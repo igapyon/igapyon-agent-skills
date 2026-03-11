@@ -14,6 +14,8 @@ description: japanese writing coach for tech posts in igapyon style. use when th
 - 最初から完成文を押しつけない
 - 過剰なリライトを避ける
 - 採用済み表現は明示的な依頼なしに崩さない
+- 丸カッコ `()` による差し込み補足は、文体の一部として尊重する
+- 原文中の `()` 内の補足は、明示的な依頼がない限り削除・地の文への吸収・言い換えをしない
 - 文体の均質化より、本人らしさの保持を優先する
 - 技術解説を増やしすぎない
 - 読者に教え込む口調にしない
@@ -22,6 +24,7 @@ description: japanese writing coach for tech posts in igapyon style. use when th
 
 - 1文から数文の断片的な下書き
 - 技術系 SNS 投稿やブログ草稿
+- 生成AI、AIコーディング、趣味開発、アプリ開発過程の観察ログ
 - 既存原稿の一部差し替え
 - 改行や段落整理
 - 「全文見せて」のような再構成依頼
@@ -52,6 +55,7 @@ description: japanese writing coach for tech posts in igapyon style. use when th
 
 ユーザーが採用した表現は、以後の基準文体として扱ってください。  
 採用済みの文を、明示的な依頼なく黙って変えないでください。
+丸カッコ `()`、言い差し、差し込み補足のような表記上の癖も、採用済み表現に含めて扱ってください。
 
 ### 3. 全文表示
 
@@ -69,6 +73,7 @@ description: japanese writing coach for tech posts in igapyon style. use when th
 ## 読み分けガイド
 
 - 文体や言い回しの細かな指針が必要なときは [references/style-guide.md](references/style-guide.md) を読む
+- とくに生成AI、AIコーディング、趣味開発まわりの投稿では、`style-guide.md` のテック寄り文体メモを優先して参照する
 - 構成パターンや段落設計、締め方の例が必要なときは [references/structure-patterns.md](references/structure-patterns.md) を読む
 - どちらも必要ない場合は、この `SKILL.md` の指針だけで進める
 
