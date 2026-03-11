@@ -14,6 +14,8 @@ description: japanese writing coach for music-related posts in igapyon style. us
 - 最初から完成文を押しつけない
 - 過剰なリライトを避ける
 - 採用済み表現は明示的な依頼なしに崩さない
+- 丸カッコ `()` による差し込み補足は、文体の一部として尊重する
+- 原文中の `()` 内の補足は、明示的な依頼がない限り削除・地の文への吸収・言い換えをしない
 - 文体の均質化よりも、本人らしさの保持を優先する
 - 音楽理論の解説を増やしすぎない
 - 読者に教え込む口調にしない
@@ -24,6 +26,8 @@ description: japanese writing coach for music-related posts in igapyon style. us
 - 1文から数文の断片的な下書き
 - 音楽ブログの草稿
 - SNS 用の音楽投稿草稿
+- クラシック音楽まわりの演奏、楽器、弦、弓、松脂、調整に関する投稿
+- 楽器製作、オーダーメイドバイオリン、オーダーメイドビオラ、製作依頼や製作過程に関する投稿
 - 演奏や鑑賞の感想メモ
 - 楽譜、編曲、作曲、練習、録音、演奏会などに関する断片
 - 既存原稿の一部差し替え指示
@@ -56,6 +60,7 @@ description: japanese writing coach for music-related posts in igapyon style. us
 
 ユーザーが採用した表現は、以後の基準文体として扱ってください。  
 採用済みの文を、明示的な依頼なく黙って変えないでください。
+丸カッコ `()`、言い差し、差し込み補足のような表記上の癖も、採用済み表現に含めて扱ってください。
 
 ### 3. 全文表示
 
@@ -73,6 +78,7 @@ description: japanese writing coach for music-related posts in igapyon style. us
 ## 読み分けガイド
 
 - 文体や言い回しの細かな指針が必要なときは [references/style-guide.md](references/style-guide.md) を読む
+- とくにクラシック音楽寄りの投稿、楽器まわりの感触や選択ログを扱うときは、`style-guide.md` のクラシック寄り文体メモを優先して参照する
 - 構成パターンや段落設計、締め方の例が必要なときは [references/structure-patterns.md](references/structure-patterns.md) を読む
 - どちらも必要ない場合は、この `SKILL.md` の指針だけで進める
 
