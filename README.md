@@ -12,6 +12,7 @@
 - repo 全体の運用方針は `AGENTS.md` に書く
 - 正本は `.claude/skills/` に置く
 - 必要に応じて `.github/skills/` に同期する
+- 現在の同期実装は `.github/skills/` のみを対象にしている
 - `.github/skills/` は生成物として扱い、直接編集しない
 
 ## ディレクトリ構成
@@ -27,6 +28,14 @@
 │     └─ ...
 ├─ .github/
 │  └─ skills/
+├─ docs/
+│  ├─ CONTEXT.md
+│  ├─ ARCHITECTURE.md
+│  ├─ PLAN.md
+│  ├─ TODO.md
+│  ├─ STATE.md
+│  ├─ SESSION.md
+│  └─ RULES.md
 ├─ tools/
 │  └─ sync-skills.mjs
 ├─ AGENTS.md
@@ -78,9 +87,24 @@
 - repo 全体の説明や交通整理は `AGENTS.md` に書く
 - skill 固有の文体・入出力・禁止事項・進め方は各 `SKILL.md` に書く
 
+## LLM Workflow
+
+このリポジトリでは、LLM セッション向けの作業メモを `docs/` に集約します。
+
+- 安定した前提や背景は `docs/CONTEXT.md`
+- 構造把握は `docs/ARCHITECTURE.md`
+- 現状理解は `docs/STATE.md`
+- 作業キューは `docs/TODO.md`
+- 現在セッションの焦点は `docs/SESSION.md`
+- 運用ルールは `docs/RULES.md`
+
+LLM が作業を始めるときは、原則として `CONTEXT.md`、`ARCHITECTURE.md`、`STATE.md`、`TODO.md`、`SESSION.md` の順に読む前提です。
+
 ## 同期方法
 
 このリポジトリでは、`.claude/skills/` を正本として、必要に応じて `.github/skills/` に同期します。
+
+現時点で `npm run sync-skills` が同期するのは `.github/skills/` のみです。
 
 実行コマンド:
 
