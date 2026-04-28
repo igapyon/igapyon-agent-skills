@@ -3,6 +3,14 @@
   "basePath": ".",
   "files": [
     {
+      "name": "20260428-general.md",
+      "path": "references/general/20260428-general.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 3829,
+      "summary": "掲載先情報"
+    },
+    {
       "name": "20260412-miku-abc-player-intro.md",
       "path": "references/miku-abc-player/20260412-miku-abc-player-intro.md",
       "ext": "md",
