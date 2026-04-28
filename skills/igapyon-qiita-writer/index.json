@@ -129,6 +129,14 @@
       "dir": "references/miku-xlsx2md",
       "size": 4820,
       "summary": "`xlsx2md` 機能一覧メモ"
+    },
+    {
+      "name": "SKILL.md",
+      "path": "SKILL.md",
+      "ext": "md",
+      "dir": "",
+      "size": 6408,
+      "summary": "--- name: igapyon-qiita-writer description: Use when writing, revising, structuring, or preparing Japanese Qiita technical articles in igapyon style. This skill helps turn notes, README material, implementation logs, OSS tool descriptions, AI development e"
     }
   ]
 }

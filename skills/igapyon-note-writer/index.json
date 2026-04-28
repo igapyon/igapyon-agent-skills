@@ -81,6 +81,14 @@
       "dir": "references/miku-xlsx2md",
       "size": 7517,
       "summary": "掲載先情報"
+    },
+    {
+      "name": "SKILL.md",
+      "path": "SKILL.md",
+      "ext": "md",
+      "dir": "",
+      "size": 6672,
+      "summary": "--- name: igapyon-note-writer description: Use when writing, revising, structuring, or preparing Japanese Note articles in igapyon style. This skill helps turn notes, experiences, background stories, product-making motives, AI development observations, OSS"
     }
   ]
 }
