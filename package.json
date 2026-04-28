@@ -1,8 +1,5 @@
 {
   "name": "igapyon-agent-skills",
   "private": true,
-  "type": "module",
-  "scripts": {
-    "sync-skills": "node tools/sync-skills.mjs"
-  }
+  "type": "module"
 }
