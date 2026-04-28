@@ -3,6 +3,14 @@
   "basePath": ".",
   "files": [
     {
+      "name": "20260428-general.md",
+      "path": "references/general/20260428-general.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 816,
+      "summary": "生成AIとの会話で、自然言語プログラミングになってきた話"
+    },
+    {
       "name": "20260412-miku-abc-player-intro.md",
       "path": "references/miku-abc-player/20260412-miku-abc-player-intro.md",
       "ext": "md",
