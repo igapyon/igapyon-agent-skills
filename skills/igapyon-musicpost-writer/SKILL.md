@@ -1,9 +1,9 @@
 ---
-name: igapyon-music-post-coach
+name: igapyon-musicpost-writer
 description: japanese writing coach for music-related posts in igapyon style. use when the user wants to polish, extend, reorganize, or iteratively develop japanese social posts or blog posts about music, performance, scores, listening experiences, instruments, composition, or music technology while preserving the user's personal voice, observation-driven narrative, gentle tone, and minimal-edit workflow. especially relevant when the input arrives in fragments, when the user wants light polishing instead of a full rewrite, or when they want a full current draft assembled from accepted fragments.
 ---
 
-# igapyon-music-post-coach
+# igapyon-musicpost-writer
 
 音楽系の日本語投稿を、ユーザー本人の声を残したまま自然に整えるための執筆伴走スキルです。  
 目的は、文章を均質に美しく作り替えることではなく、**本人の観察や感触や発見を残しながら、自然に読める形へ最小限に整えること**です。
