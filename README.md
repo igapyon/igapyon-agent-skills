@@ -2,6 +2,8 @@
 
 個人用の Agent Skills を管理するためのリポジトリです。
 
+日本語の Qiita / Note 記事作成と、技術・音楽投稿の伴走型ライティング支援に使う skill を置いています。
+
 ## 方針
 
 - skill は `skills/` 配下に置く
@@ -9,6 +11,7 @@
 - skill ごとの詳細仕様は各 `SKILL.md` に書く
 - repo 全体の運用ルールはこの `README.md` に書く
 - 作業メモは repo 直下の `TODO.md` に集約する
+- skill ごとの `index.json` は `miku-indexgen` で生成する
 
 ## references の扱い
 
@@ -27,18 +30,45 @@
 ```text
 .
 ├─ skills/
-│  ├─ igapyon-techpost-writer/
+│  ├─ igapyon-qiita-writer/
+│  │  ├─ SKILL.md
+│  │  └─ references/
+│  ├─ igapyon-note-writer/
+│  │  ├─ SKILL.md
+│  │  └─ references/
+│  ├─ igapyon-companion-techpost-writer/
 │  │  └─ SKILL.md
-│  └─ igapyon-musicpost-writer/
+│  └─ igapyon-companion-musicpost-writer/
 │     └─ SKILL.md
+├─ pom.xml
 ├─ TODO.md
 └─ README.md
 ```
 
 ## 現在の skill
 
-- `igapyon-techpost-writer`  
+- `igapyon-qiita-writer`
+
+  Qiita 向けの日本語技術記事の作成、整理、改善向け
+
+- `igapyon-note-writer`
+
+  Note 向けの日本語記事の作成、整理、改善向け
+
+- `igapyon-companion-techpost-writer`
+
   技術系日本語投稿の伴走、最小整理、全文再構成向け
 
-- `igapyon-musicpost-writer`  
+- `igapyon-companion-musicpost-writer`
+
   音楽系日本語投稿の伴走、最小整理、全文再構成向け
+
+## index.json の更新
+
+各 skill の `index.json` を更新する場合は、次のコマンドで `skills/` 配下をまとめて再生成します。
+
+```sh
+mvn generate-resources
+```
+
+生成された `index.json` は、skill と一緒にコミットします。

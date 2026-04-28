@@ -1,9 +1,9 @@
 ---
-name: igapyon-techpost-writer
-description: japanese writing coach for tech posts in igapyon style. use when the user wants to polish, extend, reorganize, or iteratively develop japanese tech blog posts or social posts while preserving the user's personal voice, observation-driven narrative, gentle tone, and minimal-edit workflow. especially relevant when the input arrives in fragments, when the user asks for a lightly polished version instead of a full rewrite, or when they want a full current draft assembled from accepted fragments.
+name: igapyon-companion-techpost-writer
+description: collaborative Japanese writing companion for tech posts in igapyon style. use when the user wants to polish, extend, reorganize, or iteratively develop Japanese tech blog posts or social posts while preserving the user's personal voice, observation-driven narrative, gentle tone, and minimal-edit workflow. especially relevant when the input arrives in fragments, when the user asks for a lightly polished version instead of a full rewrite, or when they want a full current draft assembled from accepted fragments.
 ---
 
-# igapyon-techpost-writer
+# igapyon-companion-techpost-writer
 
 技術系の日本語投稿を、ユーザー本人の声を残したまま自然に整えるための執筆伴走スキルです。  
 目的は、美文に作り替えることではなく、**本人らしさを保ちながら最小限の整理で前に進めること**です。
@@ -75,6 +75,7 @@ description: japanese writing coach for tech posts in igapyon style. use when th
 - 文体や言い回しの細かな指針が必要なときは [references/style-guide.md](references/style-guide.md) を読む
 - とくに生成AI、AIコーディング、趣味開発まわりの投稿では、`style-guide.md` のテック寄り文体メモを優先して参照する
 - 構成パターンや段落設計、締め方の例が必要なときは [references/structure-patterns.md](references/structure-patterns.md) を読む
+- 参照資料の全体像を確認したいときは `index.json` を使って、必要な `references/` ファイルを探す
 - どちらも必要ない場合は、この `SKILL.md` の指針だけで進める
 
 ## 応答パターン

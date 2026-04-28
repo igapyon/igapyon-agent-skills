@@ -1,9 +1,9 @@
 ---
-name: igapyon-musicpost-writer
-description: japanese writing coach for music-related posts in igapyon style. use when the user wants to polish, extend, reorganize, or iteratively develop japanese social posts or blog posts about music, performance, scores, listening experiences, instruments, composition, or music technology while preserving the user's personal voice, observation-driven narrative, gentle tone, and minimal-edit workflow. especially relevant when the input arrives in fragments, when the user wants light polishing instead of a full rewrite, or when they want a full current draft assembled from accepted fragments.
+name: igapyon-companion-musicpost-writer
+description: collaborative Japanese writing companion for music-related posts in igapyon style. use when the user wants to polish, extend, reorganize, or iteratively develop Japanese social posts or blog posts about music, performance, scores, listening experiences, instruments, composition, or music technology while preserving the user's personal voice, observation-driven narrative, gentle tone, and minimal-edit workflow. especially relevant when the input arrives in fragments, when the user wants light polishing instead of a full rewrite, or when they want a full current draft assembled from accepted fragments.
 ---
 
-# igapyon-musicpost-writer
+# igapyon-companion-musicpost-writer
 
 音楽系の日本語投稿を、ユーザー本人の声を残したまま自然に整えるための執筆伴走スキルです。  
 目的は、文章を均質に美しく作り替えることではなく、**本人の観察や感触や発見を残しながら、自然に読める形へ最小限に整えること**です。
@@ -80,6 +80,7 @@ description: japanese writing coach for music-related posts in igapyon style. us
 - 文体や言い回しの細かな指針が必要なときは [references/style-guide.md](references/style-guide.md) を読む
 - とくにクラシック音楽寄りの投稿、楽器まわりの感触や選択ログを扱うときは、`style-guide.md` のクラシック寄り文体メモを優先して参照する
 - 構成パターンや段落設計、締め方の例が必要なときは [references/structure-patterns.md](references/structure-patterns.md) を読む
+- 参照資料の全体像を確認したいときは `index.json` を使って、必要な `references/` ファイルを探す
 - どちらも必要ない場合は、この `SKILL.md` の指針だけで進める
 
 ## 応答パターン
