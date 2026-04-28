@@ -1,0 +1,150 @@
+{
+  "generator": "miku-indexgen",
+  "basePath": ".",
+  "files": [
+    {
+      "name": "20260428-general.md",
+      "path": "references/general/20260428-general.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 19425,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260412-miku-abc-player-intro.md",
+      "path": "references/miku-abc-player/20260412-miku-abc-player-intro.md",
+      "ext": "md",
+      "dir": "references/miku-abc-player",
+      "size": 11208,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260428-miku-indexgen-intro.md",
+      "path": "references/miku-indexgen/20260428-miku-indexgen-intro.md",
+      "ext": "md",
+      "dir": "references/miku-indexgen",
+      "size": 9493,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260330-mikuproject-ai-wbs-draft.md",
+      "path": "references/mikuproject/20260330-mikuproject-ai-wbs-draft.md",
+      "ext": "md",
+      "dir": "references/mikuproject",
+      "size": 9486,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260330-mikuproject-intro.md",
+      "path": "references/mikuproject/20260330-mikuproject-intro.md",
+      "ext": "md",
+      "dir": "references/mikuproject",
+      "size": 7476,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260407-mikuproject-ai-wbs-planning.md",
+      "path": "references/mikuproject/20260407-mikuproject-ai-wbs-planning.md",
+      "ext": "md",
+      "dir": "references/mikuproject",
+      "size": 16005,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260409-mikuproject-agent-skills-wbs-planning.md",
+      "path": "references/mikuproject/20260409-mikuproject-agent-skills-wbs-planning.md",
+      "ext": "md",
+      "dir": "references/mikuproject",
+      "size": 11962,
+      "summary": "--- title: [mikuproject] Agent Skills で WBS の叩き台作成とブラッシュアップ tags: mikuproject mikuku AgentSkills WBS 生成AI author: igapyon slide: false ---"
+    },
+    {
+      "name": "20260412-ai-score-abc-first.md",
+      "path": "references/mikuscore/20260412-ai-score-abc-first.md",
+      "ext": "md",
+      "dir": "references/mikuscore",
+      "size": 15138,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "2026XXXX-mikuscore-skills-intro.md",
+      "path": "references/mikuscore/2026XXXX-mikuscore-skills-intro.md",
+      "ext": "md",
+      "dir": "references/mikuscore",
+      "size": 8957,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260320-vscode-gpt54-chat-dev.md",
+      "path": "references/miku-xlsx2md/20260320-vscode-gpt54-chat-dev.md",
+      "ext": "md",
+      "dir": "references/miku-xlsx2md",
+      "size": 20768,
+      "summary": "VS Code + GPT-5.4 開発体験記事メモ"
+    },
+    {
+      "name": "20260320-xlsx2md-intro.md",
+      "path": "references/miku-xlsx2md/20260320-xlsx2md-intro.md",
+      "ext": "md",
+      "dir": "references/miku-xlsx2md",
+      "size": 17367,
+      "summary": "`xlsx2md` 紹介記事メモ"
+    },
+    {
+      "name": "20260321-xlsx2md-cli.md",
+      "path": "references/miku-xlsx2md/20260321-xlsx2md-cli.md",
+      "ext": "md",
+      "dir": "references/miku-xlsx2md",
+      "size": 4951,
+      "summary": "`xlsx2md` CLI 追加記事メモ"
+    },
+    {
+      "name": "20260321-xlsx2md-cli-ai-dev-log.md",
+      "path": "references/miku-xlsx2md/20260321-xlsx2md-cli-ai-dev-log.md",
+      "ext": "md",
+      "dir": "references/miku-xlsx2md",
+      "size": 16755,
+      "summary": "`xlsx2md` CLI AI 開発ログ記事メモ"
+    },
+    {
+      "name": "20260326-xlsx2md-grid-bugfix.md",
+      "path": "references/miku-xlsx2md/20260326-xlsx2md-grid-bugfix.md",
+      "ext": "md",
+      "dir": "references/miku-xlsx2md",
+      "size": 8862,
+      "summary": "`xlsx2md` Excel 方眼サンプル不具合修正記事メモ"
+    },
+    {
+      "name": "20260327-xlsx2md-rich-markdown.md",
+      "path": "references/miku-xlsx2md/20260327-xlsx2md-rich-markdown.md",
+      "ext": "md",
+      "dir": "references/miku-xlsx2md",
+      "size": 8834,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260425-xlsx2md-java.md",
+      "path": "references/miku-xlsx2md/20260425-xlsx2md-java.md",
+      "ext": "md",
+      "dir": "references/miku-xlsx2md",
+      "size": 20759,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "xlsx2md-feature-list-memo.md",
+      "path": "references/miku-xlsx2md/xlsx2md-feature-list-memo.md",
+      "ext": "md",
+      "dir": "references/miku-xlsx2md",
+      "size": 4820,
+      "summary": "`xlsx2md` 機能一覧メモ"
+    },
+    {
+      "name": "SKILL.md",
+      "path": "SKILL.md",
+      "ext": "md",
+      "dir": "",
+      "size": 6408,
+      "summary": "--- name: igapyon-qiita-writer description: Use when writing, revising, structuring, or preparing Japanese Qiita technical articles in igapyon style. This skill helps turn notes, README material, implementation logs, OSS tool descriptions, AI development e"
+    }
+  ]
+}

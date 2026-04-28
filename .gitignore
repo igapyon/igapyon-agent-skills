@@ -1,0 +1,16 @@
+node_modules/
+.DS_Store
+target/
+
+# Optional local output paths
+.codex/
+
+# Local workspace contents
+workplace/*
+!workplace/.gitkeep
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

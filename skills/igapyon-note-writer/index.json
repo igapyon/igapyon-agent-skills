@@ -1,0 +1,102 @@
+{
+  "generator": "miku-indexgen",
+  "basePath": ".",
+  "files": [
+    {
+      "name": "20260428-general.md",
+      "path": "references/general/20260428-general.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 3829,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260412-miku-abc-player-intro.md",
+      "path": "references/miku-abc-player/20260412-miku-abc-player-intro.md",
+      "ext": "md",
+      "dir": "references/miku-abc-player",
+      "size": 3667,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260428-miku-indexgen-intro.md",
+      "path": "references/miku-indexgen/20260428-miku-indexgen-intro.md",
+      "ext": "md",
+      "dir": "references/miku-indexgen",
+      "size": 4182,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260330-mikuproject-ai-wbs-draft.md",
+      "path": "references/mikuproject/20260330-mikuproject-ai-wbs-draft.md",
+      "ext": "md",
+      "dir": "references/mikuproject",
+      "size": 6134,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260330-mikuproject-intro.md",
+      "path": "references/mikuproject/20260330-mikuproject-intro.md",
+      "ext": "md",
+      "dir": "references/mikuproject",
+      "size": 5974,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260410-mikuproject-agent-skills-wbs-planning.md",
+      "path": "references/mikuproject/20260410-mikuproject-agent-skills-wbs-planning.md",
+      "ext": "md",
+      "dir": "references/mikuproject",
+      "size": 9606,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260412-ai-score-abc-first.md",
+      "path": "references/mikuscore/20260412-ai-score-abc-first.md",
+      "ext": "md",
+      "dir": "references/mikuscore",
+      "size": 7249,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "2026XXXX-mikuscore-skills-intro.md",
+      "path": "references/mikuscore/2026XXXX-mikuscore-skills-intro.md",
+      "ext": "md",
+      "dir": "references/mikuscore",
+      "size": 7154,
+      "summary": "[mikuscore] 譜面フォーマット変換の前提を、毎回説明しなくてよくしたかった話"
+    },
+    {
+      "name": "20260320-gpt54-app-dev.md",
+      "path": "references/miku-xlsx2md/20260320-gpt54-app-dev.md",
+      "ext": "md",
+      "dir": "references/miku-xlsx2md",
+      "size": 13102,
+      "summary": "生成AI 実装担当開発記事メモ"
+    },
+    {
+      "name": "20260326-xlsx2md-grid-bug-diary.md",
+      "path": "references/miku-xlsx2md/20260326-xlsx2md-grid-bug-diary.md",
+      "ext": "md",
+      "dir": "references/miku-xlsx2md",
+      "size": 7285,
+      "summary": "[xlsx2md] Excel 方眼を Markdown にする記事を書こうとしたら、およよとなった話"
+    },
+    {
+      "name": "20260327-xlsx2md-strike-meaning.md",
+      "path": "references/miku-xlsx2md/20260327-xlsx2md-strike-meaning.md",
+      "ext": "md",
+      "dir": "references/miku-xlsx2md",
+      "size": 7517,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "SKILL.md",
+      "path": "SKILL.md",
+      "ext": "md",
+      "dir": "",
+      "size": 6672,
+      "summary": "--- name: igapyon-note-writer description: Use when writing, revising, structuring, or preparing Japanese Note articles in igapyon style. This skill helps turn notes, experiences, background stories, product-making motives, AI development observations, OSS"
+    }
+  ]
+}

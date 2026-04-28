@@ -1,0 +1,30 @@
+{
+  "generator": "miku-indexgen",
+  "basePath": ".",
+  "files": [
+    {
+      "name": "structure-patterns.md",
+      "path": "references/structure-patterns.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 1858,
+      "summary": "Structure Patterns"
+    },
+    {
+      "name": "style-guide.md",
+      "path": "references/style-guide.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 3383,
+      "summary": "Style Guide"
+    },
+    {
+      "name": "SKILL.md",
+      "path": "SKILL.md",
+      "ext": "md",
+      "dir": "",
+      "size": 5519,
+      "summary": "--- name: igapyon-companion-musicpost-writer description: collaborative Japanese writing companion for music-related posts in igapyon style. use when the user wants to polish, extend, reorganize, or iteratively develop Japanese social posts or blog posts a"
+    }
+  ]
+}
