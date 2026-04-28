@@ -1,0 +1,168 @@
+---
+name: igapyon-note-writer
+description: Use when writing, revising, structuring, or preparing Japanese Note articles in igapyon style. This skill helps turn notes, experiences, background stories, product-making motives, AI development observations, OSS tool creation stories, and draft fragments into Note-ready Markdown with a readable narrative flow, gentle personal voice, clear context, and appropriate title and hashtag suggestions. It should use the reference articles under references/ as examples of Note article shape, tone, and pacing.
+---
+
+# igapyon-note-writer
+
+Note 向けの日本語記事を作成・整理・改善するための skill です。
+
+この skill の目的は、技術情報を網羅的に説明することではありません。  
+作った理由、気づいたこと、少し困ったこと、試してみた感触を、読み物として自然に伝わる形へ整えることです。
+
+## Purpose
+
+この skill では、次の作業を扱います。
+
+- Note 記事の新規作成
+- 断片メモや体験ログからの記事化
+- 技術系の話題を読み物として整理
+- タイトル案とハッシュタグ案の作成
+- 背景、問題意識、きっかけ、感触の整理
+- Qiita 向け原稿を Note 向けにやわらかく再構成
+- OSS、生成AI、個人開発、音楽データ、WBS、CLI などの体験記事化
+- 公開前原稿の流れ、余白、読みやすさの調整
+
+## When To Use
+
+次のような依頼では、この skill を使います。
+
+- 「Note 記事にして」
+- 「note 用に整えて」
+- 「読み物っぽくしたい」
+- 「背景やきっかけを厚めにしたい」
+- 「体験談としてまとめたい」
+- 「ハッシュタグを考えて」
+- 「Qiita ではなく Note 向けにしたい」
+- `igapyon-note-writer` が明示されたとき
+
+純粋な技術手順、API 仕様、コマンド解説、Qiita front matter 作成が中心の場合は、この skill を無理に使いません。
+
+## Note Article Shape
+
+Note 記事では、次の情報が自然に伝わる順に並ぶようにします。
+
+- 何に少し困っていたか
+- なぜそれを作りたくなったか
+- 実際に何を試したか
+- やってみて何が起きたか
+- 何が少し楽になったか
+- どこに面白さや違和感があったか
+- 読者が自分ごととして受け取れる点はどこか
+
+記事の基本構成は、必要に応じて次の形を使います。
+
+1. はじめに
+2. きっかけや背景
+3. やってみたこと
+4. 使ってみて感じたこと
+5. 少し便利になったところ
+6. まだ残っていること
+7. おわりに
+
+すべての記事でこの構成を強制する必要はありません。  
+題材の流れと読みやすさを優先します。
+
+## Writing Rules
+
+- 背景、問題意識、体験、感触を大切にする
+- 技術詳細は必要な範囲に抑える
+- 読者が自分ごととして読める入口を作る
+- 大きな主張より、小さな観察から始める
+- 「作ったもの」だけでなく「なぜ作ったか」を書く
+- 断定しすぎず、個人の感想や観測として自然に書く
+- 過剰にきれいな広告文や企業ブログ風にしない
+- 技術用語は使ってよいが、文章の主役を技術用語にしすぎない
+- 生成AIを使った体験では、驚き、戸惑い、手応え、人間側の判断を残す
+
+## Note Metadata Rules
+
+Note 掲載用の属性情報が必要な場合は、次の形を基本にします。
+
+```markdown
+## 掲載先情報
+
+- 掲載先: Note
+- URL: （未記入）
+
+## Note 掲載用属性情報
+
+- タイトル: 記事タイトル
+- ハッシュタグ: `タグ1`, `タグ2`, `タグ3`
+```
+
+既存原稿に公開 URL、公開タイトル、ハッシュタグがある場合は、明示的な依頼なしに変更しないでください。
+
+未確認の URL、公開状態、投稿日、読者反応は作らないでください。
+
+## Reference Usage
+
+`references/` 配下の記事は、Note 記事の実例集として使います。
+
+主に見る観点は次の通りです。
+
+- 導入の入り方
+- 背景やきっかけの置き方
+- 技術説明の薄め方
+- 体験談と事実説明の混ぜ方
+- タイトルの温度感
+- ハッシュタグの粒度
+- 読み物としての段落の長さ
+- 終わり方
+
+題材が近い場合は、該当プロジェクト配下の記事を優先して参照します。
+
+- `references/miku-abc-player/`
+- `references/miku-indexgen/`
+- `references/miku-xlsx2md/`
+- `references/mikuproject/`
+- `references/mikuscore/`
+
+索引が必要なときは `index.json` を使って、関連しそうな記事を探します。
+
+参照記事の表現を長くコピーしないでください。  
+参考にするのは、文章の温度感、展開の順序、背景の厚さ、Note 向けの読み物としての流れです。
+
+## Output Patterns
+
+### Full Article Draft
+
+ユーザーが記事本文を求めた場合は、Note に貼りやすい Markdown として出力します。
+
+必要に応じて、次の順序にします。
+
+1. 掲載先情報
+2. Note 掲載用属性情報
+3. 本文
+4. 補足または未確認事項
+
+### Outline
+
+構成案を求められた場合は、見出し案と各節で書く内容を短く示します。
+
+### Title And Hashtags
+
+タイトルやハッシュタグだけを求められた場合は、候補を複数出します。  
+ただし、根拠のない固有名詞や未確認の技術要素をハッシュタグに追加しないでください。
+
+### Revision
+
+既存原稿の修正では、事実関係を勝手に増やさず、流れ、段落、温度感、読みやすさを中心に整えます。
+
+## Do Not
+
+- 未確認の仕様を追加しない
+- 実行していない体験を実体験として書かない
+- 架空の URL、公開日、公開状態を書かない
+- 存在確認していないリポジトリ名やサービス名を断定しない
+- Qiita 向けの硬い技術手順記事に寄せすぎない
+- ユーザー本人の感触や観察を消しすぎない
+- 参照記事の本文を長く流用しない
+- 誇張した成果や宣伝文にしない
+
+## Practical Notes
+
+Note 記事では、読者が「なぜこの話が始まったのか」「何が少し楽になったのか」「書き手はそこで何を感じたのか」を追えることを優先します。
+
+技術的な正確さは大切ですが、細部の仕様を詰め込みすぎると Note らしい読みやすさが失われます。  
+技術情報と個人の観察のバランスを取り、自然に読み進められる記事を目指します。
