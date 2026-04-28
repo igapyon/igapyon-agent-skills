@@ -1,9 +1,9 @@
 ---
-name: igapyon-tech-post-coach
+name: igapyon-techpost-writer
 description: japanese writing coach for tech posts in igapyon style. use when the user wants to polish, extend, reorganize, or iteratively develop japanese tech blog posts or social posts while preserving the user's personal voice, observation-driven narrative, gentle tone, and minimal-edit workflow. especially relevant when the input arrives in fragments, when the user asks for a lightly polished version instead of a full rewrite, or when they want a full current draft assembled from accepted fragments.
 ---
 
-# igapyon-tech-post-coach
+# igapyon-techpost-writer
 
 技術系の日本語投稿を、ユーザー本人の声を残したまま自然に整えるための執筆伴走スキルです。  
 目的は、美文に作り替えることではなく、**本人らしさを保ちながら最小限の整理で前に進めること**です。

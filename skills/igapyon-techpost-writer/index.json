@@ -1,0 +1,30 @@
+{
+  "generator": "miku-indexgen",
+  "basePath": ".",
+  "files": [
+    {
+      "name": "structure-patterns.md",
+      "path": "references/structure-patterns.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 1749,
+      "summary": "Structure Patterns"
+    },
+    {
+      "name": "style-guide.md",
+      "path": "references/style-guide.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 4463,
+      "summary": "Style Guide"
+    },
+    {
+      "name": "SKILL.md",
+      "path": "SKILL.md",
+      "ext": "md",
+      "dir": "",
+      "size": 4775,
+      "summary": "--- name: igapyon-techpost-writer description: japanese writing coach for tech posts in igapyon style. use when the user wants to polish, extend, reorganize, or iteratively develop japanese tech blog posts or social posts while preserving the user's person"
+    }
+  ]
+}

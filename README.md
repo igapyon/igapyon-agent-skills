@@ -15,9 +15,9 @@
 ```text
 .
 ├─ skills/
-│  ├─ igapyon-tech-post-coach/
+│  ├─ igapyon-techpost-writer/
 │  │  └─ SKILL.md
-│  └─ igapyon-music-post-coach/
+│  └─ igapyon-musicpost-writer/
 │     └─ SKILL.md
 ├─ TODO.md
 └─ README.md
@@ -25,8 +25,8 @@
 
 ## 現在の skill
 
-- `igapyon-tech-post-coach`  
+- `igapyon-techpost-writer`  
   技術系日本語投稿の伴走、最小整理、全文再構成向け
 
-- `igapyon-music-post-coach`  
+- `igapyon-musicpost-writer`  
   音楽系日本語投稿の伴走、最小整理、全文再構成向け
