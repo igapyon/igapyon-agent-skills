@@ -27,11 +27,19 @@
       "summary": "掲載先情報"
     },
     {
+      "name": "20260430-general-straight-conv.md",
+      "path": "references/general/20260430-general-straight-conv.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 71172,
+      "summary": "掲載先情報"
+    },
+    {
       "name": "20260430-miku-soft-architecture-topic-bank.md",
       "path": "references/general/20260430-miku-soft-architecture-topic-bank.md",
       "ext": "md",
       "dir": "references/general",
-      "size": 19089,
+      "size": 20412,
       "summary": "--- title: [miku-soft] 生成AI時代の local-first ツール群アーキテクチャ topic bank tags: 生成AI ソフトウェアアーキテクチャ AgentSkills MCP CLI author: igapyon slide: false ---"
     },
     {
