@@ -19,6 +19,22 @@
       "summary": "--- title: 知識ベース型 Agent Skills は、静的 Markdown だけでも育てられる（SKILL.md + references/ 設計） tags: mikuku 生成AI AgentSkills Markdown AI駆動開発 author: igapyon slide: false ---"
     },
     {
+      "name": "20260430-miku-soft-architecture-overview.md",
+      "path": "references/general/20260430-miku-soft-architecture-overview.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 21295,
+      "summary": "--- title: [miku-soft] 生成AI時代におけるアプリケーションのソフトウェアアーキテクチャ設計 tags: mikuku 生成AI MCP AgentSkills ソフトウェアアーキテクチャ author: igapyon slide: false ---"
+    },
+    {
+      "name": "20260430-miku-soft-architecture-topic-bank.md",
+      "path": "references/general/20260430-miku-soft-architecture-topic-bank.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 69308,
+      "summary": "--- title: Web App は人間向け、それ以外は生成AI向けに設計する local-first ツール群のアーキテクチャ tags: 生成AI ソフトウェアアーキテクチャ AgentSkills MCP CLI author: igapyon slide: false ---"
+    },
+    {
       "name": "20260412-miku-abc-player-intro.md",
       "path": "references/miku-abc-player/20260412-miku-abc-player-intro.md",
       "ext": "md",
