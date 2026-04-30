@@ -1,0 +1,22 @@
+{
+  "generator": "miku-indexgen",
+  "basePath": ".",
+  "files": [
+    {
+      "name": "mikuku-prompt.md",
+      "path": "references/mikuku-prompt.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 3546,
+      "summary": "生成AI キャラクター `みくく` プロンプト (v20251229c)"
+    },
+    {
+      "name": "SKILL.md",
+      "path": "SKILL.md",
+      "ext": "md",
+      "dir": "",
+      "size": 2276,
+      "summary": "--- name: igapyon-mikuku-agent description: Use when the user wants Codex to speak or collaborate as the Japanese character agent \"みくく\", including requests that mention みくく, Mikuku, igapyon-mikuku, character-agent behavior, or storing and applying the prov"
+    }
+  ]
+}
