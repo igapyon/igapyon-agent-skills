@@ -51,6 +51,22 @@
       "summary": "--- title: [miku-soft] 生成AI時代の local-first ツール群アーキテクチャ topic bank tags: 生成AI ソフトウェアアーキテクチャ AgentSkills MCP CLI author: igapyon slide: false ---"
     },
     {
+      "name": "20260502-general-repository-engineering.md",
+      "path": "references/general/20260502-general-repository-engineering.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 16315,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260503-general-miku-soft-agent-skills.md",
+      "path": "references/general/20260503-general-miku-soft-agent-skills.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 5279,
+      "summary": "掲載先情報"
+    },
+    {
       "name": "20260412-miku-abc-player-intro.md",
       "path": "references/miku-abc-player/20260412-miku-abc-player-intro.md",
       "ext": "md",

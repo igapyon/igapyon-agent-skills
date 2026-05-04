@@ -1,0 +1,46 @@
+{
+  "generator": "miku-indexgen",
+  "basePath": ".",
+  "files": [
+    {
+      "name": "repository-rules.md",
+      "path": "references/repository-rules.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 3680,
+      "summary": "Repository Rules"
+    },
+    {
+      "name": "CONTRIBUTING.md",
+      "path": "references/template/CONTRIBUTING.md",
+      "ext": "md",
+      "dir": "references/template",
+      "size": 1501,
+      "summary": "Contributing to PROJECT_NAME"
+    },
+    {
+      "name": "CONTRIBUTORS.md",
+      "path": "references/template/CONTRIBUTORS.md",
+      "ext": "md",
+      "dir": "references/template",
+      "size": 161,
+      "summary": "Contributors"
+    },
+    {
+      "name": "THIRD_PARTY_NOTICES.md",
+      "path": "references/template/THIRD_PARTY_NOTICES.md",
+      "ext": "md",
+      "dir": "references/template",
+      "size": 392,
+      "summary": "Third-Party Notices"
+    },
+    {
+      "name": "SKILL.md",
+      "path": "SKILL.md",
+      "ext": "md",
+      "dir": "",
+      "size": 2310,
+      "summary": "--- name: igapyon-repo-conventions description: Use when applying igapyon's repository conventions to a local Git or GitHub repository, including repo-side .gitignore rules, .DS_Store exclusion, workplace/.gitkeep setup, .codex/skills exclusion, Java/Maven"
+    }
+  ]
+}
