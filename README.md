@@ -69,6 +69,9 @@ skill を利用する際は、`SKILL.md` を入口とし、具体ルール、例
 │  ├─ igapyon-github-writer/
 │  │  ├─ SKILL.md
 │  │  └─ references/
+│  ├─ igapyon-miku-soft-developer/
+│  │  ├─ SKILL.md
+│  │  └─ references/
 │  ├─ igapyon-mikuku-agent/
 │  │  ├─ SKILL.md
 │  │  ├─ assets/
@@ -102,6 +105,10 @@ skill を利用する際は、`SKILL.md` を入口とし、具体ルール、例
 - `igapyon-github-writer`
 
   GitHub PR、GitHub Release、GitHub About に貼る文章の作成向け。明示的に指定した場合に利用する。
+
+- `igapyon-miku-soft-developer`
+
+  miku-soft project の新規作成・既存保守ワークフロー向け。skill の利用を明示的に指定した場合のみ利用し、miku-soft 作成・保守の相談だけでは存在案内に留める。
 
 - `igapyon-mikuku-agent`
 

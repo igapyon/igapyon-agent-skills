@@ -1,0 +1,102 @@
+{
+  "generator": "miku-indexgen",
+  "basePath": ".",
+  "files": [
+    {
+      "name": "activation-policy.md",
+      "path": "references/activation-policy.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 1187,
+      "summary": "miku-soft Developer Activation Policy"
+    },
+    {
+      "name": "architecture-rules.md",
+      "path": "references/architecture-rules.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 2019,
+      "summary": "miku-soft Architecture Rules"
+    },
+    {
+      "name": "maintenance-workflow.md",
+      "path": "references/maintenance-workflow.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 1147,
+      "summary": "Existing miku-soft Maintenance Workflow"
+    },
+    {
+      "name": "miku-soft-00-overview-design-v20260427.md",
+      "path": "references/miku-soft-basic/miku-soft-00-overview-design-v20260427.md",
+      "ext": "md",
+      "dir": "references/miku-soft-basic",
+      "size": 14059,
+      "summary": "Miku Software Overview Design v20260427"
+    },
+    {
+      "name": "miku-soft-10-mainapp-design-v20260501.md",
+      "path": "references/miku-soft-basic/miku-soft-10-mainapp-design-v20260501.md",
+      "ext": "md",
+      "dir": "references/miku-soft-basic",
+      "size": 59100,
+      "summary": "Miku Software Main Application Design v20260425"
+    },
+    {
+      "name": "miku-soft-20-javaapp-design-v20260501.md",
+      "path": "references/miku-soft-basic/miku-soft-20-javaapp-design-v20260501.md",
+      "ext": "md",
+      "dir": "references/miku-soft-basic",
+      "size": 41407,
+      "summary": "Miku Software Java Application Design v20260426"
+    },
+    {
+      "name": "miku-soft-30-straight-conversion-v20260425.md",
+      "path": "references/miku-soft-basic/miku-soft-30-straight-conversion-v20260425.md",
+      "ext": "md",
+      "dir": "references/miku-soft-basic",
+      "size": 55702,
+      "summary": "Miku Software Straight Conversion Guide v20260425"
+    },
+    {
+      "name": "miku-soft-40-agentskills-design-v20260501.md",
+      "path": "references/miku-soft-basic/miku-soft-40-agentskills-design-v20260501.md",
+      "ext": "md",
+      "dir": "references/miku-soft-basic",
+      "size": 39734,
+      "summary": "Miku Software Agent Skills Design v20260425"
+    },
+    {
+      "name": "miku-soft-50-mcp-design-v20260501.md",
+      "path": "references/miku-soft-basic/miku-soft-50-mcp-design-v20260501.md",
+      "ext": "md",
+      "dir": "references/miku-soft-basic",
+      "size": 41214,
+      "summary": "Miku Software MCP Design v20260501"
+    },
+    {
+      "name": "new-project-workflow.md",
+      "path": "references/new-project-workflow.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 1874,
+      "summary": "New miku-soft Project Workflow"
+    },
+    {
+      "name": "repo-operations.md",
+      "path": "references/repo-operations.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 1189,
+      "summary": "miku-soft Repository Operations"
+    },
+    {
+      "name": "SKILL.md",
+      "path": "SKILL.md",
+      "ext": "md",
+      "dir": "",
+      "size": 2744,
+      "summary": "--- name: igapyon-miku-soft-developer description: Use only when the user explicitly asks to use igapyon-miku-soft-developer or explicitly asks to apply the miku-soft developer skill. If the user says they want to create a new miku-soft project, maintain a"
+    }
+  ]
+}
