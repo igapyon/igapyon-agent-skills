@@ -23,8 +23,8 @@
       "path": "SKILL.md",
       "ext": "md",
       "dir": "",
-      "size": 4941,
-      "summary": "--- name: igapyon-companion-techpost-writer description: collaborative Japanese writing companion for tech posts in igapyon style. use when the user wants to polish, extend, reorganize, or iteratively develop Japanese tech blog posts or social posts while"
+      "size": 5175,
+      "summary": "--- name: igapyon-companion-techpost-writer description: Use only when the user explicitly asks for igapyon-companion-techpost-writer, asks for an igapyon-style companion workflow, or clearly wants iterative minimal polishing of Japanese tech blog or socia"
     }
   ]
 }

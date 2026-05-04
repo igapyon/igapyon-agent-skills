@@ -1,0 +1,46 @@
+{
+  "generator": "miku-indexgen",
+  "basePath": ".",
+  "files": [
+    {
+      "name": "about-writing.md",
+      "path": "references/about-writing.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 1136,
+      "summary": "GitHub About Writing"
+    },
+    {
+      "name": "github-writing-rules.md",
+      "path": "references/github-writing-rules.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 3282,
+      "summary": "GitHub Writing Rules"
+    },
+    {
+      "name": "pr-writing.md",
+      "path": "references/pr-writing.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 2860,
+      "summary": "GitHub PR Writing"
+    },
+    {
+      "name": "release-writing.md",
+      "path": "references/release-writing.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 3555,
+      "summary": "GitHub Release Writing"
+    },
+    {
+      "name": "SKILL.md",
+      "path": "SKILL.md",
+      "ext": "md",
+      "dir": "",
+      "size": 3680,
+      "summary": "--- name: igapyon-github-writer description: Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, or GitHub About text from repository evidence, or explicitly mentions igapyon-github-writer. If the user only asks whether su"
+    }
+  ]
+}

@@ -103,8 +103,8 @@
       "path": "SKILL.md",
       "ext": "md",
       "dir": "",
-      "size": 6672,
-      "summary": "--- name: igapyon-note-writer description: Use when writing, revising, structuring, or preparing Japanese Note articles in igapyon style. This skill helps turn notes, experiences, background stories, product-making motives, AI development observations, OSS"
+      "size": 6869,
+      "summary": "--- name: igapyon-note-writer description: Use only when the user explicitly asks for igapyon-note-writer, asks to create or revise a Japanese Note article in igapyon style, or clearly requests Note-ready Markdown with title and hashtag suggestions. If the"
     }
   ]
 }

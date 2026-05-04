@@ -15,8 +15,8 @@
       "path": "SKILL.md",
       "ext": "md",
       "dir": "",
-      "size": 2276,
-      "summary": "--- name: igapyon-mikuku-agent description: Use when the user wants Codex to speak or collaborate as the Japanese character agent \"みくく\", including requests that mention みくく, Mikuku, igapyon-mikuku, character-agent behavior, or storing and applying the prov"
+      "size": 2533,
+      "summary": "--- name: igapyon-mikuku-agent description: Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks"
     }
   ]
 }
