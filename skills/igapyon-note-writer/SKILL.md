@@ -1,11 +1,14 @@
 ---
 name: igapyon-note-writer
-description: Use when writing, revising, structuring, or preparing Japanese Note articles in igapyon style. This skill helps turn notes, experiences, background stories, product-making motives, AI development observations, OSS tool creation stories, and draft fragments into Note-ready Markdown with a readable narrative flow, gentle personal voice, clear context, and appropriate title and hashtag suggestions. It should use the reference articles under references/ as examples of Note article shape, tone, and pacing.
+description: Use only when the user explicitly asks for igapyon-note-writer, asks to create or revise a Japanese Note article in igapyon style, or clearly requests Note-ready Markdown with title and hashtag suggestions. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
 ---
 
 # igapyon-note-writer
 
 Note 向けの日本語記事を作成・整理・改善するための skill です。
+
+一般的な文章校正、短文投稿、技術説明、または Note 向けであることが明示されていない文章相談では、この skill を使わないでください。
+Note 記事向けの skill があるか聞かれた場合は、この skill を候補として案内し、ユーザーが使用を依頼するまで適用しないでください。
 
 この skill の目的は、技術情報を網羅的に説明することではありません。  
 作った理由、気づいたこと、少し困ったこと、試してみた感触を、読み物として自然に伝わる形へ整えることです。

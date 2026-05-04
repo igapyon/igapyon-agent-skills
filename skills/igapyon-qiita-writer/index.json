@@ -199,8 +199,8 @@
       "path": "SKILL.md",
       "ext": "md",
       "dir": "",
-      "size": 6408,
-      "summary": "--- name: igapyon-qiita-writer description: Use when writing, revising, structuring, or preparing Japanese Qiita technical articles in igapyon style. This skill helps turn notes, README material, implementation logs, OSS tool descriptions, AI development e"
+      "size": 6665,
+      "summary": "--- name: igapyon-qiita-writer description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-ready Markdown with front matter, tags, and"
     }
   ]
 }

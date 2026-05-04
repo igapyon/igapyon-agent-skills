@@ -1,13 +1,17 @@
 ---
 name: igapyon-repo-conventions
-description: Use when applying igapyon's repository conventions to a local Git or GitHub repository, including repo-side .gitignore rules, .DS_Store exclusion, workplace/.gitkeep setup, .codex/skills exclusion, Java/Maven .mvn/jvm.config handling, and README documentation of repository operation rules.
+description: Use only when the user explicitly asks to apply or review igapyon's repository conventions for a local Git or GitHub repository, or explicitly mentions igapyon-repo-conventions. Covers repo-side .gitignore rules, .DS_Store exclusion, workplace/.gitkeep setup, .codex/skills exclusion, Java/Maven .mvn/jvm.config handling, and README documentation of repository operation rules.
 ---
 
 # igapyon-repo-conventions
 
 This skill helps Codex apply igapyon's standard repository conventions to a local Git repository.
 
-Use it when the user wants to set up, inspect, or document repository-level conventions rather than implement product behavior.
+Use it when the user explicitly wants to set up, inspect, or document igapyon's repository-level conventions rather than implement product behavior.
+
+Do not use this skill for ordinary repository cleanup or generic `.gitignore` / `README.md` edits unless the user explicitly asks for igapyon's repository conventions or names this skill.
+
+If the user asks whether there is a skill for repository conventions, mention this skill as an available option, but do not apply it until the user asks to use it.
 
 ## Core Workflow
 

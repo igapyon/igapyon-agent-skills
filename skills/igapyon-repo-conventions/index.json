@@ -39,8 +39,8 @@
       "path": "SKILL.md",
       "ext": "md",
       "dir": "",
-      "size": 2310,
-      "summary": "--- name: igapyon-repo-conventions description: Use when applying igapyon's repository conventions to a local Git or GitHub repository, including repo-side .gitignore rules, .DS_Store exclusion, workplace/.gitkeep setup, .codex/skills exclusion, Java/Maven"
+      "size": 2772,
+      "summary": "--- name: igapyon-repo-conventions description: Use only when the user explicitly asks to apply or review igapyon's repository conventions for a local Git or GitHub repository, or explicitly mentions igapyon-repo-conventions. Covers repo-side .gitignore ru"
     }
   ]
 }

@@ -1,12 +1,15 @@
 ---
 name: igapyon-companion-musicpost-writer
-description: collaborative Japanese writing companion for music-related posts in igapyon style. use when the user wants to polish, extend, reorganize, or iteratively develop Japanese social posts or blog posts about music, performance, scores, listening experiences, instruments, composition, or music technology while preserving the user's personal voice, observation-driven narrative, gentle tone, and minimal-edit workflow. especially relevant when the input arrives in fragments, when the user wants light polishing instead of a full rewrite, or when they want a full current draft assembled from accepted fragments.
+description: Use only when the user explicitly asks for igapyon-companion-musicpost-writer, asks for an igapyon-style companion workflow, or clearly wants iterative minimal polishing of Japanese music-related posts while preserving the user's voice. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
 ---
 
 # igapyon-companion-musicpost-writer
 
 音楽系の日本語投稿を、ユーザー本人の声を残したまま自然に整えるための執筆伴走スキルです。  
 目的は、文章を均質に美しく作り替えることではなく、**本人の観察や感触や発見を残しながら、自然に読める形へ最小限に整えること**です。
+
+一般的な文章校正、音楽解説、記事の全面リライト、または伴走型の最小整理が求められていない依頼では、この skill を使わないでください。
+音楽投稿の伴走用 skill があるか聞かれた場合は、この skill を候補として案内し、ユーザーが使用を依頼するまで適用しないでください。
 
 ## この skill で毎回守ること
 
