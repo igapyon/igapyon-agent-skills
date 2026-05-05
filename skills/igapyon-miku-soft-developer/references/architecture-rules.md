@@ -11,7 +11,7 @@ Do not create or rely on a synchronization script for these documents. When a ta
 Read only the document needed for the current task:
 
 - [miku-soft-basic/miku-soft-00-overview-design-v20260427.md](miku-soft-basic/miku-soft-00-overview-design-v20260427.md): overall miku-soft stance and product-type overview
-- [miku-soft-basic/miku-soft-10-mainapp-design-v20260501.md](miku-soft-basic/miku-soft-10-mainapp-design-v20260501.md): main application, Web UI, CLI, local-first behavior, diagnostics, and shared conventions
+- [miku-soft-basic/miku-soft-10-mainapp-design-v20260505.md](miku-soft-basic/miku-soft-10-mainapp-design-v20260505.md): main application, Web UI, CLI, local-first behavior, diagnostics, and shared conventions
 - [miku-soft-basic/miku-soft-20-javaapp-design-v20260501.md](miku-soft-basic/miku-soft-20-javaapp-design-v20260501.md): Java CLI, Maven, Java runtime boundary, packaging, and Java-side maintenance
 - [miku-soft-basic/miku-soft-30-straight-conversion-v20260425.md](miku-soft-basic/miku-soft-30-straight-conversion-v20260425.md): Node.js / TypeScript to Java straight conversion
 - [miku-soft-basic/miku-soft-40-agentskills-design-v20260501.md](miku-soft-basic/miku-soft-40-agentskills-design-v20260501.md): Agent Skills versions and agent-facing local workflow packages

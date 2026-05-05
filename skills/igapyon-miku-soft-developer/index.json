@@ -3,6 +3,38 @@
   "basePath": ".",
   "files": [
     {
+      "name": "10-node-app-workflow.md",
+      "path": "references/10-node-app-workflow.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 2756,
+      "summary": "Node App Workflow"
+    },
+    {
+      "name": "30-java-straight-conversion-workflow.md",
+      "path": "references/30-java-straight-conversion-workflow.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 1386,
+      "summary": "Java Straight Conversion Workflow"
+    },
+    {
+      "name": "40-agent-skills-workflow.md",
+      "path": "references/40-agent-skills-workflow.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 1174,
+      "summary": "Agent Skills Workflow"
+    },
+    {
+      "name": "50-mcp-workflow.md",
+      "path": "references/50-mcp-workflow.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 1169,
+      "summary": "MCP Workflow"
+    },
+    {
       "name": "activation-policy.md",
       "path": "references/activation-policy.md",
       "ext": "md",
@@ -35,12 +67,12 @@
       "summary": "Miku Software Overview Design v20260427"
     },
     {
-      "name": "miku-soft-10-mainapp-design-v20260501.md",
-      "path": "references/miku-soft-basic/miku-soft-10-mainapp-design-v20260501.md",
+      "name": "miku-soft-10-mainapp-design-v20260505.md",
+      "path": "references/miku-soft-basic/miku-soft-10-mainapp-design-v20260505.md",
       "ext": "md",
       "dir": "references/miku-soft-basic",
-      "size": 59100,
-      "summary": "Miku Software Main Application Design v20260425"
+      "size": 62953,
+      "summary": "Miku Software Main Application Design v20260505"
     },
     {
       "name": "miku-soft-20-javaapp-design-v20260501.md",
@@ -79,7 +111,7 @@
       "path": "references/new-project-workflow.md",
       "ext": "md",
       "dir": "references",
-      "size": 1874,
+      "size": 2363,
       "summary": "New miku-soft Project Workflow"
     },
     {
@@ -95,7 +127,7 @@
       "path": "SKILL.md",
       "ext": "md",
       "dir": "",
-      "size": 2744,
+      "size": 3128,
       "summary": "--- name: igapyon-miku-soft-developer description: Use only when the user explicitly asks to use igapyon-miku-soft-developer or explicitly asks to apply the miku-soft developer skill. If the user says they want to create a new miku-soft project, maintain a"
     }
   ]

@@ -1,4 +1,4 @@
-# Miku Software Main Application Design v20260425
+# Miku Software Main Application Design v20260505
 
 This memo organizes design characteristics commonly seen across the software series whose names start with `miku`.
 
@@ -87,6 +87,8 @@ The shared direction is as follows.
 In this document, a main application means an application in the miku series that is neither a Java straight-conversion version nor an Agent Skills version, and that uses Node.js as its basic runtime.
 
 Main applications may be Web UI applications, CLI-only applications, or applications that provide both. A Web UI is common but not required. A CLI-only tool such as an index generator is still a main application when it stands as the primary product, accepts real local input, and produces verifiable artifacts.
+
+CLI-only main applications are especially common when the product value is a structured operation for AI agents, scripts, or automation. Tools such as local file search, local file reading, and index generation can be complete products without a Web UI when their CLI contract, JSON output, diagnostics, documentation, and tests are stable enough for repeated use.
 
 Main applications are practical tools for safely reading existing files in a local environment, structuring them, and passing them to another representation.
 
@@ -297,6 +299,8 @@ The following sections turn the cross-cutting principles into practical reposito
 
 ### Distribution and Build Principles
 
+#### Web Distribution Shape
+
 For main applications with a Web UI, split development-time source files from distribution-time single-file artifacts.
 
 Distribution artifacts should generally be designed as Single-file Web Apps. They should open in a Web browser, require no additional installation or server startup, and allow core functionality to be used offline.
@@ -304,6 +308,8 @@ Distribution artifacts should generally be designed as Single-file Web Apps. The
 For Web distribution, the basic structure is to place `index.html` as a landing page and launch the actual main HTML from it. The main HTML is generated as a product-named single-file app, such as `miku-xlsx2md.html`, `miku-docx2md.html`, `mikuproject.html`, or `mikuscore.html`.
 
 The landing page generally displays the build date. Links from the landing page to the main HTML include URL parameters such as the build date so old single-file apps are less likely to be opened from the browser cache.
+
+#### Generated Web Artifacts
 
 The basic shape is as follows.
 
@@ -321,6 +327,27 @@ The basic shape is as follows.
 
 This shape balances development-time maintainability with ease of distribution for users.
 
+### Node Package and Runtime Artifact Principles
+
+CLI-oriented main applications may also be distributed as Node.js packages or as single-file Node.js runtime artifacts.
+
+#### Package Metadata
+
+When a main application exposes a Node package surface, keep package metadata aligned with the actual runtime contract:
+
+- `bin`: command-line entrypoint
+- `exports`: programmatic entrypoint when provided
+- `types`: TypeScript declaration entrypoint when provided
+- `files`: package contents intended for publication or dry-run checks
+- `engines`: supported Node.js runtime range
+- scripts such as `build`, `test`, `cli`, `typecheck`, `smoke`, `smoke:bundle`, and `pack:check`
+
+#### Single-file Node Runtime Artifacts
+
+For downstream Agent Skills or other local automation, a build may produce a single-file Node.js CLI runtime artifact such as `bundle/<product>.mjs`. When this shape is used, keep the generated runtime artifact distinct from development-time `dist/` output.
+
+A source archive such as `bundle/<product>-sources.tgz` may be useful for rebuild, audit, or downstream confirmation. Treat these files as generated artifacts: rebuild them through documented commands and verify them with smoke tests rather than editing them directly.
+
 ### `workplace/` Directory Principles
 
 The repository root of a main application contains a `workplace/` directory for local work.
@@ -335,6 +362,8 @@ The name is standardized as `workplace`. If past text or typos use `workspace`, 
 
 ### Role Split Between README and docs
 
+#### README
+
 `README.md` is an entry document for ordinary users.
 
 README should mainly contain the following.
@@ -346,15 +375,21 @@ README should mainly contain the following.
 - Major options
 - Links to additional information
 
+#### docs
+
 Developer details, design memos, internal structure, implementation specifications, test policy, and future notes are stored as Markdown under `docs/`.
 
 README may link to `docs/`, but its body should stay as the first explanation users read. Do not make README too heavy with internal design or developer details.
 
 ### Managing External-Publishing Documents Under `docs/articles`
 
+#### Purpose
+
 Main applications may place drafts and outlines for external publishing under `docs/articles/`, separate from user-facing README and developer-facing docs.
 
 `docs/articles/` is not the product specification itself. It is a working area for organizing product introductions, development experience, implementation knowledge, and problem awareness for external media. Original manuscripts, article notes, outlines, and drafts for published articles are kept as Markdown.
+
+#### Directory Shape
 
 The basic shape is as follows.
 
@@ -371,6 +406,8 @@ The roles of media-specific directories are also separated.
 - `docs/articles/note/` contains articles that emphasize narrative flow, such as background, problem awareness, experience, and thinking
 
 This separation keeps technical articles and experience articles from mixing too much, even when they discuss the same subject. For example, feature introductions and Markdown output specifications for `miku-xlsx2md` can be organized for Qiita, while the experience of implementing and documenting with generative AI can be organized for Note.
+
+#### Feedback to Product Docs
 
 `docs/articles/` is not a replacement for README or specifications. Constraints, implementation knowledge, bugs, and improvement ideas found while writing articles are returned to README, formal docs, TODO, or test fixtures as needed. Article writing is external publishing, but it is also treated as a review workflow for making the product explainable.
 
@@ -405,9 +442,13 @@ This policy permits a little extra code only when an upstream exists. Normal mai
 
 ### Core and Thin Entry Principles
 
+#### Shared Core
+
 Main applications push processing called from UI, CLI, tests, and Agent Skills toward the same core as much as possible.
 
 CLI and Web UI are designed as thin entry points that call a shared core, not as separate implementations.
+
+#### Thin Entrypoints
 
 This principle appears in forms such as the following.
 
@@ -422,9 +463,13 @@ When adding a thin layer to publish a CLI, keep that layer responsible for optio
 
 ### Public API Surface Principles
 
+#### API Boundary
+
 Main applications provide a UI-independent public API surface when needed.
 
 The public API surface does not expose everything inside the application. It gathers operations needed by Agent Skills, CLI, tests, MCP, or future integrations as small, stable entry points.
+
+#### API Contents
 
 The public API surface emphasizes the following.
 
@@ -439,9 +484,13 @@ This policy lets features built for Web UI be used with the same meaning from CL
 
 ### Runtime Difference Adapter Principles
 
+#### Runtime-specific Boundaries
+
 Main applications may run in both Web browsers and Node.js CLI.
 
 In that case, runtime-specific parts such as DOM, XML parser, file, Blob, download, encoding, and ZIP saving should not be scattered directly through core logic.
+
+#### Adapter Shape
 
 Runtime differences are contained in adapters or loaders as follows.
 
@@ -455,11 +504,17 @@ This separation makes it easier to use the same core in both Single-file Web App
 
 ### Diagnostics and Summary Principles
 
+#### Diagnostics
+
 Main applications treat diagnostics and summaries as formal output surfaces, not as byproducts.
 
 Diagnostics are not mere error messages. They are information for users, developers, and AI agents to trace conversion decisions, fallback, unsupported areas, loss, warnings, suspicious input, and output constraints.
 
+#### Summaries
+
 Summaries are used to quickly understand the whole input or conversion result.
+
+#### Diagnostic Shape
 
 The principles are as follows.
 
@@ -476,9 +531,13 @@ This makes it possible to judge not only whether conversion succeeded, but also 
 
 ### Option and Mode Principles
 
+#### Mode Scope
+
 Main applications avoid adding too many options and modes.
 
 However, important trade-offs that users must choose because of the target conversion should be exposed as modes.
+
+#### Examples
 
 Examples:
 
@@ -487,6 +546,8 @@ Examples:
 - balanced / border / planner-aware
 - replace / merge / patch
 - diagnostics text / json
+
+#### Mode Criteria
 
 When adding a mode, satisfy the following.
 
@@ -500,9 +561,13 @@ Modes are placed for users to choose conversion policy, not to expose internal c
 
 ### UI Design Principles
 
+#### UI Role
+
 Main applications with a Web UI use `lht-cmn` Web Components to keep consistency across the series.
 
 UI is centered on the actual work surface rather than an explanatory landing page.
+
+#### Basic UI Flow
 
 The basic UI flow is as follows.
 
@@ -512,6 +577,8 @@ The basic UI flow is as follows.
 - Save required artifacts
 
 The UI clearly treats processing as local so users do not mistakenly think their files are being sent to an external server.
+
+#### UI Boundary
 
 Even when a Web UI exists, the center of the main application is not the UI itself. It is the processing that reads local files, structures them, and outputs artifacts. Avoid states whose meaning exists only in the UI.
 
@@ -525,7 +592,13 @@ For this reason, miku main applications prefer reliable operations on real files
 
 ### CLI Design Principles
 
+#### CLI Role
+
 Main applications with a CLI consider both batch workflows that replace manual work and invocation from AI agents.
+
+CLI is not a helper for UI. It is a formal entry point for AI agent workflows and automation.
+
+#### Basic CLI Contract
 
 CLI emphasizes the following.
 
@@ -538,11 +611,27 @@ CLI emphasizes the following.
 - Make success and failure judgeable by exit code
 - Make the same operation reproducible in tests and CI
 
-CLI is not a helper for UI. It is a formal entry point for AI agent workflows and automation.
+#### Structured Output and Error Handling
+
+For CLI-only structured tools, stdout is often the primary machine-readable result surface. In that shape, keep stdout dedicated to result JSON or another documented payload, send progress / diagnostics / runtime-level messages to stderr, and treat `--help` and `--version` as explicit metadata exceptions that may print plain text without requiring stdin JSON.
+
+When a command can safely construct a result object for validation or semantic failures, returning the normal result shape with diagnostics can be better than switching to ad hoc stderr-only output. Reserve stderr-only output for usage errors, malformed input, or unexpected failures where the normal result shape cannot be constructed safely.
+
+#### Verbose and Progress Output
 
 As in `miku-indexgen --verbose`, target, output destination, current scan location, discovered files, and timing breakdowns are emitted incrementally when useful, rather than only summarized at the end. This lets humans and AI agents notice stalls, incorrect target ranges, or unexpected input earlier during processing.
 
 This kind of progress / timing output is not confused with primary output or structured diagnostics. Text artifacts remain stable through file or stdout contracts, while binary artifacts remain stable through explicit file-output or documented binary-safe stdout contracts. Incremental logs use an easy-to-identify prefix such as `verbose:`, and representative lines are fixed in tests.
+
+#### Local File Safety
+
+Local-first CLI tools that read files or directories should make filesystem boundaries explicit.
+
+When the CLI accepts a root directory or file list, document how relative paths are resolved. Prefer returning result paths relative to the selected root rather than absolute paths, and normalize result path separators where cross-platform consumers need stable output.
+
+For text-reading tools, encoding behavior should be part of the public contract. Do not silently guess or replace unreadable text when that would hide data loss. Use documented encoding defaults, encoding rules, size limits, binary detection, and decode-error diagnostics.
+
+Limits and security decisions should be visible in structured results or diagnostics. Examples include skipped files, unreadable files, path escape attempts, decode failures, size limits, and regex or query restrictions. Add focused tests for these failure and warning paths, not only for successful output.
 
 ## Common Patterns Observed Across the Series
 
