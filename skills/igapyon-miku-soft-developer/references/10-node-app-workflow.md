@@ -27,10 +27,27 @@ Before editing, identify which Node app shape the repository currently uses:
 - Single-file Web App plus CLI: check `index.html`, product-named HTML, `index-src.html`, `src/`, `lht-cmn/`, build scripts, CLI scripts, and browser or UI tests.
 - CLI / structured JSON tool: check `src/main.ts`, `src/*types.ts`, CLI specs under `docs/`, `bin`, `exports`, `types`, and stdout / stderr contract tests.
 - Bundled runtime artifact: check `bundle/`, `scripts/build-cli-bundle.mjs`, `scripts/build-cli-runtime.mjs`, smoke scripts, and package `files`.
+- GitHub Actions CI baseline: check `.github/workflows/`, PR / push triggers, dependency install, and primary verification commands.
 - Release CLI bundle: check `.github/workflows/release-cli-bundle.yml`, release asset naming, version checks, `bundle/*.mjs`, `bundle/*-sources.tgz`, and `smoke:bundle`.
 - AI-facing operation surface: check projection, patch, validation, summary, diagnostics, or state-oriented docs and tests.
 
 Use the detected shape to decide which contracts must be preserved. Do not force every repository into every shape.
+
+## GitHub Actions CI Baseline
+
+For Node.js / TypeScript main applications, inspect the CI baseline during late-stage hardening and release-readiness work, especially when `package.json` provides `build`, `test`, `typecheck`, `smoke`, or similar verification scripts.
+
+Check these points:
+
+- `.github/workflows/` exists when the repository is expected to run GitHub Actions checks.
+- A CI workflow, normally `.github/workflows/ci.yml`, runs on `push` and `pull_request`.
+- The workflow installs dependencies with `npm ci`.
+- The workflow runs the repository's primary verification command, usually `npm run build`, and also `npm test`, `npm run typecheck`, `npm run smoke`, or `npm run verify` when those scripts are the documented local contract.
+- For release-readiness, audit or package dry-run expectations are represented either by a local script such as `npm run verify`, by CI, or by a documented manual release check. Do not make `npm audit --audit-level=moderate` mandatory for every CI baseline unless the repository has adopted that policy.
+
+If CI is missing, report it as a release-readiness gap, not as a product implementation bug. When the user has asked to proceed in an initial release, late-stage hardening, or release-readiness context, add or propose a minimal local workflow file such as `.github/workflows/ci.yml` when that is within the requested work.
+
+Creating or editing a local workflow file is allowed repository work. Pushing branches, opening pull requests, publishing releases, or uploading release assets remains a human GitHub operation as described in [repo-operations.md](repo-operations.md).
 
 ## Release Bundle Workflow
 

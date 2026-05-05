@@ -22,7 +22,8 @@ Then inspect git status.
 2. Read the relevant basic document selected by [architecture-rules.md](architecture-rules.md).
 3. Make the smallest change that preserves the documented boundary.
 4. Update README, docs, TODO, tests, or indexes when the change affects them.
-5. Run relevant verification.
-6. Review git diff and status before finishing.
+5. When the work is release-readiness or late-stage hardening, inspect CI / GitHub Actions status and report missing baseline CI as a release-readiness gap.
+6. Run relevant verification.
+7. Review git diff and status before finishing.
 
 Do not update only one entrypoint when repository evidence shows the requested behavior belongs to shared product semantics.
