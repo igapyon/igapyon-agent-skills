@@ -142,16 +142,39 @@ Bundled starter templates are available under
     the release tag, stages `<artifact>-<version>.jar` and
     `<artifact>-sources-<version>.jar`, verifies the runtime jar with Java 8
     using `java -jar ... --version`, and uploads only the staged jar assets.
+  - The template uses Maven standard output names as its copy source:
+    `<artifactId>-<project.version>.jar` and
+    `<artifactId>-<project.version>-sources.jar`. Keep this default unless the
+    target repository intentionally sets `<finalName>` to a fixed runtime name,
+    in which case update the copy source paths explicitly.
+  - The template obtains `project.version` with
+    `mvn help:evaluate -Dexpression=project.version -q -DforceStdout` rather
+    than by reading the first `<version>` tag, so parent POM and multi-module
+    layouts are less likely to resolve the wrong version.
+  - The template obtains `project.artifactId` with
+    `mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout`, so
+    the release asset copy source and staged asset names do not need a
+    hard-coded artifactId.
+  - Set up the build JDK explicitly, normally Temurin Java 21 with Maven cache,
+    before `mvn -B package`; set up Java 8 separately for the packaged runtime
+    smoke test.
   - The template uses `softprops/action-gh-release` so tag-push releases can
     create or update the GitHub Release assets for that tag. Keep
     `permissions: contents: write` and explicit asset overwrite behavior.
-  - Replace `__ARTIFACT_ID__` with the Maven artifactId before use.
-  - Adjust target paths for multi-module runtime repositories so the runtime
-    module's `target/` directory is used instead of the aggregator root
-    `target/`.
+  - When `softprops/action-gh-release` creates a release with the workflow's
+    `GITHUB_TOKEN`, GitHub Actions normally suppresses recursive workflow
+    triggering from that token-created event. If a human later publishes or
+    republishes the same tag's GitHub Release, the release trigger may run
+    again and update the same staged assets.
+  - Adjust `RUNTIME_TARGET_DIR` for multi-module runtime repositories so the
+    runtime module's `target/` directory, such as `miku-xlsx2md/target`, is used
+    instead of the aggregator root `target/`.
 - `pom-cli-runtime.xml`
   - Starter `pom.xml` for a single-module CLI runtime jar with Java 1.8,
     JUnit Jupiter, Jackson, source jar, shaded runtime jar, and dist zip.
+  - The starter follows Maven standard artifact naming, so the package output
+    is normally `target/<artifactId>-<version>.jar` and
+    `target/<artifactId>-<version>-sources.jar`.
   - Copy to `pom.xml`, then replace `__ARTIFACT_ID__`, `__VERSION__`,
     `__PROJECT_NAME__`, `__DESCRIPTION__`, `__GITHUB_REPOSITORY__`, and
     `__MAIN_CLASS__`.
