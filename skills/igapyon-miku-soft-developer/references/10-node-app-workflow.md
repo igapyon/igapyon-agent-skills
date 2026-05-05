@@ -63,7 +63,7 @@ If the repository does not yet have a bundle artifact script, do not assume the 
 - source archive
 - generated documentation bundle
 
-Then ask or record which release asset should be attached, unless the user has clearly specified it.
+Then ask or record which release asset should be attached, unless the user has clearly specified it. Do not treat `npm pack` output as the default release CLI bundle. An npm pack tarball is a package publication artifact named by npm as `<package-name>-<version>.tgz`; it is not the same artifact role as a single-file CLI runtime plus source archive.
 
 Creating or editing a local workflow file is allowed repository work. Pushing branches, opening pull requests, publishing releases, running `npm publish`, configuring secrets, or uploading release assets remains a human GitHub or registry operation as described in [repo-operations.md](repo-operations.md).
 
@@ -80,8 +80,16 @@ Check these points:
 - The release tag version is checked against `package.json` `version`; if patch suffix tags are allowed, the accepted suffix rule is explicit.
 - Runtime and source assets are copied from `bundle/` into a release staging directory with product and version in the filename.
 - Upload uses the GitHub Release tag and only the prepared miku-soft CLI assets, normally `<product>-<version>.mjs` and `<product>-sources-<version>.tgz`.
+- Do not implement a Release CLI bundle workflow by running `npm pack` and uploading `release-assets/*.tgz` unless the user explicitly asked for the npm package tarball as the release asset.
 - Do not add a broad repository source ZIP or generic source archive as a custom uploaded release asset.
 - Actions runtime compatibility settings, such as Node.js version or JavaScript action runtime flags, are kept only when the reference project or current repository needs them.
+
+For a Release CLI bundle request, the expected release assets are usually:
+
+- `<product>-<version>.mjs`
+- `<product>-sources-<version>.tgz`
+
+If the current repository only has `npm pack` and does not yet generate `bundle/<product>.mjs` and `bundle/<product>-sources.tgz`, first report that gap and add or propose the bundle build / smoke path before wiring the GitHub Release upload.
 
 When the repository has a documented bundle build and smoke script, the expected local workflow file is normally `.github/workflows/release-cli-bundle.yml` with this shape, adapted to the product name and artifact paths:
 
