@@ -13,6 +13,7 @@ Use it only after the user explicitly asks to use `igapyon-miku-soft-developer` 
 
 After the skill is explicitly active, choose one mode:
 
+- Concept and naming mode: clarify the app concept and decide the miku-soft base repository name before creating files.
 - New project mode: create a new miku-soft project or initialize a repository as a miku-soft project.
 - Maintenance mode: inspect, update, or repair an existing miku-soft project.
 
@@ -24,13 +25,14 @@ Prerequisite: use `igapyon-repo-conventions` as the repository-conventions basel
 
 1. Read [references/activation-policy.md](references/activation-policy.md) if activation behavior is relevant.
 2. Read [references/architecture-rules.md](references/architecture-rules.md).
-3. For new project work, read [references/new-project-workflow.md](references/new-project-workflow.md).
-4. For existing project work, read [references/maintenance-workflow.md](references/maintenance-workflow.md).
-5. Read the specific workflow reference when relevant: [references/10-node-app-workflow.md](references/10-node-app-workflow.md), [references/30-java-straight-conversion-workflow.md](references/30-java-straight-conversion-workflow.md), [references/40-agent-skills-workflow.md](references/40-agent-skills-workflow.md), or [references/50-mcp-workflow.md](references/50-mcp-workflow.md).
-6. Read [references/repo-operations.md](references/repo-operations.md) for miku-soft-specific additions.
-7. Inspect the target repository before editing.
-8. Preserve unrelated user changes.
-9. Keep product behavior in the product core or upstream runtime artifacts, not in the skill instructions.
+3. For concept and naming work, read [references/00-concept-naming-workflow.md](references/00-concept-naming-workflow.md).
+4. For new project work, read [references/new-project-workflow.md](references/new-project-workflow.md).
+5. For existing project work, read [references/maintenance-workflow.md](references/maintenance-workflow.md).
+6. Read the specific workflow reference when relevant: [references/10-node-app-workflow.md](references/10-node-app-workflow.md), [references/30-java-straight-conversion-workflow.md](references/30-java-straight-conversion-workflow.md), [references/40-agent-skills-workflow.md](references/40-agent-skills-workflow.md), or [references/50-mcp-workflow.md](references/50-mcp-workflow.md).
+7. Read [references/repo-operations.md](references/repo-operations.md) for miku-soft-specific additions.
+8. Inspect the target repository before editing.
+9. Preserve unrelated user changes.
+10. Keep product behavior in the product core or upstream runtime artifacts, not in the skill instructions.
 
 Use `index.json` when you need to discover the available bundled reference files, but treat `SKILL.md` and files under `references/` as the source of truth.
 

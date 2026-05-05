@@ -8,6 +8,7 @@ This file only records miku-soft-specific additions.
 
 ## miku-soft Additions
 
+- GitHub operations are a human responsibility. Do not create GitHub repositories, push branches or tags, open pull requests, publish releases, or upload release assets as part of this skill workflow. The agent may prepare local files, inspect local git state, and draft GitHub-facing text or instructions when asked.
 - For new miku-soft projects, copy the bundled basic documents from [miku-soft-basic/](miku-soft-basic/) into the target repository's `docs/` directory as described in [new-project-workflow.md](new-project-workflow.md).
 - Keep miku-soft basic document filenames unchanged when copying them into `docs/`.
 - Use README and TODO for the actual project state; avoid restating broad miku-soft theory that already lives in the basic documents.
