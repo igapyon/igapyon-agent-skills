@@ -31,7 +31,7 @@
       "path": "references/40-agent-skills-workflow.md",
       "ext": "md",
       "dir": "references",
-      "size": 1174,
+      "size": 3361,
       "summary": "Agent Skills Workflow"
     },
     {
@@ -107,12 +107,12 @@
       "summary": "Miku Software Straight Conversion Guide v20260506"
     },
     {
-      "name": "miku-soft-40-agentskills-design-v20260501.md",
-      "path": "references/miku-soft-basic/miku-soft-40-agentskills-design-v20260501.md",
+      "name": "miku-soft-40-agentskills-design-v20260506.md",
+      "path": "references/miku-soft-basic/miku-soft-40-agentskills-design-v20260506.md",
       "ext": "md",
       "dir": "references/miku-soft-basic",
-      "size": 39734,
-      "summary": "Miku Software Agent Skills Design v20260425"
+      "size": 45896,
+      "summary": "Miku Software Agent Skills Design v20260506"
     },
     {
       "name": "miku-soft-50-mcp-design-v20260501.md",

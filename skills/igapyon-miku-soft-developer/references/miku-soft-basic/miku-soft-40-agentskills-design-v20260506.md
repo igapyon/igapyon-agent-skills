@@ -1,10 +1,10 @@
-# Miku Software Agent Skills Design v20260425
+# Miku Software Agent Skills Design v20260506
 
 This memo organizes design characteristics commonly expected for Agent Skills versions in the `miku` software series.
 
 The initial versions of the related tools were created by `Mikuku` and Toshiki Iga.
 
-The current contents are based on current Agent Skills examples, the main-application design memo, the Java application design memo, and the straight-conversion guide checked on 2026-04-25.
+The current contents are based on current Agent Skills examples, the main-application design memo, the Java application design memo, and the straight-conversion guide checked on 2026-05-06.
 
 ## Design Summary
 
@@ -35,7 +35,7 @@ Use the shared design documents together as follows.
   - describes Java runtime versions when they exist
 - `docs/miku-soft-30-straight-conversion-v20260506.md`
   - describes how Java versions are created from upstream main applications
-- `docs/miku-soft-40-agentskills-design-v20260501.md`
+- `docs/miku-soft-40-agentskills-design-v20260506.md`
   - describes how Agent Skills versions should expose miku workflows to AI agents
 
 This document separates the following levels.
@@ -69,6 +69,8 @@ Java application versions:
 
 Agent Skills versions:
 
+- `miku-grep-skills`
+- `miku-readfile-skills`
 - `mikuproject-skills`
 - `mikuscore-skills`
 
@@ -110,6 +112,18 @@ The preferred relationship is as follows.
 - Agent Skill does not reimplement core conversion behavior unless no upstream surface exists
 
 If an upstream capability is missing, the preferred order is to request or implement the capability on the upstream side, expose it as a stable upstream API, and then let the skill call it. Agent Skills should not silently add upstream product capabilities on the skill side. Skill-local workaround code should be treated as temporary or product-specific, not as the new semantic center.
+
+For new Agent Skills creation or substantial maintenance, fix the upstream anchor at the start.
+
+Required initial inputs should include:
+
+- upstream miku main application GitHub repository URL
+- upstream branch, tag, release, commit, or received runtime artifact version used as the compatibility source
+- required upstream runtime artifacts already placed under `skills/<skill-name>/runtime/` for CLI-backed work
+- expected upstream API, CLI, runtime artifact, MCP server, or handoff contract that the skill will expose
+- closest available `-skills` sister project checkout under `workplace/`, when one exists
+
+If the exact upstream revision or runtime artifact version is unknown, record the repository URL first and leave a concrete follow-up to pin it. Do not design activation rules, runtime lookup, bundle tests, or operation maps as if the upstream product boundary were implicit.
 
 ## Role of Agent Skills
 
@@ -181,6 +195,41 @@ Agent Skills use the following principles as defaults.
 
 These are defaults for the miku Agent Skills series. Individual products may add product-specific conventions, but should not change these foundations casually.
 
+### Implementation Maturity Patterns
+
+Current Agent Skills repositories can be understood through a small number of implementation maturity patterns. The pattern should be explicit in README, `SKILL.md`, references, and tests because it affects runtime lookup, fallback behavior, and bundle expectations.
+
+Common patterns are:
+
+- handoff-only skill: provides activation, workflow guidance, prompts, specs, or JSON handoff material but does not execute product operations
+- CLI-backed skill: declares bundled runtime artifacts and executes local operations through Java or Node.js CLI paths
+- CLI plus MCP-backed skill: keeps the Agent Skill as the workflow layer while backend policy chooses CLI, MCP, or handoff execution
+
+For new miku Agent Skills work, prefer the CLI-backed or CLI plus MCP-backed pattern when the upstream product can provide stable runtime artifacts.
+
+Observed examples:
+
+- `miku-readfile-skills` and `miku-grep-skills` show the compact CLI-backed shape with `runtime/`, `lib/`, runtime smoke tests, bundle tests, and explicit non-activation for generic file operations.
+- `mikuproject-skills` shows CLI plus MCP backend policy, operation capability maps, strict `*-only` behavior, preferred fallback behavior, and handoff-only no-execution behavior.
+
+### Sister Project Reference Principles
+
+For initial creation or substantial maintenance of an Agent Skills repository, it is useful to inspect one or more existing miku `-skills` sister repositories under `workplace/`.
+
+This is a practical implementation reference technique, not a replacement for the design documents. Use sister repositories to confirm details that are easy to miss, such as:
+
+- how much belongs in `SKILL.md`
+- how references are split by workflow, runtime, examples, and operation maps
+- how runtime artifacts are named and resolved
+- how `lib/` helpers stay thin
+- how backend policy is represented in code and tests
+- how bundle scripts include required runtime artifacts and exclude development-only files
+- how docs contract tests protect activation and runtime boundaries
+
+Choose sister references that match the target maturity pattern. A compact CLI-backed skill should compare first with compact CLI-backed examples. A CLI plus MCP-backed skill should compare with an example that already has backend policy and operation capability tests.
+
+Keep all `workplace/` sister repositories local-only. Do not copy a sister repository wholesale into the target. Adapt only the necessary patterns, and keep product-specific activation, artifact roles, diagnostics, and runtime contracts tied to the target upstream product.
+
 ### Activation Boundary Principles
 
 Agent Skills must be careful about when they activate.
@@ -216,11 +265,26 @@ This keeps agent behavior predictable. It also prevents the skill from accidenta
 
 Runtime artifact lookup should be simple and fixed. Place the single jar and single JavaScript CLI file under the skill directory, such as `skills/<skill-name>/runtime/`, and let the skill resolve the declared versioned artifacts there.
 
+For CLI-backed Agent Skills, runtime artifacts should be received before runtime wiring and packaging work begins. A human should normally download them from the upstream GitHub Releases page or another documented upstream release channel and place them under `skills/<skill-name>/runtime/`. The skill repository then verifies, selects, runs, and bundles those artifacts; it should not make broad source-tree search or runtime-building from upstream source part of the normal skill workflow.
+
+Use versioned artifact names for selection. The selected file should normally be the newest matching file by file-name version, while `--version` or equivalent runtime output should be treated as a smoke check that the artifact starts and identifies itself. Do not use broad workspace search before checking the declared runtime directory.
+
+Recommended artifact kinds:
+
+- Java runtime: `<product>-<version>.jar`
+- Node.js runtime: `<product>-<version>.mjs`
+- Java source archive, when distributed for review or license reasons: `<product>-sources-<version>.jar`
+- Node.js source archive, when distributed for review or license reasons: `<product>-sources-<version>.tgz`
+
+The runtime artifacts needed for normal execution should be required by bundle and smoke tests. Source archives may be optional unless the repository's release policy says otherwise.
+
 Do not create a separate skill product line only because an additional runtime path exists. When both Java CLI and Node.js CLI runtimes are available, treat them as runtime artifacts of the same normal `-skills` package. The skill name, activation rules, workflow vocabulary, artifact roles, and product boundary should remain tied to the upstream main application, not to the runtime implementation.
 
 When both Java CLI and Node.js CLI runtime artifacts are bundled, the skill may prefer the Java CLI first for local execution. A single jar is easy to locate, smoke-test, and run in automation environments. If the Java CLI artifact is missing, cannot be invoked, or does not support the requested operation, the skill may fall back to the Node.js CLI runtime.
 
 This runtime preference is an execution policy, not a semantic priority. The upstream main application remains the semantic center. Runtime differences should be reported as capability or compatibility diagnostics.
+
+Node.js helper files under `lib/` are useful for runtime lookup, CLI invocation, backend planning, result formatting, repository config loading, and tests. They should not become the product runtime. If the active environment has Java but not Node.js, a well-designed CLI-backed skill should still document how to run the jar directly with explicit JSON input and output.
 
 ### Execution Backend Policy Principles
 
@@ -246,9 +310,20 @@ Supported policy values should be interpreted as follows.
 
 Execution backend policy is subordinate to the user's explicit instruction and the active environment policy. If an environment disallows CLI execution, a skill must not run CLI commands merely because `cli-preferred` is the repository default. If an environment disallows MCP access, a skill must not call MCP tools merely because CLI failed.
 
+Policy resolution should be deterministic. A useful precedence order is:
+
+1. explicit user policy in the current request
+2. active environment policy
+3. skill-local or repository configuration
+4. repository default, usually `cli-preferred`
+
+Machine-readable configuration may mirror the Markdown policy, but `SKILL.md`, the active user request, and environment restrictions remain higher priority than generated or local config files.
+
 Strict policies are intentionally strict. Under `cli-only` or `mcp-only`, failure of the selected backend should be reported as a hard execution-path error instead of silently switching to another backend. Under `handoff-only`, backend execution should not occur even when CLI or MCP is available.
 
 When fallback is allowed and happens, diagnostics should state the source backend, target backend, and concise reason. For example, a result may say that CLI was unavailable and execution continued through MCP, or that MCP lacked a required tool and execution continued through CLI.
+
+Backend planning should be testable as a small pure decision layer. Tests should cover unknown operations, unsupported backend capability, unavailable primary backend, strict no-fallback behavior, preferred fallback behavior, and handoff-only no-execution behavior.
 
 An MCP backend should use the MCP server layer described by the miku MCP design documents. The Agent Skill should not become the MCP server implementation and should not redefine MCP tool names, resource roles, or protocol contracts locally. It should describe how its operation vocabulary maps to the MCP tools and resources exposed by the product-specific MCP server.
 
@@ -280,6 +355,7 @@ The skill layer may contain:
 - runtime path discovery
 - small adapters around upstream API calls
 - result formatting for the agent
+- repository-local config loading for defaults that do not override explicit requests
 - bundle-building scripts
 - smoke tests
 
@@ -422,9 +498,11 @@ The TOBE target shape is as follows.
 - document the artifact update procedure
 - verify the received artifacts through skill smoke tests and API / CLI contract checks
 
-Current repositories may not yet have this shape. During transition, it is acceptable for a skill repository to keep a vendored upstream source tree or a broader runtime copy when that is how the current skill works. However, this is a current-state allowance, not the target design.
+Current repositories may not yet have this shape. Do not use copied upstream source trees as a model for new Agent Skills repositories.
 
 Near-term maintenance should move those repositories toward the target shape: replace source-tree dependency with received single-jar and single-JavaScript runtime artifacts under the skill directory.
+
+When both runtime artifacts and source archives are received, keep their roles distinct. Runtime artifacts are executable inputs to the skill. Source archives are optional review, license, or provenance artifacts unless a repository explicitly makes them required. Do not make normal skill execution depend on unpacking source archives.
 
 ### Packaging and Distribution Principles
 
@@ -434,7 +512,7 @@ Packaging should include the files needed for the agent to read instructions and
 
 As the TOBE target shape, miku Agent Skills should bundle both Java CLI and Node.js CLI paths when the corresponding upstream runtime exists or can be produced. The Java path should be represented by a single jar, and the Node.js path should be represented by a single JavaScript CLI file.
 
-Current repositories may temporarily use broader vendored runtime contents or source-tree-derived packaging. This is allowed only as a transition state. New packaging work should move toward single-runtime-artifact handling.
+New packaging work should move toward single-runtime-artifact handling.
 
 The purpose of bundling both paths is not to make the skill layer heavier. It is to let an agent choose the runtime that best fits the local environment while keeping each runtime artifact simple, explicit, and reproducible.
 
@@ -461,6 +539,8 @@ Examples:
 
 Bundle-building scripts should be deterministic enough that changes are reviewable. A zipped bundle should be created by a documented command such as `npm run build:bundle` or `npm run build:bundle:zip`.
 
+Release bundle tests should inspect the final bundle or zip contents. They should assert that required entries such as `skills/<skill-name>/SKILL.md`, required references, skill-local helper files, and required runtime artifacts are present. They should also assert that development-only entries such as `tests/`, root-level `docs/` when not needed at runtime, `bundle/`, `node_modules/`, `.DS_Store`, and `workplace/` contents are absent.
+
 ### Testing Principles
 
 Agent Skills use tests to preserve activation behavior, runtime wiring, structured I/O, and packaging.
@@ -469,12 +549,15 @@ Test coverage should include:
 
 - skill smoke tests
 - upstream runtime availability checks
+- runtime artifact resolver checks, including newest-version selection and missing artifact errors
 - runtime selection checks, including Java CLI available, Java CLI unavailable with Node.js fallback, unsupported Java CLI operation with Node.js fallback, and all runtimes missing as a hard error
 - execution backend policy checks, including strict `cli-only`, strict `mcp-only`, preferred fallback behavior, and `handoff-only` no-execution behavior when the repository supports those modes
 - representative import / export operations
 - draft / patch / validate / apply operations where applicable
 - diagnostics and hard-error behavior
 - bundle creation
+- release bundle content checks
+- documentation contract checks for activation, runtime boundaries, operation maps, and artifact roles
 - important file naming and artifact paths
 
 As miku Agent Skills move toward receiving upstream runtime artifacts as a single jar and a single JavaScript CLI file, the TOBE target shape is that the upstream source tree and upstream source test suite are not bundled and cannot be executed in the skill repository.
@@ -515,6 +598,8 @@ Detailed references may include:
 - installation notes
 - development notes
 
+Runtime references should usually include an operation map. The map should name each operation, input artifact role, output artifact role, backend support, diagnostics behavior, and whether the operation is executable or handoff-only in the current repository.
+
 Do not make `SKILL.md` carry every product detail. It should be compact enough for an agent to read at activation time.
 
 ## Recommended Conventions
@@ -541,7 +626,7 @@ repository root
   workplace/.gitkeep
 ```
 
-In the TOBE target shape, runtime artifacts should be placed under each skill directory. Do not design new normal operation around root-level runtime artifacts, vendored source trees, or multiple competing runtime lookup paths. Current repositories that still use a vendored runtime tree should document that as a transition state and keep the lookup path explicit.
+In the TOBE target shape, runtime artifacts should be placed under each skill directory. Do not design new normal operation around root-level runtime artifacts, copied upstream source trees, or multiple competing runtime lookup paths.
 
 For example, `mikuproject-skills` should move toward this shape when both runtime paths are available.
 
@@ -557,7 +642,7 @@ skills/
 
 The Java jar and Node.js CLI file are peer runtime artifacts. Use versioned file names for received artifacts, and resolve the actual file under `runtime/` at execution time. Their presence should not change the skill name or split the workflow vocabulary into runtime-specific skill products.
 
-`vendor/` directories are transition-only locations for repositories that still depend on copied upstream source trees or broader runtime trees. New normal operation should not add new runtime lookup through `vendor/`. As upstream Java and Node.js CLI artifacts become available as single files, repositories should move those artifacts into `skills/<skill-name>/runtime/` and remove the vendored runtime tree.
+If an existing repository still depends on copied upstream source trees or broader runtime trees, move toward single-file artifacts under `skills/<skill-name>/runtime/`.
 
 ### Skill Naming Conventions
 
@@ -644,7 +729,7 @@ npm run build:bundle:zip
 
 `npm test` should verify the skill layer and the bundled runtime artifact contracts. `build:bundle` and `build:bundle:zip` should assemble those files into installable skill artifacts. In the TOBE target shape, they should not compile upstream TypeScript or Java source as part of normal skill packaging.
 
-If a current repository still compiles or copies broader upstream runtime contents as part of packaging, that can be tolerated during transition, but it should be treated as a migration item toward single jar and single JavaScript runtime artifacts.
+Normal skill packaging should not compile or copy broader upstream runtime contents. It should consume received single jar and single JavaScript runtime artifacts.
 
 The build script should fail when required runtime files are missing. It should not silently create a skill bundle that cannot run the documented workflow.
 
@@ -691,15 +776,13 @@ Expected design points:
 - state the documented `ABC` baseline as `ABC standard 2.2`, while noting that some standard features remain partial or unimplemented
 - distinguish notation source, AI-facing representation, rendered output, final deliverables, and temporary handoff data
 - operation categories include `convert`, `render`, `diagnostics`, `format-guidance`, `ai-handoff`, and `workflow`
-- prefer the vendored upstream CLI or documented runtime flow before broad repository exploration or generic converter logic
-- in the development repository, check `vendor/mikuscore` first; in an installed bundle, check the skill-local `skills/mikuscore/vendor/mikuscore` runtime before treating the runtime as missing
+- prefer declared `mikuscore` runtime artifacts or documented runtime flow before broad repository exploration or generic converter logic
+- move runtime lookup toward `skills/mikuscore/runtime/mikuscore-<version>.jar` and `skills/mikuscore/runtime/mikuscore-<version>.mjs` when those artifacts are available
 - current documented conversion / render routes include `ABC <-> MusicXML`, `ABC -> MIDI`, `MIDI -> MusicXML`, `MusicXML <-> MEI`, `MusicXML <-> LilyPond`, `MusicXML <-> MuseScore`, `MusicXML -> SVG`, and `ABC -> MusicXML -> SVG`
 - keep `MEI`, `LilyPond`, and other experimental paths explicitly marked as experimental when explaining them
 - place default generated files under a workspace-local `mikuscore/` tree: `state/` for handoff or canonical artifacts, `output/` for final deliverables, and `tmp/` for temporary intermediates
 - avoid presenting the skill as a full notation editor
 - make unsupported notation, fallback, and conversion loss visible as diagnostics
-
-The current `mikuscore-skills` repository may still bundle a vendored `mikuscore` runtime tree, including runtime dependencies, as its practical runtime source. That is acceptable as the current state when documented in README, `SKILL.md`, references, and smoke tests. The longer-term shared target remains single runtime artifact handling when upstream provides suitable JavaScript and Java CLI artifacts.
 
 The details should be fixed in the `mikuscore-skills` repository's own `SKILL.md`, README, references, and docs.
 

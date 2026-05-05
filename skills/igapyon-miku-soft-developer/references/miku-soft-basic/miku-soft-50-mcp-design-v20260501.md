@@ -41,7 +41,7 @@ Use the shared design documents together as follows.
 
 - `docs/miku-soft-10-mainapp-design-v20260505.md`
   - describes the upstream product design and semantic center
-- `docs/miku-soft-40-agentskills-design-v20260501.md`
+- `docs/miku-soft-40-agentskills-design-v20260506.md`
   - describes how Agent Skills versions expose miku workflows to AI agents
 - `docs/miku-soft-50-mcp-design-v20260501.md`
   - describes how MCP server versions should expose miku workflows to MCP clients
