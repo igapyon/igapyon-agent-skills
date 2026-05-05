@@ -23,7 +23,7 @@
       "path": "references/30-java-straight-conversion-workflow.md",
       "ext": "md",
       "dir": "references",
-      "size": 13642,
+      "size": 14513,
       "summary": "Java Straight Conversion Workflow"
     },
     {
@@ -99,12 +99,12 @@
       "summary": "Miku Software Java Application Design v20260426"
     },
     {
-      "name": "miku-soft-30-straight-conversion-v20260425.md",
-      "path": "references/miku-soft-basic/miku-soft-30-straight-conversion-v20260425.md",
+      "name": "miku-soft-30-straight-conversion-v20260506.md",
+      "path": "references/miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md",
       "ext": "md",
       "dir": "references/miku-soft-basic",
-      "size": 57309,
-      "summary": "Miku Software Straight Conversion Guide v20260425"
+      "size": 58564,
+      "summary": "Miku Software Straight Conversion Guide v20260506"
     },
     {
       "name": "miku-soft-40-agentskills-design-v20260501.md",
