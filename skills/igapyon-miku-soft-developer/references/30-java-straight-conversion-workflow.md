@@ -1,7 +1,12 @@
 # Java Straight Conversion Workflow
 
 Use this workflow for creating or maintaining a Java straight-conversion
-version of a miku-soft Node.js / TypeScript upstream project.
+version of a miku-soft Node.js / TypeScript main application.
+
+In this workflow, `upstream` means the source miku-soft main application that
+corresponds to [10-node-app-workflow.md](10-node-app-workflow.md). It is
+normally the suffixless Node.js / TypeScript repository, while this workflow
+targets the Java companion repository, normally with a `-java` suffix.
 
 Detailed design guidance lives in:
 
@@ -10,6 +15,26 @@ Detailed design guidance lives in:
 
 Keep this file as the execution checklist. Load the detailed design documents
 only when a policy decision is unclear.
+
+## Required Initial Input
+
+At the beginning of a Java straight-conversion task, require the upstream
+Node.js / TypeScript main application GitHub repository URL: the repository
+that would be maintained using [10-node-app-workflow.md](10-node-app-workflow.md).
+If the user has not provided it yet, ask for it before inventory, scaffolding,
+or implementation work.
+
+Also confirm the upstream branch, tag, release, commit, or vendored snapshot
+that should be treated as the compatibility source. When the exact upstream
+state is unknown, use the GitHub repository URL as the first anchor and record
+the follow-up needed to pin the precise source revision.
+
+Also require one or more similar existing miku-soft Java companion repositories
+as sister-project references under `workplace/`. These are `-java` repositories
+at the same companion layer as the target Java repository, not the Node.js /
+TypeScript upstream. If the user has not provided them yet, ask for the closest
+available `-java` sister project source checkout path under `workplace/` before
+scaffolding or implementation work.
 
 ## First Reads
 
@@ -22,21 +47,67 @@ only when a policy decision is unclear.
 
 Confirm these before editing Java code:
 
-- upstream source repository and branch or vendored snapshot
+- upstream Node.js / TypeScript main application GitHub repository URL, and its
+  branch, tag, commit, release, or vendored snapshot
+- similar existing `-java` sister project source checkout under `workplace/`
 - target Java repository, artifactId, base package, and CLI class
 - Java source / target compatibility, normally `1.8`
 - Maven as the build tool
 - JUnit Jupiter as the test framework
 - primary verification command, normally `mvn test`
 - runtime packaging shape: executable fat jar, and distribution zip when useful
+- Maven plugin support is out of initial scope by default unless the developer
+  explicitly requests it at the start
 - whether the upstream body is vendored, connected as a remote, or cloned under
   `workplace/`
 - the intended compatibility target, such as CLI JSON parity, generated file
-  parity, Maven plugin behavior, or a narrower partial conversion
+  parity, Maven plugin behavior when explicitly requested, or a narrower
+  partial conversion
 
 Do not start by redesigning the upstream product for Java. Preserve upstream
 file boundaries, vocabulary, request / result shapes, diagnostics, and CLI
 behavior unless the user explicitly asks for a separate Java-side extension.
+
+## Sister Java Reference Projects
+
+For initial conversion or substantial maintenance, use one or more existing
+miku-soft `-java` companion repositories expanded under `workplace/` as
+sister-project references.
+
+Treat these sister projects as practical shape references for Maven layout,
+package naming, CLI entry points, core API boundaries, tests, docs, release
+workflows, distribution packaging, and Java-side extension separation. Use the
+basic documents as the source of design intent, and use the `workplace/`
+sister projects to confirm implementation details that are easy to miss.
+
+When multiple `-java` references are available, prefer the newer project version
+or the project closest to the target product shape, such as CLI-only, JSON
+contract, generated artifact, Maven plugin, or distribution zip.
+
+Do not copy `workplace/` contents into the target repository wholesale. Copy or
+adapt only the necessary patterns, and keep `workplace/` local-only according
+to repository convention rules.
+
+## Maven Plugin Scope
+
+Maven plugin support is optional for Java straight-conversion projects, and is
+off by default during initial conversion.
+
+The default initial target is to stabilize the runtime core, CLI or batch
+adapter, upstream parity, tests, packaging, and documentation. Maven plugin
+support adds module structure, Mojo classes, parameters, lifecycle assumptions,
+plugin smoke tests, and user-facing docs, so adding it too early can obscure
+the straight-conversion boundary.
+
+If the developer explicitly requests Maven plugin support at the start, include
+it in scope and fix the plugin artifactId, goal prefix, goals, parameters, and
+verification commands early. Otherwise, treat Maven plugin support as a
+Java-side extension that can be added after the runtime core contract is stable.
+
+Near the finishing stage, confirm whether Maven plugin support should remain
+out of scope, be recorded as a follow-up item, or be added as a final extension.
+Prefer adding it only when the product naturally performs build-time generation,
+validation, conversion, indexing, or report creation.
 
 ## Repository Shape
 
@@ -128,7 +199,8 @@ smaller safe slice:
 6. Port validation and diagnostic construction before broad processing logic.
 7. Port core processing behind a callable core API.
 8. Add CLI or batch adapters that delegate to the core API.
-9. Add Maven plugin modules only after the runtime core contract is stable.
+9. Add Maven plugin modules only when explicitly in scope, and only after the
+   runtime core contract is stable.
 10. Add packaging, distribution zip, release workflow, and documentation sync
     tests when they are part of the product contract.
 
@@ -154,7 +226,7 @@ Treat upstream-derived behavior as the default contract:
 Document Java-side runtime differences explicitly. Common examples include
 Java `Pattern` versus Node.js `RegExp`, Java charset behavior versus Node-side
 encoding libraries, ZIP / XML library differences, and Java-side Maven plugin
-or batch extensions.
+or batch extensions when they are in scope.
 
 Java-side extensions are allowed when useful, but keep them separate from the
 upstream contract in README, CLI specs, mapping documents, and tests.
@@ -171,7 +243,8 @@ Prefer focused regression commands that explain the changed area:
 - documentation synchronization tests
 - Node-vs-Java parity scripts when practical
 - packaged jar smoke scripts after `mvn package`
-- Maven plugin smoke scripts for plugin modules
+- Maven plugin smoke scripts for plugin modules, when plugin support is in
+  scope
 
 When parity scripts generate local fixtures or comparison outputs, write them
 under `workplace/` and keep those outputs untracked.
@@ -207,6 +280,8 @@ Before finishing a conversion task:
 - mapping documents reflect changed source, tests, or CLI contracts
 - README and docs agree with current runtime behavior
 - TODO or migration status records remaining work and latest verification
+- Maven plugin support is explicitly marked as out of scope, follow-up, or
+  implemented extension
 - focused regressions were run, or the reason for not running them is clear
 - `git status --short` has been checked
 - final diff does not include unrelated changes
