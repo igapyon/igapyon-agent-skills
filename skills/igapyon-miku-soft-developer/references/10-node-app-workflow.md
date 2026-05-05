@@ -27,9 +27,28 @@ Before editing, identify which Node app shape the repository currently uses:
 - Single-file Web App plus CLI: check `index.html`, product-named HTML, `index-src.html`, `src/`, `lht-cmn/`, build scripts, CLI scripts, and browser or UI tests.
 - CLI / structured JSON tool: check `src/main.ts`, `src/*types.ts`, CLI specs under `docs/`, `bin`, `exports`, `types`, and stdout / stderr contract tests.
 - Bundled runtime artifact: check `bundle/`, `scripts/build-cli-bundle.mjs`, `scripts/build-cli-runtime.mjs`, smoke scripts, and package `files`.
+- Release CLI bundle: check `.github/workflows/release-cli-bundle.yml`, release asset naming, version checks, `bundle/*.mjs`, `bundle/*-sources.tgz`, and `smoke:bundle`.
 - AI-facing operation surface: check projection, patch, validation, summary, diagnostics, or state-oriented docs and tests.
 
 Use the detected shape to decide which contracts must be preserved. Do not force every repository into every shape.
+
+## Release Bundle Workflow
+
+When a Node CLI main app publishes a single-file runtime artifact through GitHub Releases, inspect the release workflow before changing build, bundle, version, or package metadata.
+
+Check these points:
+
+- The workflow is triggered by GitHub Release publication and, when useful, `workflow_dispatch` with an explicit `tag_name`.
+- The workflow only attaches release assets for version tags, normally `v*`.
+- The checkout ref uses the release tag or manually supplied tag, not an unrelated branch tip.
+- The workflow runs dependency install, build, asset preparation, and `smoke:bundle` before upload.
+- The release tag version is checked against `package.json` `version`; if patch suffix tags are allowed, the accepted suffix rule is explicit.
+- Runtime and source assets are copied from `bundle/` into a release staging directory with product and version in the filename.
+- Upload uses the GitHub Release tag and only the prepared miku-soft CLI assets, normally `<product>-<version>.mjs` and `<product>-sources-<version>.tgz`.
+- Do not add a broad repository source ZIP or generic source archive as a custom uploaded release asset.
+- Actions runtime compatibility settings, such as Node.js version or JavaScript action runtime flags, are kept only when the reference project or current repository needs them.
+
+Do not treat Release asset upload as a substitute for local bundle verification. The local build and smoke contract should remain valid without GitHub Actions.
 
 ## Checklist
 
