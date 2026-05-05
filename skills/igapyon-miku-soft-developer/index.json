@@ -3,6 +3,14 @@
   "basePath": ".",
   "files": [
     {
+      "name": "00-concept-naming-workflow.md",
+      "path": "references/00-concept-naming-workflow.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 2571,
+      "summary": "Concept and Naming Workflow"
+    },
+    {
       "name": "10-node-app-workflow.md",
       "path": "references/10-node-app-workflow.md",
       "ext": "md",
@@ -49,6 +57,14 @@
       "dir": "references",
       "size": 2019,
       "summary": "miku-soft Architecture Rules"
+    },
+    {
+      "name": "existing-miku-soft-repositories.md",
+      "path": "references/existing-miku-soft-repositories.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 3591,
+      "summary": "Existing igapyon miku-soft Repositories"
     },
     {
       "name": "maintenance-workflow.md",
@@ -111,7 +127,7 @@
       "path": "references/new-project-workflow.md",
       "ext": "md",
       "dir": "references",
-      "size": 2363,
+      "size": 3683,
       "summary": "New miku-soft Project Workflow"
     },
     {
@@ -119,7 +135,7 @@
       "path": "references/repo-operations.md",
       "ext": "md",
       "dir": "references",
-      "size": 1189,
+      "size": 1507,
       "summary": "miku-soft Repository Operations"
     },
     {
@@ -127,7 +143,7 @@
       "path": "SKILL.md",
       "ext": "md",
       "dir": "",
-      "size": 3128,
+      "size": 3372,
       "summary": "--- name: igapyon-miku-soft-developer description: Use only when the user explicitly asks to use igapyon-miku-soft-developer or explicitly asks to apply the miku-soft developer skill. If the user says they want to create a new miku-soft project, maintain a"
     }
   ]
