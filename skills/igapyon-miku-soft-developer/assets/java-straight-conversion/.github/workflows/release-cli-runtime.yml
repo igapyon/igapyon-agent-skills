@@ -1,6 +1,9 @@
 name: Release CLI runtime
 
 on:
+  push:
+    tags:
+      - "v*"
   release:
     types:
       - published
@@ -64,5 +67,6 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref_name }}
           files: release-assets/*
+          overwrite_files: true
           draft: false
           prerelease: false

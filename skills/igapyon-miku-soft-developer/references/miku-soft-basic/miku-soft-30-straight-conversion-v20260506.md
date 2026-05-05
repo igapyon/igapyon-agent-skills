@@ -1,4 +1,4 @@
-# Miku Software Straight Conversion Guide v20260425
+# Miku Software Straight Conversion Guide v20260506
 
 ## Purpose
 
@@ -515,6 +515,13 @@ Read the strength of individual sentences according to wording such as `fix`, `b
 - Maven coordinates basically use `groupId = jp.igapyon` and `artifactId = <project>`
 - Artifact names for single fat jar, optional Maven plugin jar, and distribution zip are aligned to an `artifactId-version` style that is easy to trace from Maven coordinates
 - Runtime jar names inside distribution zips are also versioned like distribution file names
+- When a Java CLI runtime publishes GitHub Release assets, keep the release workflow compatible with `push` tags matching `v*`, published GitHub Releases, and manual dispatch with an explicit tag
+- Preserve existing tag-push release operation, such as `git push origin vX.Y.Z`, when migrating a sister Java project to the shared release workflow template
+- Check that the release tag version matches `pom.xml` `version`, or document any accepted dot-suffix rule such as `v0.5.0.1` for `0.5.0`
+- Stage runtime and source jar assets with versioned names such as `<artifact>-<version>.jar` and `<artifact>-sources-<version>.jar`, and upload only those staged assets to the GitHub Release
+- Run a Java 8 `java -jar ... --version` smoke test against the staged runtime jar before uploading release assets
+- In multi-module repositories, point release asset preparation at the runtime module's `target/` directory, not the aggregator root `target/`
+- A release workflow may use `softprops/action-gh-release` for tag-push creation or update of GitHub Release assets, with `contents: write` permission and explicit asset overwrite behavior; use `gh release view/create/upload` only when the repository needs more detailed release existence, body, or note control
 - Place the CLI main class at `jp.igapyon.<project>.cli.<Project>Cli`
 - The CLI should not pack real processing into `main(String[] args)`; delegate to a testable entrypoint such as `run(String[] args, PrintStream out, PrintStream err)`
 - In principle, confine `System.exit` to the end of the CLI main, and return exit codes from core APIs and CLI implementation logic

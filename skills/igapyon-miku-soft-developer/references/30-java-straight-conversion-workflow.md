@@ -11,7 +11,7 @@ targets the Java companion repository, normally with a `-java` suffix.
 Detailed design guidance lives in:
 
 - [miku-soft-basic/miku-soft-20-javaapp-design-v20260501.md](miku-soft-basic/miku-soft-20-javaapp-design-v20260501.md)
-- [miku-soft-basic/miku-soft-30-straight-conversion-v20260425.md](miku-soft-basic/miku-soft-30-straight-conversion-v20260425.md)
+- [miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md](miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md)
 
 Keep this file as the execution checklist. Load the detailed design documents
 only when a policy decision is unclear.
@@ -134,8 +134,21 @@ Bundled starter templates are available under
     resolution is affected by IPv6 behavior.
 - `.github/workflows/release-cli-runtime.yml`
   - GitHub Release asset workflow for a single CLI runtime jar and source jar.
+  - Trigger from `push` tags matching `v*`, published GitHub Releases, and
+    manual dispatch with an explicit `tag_name`.
+  - Keep the `push` tag trigger when migrating an existing sister project that
+    already releases by running `git push origin vX.Y.Z`.
+  - The workflow checks the release tag version against `pom.xml`, builds from
+    the release tag, stages `<artifact>-<version>.jar` and
+    `<artifact>-sources-<version>.jar`, verifies the runtime jar with Java 8
+    using `java -jar ... --version`, and uploads only the staged jar assets.
+  - The template uses `softprops/action-gh-release` so tag-push releases can
+    create or update the GitHub Release assets for that tag. Keep
+    `permissions: contents: write` and explicit asset overwrite behavior.
   - Replace `__ARTIFACT_ID__` with the Maven artifactId before use.
-  - Adjust target paths for multi-module runtime repositories.
+  - Adjust target paths for multi-module runtime repositories so the runtime
+    module's `target/` directory is used instead of the aggregator root
+    `target/`.
 - `pom-cli-runtime.xml`
   - Starter `pom.xml` for a single-module CLI runtime jar with Java 1.8,
     JUnit Jupiter, Jackson, source jar, shaded runtime jar, and dist zip.
