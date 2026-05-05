@@ -134,10 +134,16 @@ Bundled starter templates are available under
     resolution is affected by IPv6 behavior.
 - `.github/workflows/release-cli-runtime.yml`
   - GitHub Release asset workflow for a single CLI runtime jar and source jar.
-  - Trigger from `push` tags matching `v*`, published GitHub Releases, and
-    manual dispatch with an explicit `tag_name`.
+  - Trigger from `push` tags matching `v*` and manual dispatch with an
+    explicit `tag_name`.
   - Keep the `push` tag trigger when migrating an existing sister project that
     already releases by running `git push origin vX.Y.Z`.
+  - Do not trigger this shared template from GitHub Release `published` events
+    by default. When `softprops/action-gh-release` creates or updates the
+    GitHub Release from a tag-push workflow, a separate release-published
+    trigger can cause a second run for the same tag.
+  - Use `workflow_dispatch` with an explicit `tag_name` when release assets need
+    to be recreated or attached to an existing GitHub Release manually.
   - The workflow checks the release tag version against `pom.xml`, builds from
     the release tag, stages `<artifact>-<version>.jar` and
     `<artifact>-sources-<version>.jar`, verifies the runtime jar with Java 8
@@ -161,11 +167,6 @@ Bundled starter templates are available under
   - The template uses `softprops/action-gh-release` so tag-push releases can
     create or update the GitHub Release assets for that tag. Keep
     `permissions: contents: write` and explicit asset overwrite behavior.
-  - When `softprops/action-gh-release` creates a release with the workflow's
-    `GITHUB_TOKEN`, GitHub Actions normally suppresses recursive workflow
-    triggering from that token-created event. If a human later publishes or
-    republishes the same tag's GitHub Release, the release trigger may run
-    again and update the same staged assets.
   - Adjust `RUNTIME_TARGET_DIR` for multi-module runtime repositories so the
     runtime module's `target/` directory, such as `miku-xlsx2md/target`, is used
     instead of the aggregator root `target/`.

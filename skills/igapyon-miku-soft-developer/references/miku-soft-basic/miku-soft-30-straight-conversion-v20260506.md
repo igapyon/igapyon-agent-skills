@@ -515,8 +515,9 @@ Read the strength of individual sentences according to wording such as `fix`, `b
 - Maven coordinates basically use `groupId = jp.igapyon` and `artifactId = <project>`
 - Artifact names for single fat jar, optional Maven plugin jar, and distribution zip are aligned to an `artifactId-version` style that is easy to trace from Maven coordinates
 - Runtime jar names inside distribution zips are also versioned like distribution file names
-- When a Java CLI runtime publishes GitHub Release assets, keep the release workflow compatible with `push` tags matching `v*`, published GitHub Releases, and manual dispatch with an explicit tag
+- When a Java CLI runtime publishes GitHub Release assets, keep the shared release workflow compatible with `push` tags matching `v*` and manual dispatch with an explicit tag
 - Preserve existing tag-push release operation, such as `git push origin vX.Y.Z`, when migrating a sister Java project to the shared release workflow template
+- Do not trigger the shared release workflow from GitHub Release `published` events by default; with `softprops/action-gh-release`, tag push should create or update the GitHub Release and assets, and manual reruns should use `workflow_dispatch`
 - Check that the release tag version matches `pom.xml` `version`, or document any accepted dot-suffix rule such as `v0.5.0.1` for `0.5.0`
 - Set up the build JDK explicitly, normally Temurin Java 21 with Maven cache, before `mvn -B package`; set up Java 8 separately for the packaged runtime smoke test
 - Use Maven standard output names as the release workflow copy source by default, such as `target/<artifactId>-<project.version>.jar` and `target/<artifactId>-<project.version>-sources.jar`; if the repository intentionally uses a fixed `<finalName>`, document that and adjust the release workflow copy source explicitly
@@ -525,7 +526,6 @@ Read the strength of individual sentences according to wording such as `fix`, `b
 - Stage runtime and source jar assets with versioned names such as `<artifact>-<version>.jar` and `<artifact>-sources-<version>.jar`, and upload only those staged assets to the GitHub Release
 - Run a Java 8 `java -jar ... --version` smoke test against the staged runtime jar before uploading release assets
 - In multi-module repositories, point release asset preparation at the runtime module's `target/` directory, not the aggregator root `target/`; make that target directory an explicit workflow setting such as `RUNTIME_TARGET_DIR`
-- When a tag-push workflow creates a GitHub Release with `GITHUB_TOKEN`, recursive workflow triggering from that token-created event is normally suppressed; if a human later publishes or republishes the same tag's release, the release trigger may run again and update the same staged assets
 - A release workflow may use `softprops/action-gh-release` for tag-push creation or update of GitHub Release assets, with `contents: write` permission and explicit asset overwrite behavior; use `gh release view/create/upload` only when the repository needs more detailed release existence, body, or note control
 - Place the CLI main class at `jp.igapyon.<project>.cli.<Project>Cli`
 - The CLI should not pack real processing into `main(String[] args)`; delegate to a testable entrypoint such as `run(String[] args, PrintStream out, PrintStream err)`

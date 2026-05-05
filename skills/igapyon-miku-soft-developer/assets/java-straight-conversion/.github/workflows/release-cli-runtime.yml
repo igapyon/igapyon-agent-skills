@@ -4,9 +4,6 @@ on:
   push:
     tags:
       - "v*"
-  release:
-    types:
-      - published
   workflow_dispatch:
     inputs:
       tag_name:
@@ -24,13 +21,13 @@ env:
 jobs:
   release-cli-runtime:
     runs-on: ubuntu-latest
-    if: startsWith(github.event.release.tag_name || github.event.inputs.tag_name || github.ref_name, 'v')
+    if: startsWith(github.event.inputs.tag_name || github.ref_name, 'v')
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref }}
+          ref: ${{ github.event.inputs.tag_name || github.ref }}
 
       - name: Set up Java 21 for build
         uses: actions/setup-java@v4
@@ -44,7 +41,7 @@ jobs:
 
       - name: Prepare release assets
         env:
-          TAG_NAME: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref_name }}
+          TAG_NAME: ${{ github.event.inputs.tag_name || github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG_NAME#v}"
@@ -77,7 +74,7 @@ jobs:
       - name: Upload CLI runtime to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref_name }}
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           files: release-assets/*
           overwrite_files: true
           draft: false
