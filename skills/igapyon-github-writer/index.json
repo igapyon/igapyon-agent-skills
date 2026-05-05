@@ -11,6 +11,14 @@
       "summary": "GitHub About Writing"
     },
     {
+      "name": "branch-status.md",
+      "path": "references/branch-status.md",
+      "ext": "md",
+      "dir": "references",
+      "size": 2672,
+      "summary": "GitHub Branch Status"
+    },
+    {
       "name": "github-writing-rules.md",
       "path": "references/github-writing-rules.md",
       "ext": "md",
@@ -39,8 +47,8 @@
       "path": "SKILL.md",
       "ext": "md",
       "dir": "",
-      "size": 3680,
-      "summary": "--- name: igapyon-github-writer description: Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, or GitHub About text from repository evidence, or explicitly mentions igapyon-github-writer. If the user only asks whether su"
+      "size": 4271,
+      "summary": "--- name: igapyon-github-writer description: Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, or asks to inspect the current branch status using igapyon-github-writer. If the user only asks whether su"
     }
   ]
 }
