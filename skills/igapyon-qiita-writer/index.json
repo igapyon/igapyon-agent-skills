@@ -15,7 +15,55 @@
       "path": "references/general/20260429-general.md",
       "ext": "md",
       "dir": "references/general",
-      "size": 12522,
+      "size": 13200,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260430-general.md",
+      "path": "references/general/20260430-general.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 22118,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260430-general-ai-dev-docs-workplace.md",
+      "path": "references/general/20260430-general-ai-dev-docs-workplace.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 19925,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260430-general-straight-conv.md",
+      "path": "references/general/20260430-general-straight-conv.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 71172,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260430-miku-soft-architecture-topic-bank.md",
+      "path": "references/general/20260430-miku-soft-architecture-topic-bank.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 22394,
+      "summary": "--- title: [miku-soft] 生成AI時代の local-first ツール群アーキテクチャ topic bank tags: 生成AI ソフトウェアアーキテクチャ AgentSkills MCP CLI author: igapyon slide: false ---"
+    },
+    {
+      "name": "20260502-general-repository-engineering.md",
+      "path": "references/general/20260502-general-repository-engineering.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 16315,
+      "summary": "掲載先情報"
+    },
+    {
+      "name": "20260503-general-miku-soft-agent-skills.md",
+      "path": "references/general/20260503-general-miku-soft-agent-skills.md",
+      "ext": "md",
+      "dir": "references/general",
+      "size": 5279,
       "summary": "掲載先情報"
     },
     {
@@ -151,8 +199,8 @@
       "path": "SKILL.md",
       "ext": "md",
       "dir": "",
-      "size": 6408,
-      "summary": "--- name: igapyon-qiita-writer description: Use when writing, revising, structuring, or preparing Japanese Qiita technical articles in igapyon style. This skill helps turn notes, README material, implementation logs, OSS tool descriptions, AI development e"
+      "size": 6665,
+      "summary": "--- name: igapyon-qiita-writer description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-ready Markdown with front matter, tags, and"
     }
   ]
 }

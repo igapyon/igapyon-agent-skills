@@ -1,11 +1,14 @@
 ---
 name: igapyon-qiita-writer
-description: Use when writing, revising, structuring, or preparing Japanese Qiita technical articles in igapyon style. This skill helps turn notes, README material, implementation logs, OSS tool descriptions, AI development experiences, and draft fragments into Qiita-ready Markdown with clear technical value, appropriate front matter, tags, headings, constraints, and reader-oriented structure. It should use the reference articles under references/ as examples of article shape and explanation depth.
+description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-ready Markdown with front matter, tags, and article structure. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
 ---
 
 # igapyon-qiita-writer
 
 Qiita 向けの日本語技術記事を作成・整理・改善するための skill です。
+
+一般的な文章校正、PR 文面、短文投稿、Note 向け記事、または Qiita 向けであることが明示されていない文章相談では、この skill を使わないでください。
+Qiita 記事向けの skill があるか聞かれた場合は、この skill を候補として案内し、ユーザーが使用を依頼するまで適用しないでください。
 
 この skill の目的は、文章を単にきれいにすることではありません。  
 Qiita の読者が読みやすく、技術的な持ち帰りを得やすい形に整えることです。

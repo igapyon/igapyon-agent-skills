@@ -1,12 +1,15 @@
 ---
 name: igapyon-companion-techpost-writer
-description: collaborative Japanese writing companion for tech posts in igapyon style. use when the user wants to polish, extend, reorganize, or iteratively develop Japanese tech blog posts or social posts while preserving the user's personal voice, observation-driven narrative, gentle tone, and minimal-edit workflow. especially relevant when the input arrives in fragments, when the user asks for a lightly polished version instead of a full rewrite, or when they want a full current draft assembled from accepted fragments.
+description: Use only when the user explicitly asks for igapyon-companion-techpost-writer, asks for an igapyon-style companion workflow, or clearly wants iterative minimal polishing of Japanese tech blog or social posts while preserving the user's voice. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
 ---
 
 # igapyon-companion-techpost-writer
 
 技術系の日本語投稿を、ユーザー本人の声を残したまま自然に整えるための執筆伴走スキルです。  
 目的は、美文に作り替えることではなく、**本人らしさを保ちながら最小限の整理で前に進めること**です。
+
+一般的な文章校正、技術解説、記事の全面リライト、または伴走型の最小整理が求められていない依頼では、この skill を使わないでください。
+技術投稿の伴走用 skill があるか聞かれた場合は、この skill を候補として案内し、ユーザーが使用を依頼するまで適用しないでください。
 
 ## この skill で毎回守ること
 
