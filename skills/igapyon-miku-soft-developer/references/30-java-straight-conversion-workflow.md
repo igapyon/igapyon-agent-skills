@@ -1,25 +1,212 @@
 # Java Straight Conversion Workflow
 
-Use this workflow for creating or maintaining a Java straight-conversion version of a miku-soft Node.js / TypeScript upstream project.
+Use this workflow for creating or maintaining a Java straight-conversion
+version of a miku-soft Node.js / TypeScript upstream project.
 
 Detailed design guidance lives in:
 
 - [miku-soft-basic/miku-soft-20-javaapp-design-v20260501.md](miku-soft-basic/miku-soft-20-javaapp-design-v20260501.md)
 - [miku-soft-basic/miku-soft-30-straight-conversion-v20260425.md](miku-soft-basic/miku-soft-30-straight-conversion-v20260425.md)
 
-Keep this file as the execution checklist.
+Keep this file as the execution checklist. Load the detailed design documents
+only when a policy decision is unclear.
 
 ## First Reads
 
 1. Read [architecture-rules.md](architecture-rules.md).
 2. Read the Java application and straight conversion basic documents.
-3. Inspect upstream evidence, existing Java source, mapping documents, tests, build files, README, docs, TODO, and workplace instructions.
+3. Inspect upstream evidence, existing Java source, mapping documents, tests,
+   build files, README, docs, TODO, and workplace instructions.
 
-## Checklist
+## Fixed Premises
 
-1. Confirm the upstream source and target Java repository before editing.
-2. Preserve upstream-following ability and avoid Java-first redesign unless the user explicitly asks for a separate extension.
-3. Keep upstream-derived behavior and Java-side original extensions documented separately.
-4. Maintain or create mapping notes when file/class responsibility tracking matters.
-5. Prefer focused regression commands that compare behavior, CLI contracts, diagnostics, or generated artifacts.
-6. Update README, docs, TODO, tests, build files, and indexes when conversion assumptions change.
+Confirm these before editing Java code:
+
+- upstream source repository and branch or vendored snapshot
+- target Java repository, artifactId, base package, and CLI class
+- Java source / target compatibility, normally `1.8`
+- Maven as the build tool
+- JUnit Jupiter as the test framework
+- primary verification command, normally `mvn test`
+- runtime packaging shape: executable fat jar, and distribution zip when useful
+- whether the upstream body is vendored, connected as a remote, or cloned under
+  `workplace/`
+- the intended compatibility target, such as CLI JSON parity, generated file
+  parity, Maven plugin behavior, or a narrower partial conversion
+
+Do not start by redesigning the upstream product for Java. Preserve upstream
+file boundaries, vocabulary, request / result shapes, diagnostics, and CLI
+behavior unless the user explicitly asks for a separate Java-side extension.
+
+## Repository Shape
+
+Prefer this shape unless the target repository already has a consistent local
+pattern:
+
+- `.mvn/jvm.config` for repository-local Maven JVM settings when needed
+- `pom.xml` at the root, or a root aggregator with runtime and plugin modules
+- `src/main/java/` for a single-module runtime
+- `<runtime-module>/src/main/java/` for a multi-module runtime
+- `src/test/java/` or `<module>/src/test/java/` for focused regressions
+- `docs/` for mapping, parity, development, and migration documents
+- `vendor/<upstream-name>/` when a checked-in upstream snapshot is used
+- `workplace/.gitkeep` only; use other `workplace/` files as local scratch
+
+Keep required fixtures under normal tracked test or docs paths. Do not hide
+required implementation inputs under `workplace/`.
+
+Bundled starter templates are available under
+`assets/java-straight-conversion/`:
+
+- `.mvn/jvm.config`
+  - Maven JVM settings that prefer IPv4 for environments where dependency
+    resolution is affected by IPv6 behavior.
+- `.github/workflows/release-cli-runtime.yml`
+  - GitHub Release asset workflow for a single CLI runtime jar and source jar.
+  - Replace `__ARTIFACT_ID__` with the Maven artifactId before use.
+  - Adjust target paths for multi-module runtime repositories.
+- `pom-cli-runtime.xml`
+  - Starter `pom.xml` for a single-module CLI runtime jar with Java 1.8,
+    JUnit Jupiter, Jackson, source jar, shaded runtime jar, and dist zip.
+  - Copy to `pom.xml`, then replace `__ARTIFACT_ID__`, `__VERSION__`,
+    `__PROJECT_NAME__`, `__DESCRIPTION__`, `__GITHUB_REPOSITORY__`, and
+    `__MAIN_CLASS__`.
+  - Remove Jackson if the runtime does not expose or consume JSON.
+- `src/assembly/dist.xml`
+  - Distribution zip descriptor used by `pom-cli-runtime.xml`.
+  - Replace `__CLI_SPEC_DOC__`, or remove that file entry if the repository has
+    no CLI spec document yet.
+
+## Required Tracking Documents
+
+Create or maintain the documents that fit the repository's scope:
+
+- `docs/upstream-snapshot.md`
+  - Records upstream URL, branch, commit, tag or version, and vendored path.
+  - Use when the repository keeps a stable vendored upstream snapshot.
+- `docs/upstream-class-mapping.md`
+  - Maps `upstream file -> Java class / package`.
+  - Include notes when one upstream file becomes multiple Java classes, or when
+    multiple upstream files share a Java helper.
+- `docs/upstream-test-mapping.md`
+  - Maps upstream test intent, fixtures, and contract cases to Java tests or
+    smoke scripts.
+  - Include focused commands such as `mvn test -Dtest=...`.
+- `docs/upstream-cli-mapping.md` or a CLI section in README
+  - Use when the upstream CLI has command families, options, stdin / stdout
+    behavior, exit codes, or partial implementation status to track.
+- `docs/cli-json-parity.md`
+  - Use when stdin / stdout JSON compatibility is the primary target.
+  - Fix stdout, stderr, exit codes, field names, ordering, defaults,
+    diagnostics, pretty printing, and known runtime differences.
+- `docs/upstream-followup-log.md`
+  - Record concrete upstream diff checks, follow-up decisions, accepted runtime
+    differences, and upstream bugs found during conversion.
+- `docs/remaining-migration-items.md` or equivalent status document
+  - Keep completed preparation, completed implementation, pending units,
+    focused regressions, latest verification, and next step.
+- `docs/development.md` or `docs/development-status.md`
+  - Keep maintainer commands, repository structure, local workspace rules, and
+    focused regression flow out of the user-facing README.
+
+Top-level `README.md` should remain user-facing: purpose, usage, build outputs,
+runtime differences, and links to deeper development documents.
+
+## Implementation Order
+
+Use this order for initial conversion unless upstream structure suggests a
+smaller safe slice:
+
+1. Inventory upstream source files, tests, fixtures, CLI commands, public API,
+   generated artifacts, and runtime dependencies.
+2. Decide target scope and out-of-scope items before coding.
+3. Create the Maven skeleton, package base, test setup, and executable entry
+   point.
+4. Create model classes that preserve upstream JSON or data contracts.
+5. Add JSON, text, binary, path, encoding, glob, regex, or codec helpers needed
+   by upstream semantics.
+6. Port validation and diagnostic construction before broad processing logic.
+7. Port core processing behind a callable core API.
+8. Add CLI or batch adapters that delegate to the core API.
+9. Add Maven plugin modules only after the runtime core contract is stable.
+10. Add packaging, distribution zip, release workflow, and documentation sync
+    tests when they are part of the product contract.
+
+Keep `main(String[] args)` thin. Prefer a testable CLI method such as
+`run(String[] args, PrintStream out, PrintStream err)` and confine
+`System.exit` to the outermost boundary.
+
+## Compatibility Rules
+
+Treat upstream-derived behavior as the default contract:
+
+- request and result field names
+- JSON top-level shape and version fields
+- diagnostic codes and severities
+- path normalization and absolute-path avoidance
+- stdout / stderr roles
+- exit codes
+- help and version output
+- default values, limits, and validation failures
+- generated artifact names, contents, and ordering where visible
+- fixture behavior and edge cases covered by upstream tests
+
+Document Java-side runtime differences explicitly. Common examples include
+Java `Pattern` versus Node.js `RegExp`, Java charset behavior versus Node-side
+encoding libraries, ZIP / XML library differences, and Java-side Maven plugin
+or batch extensions.
+
+Java-side extensions are allowed when useful, but keep them separate from the
+upstream contract in README, CLI specs, mapping documents, and tests.
+
+## Regression Strategy
+
+Prefer focused regression commands that explain the changed area:
+
+- model / JSON shape tests
+- request contract and validation tests
+- path security, glob, regex, encoding, codec, or parser tests
+- core API tests
+- CLI stdout / stderr / exit-code tests
+- documentation synchronization tests
+- Node-vs-Java parity scripts when practical
+- packaged jar smoke scripts after `mvn package`
+- Maven plugin smoke scripts for plugin modules
+
+When parity scripts generate local fixtures or comparison outputs, write them
+under `workplace/` and keep those outputs untracked.
+
+For docs-only changes, additional tests are usually not required. Run focused
+tests when the docs change executable commands, public CLI examples, JSON
+contract examples, or packaging assumptions.
+
+## Maintenance Flow
+
+When following upstream after the initial conversion:
+
+1. Check the upstream snapshot or latest upstream diff.
+2. Find affected Java classes through `docs/upstream-class-mapping.md`.
+3. Find focused Java tests through `docs/upstream-test-mapping.md`.
+4. Apply the smallest Java change that preserves upstream traceability.
+5. Update parity, CLI, README, development, and migration documents if the
+   observable contract or scope changed.
+6. Record the check in `docs/upstream-followup-log.md`.
+7. Run the focused regression command first, then broader `mvn test` or
+   `mvn package` when warranted.
+
+Do not silently absorb upstream bugs as Java design changes. Record them as
+follow-up or communication items, and only diverge intentionally when the user
+confirms the Java side should carry a separate behavior.
+
+## Completion Checklist
+
+Before finishing a conversion task:
+
+- upstream source and target Java repository are clear
+- upstream-derived behavior and Java-side extensions are separated
+- mapping documents reflect changed source, tests, or CLI contracts
+- README and docs agree with current runtime behavior
+- TODO or migration status records remaining work and latest verification
+- focused regressions were run, or the reason for not running them is clear
+- `git status --short` has been checked
+- final diff does not include unrelated changes
