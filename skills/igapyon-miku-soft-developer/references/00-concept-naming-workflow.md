@@ -24,7 +24,8 @@ Before scaffolding a repository, establish:
 4. Propose one to three repository names using the `miku-<domain>` pattern.
 5. Compare candidates with [existing-miku-soft-repositories.md](existing-miku-soft-repositories.md) and current GitHub information when exact current availability matters.
 6. Select a final base name with the user.
-7. Only after the name is decided and the user asks to proceed with creation, continue to [new-project-workflow.md](new-project-workflow.md) for repository location, first delivery surface details, docs, TODO, workplace conventions, and scaffolding.
+7. After the name is decided, tell the user that the next step is to create the GitHub repository with that name. GitHub repository operations are handled by the human, not by the agent.
+8. Only after the GitHub repository exists and the user asks to proceed with local creation or scaffolding, continue to [new-project-workflow.md](new-project-workflow.md) for repository location, first delivery surface details, docs, TODO, workplace conventions, and scaffolding.
 
 ## Naming Rules
 
@@ -40,6 +41,8 @@ Before scaffolding a repository, establish:
 
 When this phase completes, summarize the decision as Markdown text in the conversation. Do not write this summary into a file during the 00 phase.
 
+After the repository name is decided, also output a compact basic-information Markdown block that the user can pass to another generative AI or another working context. Use the actual decided repository name in the heading, such as `# miku-text-bundle 基本情報`. Keep this block minimal and limited to project basics, not a full implementation handoff.
+
 ```md
 ## Concept and Naming Result
 
@@ -49,4 +52,43 @@ When this phase completes, summarize the decision as Markdown text in the conver
 - First target layer: 10 main application
 - Repository name:
 - Reasoning:
+- Next step: Human creates the GitHub repository. After that, proceed with local repository creation or scaffolding.
 ```
+
+````md
+# <repository-name> 基本情報
+
+## プロジェクト名
+
+`<repository-name>`
+
+## 目的
+
+<one or two sentences describing the practical user problem and product purpose>
+
+## 入力
+
+- <primary input>
+- <secondary input or options>
+
+## 出力
+
+- <primary output artifact>
+- <secondary output artifact, when applicable>
+
+## 初期CLI案
+
+```text
+<repository-name> <input> <output> [options]
+```
+
+## 対象
+
+<target data, files, users, or workflow>
+
+## 初期方針
+
+- <smallest useful behavior>
+- <important constraint>
+- GitHub リポジトリ操作は人間が担当する
+````
