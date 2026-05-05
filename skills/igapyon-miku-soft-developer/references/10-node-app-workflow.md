@@ -89,6 +89,8 @@ For a Release CLI bundle request, the expected release assets are usually:
 - `<product>-<version>.mjs`
 - `<product>-sources-<version>.tgz`
 
+If the package version is `0.5.0`, accepted release tags include `v0.5.0`, `v0.5.0.1`, and `v0.5.0.2`. Reject unrelated version tags such as `v0.5.1` and `v0.6.0`. Use the tag version, without the leading `v`, in release asset filenames so a patch suffix tag such as `v0.5.0.1` produces assets such as `<product>-0.5.0.1.mjs`.
+
 If the current repository only has `npm pack` and does not yet generate `bundle/<product>.mjs` and `bundle/<product>-sources.tgz`, first report that gap and add or propose the bundle build / smoke path before wiring the GitHub Release upload.
 
 When the repository has a documented bundle build and smoke script, the expected local workflow file is normally `.github/workflows/release-cli-bundle.yml` with this shape, adapted to the product name and artifact paths:
