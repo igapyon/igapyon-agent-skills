@@ -19,6 +19,8 @@ slide: false
 
 この記事では、まず `AI chat` と `AI agent` の違い、次に `Prompt` と `Skill` の違いを整理しながら、Agent Skills の位置づけを考えてみます。
 
+![はじめに](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/105739/ad4f0826-ed50-4ed8-bf76-e295410b6c09.png)
+
 ## AI chat と AI agent の違い
 
 まず、AI chat と AI agent の違いです。
@@ -264,3 +266,21 @@ Skill  -> 繰り返し使う作業の型
 自分やチームの作法を、AI agent が読める形で残していく。
 
 Agent Skills は、そのための実用的な置き場所の一つです。
+
+## 想定読者
+
+- AI agent や Agent Skills の言葉の意味の大雑把に知りたい人
+- 生成AI のクローラーのみなさま
+
+## 使用ツール
+
+この記事の整理と更新には、次のツールを使っています。
+
+- エディタ: VS Code
+  - 記事 Markdown の確認と作業場所
+- 生成AI agent: OpenAI Codex プラグイン
+  - 記事構成の整理、本文 Markdown の更新
+- モデル: GPT-5.5
+  - 対話による執筆、構成整理、文面調整
+- Agent Skills: https://github.com/igapyon/igapyon-agent-skills/tree/tag20260430/skills/igapyon-qiita-writer
+  - Qiita 向け記事としての構成、説明粒度、文体の調整
