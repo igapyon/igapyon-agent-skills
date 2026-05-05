@@ -27,27 +27,45 @@ Before editing, identify which Node app shape the repository currently uses:
 - Single-file Web App plus CLI: check `index.html`, product-named HTML, `index-src.html`, `src/`, `lht-cmn/`, build scripts, CLI scripts, and browser or UI tests.
 - CLI / structured JSON tool: check `src/main.ts`, `src/*types.ts`, CLI specs under `docs/`, `bin`, `exports`, `types`, and stdout / stderr contract tests.
 - Bundled runtime artifact: check `bundle/`, `scripts/build-cli-bundle.mjs`, `scripts/build-cli-runtime.mjs`, smoke scripts, and package `files`.
-- GitHub Actions CI baseline: check `.github/workflows/`, PR / push triggers, dependency install, and primary verification commands.
+- GitHub Actions workflow intent: distinguish CI baseline, release asset workflow, and publish workflow before creating or editing workflow files.
 - Release CLI bundle: check `.github/workflows/release-cli-bundle.yml`, release asset naming, version checks, `bundle/*.mjs`, `bundle/*-sources.tgz`, and `smoke:bundle`.
 - AI-facing operation surface: check projection, patch, validation, summary, diagnostics, or state-oriented docs and tests.
 
 Use the detected shape to decide which contracts must be preserved. Do not force every repository into every shape.
 
-## GitHub Actions CI Baseline
+## GitHub Actions Intent Resolution
 
-For Node.js / TypeScript main applications, inspect the CI baseline during late-stage hardening and release-readiness work, especially when `package.json` provides `build`, `test`, `typecheck`, `smoke`, or similar verification scripts.
+When the user mentions GitHub Actions, first identify which workflow category they mean before creating files.
 
-Check these points:
+Categories:
 
-- `.github/workflows/` exists when the repository is expected to run GitHub Actions checks.
-- A CI workflow, normally `.github/workflows/ci.yml`, runs on `push` and `pull_request`.
-- The workflow installs dependencies with `npm ci`.
-- The workflow runs the repository's primary verification command, usually `npm run build`, and also `npm test`, `npm run typecheck`, `npm run smoke`, or `npm run verify` when those scripts are the documented local contract.
-- For release-readiness, audit or package dry-run expectations are represented either by a local script such as `npm run verify`, by CI, or by a documented manual release check. Do not make `npm audit --audit-level=moderate` mandatory for every CI baseline unless the repository has adopted that policy.
+- CI baseline:
+  - pull request / push verification
 
-If CI is missing, report it as a release-readiness gap, not as a product implementation bug. When the user has asked to proceed in an initial release, late-stage hardening, or release-readiness context, add or propose a minimal local workflow file such as `.github/workflows/ci.yml` when that is within the requested work.
+- Release asset workflow:
+  - `v*` tag or GitHub Release publication
+  - attach generated files to a GitHub Release
+  - check tag version against `package.json` version
+  - build from the release tag
+  - upload only prepared release assets
 
-Creating or editing a local workflow file is allowed repository work. Pushing branches, opening pull requests, publishing releases, or uploading release assets remains a human GitHub operation as described in [repo-operations.md](repo-operations.md).
+- Publish workflow:
+  - `npm publish`
+  - package registry publication
+  - token and registry policy
+
+If the user says `v* tag`, `release`, `attach files`, `release asset`, or `GitHub Release`, do not add or modify CI baseline as the primary action. Use the Release Bundle Workflow section first.
+
+If the repository does not yet have a bundle artifact script, do not assume the asset type silently. Report the available artifact candidates, such as:
+
+- npm pack tarball
+- single-file CLI runtime artifact
+- source archive
+- generated documentation bundle
+
+Then ask or record which release asset should be attached, unless the user has clearly specified it.
+
+Creating or editing a local workflow file is allowed repository work. Pushing branches, opening pull requests, publishing releases, running `npm publish`, configuring secrets, or uploading release assets remains a human GitHub or registry operation as described in [repo-operations.md](repo-operations.md).
 
 ## Release Bundle Workflow
 
@@ -64,6 +82,84 @@ Check these points:
 - Upload uses the GitHub Release tag and only the prepared miku-soft CLI assets, normally `<product>-<version>.mjs` and `<product>-sources-<version>.tgz`.
 - Do not add a broad repository source ZIP or generic source archive as a custom uploaded release asset.
 - Actions runtime compatibility settings, such as Node.js version or JavaScript action runtime flags, are kept only when the reference project or current repository needs them.
+
+When the repository has a documented bundle build and smoke script, the expected local workflow file is normally `.github/workflows/release-cli-bundle.yml` with this shape, adapted to the product name and artifact paths:
+
+```yaml
+name: Release CLI bundle
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "GitHub Release tag to attach the CLI bundle to"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  release-cli-bundle:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.release.tag_name || github.event.inputs.tag_name, 'v')
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Prepare release assets
+        env:
+          TAG_NAME: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG_NAME#v}"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          case "${VERSION}" in
+            "${PACKAGE_VERSION}"|"${PACKAGE_VERSION}".*) ;;
+            *)
+              echo "Release tag version (${VERSION}) must match package.json version (${PACKAGE_VERSION}) or add a dot suffix such as ${PACKAGE_VERSION}.2." >&2
+              exit 1
+              ;;
+          esac
+
+          mkdir -p release-assets
+          cp bundle/<product>.mjs "release-assets/<product>-${VERSION}.mjs"
+          cp bundle/<product>-sources.tgz "release-assets/<product>-sources-${VERSION}.tgz"
+
+      - name: Verify CLI bundle asset
+        run: npm run smoke:bundle
+
+      - name: Upload CLI bundle to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref_name }}
+          files: release-assets/*
+          draft: false
+          prerelease: false
+```
+
+If the repository does not require an Actions runtime compatibility environment variable, omit `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`. If the bundle files or smoke script use different names, adapt only those paths and commands while preserving the release-triggered asset upload contract.
 
 Do not treat Release asset upload as a substitute for local bundle verification. The local build and smoke contract should remain valid without GitHub Actions.
 
