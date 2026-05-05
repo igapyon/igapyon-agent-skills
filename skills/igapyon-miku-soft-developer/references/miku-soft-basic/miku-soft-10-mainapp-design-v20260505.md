@@ -348,6 +348,23 @@ For downstream Agent Skills or other local automation, a build may produce a sin
 
 A source archive such as `bundle/<product>-sources.tgz` may be useful for rebuild, audit, or downstream confirmation. Treat these files as generated artifacts: rebuild them through documented commands and verify them with smoke tests rather than editing them directly.
 
+#### GitHub Release CLI Assets
+
+When a CLI-oriented main application publishes a single-file runtime artifact, GitHub Releases may carry the runnable bundle and its source archive as release assets.
+
+This release path is a distribution layer over the local build contract. It should not be the only place where the bundle is created or verified. The repository should still provide local commands that build the bundle and verify it with a smoke test.
+
+Recommended release asset behavior is as follows.
+
+- Trigger release-asset attachment from published GitHub Releases and, when useful, manual dispatch with an explicit tag.
+- Restrict release bundle upload to version tags such as `v*`.
+- Check that the release tag version matches `package.json` `version`, or document any accepted dot-suffix rule.
+- Build from the release tag, not from an unrelated branch state.
+- Stage release assets with product and version in their filenames, such as `<product>-<version>.mjs` and `<product>-sources-<version>.tgz`.
+- Upload only those prepared miku-soft CLI assets as custom release assets; do not add broad repository source archives as extra uploaded assets.
+- Run the bundle smoke test before uploading release assets.
+- Keep GitHub Actions runtime compatibility settings local to the workflow and do not let them change the product runtime contract.
+
 ### `workplace/` Directory Principles
 
 The repository root of a main application contains a `workplace/` directory for local work.
