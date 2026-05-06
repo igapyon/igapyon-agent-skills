@@ -38,7 +38,7 @@
       "path": "references/10-node-app-workflow.md",
       "ext": "md",
       "dir": "references",
-      "size": 12203,
+      "size": 12754,
       "summary": "Node App Workflow"
     },
     {
@@ -106,12 +106,12 @@
       "summary": "Miku Software Overview Design v20260427"
     },
     {
-      "name": "miku-soft-10-mainapp-design-v20260506.md",
-      "path": "references/miku-soft-basic/miku-soft-10-mainapp-design-v20260506.md",
+      "name": "miku-soft-10-mainapp-design-v20260507.md",
+      "path": "references/miku-soft-basic/miku-soft-10-mainapp-design-v20260507.md",
       "ext": "md",
       "dir": "references/miku-soft-basic",
-      "size": 65008,
-      "summary": "Miku Software Main Application Design v20260506"
+      "size": 65868,
+      "summary": "Miku Software Main Application Design v20260507"
     },
     {
       "name": "miku-soft-20-javaapp-design-v20260506.md",
@@ -198,7 +198,7 @@
       "path": "references/review/release-automation.md",
       "ext": "md",
       "dir": "references/review",
-      "size": 7256,
+      "size": 7908,
       "summary": "Release Automation Review"
     },
     {
