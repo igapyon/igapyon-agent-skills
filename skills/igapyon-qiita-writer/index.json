@@ -83,6 +83,14 @@
       "summary": "[miku-abc-player] `ABC` を貼ると譜面を見て再生できる `miku-abc-player` を作りました"
     },
     {
+      "name": "20260XXX-miku-docx2md-usage.md",
+      "path": "references/miku-docx2md/20260XXX-miku-docx2md-usage.md",
+      "ext": "md",
+      "dir": "references/miku-docx2md",
+      "size": 11061,
+      "summary": "[miku-docx2md] Word の .docx を Markdown に変換するアプリの使用方法"
+    },
+    {
       "name": "20260506-miku-grep-usage.md",
       "path": "references/miku-grep/20260506-miku-grep-usage.md",
       "ext": "md",
