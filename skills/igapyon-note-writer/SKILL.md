@@ -100,7 +100,10 @@ Note 掲載用の属性情報が必要な場合は、次の形を基本にしま
 
 ## Reference Usage
 
-`references/` 配下の記事は、Note 記事の実例集として使います。
+`references/` 配下の記事は、Note 記事の正本であり、Note 記事の実例集としても使います。
+
+Note 記事を新規作成・更新する場合は、`skills/igapyon-note-writer/references/` 配下の Markdown を正本として扱います。  
+`workplace/*/docs/articles/note/` などに旧配置や作業メモがある場合でも、公開・更新対象の本文はこの skill 配下の `references/` に置きます。
 
 主に見る観点は次の通りです。
 
