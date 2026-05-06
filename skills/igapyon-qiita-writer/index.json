@@ -95,7 +95,7 @@
       "path": "references/miku-javaclass2json/20260506-miku-javaclass2json-usage.md",
       "ext": "md",
       "dir": "references/miku-javaclass2json",
-      "size": 15454,
+      "size": 15986,
       "summary": "[miku-javaclass2json] Java の .class / .jar を JSON / JSONL で索引化するアプリの使用方法"
     },
     {
@@ -131,6 +131,14 @@
       "summary": "--- title: [mikuproject] Agent Skills で WBS の叩き台作成とブラッシュアップ tags: mikuproject mikuku AgentSkills WBS 生成AI author: igapyon slide: false ---"
     },
     {
+      "name": "20260506-miku-readfile-usage.md",
+      "path": "references/miku-readfile/20260506-miku-readfile-usage.md",
+      "ext": "md",
+      "dir": "references/miku-readfile",
+      "size": 13261,
+      "summary": "[miku-readfile] JSON request でローカルのテキストファイルを安全に読むアプリの使用方法"
+    },
+    {
       "name": "20260412-ai-score-abc-first.md",
       "path": "references/mikuscore/20260412-ai-score-abc-first.md",
       "ext": "md",
@@ -145,6 +153,14 @@
       "dir": "references/mikuscore",
       "size": 8957,
       "summary": "掲載先情報"
+    },
+    {
+      "name": "20260506-miku-text-bundle-usage.md",
+      "path": "references/miku-text-bundle/20260506-miku-text-bundle-usage.md",
+      "ext": "md",
+      "dir": "references/miku-text-bundle",
+      "size": 12921,
+      "summary": "[miku-text-bundle] リポジトリのテキストを生成AI向け Markdown バンドルにまとめるアプリの使用方法"
     },
     {
       "name": "20260320-vscode-gpt54-chat-dev.md",
