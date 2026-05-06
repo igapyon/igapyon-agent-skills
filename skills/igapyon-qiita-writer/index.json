@@ -83,6 +83,14 @@
       "summary": "掲載先情報"
     },
     {
+      "name": "20260506-miku-grep-usage.md",
+      "path": "references/miku-grep/20260506-miku-grep-usage.md",
+      "ext": "md",
+      "dir": "references/miku-grep",
+      "size": 18708,
+      "summary": "[miku-grep] JSON request でローカルのテキストファイルを検索するアプリの使用方法"
+    },
+    {
       "name": "20260428-miku-indexgen-intro.md",
       "path": "references/miku-indexgen/20260428-miku-indexgen-intro.md",
       "ext": "md",
