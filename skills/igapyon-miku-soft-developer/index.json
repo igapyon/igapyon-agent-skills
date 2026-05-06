@@ -10,13 +10,6 @@
       "size": 339
     },
     {
-      "name": "release-build.yml",
-      "path": "assets/agent-skills/.github/workflows/release-build.yml",
-      "ext": "yml",
-      "dir": "assets/agent-skills/.github/workflows",
-      "size": 3620
-    },
-    {
       "name": "INDEX.md",
       "path": "assets/agent-skills/skills/__SKILL_NAME__/references/INDEX.md",
       "ext": "md",
@@ -167,6 +160,54 @@
       "dir": "references",
       "size": 1507,
       "summary": "miku-soft Repository Operations"
+    },
+    {
+      "name": "agent-skills.md",
+      "path": "references/review/agent-skills.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 5933,
+      "summary": "Agent Skills Review"
+    },
+    {
+      "name": "mcp-server.md",
+      "path": "references/review/mcp-server.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 6514,
+      "summary": "MCP Server Review"
+    },
+    {
+      "name": "node-cli.md",
+      "path": "references/review/node-cli.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 14615,
+      "summary": "Node.js CLI Review"
+    },
+    {
+      "name": "README.md",
+      "path": "references/review/README.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 3208,
+      "summary": "miku-soft Review Notes"
+    },
+    {
+      "name": "release-automation.md",
+      "path": "references/review/release-automation.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 7256,
+      "summary": "Release Automation Review"
+    },
+    {
+      "name": "single-file-web-app.md",
+      "path": "references/review/single-file-web-app.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 13789,
+      "summary": "Single-file Web App Review"
     },
     {
       "name": "SKILL.md",
