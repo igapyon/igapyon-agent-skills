@@ -1,4 +1,4 @@
-## 掲載先情報
+## [mikuproject] 作業を分けて並べた計画表を毎回ちがう形式で扱っているのが、だんだん気になってきた話
 
 - 掲載先: Note
 - URL: https://note.com/toshikiigaa/n/n20f5ee782358

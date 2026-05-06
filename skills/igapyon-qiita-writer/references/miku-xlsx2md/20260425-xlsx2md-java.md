@@ -1,4 +1,4 @@
-## 掲載先情報
+## [miku-xlsx2md] Node 版を入力に、生成AIで Java 版 
 
 - 掲載先: Qiita
 - URL: https://qiita.com/igapyon/items/c2d8977c5b3408e6e4ec

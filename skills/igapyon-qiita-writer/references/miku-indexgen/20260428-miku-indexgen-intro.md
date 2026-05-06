@@ -1,4 +1,4 @@
-## 掲載先情報
+## [miku-indexgen] AI エージェントが読む前に、ディレクトリの index.json / index.md を作る CLI
 
 - 掲載先: Qiita
 - URL: https://qiita.com/igapyon/items/85871ba02955e78b3825

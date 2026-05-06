@@ -1,4 +1,4 @@
-## 掲載先情報
+## AI agent と Agent Skills ってそもそも何だろう
 
 - 掲載先: Qiita
 - URL: https://qiita.com/igapyon/items/9e50c1c5cf7a53d16298

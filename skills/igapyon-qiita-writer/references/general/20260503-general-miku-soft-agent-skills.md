@@ -1,4 +1,4 @@
-## 掲載先情報
+## [miku-soft] miku-soft の Agent Skills 一覧
 
 - 掲載先: Qiita
 - URL: https://qiita.com/igapyon/items/ca8c83215a71e22ffd26
