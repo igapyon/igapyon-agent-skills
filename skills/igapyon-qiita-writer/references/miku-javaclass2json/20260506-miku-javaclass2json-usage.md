@@ -1,10 +1,14 @@
+## [miku-javaclass2json] Java の .class / .jar を JSON / JSONL で索引化するアプリの使用方法
+
+- 掲載先: Qiita
+- URL: https://qiita.com/igapyon/items/5929580cc4ff4dac6329
+
 ---
 title: [miku-javaclass2json] Java の .class / .jar を JSON / JSONL で索引化するアプリの使用方法
-tags: Mikuku Java Maven JSON 生成AI
+tags: mikuku Java Maven JSON AI駆動開発
 author: igapyon
 slide: false
 ---
-
 ## はじめに
 
 `miku-javaclass2json-java` は、Java の `.class` ファイル、classes ディレクトリ、`.jar` ファイルを読み取り、JSON / JSONL の索引を生成するツールです。

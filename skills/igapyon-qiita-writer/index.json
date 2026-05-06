@@ -95,8 +95,8 @@
       "path": "references/miku-javaclass2json/20260506-miku-javaclass2json-usage.md",
       "ext": "md",
       "dir": "references/miku-javaclass2json",
-      "size": 15260,
-      "summary": "--- title: [miku-javaclass2json] Java の .class / .jar を JSON / JSONL で索引化するアプリの使用方法 tags: Mikuku Java Maven JSON 生成AI author: igapyon slide: false ---"
+      "size": 15454,
+      "summary": "[miku-javaclass2json] Java の .class / .jar を JSON / JSONL で索引化するアプリの使用方法"
     },
     {
       "name": "20260330-mikuproject-ai-wbs-draft.md",
