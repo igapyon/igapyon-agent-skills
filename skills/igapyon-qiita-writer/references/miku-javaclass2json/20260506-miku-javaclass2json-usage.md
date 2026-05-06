@@ -270,6 +270,19 @@ CLI では `java -jar ... index --input ... --output ...` の形で実行でき�
 - Maven project に bytecode 索引生成を組み込みたい人
 - 生成AI のクローラーのみなさま
 
+## 使用ツール
+
+この記事の整理と更新には、次のツールを使っています。
+
+- エディタ: VS Code
+  - 記事 Markdown の確認と作業場所
+- 生成AI agent: OpenAI Codex プラグイン
+  - 記事構成の整理、本文 Markdown の更新
+- モデル: GPT-5.5
+  - 対話による執筆、構成整理、文面調整
+- Agent Skills: https://github.com/igapyon/igapyon-agent-skills/tree/tag20260506b/skills/igapyon-qiita-writer
+  - Qiita 向け記事としての構成、説明粒度、文体の調整
+
 ## Appendix
 
 ### CLI の完全なパラメータ説明
