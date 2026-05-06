@@ -10,6 +10,7 @@
 - 1 skill = 1 directory
 - skill ごとの詳細仕様は各 `SKILL.md` に書く
 - skill の具体ルール、例、長めの手順は `references/` 配下に置く
+- Qiita / Note 記事 Markdown は、各 writer skill 配下の `references/` を正本として管理する
 - skill を新規作成・更新した後は、`SKILL.md` が必要な `references/` を案内していること、必要に応じて `index.json` を参照することを確認する
 - repo 全体の運用ルールはこの `README.md` に書く
 - 作業メモは repo 直下の `TODO.md` に集約する
@@ -69,17 +70,19 @@ skill を利用する際は、`SKILL.md` を入口とし、具体ルール、例
 `skill-creator` などで skill を作成した直後は、必要な具体ルールを `SKILL.md` に詰め込みすぎず、`references/` へ分離します。  
 また、参照資料の全体像を探す必要がある skill では、`SKILL.md` に `index.json` を discovery index として使う旨を明記します。
 
-特に、`references/` 以下の `miku` から始まるディレクトリ内のファイルは、ほかのリポジトリに正本がある記事やメモを、この repo で利用しやすいようにコピーしたものです。  
-この repo では、それらのコピーを skill と一緒に `.codex/skills/` へ複写して利用する前提です。
+Qiita / Note 記事 Markdown は、各 writer skill 配下の `references/` を正本として管理します。
 
-正本側の更新を取り込む必要がある場合は、必要なタイミングでこの repo 側のコピーを更新します。
+- Qiita 技術記事の正本: `skills/igapyon-qiita-writer/references/`
+- Note 記事の正本: `skills/igapyon-note-writer/references/`
 
-一方、`references/general/` は、この repo を正本として管理する一般記事用の置き場です。  
-`miku` 系プロダクトに分類されない Qiita / Note 記事は、必要に応じて各 writer skill の `references/general/` に置きます。
+`references/general/` は、特定の `miku` 系プロダクトに分類されない一般記事用の置き場です。  
+`miku` 系プロダクトの記事は、各 writer skill の `references/<project>/` に置きます。
+
+`workplace/*/docs/articles/` などに記事メモや旧配置の Markdown が残っている場合でも、記事として更新・公開対象にする正本は writer skill 配下の `references/` です。
 
 ## docs/articles 集約状況
 
-記事管理は、Qiita 向け記事を `skills/igapyon-qiita-writer/references/`、Note 向け記事を `skills/igapyon-note-writer/references/` に集約する方針です。
+記事管理は、Qiita 向け記事を `skills/igapyon-qiita-writer/references/`、Note 向け記事を `skills/igapyon-note-writer/references/` に集約し、そこを正本として扱う方針です。
 
 2026-05-06 時点で、`workplace/*/docs/articles/qiita/` 配下の有意な記事本文は、`README.md` と `TEMPLATE.md` を除き、すべて `skills/igapyon-qiita-writer/references/` 側に同一内容で存在することを確認済みです。
 

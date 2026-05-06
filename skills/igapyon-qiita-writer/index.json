@@ -247,7 +247,7 @@
       "path": "SKILL.md",
       "ext": "md",
       "dir": "",
-      "size": 6665,
+      "size": 7040,
       "summary": "--- name: igapyon-qiita-writer description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-ready Markdown with front matter, tags, and"
     }
   ]
