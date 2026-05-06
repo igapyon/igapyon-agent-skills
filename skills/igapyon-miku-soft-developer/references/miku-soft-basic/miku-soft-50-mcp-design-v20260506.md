@@ -1,4 +1,4 @@
-# Miku Software MCP Design v20260501
+# Miku Software MCP Design v20260506
 
 This memo organizes design characteristics commonly expected for MCP server versions in the `miku` software series.
 
@@ -39,11 +39,11 @@ This document is not a detailed specification for one MCP repository. Repository
 
 Use the shared design documents together as follows.
 
-- `docs/miku-soft-10-mainapp-design-v20260505.md`
+- `docs/miku-soft-10-mainapp-design-v20260506.md`
   - describes the upstream product design and semantic center
-- `docs/miku-soft-40-agentskills-design-v20260501.md`
+- `docs/miku-soft-40-agentskills-design-v20260506.md`
   - describes how Agent Skills versions expose miku workflows to AI agents
-- `docs/miku-soft-50-mcp-design-v20260501.md`
+- `docs/miku-soft-50-mcp-design-v20260506.md`
   - describes how MCP server versions should expose miku workflows to MCP clients
 
 This document separates the following levels.
@@ -251,6 +251,20 @@ MCP servers use the following principles as defaults.
 - Use `workplace/` or a configured workspace root for local scratch data, uploaded files, generated outputs, and verification files
 
 These are defaults for the miku MCP series. Individual products may add product-specific conventions, but should not change these foundations casually.
+
+### New Creation Sister Reference Principles
+
+For new MCP server creation, inspect one or more similar miku `-mcp`
+repositories before designing the initial protocol surface, repository shape,
+runtime adapter, tests, or resources. Use local checkouts under `workplace/` or
+`workplace/upstream/` when available. If no same-layer MCP checkout exists
+locally, record that absence and name the closest public or documented
+reference used instead.
+
+When the MCP server should align with an Agent Skills operation map, also
+inspect the related `-skills` sister repository. Use these references to keep
+tool names, artifact roles, diagnostics, resource URI roles, and smoke-test
+shape aligned with established miku patterns.
 
 ## Transport Principles
 

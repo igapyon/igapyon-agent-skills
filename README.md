@@ -27,6 +27,32 @@ macOS が生成する `.DS_Store` は Git 管理対象外とするため、repo 
 `.codex/skills/` は Codex から利用するためのローカル配備先です。  
 この repo では `skills/` 配下を正本として管理し、`.codex/skills/` 配下のコピーは Git 管理対象外とします。
 
+## Codex skills 更新後の反映 tips
+
+Codex skills を更新した後、基本は VS Code のウィンドウ再読み込みで有効になります。
+
+コマンドパレットから実行する場合は、次を実行します。
+
+```text
+Developer: Reload Window
+```
+
+macOS の通常操作では、次のショートカットでコマンドパレットを開きます。
+
+```text
+Cmd+Shift+P
+```
+
+その後、`Reload Window` を実行します。
+
+ターミナルから VS Code を操作できる環境では、対象ワークスペースで次のコマンドでも近い動きになります。
+
+```sh
+code -r .
+```
+
+ただし、`code -r .` は同じウィンドウを再利用して開き直す動きです。拡張や Codex 側の状態更新まで確実に反映したい場合は、VS Code 内の `Developer: Reload Window` を使うのが一番確実です。
+
 ## Java / Maven の扱い
 
 Java / Maven を使う repo では、実行時の JVM 設定を repo 側で明示するため、`.mvn/jvm.config` を Git 管理下に入れます。

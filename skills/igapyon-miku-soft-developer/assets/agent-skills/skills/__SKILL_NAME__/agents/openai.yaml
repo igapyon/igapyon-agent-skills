@@ -1,0 +1,4 @@
+# Optional OpenAI agent metadata for __SKILL_NAME__.
+# Remove this file if the target skill does not provide agent metadata.
+name: __SKILL_NAME__
+description: __SKILL_TITLE__

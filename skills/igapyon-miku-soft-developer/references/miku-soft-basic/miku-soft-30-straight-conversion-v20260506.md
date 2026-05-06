@@ -1,4 +1,4 @@
-# Miku Software Straight Conversion Guide v20260425
+# Miku Software Straight Conversion Guide v20260506
 
 ## Purpose
 
@@ -78,6 +78,7 @@ At the start of straight conversion, fix at least the following items first.
 - Fix the primary test entrypoint to `mvn test`
 - Fix runtime packaging to a single fat jar
 - Decide whether to adopt a distribution zip depending on the processing target
+- Treat Maven plugin support as out of initial scope by default unless the developer explicitly requests it at the start
 - Create `workplace/` at the repository root, and track only `workplace/.gitkeep` in Git
 - Exclude all files under `workplace/` except `workplace/.gitkeep` from Git tracking
 - Do not add new features during straight conversion
@@ -112,6 +113,10 @@ Among the items above, the environment premises are fixed in the following sense
 - runtime packaging
   - Fix to a single fat jar
   - Add a distribution zip depending on the processing target
+- Maven plugin support
+  - Keep it out of the initial conversion scope by default
+  - Add it at the start only when the developer explicitly requests it
+  - Otherwise, revisit it as a finishing-stage or follow-up Java-side extension
 - local workspace
   - Place `workplace/` at the repository root
   - Track `workplace/.gitkeep` in Git
@@ -136,6 +141,7 @@ When starting straight conversion, fill in at least the following.
 - The primary test entrypoint has been fixed to `mvn test`
 - Runtime packaging has been fixed to a single fat jar
 - Whether to create a distribution zip has been decided depending on the processing target
+- Maven plugin support has been marked as initially out of scope unless explicitly requested by the developer
 - The policy to create `workplace/` at the repository root and track only `.gitkeep` in Git has been confirmed
 - The scope for not bringing in the GUI has been decided
 - If a CLI exists, how far the Node interface will be respected has been decided
@@ -172,6 +178,9 @@ First fix the following.
 - runtime packaging
   - Fix to a single fat jar
   - Add a distribution zip depending on the processing target
+- Maven plugin support
+  - Keep off by default for initial straight conversion
+  - Include it only when explicitly requested at the start, or defer it until the runtime core contract is stable
 - local workspace
   - Create `workplace/` at the repository root
   - Track only `workplace/.gitkeep` in Git
@@ -504,8 +513,20 @@ This section summarizes fixed policies, default policies, acceptable patterns, a
 Read the strength of individual sentences according to wording such as `fix`, `basically`, `allow`, and `example`.
 
 - Maven coordinates basically use `groupId = jp.igapyon` and `artifactId = <project>`
-- Artifact names for single fat jar, Maven plugin jar, and distribution zip are aligned to an `artifactId-version` style that is easy to trace from Maven coordinates
+- Artifact names for single fat jar, optional Maven plugin jar, and distribution zip are aligned to an `artifactId-version` style that is easy to trace from Maven coordinates
 - Runtime jar names inside distribution zips are also versioned like distribution file names
+- When a Java CLI runtime publishes GitHub Release assets, keep the shared release workflow compatible with `push` tags matching `v*` and manual dispatch with an explicit tag
+- Preserve existing tag-push release operation, such as `git push origin vX.Y.Z`, when migrating a sister Java project to the shared release workflow template
+- Do not trigger the shared release workflow from GitHub Release `published` events by default; with `softprops/action-gh-release`, tag push should create or update the GitHub Release and assets, and manual reruns should use `workflow_dispatch`
+- Check that the release tag version matches `pom.xml` `version`, or document any accepted dot-suffix rule such as `v0.5.0.1` for `0.5.0`
+- Set up the build JDK explicitly, normally Temurin Java 21 with Maven cache, before `mvn -B package`; set up Java 8 separately for the packaged runtime smoke test
+- Use Maven standard output names as the release workflow copy source by default, such as `target/<artifactId>-<project.version>.jar` and `target/<artifactId>-<project.version>-sources.jar`; if the repository intentionally uses a fixed `<finalName>`, document that and adjust the release workflow copy source explicitly
+- Obtain the Maven project version for release checks with `mvn help:evaluate -Dexpression=project.version -q -DforceStdout` in shared templates, instead of assuming that the first `<version>` tag in `pom.xml` is the project version
+- Obtain the Maven artifactId with `mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout` in shared release workflow templates, so release asset source paths and staged names do not depend on a hard-coded artifactId
+- Stage runtime and source jar assets with versioned names such as `<artifact>-<version>.jar` and `<artifact>-sources-<version>.jar`, and upload only those staged assets to the GitHub Release
+- Run a Java 8 `java -jar ... --version` smoke test against the staged runtime jar before uploading release assets
+- In multi-module repositories, point release asset preparation at the runtime module's `target/` directory, not the aggregator root `target/`; make that target directory an explicit workflow setting such as `RUNTIME_TARGET_DIR`
+- A release workflow may use `softprops/action-gh-release` for tag-push creation or update of GitHub Release assets, with `contents: write` permission and explicit asset overwrite behavior; use `gh release view/create/upload` only when the repository needs more detailed release existence, body, or note control
 - Place the CLI main class at `jp.igapyon.<project>.cli.<Project>Cli`
 - The CLI should not pack real processing into `main(String[] args)`; delegate to a testable entrypoint such as `run(String[] args, PrintStream out, PrintStream err)`
 - In principle, confine `System.exit` to the end of the CLI main, and return exit codes from core APIs and CLI implementation logic
@@ -592,7 +613,7 @@ Main examples:
 
 - Organization of public entrypoints such as `CoreApi*`
 - Java CLI entrypoint
-- Java-side wrapper module for adding Maven plugin goals
+- Java-side wrapper module for adding Maven plugin goals, when explicitly in scope or added later
 - API / CLI entrypoints for retrieving AI-facing prompt markdown
 - single fat jar packaging
 - distribution zip packaging depending on the processing target
@@ -600,8 +621,13 @@ Main examples:
 
 These are not mixed as the same responsibility as the upstream body; they are treated separately as `Java-side original extensions`.
 
-In addition to the CLI runtime, Java-side execution paths such as Maven plugins may be considered first-class, high-priority paths for CLI / batch conversion tools.
-Especially for tools that fit naturally into a build process, such as artifact generation, validation, conversion, and index creation, Maven plugin support is highly worth considering.
+Maven plugin support is optional, and should be off by default for the initial straight-conversion scope.
+The initial priority is to stabilize the runtime core, CLI or batch entrypoint, upstream parity, regression tests, packaging, and documentation.
+Maven plugin support adds module structure, Mojo classes, parameters, lifecycle assumptions, plugin smoke tests, and user-facing documentation, so adding it too early can make the conversion harder to keep traceable.
+
+If the developer explicitly requests Maven plugin support at the start, include it in scope and fix the plugin artifactId, goal prefix, goals, parameters, and verification commands early.
+Otherwise, treat Maven plugin support as a finishing-stage or follow-up Java-side extension that can be added after the runtime core contract is stable.
+Especially for tools that fit naturally into a build process, such as artifact generation, validation, conversion, and index creation, Maven plugin support is worth reconsidering near the end of initial conversion.
 
 In that case, a multi-module Maven reactor repository structure may be used.
 
@@ -632,7 +658,7 @@ Design notes:
 
 ## Naming When Adding a Maven Plugin
 
-When adding a Maven plugin as a Java-side original extension, align the artifact name, prefix, and goal name at the beginning.
+When adding a Maven plugin as a Java-side original extension, align the artifact name, prefix, and goal name at the beginning of that plugin work.
 Maven has its own conventions here, and fixing these later tends to widen the range of user-facing command and README changes.
 
 Basic policy:
@@ -667,7 +693,7 @@ Findings:
 - If `artifactId`, `goalPrefix`, and `goal` drift apart, README and execution method explanations tend to become hard to understand
 - Whether short form succeeds depends not only on naming but also on plugin group resolution settings
 - If parameter names use different vocabulary in CLI and Maven plugin, synchronization cost increases across README, help, tests, and adapter implementation
-- If the main target of straight conversion is CLI / batch / report work and it naturally fits into a build process, plugin naming should be fixed early
+- If Maven plugin support is explicitly in scope, plugin naming should be fixed early in that plugin work
 - If the same directory / batch feature exists in both CLI and Maven plugin, keep the plugin goal as a thin adapter, and fix traversal, relative path resolution, output name decisions, and repeated conversion in runtime helper tests
 
 ## CLI Handling
@@ -686,7 +712,7 @@ However, the following may be added for Java-side operational convenience.
 
 - batch command
 - directory input option
-- Maven plugin goal
+- Maven plugin goal, when explicitly in scope or added after the runtime core is stable
 - minimal startup method differences for fat jar execution
 - auxiliary diagnostics that match Java runtime / file APIs
 
@@ -695,7 +721,7 @@ Even in this case, keep the upstream CLI body contract separate from Java-side o
 Findings:
 
 - If the CLI contract is vague at the beginning, synchronization cost for help / README / tests / diagnostics tends to increase later
-- For CLIs that naturally fit into a build process, providing a Maven plugin often greatly improves practicality for Java users
+- For CLIs that naturally fit into a build process, providing a Maven plugin can improve practicality for Java users, but it should still remain outside the initial scope unless explicitly requested
 - Java-side original batch / directory commands are convenient, but mixing them with upstream straight conversion easily breaks the upstream-following unit
 - Because JVM startup cost exists, it is reasonable for Java CLI to provide directory / batch processing even apart from Maven plugins
 - In directory mode, allowing `outputFile` or archive options from single-file mode as-is often makes meaning ambiguous, so mutual exclusion should be fixed in entrypoint validation
@@ -892,6 +918,7 @@ To treat the initial stage of straight conversion as complete, it should satisfy
 - `upstream test intent -> Java test` mapping table exists
 - focused regression commands exist
 - If a CLI exists, contracts for main commands / options / diagnostics are fixed
+- Maven plugin support has been explicitly marked as out of scope, follow-up, or implemented Java-side extension
 - The follow-up log contains at least several concrete `upstream file` examples
 - Determinism has been confirmed for major artifacts
 - Byte-level parity has been confirmed for artifacts with high comparison value, or the reason for not applying it has been documented

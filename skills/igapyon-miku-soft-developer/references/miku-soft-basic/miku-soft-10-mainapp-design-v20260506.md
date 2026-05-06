@@ -1,4 +1,4 @@
-# Miku Software Main Application Design v20260505
+# Miku Software Main Application Design v20260506
 
 This memo organizes design characteristics commonly seen across the software series whose names start with `miku`.
 
@@ -147,6 +147,19 @@ Main applications use the following principles as defaults.
 - Try to obtain the same output from the same input and same settings
 
 Main applications keep the user flow short: load, verify, export, and pass to another tool or AI.
+
+### New Creation Sister Reference Principles
+
+For new main application creation, inspect one or more similar suffixless miku
+main application repositories before designing the initial repository shape.
+Use local checkouts under `workplace/` when available. If no same-layer sister
+checkout exists locally, record that absence and name the closest public or
+documented reference used instead.
+
+Use sister repositories to confirm practical details such as package metadata,
+source layout, UI or CLI entrypoints, test shape, generated artifact placement,
+release assets, README structure, and documentation split. These references do
+not replace the product-specific concept or the shared design principles.
 
 ### Scratch Implementation and Dependency Principles
 

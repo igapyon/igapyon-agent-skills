@@ -3,6 +3,29 @@
   "basePath": ".",
   "files": [
     {
+      "name": "package.json",
+      "path": "assets/agent-skills/package.json",
+      "ext": "json",
+      "dir": "assets/agent-skills",
+      "size": 339
+    },
+    {
+      "name": "INDEX.md",
+      "path": "assets/agent-skills/skills/__SKILL_NAME__/references/INDEX.md",
+      "ext": "md",
+      "dir": "assets/agent-skills/skills/__SKILL_NAME__/references",
+      "size": 283,
+      "summary": "__SKILL_TITLE__ References"
+    },
+    {
+      "name": "SKILL.md",
+      "path": "assets/agent-skills/skills/__SKILL_NAME__/SKILL.md",
+      "ext": "md",
+      "dir": "assets/agent-skills/skills/__SKILL_NAME__",
+      "size": 1388,
+      "summary": "--- name: __SKILL_NAME__ description: Use only when the user explicitly names `__PRODUCT_NAME__` or `__SKILL_NAME__` for __PRODUCT_NAME__-specific agent workflows. Do not auto-activate it for generic requests that merely mention the domain or output format"
+    },
+    {
       "name": "00-concept-naming-workflow.md",
       "path": "references/00-concept-naming-workflow.md",
       "ext": "md",
@@ -15,7 +38,7 @@
       "path": "references/10-node-app-workflow.md",
       "ext": "md",
       "dir": "references",
-      "size": 5322,
+      "size": 12203,
       "summary": "Node App Workflow"
     },
     {
@@ -23,7 +46,7 @@
       "path": "references/30-java-straight-conversion-workflow.md",
       "ext": "md",
       "dir": "references",
-      "size": 1386,
+      "size": 16689,
       "summary": "Java Straight Conversion Workflow"
     },
     {
@@ -31,7 +54,7 @@
       "path": "references/40-agent-skills-workflow.md",
       "ext": "md",
       "dir": "references",
-      "size": 1174,
+      "size": 7525,
       "summary": "Agent Skills Workflow"
     },
     {
@@ -39,7 +62,7 @@
       "path": "references/50-mcp-workflow.md",
       "ext": "md",
       "dir": "references",
-      "size": 1169,
+      "size": 2370,
       "summary": "MCP Workflow"
     },
     {
@@ -55,7 +78,7 @@
       "path": "references/architecture-rules.md",
       "ext": "md",
       "dir": "references",
-      "size": 2019,
+      "size": 3028,
       "summary": "miku-soft Architecture Rules"
     },
     {
@@ -71,7 +94,7 @@
       "path": "references/maintenance-workflow.md",
       "ext": "md",
       "dir": "references",
-      "size": 1147,
+      "size": 1316,
       "summary": "Existing miku-soft Maintenance Workflow"
     },
     {
@@ -83,44 +106,44 @@
       "summary": "Miku Software Overview Design v20260427"
     },
     {
-      "name": "miku-soft-10-mainapp-design-v20260505.md",
-      "path": "references/miku-soft-basic/miku-soft-10-mainapp-design-v20260505.md",
+      "name": "miku-soft-10-mainapp-design-v20260506.md",
+      "path": "references/miku-soft-basic/miku-soft-10-mainapp-design-v20260506.md",
       "ext": "md",
       "dir": "references/miku-soft-basic",
-      "size": 64302,
-      "summary": "Miku Software Main Application Design v20260505"
+      "size": 65008,
+      "summary": "Miku Software Main Application Design v20260506"
     },
     {
-      "name": "miku-soft-20-javaapp-design-v20260501.md",
-      "path": "references/miku-soft-basic/miku-soft-20-javaapp-design-v20260501.md",
+      "name": "miku-soft-20-javaapp-design-v20260506.md",
+      "path": "references/miku-soft-basic/miku-soft-20-javaapp-design-v20260506.md",
       "ext": "md",
       "dir": "references/miku-soft-basic",
-      "size": 41407,
-      "summary": "Miku Software Java Application Design v20260426"
+      "size": 42549,
+      "summary": "Miku Software Java Application Design v20260506"
     },
     {
-      "name": "miku-soft-30-straight-conversion-v20260425.md",
-      "path": "references/miku-soft-basic/miku-soft-30-straight-conversion-v20260425.md",
+      "name": "miku-soft-30-straight-conversion-v20260506.md",
+      "path": "references/miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md",
       "ext": "md",
       "dir": "references/miku-soft-basic",
-      "size": 55702,
-      "summary": "Miku Software Straight Conversion Guide v20260425"
+      "size": 59821,
+      "summary": "Miku Software Straight Conversion Guide v20260506"
     },
     {
-      "name": "miku-soft-40-agentskills-design-v20260501.md",
-      "path": "references/miku-soft-basic/miku-soft-40-agentskills-design-v20260501.md",
+      "name": "miku-soft-40-agentskills-design-v20260506.md",
+      "path": "references/miku-soft-basic/miku-soft-40-agentskills-design-v20260506.md",
       "ext": "md",
       "dir": "references/miku-soft-basic",
-      "size": 39734,
-      "summary": "Miku Software Agent Skills Design v20260425"
+      "size": 51792,
+      "summary": "Miku Software Agent Skills Design v20260506"
     },
     {
-      "name": "miku-soft-50-mcp-design-v20260501.md",
-      "path": "references/miku-soft-basic/miku-soft-50-mcp-design-v20260501.md",
+      "name": "miku-soft-50-mcp-design-v20260506.md",
+      "path": "references/miku-soft-basic/miku-soft-50-mcp-design-v20260506.md",
       "ext": "md",
       "dir": "references/miku-soft-basic",
-      "size": 41214,
-      "summary": "Miku Software MCP Design v20260501"
+      "size": 41933,
+      "summary": "Miku Software MCP Design v20260506"
     },
     {
       "name": "new-project-workflow.md",
@@ -137,6 +160,54 @@
       "dir": "references",
       "size": 1507,
       "summary": "miku-soft Repository Operations"
+    },
+    {
+      "name": "agent-skills.md",
+      "path": "references/review/agent-skills.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 5933,
+      "summary": "Agent Skills Review"
+    },
+    {
+      "name": "mcp-server.md",
+      "path": "references/review/mcp-server.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 6514,
+      "summary": "MCP Server Review"
+    },
+    {
+      "name": "node-cli.md",
+      "path": "references/review/node-cli.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 16469,
+      "summary": "Node.js CLI Review"
+    },
+    {
+      "name": "README.md",
+      "path": "references/review/README.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 4799,
+      "summary": "miku-soft Review Notes"
+    },
+    {
+      "name": "release-automation.md",
+      "path": "references/review/release-automation.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 7256,
+      "summary": "Release Automation Review"
+    },
+    {
+      "name": "single-file-web-app.md",
+      "path": "references/review/single-file-web-app.md",
+      "ext": "md",
+      "dir": "references/review",
+      "size": 13789,
+      "summary": "Single-file Web App Review"
     },
     {
       "name": "SKILL.md",

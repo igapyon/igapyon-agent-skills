@@ -4,6 +4,17 @@
 - [ ] skill 配布先が必要になったら mirror 方針を決める
 - [ ] UI metadata が必要になったら skill 用の `agents/openai.yaml` を検討する
 
+## igapyon-miku-soft-developer review 整理
+
+- [x] `skills/igapyon-miku-soft-developer/references/review/node-cli.md` に、他の review note と同じ `Severity Guidance` と `Review Output` を追加するか検討する
+- [x] `skills/igapyon-miku-soft-developer/references/review/` の入口として、各 review note の使い分けを説明する `README.md` または index 的な案内を追加するか検討する
+- [x] `skills/igapyon-miku-soft-developer/references/review/` 以下の review note 全体を整理し、ファイル粒度、見出し構成、分類条件、`Severity Guidance`、`Review Output` の揃い方を確認する
+- [x] `node-cli.md` と `single-file-web-app.md` の UI / CLI alignment 観点が重複・補完関係として自然に読めるか確認する
+- [x] `release-automation.md` と `node-cli.md` の single-file CLI runtime / source archive / npm pack の artifact role 用語をそろえる
+- [x] `agent-skills.md` と `mcp-server.md` の backend / transport / HTTP fallback / network visibility の用語をそろえる
+- [x] 全体レビュー観点として、リリース自動化まわりの実装漏れを重点的に確認できるようにする
+- [x] バージョン番号は、基本的に出来立ての miku-soft repository では `0.5.0` にし、`-SNAPSHOT` を付けない状態をチェック観点に加える
+
 ## miku-soft アーキテクチャ考察メモ
 
 - [ ] 再開時はまず `README.md` とこの `TODO.md` を読む
