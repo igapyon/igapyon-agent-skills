@@ -1,4 +1,4 @@
-# 掲載先情報
+# [xlsx2md] 設計書の取り消し線が Markdown で消えると、ちょっと危ない
 
 - 掲載先: Note
 - URL: https://note.com/toshikiigaa/n/nc0f61d0f1bb2

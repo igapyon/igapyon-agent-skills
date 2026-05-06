@@ -1,4 +1,4 @@
-# 掲載先情報
+# [xlsx2md] Excel の強調や取り消し線を Markdown に反映する重要さと `xlsx2md` の `plain/github` モード
 
 - 掲載先: Qiita
 - URL: https://qiita.com/igapyon/items/722caca07a254e1ade14

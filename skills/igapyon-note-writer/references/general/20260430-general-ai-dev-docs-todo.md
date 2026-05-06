@@ -1,4 +1,4 @@
-## 掲載先情報
+## 生成AI agent と開発するとき、README・docs・TODO は会話の外の記憶になる
 
 - 掲載先: Note
 - URL: https://note.com/toshikiigaa/n/n5dcb66e47151

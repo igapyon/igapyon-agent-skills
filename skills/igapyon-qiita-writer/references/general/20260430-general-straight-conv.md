@@ -1,4 +1,4 @@
-## 掲載先情報
+## [miku-soft] 生成AI時代のストレートコンバージョン設計
 
 - 掲載先: Qiita
 - URL: https://qiita.com/igapyon/items/a15d77f023d4cc61bb37

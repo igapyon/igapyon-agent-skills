@@ -7,80 +7,80 @@
       "path": "references/general/20260428-general.md",
       "ext": "md",
       "dir": "references/general",
-      "size": 19425,
-      "summary": "掲載先情報"
+      "size": 19508,
+      "summary": "生成AIとの総会話時間が、自然言語プログラミングの感覚を育てている話"
     },
     {
       "name": "20260429-general.md",
       "path": "references/general/20260429-general.md",
       "ext": "md",
       "dir": "references/general",
-      "size": 13200,
-      "summary": "掲載先情報"
+      "size": 13301,
+      "summary": "知識ベース型 Agent Skills は、静的 Markdown だけでも育てられる（SKILL.md + references/ 設計）"
     },
     {
       "name": "20260430-general.md",
       "path": "references/general/20260430-general.md",
       "ext": "md",
       "dir": "references/general",
-      "size": 22118,
-      "summary": "掲載先情報"
+      "size": 22213,
+      "summary": "[miku-soft] 生成AI時代におけるアプリケーションのソフトウェアアーキテクチャ設計"
     },
     {
       "name": "20260430-general-ai-dev-docs-workplace.md",
       "path": "references/general/20260430-general-ai-dev-docs-workplace.md",
       "ext": "md",
       "dir": "references/general",
-      "size": 19925,
-      "summary": "掲載先情報"
+      "size": 20003,
+      "summary": "[miku-soft] 生成AI駆動開発における README / docs / TODO / workplace の使い分け"
     },
     {
       "name": "20260430-general-straight-conv.md",
       "path": "references/general/20260430-general-straight-conv.md",
       "ext": "md",
       "dir": "references/general",
-      "size": 71172,
-      "summary": "掲載先情報"
+      "size": 71228,
+      "summary": "[miku-soft] 生成AI時代のストレートコンバージョン設計"
     },
     {
       "name": "20260430-miku-soft-architecture-topic-bank.md",
       "path": "references/general/20260430-miku-soft-architecture-topic-bank.md",
       "ext": "md",
       "dir": "references/general",
-      "size": 22394,
-      "summary": "--- title: [miku-soft] 生成AI時代の local-first ツール群アーキテクチャ topic bank tags: 生成AI ソフトウェアアーキテクチャ AgentSkills MCP CLI author: igapyon slide: false ---"
+      "size": 22461,
+      "summary": "記事のストック/元ネタ"
     },
     {
       "name": "20260502-general-repository-engineering.md",
       "path": "references/general/20260502-general-repository-engineering.md",
       "ext": "md",
       "dir": "references/general",
-      "size": 16315,
-      "summary": "掲載先情報"
+      "size": 16350,
+      "summary": "生成AI時代の repository engineering 徒然考"
     },
     {
       "name": "20260503-general-miku-soft-agent-skills.md",
       "path": "references/general/20260503-general-miku-soft-agent-skills.md",
       "ext": "md",
       "dir": "references/general",
-      "size": 5279,
-      "summary": "掲載先情報"
+      "size": 5309,
+      "summary": "[miku-soft] miku-soft の Agent Skills 一覧"
     },
     {
       "name": "20260505-general-ai-agent-skills-basic.md",
       "path": "references/general/20260505-general-ai-agent-skills-basic.md",
       "ext": "md",
       "dir": "references/general",
-      "size": 10551,
-      "summary": "掲載先情報"
+      "size": 10592,
+      "summary": "AI agent と Agent Skills ってそもそも何だろう"
     },
     {
       "name": "20260412-miku-abc-player-intro.md",
       "path": "references/miku-abc-player/20260412-miku-abc-player-intro.md",
       "ext": "md",
       "dir": "references/miku-abc-player",
-      "size": 11208,
-      "summary": "掲載先情報"
+      "size": 11296,
+      "summary": "[miku-abc-player] `ABC` を貼ると譜面を見て再生できる `miku-abc-player` を作りました"
     },
     {
       "name": "20260506-miku-grep-usage.md",
@@ -95,8 +95,8 @@
       "path": "references/miku-indexgen/20260428-miku-indexgen-intro.md",
       "ext": "md",
       "dir": "references/miku-indexgen",
-      "size": 9493,
-      "summary": "掲載先情報"
+      "size": 9590,
+      "summary": "[miku-indexgen] AI エージェントが読む前に、ディレクトリの index.json / index.md を作る CLI"
     },
     {
       "name": "20260506-miku-javaclass2json-usage.md",
@@ -175,56 +175,56 @@
       "path": "references/miku-xlsx2md/20260320-vscode-gpt54-chat-dev.md",
       "ext": "md",
       "dir": "references/miku-xlsx2md",
-      "size": 20768,
-      "summary": "VS Code + GPT-5.4 開発体験記事メモ"
+      "size": 16093,
+      "summary": "VS Code + GPT-5.4 と会話しながら、アプリ開発をかなり広い範囲で進めた話"
     },
     {
       "name": "20260320-xlsx2md-intro.md",
       "path": "references/miku-xlsx2md/20260320-xlsx2md-intro.md",
       "ext": "md",
       "dir": "references/miku-xlsx2md",
-      "size": 17367,
-      "summary": "`xlsx2md` 紹介記事メモ"
+      "size": 16410,
+      "summary": "Excelブックを生成AI向けMarkdownに変換する `xlsx2md` を作りました"
     },
     {
       "name": "20260321-xlsx2md-cli.md",
       "path": "references/miku-xlsx2md/20260321-xlsx2md-cli.md",
       "ext": "md",
       "dir": "references/miku-xlsx2md",
-      "size": 4951,
-      "summary": "`xlsx2md` CLI 追加記事メモ"
+      "size": 4059,
+      "summary": "`xlsx2md` に Node CLI を追加した話"
     },
     {
       "name": "20260321-xlsx2md-cli-ai-dev-log.md",
       "path": "references/miku-xlsx2md/20260321-xlsx2md-cli-ai-dev-log.md",
       "ext": "md",
       "dir": "references/miku-xlsx2md",
-      "size": 16755,
-      "summary": "`xlsx2md` CLI AI 開発ログ記事メモ"
+      "size": 15237,
+      "summary": "AI駆動開発の実録。GUI アプリに CLI を追加したときの対話ログ"
     },
     {
       "name": "20260326-xlsx2md-grid-bugfix.md",
       "path": "references/miku-xlsx2md/20260326-xlsx2md-grid-bugfix.md",
       "ext": "md",
       "dir": "references/miku-xlsx2md",
-      "size": 8862,
-      "summary": "`xlsx2md` Excel 方眼サンプル不具合修正記事メモ"
+      "size": 7380,
+      "summary": "[xlsx2md] 記事用の Excel 方眼サンプルで見つかった不具合を修正した話"
     },
     {
       "name": "20260327-xlsx2md-rich-markdown.md",
       "path": "references/miku-xlsx2md/20260327-xlsx2md-rich-markdown.md",
       "ext": "md",
       "dir": "references/miku-xlsx2md",
-      "size": 8834,
-      "summary": "掲載先情報"
+      "size": 8941,
+      "summary": "[xlsx2md] Excel の強調や取り消し線を Markdown に反映する重要さと `xlsx2md` の `plain/github` モード"
     },
     {
       "name": "20260425-xlsx2md-java.md",
       "path": "references/miku-xlsx2md/20260425-xlsx2md-java.md",
       "ext": "md",
       "dir": "references/miku-xlsx2md",
-      "size": 20759,
-      "summary": "掲載先情報"
+      "size": 20803,
+      "summary": "[miku-xlsx2md] Node 版を入力に、生成AIで Java 版"
     },
     {
       "name": "xlsx2md-feature-list-memo.md",
