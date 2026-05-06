@@ -173,6 +173,38 @@ The CLI may expose batch, directory, or automation-oriented features that do not
 belong in the Web UI. Treat those as CLI-side operational extensions only when
 their semantics and artifact roles are documented.
 
+## Node and Java Sort Parity Checks
+
+Some miku-soft Node.js products later receive Java straight conversions. Review
+string sorting as an explicit compatibility contract because JavaScript and
+Java defaults can differ.
+
+Check these points:
+
+- ordered paths, diagnostics, generated indexes, archive entries, reports, and
+  JSON arrays have documented sort keys and comparator semantics
+- machine-facing path and diagnostic-code ordering uses deterministic UTF-16
+  code unit order when Java parity is expected, equivalent to Java
+  `String.compareTo`
+- human-facing Japanese ordering uses an explicit locale collation rule and a
+  deterministic tie-breaker, not ambient runtime defaults
+- JavaScript code does not use bare `localeCompare`, `Array.prototype.sort()`
+  on strings, object key iteration, `Map` insertion order, or filesystem
+  traversal order as an implicit product order
+- Java code does not use `Collator`, `Collections.sort`, `TreeMap`, `TreeSet`,
+  `Path.compareTo`, or filesystem traversal order without checking that the
+  resulting order matches the Node contract
+- numeric, date, tick, position, line, column, and outline ordering use numeric
+  or domain-specific comparators rather than string comparison
+- parity tests include names that reveal ordering differences, such as mixed
+  ASCII and Japanese filenames or labels, when sorted output is part of the
+  contract
+
+If the repository intentionally changes sort behavior in the Java version,
+review whether README, CLI docs, golden outputs, and migration notes describe
+the difference as a product decision. Otherwise, treat Node/Java sort drift as
+a parity defect.
+
 ## Local Safety Checks
 
 Several miku-soft CLIs are intended for AI agents reading or searching local
@@ -304,6 +336,9 @@ Use this severity guidance during Review mode:
   implicit, or hard to infer from the command and docs.
 - Medium: Web UI and CLI defaults or artifact vocabulary diverge without a
   documented runtime or workflow reason.
+- Medium: Node and Java versions can emit different sorted paths, diagnostics,
+  generated indexes, archive entries, reports, or JSON arrays because the sort
+  order is undocumented or relies on runtime defaults.
 - Medium: bundle artifacts are present but lack smoke checks, clear naming, or
   downstream placement instructions.
 - Low: minor naming, docs, or package metadata issues make the CLI harder to
