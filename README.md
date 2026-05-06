@@ -77,6 +77,35 @@ skill を利用する際は、`SKILL.md` を入口とし、具体ルール、例
 一方、`references/general/` は、この repo を正本として管理する一般記事用の置き場です。  
 `miku` 系プロダクトに分類されない Qiita / Note 記事は、必要に応じて各 writer skill の `references/general/` に置きます。
 
+## docs/articles 集約状況
+
+記事管理は、Qiita 向け記事を `skills/igapyon-qiita-writer/references/`、Note 向け記事を `skills/igapyon-note-writer/references/` に集約する方針です。
+
+2026-05-06 時点で、`workplace/*/docs/articles/qiita/` 配下の有意な記事本文は、`README.md` と `TEMPLATE.md` を除き、すべて `skills/igapyon-qiita-writer/references/` 側に同一内容で存在することを確認済みです。
+
+対象は次の通りです。
+
+- `miku-abc-player`: 1 件
+- `miku-indexgen`: 1 件
+- `miku-xlsx2md`: 8 件
+- `mikuproject`: 4 件
+- `mikuscore`: 2 件
+
+同じく 2026-05-06 時点で、`workplace/*/docs/articles/note/` 配下の有意な記事本文は、`README.md` と `TEMPLATE.md` を除き、すべて `skills/igapyon-note-writer/references/` 側に同一内容で存在することを確認済みです。
+
+対象は次の通りです。
+
+- `miku-abc-player`: 1 件
+- `miku-indexgen`: 1 件
+- `miku-xlsx2md`: 3 件
+- `mikuproject`: 3 件
+- `mikuscore`: 2 件
+
+`mikuscore` の記事は、`workplace/docs-articles/mikuscore-devel/` と `workplace/docs-articles/miku-abc-player-devel/vendor/mikuscore/` の両方に重複して存在する場合があります。  
+集約先の `references/mikuscore/` では 1 セットとして保持します。
+
+`references/general/` 配下の記事は、`workplace/*/docs/articles/` 由来ではない一般記事を、この repo 側で集約管理するための置き場です。
+
 ## 構成
 
 ```text
