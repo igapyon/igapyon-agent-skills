@@ -2,17 +2,32 @@
 
 Use this workflow for creating or maintaining a miku-soft Node.js / TypeScript main application.
 
-Detailed design guidance lives in [miku-soft-basic/miku-soft-10-mainapp-design-v20260505.md](miku-soft-basic/miku-soft-10-mainapp-design-v20260505.md). Keep this file as the execution checklist.
+Detailed design guidance lives in [miku-soft-basic/miku-soft-10-mainapp-design-v20260506.md](miku-soft-basic/miku-soft-10-mainapp-design-v20260506.md). Keep this file as the execution checklist.
+
+## Required Initial Input
+
+At the beginning of new main application creation, require one or more similar
+suffixless miku main application source checkout paths under `workplace/`, or
+inspect the target repository's `workplace/` for likely local references. If no
+same-layer sister checkout exists locally, record that explicitly and name the
+closest public or documented reference used instead.
+
+These references are practical shape references for repository layout, package
+metadata, UI or CLI contracts, tests, docs, release assets, and generated
+artifacts. They do not replace the product-specific concept or the basic design
+document.
 
 ## First Reads
 
 1. Read [architecture-rules.md](architecture-rules.md).
 2. Read the main application basic document.
 3. Inspect existing README, docs, TODO, package metadata, source layout, CLI scripts, tests, and generated indexes.
+4. For new creation, inspect the same-layer sister main application reference before designing files.
+5. For new creation, before scaffolding or initial file design, summarize which sister project was used, which product shape it represents, and which concrete repository-shape decisions were adopted or rejected.
 
 ## Reference Projects
 
-For new Node app creation, prefer starting from one or more similar existing miku-soft projects expanded under `workplace/`.
+For new Node app creation, start from one or more similar existing miku-soft projects expanded under `workplace/`.
 
 If the user has not provided reference projects, ask them to provide the closest existing miku-soft examples before scaffolding the new app. Treat those examples as shape references for repository layout, package metadata, CLI contracts, tests, docs, and build artifacts.
 
@@ -77,6 +92,7 @@ Check these points:
 - The workflow only attaches release assets for version tags, normally `v*`.
 - The checkout ref uses the release tag or manually supplied tag, not an unrelated branch tip.
 - The workflow runs dependency install, build, asset preparation, and `smoke:bundle` before upload.
+- The `smoke:bundle` command verifies that the generated single-file runtime starts and responds to both `--version` and `--help`.
 - The release tag version is checked against `package.json` `version`; if patch suffix tags are allowed, the accepted suffix rule is explicit.
 - Runtime and source assets are copied from `bundle/` into a release staging directory with product and version in the filename.
 - Upload uses the GitHub Release tag and only the prepared miku-soft CLI assets, normally `<product>-<version>.mjs` and `<product>-sources-<version>.tgz`.
@@ -92,6 +108,8 @@ For a Release CLI bundle request, the expected release assets are usually:
 If the package version is `0.5.0`, accepted release tags include `v0.5.0`, `v0.5.0.1`, and `v0.5.0.2`. Reject unrelated version tags such as `v0.5.1` and `v0.6.0`. Use the tag version, without the leading `v`, in release asset filenames so a patch suffix tag such as `v0.5.0.1` produces assets such as `<product>-0.5.0.1.mjs`.
 
 If the current repository only has `npm pack` and does not yet generate `bundle/<product>.mjs` and `bundle/<product>-sources.tgz`, first report that gap and add or propose the bundle build / smoke path before wiring the GitHub Release upload.
+
+The bundle smoke path should include metadata checks for the generated runtime artifact. At minimum, run the bundled CLI with `--version` and `--help` without requiring normal input files or stdin payloads. Product-specific smoke checks may add a small real operation after those metadata checks.
 
 When the repository has a documented bundle build and smoke script, the expected local workflow file is normally `.github/workflows/release-cli-bundle.yml` with this shape, adapted to the product name and artifact paths:
 
@@ -179,7 +197,8 @@ Do not treat Release asset upload as a substitute for local bundle verification.
 2. Separate product core, Web UI, CLI, tests, docs, and generated artifacts when the repository structure supports it.
 3. Define CLI inputs, outputs, exit behavior, diagnostics, and artifact roles when CLI behavior exists.
 4. Keep local-first behavior and avoid adding network assumptions unless the product explicitly requires them.
-5. Update README, docs, TODO, tests, and indexes when the main application contract changes.
+5. Treat the sister-reference summary as required implementation context for new creation work.
+6. Update README, docs, TODO, tests, and indexes when the main application contract changes.
 
 ## Node-Specific Checklist
 
@@ -189,6 +208,7 @@ When a Node app change touches executable behavior, check the relevant local con
 - TypeScript configuration and emitted runtime paths such as `dist/`, `src/js/`, generated HTML, or `bundle/*.mjs`
 - CLI metadata such as `bin`, `exports`, `types`, `engines`, and package `files`
 - CLI behavior for `--help`, `--version`, stdin, stdout, stderr, exit code, diagnostics, and usage errors
+- bundled runtime smoke behavior for both `--version` and `--help`
 - tests for core API, CLI subprocess behavior, encoding, path security, limits, diagnostics, fixtures, golden output, roundtrip behavior, or UI wiring
 - generated artifacts that should be rebuilt instead of hand-edited
 

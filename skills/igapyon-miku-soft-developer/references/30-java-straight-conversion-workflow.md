@@ -10,7 +10,7 @@ targets the Java companion repository, normally with a `-java` suffix.
 
 Detailed design guidance lives in:
 
-- [miku-soft-basic/miku-soft-20-javaapp-design-v20260501.md](miku-soft-basic/miku-soft-20-javaapp-design-v20260501.md)
+- [miku-soft-basic/miku-soft-20-javaapp-design-v20260506.md](miku-soft-basic/miku-soft-20-javaapp-design-v20260506.md)
 - [miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md](miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md)
 
 Keep this file as the execution checklist. Load the detailed design documents
@@ -18,7 +18,7 @@ only when a policy decision is unclear.
 
 ## Required Initial Input
 
-At the beginning of a Java straight-conversion task, require the upstream
+At the beginning of a new Java straight-conversion task, require the upstream
 Node.js / TypeScript main application GitHub repository URL: the repository
 that would be maintained using [10-node-app-workflow.md](10-node-app-workflow.md).
 If the user has not provided it yet, ask for it before inventory, scaffolding,
@@ -29,12 +29,15 @@ that should be treated as the compatibility source. When the exact upstream
 state is unknown, use the GitHub repository URL as the first anchor and record
 the follow-up needed to pin the precise source revision.
 
-Also require one or more similar existing miku-soft Java companion repositories
-as sister-project references under `workplace/`. These are `-java` repositories
-at the same companion layer as the target Java repository, not the Node.js /
-TypeScript upstream. If the user has not provided them yet, ask for the closest
-available `-java` sister project source checkout path under `workplace/` before
-scaffolding or implementation work.
+Also require a sister-reference check for one or more similar existing
+miku-soft Java companion repositories under `workplace/`. These are `-java`
+repositories at the same companion layer as the target Java repository, not the
+Node.js / TypeScript upstream. If the user has not provided them yet, ask for
+the closest available `-java` sister project source checkout path under
+`workplace/`, or inspect the target repository's `workplace/` for likely local
+references, before scaffolding or initial implementation work. If no
+same-layer sister checkout exists locally, record that explicitly and name the
+closest public or documented reference used instead.
 
 ## First Reads
 
@@ -42,6 +45,10 @@ scaffolding or implementation work.
 2. Read the Java application and straight conversion basic documents.
 3. Inspect upstream evidence, existing Java source, mapping documents, tests,
    build files, README, docs, TODO, and workplace instructions.
+4. For new conversion, inspect the same-layer `-java` sister reference before designing files.
+5. For new conversion, before scaffolding or initial file design, summarize
+   which sister project was used, which Java product shape it represents, and
+   which concrete repository-shape decisions were adopted or rejected.
 
 ## Fixed Premises
 
@@ -70,7 +77,7 @@ behavior unless the user explicitly asks for a separate Java-side extension.
 
 ## Sister Java Reference Projects
 
-For initial conversion or substantial maintenance, use one or more existing
+For initial conversion, use one or more existing
 miku-soft `-java` companion repositories expanded under `workplace/` as
 sister-project references.
 
@@ -313,6 +320,7 @@ confirms the Java side should carry a separate behavior.
 Before finishing a conversion task:
 
 - upstream source and target Java repository are clear
+- for initial conversion, sister `-java` reference was inspected, or its local absence was recorded
 - upstream-derived behavior and Java-side extensions are separated
 - mapping documents reflect changed source, tests, or CLI contracts
 - README and docs agree with current runtime behavior
