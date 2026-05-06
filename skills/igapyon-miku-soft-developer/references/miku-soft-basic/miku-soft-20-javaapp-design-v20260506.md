@@ -1,4 +1,4 @@
-# Miku Software Java Application Design v20260426
+# Miku Software Java Application Design v20260506
 
 This memo organizes design characteristics commonly expected for Java application versions in the `miku` software series.
 
@@ -178,6 +178,20 @@ Java applications use the following principles as defaults.
 
 These are defaults for the miku Java series. Individual products may add product-specific conventions, but should not change these foundations casually.
 
+### New Creation Sister Reference Principles
+
+For new Java application creation or initial straight conversion, inspect one
+or more similar miku `-java` repositories before designing the initial Maven
+layout, package names, runtime jar, tests, release assets, or mapping
+documents. Use local checkouts under `workplace/` when available. If no
+same-layer sister checkout exists locally, record that absence and name the
+closest public or documented reference used instead.
+
+Use sister repositories to confirm practical Java-side details such as module
+shape, CLI class placement, Maven plugin separation, distribution zip policy,
+GitHub Release asset workflow, focused regression style, and documentation
+split. These references do not replace the upstream main application contract.
+
 ### Upstream-Following Principles
 
 Java applications preserve upstream-following ability.
@@ -342,6 +356,8 @@ CLI design emphasizes the following.
 When the upstream has a CLI, the Java CLI should respect its interface as far as practical. This includes the command group structure, subcommand names, option names, stdin / stdout conventions, diagnostics options, and usage-error boundaries. Differences caused by Java runtime needs or Java-side automation extensions should be documented.
 
 CLI help, README usage, and tests should be synchronized closely enough that option descriptions do not drift.
+
+Java CLI runtime artifacts should provide `--help` and `--version` as metadata commands. These commands should not require normal input files or stdin payloads. Release asset smoke tests may use `java -jar <artifact>.jar --version` as the minimum runtime-start verification, and focused CLI tests should also cover `--help` when the CLI surface is present.
 
 ### Diagnostics and Logging Principles
 

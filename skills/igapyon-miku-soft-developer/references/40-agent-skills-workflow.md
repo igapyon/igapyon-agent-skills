@@ -6,7 +6,7 @@ Detailed design guidance lives in [miku-soft-basic/miku-soft-40-agentskills-desi
 
 ## Required Initial Input
 
-At the beginning of an Agent Skills creation or substantial maintenance task,
+At the beginning of a new Agent Skills creation task,
 require the upstream miku main application GitHub repository URL: the product
 repository whose behavior, APIs, CLI contracts, runtime artifacts, diagnostics,
 and limitations the skill should expose to agents.
@@ -23,10 +23,71 @@ packaging, or smoke-test work. These artifacts should normally be downloaded
 from the upstream GitHub Releases page or another documented upstream release
 channel, then renamed to the skill's declared versioned runtime artifact names.
 
-When available, also require one or more similar existing miku `-skills`
-sister project source checkout paths under `workplace/`. These are practical
-shape references for the Agent Skills layer, not replacements for the upstream
-product source.
+Require a sister-reference check before scaffolding or initial file design. Ask
+for one or more similar existing miku `-skills` sister project source checkout
+paths under `workplace/`, or inspect the target repository's `workplace/` for
+likely checkouts. If no sister checkout exists locally, record that explicitly
+before proceeding. These are practical shape references for the Agent Skills
+layer, not replacements for the upstream product source.
+
+## Starter Assets
+
+Bundled starter templates are available under `assets/agent-skills/`:
+
+- `package.json`
+  - Starter npm metadata for build, test, and bundle orchestration.
+  - Keep `private: true` unless the repository explicitly chooses npm
+    publication.
+  - Replace `__REPO_NAME__` and `__VERSION__`.
+- `scripts/build-skill-bundle.mjs`
+  - Builds `bundle/<repo-name>/skills/<skill-name>/...` from
+    `skills/<skill-name>/`.
+  - Excludes `.DS_Store` and nested temporary `tmp`, `output`, and `state`
+    contents.
+- `scripts/build-skill-bundle-zip.mjs`
+  - Builds the installable bundle first, then creates a release zip such as
+    `bundle/igapyon-<repo-name>-<version>.zip`.
+  - Adjust the zip name if the target repository already has a release naming
+    convention.
+- `tests/release-bundle-contents.test.mjs`
+  - Verifies required skill files are included and development-only files are
+    excluded from the release zip.
+- `tests/isolated-bundle-smoke.test.mjs`
+  - Copies the generated bundle to a temporary directory and verifies the
+    installed bundle shape.
+  - When runtime artifacts are present, smoke-tests the matching jar or mjs
+    with `--version`.
+- `.github/workflows/release-build.yml`
+  - Standard release asset workflow template for building the skill bundle zip
+    and attaching it to a GitHub Release.
+  - Copy for new `-skills` repositories by default, then adapt runtime artifact
+    verification and zip naming to the target skill.
+  - Omit only when the repository intentionally does not use GitHub Release
+    assets, and record that reason.
+- `skills/__SKILL_NAME__/`
+  - Minimal skill skeleton with `SKILL.md`, optional `agents/openai.yaml`,
+    `references/INDEX.md`, `lib/`, and `runtime/`.
+
+After copying these templates, replace `__REPO_NAME__`, `__SKILL_NAME__`,
+`__SKILL_TITLE__`, `__PRODUCT_NAME__`, and `__VERSION__`.
+
+## Release Asset Workflow
+
+`.github/workflows/release-build.yml` is a standard starter asset for new
+Agent Skills skeletons. Treat it as a local release asset workflow preparation
+file, not as a GitHub operation.
+
+For new `-skills` repository creation, inspect sister `-skills` repositories
+for their GitHub Actions release asset workflow and normally add or adapt the
+local release workflow during initial scaffolding. Omit it only when the user
+explicitly does not want GitHub Actions release support, or when the repository
+has a documented non-GitHub release path. If it is not added during initial
+creation, record why.
+
+The agent may create or edit the local workflow file. Creating GitHub releases,
+pushing tags or branches, publishing packages, and uploading release assets
+remain human GitHub or registry operations as described in
+[repo-operations.md](repo-operations.md).
 
 ## First Reads
 
@@ -34,7 +95,8 @@ product source.
 2. Read [architecture-rules.md](architecture-rules.md).
 3. Read the Agent Skills basic document.
 4. Inspect the upstream product README, runtime artifacts, CLI/API contracts, existing skill files, references, assets, tests, README, docs, TODO, and generated indexes.
-5. When available, inspect existing `-skills` sister application checkouts under `workplace/` for the same maturity pattern, especially `SKILL.md`, `runtime/`, `lib/`, `scripts/`, `tests/`, `references/runtime/`, and bundle output.
+5. For new creation, inspect existing `-skills` sister application checkouts under `workplace/` for the same maturity pattern, especially `SKILL.md`, `runtime/`, `lib/`, `scripts/`, `tests/`, `.github/workflows/`, `references/runtime/`, and bundle output. If no checkout is available, write down that absence and the closest public or documented reference before designing files.
+6. For new creation, before scaffolding or initial file design, summarize which sister project was used, which maturity pattern it represents, and which concrete repository-shape decisions were adopted or rejected.
 
 ## Checklist
 
@@ -42,11 +104,18 @@ product source.
 2. Do not duplicate product logic in `SKILL.md` or references.
 3. Keep `SKILL.md` lean and put detailed workflow material under `references/`.
 4. Define activation behavior narrowly when the skill can affect broad repository work.
-5. Fix the upstream URL and compatibility source before designing runtime lookup or tests.
-6. For CLI-backed work, confirm that required runtime artifacts have been placed under `skills/<skill-name>/runtime/`.
-7. Decide the implementation maturity pattern: handoff-only, CLI-backed, or CLI plus MCP-backed.
-8. Describe runtime artifact lookup, artifact roles, diagnostics, and handoff points when relevant.
-9. Keep backend policy strict: `*-only` policies must not silently fallback, and `handoff-only` must not execute runtime operations.
-10. Verify bundle contents include required skill files and runtime artifacts while excluding development-only files.
-11. Use sister projects as shape references only; do not copy `workplace/` contents into the target repository wholesale.
-12. Update indexes and validation output after adding or changing skill files.
+5. Treat `-skills` as the standard companion deliverable for miku-soft products that provide Node.js or Java CLI runtime artifacts.
+6. Prefer CLI-backed or CLI plus MCP-backed maturity when runtime artifacts exist; use `handoff-only` mainly for early MVPs or explicitly CLI-less workflows.
+7. Fix the upstream URL and compatibility source before designing runtime lookup or tests.
+8. For CLI-backed work, confirm that required runtime artifacts have been placed under `skills/<skill-name>/runtime/`.
+9. Decide the implementation maturity pattern: handoff-only, CLI-backed, or CLI plus MCP-backed.
+10. For new `-skills` repositories, create `build:bundle` and `build:bundle:zip` from the initial skeleton stage.
+11. Put required skill helpers under `skills/<skill-name>/lib/`, not root-level `lib/`, unless the repository explicitly owns a separate root tool.
+12. Describe runtime artifact lookup, artifact roles, diagnostics, and handoff points when relevant.
+13. Keep backend policy strict: `*-only` policies must not silently fallback, and `handoff-only` must not execute runtime operations.
+14. Verify bundle contents include required skill files and runtime artifacts while excluding development-only files.
+15. Add isolated bundle smoke when the skill depends on runtime artifacts.
+16. Treat the sister-reference summary as required implementation context for new creation work.
+17. Use sister projects as shape references only; do not copy `workplace/` contents into the target repository wholesale.
+18. Add the local GitHub Actions release asset workflow from the starter template by default, or record the explicit reason for omitting it.
+19. Update indexes and validation output after adding or changing skill files.

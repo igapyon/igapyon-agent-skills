@@ -29,9 +29,9 @@ This document is not a detailed specification for one skill repository. Reposito
 
 Use the shared design documents together as follows.
 
-- `docs/miku-soft-10-mainapp-design-v20260505.md`
+- `docs/miku-soft-10-mainapp-design-v20260506.md`
   - describes the upstream product design and semantic center
-- `docs/miku-soft-20-javaapp-design-v20260501.md`
+- `docs/miku-soft-20-javaapp-design-v20260506.md`
   - describes Java runtime versions when they exist
 - `docs/miku-soft-30-straight-conversion-v20260506.md`
   - describes how Java versions are created from upstream main applications
@@ -96,6 +96,12 @@ The Agent Skills version emphasizes the parts that fit AI-agent operation partic
 
 An Agent Skills version should not become a generic planner, generic converter, or autonomous replacement for the upstream application. Its value is that an AI agent can use the upstream miku product correctly with less guesswork.
 
+For the miku-soft series, a `-skills` repository is normally expected when the upstream product has a Node.js CLI, Java CLI, structured artifacts, or AI-facing handoff workflow.
+
+This is because the normal miku-soft product line tends to provide Node.js and/or Java CLI runtime artifacts. The `-skills` repository is the standard agent-facing companion layer that tells agents how to activate the workflow, locate runtime artifacts, execute CLI-backed operations, interpret diagnostics, apply backend policy, and use the installable skill bundle.
+
+A product may temporarily have no `-skills` repository during early proof-of-concept work or when it is explicitly not intended for agent operation. In that case, record the absence as a current scope decision, not as the normal target state.
+
 ## Relationship to Main Applications
 
 Agent Skills versions are downstream of miku main applications.
@@ -113,7 +119,7 @@ The preferred relationship is as follows.
 
 If an upstream capability is missing, the preferred order is to request or implement the capability on the upstream side, expose it as a stable upstream API, and then let the skill call it. Agent Skills should not silently add upstream product capabilities on the skill side. Skill-local workaround code should be treated as temporary or product-specific, not as the new semantic center.
 
-For new Agent Skills creation or substantial maintenance, fix the upstream anchor at the start.
+For new Agent Skills creation, fix the upstream anchor at the start.
 
 Required initial inputs should include:
 
@@ -121,7 +127,7 @@ Required initial inputs should include:
 - upstream branch, tag, release, commit, or received runtime artifact version used as the compatibility source
 - required upstream runtime artifacts already placed under `skills/<skill-name>/runtime/` for CLI-backed work
 - expected upstream API, CLI, runtime artifact, MCP server, or handoff contract that the skill will expose
-- closest available `-skills` sister project checkout under `workplace/`, when one exists
+- closest available `-skills` sister project checkout under `workplace/`, or an explicit note that no local sister checkout is available
 
 If the exact upstream revision or runtime artifact version is unknown, record the repository URL first and leave a concrete follow-up to pin it. Do not design activation rules, runtime lookup, bundle tests, or operation maps as if the upstream product boundary were implicit.
 
@@ -205,7 +211,7 @@ Common patterns are:
 - CLI-backed skill: declares bundled runtime artifacts and executes local operations through Java or Node.js CLI paths
 - CLI plus MCP-backed skill: keeps the Agent Skill as the workflow layer while backend policy chooses CLI, MCP, or handoff execution
 
-For new miku Agent Skills work, prefer the CLI-backed or CLI plus MCP-backed pattern when the upstream product can provide stable runtime artifacts.
+For new miku Agent Skills work, prefer the CLI-backed or CLI plus MCP-backed pattern when the upstream product can provide stable runtime artifacts. `Handoff-only` remains allowed for early MVPs, documentation-first workflows, or future products that intentionally have no CLI runtime, but it should not be treated as the default mature target when CLI runtime artifacts exist.
 
 Observed examples:
 
@@ -214,7 +220,7 @@ Observed examples:
 
 ### Sister Project Reference Principles
 
-For initial creation or substantial maintenance of an Agent Skills repository, it is useful to inspect one or more existing miku `-skills` sister repositories under `workplace/`.
+For new Agent Skills repository creation, inspect one or more existing miku `-skills` sister repositories under `workplace/` before scaffolding or initial file design. If no local sister checkout is available, record that absence and name the closest public or documented reference used instead.
 
 This is a practical implementation reference technique, not a replacement for the design documents. Use sister repositories to confirm details that are easy to miss, such as:
 
@@ -227,6 +233,8 @@ This is a practical implementation reference technique, not a replacement for th
 - how docs contract tests protect activation and runtime boundaries
 
 Choose sister references that match the target maturity pattern. A compact CLI-backed skill should compare first with compact CLI-backed examples. A CLI plus MCP-backed skill should compare with an example that already has backend policy and operation capability tests.
+
+The working notes or final report for a new creation task should state which sister project was checked and which concrete decisions it influenced, such as runtime artifact naming, `lib/` helper placement, bundle exclusions, smoke-test shape, activation boundary, and reference-file split. This prevents Agent Skills work from drifting into repository-local invention when an established miku pattern already exists.
 
 Keep all `workplace/` sister repositories local-only. Do not copy a sister repository wholesale into the target. Adapt only the necessary patterns, and keep product-specific activation, artifact roles, diagnostics, and runtime contracts tied to the target upstream product.
 
@@ -267,7 +275,7 @@ Runtime artifact lookup should be simple and fixed. Place the single jar and sin
 
 For CLI-backed Agent Skills, runtime artifacts should be received before runtime wiring and packaging work begins. A human should normally download them from the upstream GitHub Releases page or another documented upstream release channel and place them under `skills/<skill-name>/runtime/`. The skill repository then verifies, selects, runs, and bundles those artifacts; it should not make broad source-tree search or runtime-building from upstream source part of the normal skill workflow.
 
-Use versioned artifact names for selection. The selected file should normally be the newest matching file by file-name version, while `--version` or equivalent runtime output should be treated as a smoke check that the artifact starts and identifies itself. Do not use broad workspace search before checking the declared runtime directory.
+Use versioned artifact names for selection. The selected file should normally be the newest matching file by file-name version, while `--version` or equivalent runtime output should be treated as a smoke check that the artifact starts and identifies itself. CLI runtime artifacts consumed by Agent Skills should expose `--version` for smoke checks and `--help` for contract discovery. These metadata commands should not require normal input files or stdin payloads. Do not use broad workspace search before checking the declared runtime directory.
 
 Recommended artifact kinds:
 
@@ -539,7 +547,68 @@ Examples:
 
 Bundle-building scripts should be deterministic enough that changes are reviewable. A zipped bundle should be created by a documented command such as `npm run build:bundle` or `npm run build:bundle:zip`.
 
-Release bundle tests should inspect the final bundle or zip contents. They should assert that required entries such as `skills/<skill-name>/SKILL.md`, required references, skill-local helper files, and required runtime artifacts are present. They should also assert that development-only entries such as `tests/`, root-level `docs/` when not needed at runtime, `bundle/`, `node_modules/`, `.DS_Store`, and `workplace/` contents are absent.
+Release bundle tests should inspect the final bundle or zip contents. They should assert that required entries such as `skills/<skill-name>/SKILL.md`, required references, skill-local helper files, skill-local assets when provided, and required runtime artifacts are present. They should also assert that development-only entries such as `tests/`, root-level `docs/` when not needed at runtime, `bundle/`, `node_modules/`, `.DS_Store`, and `workplace/` contents are absent.
+
+### Initial Bundle Skeleton Principles
+
+New `-skills` repositories should create the installable bundle shape from the initial skeleton stage. Do not wait until late packaging work to discover whether the skill can run after installation.
+
+The normal bundle output should be rooted at `skills/`.
+
+Recommended shape:
+
+```text
+bundle/<repo-name>/
+  skills/
+    <skill-name>/
+      SKILL.md
+      agents/        when provided
+      assets/        when provided
+      references/
+      lib/           when helper code is needed
+      runtime/       when runtime artifacts are required
+```
+
+Skill-local helpers should normally live under `skills/<skill-name>/lib/`. Required runtime lookup, backend policy, CLI runner, repository config, or result formatting helpers should not exist only under repository-root `lib/`, because root-only helpers can be omitted from installed skill bundles.
+
+The release zip should be generated from the installable bundle shape. A common recommended path is:
+
+```text
+bundle/igapyon-<repo-name>-<version>.zip
+```
+
+Use the repository's existing release naming convention when it is already established, but keep the zip rooted so that extracting or copying the bundle installs `skills/<skill-name>/...` in the expected shape.
+
+Bundle contents tests should be added early. They should verify that required files such as `skills/<skill-name>/SKILL.md`, `references/`, `agents/` when provided, skill-local `assets/` when provided, skill-local `lib/` when used, and `runtime/` when runtime artifacts are required are included. They should also verify that development-only files such as `tests/`, root-level `docs/` when not needed at runtime, `bundle/`, `node_modules/`, `.DS_Store`, and `workplace/` contents are excluded.
+
+When runtime artifacts are required, add an isolated bundle smoke test. The test should build the bundle, copy or extract it into a temporary directory, and verify that runtime artifact lookup and a minimal runtime command work from inside the installed bundle shape.
+
+`package.json` in these repositories is build, test, and bundle orchestration metadata. It does not imply npm package publication. Keeping `private: true` is appropriate unless the repository explicitly chooses npm publication. A normal `build` script should run tests and create the release bundle zip, such as `npm test && npm run build:bundle:zip`.
+
+### GitHub Actions Release Workflow Principles
+
+A GitHub Actions release workflow such as
+`.github/workflows/release-build.yml` is a local repository file that may
+prepare or attach release bundle assets, but it is not a GitHub operation by
+itself. Creating GitHub releases, pushing tags, publishing packages, and
+uploading assets remain human repository operations unless a separate workflow
+outside this skill explicitly authorizes them.
+
+Treat `release-build.yml` as a standard Agent Skills starter asset for new
+`-skills` repositories. For new repository creation, add or adapt it during
+initial scaffolding unless the user explicitly does not want GitHub Actions
+release support or the repository has a documented non-GitHub release path.
+Inspect the selected sister `-skills` reference before finalizing the workflow
+so runtime checks, bundle zip naming, and trigger shape match the established
+maturity pattern. If no release workflow is added during initial creation,
+record the reason rather than leaving the decision implicit.
+
+The local workflow should call the repository's documented bundle build and
+smoke commands. It should run only for `v...` release tags, verify that the tag
+version matches `package.json` version or an accepted dot suffix, and prepare a
+release zip whose filename uses the tag version. It should upload only prepared
+release bundle assets, not development scratch files, `workplace/` contents,
+broad repository archives, or unverified generated files.
 
 ### Testing Principles
 
@@ -557,6 +626,7 @@ Test coverage should include:
 - diagnostics and hard-error behavior
 - bundle creation
 - release bundle content checks
+- isolated bundle smoke checks when runtime artifacts are required
 - documentation contract checks for activation, runtime boundaries, operation maps, and artifact roles
 - important file naming and artifact paths
 
@@ -618,7 +688,10 @@ repository root
   skills/
     <skill-name>/
       SKILL.md
+      agents/
+      assets/
       references/
+      lib/
       runtime/
         <product>-<version>.jar
         <product>-<version>.mjs
@@ -634,7 +707,10 @@ For example, `mikuproject-skills` should move toward this shape when both runtim
 skills/
   mikuproject/
     SKILL.md
+    agents/
+    assets/
     references/
+    lib/
     runtime/
       mikuproject-<version>.jar
       mikuproject-<version>.mjs
@@ -815,6 +891,7 @@ This separation makes it easier to tell whether a change came from upstream beha
 Before treating a new `-skills` repository as usable, confirm at least the following.
 
 - Upstream product and semantic center are named
+- Sister `-skills` reference was inspected, or its local absence was recorded
 - Skill name and activation rule are fixed
 - Product boundary and non-goals are written in `SKILL.md`
 - Runtime lookup order is documented
