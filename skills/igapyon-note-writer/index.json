@@ -5,6 +5,7 @@
   {"name":"article-assignments.md","path":"references/00-management/article-assignments.md","ext":"md","dir":"references/00-management","size":713,"summary":"Note 記事担当一覧"},
   {"name":"20260428-general.md","path":"references/general/20260428-general.md","ext":"md","dir":"references/general","size":3900,"summary":"生成AIと長く話していたら、日本語の使い方が少し変わってきた"},
   {"name":"20260430-general-ai-dev-docs-todo.md","path":"references/general/20260430-general-ai-dev-docs-todo.md","ext":"md","dir":"references/general","size":11259,"summary":"生成AI agent と開発するとき、README・docs・TODO は会話の外の記憶になる"},
+  {"name":"20260509-general-agent-skills-activation.md","path":"references/general/20260509-general-agent-skills-activation.md","ext":"md","dir":"references/general","size":14785,"summary":"Agent Skills の発火は、どのように起きているのか"},
   {"name":"20260509-general-agent-skills-docs.md","path":"references/general/20260509-general-agent-skills-docs.md","ext":"md","dir":"references/general","size":14543,"summary":"Agent Skills では、説明ページの役割が少し変わる"},
   {"name":"20260412-miku-abc-player-intro.md","path":"references/miku-abc-player/20260412-miku-abc-player-intro.md","ext":"md","dir":"references/miku-abc-player","size":3742,"summary":"[miku-abc-player] `ABC` 記譜法の譜面を、ちょっと五線譜で見たくなった"},
   {"name":"20260428-miku-indexgen-intro.md","path":"references/miku-indexgen/20260428-miku-indexgen-intro.md","ext":"md","dir":"references/miku-indexgen","size":4256,"summary":"[miku-indexgen] AI にファイルを読ませる前に、まず地図が欲しかった話"},

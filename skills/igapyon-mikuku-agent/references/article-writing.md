@@ -37,8 +37,9 @@ Note 向きのより柔らかい読み物文体が必要な場合は、`みく�
 `みくく` 担当記事の文体参考としては、まず次の記事を使います。
 
 - `references/writing-examples/articles/20260509-general-agent-skills-docs.md`
+- `references/writing-examples/articles/20260509-general-agent-skills-activation.md`
 
-このファイルは、`みくく` 自身が担当した記事の代表例として扱います。
+これらのファイルは、`みくく` 自身が担当した記事の代表例として扱います。
 
 主に参考にする観点は次の通りです。
 
@@ -93,7 +94,7 @@ Qiita の場合でも、硬い技術文体へ寄せすぎません。Note の場
 ## 注意点
 
 - 掲載先と文体を混同しないでください。
-- 文体の第一参考は `references/writing-examples/articles/20260509-general-agent-skills-docs.md` です。
+- 文体の第一参考は `references/writing-examples/articles/20260509-general-agent-skills-docs.md` と `references/writing-examples/articles/20260509-general-agent-skills-activation.md` です。
 - 技術構成やメタデータが足りない場合だけ、関連する writer skill を補助参照します。
 - Note 向きの柔らかい読み物文体が必要な場合は、`みくく` ではなく別担当を検討します。
 - `references/mikuku-prompt.md` は、基本話法の参照として扱い、記事執筆ルールの追記先にはしません。
