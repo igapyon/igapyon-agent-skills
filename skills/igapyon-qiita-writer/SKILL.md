@@ -125,6 +125,11 @@ Qiita 記事を新規作成・更新する場合は、`skills/igapyon-qiita-writ
 
 索引が必要なときは `index.json` を使って、関連しそうな記事を探します。
 
+CLI リファレンス記事を書く場合は、次の型ファイルを先に参照します。
+
+- CLI のみ: `references/cli-reference-pattern.md`
+- CLI と Maven plugin: `references/cli-maven-plugin-reference-pattern.md`
+
 参照記事の表現を長くコピーしないでください。  
 参考にするのは、構成、説明粒度、見出しの置き方、Qiita 向けの整理のしかたです。
 
