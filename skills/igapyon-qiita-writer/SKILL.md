@@ -130,6 +130,13 @@ CLI リファレンス記事を書く場合は、次の型ファイルを先に�
 - CLI のみ: `references/cli-reference-pattern.md`
 - CLI と Maven plugin: `references/cli-maven-plugin-reference-pattern.md`
 
+CLI リファレンス以外の一般記事を書く場合は、題材に応じて次の型ファイルを参照します。
+
+- 一般記事の基本型: `references/general-article-pattern.md`
+- ツール紹介: `references/tool-introduction-pattern.md`
+- 開発ログ: `references/development-log-pattern.md`
+- 設計・考察: `references/design-thought-pattern.md`
+
 参照記事の表現を長くコピーしないでください。  
 参考にするのは、構成、説明粒度、見出しの置き方、Qiita 向けの整理のしかたです。
 

@@ -4,6 +4,8 @@
  "files": [
   {"name":"cli-maven-plugin-reference-pattern.md","path":"references/cli-maven-plugin-reference-pattern.md","ext":"md","dir":"references","size":7248,"summary":"CLI / Maven plugin リファレンス記事の型"},
   {"name":"cli-reference-pattern.md","path":"references/cli-reference-pattern.md","ext":"md","dir":"references","size":5725,"summary":"CLI リファレンス記事の型"},
+  {"name":"design-thought-pattern.md","path":"references/design-thought-pattern.md","ext":"md","dir":"references","size":4164,"summary":"設計・考察記事の型"},
+  {"name":"development-log-pattern.md","path":"references/development-log-pattern.md","ext":"md","dir":"references","size":3791,"summary":"開発ログ記事の型"},
   {"name":"20260428-general.md","path":"references/general/20260428-general.md","ext":"md","dir":"references/general","size":19508,"summary":"生成AIとの総会話時間が、自然言語プログラミングの感覚を育てている話"},
   {"name":"20260429-general.md","path":"references/general/20260429-general.md","ext":"md","dir":"references/general","size":13301,"summary":"知識ベース型 Agent Skills は、静的 Markdown だけでも育てられる（SKILL.md + references/ 設計）"},
   {"name":"20260430-general.md","path":"references/general/20260430-general.md","ext":"md","dir":"references/general","size":22213,"summary":"[miku-soft] 生成AI時代におけるアプリケーションのソフトウェアアーキテクチャ設計"},
@@ -13,6 +15,7 @@
   {"name":"20260502-general-repository-engineering.md","path":"references/general/20260502-general-repository-engineering.md","ext":"md","dir":"references/general","size":16350,"summary":"生成AI時代の repository engineering 徒然考"},
   {"name":"20260503-general-miku-soft-agent-skills.md","path":"references/general/20260503-general-miku-soft-agent-skills.md","ext":"md","dir":"references/general","size":5309,"summary":"[miku-soft] miku-soft の Agent Skills 一覧"},
   {"name":"20260505-general-ai-agent-skills-basic.md","path":"references/general/20260505-general-ai-agent-skills-basic.md","ext":"md","dir":"references/general","size":10592,"summary":"AI agent と Agent Skills ってそもそも何だろう"},
+  {"name":"general-article-pattern.md","path":"references/general-article-pattern.md","ext":"md","dir":"references","size":3543,"summary":"Qiita 一般記事の型"},
   {"name":"20260412-miku-abc-player-intro.md","path":"references/miku-abc-player/20260412-miku-abc-player-intro.md","ext":"md","dir":"references/miku-abc-player","size":11296,"summary":"[miku-abc-player] `ABC` を貼ると譜面を見て再生できる `miku-abc-player` を作りました"},
   {"name":"20260509-miku-docx2md-usage.md","path":"references/miku-docx2md/20260509-miku-docx2md-usage.md","ext":"md","dir":"references/miku-docx2md","size":13582,"summary":"[miku-docx2md] CLI / Maven plugin リファレンス"},
   {"name":"20260506-miku-grep-usage.md","path":"references/miku-grep/20260506-miku-grep-usage.md","ext":"md","dir":"references/miku-grep","size":18708,"summary":"[miku-grep] JSON request でローカルのテキストファイルを検索するアプリの使用方法"},
@@ -34,6 +37,7 @@
   {"name":"20260327-xlsx2md-rich-markdown.md","path":"references/miku-xlsx2md/20260327-xlsx2md-rich-markdown.md","ext":"md","dir":"references/miku-xlsx2md","size":8941,"summary":"[xlsx2md] Excel の強調や取り消し線を Markdown に反映する重要さと `xlsx2md` の `plain/github` モード"},
   {"name":"20260425-xlsx2md-java.md","path":"references/miku-xlsx2md/20260425-xlsx2md-java.md","ext":"md","dir":"references/miku-xlsx2md","size":20803,"summary":"[miku-xlsx2md] Node 版を入力に、生成AIで Java 版"},
   {"name":"xlsx2md-feature-list-memo.md","path":"references/miku-xlsx2md/xlsx2md-feature-list-memo.md","ext":"md","dir":"references/miku-xlsx2md","size":4820,"summary":"`xlsx2md` 機能一覧メモ"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":7267,"summary":"--- name: igapyon-qiita-writer description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-ready Markdown with front matter, tags, and"}
+  {"name":"tool-introduction-pattern.md","path":"references/tool-introduction-pattern.md","ext":"md","dir":"references","size":3722,"summary":"ツール紹介記事の型"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":7637,"summary":"--- name: igapyon-qiita-writer description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-ready Markdown with front matter, tags, and"}
  ]
 }
