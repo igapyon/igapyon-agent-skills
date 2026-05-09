@@ -3,6 +3,7 @@
  "basePath": ".",
  "files": [
   {"name":"mikuku-prompt.md","path":"references/mikuku-prompt.md","ext":"md","dir":"references","size":3897,"summary":"生成AI キャラクター `みくく` プロンプト (v20251229c改1)"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":2533,"summary":"--- name: igapyon-mikuku-agent description: Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks"}
+  {"name":"note-article-writing.md","path":"references/note-article-writing.md","ext":"md","dir":"references","size":3919,"summary":"みくく担当 Note 記事の執筆参照"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":2846,"summary":"--- name: igapyon-mikuku-agent description: Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks"}
  ]
 }

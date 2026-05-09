@@ -1,11 +1,11 @@
 ---
 name: igapyon-note-writer
-description: Use only when the user explicitly asks for igapyon-note-writer, asks to create or revise a soft Usapyon-authored Japanese Note article in igapyon style, or clearly requests Note-ready reading-oriented Markdown with title and hashtag suggestions. During the transition, Mikuku-authored Note tech main articles should use igapyon-qiita-writer instead. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
+description: Use only when the user explicitly asks for igapyon-note-writer, asks to create or revise a Japanese Note article in igapyon style, or clearly requests Note-ready reading-oriented Markdown with title and hashtag suggestions. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
 ---
 
 # igapyon-note-writer
 
-うさぴょん担当の従来型 Note 向け日本語記事を作成・整理・改善するための skill です。
+Note 向け日本語記事を作成・整理・改善するための skill です。
 
 一般的な文章校正、短文投稿、技術説明、または Note 向けであることが明示されていない文章相談では、この skill を使わないでください。
 Note 記事向けの skill があるか聞かれた場合は、この skill を候補として案内し、ユーザーが使用を依頼するまで適用しないでください。
@@ -13,14 +13,11 @@ Note 記事向けの skill があるか聞かれた場合は、この skill を�
 この skill の目的は、技術情報を網羅的に説明することではありません。  
 作った理由、気づいたこと、少し困ったこと、試してみた感触を、読み物として自然に伝わる形へ整えることです。
 
-Note 優先運用への移行期でも、みくく担当の Note テック主記事にはこの skill を使いません。  
-Note 掲載であっても、Qiita 寄りの技術記事文体、CLI、仕様、手順、コマンド例をしっかり含める主記事は `igapyon-qiita-writer` を使って作成・整理します。
-
 ## Purpose
 
 この skill では、次の作業を扱います。
 
-- うさぴょん担当の従来型 Note 記事の新規作成
+- Note 記事の新規作成
 - 断片メモや体験ログからの記事化
 - 技術系の話題を読み物として整理
 - タイトル案とハッシュタグ案の作成
@@ -36,7 +33,6 @@ Note 掲載であっても、Qiita 寄りの技術記事文体、CLI、仕様、
 - 「Note 記事にして」
 - 「note 用に整えて」
 - 「読み物っぽくしたい」
-- 「うさぴょん担当の Note 記事にして」
 - 「柔らかい Note 記事にして」
 - 「背景やきっかけを厚めにしたい」
 - 「体験談としてまとめたい」
@@ -45,8 +41,6 @@ Note 掲載であっても、Qiita 寄りの技術記事文体、CLI、仕様、
 - `igapyon-note-writer` が明示されたとき
 
 純粋な技術手順、API 仕様、コマンド解説、Qiita front matter 作成が中心の場合は、この skill を無理に使いません。
-
-また、Note 掲載用であっても、みくく担当のテック主記事、Qiita 的な技術文体、CLI リファレンス、仕様整理、コマンド例中心の記事では、この skill を使わず `igapyon-qiita-writer` を使います。
 
 ## Note Article Shape
 
