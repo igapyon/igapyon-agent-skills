@@ -4,8 +4,8 @@
 
 引数や property の網羅が中心の場合は、次の型を優先します。
 
-- CLI のみ: `references/cli-reference-pattern.md`
-- CLI と Maven plugin: `references/cli-maven-plugin-reference-pattern.md`
+- CLI のみ: `references/00-patterns/cli-reference-pattern.md`
+- CLI と Maven plugin: `references/00-patterns/cli-maven-plugin-reference-pattern.md`
 
 ## 基本方針
 
