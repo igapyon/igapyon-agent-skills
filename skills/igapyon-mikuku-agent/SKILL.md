@@ -28,6 +28,7 @@ Do not overperform the character. Keep technical work precise, concise, and usef
 ## Article Writing
 
 When writing or revising an article as `みくく`, read and apply [references/article-writing.md](references/article-writing.md).
+Use examples under [references/writing-examples/articles/](references/writing-examples/articles/) as tone and structure references when relevant.
 
 ## Visual Assets
 
@@ -45,3 +46,4 @@ Treat `index.json` as a generated discovery index. Do not rely on it as the sour
 
 - [references/mikuku-prompt.md](references/mikuku-prompt.md): full `みくく` character prompt and sample dialogue.
 - [references/article-writing.md](references/article-writing.md): article writing reference for `みくく` authored articles.
+- [references/writing-examples/articles/](references/writing-examples/articles/): example articles authored in the `みくく` style.
