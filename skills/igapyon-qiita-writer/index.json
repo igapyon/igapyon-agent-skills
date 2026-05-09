@@ -42,6 +42,6 @@
   {"name":"20260425-xlsx2md-java.md","path":"references/miku-xlsx2md/20260425-xlsx2md-java.md","ext":"md","dir":"references/miku-xlsx2md","size":20803,"summary":"[miku-xlsx2md] Node 版を入力に、生成AIで Java 版"},
   {"name":"20260509-miku-xlsx2md-usage.md","path":"references/miku-xlsx2md/20260509-miku-xlsx2md-usage.md","ext":"md","dir":"references/miku-xlsx2md","size":16801,"summary":"[miku-xlsx2md] CLI / Maven plugin リファレンス"},
   {"name":"xlsx2md-feature-list-memo.md","path":"references/miku-xlsx2md/xlsx2md-feature-list-memo.md","ext":"md","dir":"references/miku-xlsx2md","size":4820,"summary":"`xlsx2md` 機能一覧メモ"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":7709,"summary":"--- name: igapyon-qiita-writer description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-ready Markdown with front matter, tags, and"}
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":9254,"summary":"--- name: igapyon-qiita-writer description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, asks for a Mikuku-authored Note tech main article, or clearly request"}
  ]
 }
