@@ -18,6 +18,8 @@ Qiita front matter の `title` も同じ表記にします。
 - 実行していないこと、確認していない仕様は断定しません。
 - コマンド例は、実在するバージョン番号、jar 名、runtime 名に揃えます。
 - GitHub Releases から入手する場合は、Release ページへのリンクを先に示し、個別 `curl` download 手順は原則として詳述しません。
+- miku-soft 系のように Node CLI と Java CLI が分かれている場合は、単独実装として扱わず、`product-name` ファミリーとして実行形態を棚卸しします。
+- Release ページへのリンクでは、表示テキストは `product-name` や `product-name-java` のままにし、リンク先だけ Releases URL にします。
 
 ## 推奨構成
 
@@ -48,10 +50,27 @@ CLI リファレンス記事では、次の見出し順を基本にします。
 この記事では、`product-name` の CLI の使い方をリファレンス形式で整理します。
 ```
 
+Node CLI と Java CLI の両方がある場合は、冒頭で対象にする実行形態を明示します。
+
+```markdown
+この記事では、`product-name` ファミリーの CLI の使い方をリファレンス形式で整理します。
+
+対象にする実行形態は次の通りです。
+
+- Node CLI: [`product-name`](https://github.com/owner/product-name)
+- Java CLI: [`product-name-java`](https://github.com/owner/product-name-java)
+```
+
 入手方法は、Release ページへのリンクを使って簡潔に書きます。
 
 ```markdown
 CLI 用の runtime は [`product-name`](https://github.com/owner/product-name/releases) の GitHub Releases から入手できます。
+```
+
+Node CLI と Java CLI の両方がある場合は、次のように書きます。
+
+```markdown
+Node CLI の単一ファイル runtime は [`product-name`](https://github.com/owner/product-name/releases) から、Java CLI の単一 jar は [`product-name-java`](https://github.com/owner/product-name-java/releases) から入手できます。
 ```
 
 ## コマンド形式
@@ -169,6 +188,19 @@ node product-name-0.0.0.mjs [options]
 ## 関連リンク
 
 - [product-name](https://github.com/owner/product-name)
+- [product-name Releases](https://github.com/owner/product-name/releases)
+- [miku-soft-catalog](https://github.com/igapyon/miku-soft-catalog)
+```
+
+Node CLI と Java CLI の両方がある場合は、両方の repository と Releases を置きます。
+
+```markdown
+## 関連リンク
+
+- [product-name](https://github.com/owner/product-name)
+- [product-name Releases](https://github.com/owner/product-name/releases)
+- [product-name-java](https://github.com/owner/product-name-java)
+- [product-name-java Releases](https://github.com/owner/product-name-java/releases)
 - [miku-soft-catalog](https://github.com/igapyon/miku-soft-catalog)
 ```
 
