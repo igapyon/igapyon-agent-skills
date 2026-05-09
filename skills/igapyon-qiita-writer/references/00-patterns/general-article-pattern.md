@@ -4,9 +4,9 @@
 
 具体的な題材がツール紹介、開発ログ、設計・考察のいずれかに寄る場合は、次の型ファイルを優先します。
 
-- ツール紹介: `references/tool-introduction-pattern.md`
-- 開発ログ: `references/development-log-pattern.md`
-- 設計・考察: `references/design-thought-pattern.md`
+- ツール紹介: `references/00-patterns/tool-introduction-pattern.md`
+- 開発ログ: `references/00-patterns/development-log-pattern.md`
+- 設計・考察: `references/00-patterns/design-thought-pattern.md`
 
 ## 基本方針
 
