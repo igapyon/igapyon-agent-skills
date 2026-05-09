@@ -1,30 +1,9 @@
 {
-  "generator": "miku-indexgen",
-  "basePath": ".",
-  "files": [
-    {
-      "name": "structure-patterns.md",
-      "path": "references/structure-patterns.md",
-      "ext": "md",
-      "dir": "references",
-      "size": 1749,
-      "summary": "Structure Patterns"
-    },
-    {
-      "name": "style-guide.md",
-      "path": "references/style-guide.md",
-      "ext": "md",
-      "dir": "references",
-      "size": 4463,
-      "summary": "Style Guide"
-    },
-    {
-      "name": "SKILL.md",
-      "path": "SKILL.md",
-      "ext": "md",
-      "dir": "",
-      "size": 5175,
-      "summary": "--- name: igapyon-companion-techpost-writer description: Use only when the user explicitly asks for igapyon-companion-techpost-writer, asks for an igapyon-style companion workflow, or clearly wants iterative minimal polishing of Japanese tech blog or socia"
-    }
-  ]
+ "generator": "miku-indexgen",
+ "basePath": ".",
+ "files": [
+  {"name":"structure-patterns.md","path":"references/structure-patterns.md","ext":"md","dir":"references","size":1749,"summary":"Structure Patterns"},
+  {"name":"style-guide.md","path":"references/style-guide.md","ext":"md","dir":"references","size":4463,"summary":"Style Guide"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":5175,"summary":"--- name: igapyon-companion-techpost-writer description: Use only when the user explicitly asks for igapyon-companion-techpost-writer, asks for an igapyon-style companion workflow, or clearly wants iterative minimal polishing of Japanese tech blog or socia"}
+ ]
 }
