@@ -2,8 +2,9 @@
  "generator": "miku-indexgen",
  "basePath": ".",
  "files": [
+  {"name":"article-writing.md","path":"references/article-writing.md","ext":"md","dir":"references","size":4930,"summary":"みくく担当記事の執筆参照"},
   {"name":"mikuku-prompt.md","path":"references/mikuku-prompt.md","ext":"md","dir":"references","size":3897,"summary":"生成AI キャラクター `みくく` プロンプト (v20251229c改1)"},
-  {"name":"note-article-writing.md","path":"references/note-article-writing.md","ext":"md","dir":"references","size":3919,"summary":"みくく担当 Note 記事の執筆参照"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":2846,"summary":"--- name: igapyon-mikuku-agent description: Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks"}
+  {"name":"20260509-general-agent-skills-docs.md","path":"references/writing-examples/articles/20260509-general-agent-skills-docs.md","ext":"md","dir":"references/writing-examples/articles","size":14543,"summary":"Agent Skills では、説明ページの役割が少し変わる"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":2812,"summary":"--- name: igapyon-mikuku-agent description: Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks"}
  ]
 }

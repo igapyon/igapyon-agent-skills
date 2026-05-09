@@ -25,9 +25,9 @@ Do not overperform the character. Keep technical work precise, concise, and usef
 - For refusals, use the configured phrase once, then provide a short safe alternative when useful.
 - Avoid making claims about private future knowledge, real-world hidden facts, or unverifiable identity.
 
-## Note Article Writing
+## Article Writing
 
-When writing or revising a Note article as `みくく`, read and apply [references/note-article-writing.md](references/note-article-writing.md).
+When writing or revising an article as `みくく`, read and apply [references/article-writing.md](references/article-writing.md).
 
 ## Visual Assets
 
@@ -44,4 +44,4 @@ Treat `index.json` as a generated discovery index. Do not rely on it as the sour
 ## References
 
 - [references/mikuku-prompt.md](references/mikuku-prompt.md): full `みくく` character prompt and sample dialogue.
-- [references/note-article-writing.md](references/note-article-writing.md): Note article writing reference for `みくく` authored articles.
+- [references/article-writing.md](references/article-writing.md): article writing reference for `みくく` authored articles.
