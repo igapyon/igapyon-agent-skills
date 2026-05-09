@@ -18,6 +18,8 @@ Qiita front matter の `title` も同じ表記にします。
 - `基本的な使い方` では、CLI の代表例を先に置き、Maven plugin の実行例は後ろの方に置きます。
 - Maven plugin は、必要に応じて「ソースがある位置で `mvn install` してから利用側 project で plugin 指定する」流れを書きます。
 - README、Release、plugin source、`--help` を確認し、未確認の property 名を作らないようにします。
+- miku-soft 系のように Node CLI、Java CLI、Maven plugin が分かれている場合は、Java 側単独として扱わず、`product-name` ファミリーとして実行形態を棚卸しします。
+- Release ページへのリンクでは、表示テキストは `product-name` や `product-name-java` のままにし、リンク先だけ Releases URL にします。
 
 ## 推奨構成
 
@@ -48,10 +50,28 @@ CLI / Maven plugin リファレンス記事では、次の見出し順を基本�
 この記事では、`product-name-java` の CLI と Maven plugin の使い方をリファレンス形式で整理します。
 ```
 
+Node CLI、Java CLI、Maven plugin のファミリー構成で扱う場合は、次のように書きます。
+
+```markdown
+この記事では、`product-name` ファミリーの CLI と Maven plugin の使い方をリファレンス形式で整理します。
+
+対象にする実行形態は次の通りです。
+
+- Node CLI: [`product-name`](https://github.com/owner/product-name)
+- Java CLI: [`product-name-java`](https://github.com/owner/product-name-java)
+- Maven plugin: `product-name-java` に含まれる `product-name-maven-plugin`
+```
+
 入手方法は Release ページへのリンクを使って簡潔に書きます。
 
 ```markdown
 CLI 用の jar は [`product-name-java`](https://github.com/owner/product-name-java/releases) の GitHub Releases から入手できます。
+```
+
+Node CLI と Java CLI の両方がある場合は、次のように書きます。
+
+```markdown
+Node CLI の単一ファイル runtime は [`product-name`](https://github.com/owner/product-name/releases) から、Java CLI の単一 jar は [`product-name-java`](https://github.com/owner/product-name-java/releases) から入手できます。
 ```
 
 ## コマンド形式
@@ -210,6 +230,8 @@ mvn jp.igapyon:product-name-maven-plugin:0.0.0:goal \
 ```markdown
 ## 関連リンク
 
+- [product-name](https://github.com/owner/product-name)
+- [product-name Releases](https://github.com/owner/product-name/releases)
 - [product-name-java](https://github.com/owner/product-name-java)
 - [product-name-java Releases](https://github.com/owner/product-name-java/releases)
 - [miku-soft-catalog](https://github.com/igapyon/miku-soft-catalog)
@@ -231,6 +253,7 @@ Appendix には、記事整理時に実施した検証を簡潔に書きます�
 - `--help` と `--version` による CLI 表示
 - 代表的な変換または索引生成
 - 主要 option による出力 file / directory の生成
+- Node CLI と Java CLI の両方がある場合は、両方の代表的な実行例
 - Maven plugin の goal と property 名
 ```
 
