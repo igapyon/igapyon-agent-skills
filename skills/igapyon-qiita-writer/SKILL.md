@@ -1,26 +1,31 @@
 ---
 name: igapyon-qiita-writer
-description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-ready Markdown with front matter, tags, and article structure. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
+description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, asks for a Mikuku-authored Note tech main article, or clearly requests Qiita-like technical Markdown with front matter/tags or Note metadata. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
 ---
 
 # igapyon-qiita-writer
 
-Qiita 向けの日本語技術記事を作成・整理・改善するための skill です。
+Qiita 向けの日本語技術記事、および移行期における Note テック主記事を作成・整理・改善するための skill です。
 
-一般的な文章校正、PR 文面、短文投稿、Note 向け記事、または Qiita 向けであることが明示されていない文章相談では、この skill を使わないでください。
+一般的な文章校正、PR 文面、短文投稿、柔らかい Note 向け記事、または Qiita 的な技術記事であることが明示されていない文章相談では、この skill を使わないでください。
 Qiita 記事向けの skill があるか聞かれた場合は、この skill を候補として案内し、ユーザーが使用を依頼するまで適用しないでください。
 
 この skill の目的は、文章を単にきれいにすることではありません。  
 Qiita の読者が読みやすく、技術的な持ち帰りを得やすい形に整えることです。
+
+Note 優先運用への移行期は、みくく担当の Note テック主記事にもこの skill を使います。  
+その場合も文体と情報密度は Qiita 寄りの技術記事として保ち、掲載媒体に合わせて出力メタデータだけを Note 用に調整します。
 
 ## Purpose
 
 この skill では、次の作業を扱います。
 
 - Qiita 記事の新規作成
+- みくく担当の Note テック主記事の新規作成
 - 既存メモや README からの記事化
 - 技術記事の見出し構成作成
 - タイトル案とタグ案の作成
+- Note テック主記事向けのタイトル案とハッシュタグ案の作成
 - Qiita front matter の作成・整形
 - Note 風または日記風の文章を Qiita 向けに整理
 - OSS、CLI、Web アプリ、Maven plugin、生成AI活用、開発ログの技術記事化
@@ -37,9 +42,37 @@ Qiita の読者が読みやすく、技術的な持ち帰りを得やすい形�
 - 「技術記事として構成して」
 - 「README から記事を書いて」
 - 「この開発ログを Qiita 向けにしたい」
+- 「Note のテック主記事として書いて」
+- 「みくく担当の Note 記事にして」
+- 「Note 掲載だが Qiita 的な技術文体で書いて」
 - `igapyon-qiita-writer` が明示されたとき
 
-単なる短文 SNS 投稿、Note 向けの体験文、音楽寄りの随筆、PR 文面作成では、この skill を無理に使いません。
+単なる短文 SNS 投稿、うさぴょん担当の柔らかい Note 向け体験文、音楽寄りの随筆、PR 文面作成では、この skill を無理に使いません。
+
+## Transition Note Tech Article Mode
+
+移行期に Note テック主記事を書く場合は、掲載先が Note であっても、この skill の Qiita 的な技術記事文体を維持します。
+
+- 担当はみくく
+- 掲載先は Note
+- 文体は Qiita 寄りの技術記事文体
+- 技術内容、使い方、CLI、仕様、手順、コマンド例をしっかり含める
+- front matter ではなく Note 掲載用属性情報を使う
+- 正本は `skills/igapyon-note-writer/references/` に置く
+
+Note 掲載用属性情報は、次の形を基本にします。
+
+```markdown
+## 掲載先情報
+
+- 掲載先: Note
+- URL: （未記入）
+
+## Note 掲載用属性情報
+
+- タイトル: 記事タイトル
+- ハッシュタグ: `タグ1`, `タグ2`, `タグ3`
+```
 
 ## Qiita Article Shape
 
