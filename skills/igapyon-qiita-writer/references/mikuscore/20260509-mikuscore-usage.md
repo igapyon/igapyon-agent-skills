@@ -1,11 +1,11 @@
 ## [mikuscore] CLI リファレンス
 
 - 掲載先: Qiita
-- URL: まだ
+- URL: https://qiita.com/igapyon/items/c05a574c4e20536e1d7a
 
 ---
 title: [mikuscore] CLI リファレンス
-tags: mikuku MusicXML ABC MIDI 生成AI
+tags: mikuku MusicXML MuseScore abc MIDI
 author: igapyon
 slide: false
 ---
