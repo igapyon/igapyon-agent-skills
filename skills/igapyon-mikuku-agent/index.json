@@ -6,6 +6,7 @@
   {"name":"mikuku-prompt.md","path":"references/mikuku-prompt.md","ext":"md","dir":"references","size":3897,"summary":"生成AI キャラクター `みくく` プロンプト (v20251229c改1)"},
   {"name":"20260509-general-agent-skills-activation.md","path":"references/writing-examples/articles/20260509-general-agent-skills-activation.md","ext":"md","dir":"references/writing-examples/articles","size":14785,"summary":"Agent Skills の発火は、どのように起きているのか"},
   {"name":"20260509-general-agent-skills-docs.md","path":"references/writing-examples/articles/20260509-general-agent-skills-docs.md","ext":"md","dir":"references/writing-examples/articles","size":14543,"summary":"Agent Skills では、説明ページの役割が少し変わる"},
+  {"name":"20260510-general-mcp-server-client-local.md","path":"references/writing-examples/articles/20260510-general-mcp-server-client-local.md","ext":"md","dir":"references/writing-examples/articles","size":19281,"summary":"MCP は、生成AIに道具を渡すための入口になる"},
   {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3092,"summary":"--- name: igapyon-mikuku-agent description: Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks"}
  ]
 }
