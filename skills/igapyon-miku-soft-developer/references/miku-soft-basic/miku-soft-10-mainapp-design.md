@@ -1,4 +1,4 @@
-# Miku Software Main Application Design v20260506
+# Miku Software Main Application Design
 
 This memo organizes design characteristics commonly seen across the software series whose names start with `miku`.
 
@@ -369,14 +369,19 @@ This release path is a distribution layer over the local build contract. It shou
 
 Recommended release asset behavior is as follows.
 
-- Trigger release-asset attachment from published GitHub Releases and, when useful, manual dispatch with an explicit tag.
-- Restrict release bundle upload to version tags such as `v*`.
+- Trigger release-asset attachment from `push` tags matching `v*`.
+- Treat CI baseline workflows for pull requests or ordinary pushes as a separate category. Do not include them in the standard release asset workflow unless the user explicitly asks for CI baseline work.
+- Do not use GitHub Release `published` as the standard trigger. Use it only when the repository has a documented repository-specific reason.
+- Use `workflow_dispatch` with an explicit `tag_name` only when the repository needs a manual rerun path for recreating or attaching release assets.
+- If `workflow_dispatch` is used, guard the workflow so only `v*` tags proceed.
 - Check that the release tag version matches `package.json` `version`, or document any accepted dot-suffix rule.
 - Build from the release tag, not from an unrelated branch state.
-- Stage release assets with product and version in their filenames, such as `<product>-<version>.mjs` and `<product>-sources-<version>.tgz`.
-- Upload only those prepared miku-soft CLI assets as custom release assets; do not add broad repository source archives as extra uploaded assets.
-- Run the bundle smoke test before uploading release assets.
+- Keep build and smoke reproducible through local `npm scripts` or `scripts/*.mjs`; release asset staging may be in the workflow template when it only copies local build outputs into versioned GitHub Release asset names.
+- Run build, smoke, release asset staging, and upload in that order.
+- Stage release assets into `release-assets/` with product and version in their filenames, such as `<product>-<version>.mjs` and `<product>-sources-<version>.tgz`.
+- Upload only `release-assets/*` as custom release assets; do not add broad repository source archives as extra uploaded assets.
 - Keep GitHub Actions runtime compatibility settings local to the workflow and do not let them change the product runtime contract.
+- Keep GitHub repository creation, tag push, release publication, secret configuration, and registry publication as human-owned operations unless separately requested.
 
 ### `workplace/` Directory Principles
 

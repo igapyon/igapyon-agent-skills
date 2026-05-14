@@ -1,4 +1,4 @@
-## 掲載先情報
+## [miku-abc-player] `ABC` 記譜法の譜面を、ちょっと五線譜で見たくなった
 
 - 掲載先: Note
 - URL: https://note.com/toshikiigaa/n/n5be1d51d336a

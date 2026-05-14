@@ -2,7 +2,7 @@
 
 Use this workflow for creating or maintaining a miku-soft Node.js / TypeScript main application.
 
-Detailed design guidance lives in [miku-soft-basic/miku-soft-10-mainapp-design-v20260506.md](miku-soft-basic/miku-soft-10-mainapp-design-v20260506.md). Keep this file as the execution checklist.
+Detailed design guidance lives in [miku-soft-basic/miku-soft-10-mainapp-design.md](miku-soft-basic/miku-soft-10-mainapp-design.md). Keep this file as the execution checklist.
 
 ## Required Initial Input
 
@@ -56,9 +56,10 @@ Categories:
 
 - CI baseline:
   - pull request / push verification
+  - separate quality gate category, not part of the standard release asset workflow
 
 - Release asset workflow:
-  - `v*` tag or GitHub Release publication
+  - `v*` tag push
   - attach generated files to a GitHub Release
   - check tag version against `package.json` version
   - build from the release tag
@@ -69,7 +70,7 @@ Categories:
   - package registry publication
   - token and registry policy
 
-If the user says `v* tag`, `release`, `attach files`, `release asset`, or `GitHub Release`, do not add or modify CI baseline as the primary action. Use the Release Bundle Workflow section first.
+If the user says `v* tag`, `release`, `attach files`, `release asset`, or `GitHub Release`, do not add or modify CI baseline as the primary action. Use the Release Bundle Workflow section first. Do not create a pull-request or normal-push CI baseline workflow unless the user explicitly asks for CI baseline work.
 
 If the repository does not yet have a bundle artifact script, do not assume the asset type silently. Report the available artifact candidates, such as:
 
@@ -88,14 +89,17 @@ When a Node CLI main app publishes a single-file runtime artifact through GitHub
 
 Check these points:
 
-- The workflow is triggered by GitHub Release publication and, when useful, `workflow_dispatch` with an explicit `tag_name`.
-- The workflow only attaches release assets for version tags, normally `v*`.
-- The checkout ref uses the release tag or manually supplied tag, not an unrelated branch tip.
-- The workflow runs dependency install, build, asset preparation, and `smoke:bundle` before upload.
+- The standard workflow is triggered by `push` tags matching `v*`.
+- Do not use GitHub Release `published` as the standard trigger. Use it only when the repository has a documented repository-specific reason.
+- Use `workflow_dispatch` with an explicit `tag_name` only when the repository needs a manual rerun path for recreating or attaching release assets.
+- If `workflow_dispatch` is used, guard the job so only `v*` tags proceed.
+- The checkout ref uses the pushed release tag or explicit manual tag, not an unrelated branch tip.
+- The workflow runs dependency install, build, smoke, release asset staging, and upload in that order.
+- Build and smoke are delegated to local `npm scripts`; release tag validation and asset staging may be in the workflow template when they only adapt local build outputs into GitHub Release asset names.
 - The `smoke:bundle` command verifies that the generated single-file runtime starts and responds to both `--version` and `--help`.
 - The release tag version is checked against `package.json` `version`; if patch suffix tags are allowed, the accepted suffix rule is explicit.
-- Runtime and source assets are copied from `bundle/` into a release staging directory with product and version in the filename.
-- Upload uses the GitHub Release tag and only the prepared miku-soft CLI assets, normally `<product>-<version>.mjs` and `<product>-sources-<version>.tgz`.
+- Runtime and source assets are staged into `release-assets/`, with product and version in the filename.
+- Upload uses the GitHub Release tag and only files already prepared under `release-assets/*`.
 - Do not implement a Release CLI bundle workflow by running `npm pack` and uploading `release-assets/*.tgz` unless the user explicitly asked for the npm package tarball as the release asset.
 - Do not add a broad repository source ZIP or generic source archive as a custom uploaded release asset.
 - Actions runtime compatibility settings, such as Node.js version or JavaScript action runtime flags, are kept only when the reference project or current repository needs them.
@@ -111,21 +115,15 @@ If the current repository only has `npm pack` and does not yet generate `bundle/
 
 The bundle smoke path should include metadata checks for the generated runtime artifact. At minimum, run the bundled CLI with `--version` and `--help` without requiring normal input files or stdin payloads. Product-specific smoke checks may add a small real operation after those metadata checks.
 
-When the repository has a documented bundle build and smoke script, the expected local workflow file is normally `.github/workflows/release-cli-bundle.yml` with this shape, adapted to the product name and artifact paths:
+When the repository has a documented bundle build and smoke script, the expected local workflow file is normally `.github/workflows/release-cli-bundle.yml` with this shape, adapted to the product name, package scripts, and artifact paths:
 
 ```yaml
 name: Release CLI bundle
 
 on:
-  release:
-    types:
-      - published
-  workflow_dispatch:
-    inputs:
-      tag_name:
-        description: "GitHub Release tag to attach the CLI bundle to"
-        required: true
-        type: string
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: write
@@ -136,13 +134,10 @@ env:
 jobs:
   release-cli-bundle:
     runs-on: ubuntu-latest
-    if: startsWith(github.event.release.tag_name || github.event.inputs.tag_name, 'v')
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -156,9 +151,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Smoke test
+        run: npm run smoke:bundle
+
       - name: Prepare release assets
         env:
-          TAG_NAME: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref_name }}
+          TAG_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           VERSION="${TAG_NAME#v}"
@@ -175,21 +173,23 @@ jobs:
           cp bundle/<product>.mjs "release-assets/<product>-${VERSION}.mjs"
           cp bundle/<product>-sources.tgz "release-assets/<product>-sources-${VERSION}.tgz"
 
-      - name: Verify CLI bundle asset
-        run: npm run smoke:bundle
-
       - name: Upload CLI bundle to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref_name }}
+          tag_name: ${{ github.ref_name }}
           files: release-assets/*
+          overwrite_files: true
           draft: false
           prerelease: false
 ```
 
-If the repository does not require an Actions runtime compatibility environment variable, omit `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`. If the bundle files or smoke script use different names, adapt only those paths and commands while preserving the release-triggered asset upload contract.
+If a repository needs a manual rerun path, add `workflow_dispatch` with a required `tag_name`, check out that explicit tag, and use it for release asset upload; keep a `v*` guard on the job. Do not add manual dispatch by default.
+
+If the repository does not require an Actions runtime compatibility environment variable, omit `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`. If the bundle files or smoke script use different names, adapt only those paths and commands while preserving the tag-push asset upload contract.
 
 Do not treat Release asset upload as a substitute for local bundle verification. The local build and smoke contract should remain valid without GitHub Actions.
+
+For new Node main application scaffolding that needs a release asset workflow, use the starter template at `assets/node-main-app/.github/workflows/release-cli-bundle.yml` and adapt its product name, bundle paths, and script names to the target repository.
 
 ## Checklist
 

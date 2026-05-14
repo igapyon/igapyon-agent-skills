@@ -4,20 +4,22 @@ This file is the short entry point for explicit `igapyon-miku-soft-developer` wo
 
 Detailed miku-soft design rules live under [miku-soft-basic/](miku-soft-basic/). Do not duplicate those rules here.
 
-Do not create or rely on a synchronization script for these documents. When a task requires copying or updating them, perform the copy as part of the explicit workflow and report the source and destination files.
+Do not copy the shared basic documents into each miku-soft project repository.
+Project repositories should link to the installed `igapyon-miku-soft-developer`
+skill through `docs/miku-soft-reference.md` and keep project-specific
+reference revisions in development or worklog documents.
 
 ## Basic Document Selection
 
 Read only the document needed for the current task:
 
-- [miku-soft-basic/miku-soft-00-overview-design-v20260427.md](miku-soft-basic/miku-soft-00-overview-design-v20260427.md): overall miku-soft stance and product-type overview
-- [miku-soft-basic/miku-soft-10-mainapp-design-v20260506.md](miku-soft-basic/miku-soft-10-mainapp-design-v20260506.md): main application, Web UI, CLI, local-first behavior, diagnostics, and shared conventions
-- [miku-soft-basic/miku-soft-20-javaapp-design-v20260506.md](miku-soft-basic/miku-soft-20-javaapp-design-v20260506.md): Java CLI, Maven, Java runtime boundary, packaging, and Java-side maintenance
-- [miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md](miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md): Node.js / TypeScript to Java straight conversion
-- [miku-soft-basic/miku-soft-40-agentskills-design-v20260506.md](miku-soft-basic/miku-soft-40-agentskills-design-v20260506.md): Agent Skills versions and agent-facing local workflow packages
-- [miku-soft-basic/miku-soft-50-mcp-design-v20260506.md](miku-soft-basic/miku-soft-50-mcp-design-v20260506.md): MCP server versions, tools, resources, prompts, transport, and protocol adapter boundaries
-
-When multiple basic documents have the same numbered topic, prefer the file with the newest `-v2026...` suffix.
+- [miku-soft-basic/miku-soft-00-overview-design.md](miku-soft-basic/miku-soft-00-overview-design.md): overall miku-soft stance and product-type overview
+- [miku-soft-basic/miku-soft-10-mainapp-design.md](miku-soft-basic/miku-soft-10-mainapp-design.md): main application, Web UI, CLI, local-first behavior, diagnostics, and shared conventions
+- [miku-soft-basic/miku-soft-20-javaapp-design.md](miku-soft-basic/miku-soft-20-javaapp-design.md): Java CLI, Java runtime boundary, packaging, and Java-side maintenance
+- [miku-soft-basic/miku-soft-21-java-maven-design.md](miku-soft-basic/miku-soft-21-java-maven-design.md): separated Maven plugin repositories for Java runtimes
+- [miku-soft-basic/miku-soft-30-straight-conversion.md](miku-soft-basic/miku-soft-30-straight-conversion.md): Node.js / TypeScript to Java straight conversion
+- [miku-soft-basic/miku-soft-40-agentskills-design.md](miku-soft-basic/miku-soft-40-agentskills-design.md): Agent Skills versions and agent-facing local workflow packages
+- [miku-soft-basic/miku-soft-50-mcp-design.md](miku-soft-basic/miku-soft-50-mcp-design.md): MCP server versions, tools, resources, prompts, transport, and protocol adapter boundaries
 
 ## Short Rule
 

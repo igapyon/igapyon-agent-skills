@@ -1,4 +1,4 @@
-## 掲載先情報
+## [miku-abc-player] `ABC` を貼ると譜面を見て再生できる `miku-abc-player` を作りました
 
 - 掲載先: Qiita
 - URL: https://qiita.com/igapyon/items/74c896c7dab9a78ba2f4

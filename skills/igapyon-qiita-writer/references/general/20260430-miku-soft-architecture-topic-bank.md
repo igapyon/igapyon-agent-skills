@@ -1,3 +1,8 @@
+## 記事のストック/元ネタ
+
+- 掲載先: Qiita
+- URL: N/A
+
 ---
 title: [miku-soft] 生成AI時代の local-first ツール群アーキテクチャ topic bank
 tags: 生成AI ソフトウェアアーキテクチャ AgentSkills MCP CLI

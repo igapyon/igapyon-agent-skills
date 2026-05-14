@@ -1,17 +1,20 @@
 ---
 name: igapyon-qiita-writer
-description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-ready Markdown with front matter, tags, and article structure. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
+description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-like technical Markdown with front matter/tags or Note metadata. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
 ---
 
 # igapyon-qiita-writer
 
 Qiita 向けの日本語技術記事を作成・整理・改善するための skill です。
 
-一般的な文章校正、PR 文面、短文投稿、Note 向け記事、または Qiita 向けであることが明示されていない文章相談では、この skill を使わないでください。
+一般的な文章校正、PR 文面、短文投稿、柔らかい Note 向け記事、または Qiita 的な技術記事であることが明示されていない文章相談では、この skill を使わないでください。
 Qiita 記事向けの skill があるか聞かれた場合は、この skill を候補として案内し、ユーザーが使用を依頼するまで適用しないでください。
 
 この skill の目的は、文章を単にきれいにすることではありません。  
 Qiita の読者が読みやすく、技術的な持ち帰りを得やすい形に整えることです。
+
+Note 記事を書く場面でこの skill を直接の主担当にはしません。  
+ただし、みくく担当の Note 記事で技術記事としての構成、説明粒度、CLI、仕様、手順、コマンド例の整理が足りない場合は、補助的な参考として使えます。
 
 ## Purpose
 
@@ -39,7 +42,12 @@ Qiita の読者が読みやすく、技術的な持ち帰りを得やすい形�
 - 「この開発ログを Qiita 向けにしたい」
 - `igapyon-qiita-writer` が明示されたとき
 
-単なる短文 SNS 投稿、Note 向けの体験文、音楽寄りの随筆、PR 文面作成では、この skill を無理に使いません。
+単なる短文 SNS 投稿、柔らかい Note 向け体験文、音楽寄りの随筆、PR 文面作成では、この skill を無理に使いません。
+
+## Supplemental Use For Note Articles
+
+Note 記事の正本、保存場所、Note 掲載用属性情報は `igapyon-note-writer` 側の規則に従います。
+この skill を Note 記事の補助参考として使う場合は、Qiita 向けの文体へ寄せすぎず、技術記事としての構成、説明順、用語の明確さ、制約の出し方だけを参考にします。
 
 ## Qiita Article Shape
 
@@ -99,7 +107,10 @@ slide: false
 
 ## Reference Usage
 
-`references/` 配下の記事は、Qiita 記事の実例集として使います。
+`references/` 配下の記事は、Qiita 技術記事の正本であり、Qiita 記事の実例集としても使います。
+
+Qiita 記事を新規作成・更新する場合は、`skills/igapyon-qiita-writer/references/` 配下の Markdown を正本として扱います。  
+`workplace/*/docs/articles/qiita/` などに旧配置や作業メモがある場合でも、公開・更新対象の本文はこの skill 配下の `references/` に置きます。
 
 主に見る観点は次の通りです。
 
@@ -121,6 +132,18 @@ slide: false
 - `references/mikuscore/`
 
 索引が必要なときは `index.json` を使って、関連しそうな記事を探します。
+
+CLI リファレンス記事を書く場合は、次の型ファイルを先に参照します。
+
+- CLI のみ: `references/00-patterns/cli-reference-pattern.md`
+- CLI と Maven plugin: `references/00-patterns/cli-maven-plugin-reference-pattern.md`
+
+CLI リファレンス以外の一般記事を書く場合は、題材に応じて次の型ファイルを参照します。
+
+- 一般記事の基本型: `references/00-patterns/general-article-pattern.md`
+- ツール紹介: `references/00-patterns/tool-introduction-pattern.md`
+- 開発ログ: `references/00-patterns/development-log-pattern.md`
+- 設計・考察: `references/00-patterns/design-thought-pattern.md`
 
 参照記事の表現を長くコピーしないでください。  
 参考にするのは、構成、説明粒度、見出しの置き方、Qiita 向けの整理のしかたです。

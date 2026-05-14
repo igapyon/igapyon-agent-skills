@@ -1,24 +1,24 @@
-# Miku Software Java Application Design v20260506
+# Miku Software Java Application Design
 
 This memo organizes design characteristics commonly expected for Java application versions in the `miku` software series.
 
 The initial versions of the related tools were created by `Mikuku` and Toshiki Iga.
 
-The current contents are based on current miku Java application examples, the main-application design memo, and the straight-conversion guide checked on 2026-04-25.
+The current contents are based on current miku Java application examples, the main-application design memo, the Java Maven plugin design memo, and the straight-conversion guide checked on 2026-05-14.
 
 ## Design Summary
 
 The Java application versions in the `miku` software series can be summarized as follows.
 
-> Java CLI / batch / build-tool versions of miku main applications that preserve upstream semantics, remain easy to trace back to the Node.js / TypeScript upstream, and provide local, reproducible artifact generation for automation and build workflows.
+> Java CLI / batch / runtime versions of miku main applications that preserve upstream semantics, remain easy to trace back to the Node.js / TypeScript upstream, and provide local, reproducible artifact generation for automation and Java-centered workflows.
 
 What characterizes Java application versions is not a Java-first redesign of the original products. It is a repeated set of constraints.
 
 - Keep the semantic center of the upstream main application
 - Preserve traceability from upstream files, vocabulary, CLI behavior, and tests
-- Prefer CLI, batch, Maven, and jar distribution over Web UI
+- Prefer CLI, batch, public Java APIs, jar distribution, and reproducible local execution over Web UI
 - Keep core processing independent of entrypoint adapters
-- Make automation and build integration first-class use cases
+- Make automation and separated build-tool adapter integration first-class use cases
 - Distinguish upstream-derived behavior from Java-side original extensions
 - Keep outputs reproducible and easy to compare
 
@@ -28,7 +28,7 @@ This document is not a porting procedure. The procedure for creating a Java vers
 
 This document instead describes the resulting Java application design that should be preserved after such conversion work.
 
-Use the three shared design documents together as follows.
+Use the shared design documents together as follows.
 
 - main-application design memo
   - describes the design of upstream miku main applications
@@ -36,6 +36,8 @@ Use the three shared design documents together as follows.
   - describes how to create a Java version from such an upstream
 - Java application design memo
   - describes how Java application versions should be shaped and maintained
+- Java Maven plugin design memo
+  - describes separated Maven plugin repositories that adapt Java runtimes to Maven builds
 
 This document separates the following levels.
 
@@ -85,7 +87,7 @@ The Java version emphasizes the parts that fit Java particularly well.
 
 - local CLI execution
 - batch processing
-- Maven and build-tool integration
+- public Java APIs for automation and separated build-tool adapters
 - jar-based distribution
 - stable public core APIs
 - deterministic artifact generation
@@ -118,7 +120,6 @@ In this document, a Java application means a `miku` repository with a `-java` su
 A Java application is primarily a local execution tool. It usually exposes one or more of the following.
 
 - CLI runtime jar
-- Maven plugin
 - batch command
 - public core API
 - deterministic file output
@@ -126,7 +127,7 @@ A Java application is primarily a local execution tool. It usually exposes one o
 
 The Java application is not primarily a Web UI application. If the upstream main application has a Web UI, that UI is generally not brought into the Java version.
 
-The center of the Java version is reusable processing: read local input, create structured output, emit diagnostics, and make the result reproducible from CLI, tests, Maven plugins, or other automation.
+The center of the Java version is reusable processing: read local input, create structured output, emit diagnostics, and make the result reproducible from CLI, tests, separated Maven plugin adapters, or other automation.
 
 ## Cross-Cutting Principles
 
@@ -134,8 +135,8 @@ miku Java applications emphasize the following cross-cutting principles.
 
 1. Preserve the semantic center and product boundary of the upstream main application.
 2. Preserve traceability from upstream files, tests, vocabulary, CLI contracts, and artifacts.
-3. Use Java as a local CLI / batch / build integration runtime, not as a reason to redesign the product first.
-4. Keep core processing independent from CLI, Maven plugin, and other adapters.
+3. Use Java as a local CLI / batch / automation runtime, not as a reason to redesign the product first.
+4. Keep core processing independent from CLI and external adapters such as separated Maven plugin repositories.
 5. Treat Java-side original extensions as separate contracts.
 6. Prefer reproducible artifacts and deterministic tests over environment-dependent behavior.
 7. Keep diagnostics, summaries, warnings, and timing output structured enough for automation.
@@ -168,9 +169,9 @@ Java applications use the following principles as defaults.
 - Use `mvn test` as the primary verification command
 - Package the runtime as a single executable fat jar
 - Add a distribution zip when it helps users handle runtime artifacts
-- Place runtime implementation in a runtime module when a multi-module repository is needed
-- Place Maven plugin implementation in a separate plugin module when provided
-- Keep core APIs callable from CLI, Maven plugin, and tests
+- Keep the Java runtime repository as a single-module Maven project by default
+- Put Maven plugin support in a separated `<product>-java-maven` repository when provided
+- Keep core APIs callable from CLI, separated Maven plugin adapters, and tests
 - Keep CLI stdout, stderr, output files, and exit codes clearly separated
 - Keep `workplace/` at the repository root for local upstream checkout and temporary work
 - Track only `workplace/.gitkeep` under `workplace/`
@@ -187,8 +188,9 @@ documents. Use local checkouts under `workplace/` when available. If no
 same-layer sister checkout exists locally, record that absence and name the
 closest public or documented reference used instead.
 
-Use sister repositories to confirm practical Java-side details such as module
-shape, CLI class placement, Maven plugin separation, distribution zip policy,
+Use sister repositories to confirm practical Java-side details such as
+single-module runtime shape, CLI class placement, separated Maven plugin
+repository relationship, distribution zip policy,
 GitHub Release asset workflow, focused regression style, and documentation
 split. These references do not replace the upstream main application contract.
 
@@ -225,7 +227,7 @@ Main targets:
 - summary and diagnostics
 - CLI entrypoint
 - batch entrypoint
-- Maven plugin entrypoint where useful
+- public API entrypoint for separated Maven plugin adapters where useful
 - report and artifact generation
 - runtime packaging
 
@@ -238,7 +240,7 @@ Mainly out of scope:
 - download UI behavior
 - UI-only helpers that do not represent product semantics
 
-The Java version translates the runtime environment into CLI, Maven, jar, and file-based workflows while preserving the upstream product meaning.
+The Java version translates the runtime environment into CLI, jar, public API, and file-based workflows while preserving the upstream product meaning. Maven plugin behavior belongs to a separated adapter repository when provided.
 
 ### Core and Adapter Principles
 
@@ -248,13 +250,13 @@ The preferred shape is as follows.
 
 - core API owns product processing and output decisions
 - CLI parses arguments, handles file I/O, prints stdout / stderr, and returns exit codes
-- Maven plugin maps plugin parameters to core API options
+- separated Maven plugin repositories map plugin parameters to core API options
 - tests call core APIs directly where possible
-- batch helpers are shared by CLI and Maven plugin when both need them
+- batch helpers are shared by CLI and separated adapters when both need them
 
 Do not pack real processing into `main(String[] args)`. The CLI main should delegate to a testable method such as `run(String[] args, PrintStream out, PrintStream err)` and confine `System.exit` to the outermost boundary.
 
-This keeps CLI behavior testable and prevents Maven plugin or future automation from reimplementing product logic.
+This keeps CLI behavior testable and prevents separated Maven plugin repositories or future automation from reimplementing product logic.
 
 ### Java-Side Extension Principles
 
@@ -262,7 +264,7 @@ Java applications may add operationally useful Java-side extensions.
 
 Examples:
 
-- Maven plugin goals
+- separated Maven plugin adapter goals
 - batch / directory processing
 - public Java core API wrappers
 - fat jar packaging
@@ -282,11 +284,11 @@ When adding a Java-side extension, satisfy the following.
 
 Batch and directory processing are especially useful in Java because JVM startup cost and build-tool usage often make grouped execution more practical than launching one process per input.
 
-### Maven and Build Integration Principles
+### Maven and Build Adapter Principles
 
-Maven integration is a first-class path when the product naturally participates in build workflows.
+Maven integration is a first-class path when the product naturally participates in build workflows, but it is no longer modeled as a module inside the Java runtime repository.
 
-This does not mean every Java application version must provide a Maven plugin. A CLI-only or runtime-jar-only repository is acceptable when that is the natural product surface. When a Maven plugin is provided, it should be treated as a first-class adapter over the same core API.
+This does not mean every Java application version must provide a Maven plugin. A CLI-only or runtime-jar-only repository is acceptable when that is the natural product surface. When a Maven plugin is provided, it should live in a separated `<product>-java-maven` repository and should be treated as a first-class adapter over the same core API.
 
 Examples include:
 
@@ -296,19 +298,11 @@ Examples include:
 - conversion
 - report generation
 
-When a Maven plugin is provided, the repository may use a multi-module Maven reactor.
+The Java runtime repository should remain a single-module Maven project. It owns the runtime jar, CLI, public API, tests, documentation, and distribution zip.
 
-The recommended shape is as follows.
+The separated Maven plugin repository is described by the Java Maven plugin design memo. It owns Maven goals, parameters, plugin documentation, examples, smoke tests, and Maven-specific release behavior. It depends on the published runtime/core artifact and should not duplicate product logic.
 
-- repository root is an aggregator parent project
-- runtime jar implementation lives under a runtime module
-- Maven plugin implementation lives under a plugin module
-- shared core contracts live in the runtime module or a core module
-- plugin code depends on core contracts
-- core code does not depend on plugin code
-- directory / batch helpers used by both CLI and plugin live on the runtime/core side
-
-Maven plugin lifecycle binding should remain opt-in. The plugin should work through explicit invocation first, and consuming projects can bind it to a lifecycle phase when appropriate.
+Maven plugin lifecycle binding should remain opt-in. The separated plugin should work through explicit invocation first, and consuming projects can bind it to a lifecycle phase when appropriate.
 
 ### Packaging and Distribution Principles
 
@@ -376,7 +370,7 @@ Java applications distinguish the following.
 
 Warnings and changes that do not stop processing should be accumulated in result objects where practical. Entry contract violations and syntactically invalid inputs should move toward exceptions or explicit failure results.
 
-Verbose output should not be mixed into primary output. For example, progress and timing lines can be emitted to stderr by CLI and to Maven logs by Maven plugins, while the core result keeps structured timings and messages for tests or adapters.
+Verbose output should not be mixed into primary output. For example, progress and timing lines can be emitted to stderr by CLI and to Maven logs by separated Maven plugin adapters, while the core result keeps structured timings and messages for tests or adapters.
 
 ### Data and Artifact Principles
 
@@ -397,7 +391,7 @@ For example, optional Markdown companion output should not become the canonical 
 
 When structures affect output order, use deterministic data structures or explicit sorting. `LinkedHashMap` and `LinkedHashSet` are appropriate when insertion order matters.
 
-Text artifacts should use explicit encodings. Binary artifacts should be handled as `byte[]` in core logic where practical, with file paths pushed to CLI, Maven plugin, and test boundaries.
+Text artifacts should use explicit encodings. Binary artifacts should be handled as `byte[]` in core logic where practical, with file paths pushed to CLI, separated adapter, and test boundaries.
 
 ### Reproducibility Principles
 
@@ -437,7 +431,7 @@ Test coverage should include:
 
 - core API tests
 - CLI tests
-- Maven plugin tests when a plugin exists
+- adapter compatibility tests where a separated Maven plugin depends on the runtime API
 - encoding tests where text input/output matters
 - artifact tests
 - diagnostics tests
@@ -463,7 +457,7 @@ Java applications keep README and docs roles separate.
 
 - what the tool does
 - how to run the jar
-- how to use the Maven plugin if provided
+- where the separated Maven plugin repository is, if provided
 - main inputs and outputs
 - major options
 - where to find development and migration information
@@ -500,9 +494,9 @@ When an upstream repository needs to be inspected, it may be cloned under `workp
 
 ### Repository Shape
 
-A single-module Java application may be enough when only a runtime jar is needed.
+A Java application repository should normally be a single-module Maven project.
 
-A multi-module Maven reactor is appropriate when the repository provides both runtime jar and Maven plugin.
+Maven plugin support should not be added as a module inside the Java runtime repository. When Maven plugin support is needed, create or maintain a separated `<product>-java-maven` repository and follow the Java Maven plugin design memo.
 
 Representative shape:
 
@@ -513,17 +507,11 @@ repository root
   LICENSE
   docs/
   workplace/.gitkeep
-  <runtime-module>/
-    pom.xml
-    src/main/java/...
-    src/test/java/...
-  <maven-plugin-module>/
-    pom.xml
-    src/main/java/...
-    src/test/java/...
+  src/main/java/...
+  src/test/java/...
 ```
 
-The aggregator root should not contain main Java source unless there is a clear reason.
+This keeps the Java runtime repository small, keeps release assets clear, and prevents Maven plugin concerns from reshaping the core application.
 
 ### Package and Naming Conventions
 
@@ -579,7 +567,7 @@ The compiler may run on a newer JDK, but the produced source and bytecode compat
 
 ### Public API Conventions
 
-Core APIs should expose stable entrypoints useful to CLI, Maven plugin, tests, and automation.
+Core APIs should expose stable entrypoints useful to CLI, separated Maven plugin adapters, tests, and automation.
 
 Prefer:
 
@@ -616,11 +604,11 @@ For normal usage, output files are preferred for generated artifacts. Stdout sho
 
 ### Maven Plugin Conventions
 
-Maven plugins should be thin adapters over the core API.
+Maven plugin conventions are defined by the Java Maven plugin design memo.
 
-Plugin parameters should map clearly to core options. Plugin code should not duplicate directory traversal, conversion, validation, or artifact assembly if those operations belong to the runtime module.
+The Java runtime repository should only expose the public API and runtime contracts that separated Maven plugin repositories need.
 
-Plugin tests should check:
+When a Maven plugin exists, it should live in a separated `<product>-java-maven` repository. That repository should check:
 
 - parameter mapping
 - skip behavior
@@ -668,15 +656,15 @@ These mappings are used both during initial conversion and during maintenance.
 
 ## Common Patterns Observed Across Java Versions
 
-### CLI and Maven as Peer Entrypoints
+### CLI and Maven Adapter as Peer Surfaces
 
-For Java application versions, CLI and Maven plugin can both be first-class paths.
+For Java application versions, CLI and separated Maven plugin repositories can both be first-class user-facing paths.
 
 The CLI is natural for direct local execution, scripts, CI, and AI agents.
 
-The Maven plugin is natural when generated artifacts belong to a Java project's build, documentation, validation, or reporting flow.
+The separated Maven plugin is natural when generated artifacts belong to a Java project's build, documentation, validation, or reporting flow.
 
-Both should call the same core API.
+Both should call the same runtime core API, but only the CLI belongs inside the `<product>-java` repository.
 
 ### Core API as the Center
 
@@ -687,7 +675,7 @@ A typical shape is a product-named facade or core class that receives an options
 That shape lets:
 
 - CLI convert arguments into options
-- Maven plugin convert parameters into options
+- separated Maven plugin repositories convert parameters into options
 - tests call the same operation directly
 - batch behavior be shared instead of duplicated
 
@@ -714,7 +702,7 @@ Java applications often benefit from batch and directory workflows.
 This is practical because:
 
 - Java process startup has cost
-- Maven plugins usually work over project directories
+- separated Maven plugins usually work over project directories
 - generated artifacts often need to be produced for many inputs
 - build and CI workflows prefer one invocation per task group
 
@@ -744,7 +732,7 @@ It scans a directory and generates `index.json`. When Markdown output is enabled
 The Java version currently has two main execution paths.
 
 - runtime jar / CLI
-- Maven plugin
+- Maven plugin in the historical multi-module repository shape
 
 The central core API is:
 
@@ -783,13 +771,15 @@ The current contract is as follows.
 
 This feature exists because `miku-indexgen-java` is often useful for generating many small directory indexes in one Java process or Maven execution. It is therefore an operational extension on the Java side, not a change to the upstream `miku-indexgen` single-directory contract.
 
-The repository is a multi-module Maven reactor.
+The current repository is a multi-module Maven reactor.
 
 - root aggregator project
 - `miku-indexgen/` runtime jar and CLI implementation
 - `miku-indexgen-maven-plugin/` Maven plugin implementation
 
-This shape is appropriate because the runtime jar and Maven plugin are separate deliverables but use the same core API.
+This was the earlier repository shape: the runtime jar and Maven plugin were kept as separate modules in one GitHub repository so they could use the same core API.
+
+For new Java runtime repositories, this is no longer the preferred shape. The new direction is to keep `<product>-java` as a single-module runtime repository and place Maven plugin support in a separated `<product>-java-maven` repository governed by the Java Maven plugin design memo. Existing multi-module repositories can be understood as historical examples or migration candidates.
 
 ### Notes Specific to `mikuproject-java`
 
@@ -806,7 +796,7 @@ The Java version currently emphasizes the following execution paths.
 - deterministic report and exchange artifact generation
 - distribution zip for runtime users
 
-Unlike `miku-indexgen-java` and `miku-xlsx2md-java`, the current `mikuproject-java` repository is a single-module Maven project. It does not currently expose a Maven plugin module. This is acceptable because the current Java-side product surface is centered on CLI, core API, report generation, and distribution packaging rather than build-lifecycle integration.
+Unlike the older `miku-indexgen-java` and `miku-xlsx2md-java` multi-module shapes, the current `mikuproject-java` repository is a single-module Maven project. It does not currently expose a Maven plugin module. This matches the newer direction: the Java runtime repository stays focused on CLI, core API, report generation, and distribution packaging; Maven plugin support, if added, belongs in a separated `<product>-java-maven` repository.
 
 #### Core Facades in `mikuproject-java`
 
@@ -868,7 +858,7 @@ The expected runtime artifacts are:
 
 The distribution zip contains the runtime jar, sources jar, and minimal runtime-facing documentation such as `README.md`, `LICENSE`, and CLI documentation.
 
-This single-module shape should remain acceptable while there is no Maven plugin deliverable. If a Maven plugin is added later, the repository should be reconsidered as a multi-module Maven reactor so that plugin code remains a thin adapter over the runtime / core API rather than a second implementation.
+This single-module shape should remain the preferred Java runtime repository shape. If a Maven plugin is added later, create or maintain a separated `mikuproject-java-maven` repository so that plugin code remains a thin adapter over the runtime / core API rather than a second implementation.
 
 #### Maintenance Focus in `mikuproject-java`
 
@@ -896,7 +886,7 @@ The upstream product treats the Excel workbook as canonical input and Markdown a
 The Java version currently exposes the following main execution paths.
 
 - runtime jar / CLI
-- Maven plugin
+- Maven plugin in the historical multi-module repository shape
 - Java-side directory batch conversion shared by CLI and Maven plugin
 - selected Node / Java Markdown byte-level comparison script for upstream fixtures
 
@@ -932,13 +922,15 @@ Important design points:
 
 #### Repository Shape in `miku-xlsx2md-java`
 
-The repository is a multi-module Maven reactor.
+The current repository is a multi-module Maven reactor.
 
 - root aggregator project
 - `miku-xlsx2md/` runtime jar and CLI implementation
 - `miku-xlsx2md-maven-plugin/` Maven plugin implementation
 
-This shape is appropriate because the runtime jar and Maven plugin are separate deliverables but use the same runtime conversion implementation.
+This was the earlier repository shape: the runtime jar and Maven plugin were kept as separate modules in one GitHub repository so they could use the same runtime conversion implementation.
+
+For new Java runtime repositories, this is no longer the preferred shape. The new direction is to keep `<product>-java` as a single-module runtime repository and place Maven plugin support in a separated `<product>-java-maven` repository governed by the Java Maven plugin design memo. Existing multi-module repositories can be understood as historical examples or migration candidates.
 
 #### Directory Batch Conversion in `miku-xlsx2md-java`
 

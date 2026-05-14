@@ -1,110 +1,26 @@
 {
-  "generator": "miku-indexgen",
-  "basePath": ".",
-  "files": [
-    {
-      "name": "20260428-general.md",
-      "path": "references/general/20260428-general.md",
-      "ext": "md",
-      "dir": "references/general",
-      "size": 3829,
-      "summary": "掲載先情報"
-    },
-    {
-      "name": "20260430-general-ai-dev-docs-todo.md",
-      "path": "references/general/20260430-general-ai-dev-docs-todo.md",
-      "ext": "md",
-      "dir": "references/general",
-      "size": 11181,
-      "summary": "掲載先情報"
-    },
-    {
-      "name": "20260412-miku-abc-player-intro.md",
-      "path": "references/miku-abc-player/20260412-miku-abc-player-intro.md",
-      "ext": "md",
-      "dir": "references/miku-abc-player",
-      "size": 3667,
-      "summary": "掲載先情報"
-    },
-    {
-      "name": "20260428-miku-indexgen-intro.md",
-      "path": "references/miku-indexgen/20260428-miku-indexgen-intro.md",
-      "ext": "md",
-      "dir": "references/miku-indexgen",
-      "size": 4182,
-      "summary": "掲載先情報"
-    },
-    {
-      "name": "20260330-mikuproject-ai-wbs-draft.md",
-      "path": "references/mikuproject/20260330-mikuproject-ai-wbs-draft.md",
-      "ext": "md",
-      "dir": "references/mikuproject",
-      "size": 6134,
-      "summary": "掲載先情報"
-    },
-    {
-      "name": "20260330-mikuproject-intro.md",
-      "path": "references/mikuproject/20260330-mikuproject-intro.md",
-      "ext": "md",
-      "dir": "references/mikuproject",
-      "size": 5974,
-      "summary": "掲載先情報"
-    },
-    {
-      "name": "20260410-mikuproject-agent-skills-wbs-planning.md",
-      "path": "references/mikuproject/20260410-mikuproject-agent-skills-wbs-planning.md",
-      "ext": "md",
-      "dir": "references/mikuproject",
-      "size": 9606,
-      "summary": "掲載先情報"
-    },
-    {
-      "name": "20260412-ai-score-abc-first.md",
-      "path": "references/mikuscore/20260412-ai-score-abc-first.md",
-      "ext": "md",
-      "dir": "references/mikuscore",
-      "size": 7249,
-      "summary": "掲載先情報"
-    },
-    {
-      "name": "2026XXXX-mikuscore-skills-intro.md",
-      "path": "references/mikuscore/2026XXXX-mikuscore-skills-intro.md",
-      "ext": "md",
-      "dir": "references/mikuscore",
-      "size": 7154,
-      "summary": "[mikuscore] 譜面フォーマット変換の前提を、毎回説明しなくてよくしたかった話"
-    },
-    {
-      "name": "20260320-gpt54-app-dev.md",
-      "path": "references/miku-xlsx2md/20260320-gpt54-app-dev.md",
-      "ext": "md",
-      "dir": "references/miku-xlsx2md",
-      "size": 13102,
-      "summary": "生成AI 実装担当開発記事メモ"
-    },
-    {
-      "name": "20260326-xlsx2md-grid-bug-diary.md",
-      "path": "references/miku-xlsx2md/20260326-xlsx2md-grid-bug-diary.md",
-      "ext": "md",
-      "dir": "references/miku-xlsx2md",
-      "size": 7285,
-      "summary": "[xlsx2md] Excel 方眼を Markdown にする記事を書こうとしたら、およよとなった話"
-    },
-    {
-      "name": "20260327-xlsx2md-strike-meaning.md",
-      "path": "references/miku-xlsx2md/20260327-xlsx2md-strike-meaning.md",
-      "ext": "md",
-      "dir": "references/miku-xlsx2md",
-      "size": 7517,
-      "summary": "掲載先情報"
-    },
-    {
-      "name": "SKILL.md",
-      "path": "SKILL.md",
-      "ext": "md",
-      "dir": "",
-      "size": 6869,
-      "summary": "--- name: igapyon-note-writer description: Use only when the user explicitly asks for igapyon-note-writer, asks to create or revise a Japanese Note article in igapyon style, or clearly requests Note-ready Markdown with title and hashtag suggestions. If the"
-    }
-  ]
+ "generator": "miku-indexgen",
+ "basePath": ".",
+ "files": [
+  {"name":"article-assignments.md","path":"references/00-management/article-assignments.md","ext":"md","dir":"references/00-management","size":1457,"summary":"Note 記事担当一覧"},
+  {"name":"20260428-general.md","path":"references/general/20260428-general.md","ext":"md","dir":"references/general","size":3900,"summary":"生成AIと長く話していたら、日本語の使い方が少し変わってきた"},
+  {"name":"20260430-general-ai-dev-docs-todo.md","path":"references/general/20260430-general-ai-dev-docs-todo.md","ext":"md","dir":"references/general","size":11259,"summary":"生成AI agent と開発するとき、README・docs・TODO は会話の外の記憶になる"},
+  {"name":"20260509-general-agent-skills-activation.md","path":"references/general/20260509-general-agent-skills-activation.md","ext":"md","dir":"references/general","size":14785,"summary":"Agent Skills の発火は、どのように起きているのか"},
+  {"name":"20260509-general-agent-skills-docs.md","path":"references/general/20260509-general-agent-skills-docs.md","ext":"md","dir":"references/general","size":14543,"summary":"Agent Skills では、説明ページの役割が少し変わる"},
+  {"name":"20260510-general-mcp-server-client-local.md","path":"references/general/20260510-general-mcp-server-client-local.md","ext":"md","dir":"references/general","size":19281,"summary":"MCP は、生成AIに道具を渡すための入口になる"},
+  {"name":"20260514-general-agent-skills-natural-language-programming.md","path":"references/general/20260514-general-agent-skills-natural-language-programming.md","ext":"md","dir":"references/general","size":18718,"summary":"Agent Skills 開発入門: 自然言語でプログラミングするという考え方"},
+  {"name":"20260514-general-ai-engineering-overview.md","path":"references/general/20260514-general-ai-engineering-overview.md","ext":"md","dir":"references/general","size":14843,"summary":"生成AI開発まわりの “Engineering” を整理してみる"},
+  {"name":"20260514-general-ai-native-cli-mcp-agent-skills.md","path":"references/general/20260514-general-ai-native-cli-mcp-agent-skills.md","ext":"md","dir":"references/general","size":19556,"summary":"AI-native CLI / MCP / Agent Skills 設計メモ"},
+  {"name":"20260412-miku-abc-player-intro.md","path":"references/miku-abc-player/20260412-miku-abc-player-intro.md","ext":"md","dir":"references/miku-abc-player","size":3742,"summary":"[miku-abc-player] `ABC` 記譜法の譜面を、ちょっと五線譜で見たくなった"},
+  {"name":"20260428-miku-indexgen-intro.md","path":"references/miku-indexgen/20260428-miku-indexgen-intro.md","ext":"md","dir":"references/miku-indexgen","size":4256,"summary":"[miku-indexgen] AI にファイルを読ませる前に、まず地図が欲しかった話"},
+  {"name":"20260330-mikuproject-ai-wbs-draft.md","path":"references/mikuproject/20260330-mikuproject-ai-wbs-draft.md","ext":"md","dir":"references/mikuproject","size":6239,"summary":"[mikuproject] 生成AIと小さなツールを組み合わせたら、WBS の叩き台が意外とすんなりできた話"},
+  {"name":"20260330-mikuproject-intro.md","path":"references/mikuproject/20260330-mikuproject-intro.md","ext":"md","dir":"references/mikuproject","size":6096,"summary":"[mikuproject] 作業を分けて並べた計画表を毎回ちがう形式で扱っているのが、だんだん気になってきた話"},
+  {"name":"20260410-mikuproject-agent-skills-wbs-planning.md","path":"references/mikuproject/20260410-mikuproject-agent-skills-wbs-planning.md","ext":"md","dir":"references/mikuproject","size":9690,"summary":"[mikuproject] WBS 作成を生成AIに手伝ってもらったら、思ったより幸せだった話"},
+  {"name":"20260412-ai-score-abc-first.md","path":"references/mikuscore/20260412-ai-score-abc-first.md","ext":"md","dir":"references/mikuscore","size":7337,"summary":"[mikuscore-skills] 生成AI に譜面対応させたくて、まず ABC 記譜法に寄っていった話"},
+  {"name":"2026XXXX-mikuscore-skills-intro.md","path":"references/mikuscore/2026XXXX-mikuscore-skills-intro.md","ext":"md","dir":"references/mikuscore","size":7154,"summary":"[mikuscore] 譜面フォーマット変換の前提を、毎回説明しなくてよくしたかった話"},
+  {"name":"20260320-gpt54-app-dev.md","path":"references/miku-xlsx2md/20260320-gpt54-app-dev.md","ext":"md","dir":"references/miku-xlsx2md","size":9607,"summary":"コードを書かずに、生成AIと一緒にアプリを作ってみた"},
+  {"name":"20260326-xlsx2md-grid-bug-diary.md","path":"references/miku-xlsx2md/20260326-xlsx2md-grid-bug-diary.md","ext":"md","dir":"references/miku-xlsx2md","size":5514,"summary":"[xlsx2md] Excel 方眼を Markdown にする記事を書こうとしたら、およよとなった話"},
+  {"name":"20260327-xlsx2md-strike-meaning.md","path":"references/miku-xlsx2md/20260327-xlsx2md-strike-meaning.md","ext":"md","dir":"references/miku-xlsx2md","size":7591,"summary":"[xlsx2md] 設計書の取り消し線が Markdown で消えると、ちょっと危ない"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":7290,"summary":"--- name: igapyon-note-writer description: Use only when the user explicitly asks for igapyon-note-writer, asks to create or revise a Japanese Note article in igapyon style, or clearly requests Note-ready reading-oriented Markdown with title and hashtag su"}
+ ]
 }

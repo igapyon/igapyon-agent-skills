@@ -1,11 +1,11 @@
 ---
 name: igapyon-note-writer
-description: Use only when the user explicitly asks for igapyon-note-writer, asks to create or revise a Japanese Note article in igapyon style, or clearly requests Note-ready Markdown with title and hashtag suggestions. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
+description: Use only when the user explicitly asks for igapyon-note-writer, asks to create or revise a Japanese Note article in igapyon style, or clearly requests Note-ready reading-oriented Markdown with title and hashtag suggestions. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
 ---
 
 # igapyon-note-writer
 
-Note 向けの日本語記事を作成・整理・改善するための skill です。
+Note 向け日本語記事を作成・整理・改善するための skill です。
 
 一般的な文章校正、短文投稿、技術説明、または Note 向けであることが明示されていない文章相談では、この skill を使わないでください。
 Note 記事向けの skill があるか聞かれた場合は、この skill を候補として案内し、ユーザーが使用を依頼するまで適用しないでください。
@@ -33,6 +33,7 @@ Note 記事向けの skill があるか聞かれた場合は、この skill を�
 - 「Note 記事にして」
 - 「note 用に整えて」
 - 「読み物っぽくしたい」
+- 「柔らかい Note 記事にして」
 - 「背景やきっかけを厚めにしたい」
 - 「体験談としてまとめたい」
 - 「ハッシュタグを考えて」
@@ -100,7 +101,10 @@ Note 掲載用の属性情報が必要な場合は、次の形を基本にしま
 
 ## Reference Usage
 
-`references/` 配下の記事は、Note 記事の実例集として使います。
+`references/` 配下の記事は、Note 記事の正本であり、Note 記事の実例集としても使います。
+
+Note 記事を新規作成・更新する場合は、`skills/igapyon-note-writer/references/` 配下の Markdown を正本として扱います。  
+`workplace/*/docs/articles/note/` などに旧配置や作業メモがある場合でも、公開・更新対象の本文はこの skill 配下の `references/` に置きます。
 
 主に見る観点は次の通りです。
 

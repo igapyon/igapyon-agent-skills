@@ -61,9 +61,15 @@ Check these points:
 
 Check these points:
 
-- release asset workflows trigger on GitHub Release publication or an explicit
-  `workflow_dispatch` tag input when that is the intended operation
+- Node.js / TypeScript main application release asset workflows normally
+  trigger on `push` tags matching `v*`
+- GitHub Release `published` is not the standard trigger for Node main app
+  release assets; require a repository-specific reason when it is used
+- `workflow_dispatch` is optional for Node main app release assets; when used,
+  it requires an explicit `tag_name` input and only proceeds for `v*` tags
 - CI baseline workflows are not confused with release asset workflows
+- pull-request and ordinary-push CI baseline workflows are not created as part
+  of release asset automation unless explicitly requested
 - publish workflows, such as `npm publish`, are separate from release asset
   attachment unless the repository intentionally combines them
 - workflow permissions are scoped to the needed operation
@@ -77,6 +83,10 @@ Check these points:
 
 - release workflow runs the repository's documented build command
 - tests or focused smoke checks run before assets are staged
+- Node main app release workflows delegate build and smoke to local `npm scripts`
+  or `scripts/*.mjs`; version checks and release asset staging may stay in the
+  workflow when they only adapt local build outputs into versioned release asset
+  names
 - CLI runtime assets are smoke-tested with at least `--version` and `--help`
 - Java runtime assets are smoke-tested with equivalent metadata commands when
   available
@@ -152,7 +162,7 @@ When this review applies, include a short classification before findings:
 Release Automation Review
 
 Release shape: GitHub Release asset / npm package / Java distribution / skill bundle / MCP package
-Trigger: release published / workflow_dispatch / tag push / manual local
+Trigger: tag push / release published / workflow_dispatch / manual local
 Version source: package.json / pom.xml / skill metadata / tag
 Artifacts: Web App / CLI runtime / jar / source archive / skill zip / docs
 Smoke checks: present / missing / partial

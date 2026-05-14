@@ -1,4 +1,4 @@
-## 掲載先情報
+## 生成AI時代の repository engineering 徒然考
 
 - 掲載先: Qiita
 - URL: https://qiita.com/igapyon/items/89c5bfcb92665a3a3cdd

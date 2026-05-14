@@ -1,4 +1,4 @@
-## 掲載先情報
+## [miku-soft] 生成AI駆動開発における README / docs / TODO / workplace の使い分け
 
 - 掲載先: Qiita
 - URL: https://qiita.com/igapyon/items/e2002183dcdadf00ec59

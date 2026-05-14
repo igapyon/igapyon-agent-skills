@@ -10,8 +10,9 @@ targets the Java companion repository, normally with a `-java` suffix.
 
 Detailed design guidance lives in:
 
-- [miku-soft-basic/miku-soft-20-javaapp-design-v20260506.md](miku-soft-basic/miku-soft-20-javaapp-design-v20260506.md)
-- [miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md](miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md)
+- [miku-soft-basic/miku-soft-20-javaapp-design.md](miku-soft-basic/miku-soft-20-javaapp-design.md)
+- [miku-soft-basic/miku-soft-21-java-maven-design.md](miku-soft-basic/miku-soft-21-java-maven-design.md)
+- [miku-soft-basic/miku-soft-30-straight-conversion.md](miku-soft-basic/miku-soft-30-straight-conversion.md)
 
 Keep this file as the execution checklist. Load the detailed design documents
 only when a policy decision is unclear.
@@ -115,6 +116,11 @@ Near the finishing stage, confirm whether Maven plugin support should remain
 out of scope, be recorded as a follow-up item, or be added as a final extension.
 Prefer adding it only when the product naturally performs build-time generation,
 validation, conversion, indexing, or report creation.
+
+When an existing `<product>-java` repository already contains a Maven plugin
+module and the work is to separate that adapter into `<product>-java-maven`,
+use [31-java-maven-plugin-separation-workflow.md](31-java-maven-plugin-separation-workflow.md)
+after confirming the runtime and plugin ownership boundary.
 
 ## Repository Shape
 

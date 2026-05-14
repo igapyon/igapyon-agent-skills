@@ -1,4 +1,4 @@
-# Miku Software Overview Design v20260427
+# Miku Software Overview Design
 
 This memo is the entry point for the shared design documents of the `miku` software series.
 
@@ -33,22 +33,29 @@ When a specification is unclear, read this overview as the product-family map, t
 
 ## Document Set
 
-This overview is the entry point for the shared miku software design document set.
+This overview is the entry point for the shared miku software design document
+set maintained under `igapyon-miku-soft-developer`.
 
 The detailed documents are organized by layer and concern.
 
-- `docs/miku-soft-00-overview-design-v*.md`
+- `references/miku-soft-basic/miku-soft-00-overview-design.md`
   - provides the top-level product-family overview and explains how the design documents relate to each other
-- `docs/miku-soft-10-mainapp-design-v*.md`
+- `references/miku-soft-basic/miku-soft-10-mainapp-design.md`
   - describes the main application layer, including the Single-file Web App and Node.js CLI as normal first-class product surfaces
-- `docs/miku-soft-20-javaapp-design-v*.md`
+- `references/miku-soft-basic/miku-soft-20-javaapp-design.md`
   - describes Java application versions, especially Java 1.8 CLI/runtime artifacts, packaging, testing, and build integration
-- `docs/miku-soft-30-straight-conversion-v*.md`
+- `references/miku-soft-basic/miku-soft-21-java-maven-design.md`
+  - describes separated Maven plugin repositories for Java runtimes
+- `references/miku-soft-basic/miku-soft-30-straight-conversion.md`
   - describes how TypeScript / Node.js products are converted into Java while preserving upstream traceability and behavior
-- `docs/miku-soft-40-agentskills-design-v*.md`
+- `references/miku-soft-basic/miku-soft-40-agentskills-design.md`
   - describes Agent Skills packages, including local instructions, operation maps, references, and bundled CLI runtime artifacts for AI agents
-- `docs/miku-soft-50-mcp-design-v*.md`
+- `references/miku-soft-basic/miku-soft-50-mcp-design.md`
   - describes Node.js / TypeScript MCP server versions that expose product operations to MCP clients through tools, resources, and prompts
+
+Project repositories should not copy these shared documents. They should keep a
+short `docs/miku-soft-reference.md` link document and record the checked skill
+revision in project-specific development or worklog documents.
 
 ## Layered Product Shape
 

@@ -1,4 +1,4 @@
-# Miku Software Straight Conversion Guide v20260506
+# Miku Software Straight Conversion Guide
 
 ## Purpose
 

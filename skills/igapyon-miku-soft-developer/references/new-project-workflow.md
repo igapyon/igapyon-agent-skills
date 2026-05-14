@@ -30,15 +30,54 @@ For first delivery surface details, read the relevant specific workflow:
 
 When showing a generic new-project example, use the Node.js / TypeScript main application form from `10-node-app-workflow.md` first. Do not use an MCP server example unless the user has already asked for MCP or the surrounding context clearly points to MCP.
 
-## Basic Document Copy
+## Shared Reference Link
 
-When creating a new miku-soft project or initializing a repository as miku-soft, copy the bundled basic documents from [miku-soft-basic/](miku-soft-basic/) into the target repository's `docs/` directory.
+When creating a new miku-soft project or initializing a repository as miku-soft,
+do not copy the bundled basic documents from [miku-soft-basic/](miku-soft-basic/)
+into the target repository.
 
-- Copy the current newest file for each numbered topic.
-- Keep the `miku-soft-*.md` filenames unchanged.
-- Do not create a synchronization script.
-- After copying, mention the copied source and destination files.
-- If the target repository already has `miku-soft-*.md` files, compare versions and ask before replacing materially different same-version files.
+Instead, create `docs/miku-soft-reference.md` as the stable project-local entry
+point to the shared miku-soft references maintained by
+`igapyon-miku-soft-developer`.
+
+Use this shape as the starting point:
+
+```markdown
+# miku-soft Reference
+
+This repository follows the shared miku-soft design references maintained in
+`igapyon-miku-soft-developer`.
+
+Shared references are not copied into this repository. Use the installed
+`igapyon-miku-soft-developer` skill as the source of truth.
+
+## Reference Location
+
+- GitHub:
+  <https://github.com/igapyon/igapyon-agent-skills/tree/devel/skills/igapyon-miku-soft-developer>
+- Installed skill path:
+  `skills/igapyon-miku-soft-developer`
+
+## Main References
+
+- `references/architecture-rules.md`
+- `references/10-node-app-workflow.md`
+- `references/30-java-straight-conversion-workflow.md`
+- `references/31-java-maven-plugin-separation-workflow.md`
+- `references/40-agent-skills-workflow.md`
+- `references/50-mcp-workflow.md`
+- `references/miku-soft-basic/`
+
+## Project-Specific Records
+
+Project-specific decisions, checked reference revisions, migration notes, and
+verification results are recorded in this repository's development or worklog
+documents.
+```
+
+Record the checked miku-soft reference date, skill commit, and main workflow
+used in a project-specific development or worklog document, not in
+`docs/miku-soft-reference.md`.
 
 ## Creation Checklist
 
@@ -46,7 +85,7 @@ When creating a new miku-soft project or initializing a repository as miku-soft,
 2. Create only the repository skeleton needed for the requested first delivery surface.
 3. Follow the specific workflow for the selected first delivery surface.
 4. Put product behavior in product code, public APIs, CLI, or bundled runtime artifacts, not in skill prose.
-5. Copy the miku-soft basic documents into `docs/` when initializing a miku-soft repository.
+5. Create `docs/miku-soft-reference.md` when initializing a miku-soft repository.
 6. Add README and TODO entries that match the actual initial state.
 7. Add focused tests or regression commands when there is executable behavior to protect.
 8. Regenerate any repository indexes required by the target repository.

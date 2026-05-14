@@ -1,4 +1,4 @@
-# Miku Software Agent Skills Design v20260506
+# Miku Software Agent Skills Design
 
 This memo organizes design characteristics commonly expected for Agent Skills versions in the `miku` software series.
 
@@ -29,13 +29,13 @@ This document is not a detailed specification for one skill repository. Reposito
 
 Use the shared design documents together as follows.
 
-- `docs/miku-soft-10-mainapp-design-v20260506.md`
+- `references/miku-soft-basic/miku-soft-10-mainapp-design.md`
   - describes the upstream product design and semantic center
-- `docs/miku-soft-20-javaapp-design-v20260506.md`
+- `references/miku-soft-basic/miku-soft-20-javaapp-design.md`
   - describes Java runtime versions when they exist
-- `docs/miku-soft-30-straight-conversion-v20260506.md`
+- `references/miku-soft-basic/miku-soft-30-straight-conversion.md`
   - describes how Java versions are created from upstream main applications
-- `docs/miku-soft-40-agentskills-design-v20260506.md`
+- `references/miku-soft-basic/miku-soft-40-agentskills-design.md`
   - describes how Agent Skills versions should expose miku workflows to AI agents
 
 This document separates the following levels.
