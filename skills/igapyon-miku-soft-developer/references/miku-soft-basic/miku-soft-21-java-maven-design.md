@@ -209,12 +209,52 @@ During local development, the runtime artifact may be installed into the local
 Maven repository, but published plugin behavior should be explainable through
 normal Maven coordinates.
 
+For unreleased local use, users normally install both artifacts into their
+local Maven repository:
+
+1. install the runtime artifact from `<product>-java`
+2. install the plugin artifact from `<product>-java-maven`
+3. execute the plugin from the consuming project with full coordinates
+
+The consuming project normally should not declare the runtime artifact only to
+make the plugin work. The runtime is resolved as a Maven dependency of the
+plugin artifact.
+
+When the `<product>-java` jar is both executable and reusable, document both
+roles clearly:
+
+- CLI jar for `java -jar`
+- runtime library artifact used by the Maven plugin dependency
+
 The plugin documentation should state:
 
 - required runtime artifact coordinates
 - expected compatible runtime version
 - how the plugin version relates to the runtime version
 - local development command for installing or resolving the runtime dependency
+
+### Runtime Core API Principles
+
+The Java runtime/core API should be the stable integration point shared by CLI
+and Maven plugin adapters.
+
+Plugin-facing product behavior should not exist only inside CLI implementation
+classes. Check especially:
+
+- file conversion
+- batch conversion
+- diagnostics and progress reporting
+- output path decisions
+- overwrite, recursive, and failure behavior
+
+When the Maven plugin needs one of these behaviors, provide it through the
+runtime core API or a runtime helper. The Mojo should call that API as a thin
+adapter, not invoke CLI implementation classes as its primary integration
+point and not duplicate product behavior.
+
+When behavior is extracted from CLI-only code into the runtime API, add focused
+runtime-side tests for that contract before relying on it from the plugin
+repository.
 
 ### Goal and Parameter Principles
 
@@ -344,6 +384,18 @@ It should explain:
 Detailed maintenance notes, compatibility notes, and development commands
 should live under `docs/`.
 
+Recommended README order:
+
+1. usage
+2. local unreleased setup
+3. configuration
+4. development
+5. release or publication notes
+
+Usage should show full-coordinate invocation first. Short-form prefix
+invocation may be documented afterward, with Maven plugin group resolution
+prerequisites called out.
+
 ### `workplace/` Directory Principles
 
 Maven plugin repositories use `workplace/` for local runtime checkouts,
@@ -356,6 +408,11 @@ Rules:
 - do not track normal files under `workplace/`
 - do not depend on `workplace/` for normal build or test inputs
 - keep required fixtures under tracked test, example, or docs paths
+- treat runtime checkouts under `workplace/` or `../runtime` as reference
+  checkouts, not reactor modules or build inputs
+- use artifact-only resolution as the default; submodules, subtrees, copied
+  `runtime/` directories, or source-tree reactor relationships require an
+  explicit product-specific decision and should be recorded as non-default
 
 ## Recommended Conventions
 
