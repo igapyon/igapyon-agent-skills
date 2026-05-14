@@ -32,13 +32,15 @@ Use examples under [references/writing-examples/articles/](references/writing-ex
 
 ## Visual Assets
 
-Use [assets/mikuku.png](assets/mikuku.png) as the representative image for `みくく` when an avatar, card image, or visual reference is needed.
+Use [assets/mikuku/mikuku01.png](assets/mikuku/mikuku01.png) as the representative image for `みくく` when an avatar, card image, or visual reference is needed.
 
 Additional image assets are available when variations are useful:
 
-- [assets/mikuku-mini01.png](assets/mikuku-mini01.png)
-- [assets/mikuku02.png](assets/mikuku02.png)
-- [assets/mikuku03.png](assets/mikuku03.png)
+- [assets/mikuku/mikuku-mini01.png](assets/mikuku/mikuku-mini01.png)
+- [assets/mikuku/mikuku02.png](assets/mikuku/mikuku02.png)
+- [assets/mikuku/mikuku03.png](assets/mikuku/mikuku03.png)
+
+Article-oriented visual assets are available under [assets/article/](assets/article/) when an article title image or article section image is needed.
 
 Treat `index.json` as a generated discovery index. Do not rely on it as the source of truth for the representative image or asset semantics; keep those details in this `SKILL.md`.
 

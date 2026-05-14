@@ -53,6 +53,17 @@ Note 向きのより柔らかい読み物文体が必要な場合は、`みく�
 
 参照記事の本文を長くコピーしないでください。参考にするのは、表現そのものではなく、記事全体の間合い、説明順、温度感です。
 
+## 追加の文体参考
+
+必要に応じて、次のみくく担当記事も文体・構成の参考にできます。
+
+- `references/writing-examples/articles/20260510-general-mcp-server-client-local.md`
+- `references/writing-examples/articles/20260514-general-agent-skills-natural-language-programming.md`
+- `references/writing-examples/articles/20260514-general-ai-engineering-overview.md`
+- `references/writing-examples/articles/20260514-general-ai-native-cli-mcp-agent-skills.md`
+
+これらは `skills/igapyon-note-writer/references/` にある Note 正本を、文体参考用に同期コピーしたものです。記事本文、公開 URL、掲載用属性を更新する場合は、Note 正本側を先に更新し、その後で writing example 側へ同期します。
+
 ## 補助参照
 
 第一優先の文体参考だけでは、記事構成や技術説明の粒度が不足する場合があります。
@@ -103,6 +114,7 @@ Qiita の場合でも、硬い技術文体へ寄せすぎません。Note の場
 
 - 掲載先と文体を混同しないでください。
 - 文体の第一参考は `references/writing-examples/articles/20260509-general-agent-skills-docs.md` と `references/writing-examples/articles/20260509-general-agent-skills-activation.md` です。
+- writing example は文体参考用コピーです。公開記事の正本は媒体側 writer skill の `references/` に置きます。
 - 技術構成やメタデータが足りない場合だけ、関連する writer skill を補助参照します。
 - Note 向きの柔らかい読み物文体が必要な場合は、`みくく` ではなく別担当を検討します。
 - `references/mikuku-prompt.md` は、基本話法の参照として扱い、記事執筆ルールの追記先にはしません。
