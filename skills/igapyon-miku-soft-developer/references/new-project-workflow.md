@@ -66,6 +66,7 @@ Shared references are not copied into this repository. Use the installed
 - `references/11-web-app-workflow.md`
 - `references/30-java-straight-conversion-workflow.md`
 - `references/31-java-maven-plugin-separation-workflow.md`
+- `references/32-node-web-separation-workflow.md`
 - `references/40-agent-skills-workflow.md`
 - `references/50-mcp-workflow.md`
 - `references/miku-soft-basic/`

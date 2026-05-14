@@ -49,3 +49,11 @@ closest public or documented reference used instead. Before scaffolding or
 initial file design, summarize which sister project was checked and which
 concrete decisions it influenced. Do not copy a sister repository wholesale
 into the target.
+
+## Separation Workflow Rule
+
+When separating a historical combined repository, use the layer-specific
+separation workflow before moving or deleting files:
+
+- [31-java-maven-plugin-separation-workflow.md](31-java-maven-plugin-separation-workflow.md): split a Maven plugin adapter from a Java runtime repository
+- [32-node-web-separation-workflow.md](32-node-web-separation-workflow.md): split a Web App surface from a TypeScript / Node.js main application repository
