@@ -6,13 +6,18 @@ The initial versions of these tools were created by `Mikuku` and Toshiki Iga.
 
 The current contents are based on this repository and public `igapyon` GitHub repositories checked on 2026-04-25.
 
+This document now focuses on the TypeScript / Node.js main application layer:
+product core, CLI, structured artifacts, diagnostics, and runtime bundles. Web
+application design is split into `miku-soft-11-web-design.md`.
+
 ## Design Summary
 
 The `miku` software series can be summarized as follows.
 
 > A family of small, local-first conversion / bridge tools that turn existing domain files into AI-friendly, script-friendly, human-reviewable structured outputs.
 
-What characterizes this series is not a specific technology stack or UI style. It is a repeated set of product constraints.
+What characterizes this layer is a TypeScript / Node.js product center with a
+clear core, CLI, structured artifacts, diagnostics, and downstream contracts.
 
 - Keep each tool small enough to understand
 - Run locally whenever possible
@@ -64,7 +69,16 @@ Projects with the `-java` suffix are positioned as straight Java conversions of 
 
 Projects with the `-skills` suffix are positioned as Agent Skills versions that make the original products easier for AI agents to use.
 
-Main applications in the miku series, excluding Java versions and Agent Skills versions, are generally implemented as Node.js applications. When they have a Web UI, they use the `lht-cmn` Web Components as shared UI components.
+Main applications in the miku series, excluding Java versions, Web application
+versions, Agent Skills versions, and MCP versions, are generally implemented as
+TypeScript / Node.js applications.
+
+Web application surfaces are treated as the `11 Web App` layer and are
+described in `miku-soft-11-web-design.md`. Historically, several miku
+repositories colocated the Web UI, product core, CLI, and generated Web
+artifacts in one repository. Treat those repositories as historical combined
+repositories during migration; the intended dependency direction is `11 Web App
+-> 10 Main Application`.
 
 ## Shared Direction
 
@@ -84,15 +98,22 @@ The shared direction is as follows.
 
 ## Role of Main Applications
 
-In this document, a main application means an application in the miku series that is neither a Java straight-conversion version nor an Agent Skills version, and that uses Node.js as its basic runtime.
+In this document, a main application means a TypeScript / Node.js product in
+the miku series that is neither a Web application surface, Java
+straight-conversion version, Agent Skills version, nor MCP version.
 
-Main applications may be Web UI applications, CLI-only applications, or applications that provide both. A Web UI is common but not required. A CLI-only tool such as an index generator is still a main application when it stands as the primary product, accepts real local input, and produces verifiable artifacts.
+Main applications own the product core, CLI, structured artifacts, diagnostics,
+and runtime contracts used by downstream layers. A tool such as an index
+generator is a main application when it stands as the primary product, accepts
+real local input, and produces verifiable artifacts.
 
 CLI-only main applications are especially common when the product value is a structured operation for AI agents, scripts, or automation. Tools such as local file search, local file reading, and index generation can be complete products without a Web UI when their CLI contract, JSON output, diagnostics, documentation, and tests are stable enough for repeated use.
 
 Main applications are practical tools for safely reading existing files in a local environment, structuring them, and passing them to another representation.
 
-Main applications are not mere demos or libraries. They should stand as products that have a UI or CLI directly usable by humans, accept real files as input, and produce verifiable artifacts.
+Main applications are not mere demos or libraries. They should stand as
+products with a directly usable CLI or automation surface, accept real files or
+structured input, and produce verifiable artifacts.
 
 At the same time, main applications do not aim to fully replace specialist software. Their primary role is to stand between existing specialist software, file formats, AI agents, and scripts, then bridge information into easier-to-handle forms.
 
@@ -105,11 +126,13 @@ miku main applications emphasize the following cross-cutting principles.
 3. Choose a canonical source or semantic base for each target domain, and do not confuse it with derived views.
 4. Prefer reusable structured output and traceability over perfect visual reproduction.
 5. Make unconvertible content, fallback, loss, and unsupported areas visible as diagnostics.
-6. Push processing called from UI, CLI, tests, and Agent Skills toward the same core as much as possible.
+6. Push processing called from CLI, tests, Web Apps, Agent Skills, and MCP toward the same core as much as possible.
 7. Treat AI agents and scripts as first-class users, and do not make them depend on brittle screen operations or string parsing.
 8. Make artifacts savable, comparable, and rerunnable as files.
 
-The following sections elaborate these cross-cutting principles from the viewpoints of data design, conversion quality, distribution, UI, CLI, and individual products.
+The following sections elaborate these cross-cutting principles from the
+viewpoints of data design, conversion quality, distribution, CLI, downstream
+surfaces, and individual products.
 
 ### Basic Philosophy of Main Applications
 
@@ -117,7 +140,6 @@ Main applications emphasize the following philosophy.
 
 - Process input files on the user's machine
 - Complete processing without sending files to a server
-- Keep Web UI applications distributable as Single-file Web Apps
 - Extract as much semantic structure as practical from existing files
 - Prefer reusable structured output over perfect visual reproduction
 - Provide representations that both AI agents and humans can verify
@@ -125,7 +147,7 @@ Main applications emphasize the following philosophy.
 - Keep implementation small, understandable, and maintainable
 - Implement core processing from scratch where practical
 - Add dependencies only when the user value and maintenance reason are clear
-- Respect both automation-friendly CLI usage and human-checkable UI usage
+- Respect automation-friendly CLI usage and human-reviewable artifacts
 
 The value of a main application is not universality. It is the ability to reliably run a specific conversion, extraction, or inspection workflow locally.
 
@@ -133,20 +155,19 @@ The value of a main application is not universality. It is the ability to reliab
 
 Main applications use the following principles as defaults.
 
-- Use Node.js as the basic runtime
-- Use `lht-cmn` Web Components when a Web UI exists
-- Distribute Web UI applications as Single-file Web Apps
+- Use TypeScript / Node.js as the basic runtime
 - Do not require server communication for core functionality
 - Accept input from local files, CLI arguments, or standard text/JSON representations
 - Generate output as files that are easy to pass to other tools, such as Markdown, JSON, XML, SVG, XLSX, or ZIP
-- Build UI flow around load, preview, diagnostics, and export
 - Make CLI usable for batch processing, tests, and AI agent workflows
 - Make major artifacts savable as files
 - Treat warning, diagnostics, and summary as structured data where possible
 - State conversion limitations and unsupported areas clearly
 - Try to obtain the same output from the same input and same settings
 
-Main applications keep the user flow short: load, verify, export, and pass to another tool or AI.
+Main applications keep the operation flow short: read explicit input, process
+or validate it, emit diagnostics and artifacts, and pass the result to another
+tool, human, or AI.
 
 ### New Creation Sister Reference Principles
 
@@ -157,9 +178,11 @@ checkout exists locally, record that absence and name the closest public or
 documented reference used instead.
 
 Use sister repositories to confirm practical details such as package metadata,
-source layout, UI or CLI entrypoints, test shape, generated artifact placement,
+source layout, CLI entrypoints, test shape, generated artifact placement,
 release assets, README structure, and documentation split. These references do
-not replace the product-specific concept or the shared design principles.
+not replace the product-specific concept or the shared design principles. When
+the task concerns a Web App surface, use the `11 Web App` design document and a
+same-layer Web reference as well.
 
 ### Scratch Implementation and Dependency Principles
 
@@ -208,7 +231,9 @@ Main applications declare what they treat as the canonical source for each targe
 
 The canonical source is the semantic center that the application must preserve. In extraction tools, it is often useful to call the original file or data being extracted the canonical input. The primary output is the artifact the user mainly wants from the tool, such as Markdown, JSON, XML, SVG, XLSX, or ZIP. Derived views are additional surfaces generated from the canonical source or from the primary output for inspection, handoff, reimport, or reporting.
 
-Input/output, internal models, UI, CLI, AI-facing views, and report outputs are positioned to preserve the canonical source and transfer its meaning to other uses.
+Input/output, internal models, CLI, AI-facing views, report outputs, and
+downstream Web surfaces are positioned to preserve the canonical source and
+transfer its meaning to other uses.
 
 Examples:
 
@@ -239,7 +264,9 @@ Examples:
 - `miku-xlsx2md` aims to turn design-document structure into Markdown, not to reproduce Excel appearance
 - `mikuproject` bridges MS Project XML with WBS / AI / reports, and does not replace every project-management feature
 
-This boundary is reflected in README, docs, UI copy, and CLI help. Even if a capability exists internally, it should not be placed too prominently if it is not central to the product.
+This boundary is reflected in README, docs, CLI help, and downstream surface
+documentation. Even if a capability exists internally, it should not be placed
+too prominently if it is not central to the product.
 
 ### Conversion Quality Principles
 
@@ -287,7 +314,10 @@ This design keeps AI context small, makes returned changes easier to validate, a
 
 ### Artifact Pipeline for Generative AI Interactive Tools
 
-For miku software such as `mikuproject` and `mikuscore`, which have generative AI interaction or AI agent workflows, AI integration is not treated merely as a convenient UI feature. It is designed as a pipeline with intermediate artifacts.
+For miku software such as `mikuproject` and `mikuscore`, which have generative
+AI interaction or AI agent workflows, AI integration is not treated merely as a
+convenient surface feature. It is designed as a pipeline with intermediate
+artifacts.
 
 Inputs passed to AI, outputs returned by AI, validation results, applied state, and diffs are each made into units that can be saved, inspected, and rerun.
 
@@ -302,47 +332,24 @@ A representative flow is as follows.
 
 This property does not appear with the same intensity in every miku main application. In tools whose main purpose is extraction or conversion, such as `miku-xlsx2md` and `miku-docx2md`, AI-readable output and diagnostics are central. In tools that edit existing state through interaction with AI, projection, patch, validate, apply, and diff move closer to the center of the product workflow.
 
-This pipeline may fit CLI and Agent Skills better than Web UI. When intermediate artifacts are JSON and staged validation or diff review is important, CLI and Agent Skills should be treated as regular paths rather than making the UI too heavy.
+This pipeline may fit CLI and Agent Skills better than Web Apps. When
+intermediate artifacts are JSON and staged validation or diff review is
+important, CLI and Agent Skills should be treated as regular paths rather than
+making the Web surface too heavy.
 
-Web UI is useful as a lightweight entry point for creating projections, checking import results, previewing, and downloading. The center of AI editing, however, is the ability to handle saved projections, patches, diagnostics, and diffs in order.
+Web Apps can provide a lightweight human-facing entry point for creating
+projections, checking import results, previewing, and downloading when the `11`
+layer exists. The center of AI editing in the `10` layer, however, is the
+ability to handle saved projections, patches, diagnostics, and diffs in order.
 
 ## Recommended Conventions
 
 The following sections turn the cross-cutting principles into practical repository operations. They do not force every product into exactly the same shape, but new implementations and cleanups should first consider this shape as the default.
 
-### Distribution and Build Principles
-
-#### Web Distribution Shape
-
-For main applications with a Web UI, split development-time source files from distribution-time single-file artifacts.
-
-Distribution artifacts should generally be designed as Single-file Web Apps. They should open in a Web browser, require no additional installation or server startup, and allow core functionality to be used offline.
-
-For Web distribution, the basic structure is to place `index.html` as a landing page and launch the actual main HTML from it. The main HTML is generated as a product-named single-file app, such as `miku-xlsx2md.html`, `miku-docx2md.html`, `mikuproject.html`, or `mikuscore.html`.
-
-The landing page generally displays the build date. Links from the landing page to the main HTML include URL parameters such as the build date so old single-file apps are less likely to be opened from the browser cache.
-
-#### Generated Web Artifacts
-
-The basic shape is as follows.
-
-- Place TypeScript source under `src/`
-- Edit source template HTML
-- Treat `index.html` as the landing page
-- Display the build date on the landing page
-- Generate the main HTML as a product-named single-file app
-- Add cache-busting parameters to URLs from the landing page to the main HTML
-- Bundle CSS / JS / required assets into a single HTML file during build
-- Do not directly edit generated single HTML artifacts
-- Make generated artifacts work as offline runtime
-- Keep required JS / CSS local or vendored
-- Make builds locally deterministic
-
-This shape balances development-time maintainability with ease of distribution for users.
-
 ### Node Package and Runtime Artifact Principles
 
-CLI-oriented main applications may also be distributed as Node.js packages or as single-file Node.js runtime artifacts.
+Main applications may be distributed as Node.js packages or as single-file
+Node.js runtime artifacts.
 
 #### Package Metadata
 
@@ -468,8 +475,10 @@ Derived applications that exceptionally have an upstream emphasize the following
 
 - Keep future intake from upstream easy
 - Prefer thin wrappers, thin adapters, and entry-point level customization
-- Narrow feature scope through UI surface, input mode, and product messaging
-- Do not delete upstream-derived code broadly only because the current UI does not use it
+- Narrow feature scope through input mode, CLI surface, downstream Web surface,
+  and product messaging
+- Do not delete upstream-derived code broadly only because a current downstream
+  surface does not use it
 - Prefer ease of upstream sync over visual local cleanup
 - Allow downstream-specific divergence only when the practical benefit is clear
 
@@ -479,20 +488,23 @@ This policy permits a little extra code only when an upstream exists. Normal mai
 
 #### Shared Core
 
-Main applications push processing called from UI, CLI, tests, and Agent Skills toward the same core as much as possible.
+Main applications push processing called from CLI, tests, Web Apps, Agent
+Skills, and MCP toward the same core as much as possible.
 
-CLI and Web UI are designed as thin entry points that call a shared core, not as separate implementations.
+CLI and downstream adapters are designed as thin entry points that call a
+shared core, not as separate implementations.
 
 #### Thin Entrypoints
 
 This principle appears in forms such as the following.
 
-- Separate the body of conversion, inspection, normalization, import, and export from UI
 - Implement CLI as a thin wrapper around core
-- Let Web UI display core results and handle file selection and saving
-- Write tests not only for UI but also for core APIs
+- Let downstream Web Apps display core results through the `11` layer instead
+  of reimplementing product behavior
+- Write tests for core APIs and CLI contracts
 - Provide small public entry points that Agent Skills and external automation can call easily
-- Use the same defaults, diagnostics, and output policy in Web UI and CLI
+- Use the same defaults, diagnostics, and output policy across CLI and
+  downstream surfaces where their operation ranges overlap
 
 When adding a thin layer to publish a CLI, keep that layer responsible for option parsing, file I/O, stdout / stderr, and exit codes. Do not duplicate conversion meaning or business logic on the CLI side.
 
@@ -500,7 +512,7 @@ When adding a thin layer to publish a CLI, keep that layer responsible for optio
 
 #### API Boundary
 
-Main applications provide a UI-independent public API surface when needed.
+Main applications provide a runtime-independent public API surface when needed.
 
 The public API surface does not expose everything inside the application. It gathers operations needed by Agent Skills, CLI, tests, MCP, or future integrations as small, stable entry points.
 
@@ -511,31 +523,38 @@ The public API surface emphasizes the following.
 - Provide format-aware import / export entry points
 - Put verification operations such as validate, summarize, diff, and apply on the core side
 - Make AI-facing specs and projections stably retrievable
-- Do not depend on UI DOM state
+- Do not depend on Web UI DOM state
 - Structure input, output, and diagnostics
 - Do not turn the detailed internal module graph into an external contract
 
-This policy lets features built for Web UI be used with the same meaning from CLI and Agent Skills.
+This policy lets features be used with the same meaning from CLI, Web Apps,
+Agent Skills, MCP, and tests.
 
 ### Runtime Difference Adapter Principles
 
 #### Runtime-specific Boundaries
 
-Main applications may run in both Web browsers and Node.js CLI.
+Main applications may be called from different runtime boundaries such as the
+Node.js CLI, tests, a separated Web App, Agent Skills, or MCP.
 
-In that case, runtime-specific parts such as DOM, XML parser, file, Blob, download, encoding, and ZIP saving should not be scattered directly through core logic.
+Runtime-specific parts such as file I/O, stdin/stdout, process exit, DOM,
+Blob, download, encoding, XML parser, and ZIP saving should not be scattered
+directly through core logic.
 
 #### Adapter Shape
 
 Runtime differences are contained in adapters or loaders as follows.
 
-- Use browser standard APIs on Web
-- Inject required APIs through loaders or adapters in Node.js
+- Use Node.js APIs at the CLI boundary
+- Use browser standard APIs only in the `11 Web App` layer
+- Inject required APIs through loaders or adapters when core needs a runtime
+  service
 - Do not hard-code XML DOM or serializer to a global
-- Treat file I/O and download as separate responsibilities
+- Treat file I/O, stdout/stderr, and browser download as separate responsibilities
 - Let core pass around bytes, text, document objects, and structured data
 
-This separation makes it easier to use the same core in both Single-file Web Apps and CLI.
+This separation makes it easier to use the same core from CLI, Web Apps, Agent
+Skills, MCP, and tests.
 
 ### Diagnostics and Summary Principles
 
@@ -556,7 +575,7 @@ The principles are as follows.
 - Diagnostics have code / message / severity / source location where practical
 - Source location is kept in a form suited to the target domain, such as file / sheet / range / anchor / node / command
 - CLI can output diagnostics to stderr or as structured diagnostics
-- Web UI provides a place to inspect diagnostics and summaries
+- Web Apps can inspect the same diagnostics through the `11` layer
 - AI-facing workflows use diagnostics as material for patch validation and diff decisions
 - Unsupported information is not silently discarded; it is kept as trace or metadata when useful
 - To keep normal primary output readable, detailed trace is emitted in debug / diagnostics mode
@@ -587,43 +606,12 @@ Examples:
 When adding a mode, satisfy the following.
 
 - It is explainable what the mode switches
-- The meaning is aligned between UI and CLI
+- The meaning is aligned between CLI and downstream surfaces where applicable
 - The default is appropriate for normal use
 - The mode can be traced from output filenames or summaries
 - Tests fix representative cases for each mode
 
 Modes are placed for users to choose conversion policy, not to expose internal convenience.
-
-### UI Design Principles
-
-#### UI Role
-
-Main applications with a Web UI use `lht-cmn` Web Components to keep consistency across the series.
-
-UI is centered on the actual work surface rather than an explanatory landing page.
-
-#### Basic UI Flow
-
-The basic UI flow is as follows.
-
-- Load an input file
-- Run conversion or analysis
-- Inspect results, summaries, and diagnostics
-- Save required artifacts
-
-The UI clearly treats processing as local so users do not mistakenly think their files are being sent to an external server.
-
-#### UI Boundary
-
-Even when a Web UI exists, the center of the main application is not the UI itself. It is the processing that reads local files, structures them, and outputs artifacts. Avoid states whose meaning exists only in the UI.
-
-- Do not create important information that exists only in UI state
-- Do not trap core logic inside DOM event handlers
-- Make the same processing callable from CLI and tests
-- Use UI copy to clarify product boundaries
-- Separate the landing page as an entry point from the main HTML as the work surface
-
-For this reason, miku main applications prefer reliable operations on real files and verifiable outputs over visual luxury.
 
 ### CLI Design Principles
 
@@ -631,7 +619,7 @@ For this reason, miku main applications prefer reliable operations on real files
 
 Main applications with a CLI consider both batch workflows that replace manual work and invocation from AI agents.
 
-CLI is not a helper for UI. It is a formal entry point for AI agent workflows and automation.
+CLI is a formal entry point for AI agent workflows and automation.
 
 #### Basic CLI Contract
 
@@ -684,13 +672,14 @@ Across the series, this appears in forms such as the following.
 - Markdown output as model-readable context
 - Diagnostics and summaries for downstream tools
 - `*-skills` repositories that teach AI agents how to use tools
-- CLI surfaces that allow scripted use without depending on browser UI
+- CLI surfaces that allow scripted use without depending on a browser surface
 
 The design preference is not merely to produce human-readable output. It is to keep structures simple enough for other programs and agents to use without brittle parsing.
 
 ### Local-first and Privacy
 
-Many tools run in the browser or as local CLI.
+Many tools run as local CLI tools, and historical combined repositories may
+also include a browser Web App surface.
 
 This is important because input files often contain private or business-sensitive data.
 
@@ -702,7 +691,9 @@ Representative inputs include the following.
 - score file
 - source repository
 
-Across the series, core functionality does not assume hosted backends or server communication. Single-file Web Apps and local CLI keep processing complete inside the local environment by default.
+Across the series, core functionality does not assume hosted backends or server
+communication. Local CLI and downstream Web Apps keep processing complete
+inside the local environment by default.
 
 ### Prefer Conversion Over Full Editing
 
@@ -755,30 +746,23 @@ Across the series, tools are kept small and direct.
 
 Implementation shape differs by project, but the basic product shape is small, readable, and easy for other tools to call.
 
-### Browser and CLI Combination
+### Historical Web Colocation
 
-Several projects combine a browser UI with a CLI path.
+Several historical miku repositories colocated browser UI, TypeScript /
+Node.js core, CLI, generated Web artifacts, tests, and release scripts in one
+repository.
 
-Excluding Java versions and Agent Skills versions, main applications use Node.js as the basic runtime. Even when a Web UI exists, build, CLI, tests, and distribution artifact generation are centered on the Node.js toolchain.
+This history remains important for maintenance and migration, but it is not the
+target layer model for new design. In the current model:
 
-Web UI uses `lht-cmn` Web Components to keep a common look and operation feel across the series. App-specific UI is added minimally on top.
+- `10 Main Application` owns TypeScript / Node.js core, CLI, diagnostics,
+  structured artifacts, and runtime bundles
+- `11 Web App` owns browser UI, Single-file Web App distribution, browser
+  adapters, `lht-cmn`, preview, and download behavior
+- the dependency direction is `11 Web App -> 10 Main Application`
 
-Browser UI is suited for the following.
-
-- Interactive local conversion
-- Preview
-- Human inspection
-- Download of generated artifacts
-
-CLI is suited for the following.
-
-- Batch conversion
-- Tests
-- Agent workflows
-- Integration with other tools
-- Reproducible command-line use
-
-This combination allows the same core functionality to be used for both human work and automated workflows.
+When maintaining a historical combined repository, keep this ownership split in
+mind even if the files have not yet been physically separated.
 
 ### Naming Pattern
 
@@ -810,12 +794,14 @@ For this reason, the following are emphasized.
 
 - Major results can be output as files
 - Output filenames and formats are predictable
-- Results seen in UI and results obtained by CLI do not diverge in meaning
-- Summaries, diagnostics, and manifests inspected in UI and saved by CLI come from the same core
+- Results obtained by CLI and downstream surfaces do not diverge in meaning
+- Summaries, diagnostics, and manifests come from the same core
 - Generated files can be placed under work areas such as `workplace/`
 - Input, mode, diagnostics, and summary can be traced from artifacts
 
-UI is an operation surface for producing artifacts, and CLI is an entry point for generating artifacts automatically. Both are aligned as different entry points to the same processing result.
+CLI is the direct execution surface for generating artifacts automatically.
+Downstream Web Apps, Agent Skills, and MCP should align as adapters over the
+same processing result.
 
 ### Inspect Before Handoff
 
@@ -843,7 +829,8 @@ For this reason, avoid the following.
 
 - Editing only a derived view and leaving the path back to the canonical source unclear
 - Over-shaping data for AI convenience and losing constraints from the original data
-- Distorting the canonical format or internal model to prioritize UI appearance
+- Distorting the canonical format or internal model to prioritize presentation
+  appearance
 - Over-completing input-side meaning for the convenience of conversion results
 
 What is needed is to create human- and AI-friendly surfaces while separating what came from the canonical source from what is derived, inferred, or auxiliary.
@@ -861,7 +848,8 @@ Typically, they prefer the following shape.
 - Rerunnable with local files only
 - Same command reproducible in CI and local tests
 
-This straightforwardness applies not only to CLI but also to Web UI. In Web UI, the flow should remain short: load, inspect, save.
+This straightforwardness applies to CLI and to downstream surfaces that call
+the same product core.
 
 ### Keep Intermediate Representations Small
 
@@ -883,7 +871,9 @@ Even when the target domain is complex, the miku-side intermediate representatio
 
 Main applications treat failures and partial support as part of the specification, not only successful output.
 
-File conversion inevitably encounters inputs that cannot be fully supported. In such cases, the design should not silently discard information, approximate vaguely, or warn only in UI.
+File conversion inevitably encounters inputs that cannot be fully supported. In
+such cases, the design should not silently discard information, approximate
+vaguely, or warn only in one downstream surface.
 
 The principles are as follows.
 
@@ -926,7 +916,8 @@ This policy appears in decisions such as the following.
 - Make output filenames predictable from input name and mode
 - Avoid automatically increasing mode suffixes too much; put necessary mode information in summaries or metadata
 - Explicitly handle save-time settings such as encoding, BOM, line endings, and escaping
-- Share the same save-processing layer across browser UI, CLI, and Markdown inside ZIP
+- Share the same artifact serialization policy across CLI, downstream Web
+  Apps, and archive entries
 - Treat runtime-unavailable encoding or save features as constraints rather than silently approximating them
 
 Reproducibility is not only for easier testing. It lets AI agents and scripts diff artifacts, judge changes, and reprocess only what is necessary.
@@ -962,13 +953,19 @@ For this kind of tool, the following boundaries are especially important.
 - For inputs where full fidelity is difficult, keep loss, fallback, unsupported areas, and source locations as diagnostics
 - Prefer consistency among MusicXML usable by downstream tools, structured views readable by AI, and preview checkable by humans over perfect musical visual reproduction
 - For AI score generation or editing, use structured intermediate artifacts such as measure details, AI JSON, diagnostics, and diffs rather than exchanging the whole score as free text
-- Treat UI as an entry point for import, preview, diagnostics, export, and AI handoff, not as a score editing screen
+- Treat a Web App, when provided by the `11` layer, as an entry point for import,
+  preview, diagnostics, export, and AI handoff, not as a score editing screen
 - Treat CLI and Agent Skills as formal entry points for score conversion, validation, AI workflows, and regression tests
 - Use third-party libraries to reduce the realistic burden of score rendering and existing-format connections, while placing miku-side value in conversion policy, diagnostics, normalization, and handoff models
 
 What matters for `mikuscore` is not becoming a substitute for notation software. It is to keep MusicXML at the center, pass score data to other representations without breaking it, and let humans and AI agents verify the same conversion result.
 
-Therefore, feature priority is judged not by whether more editing can be done on screen, but by whether MusicXML-first conversion quality, diagnostics, round-trip stability, AI handoff, and external tool integration become stronger. Strengthening saved intermediate artifacts, conversion diffs, fixtures, golden tests, and format coverage is more `mikuscore`-like than adding deep editing UI.
+Therefore, feature priority is judged not by whether more editing can be done
+on screen, but by whether MusicXML-first conversion quality, diagnostics,
+round-trip stability, AI handoff, and external tool integration become
+stronger. Strengthening saved intermediate artifacts, conversion diffs,
+fixtures, golden tests, and format coverage is more `mikuscore`-like than
+adding a deep editing surface.
 
 ### Notes Specific to `miku-abc-player`
 
@@ -979,12 +976,20 @@ For this kind of tool, the following boundaries are especially important.
 - Treat ABC preview and playback as the product center, not broad score conversion or deep notation editing
 - Accept supported non-ABC imports when they are opened into the ABC-centered workflow through inherited `mikuscore` / MusicXML-compatible processing
 - Keep inherited edit and export surfaces secondary, even when they remain available because preserving them reduces implementation or sync cost
-- Reuse `mikuscore` project structure, build model, UI conventions, ABC-related logic, playback logic, and lightweight edit / export surfaces where doing so keeps upstream intake practical
-- Prefer thin adapters, profile-like configuration, entry-point customization, UI visibility controls, and product wording over downstream rewrites of shared conversion behavior
-- Do not delete upstream-derived code broadly only because the current `abc-player` UI does not expose all of it
-- Treat changes to ABC parsing, ABC / MusicXML round-trip behavior, diagnostics, playback, and shared UI/runtime assumptions as upstream-sensitive changes
+- Reuse `mikuscore` project structure, build model, ABC-related logic,
+  playback logic, and lightweight edit / export surfaces where doing so keeps
+  upstream intake practical
+- Prefer thin adapters, profile-like configuration, entry-point customization,
+  downstream surface visibility controls, and product wording over downstream
+  rewrites of shared conversion behavior
+- Do not delete upstream-derived code broadly only because the current
+  `abc-player` downstream surface does not expose all of it
+- Treat changes to ABC parsing, ABC / MusicXML round-trip behavior,
+  diagnostics, playback, and shared runtime assumptions as upstream-sensitive
+  changes
 - When local divergence becomes substantial, prefer asking for a general `mikuscore` profile / option hook rather than adding `abc-player`-specific fork logic
-- Keep user-facing messaging centered on load, preview, play, and small correction workflows
+- Keep downstream Web App messaging centered on load, preview, play, and small
+  correction workflows
 
 What matters for `miku-abc-player` is not becoming a smaller clone of all `mikuscore` features. It is to provide a fast local ABC playback and preview entry point while staying close enough to `mikuscore` that improvements to shared score handling can continue to flow into the derived app.
 
@@ -1002,9 +1007,13 @@ Therefore, feature priority is judged by whether the app becomes better at openi
 - Allow `project_draft_view` as an entry point for drafting new plans, but treat it as a different workflow from local modification of existing WBS
 - In import, make `replace / merge / patch` explicit and reject invalid combinations of `format` and `operation`
 - Validate AI-returned patches for referenced tasks, updatable fields, structural changes, dependencies, assignments, and similar points before applying them
-- Use `CLI` and `Agent Skills` as the main path for the AI editing pipeline; treat Web UI as an entry point for loading, projection saving, preview, download, and result inspection
-- Provide small aggregation entry points as needed so the single-file web app, CLI, Agent Skills, and tests can call the same core
-- Contain differences between Web browser and Node.js CLI in adapters for XML DOM, file I/O, download, encoding, and similar areas
+- Use `CLI` and `Agent Skills` as the main path for the AI editing pipeline;
+  treat Web Apps as downstream entry points for loading, projection saving,
+  preview, download, and result inspection
+- Provide small aggregation entry points as needed so CLI, Web Apps, Agent
+  Skills, MCP, and tests can call the same core
+- Contain runtime-boundary differences in adapters for XML DOM, file I/O,
+  download, encoding, stdout/stderr, and similar areas
 - Align the meaning of derived artifacts from the same `ProjectModel`, such as `WBS XLSX`, `WBS Markdown`, `Daily SVG`, `Weekly SVG`, `Monthly Calendar SVG`, and `Mermaid`
 - Treat `WBS SVG` not as a replacement for `Mermaid`, but as a separate preview / download output whose appearance is easier to control
 - Align interpretation of date bands, business days, holidays, progress bands, and similar display semantics between `WBS XLSX` and `SVG` where practical
@@ -1012,7 +1021,11 @@ Therefore, feature priority is judged by whether the app becomes better at openi
 
 What matters for `mikuproject` is not increasing project-management features for their own sake. It is to hand the same project information among `MS Project XML`, reports, visualization, AI editing, and CLI automation without breaking meaning.
 
-Therefore, feature priority is judged not by whether the product approaches an MS Project replacement, but by whether bridging, inspection, local editing, diff review, and artifact generation become stronger. Strengthening saved state, limited projections, patch validation, and report export is more `mikuproject`-like than adding heavy UI-contained editing features.
+Therefore, feature priority is judged not by whether the product approaches an
+MS Project replacement, but by whether bridging, inspection, local editing,
+diff review, and artifact generation become stronger. Strengthening saved
+state, limited projections, patch validation, and report export is more
+`mikuproject`-like than adding heavy Web-contained editing features.
 
 ### Notes Specific to `miku-xlsx2md`
 

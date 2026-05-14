@@ -41,6 +41,8 @@ Use the shared design documents together as follows.
 
 - `references/miku-soft-basic/miku-soft-10-mainapp-design.md`
   - describes the upstream product design and semantic center
+- `references/miku-soft-basic/miku-soft-11-web-design.md`
+  - describes the dependent Web App surface when browser operation exists
 - `references/miku-soft-basic/miku-soft-40-agentskills-design.md`
   - describes how Agent Skills versions expose miku workflows to AI agents
 - `references/miku-soft-basic/miku-soft-50-mcp-design.md`
@@ -105,7 +107,10 @@ Projects with the `-mcp` suffix are positioned as MCP server adapters for origin
 For `mikuproject-mcp`, the server implementation is Node.js / TypeScript.
 `packages/java/` is intentionally only a placeholder.
 
-This document focuses on MCP server versions. It does not define the Web UI conventions for upstream main applications, Java packaging conventions for Java application versions, or skill packaging conventions for Agent Skills repositories.
+This document focuses on MCP server versions. It does not define Web App
+conventions for the `11 Web App` layer, Java packaging conventions for Java
+application versions, or skill packaging conventions for Agent Skills
+repositories.
 
 ## Shared Direction
 

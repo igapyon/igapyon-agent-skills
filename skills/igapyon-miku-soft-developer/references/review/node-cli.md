@@ -3,10 +3,9 @@
 Use this review note for miku-soft `10 Main Application` repositories that
 provide a Node.js CLI.
 
-This review perspective is specific to the miku-soft series. The CLI is not a
-helper hidden behind the Web UI. It is a formal local entry point for scripts,
-AI agents, tests, downstream Agent Skills, Java straight conversion, and later
-protocol adapters.
+This review perspective is specific to the miku-soft series. The CLI is a
+formal local entry point for scripts, AI agents, tests, downstream Agent
+Skills, Java straight conversion, and later protocol adapters.
 
 ## Classification
 
@@ -18,9 +17,10 @@ Apply this review when the target repository or artifact has this shape:
 - runtime artifact: source CLI, package CLI, bundled single-file `.mjs`, or a
   documented build path that produces one of these
 
-If the repository also has a Single-file Web App, review the Web UI separately.
-The CLI review focuses on command contracts, local execution, structured
-artifacts, diagnostics, and downstream runtime usability.
+If the repository also has a Single-file Web App, review the Web App separately
+with `single-file-web-app.md`. This is common in historical combined
+repositories. The CLI review focuses on command contracts, local execution,
+structured artifacts, diagnostics, and downstream runtime usability.
 
 ## Core Contract
 
@@ -29,8 +29,7 @@ A miku-soft Node.js CLI should satisfy these principles:
 - It runs locally without requiring a hosted backend.
 - During normal operation, it does not communicate over the network unless the
   user explicitly requested a URL or remote operation.
-- It is a first-class product surface, not an implementation detail of the Web
-  UI.
+- It is a first-class product surface.
 - It preserves the product's semantic center and artifact vocabulary.
 - It has clear input, output, diagnostics, and failure contracts.
 - It is usable from automation and AI agents without interactive prompts for
@@ -156,11 +155,11 @@ Avoid a half-structured style where stdout contains partial JSON mixed with
 plain logs, or stderr contains important machine-readable diagnostics that
 agents must scrape to understand expected failures.
 
-## UI and Core Alignment Checks
+## Web App and Core Alignment Checks
 
-When the repository also has a Web UI, check these points:
+When the repository also has a Web App surface, check these points:
 
-- Web UI and CLI call the same core logic or a clearly shared product contract
+- Web App and CLI call the same core logic or a clearly shared product contract
 - defaults that affect conversion meaning are aligned, or documented as
   intentionally different
 - output modes, diagnostics, warnings, summaries, and artifact roles use the
@@ -170,7 +169,7 @@ When the repository also has a Web UI, check these points:
 - CLI code does not duplicate business logic that should belong to product core
 
 The CLI may expose batch, directory, or automation-oriented features that do not
-belong in the Web UI. Treat those as CLI-side operational extensions only when
+belong in the Web App. Treat those as CLI-side operational extensions only when
 their semantics and artifact roles are documented.
 
 ## Node and Java Sort Parity Checks
@@ -334,7 +333,7 @@ Use this severity guidance during Review mode:
   or output files.
 - Medium: file input or output locations are technically valid but surprising,
   implicit, or hard to infer from the command and docs.
-- Medium: Web UI and CLI defaults or artifact vocabulary diverge without a
+- Medium: Web App and CLI defaults or artifact vocabulary diverge without a
   documented runtime or workflow reason.
 - Medium: Node and Java versions can emit different sorted paths, diagnostics,
   generated indexes, archive entries, reports, or JSON arrays because the sort

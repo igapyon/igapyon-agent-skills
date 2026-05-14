@@ -20,7 +20,7 @@ Before scaffolding a repository, establish:
 
 1. Ask for or infer the rough app idea in one or two sentences.
 2. Clarify the core workflow: what the user gives the app, what the app does, and what artifact or view the user gets back.
-3. Identify whether the first deliverable should be a 10 main application. Do not jump to 20 Java, 40 Agent Skills, or 50 MCP unless the user explicitly asks for those companion layers first.
+3. Identify whether the first deliverable should be a 10 main application. Do not jump to 11 Web App, 20 Java, 40 Agent Skills, or 50 MCP unless the user explicitly asks for those companion layers first. When the user wants a browser UI, record whether the first step is still the upstream 10 main application or a dependent 11 Web App over an existing 10 repository.
 4. Propose one to three repository names using the `miku-<domain>` pattern.
 5. Compare candidates with [existing-miku-soft-repositories.md](existing-miku-soft-repositories.md) and current GitHub information when exact current availability matters.
 6. Select a final base name with the user.

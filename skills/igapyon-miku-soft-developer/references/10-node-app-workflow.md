@@ -1,8 +1,13 @@
 # Node App Workflow
 
-Use this workflow for creating or maintaining a miku-soft Node.js / TypeScript main application.
+Use this workflow for creating or maintaining a miku-soft Node.js / TypeScript
+main application: product core, CLI, structured artifacts, diagnostics, and
+runtime bundles.
 
 Detailed design guidance lives in [miku-soft-basic/miku-soft-10-mainapp-design.md](miku-soft-basic/miku-soft-10-mainapp-design.md). Keep this file as the execution checklist.
+
+For Web App surface work, use [11-web-app-workflow.md](11-web-app-workflow.md)
+and [miku-soft-basic/miku-soft-11-web-design.md](miku-soft-basic/miku-soft-11-web-design.md).
 
 ## Required Initial Input
 
@@ -13,15 +18,15 @@ same-layer sister checkout exists locally, record that explicitly and name the
 closest public or documented reference used instead.
 
 These references are practical shape references for repository layout, package
-metadata, UI or CLI contracts, tests, docs, release assets, and generated
+metadata, CLI contracts, tests, docs, release assets, and generated runtime
 artifacts. They do not replace the product-specific concept or the basic design
-document.
+document. For Web surface references, use the `11 Web App` workflow.
 
 ## First Reads
 
 1. Read [architecture-rules.md](architecture-rules.md).
 2. Read the main application basic document.
-3. Inspect existing README, docs, TODO, package metadata, source layout, CLI scripts, tests, and generated indexes.
+3. Inspect existing README, docs, TODO, package metadata, source layout, CLI scripts, tests, runtime bundle scripts, and generated indexes.
 4. For new creation, inspect the same-layer sister main application reference before designing files.
 5. For new creation, before scaffolding or initial file design, summarize which sister project was used, which product shape it represents, and which concrete repository-shape decisions were adopted or rejected.
 
@@ -39,9 +44,9 @@ Do not copy `workplace/` contents into the target repository wholesale. Copy or 
 
 Before editing, identify which Node app shape the repository currently uses:
 
-- Single-file Web App plus CLI: check `index.html`, product-named HTML, `index-src.html`, `src/`, `lht-cmn/`, build scripts, CLI scripts, and browser or UI tests.
 - CLI / structured JSON tool: check `src/main.ts`, `src/*types.ts`, CLI specs under `docs/`, `bin`, `exports`, `types`, and stdout / stderr contract tests.
 - Bundled runtime artifact: check `bundle/`, `scripts/build-cli-bundle.mjs`, `scripts/build-cli-runtime.mjs`, smoke scripts, and package `files`.
+- Historical combined repository with Web surface: keep `10` ownership focused on product core, CLI, diagnostics, and runtime bundles; use the `11` workflow for `index.html`, product-named HTML, `index-src.html`, `lht-cmn/`, browser adapters, generated Web artifacts, and browser or UI tests.
 - GitHub Actions workflow intent: distinguish CI baseline, release asset workflow, and publish workflow before creating or editing workflow files.
 - Release CLI bundle: check `.github/workflows/release-cli-bundle.yml`, release asset naming, version checks, `bundle/*.mjs`, `bundle/*-sources.tgz`, and `smoke:bundle`.
 - AI-facing operation surface: check projection, patch, validation, summary, diagnostics, or state-oriented docs and tests.
@@ -193,8 +198,8 @@ For new Node main application scaffolding that needs a release asset workflow, u
 
 ## Checklist
 
-1. Keep the semantic center in product code, not in Web UI event handlers or skill prose.
-2. Separate product core, Web UI, CLI, tests, docs, and generated artifacts when the repository structure supports it.
+1. Keep the semantic center in product code, not in Web App code or skill prose.
+2. Separate product core, CLI, tests, docs, runtime bundles, and downstream Web surface files when the repository structure supports it.
 3. Define CLI inputs, outputs, exit behavior, diagnostics, and artifact roles when CLI behavior exists.
 4. Keep local-first behavior and avoid adding network assumptions unless the product explicitly requires them.
 5. Treat the sister-reference summary as required implementation context for new creation work.
@@ -205,11 +210,11 @@ For new Node main application scaffolding that needs a release asset workflow, u
 When a Node app change touches executable behavior, check the relevant local contracts:
 
 - `package.json` scripts such as `build`, `test`, `cli`, `typecheck`, `smoke`, `smoke:bundle`, and `pack:check`
-- TypeScript configuration and emitted runtime paths such as `dist/`, `src/js/`, generated HTML, or `bundle/*.mjs`
+- TypeScript configuration and emitted runtime paths such as `dist/`, CLI entrypoints, or `bundle/*.mjs`
 - CLI metadata such as `bin`, `exports`, `types`, `engines`, and package `files`
 - CLI behavior for `--help`, `--version`, stdin, stdout, stderr, exit code, diagnostics, and usage errors
 - bundled runtime smoke behavior for both `--version` and `--help`
-- tests for core API, CLI subprocess behavior, encoding, path security, limits, diagnostics, fixtures, golden output, roundtrip behavior, or UI wiring
+- tests for core API, CLI subprocess behavior, encoding, path security, limits, diagnostics, fixtures, golden output, or roundtrip behavior
 - generated artifacts that should be rebuilt instead of hand-edited
 
 Run the smallest relevant command first, then broader build or smoke commands when the changed contract warrants them.
