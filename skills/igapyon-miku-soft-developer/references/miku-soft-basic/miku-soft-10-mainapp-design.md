@@ -1,4 +1,4 @@
-# Miku Software Main Application Design v20260507
+# Miku Software Main Application Design
 
 This memo organizes design characteristics commonly seen across the software series whose names start with `miku`.
 

@@ -1,4 +1,4 @@
-# Miku Software Java Application Design v20260514
+# Miku Software Java Application Design
 
 This memo organizes design characteristics commonly expected for Java application versions in the `miku` software series.
 

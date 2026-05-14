@@ -1,4 +1,4 @@
-# Miku Software Java Maven Plugin Design v20260514
+# Miku Software Java Maven Plugin Design
 
 This memo organizes design characteristics commonly expected for Maven plugin
 repositories in the `miku` software series.

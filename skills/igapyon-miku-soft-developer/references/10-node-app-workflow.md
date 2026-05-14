@@ -2,7 +2,7 @@
 
 Use this workflow for creating or maintaining a miku-soft Node.js / TypeScript main application.
 
-Detailed design guidance lives in [miku-soft-basic/miku-soft-10-mainapp-design-v20260507.md](miku-soft-basic/miku-soft-10-mainapp-design-v20260507.md). Keep this file as the execution checklist.
+Detailed design guidance lives in [miku-soft-basic/miku-soft-10-mainapp-design.md](miku-soft-basic/miku-soft-10-mainapp-design.md). Keep this file as the execution checklist.
 
 ## Required Initial Input
 

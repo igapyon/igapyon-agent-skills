@@ -1,4 +1,4 @@
-# Miku Software MCP Design v20260506
+# Miku Software MCP Design
 
 This memo organizes design characteristics commonly expected for MCP server versions in the `miku` software series.
 
@@ -39,11 +39,11 @@ This document is not a detailed specification for one MCP repository. Repository
 
 Use the shared design documents together as follows.
 
-- `docs/miku-soft-10-mainapp-design-v20260507.md`
+- `references/miku-soft-basic/miku-soft-10-mainapp-design.md`
   - describes the upstream product design and semantic center
-- `docs/miku-soft-40-agentskills-design-v20260506.md`
+- `references/miku-soft-basic/miku-soft-40-agentskills-design.md`
   - describes how Agent Skills versions expose miku workflows to AI agents
-- `docs/miku-soft-50-mcp-design-v20260506.md`
+- `references/miku-soft-basic/miku-soft-50-mcp-design.md`
   - describes how MCP server versions should expose miku workflows to MCP clients
 
 This document separates the following levels.

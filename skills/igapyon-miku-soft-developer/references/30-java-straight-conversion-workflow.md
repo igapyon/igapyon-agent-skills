@@ -10,9 +10,9 @@ targets the Java companion repository, normally with a `-java` suffix.
 
 Detailed design guidance lives in:
 
-- [miku-soft-basic/miku-soft-20-javaapp-design-v20260514.md](miku-soft-basic/miku-soft-20-javaapp-design-v20260514.md)
-- [miku-soft-basic/miku-soft-21-java-maven-design-v20260514.md](miku-soft-basic/miku-soft-21-java-maven-design-v20260514.md)
-- [miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md](miku-soft-basic/miku-soft-30-straight-conversion-v20260506.md)
+- [miku-soft-basic/miku-soft-20-javaapp-design.md](miku-soft-basic/miku-soft-20-javaapp-design.md)
+- [miku-soft-basic/miku-soft-21-java-maven-design.md](miku-soft-basic/miku-soft-21-java-maven-design.md)
+- [miku-soft-basic/miku-soft-30-straight-conversion.md](miku-soft-basic/miku-soft-30-straight-conversion.md)
 
 Keep this file as the execution checklist. Load the detailed design documents
 only when a policy decision is unclear.

@@ -8,7 +8,7 @@ This workflow is for migration of an existing repository shape. For new Java
 straight-conversion work, start from
 [30-java-straight-conversion-workflow.md](30-java-straight-conversion-workflow.md).
 For Maven plugin repository design principles, use
-[miku-soft-basic/miku-soft-21-java-maven-design-v20260514.md](miku-soft-basic/miku-soft-21-java-maven-design-v20260514.md).
+[miku-soft-basic/miku-soft-21-java-maven-design.md](miku-soft-basic/miku-soft-21-java-maven-design.md).
 
 ## Purpose
 

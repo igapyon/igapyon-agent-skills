@@ -2,7 +2,7 @@
 
 Use this workflow for creating or maintaining a miku-soft MCP server.
 
-Detailed design guidance lives in [miku-soft-basic/miku-soft-50-mcp-design-v20260506.md](miku-soft-basic/miku-soft-50-mcp-design-v20260506.md). Keep this file as the execution checklist.
+Detailed design guidance lives in [miku-soft-basic/miku-soft-50-mcp-design.md](miku-soft-basic/miku-soft-50-mcp-design.md). Keep this file as the execution checklist.
 
 ## Required Initial Input
 
