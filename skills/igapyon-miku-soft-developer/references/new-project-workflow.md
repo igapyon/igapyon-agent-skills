@@ -14,7 +14,7 @@ Resolve the minimum facts needed to start:
 
 - project name and repository location
 - primary input and output
-- first delivery surface: main app, Java app, Agent Skill, MCP server, or a combination
+- first delivery surface: main app, Web App, Java app, Agent Skill, MCP server, or a combination
 - whether README, docs, TODO, and workplace conventions should be initialized now
 
 Do not ask whether the agent should perform GitHub repository creation or other GitHub operations. Those operations are handled by the human, as defined in [repo-operations.md](repo-operations.md).
@@ -24,6 +24,7 @@ Then read the relevant basic document selected by [architecture-rules.md](archit
 For first delivery surface details, read the relevant specific workflow:
 
 - [10-node-app-workflow.md](10-node-app-workflow.md): Node.js / TypeScript main application
+- [11-web-app-workflow.md](11-web-app-workflow.md): Web App surface over a Node.js / TypeScript main application
 - [30-java-straight-conversion-workflow.md](30-java-straight-conversion-workflow.md): Java straight conversion
 - [40-agent-skills-workflow.md](40-agent-skills-workflow.md): Agent Skills package
 - [50-mcp-workflow.md](50-mcp-workflow.md): MCP server
@@ -62,6 +63,7 @@ Shared references are not copied into this repository. Use the installed
 
 - `references/architecture-rules.md`
 - `references/10-node-app-workflow.md`
+- `references/11-web-app-workflow.md`
 - `references/30-java-straight-conversion-workflow.md`
 - `references/31-java-maven-plugin-separation-workflow.md`
 - `references/40-agent-skills-workflow.md`

@@ -1,7 +1,7 @@
 # Single-file Web App Review
 
-Use this review note for miku-soft `10 Main Application` repositories that
-provide a browser-based single-file Web App.
+Use this review note for miku-soft `11 Web App` repositories, or historical
+combined repositories, that provide a browser-based single-file Web App.
 
 This review perspective is specific to the miku-soft series. A normal Web App
 review may accept server calls, CDN dependencies, or remote assets, but a
@@ -12,7 +12,7 @@ artifact.
 
 Apply this review when the target repository or artifact has this shape:
 
-- layer: `10 Main Application`
+- layer: `11 Web App`, or historical combined `10` / `11` repository
 - UI shape: Single-file Web App
 - distribution artifact: one HTML file, or a build process that produces one
   HTML file
@@ -59,9 +59,9 @@ Check the source, build output, and documentation as appropriate:
 
 ## Source and Distribution Checks
 
-Several miku-soft `10 Main Application` references keep editable source HTML
-and generated distribution HTML separate. Review the repository's actual naming
-convention, but check for the same role split:
+Several miku-soft Web App references keep editable source HTML and generated
+distribution HTML separate. Review the repository's actual naming convention,
+but check for the same role split:
 
 - source HTML, such as `index-src.html` or `<product>-src.html`, is the file
   humans edit
@@ -291,7 +291,7 @@ When this review applies, include a short classification before findings:
 ```text
 Single-file Web App Review
 
-Layer: 10 Main Application
+Layer: 11 Web App
 UI shape: Single-file Web App
 Offline contract: required
 Network policy: no network during normal operation

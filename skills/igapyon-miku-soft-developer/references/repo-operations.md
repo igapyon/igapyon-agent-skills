@@ -15,4 +15,4 @@ This file only records miku-soft-specific additions.
 - Record the checked miku-soft reference date, skill commit, and main workflow used in project-specific development or worklog documents.
 - Use README and TODO for the actual project state; avoid restating broad miku-soft theory that already lives in the basic documents.
 - Record unresolved miku-soft design, entrypoint, diagnostics, artifact-role, parity, or verification follow-ups in `TODO.md` or project docs.
-- Regenerate `index.json` or similar indexes with the target repository's documented command when indexed files change.
+- Regenerate `index.json` or similar indexes with the target repository's documented command when indexed files change. `index.json` is a generated artifact produced by a program such as `miku-indexgen`; do not treat it as a hand-maintained Markdown-adjacent reference file.

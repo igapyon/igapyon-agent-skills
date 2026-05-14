@@ -26,15 +26,26 @@ These are base product repositories. New repositories in this layer should prefe
 
 | Repository | Language | Notes |
 | --- | --- | --- |
-| `miku-abc-player` | HTML | ABC-centered single-file web app for ABC, MusicXML, MIDI, and MuseScore preview, playback, editing, and export. |
-| `miku-docx2md` | HTML | Browser-local DOCX to Markdown conversion. |
+| `miku-abc-player` | HTML | Historical combined / Web-centered repository for ABC, MusicXML, MIDI, and MuseScore preview, playback, editing, and export. |
+| `miku-docx2md` | HTML | Historical combined / Web-centered repository for browser-local DOCX to Markdown conversion. |
 | `miku-grep` | TypeScript | Grep-style text search tool. |
 | `miku-indexgen` | TypeScript | Generates flat `index.json` and optional `index.md` for reference discovery. |
 | `miku-readfile` | TypeScript | Local-first CLI for reading explicitly selected text files as JSON. |
 | `miku-unicode-guard` | TypeScript | CLI tool for detecting suspicious Unicode characters in Markdown and source files. |
-| `miku-xlsx2md` | JavaScript | Single-file Web App for extracting Excel workbook content as Markdown. |
-| `mikuproject` | JavaScript | Single-file Web App for MS Project XML conversion, WBS reports, and AI-facing JSON views. |
-| `mikuscore` | JavaScript | MusicXML-first score converter for notation and AI workflow bridges. |
+| `miku-xlsx2md` | JavaScript | Historical combined repository for extracting Excel workbook content as Markdown. |
+| `mikuproject` | JavaScript | Historical combined repository for MS Project XML conversion, WBS reports, and AI-facing JSON views. |
+| `mikuscore` | JavaScript | Historical combined repository for MusicXML-first score conversion and AI workflow bridges. |
+
+### 11 Web Apps
+
+These are Web App surfaces that depend on `10 Main Applications`. New
+repositories in this layer should normally use a product-derived Web companion
+name such as `<product>-web` when separated.
+
+At the time of this checked reference, several Web App surfaces are still in
+historical combined repositories listed under `10 Main Applications`. Treat
+their Web UI, Single-file Web App artifact, browser adapters, `lht-cmn`, and
+download behavior as `11` concerns during maintenance and migration.
 
 ### 20 Java Applications
 

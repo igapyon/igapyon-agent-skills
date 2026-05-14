@@ -77,7 +77,9 @@ Projects with the `-java` suffix are positioned as Java application versions of 
 
 Projects with the `-skills` suffix are positioned as Agent Skills versions that make the original products easier for AI agents to use.
 
-This document focuses on Java application versions. It does not define the Web UI conventions for upstream main applications, and it does not define the skill packaging conventions for Agent Skills repositories.
+This document focuses on Java application versions. It does not define Web App
+conventions for the `11 Web App` layer, and it does not define the skill
+packaging conventions for Agent Skills repositories.
 
 ## Shared Direction
 
