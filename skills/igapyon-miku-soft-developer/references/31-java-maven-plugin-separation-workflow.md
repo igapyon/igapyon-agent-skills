@@ -80,6 +80,8 @@ Confirm before editing the runtime repository:
 - the plugin POM depends on `jp.igapyon:<product>` by normal Maven coordinates
 - no runtime source-tree dependency remains
 - full-coordinate plugin invocation is documented or scripted
+- README usage explains full-coordinate invocation, runtime dependency
+  resolution, and local unreleased setup before maintainer development notes
 - `mvn test` passes in the plugin repository, or failures are recorded before
   proceeding
 
@@ -110,6 +112,11 @@ Confirm after plugin repository verification:
 - runtime docs cross-link to the separated plugin repository
 - mapping, status, and worklog documents record Maven plugin checks as
   separated-repository concerns
+- CLI-only implementation classes no longer own product behavior that the
+  Maven plugin adapter needs
+- shared file conversion, batch conversion, diagnostics, and output decision
+  behavior used by CLI and plugin are available through runtime core API or a
+  runtime helper
 
 ### Checkpoint 5: Runtime Layout Finalized
 
@@ -119,6 +126,10 @@ Confirm when the runtime repository is flattened or otherwise reshaped:
 - source and test paths match the intended single-module or multi-module shape
 - release workflows and scripts point at current `src/` and `target/` paths
 - expected runtime artifacts are documented with current paths
+- runtime artifact role is documented when the jar is both executable CLI and
+  Maven dependency runtime library
+- focused runtime tests cover any behavior extracted from CLI-only code into
+  runtime core API during separation
 - Git move/rename detection is preserved where practical by staging old and new
   paths together
 
@@ -181,10 +192,21 @@ Use the runtime artifact dependency as the boundary.
 - Runtime tests remain in the runtime repository.
 - Maven plugin smoke checks belong to the plugin repository.
 - Runtime CLI and package verification belong to the runtime repository.
+- `workplace/` or `../runtime` checkouts are reference checkouts only; they are
+  not reactor modules, submodules, subtrees, copied runtime directories, or
+  normal build inputs unless an explicit non-default decision is recorded.
+- The default shape is artifact-only resolution through the local or published
+  Maven repository.
 
 If directory or batch processing is shared by CLI and Maven plugin goals, keep
 that behavior in the runtime API or runtime helper. The Mojo should call it as
 an adapter.
+
+Do not use the CLI implementation as the primary integration point for the
+Mojo. If the plugin needs behavior that currently exists only in CLI code,
+extract that behavior into the runtime core API or a runtime helper, add
+focused runtime-side tests, and then let both CLI and plugin adapters call the
+same contract.
 
 ## Plugin Repository Work
 
@@ -228,7 +250,11 @@ In `<product>-java-maven`:
    - short-form invocation prerequisites, if documented at all
    - runtime artifact compatibility
    - local install requirement when the runtime artifact is not published
+   - that the consuming project normally does not declare the runtime
+     dependency only to make the plugin work
    - plugin parameters and generated artifacts
+   - runtime jar role when it is both `java -jar` CLI and plugin dependency
+     runtime library
 14. Add or update a smoke script that executes goals with full coordinates.
 15. Commit the local plugin repository changes after tests and smoke pass.
 16. `[Human]` Push the plugin repository branch.
@@ -254,12 +280,18 @@ In `<product>-java`:
 8. Add cross-links to the separated plugin repository.
 9. Keep runtime docs focused on runtime artifact coordinates, CLI usage, core
    API, runtime tests, packaging, and release assets.
-10. Treat the separated plugin repository as read-only context during
+10. Check whether CLI-only implementation classes still contain file
+    conversion, batch conversion, diagnostics, output decision, overwrite,
+    recursive, or failure behavior needed by the Maven plugin.
+11. Move shared behavior needed by CLI and plugin adapters into runtime core
+    API or a runtime helper, then add focused runtime-side tests for the
+    extracted contract.
+12. Treat the separated plugin repository as read-only context during
     runtime-side work.
-11. Commit the local runtime repository changes after tests and package checks
+13. Commit the local runtime repository changes after tests and package checks
     pass.
-12. `[Human]` Push the runtime repository branch.
-13. `[Human]` Create the runtime repository tag and GitHub Release when the
+14. `[Human]` Push the runtime repository branch.
+15. `[Human]` Create the runtime repository tag and GitHub Release when the
     repository is ready for release.
 
 If the runtime module is the only remaining module after plugin removal:
@@ -289,6 +321,9 @@ Runtime repository worklog should record:
 - intentionally moved paths
 - new runtime artifact output paths
 - runtime verification commands and results
+- runtime core API extraction performed for plugin compatibility, if any
+- runtime version/API changes that may require plugin dependency or adapter
+  updates
 - follow-up items that belong to the plugin repository
 
 Plugin repository worklog should record:
@@ -301,6 +336,8 @@ Plugin repository worklog should record:
 - runtime dependency coordinates
 - smoke example project
 - plugin verification commands and results
+- whether the runtime dependency version and public/core API were verified
+  against the current runtime artifact
 - follow-up items that belong to the runtime repository
 
 ## Verification
@@ -327,6 +364,16 @@ Use full-coordinate plugin execution in permanent smoke checks. Short-form
 execution depends on Maven plugin group resolution and should be documented as
 optional or environment-dependent.
 
+When the runtime artifact version or public/core API changes during this work,
+confirm one of the following before treating the affected repository as
+complete:
+
+- the plugin repository has been updated and verified against the new runtime
+  artifact
+- a TODO or worklog item records the required plugin dependency or API follow-up
+- the runtime change is confirmed not to affect plugin compilation, tests, or
+  smoke execution
+
 ## Completion Checklist
 
 - runtime repository no longer contains the Maven plugin module
@@ -336,8 +383,16 @@ optional or environment-dependent.
 - plugin repository depends on the runtime artifact by Maven coordinates
 - Mojo classes call runtime APIs or runtime contracts instead of duplicating
   product logic
+- shared behavior needed by CLI and Maven plugin adapters is not left only in
+  CLI implementation classes
+- focused runtime tests cover any runtime core API extraction performed during
+  separation
 - plugin tests and fixtures are limited to plugin behavior
 - plugin smoke executes from a minimal Maven project with full coordinates
 - both repositories document ownership and cross-link to each other
+- runtime version/API changes have corresponding plugin compatibility follow-up
+  recorded or verified
+- plugin runtime dependency version update need is checked when runtime
+  artifact version changes
 - TODO or worklog files record any remaining runtime-side or plugin-side
   follow-up items
