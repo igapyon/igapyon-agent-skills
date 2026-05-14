@@ -22,10 +22,14 @@ The series is not organized around a single UI, runtime, or protocol. It is orga
 - Provide human-facing Single-file Web Apps as a dependent Web App layer where
   useful
 - Provide Java 1.8 CLI runtimes through straight conversion as a normal follow-up deliverable
+- Provide separated Maven plugin adapter repositories for Java runtimes when
+  build-tool integration is useful
 - Package Agent Skills with instructions, operation maps, references, and executable CLI runtime artifacts
 - Provide MCP servers in Node.js / TypeScript when there is no product-specific reason to avoid them
 - Keep Java versions, Agent Skills, and MCP servers downstream of the upstream product semantics
 - Preserve artifact roles, diagnostics, local execution, and runtime traceability across layers
+- Distinguish tracked source from generated build output and intentional
+  runtime or release artifacts
 
 ## Role of This Document
 
@@ -97,6 +101,8 @@ The human-facing layer should keep the following properties.
 - structured outputs that scripts and AI agents can reuse
 - human-reviewable outputs such as HTML, Markdown, SVG, XLSX, XML, or ZIP when useful
 - shared core behavior behind CLI, Web Apps, tests, and downstream adapters where practical
+- ordinary generated JavaScript treated as build output, with intentional
+  runtime or release artifacts documented separately
 
 ## Java Runtime Layer
 
@@ -115,6 +121,12 @@ The Java runtime layer usually emphasizes:
 - distribution artifacts such as executable jars, sources jars, and distribution zips
 
 The TypeScript / Node.js CLI and Java CLI are peer runtime surfaces when both exist. Differences caused by runtime constraints should be documented rather than hidden.
+
+Maven plugin support is a build-tool adapter over the Java runtime. When a
+Maven plugin is useful, keep it in a separated `<product>-java-maven`
+repository that depends on the Java runtime artifact by normal Maven
+coordinates. Do not let Maven plugin goals, parameters, examples, or tests
+reshape the Java runtime repository into a plugin repository.
 
 ## Straight Conversion Layer
 
@@ -192,8 +204,9 @@ The usual product flow for the miku software series is as follows.
 3. Provide the dependent Single-file Web App when human-facing browser UI is useful.
 4. Produce a single-file Node.js CLI runtime artifact for downstream use.
 5. Create the Java 1.8 CLI runtime through straight conversion unless there is a clear reason not to.
-6. Package Agent Skills with instructions, operation maps, references, and bundled runtime artifacts.
-7. Provide a Node.js / TypeScript MCP server when there is no product-specific reason to avoid it.
+6. Provide a separated Maven plugin adapter for the Java runtime when build-tool integration is useful.
+7. Package Agent Skills with instructions, operation maps, references, and bundled runtime artifacts.
+8. Provide a Node.js / TypeScript MCP server when there is no product-specific reason to avoid it.
 
 This flow is a default direction, not a reason to blur responsibilities. Each layer must keep the upstream product boundary visible.
 
@@ -207,6 +220,10 @@ The preferred responsibility split is as follows.
   - owns browser UI, Single-file Web App distribution, browser adapters, `lht-cmn`, preview, diagnostics inspection, and download behavior while depending on the main application
 - Java application
   - owns Java runtime packaging, Java CLI, Java-side batch or build integration, and Java-side tests while preserving upstream behavior
+- Java Maven plugin
+  - owns Maven plugin coordinates, Mojo classes, goal names, Maven parameters,
+    plugin descriptor generation, examples, smoke tests, and plugin-facing
+    documentation while depending on the Java runtime artifact
 - Straight conversion guide
   - owns the method for creating and maintaining Java versions from TypeScript / Node.js upstreams
 - Agent Skills package
@@ -230,10 +247,19 @@ Common roles include:
 - primary exchange output
 - human-facing report
 - generated bundle
+- generated build intermediate
+- runtime or release contract artifact
+- build-tool adapter artifact
 - diagnostics and warnings
 - temporary scratch output
 
 These roles should not be collapsed only because the artifacts share a file extension or can all be represented as JSON or files.
+
+For TypeScript / Node.js main applications, tracked source, generated runtime
+JavaScript, and `.mjs` release/runtime bundles are different artifact roles.
+Layer-specific documents define the exact repository layout, but the shared
+rule is that ordinary generated output should not become product source merely
+because it was tracked in a historical combined repository.
 
 For example, a structural workbook `XLSX`, a human-facing `WBS XLSX`, a workbook JSON state file, and a Patch JSON document may all participate in one product workflow, but they are not the same contract.
 
@@ -247,12 +273,15 @@ The miku software series starts from small local products, usually implemented i
 The main application provides the upstream semantic center and Node.js CLI.
 The Web App provides a dependent human-facing browser surface when useful. Java
 versions provide Java 1.8 CLI runtimes through straight conversion. Agent
-Skills package instructions and executable runtime artifacts for AI agents. MCP
-servers expose product operations through a standard protocol for MCP clients
-and are normally implemented in Node.js / TypeScript.
+versions provide Java 1.8 CLI runtimes through straight conversion. Separated
+Maven plugin repositories expose Java runtimes to Maven builds as build-tool
+adapters when useful. Agent Skills package instructions and executable runtime
+artifacts for AI agents. MCP servers expose product operations through a
+standard protocol for MCP clients and are normally implemented in Node.js /
+TypeScript.
 
 The important point is not to multiply implementations. It is to keep one
-product meaning usable from Web App, local CLI, Java runtime, agent package,
-and MCP protocol without losing traceability, diagnostics, or artifact
-discipline. In particular, a Java runtime artifact does not imply that a Java
-MCP server should also be implemented.
+product meaning usable from Web App, local CLI, Java runtime, Maven plugin,
+agent package, and MCP protocol without losing traceability, diagnostics, or
+artifact discipline. In particular, a Java runtime artifact does not imply that
+a Java MCP server should also be implemented.
