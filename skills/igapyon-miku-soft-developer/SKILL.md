@@ -28,7 +28,7 @@ Prerequisite: use `igapyon-repo-conventions` as the repository-conventions basel
 3. For concept and naming work, read [references/00-concept-naming-workflow.md](references/00-concept-naming-workflow.md).
 4. For new project work, read [references/new-project-workflow.md](references/new-project-workflow.md).
 5. For existing project work, read [references/maintenance-workflow.md](references/maintenance-workflow.md).
-6. Read the specific workflow reference when relevant: [references/10-node-app-workflow.md](references/10-node-app-workflow.md), [references/30-java-straight-conversion-workflow.md](references/30-java-straight-conversion-workflow.md), [references/40-agent-skills-workflow.md](references/40-agent-skills-workflow.md), or [references/50-mcp-workflow.md](references/50-mcp-workflow.md).
+6. Read the specific workflow reference when relevant: [references/10-node-app-workflow.md](references/10-node-app-workflow.md), [references/30-java-straight-conversion-workflow.md](references/30-java-straight-conversion-workflow.md), [references/31-java-maven-plugin-separation-workflow.md](references/31-java-maven-plugin-separation-workflow.md), [references/40-agent-skills-workflow.md](references/40-agent-skills-workflow.md), or [references/50-mcp-workflow.md](references/50-mcp-workflow.md).
 7. Read [references/repo-operations.md](references/repo-operations.md) for miku-soft-specific additions.
 8. Inspect the target repository before editing.
 9. Preserve unrelated user changes.

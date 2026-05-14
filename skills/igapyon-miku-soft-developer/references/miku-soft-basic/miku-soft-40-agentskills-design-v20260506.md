@@ -31,7 +31,7 @@ Use the shared design documents together as follows.
 
 - `docs/miku-soft-10-mainapp-design-v20260507.md`
   - describes the upstream product design and semantic center
-- `docs/miku-soft-20-javaapp-design-v20260506.md`
+- `docs/miku-soft-20-javaapp-design-v20260514.md`
   - describes Java runtime versions when they exist
 - `docs/miku-soft-30-straight-conversion-v20260506.md`
   - describes how Java versions are created from upstream main applications

@@ -30,7 +30,7 @@
   {"name":"20260509-mikuproject-usage.md","path":"references/mikuproject/20260509-mikuproject-usage.md","ext":"md","dir":"references/mikuproject","size":18921,"summary":"[mikuproject] CLI リファレンス"},
   {"name":"20260506-miku-readfile-usage.md","path":"references/miku-readfile/20260506-miku-readfile-usage.md","ext":"md","dir":"references/miku-readfile","size":13261,"summary":"[miku-readfile] JSON request でローカルのテキストファイルを安全に読むアプリの使用方法"},
   {"name":"20260412-ai-score-abc-first.md","path":"references/mikuscore/20260412-ai-score-abc-first.md","ext":"md","dir":"references/mikuscore","size":15138,"summary":"掲載先情報"},
-  {"name":"20260509-mikuscore-usage.md","path":"references/mikuscore/20260509-mikuscore-usage.md","ext":"md","dir":"references/mikuscore","size":16075,"summary":"[mikuscore] CLI リファレンス"},
+  {"name":"20260509-mikuscore-usage.md","path":"references/mikuscore/20260509-mikuscore-usage.md","ext":"md","dir":"references/mikuscore","size":16122,"summary":"[mikuscore] CLI リファレンス"},
   {"name":"2026XXXX-mikuscore-skills-intro.md","path":"references/mikuscore/2026XXXX-mikuscore-skills-intro.md","ext":"md","dir":"references/mikuscore","size":8957,"summary":"掲載先情報"},
   {"name":"20260506-miku-text-bundle-usage.md","path":"references/miku-text-bundle/20260506-miku-text-bundle-usage.md","ext":"md","dir":"references/miku-text-bundle","size":16829,"summary":"[miku-text-bundle] CLI リファレンス"},
   {"name":"20260320-vscode-gpt54-chat-dev.md","path":"references/miku-xlsx2md/20260320-vscode-gpt54-chat-dev.md","ext":"md","dir":"references/miku-xlsx2md","size":16093,"summary":"VS Code + GPT-5.4 と会話しながら、アプリ開発をかなり広い範囲で進めた話"},
