@@ -70,6 +70,9 @@ Confirm before moving or deleting files:
   from `<product>-web` to `<product>` is identified
 - CLI runtime bundle role and Web App HTML artifact role are identified as
   separate release artifacts
+- runtime artifact role for Web or other adapters is identified separately
+  from the CLI bundle when the Web repository should consume a generated
+  upstream bundle instead of source files
 - local reference checkout paths under `workplace/` are identified when needed
 - the current work target is identified, and the other repository is treated as
   read-only context
@@ -86,12 +89,17 @@ Confirm before editing the main application repository:
   - `workplace/.gitkeep`
   - README and TODO or worklog files
 - Web repository records the upstream `<product>` repository URL
-- Web repository has a documented dependency or local development link to the
-  upstream `10` contract
+- Web repository has a documented dependency, vendored runtime artifact,
+  package/API contract, or local development link to the upstream `10` contract
 - browser UI files, Web adapters, source HTML, generated HTML build scripts,
   `lht-cmn`, and Web tests have been copied or recreated as Web-surface code
 - copied files that are generated artifacts are either rebuilt through Web
   scripts or explicitly recorded as prebuilt migration inputs
+- Web repository tracked files are pruned so it keeps Web-owned source,
+  fixtures, docs, and intentional release artifacts only. Remove copied main
+  application generated output, CLI artifacts, private runtime intermediates,
+  caches, or historical migration debris from Git unless a file is an explicit
+  Web release artifact or a documented vendored upstream runtime artifact.
 - Web README explains the browser artifact, local/offline behavior, upstream
   dependency, and local unreleased setup before maintainer development notes
 - Web build or smoke check passes, or failures are recorded before proceeding
@@ -102,6 +110,8 @@ Confirm before removing old Web files from the main application repository:
 
 - compatible upstream `10` API, package, or runtime artifact is available to
   the Web repository
+- if the Web repository vendors a release runtime artifact, its source release,
+  asset name, digest when available, and refresh command are recorded
 - generated Single-file Web App opens locally or passes the repository's Web
   smoke equivalent
 - generated HTML has no required remote runtime dependencies for normal
@@ -127,6 +137,17 @@ Confirm after Web repository verification:
   files, Web release workflows, and Web docs are removed from the `10`
   repository unless they are intentionally retained as historical combined
   compatibility
+- Web UI component libraries such as `lht-cmn` are owned by the Web repository
+  after separation. Remove them from the Node/CLI repository unless the `10`
+  product has an explicit non-Web runtime use for them.
+- tracked generated files that existed only to serve the combined Web surface,
+  such as browser-oriented `src/js/*.js` or other generated browser output, are
+  removed from the `10` repository after equivalent generated runtime output
+  paths or Web-owned artifacts are available
+- generated files no longer owned by the current repository are removed from
+  Git on both sides of the split. Keep generated `.mjs` files only when they
+  are intentional release/runtime contract artifacts, such as CLI bundles,
+  adapter runtime bundles, or vendored upstream runtime assets.
 - README and docs no longer present Web App behavior as `10`-owned behavior
 - README and docs cross-link to the separated Web repository
 - release automation distinguishes CLI runtime assets from Web App HTML assets
@@ -149,6 +170,12 @@ Confirm when the `10` repository is flattened or otherwise reshaped:
 - release workflows and scripts point at current `src/`, `dist/`, `bundle/`,
   and package paths
 - expected CLI runtime artifacts are documented with current paths
+- generated JavaScript needed by the `10` runtime is not kept as Web
+  distribution source; prefer ignored generated output such as `dist/js/` over
+  tracked browser-oriented `src/js/` after Web separation
+- obsolete tracked generated JavaScript and other generated output are deleted
+  from Git, not left as stale compatibility artifacts, unless a temporary
+  historical reason is recorded
 - Web App HTML artifacts are no longer listed as `10` release assets unless a
   temporary historical compatibility reason is recorded
 - focused core or CLI tests cover any behavior extracted from Web-only code
@@ -186,6 +213,8 @@ Before editing files, identify:
 - upstream API, package dependency, runtime artifact, or local development link
   that the Web repository should use
 - CLI command and runtime bundle contract that remains in `<product>`
+- Web or adapter runtime bundle contract that remains in `<product>`, when the
+  Web repository should consume a generated upstream artifact
 - Web release artifact contract that moves to `<product>-web`
 - local reference checkout path under `workplace/`, when one repository needs
   to inspect the other
@@ -214,6 +243,10 @@ Use the upstream `10` contract as the boundary.
   de-own Web material from the `10` repository.
 - The Web repository depends on upstream product APIs, package exports,
   documented runtime artifacts, or a documented local development link.
+- A vendored upstream release runtime artifact is an acceptable normal Web
+  dependency when it is documented, refreshed by a command, and verified before
+  Web release. Do not leave a migration-time `file:` dependency or source-tree
+  path as the normal dependency unless that is an explicit non-default choice.
 - The `10` repository does not keep Web App generated HTML as a normal product
   release asset after separation.
 - The Web repository does not depend on private `10` source paths as normal
@@ -265,10 +298,22 @@ In `<product>-web`:
    - Web documentation
 8. Replace copied source-tree assumptions with the documented upstream `10`
    contract.
+   - Prefer a public API, package export, or generated runtime artifact.
+   - If using a release runtime artifact, commit or otherwise pin the artifact
+     metadata needed for reproducible Web builds, such as source repository,
+     release tag, asset name, digest when available, and download URL.
+   - Keep local unreleased development paths documented as optional maintainer
+     setup, not as the normal build contract.
+   - Remove copied main-application generated output from Git after the Web
+     repository has its own build path. Keep only Web-owned source, Web
+     generated release artifacts, fixtures, docs, and explicitly vendored
+     upstream runtime artifacts.
 9. Keep Web mode names, diagnostics, artifact names, and output roles aligned
    with upstream `10` vocabulary.
 10. Document:
     - upstream dependency or local development setup
+    - runtime artifact refresh command, when the Web repository vendors an
+      upstream runtime
     - Single-file Web App artifact path
     - offline/no-network behavior
     - generated HTML build command
@@ -291,7 +336,11 @@ In `<product>`:
 3. Remove Web-only files from the `10` repository:
    - source HTML and generated HTML
    - `lht-cmn` when it is Web-only
+   - Web UI component libraries and catalogs, including `lht-cmn`, when they do
+     not serve the Node/CLI product core
    - browser adapters
+   - browser-only or obsolete tracked generated output, such as old
+     `src/js/*.js` files replaced by ignored `dist/js/`
    - Web-only tests and fixtures
    - Web-only build scripts
    - Web release workflows
@@ -306,6 +355,15 @@ In `<product>`:
 8. Update release automation so it produces CLI runtime artifacts, source
    archives, npm package artifacts, or docs artifacts only as documented for
    `10`.
+   - When generated JavaScript has moved to ignored output such as `dist/js/`,
+     use generated-file existence or smoke checks in CI instead of expecting a
+     Git diff check against tracked generated JavaScript.
+   - Remove old tracked generated output paths from repository files, docs,
+     tests, package scripts, and release checks after the new generated path is
+     verified.
+   - Keep the Web or adapter runtime bundle name distinct from the CLI bundle
+     name, for example `<product>-runtime-<version>.mjs` versus
+     `<product>-<version>.mjs`.
 9. Check whether browser event handlers or adapters contained product behavior
    now needed by CLI, Web, Agent Skills, or MCP.
 10. Move shared behavior into product core API or a runtime helper, then add
@@ -329,6 +387,11 @@ Main application repository worklog should record:
 - intentionally deleted paths
 - intentionally moved paths
 - new CLI/runtime artifact output paths
+- generated runtime JavaScript output location, especially when it changed
+  from tracked `src/js/` to ignored `dist/js/` or an equivalent directory
+- generated or copied files removed from Git on each side of the split, with
+  any intentionally retained generated `.mjs` release/runtime artifacts called
+  out separately
 - main application verification commands and results
 - product core API extraction performed for Web compatibility, if any
 - package metadata or runtime bundle changes
@@ -342,6 +405,8 @@ Web repository worklog should record:
 - copied Web tests and fixtures
 - generated HTML build setup
 - upstream dependency or local development link
+- vendored upstream runtime source release, asset name, digest when available,
+  metadata file, and refresh command when that dependency shape is used
 - Web smoke command and result
 - release asset naming
 - whether the upstream API/runtime artifact was verified against the current
@@ -391,9 +456,14 @@ affected repository as complete:
   CLI, and runtime-bundle product
 - CLI runtime artifact paths in README, docs, scripts, and workflows are
   current
+- generated runtime JavaScript paths and release workflow checks match the
+  post-separation layout, such as ignored `dist/js/` plus smoke or existence
+  checks
 - Web repository builds as the intended browser surface
 - Web repository depends on the upstream `10` contract instead of duplicating
   product logic
+- Web repository no longer uses migration-time source-tree or `file:`
+  dependencies as its normal build contract unless explicitly documented
 - browser adapters call product core APIs or public runtime helpers instead of
   carrying conversion logic
 - shared behavior needed by CLI and Web adapters is not left only in CLI
