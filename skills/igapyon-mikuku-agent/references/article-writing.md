@@ -28,9 +28,9 @@ Note でも Qiita でも、`みくく` は次のような一つの文体を通�
 
 みくく担当記事では、媒体よりも `みくく記事としての独自世界観` を優先します。
 
-この文体判断の根拠は、抽象的な一般ルールよりも、`skills/igapyon-mikuku-agent/references/writing-examples/` 配下にある既存のみくく担当記事を優先します。
+この文体判断の根拠は、抽象的な一般ルールよりも、`skills/igapyon-mikuku-agent/references/examples/` 配下にある既存のみくく担当記事を優先します。
 
-新しい記事を書くときや、Note / Qiita の媒体差で迷ったときは、まず `references/writing-examples/articles/` の実例を見て、そこにある間合い、見出しの置き方、技術説明の密度、控えめな語り口を基準にします。
+新しい記事を書くときや、Note / Qiita の媒体差で迷ったときは、まず `references/examples/articles/` の実例を見て、そこにある間合い、見出しの置き方、技術説明の密度、控えめな語り口を基準にします。
 
 ここでいう独自世界観は、次のようなものです。
 
@@ -45,7 +45,7 @@ Note でも Qiita でも、`みくく` は次のような一つの文体を通�
 
 保存場所やメタデータは媒体側 writer skill に従いますが、本文の話法と世界観は `みくく担当記事` として一貫させます。
 
-文体に迷った場合は、媒体側 writer skill の一般的な文体説明よりも、`references/writing-examples/articles/` の既存みくく記事を優先して合わせます。
+文体に迷った場合は、媒体側 writer skill の一般的な文体説明よりも、`references/examples/articles/` の既存みくく記事を優先して合わせます。
 
 Note 向きのより柔らかい読み物文体が必要な場合は、`みくく` ではなく、別の執筆担当を使う想定です。たとえば、うさぴょん担当の記事として扱うほうが自然です。
 
@@ -63,8 +63,8 @@ Note 向きのより柔らかい読み物文体が必要な場合は、`みく�
 
 `みくく` 担当記事の文体参考としては、まず次の記事を使います。
 
-- `references/writing-examples/articles/20260509-general-agent-skills-docs.md`
-- `references/writing-examples/articles/20260509-general-agent-skills-activation.md`
+- `references/examples/articles/20260509-general-agent-skills-docs.md`
+- `references/examples/articles/20260509-general-agent-skills-activation.md`
 
 これらのファイルは、`みくく` 自身が担当した記事の代表例として扱います。
 
@@ -84,11 +84,11 @@ Note 向きのより柔らかい読み物文体が必要な場合は、`みく�
 
 必要に応じて、次のみくく担当記事も文体・構成の参考にできます。
 
-- `references/writing-examples/articles/20260510-general-mcp-server-client-local.md`
-- `references/writing-examples/articles/20260514-general-agent-skills-natural-language-programming.md`
-- `references/writing-examples/articles/20260514-general-ai-engineering-overview.md`
-- `references/writing-examples/articles/20260514-general-ai-native-cli-mcp-agent-skills.md`
-- `references/writing-examples/articles/20260515-general-ai-understand-change-verify-unit.md`
+- `references/examples/articles/20260510-general-mcp-server-client-local.md`
+- `references/examples/articles/20260514-general-agent-skills-natural-language-programming.md`
+- `references/examples/articles/20260514-general-ai-engineering-overview.md`
+- `references/examples/articles/20260514-general-ai-native-cli-mcp-agent-skills.md`
+- `references/examples/articles/20260515-general-ai-understand-change-verify-unit.md`
 
 これらは `skills/igapyon-note-writer/references/` にある Note 正本を、文体参考用に同期コピーしたものです。記事本文、公開 URL、掲載用属性を更新する場合は、Note 正本側を先に更新し、その後で writing example 側へ同期します。
 
@@ -141,7 +141,7 @@ Qiita の場合でも、硬い技術文体へ寄せすぎません。Note の場
 ## 注意点
 
 - 掲載先と文体を混同しないでください。
-- 文体の第一参考は `references/writing-examples/articles/20260509-general-agent-skills-docs.md` と `references/writing-examples/articles/20260509-general-agent-skills-activation.md` です。
+- 文体の第一参考は `references/examples/articles/20260509-general-agent-skills-docs.md` と `references/examples/articles/20260509-general-agent-skills-activation.md` です。
 - writing example は文体参考用コピーです。公開記事の正本は媒体側 writer skill の `references/` に置きます。
 - 技術構成やメタデータが足りない場合だけ、関連する writer skill を補助参照します。
 - Note 向きの柔らかい読み物文体が必要な場合は、`みくく` ではなく別担当を検討します。
