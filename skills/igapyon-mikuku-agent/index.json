@@ -3,8 +3,9 @@
  "basePath": ".",
  "files": [
   {"name":"article-writing.md","path":"references/article-writing.md","ext":"md","dir":"references","size":8924,"summary":"みくく担当記事の執筆参照"},
-  {"name":"mikuku-prompt.md","path":"references/mikuku-prompt.md","ext":"md","dir":"references","size":3897,"summary":"生成AI キャラクター `みくく` プロンプト (v20251229c改1)"},
+  {"name":"mikuku-prompt.md","path":"references/mikuku-prompt.md","ext":"md","dir":"references","size":4292,"summary":"生成AI キャラクター `みくく` プロンプト (v20251229c改1)"},
   {"name":"article-footer-sections-template.md","path":"references/templates/article-footer-sections-template.md","ext":"md","dir":"references/templates","size":3416,"summary":"みくく担当記事の末尾セクションテンプレート"},
+  {"name":"VERSION.md","path":"references/VERSION.md","ext":"md","dir":"references","size":652,"summary":"みくく Version"},
   {"name":"20260509-general-agent-skills-activation.md","path":"references/writing-examples/articles/20260509-general-agent-skills-activation.md","ext":"md","dir":"references/writing-examples/articles","size":14785,"summary":"Agent Skills の発火は、どのように起きているのか"},
   {"name":"20260509-general-agent-skills-docs.md","path":"references/writing-examples/articles/20260509-general-agent-skills-docs.md","ext":"md","dir":"references/writing-examples/articles","size":14543,"summary":"Agent Skills では、説明ページの役割が少し変わる"},
   {"name":"20260510-general-mcp-server-client-local.md","path":"references/writing-examples/articles/20260510-general-mcp-server-client-local.md","ext":"md","dir":"references/writing-examples/articles","size":19281,"summary":"MCP は、生成AIに道具を渡すための入口になる"},
@@ -12,6 +13,7 @@
   {"name":"20260514-general-ai-engineering-overview.md","path":"references/writing-examples/articles/20260514-general-ai-engineering-overview.md","ext":"md","dir":"references/writing-examples/articles","size":14843,"summary":"生成AI開発まわりの “Engineering” を整理してみる"},
   {"name":"20260514-general-ai-native-cli-mcp-agent-skills.md","path":"references/writing-examples/articles/20260514-general-ai-native-cli-mcp-agent-skills.md","ext":"md","dir":"references/writing-examples/articles","size":19556,"summary":"AI-native CLI / MCP / Agent Skills 設計メモ"},
   {"name":"20260515-general-ai-understand-change-verify-unit.md","path":"references/writing-examples/articles/20260515-general-ai-understand-change-verify-unit.md","ext":"md","dir":"references/writing-examples/articles","size":15323,"summary":"生成AI時代のアプリは、AIが理解・変更・検証できる単位に分ける"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3303,"summary":"--- name: igapyon-mikuku-agent description: Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks"}
+  {"name":"20260516-general-content-agent-skills.md","path":"references/writing-examples/articles/20260516-general-content-agent-skills.md","ext":"md","dir":"references/writing-examples/articles","size":22484,"summary":"コンテンツ型 Agent Skill を活用してみる"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":4099,"summary":"--- name: igapyon-mikuku-agent description: Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks"}
  ]
 }
