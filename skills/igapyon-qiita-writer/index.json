@@ -2,12 +2,6 @@
  "generator": "miku-indexgen",
  "basePath": ".",
  "files": [
-  {"name":"cli-maven-plugin-reference-pattern.md","path":"references/00-patterns/cli-maven-plugin-reference-pattern.md","ext":"md","dir":"references/00-patterns","size":9175,"summary":"CLI / Maven plugin リファレンス記事の型"},
-  {"name":"cli-reference-pattern.md","path":"references/00-patterns/cli-reference-pattern.md","ext":"md","dir":"references/00-patterns","size":7448,"summary":"CLI リファレンス記事の型"},
-  {"name":"design-thought-pattern.md","path":"references/00-patterns/design-thought-pattern.md","ext":"md","dir":"references/00-patterns","size":4164,"summary":"設計・考察記事の型"},
-  {"name":"development-log-pattern.md","path":"references/00-patterns/development-log-pattern.md","ext":"md","dir":"references/00-patterns","size":3791,"summary":"開発ログ記事の型"},
-  {"name":"general-article-pattern.md","path":"references/00-patterns/general-article-pattern.md","ext":"md","dir":"references/00-patterns","size":3579,"summary":"Qiita 一般記事の型"},
-  {"name":"tool-introduction-pattern.md","path":"references/00-patterns/tool-introduction-pattern.md","ext":"md","dir":"references/00-patterns","size":3746,"summary":"ツール紹介記事の型"},
   {"name":"20260428-general.md","path":"references/general/20260428-general.md","ext":"md","dir":"references/general","size":19508,"summary":"生成AIとの総会話時間が、自然言語プログラミングの感覚を育てている話"},
   {"name":"20260429-general.md","path":"references/general/20260429-general.md","ext":"md","dir":"references/general","size":13301,"summary":"知識ベース型 Agent Skills は、静的 Markdown だけでも育てられる（SKILL.md + references/ 設計）"},
   {"name":"20260430-general.md","path":"references/general/20260430-general.md","ext":"md","dir":"references/general","size":22213,"summary":"[miku-soft] 生成AI時代におけるアプリケーションのソフトウェアアーキテクチャ設計"},
@@ -43,6 +37,12 @@
   {"name":"20260425-xlsx2md-java.md","path":"references/miku-xlsx2md/20260425-xlsx2md-java.md","ext":"md","dir":"references/miku-xlsx2md","size":20803,"summary":"[miku-xlsx2md] Node 版を入力に、生成AIで Java 版"},
   {"name":"20260509-miku-xlsx2md-usage.md","path":"references/miku-xlsx2md/20260509-miku-xlsx2md-usage.md","ext":"md","dir":"references/miku-xlsx2md","size":16801,"summary":"[miku-xlsx2md] CLI / Maven plugin リファレンス"},
   {"name":"xlsx2md-feature-list-memo.md","path":"references/miku-xlsx2md/xlsx2md-feature-list-memo.md","ext":"md","dir":"references/miku-xlsx2md","size":4820,"summary":"`xlsx2md` 機能一覧メモ"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":9015,"summary":"igapyon-qiita-writer"}
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":8857,"summary":"igapyon-qiita-writer"},
+  {"name":"cli-maven-plugin-reference-pattern.md","path":"templates/patterns/cli-maven-plugin-reference-pattern.md","ext":"md","dir":"templates/patterns","size":9216,"summary":"CLI / Maven plugin リファレンス記事の型"},
+  {"name":"cli-reference-pattern.md","path":"templates/patterns/cli-reference-pattern.md","ext":"md","dir":"templates/patterns","size":7465,"summary":"CLI リファレンス記事の型"},
+  {"name":"design-thought-pattern.md","path":"templates/patterns/design-thought-pattern.md","ext":"md","dir":"templates/patterns","size":4181,"summary":"設計・考察記事の型"},
+  {"name":"development-log-pattern.md","path":"templates/patterns/development-log-pattern.md","ext":"md","dir":"templates/patterns","size":3808,"summary":"開発ログ記事の型"},
+  {"name":"general-article-pattern.md","path":"templates/patterns/general-article-pattern.md","ext":"md","dir":"templates/patterns","size":3584,"summary":"Qiita 一般記事の型"},
+  {"name":"tool-introduction-pattern.md","path":"templates/patterns/tool-introduction-pattern.md","ext":"md","dir":"templates/patterns","size":3755,"summary":"ツール紹介記事の型"}
  ]
 }
