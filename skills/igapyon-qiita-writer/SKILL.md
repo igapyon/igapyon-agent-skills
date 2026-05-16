@@ -98,14 +98,9 @@ tags: tag1 tag2 tag3
 author: igapyon
 slide: false
 published_to: Qiita
+writer_agent: みくく
 url: https://qiita.com/igapyon/items/...
 ---
-```
-
-記事担当 agent が明示されている場合は、必要に応じて `writer_agent` も使います。
-
-```yaml
-writer_agent: みくく
 ```
 
 Qiita に貼り付ける本文を作る場合、Qiita 側で不要な独自キーは投稿前に除外してもかまいません。ただし、`references/` 配下のローカル Markdown では、公開先管理のために独自キーを残します。
@@ -143,17 +138,17 @@ Qiita 記事を新規作成・更新する場合は、`skills/igapyon-qiita-writ
 
 索引が必要なときは `index.json` を使って、関連しそうな記事を探します。
 
-CLI リファレンス記事を書く場合は、次の型ファイルを先に参照します。
+CLI リファレンス記事を書く場合は、次の pattern を先に参照します。
 
-- CLI のみ: `references/00-patterns/cli-reference-pattern.md`
-- CLI と Maven plugin: `references/00-patterns/cli-maven-plugin-reference-pattern.md`
+- CLI のみ: `templates/patterns/cli-reference-pattern.md`
+- CLI と Maven plugin: `templates/patterns/cli-maven-plugin-reference-pattern.md`
 
-CLI リファレンス以外の一般記事を書く場合は、題材に応じて次の型ファイルを参照します。
+CLI リファレンス以外の一般記事を書く場合は、題材に応じて次の pattern を参照します。
 
-- 一般記事の基本型: `references/00-patterns/general-article-pattern.md`
-- ツール紹介: `references/00-patterns/tool-introduction-pattern.md`
-- 開発ログ: `references/00-patterns/development-log-pattern.md`
-- 設計・考察: `references/00-patterns/design-thought-pattern.md`
+- 一般記事の基本型: `templates/patterns/general-article-pattern.md`
+- ツール紹介: `templates/patterns/tool-introduction-pattern.md`
+- 開発ログ: `templates/patterns/development-log-pattern.md`
+- 設計・考察: `templates/patterns/design-thought-pattern.md`
 
 参照記事の表現を長くコピーしないでください。  
 参考にするのは、構成、説明粒度、見出しの置き方、Qiita 向けの整理のしかたです。

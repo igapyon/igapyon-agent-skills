@@ -86,20 +86,16 @@ Note 掲載用の属性情報が必要な場合、ローカル正本では front
 ```markdown
 ---
 title: 記事タイトル
-hashtags:
-  - タグ1
-  - タグ2
-  - タグ3
-published_to: Note
-url: https://note.com/...
+tags: #tag1 #tag2 #tag3
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: ((TBD))
 ---
 ```
 
-記事担当 agent が明示されている場合は、必要に応じて `writer_agent` も使います。
-
-```yaml
-writer_agent: みくく
-```
+Note の `tags` は、実際の掲載用ハッシュタグに合わせて `#` 付きで書きます。Qiita の `tags` とは異なり、`#` を外さないでください。
 
 既存記事には、次のような見出し形式の掲載情報が残っている場合があります。
 
@@ -148,6 +144,10 @@ Note 記事を新規作成・更新する場合は、`skills/igapyon-note-writer
 - `references/mikuscore/`
 
 索引が必要なときは `index.json` を使って、関連しそうな記事を探します。
+
+新規 Note 記事の土台が必要な場合は、`templates/` 配下の Markdown を雛形として使います。
+
+- 汎用 Note 記事: `templates/general-note-article-template.md`
 
 参照記事の表現を長くコピーしないでください。  
 参考にするのは、文章の温度感、展開の順序、背景の厚さ、Note 向けの読み物としての流れです。
