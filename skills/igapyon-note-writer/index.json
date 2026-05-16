@@ -21,11 +21,11 @@
   {"name":"20260410-mikuproject-agent-skills-wbs-planning.md","path":"references/mikuproject/20260410-mikuproject-agent-skills-wbs-planning.md","ext":"md","dir":"references/mikuproject","size":9690,"summary":"[mikuproject] WBS 作成を生成AIに手伝ってもらったら、思ったより幸せだった話"},
   {"name":"20260412-ai-score-abc-first.md","path":"references/mikuscore/20260412-ai-score-abc-first.md","ext":"md","dir":"references/mikuscore","size":7337,"summary":"[mikuscore-skills] 生成AI に譜面対応させたくて、まず ABC 記譜法に寄っていった話"},
   {"name":"2026XXXX-mikuscore-skills-intro.md","path":"references/mikuscore/2026XXXX-mikuscore-skills-intro.md","ext":"md","dir":"references/mikuscore","size":7154,"summary":"[mikuscore] 譜面フォーマット変換の前提を、毎回説明しなくてよくしたかった話"},
-  {"name":"20260516-miku-text-bundle-ai-text-assets.md","path":"references/miku-text-bundle/20260516-miku-text-bundle-ai-text-assets.md","ext":"md","dir":"references/miku-text-bundle","size":13247,"summary":"miku-text-bundle は、手元のテキスト資産を生成AIへ渡しやすくする"},
+  {"name":"20260516-miku-text-bundle-ai-text-assets.md","path":"references/miku-text-bundle/20260516-miku-text-bundle-ai-text-assets.md","ext":"md","dir":"references/miku-text-bundle","size":15861,"title":"[miku-text-bundle] 複数のテキストファイルを生成AI向け Markdown bundle に整理する","summary":"はじめに"},
   {"name":"20260320-gpt54-app-dev.md","path":"references/miku-xlsx2md/20260320-gpt54-app-dev.md","ext":"md","dir":"references/miku-xlsx2md","size":9607,"summary":"コードを書かずに、生成AIと一緒にアプリを作ってみた"},
   {"name":"20260326-xlsx2md-grid-bug-diary.md","path":"references/miku-xlsx2md/20260326-xlsx2md-grid-bug-diary.md","ext":"md","dir":"references/miku-xlsx2md","size":5514,"summary":"[xlsx2md] Excel 方眼を Markdown にする記事を書こうとしたら、およよとなった話"},
   {"name":"20260327-xlsx2md-strike-meaning.md","path":"references/miku-xlsx2md/20260327-xlsx2md-strike-meaning.md","ext":"md","dir":"references/miku-xlsx2md","size":7591,"summary":"[xlsx2md] 設計書の取り消し線が Markdown で消えると、ちょっと危ない"},
   {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":8304,"summary":"igapyon-note-writer"},
-  {"name":"general-note-article-template.md","path":"templates/general-note-article-template.md","ext":"md","dir":"templates","size":2431,"title":"記事タイトル","summary":"記事タイトル"}
+  {"name":"general-note-article-template.md","path":"templates/general-note-article-template.md","ext":"md","dir":"templates","size":2408,"title":"記事タイトル","summary":"はじめに"}
  ]
 }
