@@ -731,24 +731,25 @@ Stable byte output lets users and AI agents answer:
 
 It scans a directory and generates `index.json`. When Markdown output is enabled, it also generates `index.md`.
 
-The Java version currently has two main execution paths.
+The current Java runtime repository has one main execution path.
 
 - runtime jar / CLI
-- Maven plugin in the historical multi-module repository shape
+
+Maven plugin support is now provided by the separated `miku-indexgen-java-maven` repository.
 
 The central core API is:
 
 - `jp.igapyon.mikuindexgen.coreapi.Indexgen.createIndexes(IndexgenOptions)`
 
-CLI and Maven plugin layers map their inputs into `IndexgenOptions` and call the same core API.
+The CLI maps its inputs into `IndexgenOptions` and calls the same core API. The separated Maven plugin adapter should continue to depend on the runtime artifact and map Maven parameters into that API rather than reimplementing indexing behavior.
 
 Important design points:
 
 - `index.json` is the primary structured output
 - `index.md` is optional companion output
-- directory scanning behavior is shared by CLI and Maven plugin through runtime-side code
+- directory scanning behavior is owned by runtime-side code and reused by the separated Maven plugin adapter
 - verbose progress and timing information are kept separate from primary output
-- Maven plugin goals are Java-side extensions
+- Maven plugin goals are adapter behavior owned by `miku-indexgen-java-maven`
 - child-directory batch mode is a Java-side extension and should not be confused with the upstream single-input contract
 - upstream class and test mappings are recorded under `docs/`
 
@@ -761,7 +762,7 @@ This mode is specific to `miku-indexgen-java` and should not be read as a cross-
 The current contract is as follows.
 
 - CLI option `--input-parent-directory <dir>` selects a parent directory
-- Maven plugin goal `index-child-directories` selects a parent directory through `inputParentDirectory`
+- separated Maven plugin goal `index-child-directories` selects a parent directory through `inputParentDirectory`
 - the parent directory itself is not indexed as one input base
 - each direct child directory under the parent is processed independently
 - direct child files under the parent are ignored
@@ -773,15 +774,14 @@ The current contract is as follows.
 
 This feature exists because `miku-indexgen-java` is often useful for generating many small directory indexes in one Java process or Maven execution. It is therefore an operational extension on the Java side, not a change to the upstream `miku-indexgen` single-directory contract.
 
-The current repository is a multi-module Maven reactor.
+The current repository shape is separated.
 
-- root aggregator project
-- `miku-indexgen/` runtime jar and CLI implementation
-- `miku-indexgen-maven-plugin/` Maven plugin implementation
+- `miku-indexgen-java` owns the runtime jar, CLI, core API, and runtime tests
+- `miku-indexgen-java-maven` owns the Maven plugin adapter, Maven goals, Maven parameters, plugin tests, and plugin smoke checks
 
-This was the earlier repository shape: the runtime jar and Maven plugin were kept as separate modules in one GitHub repository so they could use the same core API.
+The earlier repository shape kept the runtime jar and Maven plugin as separate modules in one GitHub repository so they could use the same core API.
 
-For new Java runtime repositories, this is no longer the preferred shape. The new direction is to keep `<product>-java` as a single-module runtime repository and place Maven plugin support in a separated `<product>-java-maven` repository governed by the Java Maven plugin design memo. Existing multi-module repositories can be understood as historical examples or migration candidates.
+The current direction is to keep `<product>-java` as a single-module runtime repository and place Maven plugin support in a separated `<product>-java-maven` repository governed by the Java Maven plugin design memo. `miku-indexgen-java` now follows that shape with `miku-indexgen-java-maven` as the adapter repository.
 
 ### Notes Specific to `mikuproject-java`
 

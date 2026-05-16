@@ -4,7 +4,7 @@
  "files": [
   {"name":"package.json","path":"assets/agent-skills/package.json","ext":"json","dir":"assets/agent-skills","size":339},
   {"name":"INDEX.md","path":"assets/agent-skills/skills/__SKILL_NAME__/references/INDEX.md","ext":"md","dir":"assets/agent-skills/skills/__SKILL_NAME__/references","size":283,"summary":"__SKILL_TITLE__ References"},
-  {"name":"SKILL.md","path":"assets/agent-skills/skills/__SKILL_NAME__/SKILL.md","ext":"md","dir":"assets/agent-skills/skills/__SKILL_NAME__","size":1388,"summary":"--- name: __SKILL_NAME__ description: Use only when the user explicitly names `__PRODUCT_NAME__` or `__SKILL_NAME__` for __PRODUCT_NAME__-specific agent workflows. Do not auto-activate it for generic requests that merely mention the domain or output format"},
+  {"name":"SKILL.md","path":"assets/agent-skills/skills/__SKILL_NAME__/SKILL.md","ext":"md","dir":"assets/agent-skills/skills/__SKILL_NAME__","size":1388,"summary":"__SKILL_TITLE__"},
   {"name":"00-concept-naming-workflow.md","path":"references/00-concept-naming-workflow.md","ext":"md","dir":"references","size":4028,"summary":"Concept and Naming Workflow"},
   {"name":"10-node-app-workflow.md","path":"references/10-node-app-workflow.md","ext":"md","dir":"references","size":13186,"summary":"Node App Workflow"},
   {"name":"11-web-app-workflow.md","path":"references/11-web-app-workflow.md","ext":"md","dir":"references","size":4880,"summary":"Web App Workflow"},
@@ -20,7 +20,7 @@
   {"name":"miku-soft-00-overview-design.md","path":"references/miku-soft-basic/miku-soft-00-overview-design.md","ext":"md","dir":"references/miku-soft-basic","size":16827,"summary":"Miku Software Overview Design"},
   {"name":"miku-soft-10-mainapp-design.md","path":"references/miku-soft-basic/miku-soft-10-mainapp-design.md","ext":"md","dir":"references/miku-soft-basic","size":65416,"summary":"Miku Software Main Application Design"},
   {"name":"miku-soft-11-web-design.md","path":"references/miku-soft-basic/miku-soft-11-web-design.md","ext":"md","dir":"references/miku-soft-basic","size":17991,"summary":"Miku Software Web Application Design"},
-  {"name":"miku-soft-20-javaapp-design.md","path":"references/miku-soft-basic/miku-soft-20-javaapp-design.md","ext":"md","dir":"references/miku-soft-basic","size":44544,"summary":"Miku Software Java Application Design"},
+  {"name":"miku-soft-20-javaapp-design.md","path":"references/miku-soft-basic/miku-soft-20-javaapp-design.md","ext":"md","dir":"references/miku-soft-basic","size":44765,"summary":"Miku Software Java Application Design"},
   {"name":"miku-soft-21-java-maven-design.md","path":"references/miku-soft-basic/miku-soft-21-java-maven-design.md","ext":"md","dir":"references/miku-soft-basic","size":21053,"summary":"Miku Software Java Maven Plugin Design"},
   {"name":"miku-soft-30-straight-conversion.md","path":"references/miku-soft-basic/miku-soft-30-straight-conversion.md","ext":"md","dir":"references/miku-soft-basic","size":59811,"summary":"Miku Software Straight Conversion Guide"},
   {"name":"miku-soft-40-agentskills-design.md","path":"references/miku-soft-basic/miku-soft-40-agentskills-design.md","ext":"md","dir":"references/miku-soft-basic","size":51955,"summary":"Miku Software Agent Skills Design"},
@@ -33,6 +33,6 @@
   {"name":"README.md","path":"references/review/README.md","ext":"md","dir":"references/review","size":4826,"summary":"miku-soft Review Notes"},
   {"name":"release-automation.md","path":"references/review/release-automation.md","ext":"md","dir":"references/review","size":7908,"summary":"Release Automation Review"},
   {"name":"single-file-web-app.md","path":"references/review/single-file-web-app.md","ext":"md","dir":"references/review","size":13833,"summary":"Single-file Web App Review"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3654,"summary":"--- name: igapyon-miku-soft-developer description: Use only when the user explicitly asks to use igapyon-miku-soft-developer or explicitly asks to apply the miku-soft developer skill. If the user says they want to create a new miku-soft project, maintain a"}
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3654,"summary":"igapyon-miku-soft-developer"}
  ]
 }

@@ -106,8 +106,8 @@ For example, this is a good binary/source pair shape for a copied Java
 dependency:
 
 ```text
-lib/miku-indexgen-1.1.2.jar
-lib/miku-indexgen-1.1.2-sources.jar
+lib/miku-indexgen-1.2.1.jar
+lib/miku-indexgen-1.2.1-sources.jar
 ```
 
 Do not require source jars for every dependency resolved through Maven, npm, or
