@@ -58,6 +58,127 @@ Use the detected shape to decide which contracts must be preserved. Do not
 force a CLI-only `10` repository to grow Web files unless the requested work is
 explicitly an `11 Web App` surface.
 
+## Release Web Assets Workflow
+
+For separated `11 Web App` repositories that publish a generated Single-file
+Web App through GitHub Releases, provide a Web release asset workflow.
+
+The expected local files and contracts are:
+
+- `.github/workflows/release-web-assets.yml`
+- `scripts/stage-web-release-assets.mjs`, or an equivalent local staging script
+- a `package.json` script such as `stage:web-release`
+- a `.gitignore` entry for `release-assets/`
+
+The standard workflow is triggered by `push` tags matching `v*`. It should
+install dependencies, run the documented Web build, run the documented Web
+tests or smoke checks, stage versioned Web release assets under
+`release-assets/`, and upload only those staged assets to the matching GitHub
+Release.
+
+The primary release asset is the generated Single-file Web App HTML:
+
+- `<product>-web-<version>.html`
+
+A small metadata JSON asset may also be published when it helps downstream
+automation or release review. `index.html` is optional as a GitHub Release
+asset; treat it primarily as the GitHub Pages entry point unless the repository
+explicitly documents that `index.html` is also a release asset.
+
+Keep Web release assets distinct from the upstream `10` CLI runtime bundle,
+npm package tarball, Java jar, Agent Skills bundle, MCP package, or generated
+source archive. The Web repository should not publish the `10` CLI release
+asset, and the `10` repository should not keep Web App HTML as a normal release
+asset after separation.
+
+Document the Web release asset names, staging command, GitHub Pages policy, and
+GitHub Release policy in README, TODO, or the migration worklog.
+
+When creating a new separated Web repository, adapt the starter files under
+`assets/web-app/` if the repository does not already have an equivalent local
+workflow. The starter follows the `miku-xlsx2md-web` release workflow shape:
+`npm run build:all`, `npm run stage:web-release`, staged `release-assets/*`,
+and `softprops/action-gh-release`.
+
+## Reference-Derived Repository Shape
+
+Use completed same-layer Web repositories such as `miku-xlsx2md-web` as shape
+references when creating or repairing separated `11 Web App` repositories. Do
+not copy product-specific conversion behavior, fixtures, or product names, but
+do reuse the repository contracts that are independent of the product domain.
+
+A separated Web repository should normally document this information near the
+top of README:
+
+- repository role: browser UI, Single-file Web App generation, browser
+  adapters, `lht-cmn`, Web tests, and Web release assets
+- upstream `10` main application repository URL
+- Web App repository URL
+- upstream dependency type: package API, public browser-compatible API,
+  generated runtime asset, or documented local development link
+- generated Single-file Web App artifact name
+- offline/no-network behavior for normal use
+- build, test, runtime refresh, and release staging commands
+- generated-file editing rule: rebuild generated HTML or browser JS instead of
+  hand-editing it
+- local scratch policy for `workplace/`
+
+When the Web repository consumes a vendored upstream runtime artifact, keep the
+contract explicit:
+
+- commit the vendored runtime files only when they are intentional Web build
+  inputs
+- provide a refresh command such as `refresh:runtime`
+- record the upstream release tag, asset name, URL, and digest when available
+- keep normal Web builds independent from upstream source-tree paths
+- make local unreleased upstream checkouts optional maintainer setup, not the
+  normal build contract
+
+The common generated Web file shape is:
+
+- `index-src.html`: editable source for the Pages entry point
+- `index.html`: generated GitHub Pages entry point
+- `<product>-src.html`: editable source for the product Web App
+- `<product>.html`: generated Single-file Web App release source
+- `src/ts/`: Web-specific TypeScript source when needed
+- `src/js/`: generated browser JavaScript when the repository intentionally
+  commits generated Web output for review or release
+- `vendor/`: pinned upstream runtime artifacts when the Web build depends on a
+  released upstream runtime bundle
+- `lht-cmn/`: local shared Web components
+- `tests/`: browser UI, generated HTML, or Web adapter smoke tests
+
+Generated distribution files may be committed in separated Web repositories
+when the repository explicitly treats them as reviewable release inputs. In
+that shape, README or TODO must say which files are generated and which command
+rebuilds them.
+
+Use `docs/miku-soft-reference.md` to link the repository back to the installed
+`igapyon-miku-soft-developer` skill and list the specific miku-soft references
+used. Do not copy the shared miku-soft basic documents into the product
+repository. Use `docs/migration-worklog.md` or TODO for project-specific
+separation decisions, including checked sister references, dependency
+decisions, GitHub Pages policy, and release policy.
+
+## GitHub Pages Publication
+
+For separated `11 Web App` repositories, GitHub Pages publication should be
+enabled. Treat `index.html` as the normal Pages entry point for trying the
+current Web App in a browser.
+
+Document the Pages URL and publication source in README, TODO, or the
+migration worklog. The normal policy is:
+
+- GitHub Pages is ON for separated `-web` repositories.
+- `index.html` is the Pages entry point.
+- Versioned GitHub Release assets remain separate from the Pages entry point.
+- Pages publication does not replace the downloadable Single-file Web App
+  release asset.
+
+Enabling or changing GitHub Pages repository settings is a human-owned GitHub
+operation. The skill workflow may prepare the local files and documentation,
+but should list the remote setting change separately when it is still needed.
+
 ## Checklist
 
 1. Keep the semantic center in the upstream `10` product core.
@@ -78,6 +199,10 @@ explicitly an `11 Web App` surface.
    surface contract changes.
 10. Treat the sister-reference summary as required implementation context for
     new creation work.
+11. For separated Web repositories, provide or explicitly defer the Web release
+    asset workflow and documentation described above.
+12. For separated Web repositories, document that GitHub Pages publication is
+    enabled, or record the remaining human-owned settings step.
 
 ## Web-Specific Checklist
 

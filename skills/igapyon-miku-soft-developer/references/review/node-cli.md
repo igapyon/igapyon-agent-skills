@@ -291,6 +291,28 @@ Check these points when the repository has or should have such an artifact:
 - README explains where downstream Agent Skills or local handoff should place
   or execute the runtime artifact
 
+## Generated JavaScript Layout Checks
+
+For TypeScript-based `10 main application` repositories, check that TypeScript
+source remains the tracked source of truth and ordinary generated JavaScript is
+not kept as source.
+
+Check these points:
+
+- tracked product source lives under `src/ts/` or another documented TypeScript
+  source path
+- ordinary generated JavaScript is emitted under an ignored build output path
+  such as `dist/js/`
+- obsolete tracked browser-oriented generated output such as old `src/js/*.js`
+  is removed after Web separation
+- scripts, tests, package metadata, docs, and release workflows point at the
+  current generated runtime path, not stale `src/js/` paths
+- generated `.mjs` files are kept only when they are intentional runtime or
+  release contract artifacts, such as CLI bundles, adapter runtime bundles, or
+  vendored upstream runtime assets
+- `.gitignore` and `package.json` `files` entries match the intended tracked
+  source, build output, and release artifact roles
+
 ## Test and Documentation Checks
 
 Check these points:

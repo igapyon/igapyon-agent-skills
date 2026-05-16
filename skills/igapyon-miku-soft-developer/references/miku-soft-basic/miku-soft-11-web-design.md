@@ -194,6 +194,37 @@ Exact filenames may vary by product, but the roles should remain clear.
 - `lht-cmn/` contains local shared Web Components
 - `workplace/` is local scratch and should not be packaged as a release input
 
+Completed same-layer repositories such as `miku-xlsx2md-web` provide practical
+shape references for this layout. Treat them as references for repository
+contracts, not as product behavior templates.
+
+Reusable conventions from such Web repositories include:
+
+- README starts by naming the Web repository as the separated browser surface
+  and the upstream `10` repository as the owner of product semantics
+- README lists upstream dependency or vendored runtime files before local
+  maintainer commands
+- build commands generate both the GitHub Pages entry point and the
+  product-named Single-file Web App artifact
+- `build:all` runs build plus Web tests or smoke checks
+- `stage:web-release` stages versioned release assets under `release-assets/`
+- generated distribution HTML and generated browser JavaScript are either
+  ignored build output or intentionally committed release-review input
+- `docs/miku-soft-reference.md` links to the installed miku-soft skill
+  references instead of copying shared design documents
+- `docs/migration-worklog.md` records separation decisions, dependency
+  decisions, checked sister references, and human-owned GitHub settings
+
+When a Web repository uses a vendored upstream runtime, document and verify the
+runtime as a release input. The normal build should use committed or otherwise
+pinned runtime artifacts and should not read private upstream source-tree paths.
+Provide a refresh command and record the release tag, asset name, URL, and
+digest when available.
+
+When generated files are committed for release review, the repository must
+document that they are generated, identify the command that rebuilds them, and
+forbid hand-editing those generated files.
+
 ## Distribution and Build Principles
 
 ### Single-file Web App Contract
@@ -229,6 +260,48 @@ Recommended shape:
 - fail checks when build placeholders remain unreplaced
 
 Generated artifacts should be rebuilt through documented commands.
+
+### Web Release Assets
+
+Separated `11 Web App` repositories should have a release asset workflow for
+the generated Single-file Web App.
+
+Recommended release asset behavior is as follows.
+
+- Trigger the workflow from `push` tags matching `v*`.
+- Install dependencies, run the Web build, run Web tests or smoke checks, stage
+  assets, then upload assets in that order.
+- Stage files under `release-assets/`, and keep `release-assets/` ignored by
+  Git.
+- Use product and version in the primary HTML asset name, such as
+  `<product>-web-<version>.html`.
+- Publish a small metadata JSON asset only when it is useful for release review
+  or downstream automation.
+- Treat `index.html` primarily as the GitHub Pages entry point unless the
+  repository explicitly documents it as a GitHub Release asset.
+- Upload only staged Web assets; do not upload broad source archives, npm pack
+  tarballs, CLI runtime bundles, Java jars, Agent Skills bundles, or MCP
+  packages from a Web release workflow.
+- Document the staging command, asset names, GitHub Pages policy, and GitHub
+  Release policy in README, TODO, or the migration worklog.
+
+### GitHub Pages Publication
+
+Separated `11 Web App` repositories should publish the Web App through GitHub
+Pages. Keep GitHub Pages enabled for the repository unless a product-specific
+reason is documented.
+
+Recommended Pages behavior is as follows.
+
+- Use `index.html` as the normal GitHub Pages entry point.
+- Document the Pages URL and publication source in README, TODO, or the
+  migration worklog.
+- Keep Pages publication separate from GitHub Release assets.
+- Do not rely on Pages publication as the only release distribution path when
+  the project promises a downloadable Single-file Web App.
+- Treat GitHub Pages repository settings as human-owned remote operations; the
+  local workflow may prepare files and documentation, but it should not claim
+  that remote settings were changed unless a human confirms them.
 
 ### Build Date
 
@@ -405,7 +478,14 @@ Review:
 - generated HTML has no required remote runtime dependencies
 - build date placeholders are replaced
 - release asset name includes product and version where practical
+- separated Web repositories provide a Web release asset workflow for
+  `release-assets/` staging and GitHub Release upload, or explicitly document
+  why release assets are manual
 - README and workflow agree on the distributed artifact name
+- GitHub Pages `index.html` policy is not confused with GitHub Release asset
+  policy
+- separated Web repositories document that GitHub Pages publication is enabled,
+  or record the remaining human-owned settings step
 - Web release assets are not confused with Node CLI runtime bundles, npm pack
   tarballs, Java jars, Agent Skills bundles, or source archives
 
@@ -474,6 +554,10 @@ following.
 - Normal operation is offline and no-network
 - Diagnostics and artifact vocabulary match `10`
 - Build date and generated artifact policy are explicit
+- Web release asset workflow, staging command, and `release-assets/` ignore
+  rule are present or explicitly deferred
+- GitHub Pages publication is enabled or the remaining human-owned settings
+  step is recorded
 - README names the distributed Web artifact
 - `workplace/` or local scratch policy is present
 

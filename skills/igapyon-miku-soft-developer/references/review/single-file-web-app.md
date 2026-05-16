@@ -73,10 +73,45 @@ but check for the same role split:
 - README names the published single-file artifact clearly
 - release or distribution instructions do not confuse the source HTML with the
   generated single-file artifact
+- generated distribution HTML or generated browser JavaScript is either ignored
+  build output or explicitly documented as committed release-review input
+- committed generated files have a documented rebuild command and are not
+  treated as hand-edited source
+- vendored upstream runtime artifacts, when present, are documented as pinned
+  Web build inputs with a refresh command and upstream release source
 
 If the production artifact still references many local files, classify whether
 the repository intentionally uses a multi-file development page, or whether the
 single-file build is missing or stale.
+
+## Web Release Asset Checks
+
+For separated `11 Web App` repositories, check that the generated Single-file
+Web App can be staged and uploaded as a versioned GitHub Release asset.
+
+Check these points:
+
+- `.github/workflows/release-web-assets.yml` exists, or the repository records
+  an explicit non-default release process
+- the workflow triggers on `push` tags matching `v*`
+- dependency install, Web build, Web tests or smoke checks, release asset
+  staging, and upload run in that order
+- staging is delegated to `scripts/stage-web-release-assets.mjs` or an
+  equivalent local script, exposed through a `package.json` script such as
+  `stage:web-release`
+- staged assets are written under ignored `release-assets/`
+- the primary HTML asset name includes the Web product name and tag version,
+  such as `<product>-web-<version>.html`
+- optional metadata JSON is small and intentionally documented
+- `index.html` is treated primarily as the GitHub Pages entry point unless the
+  README or worklog explicitly says it is also uploaded as a release asset
+- separated `-web` repositories document that GitHub Pages publication is
+  enabled, including the Pages URL or remaining human-owned settings step
+- the workflow uploads only staged Web assets, not source archives, npm pack
+  tarballs, CLI bundles, Java jars, Agent Skills bundles, MCP packages, or
+  stale build directories
+- README, TODO, or migration worklog documents the asset names, staging
+  command, GitHub Pages policy, and GitHub Release policy
 
 ## Build Date Checks
 
