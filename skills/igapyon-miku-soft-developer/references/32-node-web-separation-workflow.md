@@ -100,8 +100,19 @@ Confirm before editing the main application repository:
   application generated output, CLI artifacts, private runtime intermediates,
   caches, or historical migration debris from Git unless a file is an explicit
   Web release artifact or a documented vendored upstream runtime artifact.
+- Web repository has a Web release asset workflow or a recorded reason for
+  deferring it:
+  - `.github/workflows/release-web-assets.yml`
+  - `scripts/stage-web-release-assets.mjs` or equivalent
+  - `package.json` staging script such as `stage:web-release`
+  - `.gitignore` entry for `release-assets/`
 - Web README explains the browser artifact, local/offline behavior, upstream
   dependency, and local unreleased setup before maintainer development notes
+- Web README, TODO, or migration worklog documents Web release asset names,
+  staging command, GitHub Pages policy, and GitHub Release policy
+- Web README, TODO, or migration worklog documents that GitHub Pages
+  publication is enabled for the separated `-web` repository, or records the
+  remaining human-owned settings step
 - Web build or smoke check passes, or failures are recorded before proceeding
 
 ### Checkpoint 3: Web Smoke Verified
@@ -338,15 +349,26 @@ In `<product>-web`:
     - upstream dependency or local development setup
     - runtime artifact refresh command, when the Web repository vendors an
       upstream runtime
+    - vendored runtime source release tag, asset name, URL, and digest when
+      available
     - Single-file Web App artifact path
     - offline/no-network behavior
     - generated HTML build command
     - browser smoke command
     - release asset role and naming
-11. Add or update a smoke script that verifies the generated Web artifact.
-12. Commit the local Web repository changes after build and smoke pass.
-13. `[Human]` Push the Web repository branch.
-14. `[Human]` Create the Web repository tag and GitHub Release when the
+    - GitHub Pages policy for `index.html`
+    - GitHub Pages URL and publication source
+    - GitHub Release policy for versioned Web release assets
+    - generated-file editing rule for generated HTML and browser JavaScript
+11. Add or update the Web release asset workflow:
+    - `.github/workflows/release-web-assets.yml`
+    - `scripts/stage-web-release-assets.mjs` or equivalent staging script
+    - `package.json` script such as `stage:web-release`
+    - `.gitignore` entry for `release-assets/`
+12. Add or update a smoke script that verifies the generated Web artifact.
+13. Commit the local Web repository changes after build and smoke pass.
+14. `[Human]` Push the Web repository branch.
+15. `[Human]` Create the Web repository tag and GitHub Release when the
     repository is ready for release.
 
 ## Main Application Repository Work
