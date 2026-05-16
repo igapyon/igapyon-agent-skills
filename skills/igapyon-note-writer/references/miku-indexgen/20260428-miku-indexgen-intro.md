@@ -83,7 +83,7 @@ AI にも、まず見渡せる一覧を渡したい。そのための小さな�
 npx miku-indexgen --input-directory docs --markdown
 ```
 
-Node.js 版、Java 版があります。
+Node.js 版、Java CLI 版があります。Java CLI は `miku-indexgen-java`、Maven plugin は分離された `miku-indexgen-java-maven` で提供しています。
 
 ## 関連記事
 

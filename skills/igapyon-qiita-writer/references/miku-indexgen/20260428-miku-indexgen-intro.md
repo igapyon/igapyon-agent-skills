@@ -1,13 +1,10 @@
-## [miku-indexgen] AI エージェントが読む前に、ディレクトリの index.json / index.md を作る CLI
-
-- 掲載先: Qiita
-- URL: https://qiita.com/igapyon/items/85871ba02955e78b3825
-
 ---
 title: [miku-indexgen] AI エージェントが読む前に、ディレクトリの index.json / index.md を作る CLI
 tags: mikuku Node.js JavaScript index Markdown
 author: igapyon
 slide: false
+published_to: Qiita
+url: https://qiita.com/igapyon/items/85871ba02955e78b3825
 ---
 ## はじめに
 
@@ -180,9 +177,10 @@ npx miku-indexgen --input-directory docs --markdown
 
 - https://github.com/igapyon/miku-indexgen/
 
-ほぼ同じ機能を持つ Java 版もあります。Java 版は CLI のほかに Maven plugin 形式も提供します。
+ほぼ同じ機能を持つ Java CLI 版もあります。Java CLI は `miku-indexgen-java`、Maven plugin は分離された `miku-indexgen-java-maven` で提供します。
 
 - https://github.com/igapyon/miku-indexgen-java/
+- https://github.com/igapyon/miku-indexgen-java-maven/
 
 Java 版には、親ディレクトリ配下の直下にある子ディレクトリごとに index を生成する parent 指定モードもあります。
 

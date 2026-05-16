@@ -89,7 +89,7 @@ Qiita 記事では、次の情報が読み取りやすい順に並ぶように�
 
 ## Front Matter Rules
 
-Qiita front matter が必要な場合は、次の形を基本にします。
+Qiita front matter が必要な場合は、次の形を基本にします。ローカル正本では、掲載先や公開 URL も front matter の独自キーとして一緒に管理します。
 
 ```markdown
 ---
@@ -97,8 +97,18 @@ title: 記事タイトル
 tags: tag1 tag2 tag3
 author: igapyon
 slide: false
+published_to: Qiita
+url: https://qiita.com/igapyon/items/...
 ---
 ```
+
+記事担当 agent が明示されている場合は、必要に応じて `writer_agent` も使います。
+
+```yaml
+writer_agent: みくく
+```
+
+Qiita に貼り付ける本文を作る場合、Qiita 側で不要な独自キーは投稿前に除外してもかまいません。ただし、`references/` 配下のローカル Markdown では、公開先管理のために独自キーを残します。
 
 既存原稿に front matter がある場合は、明示的な依頼なしに壊さないでください。
 

@@ -4,6 +4,6 @@
  "files": [
   {"name":"structure-patterns.md","path":"references/structure-patterns.md","ext":"md","dir":"references","size":1858,"summary":"Structure Patterns"},
   {"name":"style-guide.md","path":"references/style-guide.md","ext":"md","dir":"references","size":3383,"summary":"Style Guide"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":5655,"summary":"--- name: igapyon-companion-musicpost-writer description: Use only when the user explicitly asks for igapyon-companion-musicpost-writer, asks for an igapyon-style companion workflow, or clearly wants iterative minimal polishing of Japanese music-related po"}
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":5655,"summary":"igapyon-companion-musicpost-writer"}
  ]
 }

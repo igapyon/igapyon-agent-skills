@@ -31,3 +31,17 @@
 - [ ] `生成AI駆動開発における README / docs / TODO / workplace` は `skills/igapyon-qiita-writer/references/general/20260430-general-ai-dev-docs-workplace.md` として執筆開始済み
 - [ ] 再開時は `20260430-general-ai-dev-docs-workplace.md` の初稿を読み、Qiita 記事としての構成、見出し、説明粒度、画像追加の要否を確認する
 - [ ] `20260430-miku-soft-architecture-topic-bank.md` 側では、同テーマを「執筆開始」として更新済み
+
+## miku-indexgen-java / miku-indexgen-java-maven 分離反映
+
+- [x] `skills/igapyon-qiita-writer/references/miku-indexgen/20260509-miku-indexgen-usage.md` の差分を確認する
+- [x] Qiita の `[miku-indexgen] CLI / Maven plugin リファレンス` をローカル差分どおりに更新する
+- [x] `skills/igapyon-qiita-writer/references/general/20260515-general-miku-soft-repository-map.md` の `miku-indexgen-java-maven` 反映を確認する
+- [x] Qiita の miku-soft リポジトリマップ記事を更新するか判断し、必要なら反映する
+- [x] `skills/igapyon-qiita-writer/references/miku-indexgen/20260428-miku-indexgen-intro.md` の Java CLI / Maven plugin 分離説明を確認する
+- [x] Qiita の miku-indexgen 紹介記事を更新するか判断し、必要なら反映する
+- [x] `skills/igapyon-note-writer/references/miku-indexgen/20260428-miku-indexgen-intro.md` の Note 向け差分を確認する
+- [x] Note 記事は Qiita 側から上書きせず、文体と長さを見ながら差分を手動反映する
+- [x] `skills/igapyon-miku-soft-developer/references/miku-soft-basic/miku-soft-20-javaapp-design.md` の分離後設計説明を確認する
+- [x] 公開記事の反映後、必要なら URL や掲載メモをローカル Markdown に追記する
+- [x] 最後に `mvn generate-resources` または `mvn clean package` を再実行し、`index.json` の再生成状態を確認する

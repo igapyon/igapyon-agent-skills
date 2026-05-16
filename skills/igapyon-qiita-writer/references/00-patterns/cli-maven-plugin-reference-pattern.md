@@ -10,6 +10,19 @@
 
 Qiita front matter の `title` も同じ表記にします。
 
+ローカル Markdown では、掲載先や公開 URL も front matter の独自キーとして管理します。Qiita に貼り付けるときに独自キーが不要な場合は、投稿前に Qiita 用キーだけへ整えます。
+
+```yaml
+---
+title: [product-name] CLI / Maven plugin リファレンス
+tags: product Java Maven 生成AI
+author: igapyon
+slide: false
+published_to: Qiita
+url: https://qiita.com/igapyon/items/...
+---
+```
+
 ## 基本方針
 
 - CLI と Maven plugin の両方を、引数・property を確認するためのリファレンスとして整理します。
