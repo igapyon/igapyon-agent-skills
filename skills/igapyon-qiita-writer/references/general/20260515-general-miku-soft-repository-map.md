@@ -26,7 +26,7 @@ miku-soft 関連のリポジトリが、少しずつ増えてきました。
 どのプロダクト系列に、どの種類の repository があるかを、あとから見返せるようにするための小さな地図です。
 
 - 作成日: 2026-05-15
-- 更新日: 2026-05-15
+- 更新日: 2026-05-17
 
 # 一覧の見方
 
@@ -59,11 +59,11 @@ miku-soft 関連のリポジトリが、少しずつ増えてきました。
 | `miku-grep` | [miku-grep](https://github.com/igapyon/miku-grep) |  | [miku-grep-java](https://github.com/igapyon/miku-grep-java) |  | [miku-grep-skills](https://github.com/igapyon/miku-grep-skills) |  |
 | `miku-indexgen` | [miku-indexgen](https://github.com/igapyon/miku-indexgen) |  | [miku-indexgen-java](https://github.com/igapyon/miku-indexgen-java) | [miku-indexgen-java-maven](https://github.com/igapyon/miku-indexgen-java-maven) |  |  |
 | `miku-javaclass2json` |  |  | [miku-javaclass2json-java](https://github.com/igapyon/miku-javaclass2json-java) |  |  |  |
-| `miku-md2docx` | [miku-md2docx](https://github.com/igapyon/miku-md2docx)<sup>*1</sup> | 同左<sup>*1</sup> | [miku-md2docx-java](https://github.com/igapyon/miku-md2docx-java) |  |  |  |
+| `miku-md2docx` | [miku-md2docx](https://github.com/igapyon/miku-md2docx) | [miku-md2docx-web](https://github.com/igapyon/miku-md2docx-web) | [miku-md2docx-java](https://github.com/igapyon/miku-md2docx-java) |  |  |  |
 | `miku-readfile` | [miku-readfile](https://github.com/igapyon/miku-readfile) |  | [miku-readfile-java](https://github.com/igapyon/miku-readfile-java) |  | [miku-readfile-skills](https://github.com/igapyon/miku-readfile-skills) |  |
 | `miku-text-bundle` | [miku-text-bundle](https://github.com/igapyon/miku-text-bundle) |  | [miku-text-bundle-java](https://github.com/igapyon/miku-text-bundle-java) |  | [miku-text-bundle-skills](https://github.com/igapyon/miku-text-bundle-skills) |  |
 | `miku-unicode-guard` | [miku-unicode-guard](https://github.com/igapyon/miku-unicode-guard) |  |  |  |  |  |
-| `miku-xlsx2md` | [miku-xlsx2md](https://github.com/igapyon/miku-xlsx2md)<sup>*1</sup> | 同左<sup>*1</sup> | [miku-xlsx2md-java](https://github.com/igapyon/miku-xlsx2md-java) | 同左<sup>*2</sup> |  |  |
+| `miku-xlsx2md` | [miku-xlsx2md](https://github.com/igapyon/miku-xlsx2md) | [miku-xlsx2md-web](https://github.com/igapyon/miku-xlsx2md-web) | [miku-xlsx2md-java](https://github.com/igapyon/miku-xlsx2md-java) | [miku-xlsx2md-java-maven](https://github.com/igapyon/miku-xlsx2md-java-maven) |  |  |
 | `mikuproject` | [mikuproject](https://github.com/igapyon/mikuproject)<sup>*1</sup> | 同左<sup>*1</sup> | [mikuproject-java](https://github.com/igapyon/mikuproject-java) |  | [mikuproject-skills](https://github.com/igapyon/mikuproject-skills) | [mikuproject-mcp](https://github.com/igapyon/mikuproject-mcp) |
 | `mikuscore` | [mikuscore](https://github.com/igapyon/mikuscore)<sup>*1</sup> | 同左<sup>*1</sup> | [mikuscore-java](https://github.com/igapyon/mikuscore-java) |  | [mikuscore-skills](https://github.com/igapyon/mikuscore-skills) |  |
 
@@ -84,9 +84,9 @@ Maven plugin 側は Maven adapter。
 
 こうして分かれていると、作業するときにも「ここはどの repository の責務でしたっけ？」と迷いにくくなります。わ、私…こういう地図があると少し安心します。
 
-一方で、歴史的経緯により Web surface が Main repository に同居しているものもあります。この表では、それを `*1` で示しています。
+一方で、歴史的経緯により Web surface が Main repository に同居しているものもあります。この表では、それを `*1` で示しています。現在この注釈が残っているのは、`mikuproject` と `mikuscore` です。
 
-同じように、Maven plugin surface が Java repository に同居しているものもあります。この表では、それを `*2` で示しています。今後分離する場合は、`-java-maven` の repository として切り出す形が基本になります。
+同じように、Maven plugin surface が Java repository に同居しているものもあります。この表では、それを `*2` で示しています。現在、この表では `*2` が残っている系列はありません。今後同居しているものを分離する場合は、`-java-maven` の repository として切り出す形が基本になります。
 
 ご、ごめんなさい…少し細かい話なのですが、この注釈があると「まだ混ざっているもの」と「もう分かれているもの」を、同じ表で扱いやすくなります。
 
