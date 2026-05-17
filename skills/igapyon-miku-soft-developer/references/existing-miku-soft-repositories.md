@@ -1,7 +1,7 @@
 # Existing igapyon miku-soft Repositories
 
 This file summarizes public `igapyon` GitHub repositories in the miku-soft
-family, checked on 2026-05-15.
+family, checked on 2026-05-17.
 
 Use this list as a naming reference before creating a new miku-soft project.
 Treat GitHub as the source of truth when exact current availability matters.
@@ -41,11 +41,11 @@ prefer `miku-<domain>`.
 | `miku-docx2md` | TypeScript | Node.js product core, CLI, CLI bundle, Web / adapter runtime bundle, tests, and upstream contract for DOCX to Markdown conversion. |
 | `miku-grep` | TypeScript | Grep-style local text search tool. |
 | `miku-indexgen` | TypeScript | Generates flat `index.json` and optional `index.md` for reference discovery. |
-| `miku-md2docx` | TypeScript | Converts Markdown files into editable Word `.docx` files; currently includes CLI and browser surface. |
+| `miku-md2docx` | TypeScript | Node.js product core and CLI for converting Markdown files into editable Word `.docx` files; Web surface is separated into `miku-md2docx-web`. |
 | `miku-readfile` | TypeScript | Local-first CLI for reading explicitly selected text files as JSON. |
 | `miku-text-bundle` | TypeScript | Collects repository text files into split Markdown bundles for generative AI handoff. |
 | `miku-unicode-guard` | TypeScript | CLI tool for detecting suspicious Unicode characters in Markdown and source files. |
-| `miku-xlsx2md` | JavaScript | Historical combined repository for extracting Excel workbook content as Markdown. |
+| `miku-xlsx2md` | JavaScript | Node.js product core, CLI, runtime bundle, tests, and upstream contract for extracting Excel workbook content as Markdown; Web surface is separated into `miku-xlsx2md-web`. |
 | `mikuproject` | JavaScript | Historical combined repository for MS Project XML conversion, WBS reports, and AI-facing JSON views. |
 | `mikuscore` | JavaScript | Historical combined repository for MusicXML-first score conversion and AI workflow bridges. |
 
@@ -58,11 +58,16 @@ name such as `<product>-web` when separated.
 | Repository | Language | Notes |
 | --- | --- | --- |
 | `miku-docx2md-web` | TypeScript / HTML | Separated browser UI, Single-file Web App generation, `lht-cmn`, browser adapters, browser tests, and Web release artifact for `miku-docx2md`. |
+| `miku-md2docx-web` | HTML | Separated browser UI, Single-file Web App generation, `lht-cmn`, browser adapters, browser tests, and Web release artifact for `miku-md2docx`. |
+| `miku-xlsx2md-web` | HTML | Separated browser UI, Single-file Web App generation, `lht-cmn`, browser adapters, browser tests, and Web release artifact for `miku-xlsx2md`. |
 
 Some historical combined repositories listed under `10 Main Applications` still
 own their Web surface in the same repository. During future separation work,
 treat browser UI, Single-file HTML artifacts, browser adapters, `lht-cmn`,
 preview, and download behavior as `11 Web App` concerns.
+
+As of the checked date, the remaining Web-surface historical combined
+repositories are `mikuproject` and `mikuscore`.
 
 ### 20 Java Applications
 
@@ -90,10 +95,15 @@ the Java CLI/runtime repository.
 | Repository | Language | Notes |
 | --- | --- | --- |
 | `miku-docx2md-java-maven` | Java | Separated Maven plugin adapter for the `miku-docx2md-java` runtime. |
+| `miku-indexgen-java-maven` | Java | Separated Maven plugin adapter for the `miku-indexgen-java` runtime. |
+| `miku-xlsx2md-java-maven` | Java | Separated Maven plugin adapter for the `miku-xlsx2md-java` runtime. |
 
 If an older Java repository still contains Maven plugin support internally,
 treat plugin extraction as `21 Java Maven Plugin` separation work rather than a
 new `20 Java Application` concern.
+
+As of the checked date, no active Java repository in this list is known to
+still contain an internal Maven plugin surface that should be separated.
 
 ### 40 Agent Skills
 
