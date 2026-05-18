@@ -60,6 +60,7 @@ miku-soft 関連のリポジトリが、少しずつ増えてきました。
 | `miku-indexgen` | [miku-indexgen](https://github.com/igapyon/miku-indexgen) |  | [miku-indexgen-java](https://github.com/igapyon/miku-indexgen-java) | [miku-indexgen-java-maven](https://github.com/igapyon/miku-indexgen-java-maven) |  |  |
 | `miku-javaclass2json` |  |  | [miku-javaclass2json-java](https://github.com/igapyon/miku-javaclass2json-java) |  |  |  |
 | `miku-md2docx` | [miku-md2docx](https://github.com/igapyon/miku-md2docx) | [miku-md2docx-web](https://github.com/igapyon/miku-md2docx-web) | [miku-md2docx-java](https://github.com/igapyon/miku-md2docx-java) |  |  |  |
+| `miku-md2xlsx` | [miku-md2xlsx](https://github.com/igapyon/miku-md2xlsx) |  | [miku-md2xlsx-java](https://github.com/igapyon/miku-md2xlsx-java) |  |  |  |
 | `miku-readfile` | [miku-readfile](https://github.com/igapyon/miku-readfile) |  | [miku-readfile-java](https://github.com/igapyon/miku-readfile-java) |  | [miku-readfile-skills](https://github.com/igapyon/miku-readfile-skills) |  |
 | `miku-text-bundle` | [miku-text-bundle](https://github.com/igapyon/miku-text-bundle) |  | [miku-text-bundle-java](https://github.com/igapyon/miku-text-bundle-java) |  | [miku-text-bundle-skills](https://github.com/igapyon/miku-text-bundle-skills) |  |
 | `miku-unicode-guard` | [miku-unicode-guard](https://github.com/igapyon/miku-unicode-guard) |  |  |  |  |  |
