@@ -1,7 +1,7 @@
 # Existing igapyon miku-soft Repositories
 
 This file summarizes public `igapyon` GitHub repositories in the miku-soft
-family, checked on 2026-05-17.
+family, checked on 2026-05-19.
 
 Use this list as a naming reference before creating a new miku-soft project.
 Treat GitHub as the source of truth when exact current availability matters.
@@ -42,6 +42,7 @@ prefer `miku-<domain>`.
 | `miku-grep` | TypeScript | Grep-style local text search tool. |
 | `miku-indexgen` | TypeScript | Generates flat `index.json` and optional `index.md` for reference discovery. |
 | `miku-md2docx` | TypeScript | Node.js product core and CLI for converting Markdown files into editable Word `.docx` files; Web surface is separated into `miku-md2docx-web`. |
+| `miku-md2xlsx` | JavaScript | Node.js product core and CLI for converting Markdown files into practical Excel `.xlsx` workbooks, including compatibility markers for `miku-xlsx2md`. |
 | `miku-readfile` | TypeScript | Local-first CLI for reading explicitly selected text files as JSON. |
 | `miku-text-bundle` | TypeScript | Collects repository text files into split Markdown bundles for generative AI handoff. |
 | `miku-unicode-guard` | TypeScript | CLI tool for detecting suspicious Unicode characters in Markdown and source files. |
@@ -80,6 +81,7 @@ These are Java companion repositories and use the `-java` suffix.
 | `miku-indexgen-java` | Java | Java companion for `miku-indexgen`. |
 | `miku-javaclass2json-java` | Java | Java-side tool for converting Java class structure to JSON; currently no separate suffixless main repository is tracked in this list. |
 | `miku-md2docx-java` | Java | Java companion for `miku-md2docx`. |
+| `miku-md2xlsx-java` | Java | Java companion for `miku-md2xlsx`. |
 | `miku-readfile-java` | Java | Java companion for `miku-readfile`. |
 | `miku-text-bundle-java` | Java | Java companion for `miku-text-bundle`. |
 | `miku-xlsx2md-java` | Java | Java companion for `miku-xlsx2md`. |

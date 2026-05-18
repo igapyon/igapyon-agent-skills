@@ -16,7 +16,7 @@
   {"name":"50-mcp-workflow.md","path":"references/50-mcp-workflow.md","ext":"md","dir":"references","size":2350,"summary":"MCP Workflow"},
   {"name":"activation-policy.md","path":"references/activation-policy.md","ext":"md","dir":"references","size":1187,"summary":"miku-soft Developer Activation Policy"},
   {"name":"architecture-rules.md","path":"references/architecture-rules.md","ext":"md","dir":"references","size":3888,"summary":"miku-soft Architecture Rules"},
-  {"name":"existing-miku-soft-repositories.md","path":"references/existing-miku-soft-repositories.md","ext":"md","dir":"references","size":7526,"summary":"Existing igapyon miku-soft Repositories"},
+  {"name":"existing-miku-soft-repositories.md","path":"references/existing-miku-soft-repositories.md","ext":"md","dir":"references","size":7779,"summary":"Existing igapyon miku-soft Repositories"},
   {"name":"maintenance-workflow.md","path":"references/maintenance-workflow.md","ext":"md","dir":"references","size":1316,"summary":"Existing miku-soft Maintenance Workflow"},
   {"name":"miku-soft-00-overview-design.md","path":"references/miku-soft-basic/miku-soft-00-overview-design.md","ext":"md","dir":"references/miku-soft-basic","size":16827,"summary":"Miku Software Overview Design"},
   {"name":"miku-soft-10-mainapp-design.md","path":"references/miku-soft-basic/miku-soft-10-mainapp-design.md","ext":"md","dir":"references/miku-soft-basic","size":65416,"summary":"Miku Software Main Application Design"},
