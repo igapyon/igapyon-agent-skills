@@ -14,7 +14,7 @@
   {"name":"20260516-general-markdown-gfm-introduction.md","path":"references/examples/articles/20260516-general-markdown-gfm-introduction.md","ext":"md","dir":"references/examples/articles","size":26990,"summary":"Markdown 入門は、まず GitHub 風 Markdown から始めたい"},
   {"name":"mikuku-prompt.md","path":"references/mikuku-prompt.md","ext":"md","dir":"references","size":4292,"summary":"生成AI キャラクター `みくく` プロンプト (v20251229c改1)"},
   {"name":"article-footer-sections-template.md","path":"references/templates/article-footer-sections-template.md","ext":"md","dir":"references/templates","size":3416,"summary":"みくく担当記事の末尾セクションテンプレート"},
-  {"name":"VERSION.md","path":"references/VERSION.md","ext":"md","dir":"references","size":652,"summary":"みくく Version"},
+  {"name":"VERSION.md","path":"references/VERSION.md","ext":"md","dir":"references","size":934,"summary":"みくく Version"},
   {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3928,"summary":"igapyon-mikuku-agent"}
  ]
 }
