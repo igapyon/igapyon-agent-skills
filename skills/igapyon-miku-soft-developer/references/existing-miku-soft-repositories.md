@@ -1,7 +1,7 @@
 # Existing igapyon miku-soft Repositories
 
 This file summarizes public `igapyon` GitHub repositories in the miku-soft
-family, checked on 2026-05-19.
+family, checked on 2026-05-21.
 
 Use this list as a naming reference before creating a new miku-soft project.
 Treat GitHub as the source of truth when exact current availability matters.
@@ -114,6 +114,7 @@ These are Agent Skills companion repositories and use the `-skills` suffix.
 | Repository | Language | Notes |
 | --- | --- | --- |
 | `miku-grep-skills` | JavaScript | Agent Skills package for structured local grep workflows. |
+| `miku-indexgen-skills` | JavaScript | Agent Skills package for `miku-indexgen` index generation workflows. |
 | `miku-readfile-skills` | JavaScript | Agent Skills package for `miku-readfile`. |
 | `miku-text-bundle-skills` | JavaScript | Agent Skills package for `miku-text-bundle`. |
 | `mikuproject-skills` | JavaScript | Agent Skills package for `mikuproject` workflows. |

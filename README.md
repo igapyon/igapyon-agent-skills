@@ -18,6 +18,17 @@
 - ローカル作業用に `workplace/` を置き、`workplace/.gitkeep` だけを Git 管理下に入れる
 - Java / Maven 開発では `.mvn/jvm.config` を repo に含める
 
+## バージョン更新
+
+この repo 全体のバージョンは、root の `pom.xml` を正本として管理します。
+
+バージョン形式は `1.YYYYMMDD.N` を基本とし、`YYYYMMDD` はその保守更新日、`N` は同じ日付内の更新番号を表します。  
+たとえば 2026-05-21 の最初の保守更新では、repo 全体のバージョンを `1.20260521.1` にします。
+
+repo 全体のバージョンを更新するときは、日付部分に合わせて `skills/igapyon-mikuku-agent/references/VERSION.md` の `Version` も更新します。  
+`みくく` のバージョンは `YYYYMMDDx` 形式で、`YYYYMMDD` を repo 全体のバージョンの日付部分と揃えます。  
+同じ日付内の更新は、`みくく` 側では `a`, `b`, `c` ... と suffix を進め、repo 全体のバージョンでは対応する `N` を `1`, `2`, `3` ... と進めます。
+
 ## 記事公開の優先順位
 
 技術記事は、まず Note 向けの記事として作成・公開することを優先します。

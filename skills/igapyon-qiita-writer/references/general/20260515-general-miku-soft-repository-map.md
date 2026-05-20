@@ -26,7 +26,7 @@ miku-soft 関連のリポジトリが、少しずつ増えてきました。
 どのプロダクト系列に、どの種類の repository があるかを、あとから見返せるようにするための小さな地図です。
 
 - 作成日: 2026-05-15
-- 更新日: 2026-05-17
+- 更新日: 2026-05-21
 
 # 一覧の見方
 
@@ -57,7 +57,7 @@ miku-soft 関連のリポジトリが、少しずつ増えてきました。
 | `miku-abc-player` |  | [miku-abc-player](https://github.com/igapyon/miku-abc-player) |  |  |  |  |
 | `miku-docx2md` | [miku-docx2md](https://github.com/igapyon/miku-docx2md) | [miku-docx2md-web](https://github.com/igapyon/miku-docx2md-web) | [miku-docx2md-java](https://github.com/igapyon/miku-docx2md-java) | [miku-docx2md-java-maven](https://github.com/igapyon/miku-docx2md-java-maven) |  |  |
 | `miku-grep` | [miku-grep](https://github.com/igapyon/miku-grep) |  | [miku-grep-java](https://github.com/igapyon/miku-grep-java) |  | [miku-grep-skills](https://github.com/igapyon/miku-grep-skills) |  |
-| `miku-indexgen` | [miku-indexgen](https://github.com/igapyon/miku-indexgen) |  | [miku-indexgen-java](https://github.com/igapyon/miku-indexgen-java) | [miku-indexgen-java-maven](https://github.com/igapyon/miku-indexgen-java-maven) |  |  |
+| `miku-indexgen` | [miku-indexgen](https://github.com/igapyon/miku-indexgen) |  | [miku-indexgen-java](https://github.com/igapyon/miku-indexgen-java) | [miku-indexgen-java-maven](https://github.com/igapyon/miku-indexgen-java-maven) | [miku-indexgen-skills](https://github.com/igapyon/miku-indexgen-skills) |  |
 | `miku-javaclass2json` |  |  | [miku-javaclass2json-java](https://github.com/igapyon/miku-javaclass2json-java) |  |  |  |
 | `miku-md2docx` | [miku-md2docx](https://github.com/igapyon/miku-md2docx) | [miku-md2docx-web](https://github.com/igapyon/miku-md2docx-web) | [miku-md2docx-java](https://github.com/igapyon/miku-md2docx-java) |  |  |  |
 | `miku-md2xlsx` | [miku-md2xlsx](https://github.com/igapyon/miku-md2xlsx) |  | [miku-md2xlsx-java](https://github.com/igapyon/miku-md2xlsx-java) |  |  |  |
