@@ -1,5 +1,6 @@
 {
  "generator": "miku-indexgen",
+ "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
   {"name":"article-assignments.md","path":"references/00-management/article-assignments.md","ext":"md","dir":"references/00-management","size":1457,"summary":"Note 記事担当一覧"},
@@ -25,7 +26,7 @@
   {"name":"20260320-gpt54-app-dev.md","path":"references/miku-xlsx2md/20260320-gpt54-app-dev.md","ext":"md","dir":"references/miku-xlsx2md","size":9607,"summary":"コードを書かずに、生成AIと一緒にアプリを作ってみた"},
   {"name":"20260326-xlsx2md-grid-bug-diary.md","path":"references/miku-xlsx2md/20260326-xlsx2md-grid-bug-diary.md","ext":"md","dir":"references/miku-xlsx2md","size":5514,"summary":"[xlsx2md] Excel 方眼を Markdown にする記事を書こうとしたら、およよとなった話"},
   {"name":"20260327-xlsx2md-strike-meaning.md","path":"references/miku-xlsx2md/20260327-xlsx2md-strike-meaning.md","ext":"md","dir":"references/miku-xlsx2md","size":7591,"summary":"[xlsx2md] 設計書の取り消し線が Markdown で消えると、ちょっと危ない"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":8304,"summary":"igapyon-note-writer"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":8304,"description":"Use only when the user explicitly asks for igapyon-note-writer, asks to create or revise a Japanese Note article in igapyon style, or clearly requests Note-ready reading-oriented Markdown with title and hashtag suggestions. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.","summary":"igapyon-note-writer"},
   {"name":"general-note-article-template.md","path":"templates/general-note-article-template.md","ext":"md","dir":"templates","size":2666,"title":"記事タイトル","summary":"はじめに"}
  ]
 }

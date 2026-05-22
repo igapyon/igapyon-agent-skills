@@ -1,5 +1,6 @@
 {
  "generator": "miku-indexgen",
+ "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
   {"name":"project-convention-detection-review.md","path":"references/00-start-here/project-convention-detection-review.md","ext":"md","dir":"references/00-start-here","size":6750,"summary":"Project Convention Detection Review"},
@@ -29,6 +30,6 @@
   {"name":"software-completion-review.md","path":"references/30-timing/release/software-completion-review.md","ext":"md","dir":"references/30-timing/release","size":16869,"summary":"Software Completion Review"},
   {"name":"version-consistency-review.md","path":"references/30-timing/release/version-consistency-review.md","ext":"md","dir":"references/30-timing/release","size":3172,"summary":"Version Consistency Review"},
   {"name":"INDEX.md","path":"references/INDEX.md","ext":"md","dir":"references","size":7097,"summary":"igapyon-reviewer Reference Index"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3045,"summary":"igapyon-reviewer"}
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3045,"description":"Use only when the user explicitly mentions igapyon-reviewer or explicitly asks to use igapyon's reviewer skill. Once named, participate as a review-only skill for code, repositories, articles, documentation, social posts, GitHub text, README text, UI text, CLI text, or short text. Do not use this skill for ordinary feedback, proofreading, rewriting, implementation, repository cleanup, or generic review requests unless the user names igapyon-reviewer or explicitly asks to use this reviewer skill.","summary":"igapyon-reviewer"}
  ]
 }
