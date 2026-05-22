@@ -22,6 +22,17 @@ Read only the document needed for the current task:
 - [miku-soft-basic/miku-soft-40-agentskills-design.md](miku-soft-basic/miku-soft-40-agentskills-design.md): Agent Skills versions and agent-facing local workflow packages
 - [miku-soft-basic/miku-soft-50-mcp-design.md](miku-soft-basic/miku-soft-50-mcp-design.md): MCP server versions, tools, resources, prompts, transport, and protocol adapter boundaries
 
+Use [miku-soft-ai-era-cli-interface.md](miku-soft-ai-era-cli-interface.md)
+when designing or reviewing CLI help, runtime contracts, machine-readable
+outputs, generated artifacts, overwrite behavior, and AI-agent-facing execution
+boundaries across any miku-soft layer.
+
+Use
+[miku-soft-ai-era-markdown-front-matter.md](miku-soft-ai-era-markdown-front-matter.md)
+when designing or reviewing Markdown front matter, document metadata,
+provenance fields, generated index contracts, and agent-readable Markdown
+authoring conventions across any miku-soft layer.
+
 ## Short Rule
 
 Keep product semantics in the product core or upstream runtime artifacts. Treat
