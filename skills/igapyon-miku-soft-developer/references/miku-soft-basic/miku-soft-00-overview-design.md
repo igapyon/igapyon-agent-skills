@@ -4,7 +4,9 @@ This memo is the entry point for the shared design documents of the `miku` softw
 
 The initial versions of the related tools were created by `Mikuku` and Toshiki Iga.
 
-The current contents are based on the main-application design memo, Java application design memo, straight-conversion guide, Agent Skills design memo, and MCP design memo checked on 2026-04-27.
+The current contents are based on the main-application design memo, Web
+application design memo, Java application design memo, straight-conversion
+guide, Agent Skills design memo, and MCP design memo checked on 2026-05-14.
 
 ## Design Summary
 
@@ -15,13 +17,19 @@ The `miku` software series can be summarized as follows.
 The series is not organized around a single UI, runtime, or protocol. It is organized around a layered product shape.
 
 - Keep each upstream product's semantic center clear
-- Provide human-facing Single-file Web Apps where useful
-- Provide Node.js CLI surfaces as normal main-application surfaces
+- Keep the TypeScript / Node.js main application as the upstream product core
+  and CLI surface
+- Provide human-facing Single-file Web Apps as a dependent Web App layer where
+  useful
 - Provide Java 1.8 CLI runtimes through straight conversion as a normal follow-up deliverable
+- Provide separated Maven plugin adapter repositories for Java runtimes when
+  build-tool integration is useful
 - Package Agent Skills with instructions, operation maps, references, and executable CLI runtime artifacts
 - Provide MCP servers in Node.js / TypeScript when there is no product-specific reason to avoid them
 - Keep Java versions, Agent Skills, and MCP servers downstream of the upstream product semantics
 - Preserve artifact roles, diagnostics, local execution, and runtime traceability across layers
+- Distinguish tracked source from generated build output and intentional
+  runtime or release artifacts
 
 ## Role of This Document
 
@@ -41,7 +49,9 @@ The detailed documents are organized by layer and concern.
 - `references/miku-soft-basic/miku-soft-00-overview-design.md`
   - provides the top-level product-family overview and explains how the design documents relate to each other
 - `references/miku-soft-basic/miku-soft-10-mainapp-design.md`
-  - describes the main application layer, including the Single-file Web App and Node.js CLI as normal first-class product surfaces
+  - describes the TypeScript / Node.js main application layer, including product core, CLI, structured artifacts, diagnostics, and runtime bundles
+- `references/miku-soft-basic/miku-soft-11-web-design.md`
+  - describes the Web App layer, including Single-file Web App distribution, browser adapters, `lht-cmn`, preview, diagnostics, and download behavior
 - `references/miku-soft-basic/miku-soft-20-javaapp-design.md`
   - describes Java application versions, especially Java 1.8 CLI/runtime artifacts, packaging, testing, and build integration
 - `references/miku-soft-basic/miku-soft-21-java-maven-design.md`
@@ -69,11 +79,17 @@ These are facing layers, not independent product semantics. The upstream product
 
 ## Human-Facing Layer
 
-A miku main application normally has two first-class surfaces: a Single-file Web App for human users and a Node.js CLI for automation, agents, and repeatable local workflows.
+The TypeScript / Node.js main application is the upstream human-operable and
+automation-operable product layer. It owns product semantics, product core,
+CLI, structured artifacts, diagnostics, and runtime bundles.
 
-The Single-file Web App is the human-facing surface when a product benefits from interactive loading, preview, diagnostics, and download. It is usually created in Node.js / TypeScript, has a Web UI, and runs locally in a browser without requiring server setup.
+The Web App is a dependent human-facing surface when a product benefits from
+interactive loading, preview, diagnostics, and download. It depends on the `10`
+main application and should not redefine product semantics.
 
-The Node.js CLI is also a normal main-application surface. It exposes the same product core for scripts, repeatable local workflows, downstream Agent Skills, and later runtime adapters.
+The Node.js CLI is a normal main-application surface. It exposes the product
+core for scripts, repeatable local workflows, downstream Agent Skills, and
+later runtime adapters.
 
 Some main applications may be CLI-only when that is the natural product shape. In that case, the product is still a main application if it stands as the primary upstream product, accepts real local input, and produces verifiable artifacts.
 
@@ -84,7 +100,9 @@ The human-facing layer should keep the following properties.
 - clear canonical source or semantic base
 - structured outputs that scripts and AI agents can reuse
 - human-reviewable outputs such as HTML, Markdown, SVG, XLSX, XML, or ZIP when useful
-- shared core behavior behind UI, CLI, tests, and downstream adapters where practical
+- shared core behavior behind CLI, Web Apps, tests, and downstream adapters where practical
+- ordinary generated JavaScript treated as build output, with intentional
+  runtime or release artifacts documented separately
 
 ## Java Runtime Layer
 
@@ -103,6 +121,12 @@ The Java runtime layer usually emphasizes:
 - distribution artifacts such as executable jars, sources jars, and distribution zips
 
 The TypeScript / Node.js CLI and Java CLI are peer runtime surfaces when both exist. Differences caused by runtime constraints should be documented rather than hidden.
+
+Maven plugin support is a build-tool adapter over the Java runtime. When a
+Maven plugin is useful, keep it in a separated `<product>-java-maven`
+repository that depends on the Java runtime artifact by normal Maven
+coordinates. Do not let Maven plugin goals, parameters, examples, or tests
+reshape the Java runtime repository into a plugin repository.
 
 ## Straight Conversion Layer
 
@@ -176,12 +200,13 @@ MCP servers and Agent Skills should stay aligned around upstream product vocabul
 The usual product flow for the miku software series is as follows.
 
 1. Create or maintain the TypeScript / Node.js main application.
-2. Provide the Single-file Web App when human-facing UI is useful.
-3. Provide the Node.js CLI as a normal product surface.
+2. Provide the Node.js CLI as a normal product surface.
+3. Provide the dependent Single-file Web App when human-facing browser UI is useful.
 4. Produce a single-file Node.js CLI runtime artifact for downstream use.
 5. Create the Java 1.8 CLI runtime through straight conversion unless there is a clear reason not to.
-6. Package Agent Skills with instructions, operation maps, references, and bundled runtime artifacts.
-7. Provide a Node.js / TypeScript MCP server when there is no product-specific reason to avoid it.
+6. Provide a separated Maven plugin adapter for the Java runtime when build-tool integration is useful.
+7. Package Agent Skills with instructions, operation maps, references, and bundled runtime artifacts.
+8. Provide a Node.js / TypeScript MCP server when there is no product-specific reason to avoid it.
 
 This flow is a default direction, not a reason to blur responsibilities. Each layer must keep the upstream product boundary visible.
 
@@ -190,9 +215,15 @@ This flow is a default direction, not a reason to blur responsibilities. Each la
 The preferred responsibility split is as follows.
 
 - Main application
-  - owns product semantics, canonical source or semantic base, primary conversions, core APIs, Web UI when present, and Node.js CLI
+  - owns product semantics, canonical source or semantic base, primary conversions, core APIs, Node.js CLI, diagnostics, and runtime bundles
+- Web application
+  - owns browser UI, Single-file Web App distribution, browser adapters, `lht-cmn`, preview, diagnostics inspection, and download behavior while depending on the main application
 - Java application
   - owns Java runtime packaging, Java CLI, Java-side batch or build integration, and Java-side tests while preserving upstream behavior
+- Java Maven plugin
+  - owns Maven plugin coordinates, Mojo classes, goal names, Maven parameters,
+    plugin descriptor generation, examples, smoke tests, and plugin-facing
+    documentation while depending on the Java runtime artifact
 - Straight conversion guide
   - owns the method for creating and maintaining Java versions from TypeScript / Node.js upstreams
 - Agent Skills package
@@ -216,19 +247,41 @@ Common roles include:
 - primary exchange output
 - human-facing report
 - generated bundle
+- generated build intermediate
+- runtime or release contract artifact
+- build-tool adapter artifact
 - diagnostics and warnings
 - temporary scratch output
 
 These roles should not be collapsed only because the artifacts share a file extension or can all be represented as JSON or files.
 
+For TypeScript / Node.js main applications, tracked source, generated runtime
+JavaScript, and `.mjs` release/runtime bundles are different artifact roles.
+Layer-specific documents define the exact repository layout, but the shared
+rule is that ordinary generated output should not become product source merely
+because it was tracked in a historical combined repository.
+
 For example, a structural workbook `XLSX`, a human-facing `WBS XLSX`, a workbook JSON state file, and a Patch JSON document may all participate in one product workflow, but they are not the same contract.
 
-Keeping artifact roles visible makes UI, CLI, Java runtime, Agent Skills, and MCP server behavior easier to align.
+Keeping artifact roles visible makes Web App, CLI, Java runtime, Agent Skills,
+and MCP server behavior easier to align.
 
 ## Summary
 
 The miku software series starts from small local products, usually implemented in TypeScript / Node.js, and then exposes the same product meaning through multiple surfaces.
 
-The main application provides the upstream semantic center and normally exposes both a Single-file Web App and a Node.js CLI. Java versions provide Java 1.8 CLI runtimes through straight conversion. Agent Skills package instructions and executable runtime artifacts for AI agents. MCP servers expose product operations through a standard protocol for MCP clients and are normally implemented in Node.js / TypeScript.
+The main application provides the upstream semantic center and Node.js CLI.
+The Web App provides a dependent human-facing browser surface when useful. Java
+versions provide Java 1.8 CLI runtimes through straight conversion. Agent
+versions provide Java 1.8 CLI runtimes through straight conversion. Separated
+Maven plugin repositories expose Java runtimes to Maven builds as build-tool
+adapters when useful. Agent Skills package instructions and executable runtime
+artifacts for AI agents. MCP servers expose product operations through a
+standard protocol for MCP clients and are normally implemented in Node.js /
+TypeScript.
 
-The important point is not to multiply implementations. It is to keep one product meaning usable from human UI, local CLI, Java runtime, agent package, and MCP protocol without losing traceability, diagnostics, or artifact discipline. In particular, a Java runtime artifact does not imply that a Java MCP server should also be implemented.
+The important point is not to multiply implementations. It is to keep one
+product meaning usable from Web App, local CLI, Java runtime, Maven plugin,
+agent package, and MCP protocol without losing traceability, diagnostics, or
+artifact discipline. In particular, a Java runtime artifact does not imply that
+a Java MCP server should also be implemented.

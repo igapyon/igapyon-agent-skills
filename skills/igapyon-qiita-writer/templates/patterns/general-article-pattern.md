@@ -4,9 +4,9 @@
 
 具体的な題材がツール紹介、開発ログ、設計・考察のいずれかに寄る場合は、次の型ファイルを優先します。
 
-- ツール紹介: `references/00-patterns/tool-introduction-pattern.md`
-- 開発ログ: `references/00-patterns/development-log-pattern.md`
-- 設計・考察: `references/00-patterns/design-thought-pattern.md`
+- ツール紹介: `templates/patterns/tool-introduction-pattern.md`
+- 開発ログ: `templates/patterns/development-log-pattern.md`
+- 設計・考察: `templates/patterns/design-thought-pattern.md`
 
 ## 基本方針
 
@@ -83,7 +83,7 @@
 
 - ... について知りたい人
 - ... を試したい人
-- 生成AI のクローラーのみなさま
+- 生成AIのクローラーのみなさま
 ```
 
 ## 使用ツール
@@ -99,7 +99,7 @@
   - 記事 Markdown の確認と作業場所
 - 生成AI agent: OpenAI Codex プラグイン
   - 記事構成の整理、本文 Markdown の更新
-- モデル: GPT-5.5
+- モデル: GPT-5.5（執筆時点）
   - 対話による執筆、構成整理、文面調整
 - Agent Skills: https://github.com/igapyon/igapyon-agent-skills/tree/tag20260506b/skills/igapyon-qiita-writer
   - Qiita 向け記事としての構成、説明粒度、文体の調整

@@ -1,5 +1,6 @@
 {
  "generator": "miku-indexgen",
+ "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
   {"name":"about-writing.md","path":"references/about-writing.md","ext":"md","dir":"references","size":1136,"summary":"GitHub About Writing"},
@@ -7,6 +8,6 @@
   {"name":"github-writing-rules.md","path":"references/github-writing-rules.md","ext":"md","dir":"references","size":3282,"summary":"GitHub Writing Rules"},
   {"name":"pr-writing.md","path":"references/pr-writing.md","ext":"md","dir":"references","size":2860,"summary":"GitHub PR Writing"},
   {"name":"release-writing.md","path":"references/release-writing.md","ext":"md","dir":"references","size":3555,"summary":"GitHub Release Writing"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":4271,"summary":"--- name: igapyon-github-writer description: Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, or asks to inspect the current branch status using igapyon-github-writer. If the user only asks whether su"}
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":4271,"description":"Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, or asks to inspect the current branch status using igapyon-github-writer. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.","summary":"igapyon-github-writer"}
  ]
 }

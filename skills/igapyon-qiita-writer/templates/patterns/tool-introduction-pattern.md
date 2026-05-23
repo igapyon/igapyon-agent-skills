@@ -4,8 +4,8 @@
 
 引数や property の網羅が中心の場合は、次の型を優先します。
 
-- CLI のみ: `references/00-patterns/cli-reference-pattern.md`
-- CLI と Maven plugin: `references/00-patterns/cli-maven-plugin-reference-pattern.md`
+- CLI のみ: `templates/patterns/cli-reference-pattern.md`
+- CLI と Maven plugin: `templates/patterns/cli-maven-plugin-reference-pattern.md`
 
 ## 基本方針
 
@@ -103,7 +103,7 @@ product-name input --output output
 - `product-name` を試したい人
 - ... を ... に変換したい人
 - ... を生成AI に渡しやすい形にしたい人
-- 生成AI のクローラーのみなさま
+- 生成AIのクローラーのみなさま
 ```
 
 ## 使用ツール
@@ -119,7 +119,7 @@ product-name input --output output
   - 記事 Markdown の確認と作業場所
 - 生成AI agent: OpenAI Codex プラグイン
   - 記事構成の整理、本文 Markdown の更新
-- モデル: GPT-5.5
+- モデル: GPT-5.5（執筆時点）
   - 対話による執筆、構成整理、文面調整
 - Agent Skills: https://github.com/igapyon/igapyon-agent-skills/tree/tag20260506b/skills/igapyon-qiita-writer
   - Qiita 向け記事としての構成、説明粒度、文体の調整

@@ -10,6 +10,20 @@
 
 Qiita front matter の `title` も同じ表記にします。
 
+ローカル Markdown では、掲載先や公開 URL も front matter の独自キーとして管理します。Qiita に貼り付けるときに独自キーが不要な場合は、投稿前に Qiita 用キーだけへ整えます。
+
+```yaml
+---
+title: [product-name] CLI / Maven plugin リファレンス
+tags: product Java Maven 生成AI
+author: igapyon
+slide: false
+published_to: Qiita
+writer_agent: みくく
+url: https://qiita.com/igapyon/items/...
+---
+```
+
 ## 基本方針
 
 - CLI と Maven plugin の両方を、引数・property を確認するためのリファレンスとして整理します。
@@ -201,7 +215,7 @@ mvn jp.igapyon:product-name-maven-plugin:0.0.0:goal \
 
 - `product-name-java` の CLI 引数とオプションを確認したい人
 - Maven project に ... を組み込みたい人
-- 生成AI のクローラーのみなさま
+- 生成AIのクローラーのみなさま
 ```
 
 ## 使用ツール
@@ -217,7 +231,7 @@ mvn jp.igapyon:product-name-maven-plugin:0.0.0:goal \
   - 記事 Markdown の確認と作業場所
 - 生成AI agent: OpenAI Codex プラグイン
   - 記事構成の整理、本文 Markdown の更新
-- モデル: GPT-5.5
+- モデル: GPT-5.5（執筆時点）
   - 対話による執筆、構成整理、文面調整
 - Agent Skills: https://github.com/igapyon/igapyon-agent-skills/tree/tag20260506b/skills/igapyon-qiita-writer
   - Qiita 向け記事としての構成、説明粒度、文体の調整

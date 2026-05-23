@@ -18,6 +18,7 @@ Excel ブックは情報の入れ物としては便利ですが、生成 AI に�
 
 - 初出: 2026-03-20
 - 更新: 2026-03-23 (機能対応表を追記)
+- 更新: 2026-05-18 (実行方法の広がりと姉妹ソフトを追記)
 
 ![仕様イメージ.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/105739/f0c862eb-3ab0-44d6-9908-27f4fb9e833f.png)
 
@@ -148,7 +149,7 @@ Excel ブックには、表だけでなく、説明文、補足、図、画像�
 
 このあたりは、Excel ブックを単なるファイルとしてではなく、複数の XML と関連ファイルの集合として扱っているイメージです。
 
-また、配布形態は Single-file Web App です。実装の正本は TypeScript で、ビルド時に HTML と JavaScript をまとめ、単一の `miku-xlsx2md.html` として扱えるようにしています。これによって、ブラウザだけで動かせる使い勝手と、ソースコード側の保守性を両立しています。
+また、配布形態は Single-file Web App です。実装の正本は TypeScript で、Web 版では HTML と JavaScript をまとめ、ブラウザだけで動かしやすい形にしています。これによって、ブラウザだけで動かせる使い勝手と、ソースコード側の保守性を両立しています。
 
 技術的には、派手なクラウド構成やバックエンドがあるわけではありません。その代わり、ブラウザだけで `.xlsx` の内部構造をどこまで読み解けるか、そしてそれを Markdown としてどう再構成するかに工夫を寄せています。
 
@@ -171,11 +172,15 @@ Excel ブックには、表だけでなく、説明文、補足、図、画像�
 
 ## 実行ページとソースコード
 
-ブラウザですぐ試せる実行ページは、次の URL です。
+ブラウザですぐ試せる Web 版は、次の URL です。
 
-- https://igapyon.github.io/miku-xlsx2md/miku-xlsx2md.html
+- https://igapyon.github.io/miku-xlsx2md-web/
 
-ソースコードは GitHub で公開しています。
+Web 版のソースコードは GitHub で公開しています。
+
+- https://github.com/igapyon/miku-xlsx2md-web
+
+Node.js CLI / core 側のソースコードは、次のリポジトリです。
 
 - https://github.com/igapyon/miku-xlsx2md
 
@@ -196,6 +201,50 @@ Excel ブックには、表だけでなく、説明文、補足、図、画像�
 | グラフを扱える | 対応 | 画像再現ではなく意味情報として抽出する |
 | 図形を扱える | 一部対応 | raw 寄りの情報を抽出し、対応できるものは SVG 出力する |
 | ZIP でまとめて保存できる | 対応 | Markdown と assets をまとめて保存できる |
-| CLI からバッチ変換できる | 対応 | Node.js CLI から実行できる |
+| CLI からバッチ変換できる | 対応 | Node.js CLI と Java CLI から実行できる |
+| Maven build から変換できる | 対応 | Maven plugin として build 手順に組み込める |
 | サーバへアップロードせずに使える | 対応 | ローカル完結で使える |
 | Excel の見た目を完全再現できる | 非対応 | 目的は見た目再現ではなく、意味のある Markdown 化 |
+
+## 2026-05-18 時点での実行方法の広がり
+
+初出時点の `xlsx2md` は、ブラウザで使う Single-file Web App として作りました。その後、用途が少しずつ広がり、2026-05-18 時点では次のような実行方法を意識するようになっています。
+
+- Web App としてブラウザで使う
+- Node.js CLI としてコマンドラインから使う
+- Java CLI としてコマンドラインから使う
+- Maven plugin として Maven build から使う
+
+それぞれの入口には向き不向きがあります。
+
+- Web App
+  - 手元の Excel ブックをブラウザで開いて、その場で Markdown や ZIP に変換したいときに向いています。
+  - サーバへアップロードせずに使えるため、まず試す入口として扱いやすい形です。
+- Node.js CLI
+  - TypeScript / Node.js 版の実装をそのままコマンドラインから使いたい場合の入口です。
+  - 単発変換だけでなく、スクリプトや検証作業に組み込みやすくなります。
+- Java CLI
+  - Java 実行環境で扱いたい場合の入口です。
+  - Node.js 版をもとに Java 版へ移植したことで、Java 寄りの環境でも同じ発想の Excel から Markdown への変換を扱えるようになりました。
+- Maven plugin
+  - Maven build の中で Excel ブックを Markdown に変換したい場合の入口です。
+  - 設計資料や仕様書を build 手順の中で Markdown 化し、後続の文書生成や確認作業につなげるような使い方を想定できます。
+
+つまり、`xlsx2md` は単なるブラウザ用の変換アプリから、Web、CLI、build tool へ接続できる Excel to Markdown の基盤部品に近づいてきたと考えています。
+
+## 姉妹ソフトへの広がり
+
+また、`xlsx2md` と同じ考え方で、他の文書形式を Markdown と行き来する姉妹ソフトも進めています。
+
+対応関係で見ると、次のようになります。
+
+| 変換方向 | Node / TypeScript 版 | Java 版 |
+| --- | --- | --- |
+| `.xlsx` から Markdown | [`miku-xlsx2md`](https://github.com/igapyon/miku-xlsx2md) | [`miku-xlsx2md-java`](https://github.com/igapyon/miku-xlsx2md-java) |
+| Markdown から `.xlsx` | [`miku-md2xlsx`](https://github.com/igapyon/miku-md2xlsx) | [`miku-md2xlsx-java`](https://github.com/igapyon/miku-md2xlsx-java) |
+| `.docx` から Markdown | [`miku-docx2md`](https://github.com/igapyon/miku-docx2md) | [`miku-docx2md-java`](https://github.com/igapyon/miku-docx2md-java) |
+| Markdown から `.docx` | [`miku-md2docx`](https://github.com/igapyon/miku-md2docx) | [`miku-md2docx-java`](https://github.com/igapyon/miku-md2docx-java) |
+
+これらは単にファイル形式を変換するだけではなく、生成 AI が読みやすく、後続の作業に渡しやすい中間表現として Markdown を使う、という発想を共有しています。
+
+Excel や Word は、人間が編集しやすい文書形式です。一方で Markdown は、生成 AI や Git、CLI から扱いやすいテキスト形式です。この間を行き来できるようにしておくと、人間向けの文書資産を残しながら、AI 向けの入力や自動処理にもつなげやすくなります。

@@ -63,6 +63,8 @@ Check these points:
 
 - Node.js / TypeScript main application release asset workflows normally
   trigger on `push` tags matching `v*`
+- separated `11 Web App` release asset workflows normally trigger on `push`
+  tags matching `v*`
 - GitHub Release `published` is not the standard trigger for Node main app
   release assets; require a repository-specific reason when it is used
 - `workflow_dispatch` is optional for Node main app release assets; when used,
@@ -87,6 +89,8 @@ Check these points:
   or `scripts/*.mjs`; version checks and release asset staging may stay in the
   workflow when they only adapt local build outputs into versioned release asset
   names
+- separated `11 Web App` release workflows run the Web build and Web tests or
+  smoke checks before staging versioned HTML release assets
 - CLI runtime assets are smoke-tested with at least `--version` and `--help`
 - Java runtime assets are smoke-tested with equivalent metadata commands when
   available
@@ -103,6 +107,8 @@ Check these points:
 
 - workflows upload only prepared release assets, not broad repository source
   zips or accidental build directories
+- Web release workflows upload only staged Web assets such as
+  `<product>-web-<version>.html` and optional metadata JSON
 - asset glob patterns cannot pick up stale artifacts from previous builds
 - artifact upload names match README and downstream expectations
 - release upload steps fail when expected files are missing

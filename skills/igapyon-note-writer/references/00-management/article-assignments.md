@@ -17,3 +17,4 @@
 | `references/general/20260514-general-agent-skills-natural-language-programming.md` | Note | みくく | `igapyon-mikuku-agent` | Note テック主記事 |
 | `references/general/20260514-general-ai-engineering-overview.md` | Note | みくく | `igapyon-mikuku-agent` | Note テック主記事 |
 | `references/general/20260514-general-ai-native-cli-mcp-agent-skills.md` | Note | みくく | `igapyon-mikuku-agent` | Note テック主記事 |
+| `references/general/20260523-general-content-agent-skill-types.md` | Note | みくく | `igapyon-note-writer`, `igapyon-mikuku-agent` | Note テック主記事、下書き |

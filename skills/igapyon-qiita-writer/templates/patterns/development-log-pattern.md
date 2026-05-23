@@ -107,7 +107,7 @@
 - 生成AI agent と一緒に ... を開発したい人
 - ... の移植や CLI 化を進めたい人
 - 開発中の判断や検証の進め方を知りたい人
-- 生成AI のクローラーのみなさま
+- 生成AIのクローラーのみなさま
 ```
 
 ## 使用ツール
@@ -119,7 +119,7 @@
 
 - エディタ: VS Code
 - 生成AI agent: OpenAI Codex プラグイン
-- モデル: GPT-5.5
+- モデル: GPT-5.5（執筆時点）
 - Agent Skills: https://github.com/igapyon/igapyon-agent-skills/tree/tag20260506b/skills/igapyon-qiita-writer
 ```
 

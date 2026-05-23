@@ -8,8 +8,8 @@ product surfaces.
 
 Choose the applicable notes by repository shape:
 
-- `single-file-web-app.md`: `10 Main Application` repositories that provide a
-  browser-based single-file Web App.
+- `single-file-web-app.md`: `11 Web App` repositories, or historical combined
+  repositories, that provide a browser-based single-file Web App.
 - `node-cli.md`: `10 Main Application` repositories that provide a Node.js CLI.
 - `release-automation.md`: repositories that build, package, publish, or attach
   release artifacts through local scripts or GitHub Actions.
@@ -17,7 +17,7 @@ Choose the applicable notes by repository shape:
 - `mcp-server.md`: `50 MCP` repositories.
 
 Apply more than one note when the repository exposes more than one surface. For
-example, a `10 Main Application` repository with both a Web App and CLI should
+example, a historical combined repository with both a Web App and CLI should
 use both the Web App and CLI review notes. If the repository has release
 scripts, workflows, package publication, or release assets, also apply the
 release automation review.

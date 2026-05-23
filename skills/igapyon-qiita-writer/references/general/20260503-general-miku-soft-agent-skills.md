@@ -1,13 +1,11 @@
-## [miku-soft] miku-soft の Agent Skills 一覧
-
-- 掲載先: Qiita
-- URL: https://qiita.com/igapyon/items/ca8c83215a71e22ffd26
-
 ---
-title: [miku-soft] miku-soft の Agent Skills 一覧
-tags: mikuku AgentSkills
+title: "[miku-soft] miku-soft の Agent Skills 一覧"
+tags: mikuku AgentSkills 生成AI VSCode
 author: igapyon
 slide: false
+published_to: Qiita
+writer_agent: みくく
+url: https://qiita.com/igapyon/items/ca8c83215a71e22ffd26
 ---
 # はじめに
 
@@ -16,6 +14,7 @@ miku-soft として作成・管理している Agent Skills の一覧です。
 この記事は、個々の Agent Skills の詳細な使い方を説明するものではなく、どのリポジトリが何のためにあるかを見渡すための入口として用意しています。
 
 作成日: 2026-05-03
+更新日: 2026-05-21
 
 ![はじめに](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/105739/a7013a66-b99d-4c68-8178-e98816a41b24.png)
 
@@ -26,7 +25,9 @@ miku-soft として作成・管理している Agent Skills の一覧です。
 | [mikuproject-skills](https://github.com/igapyon/mikuproject-skills) | WBS を作成・修正・出力するための Agent Skills | WBS / XLSX / Markdown / SVG / Mermaid |
 | [mikuscore-skills](https://github.com/igapyon/mikuscore-skills) | 楽譜・音楽データ関連の作業を支援する Agent Skills | ABC / MusicXML / MIDI / MuseScore / 楽譜レンダリング |
 | [miku-grep-skills](https://github.com/igapyon/miku-grep-skills) | 独自GREP、主に Shift_JIS ファイルを GREP するための Agent Skills | ローカルファイル検索 / Shift_JIS / 調査支援 |
+| [miku-indexgen-skills](https://github.com/igapyon/miku-indexgen-skills) | `index.json` / `index.md` を生成して、生成AI agent が参照資料を見つけやすくするための Agent Skills | 参照資料索引 / Markdown / JSON / repository 調査 |
 | [miku-readfile-skills](https://github.com/igapyon/miku-readfile-skills) | 独自ファイル内容の読み取り、主に Shift_JIS ファイルを読み込むための Agent Skills | ローカルファイル読込 / Shift_JIS / 内容確認 |
+| [miku-text-bundle-skills](https://github.com/igapyon/miku-text-bundle-skills) | リポジトリ内のテキストファイルを生成AIに渡しやすい Markdown bundle にまとめるための Agent Skills | テキスト収集 / Markdown bundle / 生成AI handoff |
 
 # 各リポジトリ
 
@@ -58,6 +59,15 @@ Shift_JIS のテキストファイルを含むローカルファイルを検索�
 
 - GitHub: https://github.com/igapyon/miku-grep-skills
 
+## miku-indexgen-skills
+
+`miku-indexgen-skills` は、`index.json` / `index.md` を生成して、生成AI agent が参照資料を見つけやすくするための Agent Skills です。
+
+リポジトリ内の `references/` やドキュメント群に索引を用意し、Agent との対話の中で必要なファイルを探しやすくすることを目的としています。
+
+- GitHub: https://github.com/igapyon/miku-indexgen-skills
+- 関連記事: https://qiita.com/igapyon/items/85871ba02955e78b3825
+
 ## miku-readfile-skills
 
 `miku-readfile-skills` は、独自ファイル内容の読み取り、主に Shift_JIS ファイルを読み込むための Agent Skills です。
@@ -67,6 +77,15 @@ Shift_JIS のテキストファイルを含むローカルファイルの内容�
 生成AIツールが正しく Shift_JIS を扱えるようになったら役割を終えるだろう Agent Skills です。
 
 - GitHub: https://github.com/igapyon/miku-readfile-skills
+
+## miku-text-bundle-skills
+
+`miku-text-bundle-skills` は、リポジトリ内のテキストファイルを収集し、生成AI に渡しやすい分割 Markdown bundle としてまとめるための Agent Skills です。
+
+上流の `miku-text-bundle` / `miku-text-bundle-java` の runtime artifact を使い、Java runtime を優先しつつ、必要に応じて Node.js runtime を使う構成です。Agent との対話の中で、調査対象のファイル群をまとめて渡したい場面を支援します。
+
+- GitHub: https://github.com/igapyon/miku-text-bundle-skills
+- 関連記事: https://qiita.com/igapyon/items/c67f37ffe4d0fd1eed9d
 
 # 番外編
 
@@ -96,3 +115,4 @@ Agent Skills そのものに加えて、Agent Skills が利用・内包してい
 
 - [[mikuproject] WBS 関連資料を XLSX / Markdown / SVG などで扱える OSSツールを作った](https://qiita.com/igapyon/items/e04a8224ff0fc71dc69d)
 - [[miku-indexgen] AI エージェントが読む前に、ディレクトリの index.json / index.md を作る CLI](https://qiita.com/igapyon/items/85871ba02955e78b3825)
+- [[miku-text-bundle] CLI リファレンス](https://qiita.com/igapyon/items/c67f37ffe4d0fd1eed9d)

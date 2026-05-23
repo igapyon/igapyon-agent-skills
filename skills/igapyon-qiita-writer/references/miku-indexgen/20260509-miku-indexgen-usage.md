@@ -1,13 +1,10 @@
-## [miku-indexgen] CLI / Maven plugin リファレンス
-
-- 掲載先: Qiita
-- URL: https://qiita.com/igapyon/items/415b54a06312cd971581
-
 ---
 title: [miku-indexgen] CLI / Maven plugin リファレンス
 tags: mikuku Node.js Java Maven 生成AI
 author: igapyon
 slide: false
+published_to: Qiita
+url: https://qiita.com/igapyon/items/415b54a06312cd971581
 ---
 ## はじめに
 
@@ -21,7 +18,7 @@ Markdown 出力を有効にした場合は、人間がざっと読むための `
 
 - Node CLI: [`miku-indexgen`](https://github.com/igapyon/miku-indexgen)
 - Java CLI: [`miku-indexgen-java`](https://github.com/igapyon/miku-indexgen-java)
-- Maven plugin: `miku-indexgen-java` に含まれる `miku-indexgen-maven-plugin`
+- Maven plugin: [`miku-indexgen-java-maven`](https://github.com/igapyon/miku-indexgen-java-maven) が提供する `miku-indexgen-maven-plugin`
 
 Node CLI の単一ファイル runtime は [`miku-indexgen`](https://github.com/igapyon/miku-indexgen/releases) の GitHub Releases から、Java CLI の jar は [`miku-indexgen-java`](https://github.com/igapyon/miku-indexgen-java/releases) の GitHub Releases から入手できます。
 
@@ -50,9 +47,9 @@ node dist/main.js --input-directory <dir> [options]
 Java CLI は、`miku-indexgen-java` の CLI jar を使って実行します。
 
 ```sh
-java -jar miku-indexgen-1.1.2.jar --help
-java -jar miku-indexgen-1.1.2.jar --input-directory <dir> [options]
-java -jar miku-indexgen-1.1.2.jar --input-parent-directory <dir> [options]
+java -jar miku-indexgen-1.2.1.jar --help
+java -jar miku-indexgen-1.2.1.jar --input-directory <dir> [options]
+java -jar miku-indexgen-1.2.1.jar --input-parent-directory <dir> [options]
 ```
 
 Java CLI では、単一 directory の索引生成に加えて、親 directory 直下の子 directory ごとに `index.json` / `index.md` を生成できます。
@@ -62,8 +59,8 @@ Java CLI では、単一 directory の索引生成に加えて、親 directory �
 Maven plugin の goal は、単一 directory 用の `index` と、親 directory 直下の子 directory ごとに処理する `index-child-directories` です。
 
 ```sh
-mvn -N jp.igapyon:miku-indexgen-maven-plugin:1.1.2:index
-mvn -N jp.igapyon:miku-indexgen-maven-plugin:1.1.2:index-child-directories
+mvn jp.igapyon:miku-indexgen-maven-plugin:1.2.1:index
+mvn jp.igapyon:miku-indexgen-maven-plugin:1.2.1:index-child-directories
 ```
 
 ## CLI パラメータ一覧
@@ -214,7 +211,7 @@ npx miku-indexgen \
 Java CLI でも、基本的な使い方は Node CLI と同じです。
 
 ```sh
-java -jar miku-indexgen-1.1.2.jar \
+java -jar miku-indexgen-1.2.1.jar \
   --input-directory docs \
   --output-directory out \
   --markdown
@@ -225,7 +222,7 @@ java -jar miku-indexgen-1.1.2.jar \
 親 directory の直下にある子 directory ごとに `index.json` / `index.md` を生成する場合は、`--input-parent-directory` を使います。
 
 ```sh
-java -jar miku-indexgen-1.1.2.jar \
+java -jar miku-indexgen-1.2.1.jar \
   --input-parent-directory docs-parent \
   --output-directory out \
   --markdown
@@ -237,10 +234,11 @@ java -jar miku-indexgen-1.1.2.jar \
 
 Maven project では、Maven plugin として明示実行できます。
 
-通常は、`miku-indexgen-java` の source がある位置で `mvn install` してから、利用側 project で plugin を指定します。
+Maven plugin は `miku-indexgen-java-maven` で提供されます。未公開版をローカルで確認する場合は、先に `miku-indexgen-java` の runtime artifact を install し、その後 `miku-indexgen-java-maven` の plugin artifact を install してから、利用側 project で plugin を指定します。
 
 ```sh
-mvn install
+mvn -f ../miku-indexgen-java/pom.xml install
+mvn -f ../miku-indexgen-java-maven/pom.xml install
 ```
 
 `pom.xml` に plugin を書く場合は、たとえば次のように指定します。
@@ -251,7 +249,7 @@ mvn install
     <plugin>
       <groupId>jp.igapyon</groupId>
       <artifactId>miku-indexgen-maven-plugin</artifactId>
-      <version>1.1.2</version>
+      <version>1.2.1</version>
       <configuration>
         <inputDirectory>${project.basedir}/docs</inputDirectory>
         <outputDirectory>${project.build.directory}/generated-index</outputDirectory>
@@ -273,7 +271,7 @@ mvn install
 単一 directory を索引化する場合は、`index` goal を使います。
 
 ```sh
-mvn -N jp.igapyon:miku-indexgen-maven-plugin:1.1.2:index \
+mvn jp.igapyon:miku-indexgen-maven-plugin:1.2.1:index \
   -Dmiku-indexgen.inputDirectory=docs \
   -Dmiku-indexgen.outputDirectory=target/generated-index \
   -Dmiku-indexgen.markdown=true
@@ -282,7 +280,7 @@ mvn -N jp.igapyon:miku-indexgen-maven-plugin:1.1.2:index \
 親 directory 直下の子 directory ごとに索引化する場合は、`index-child-directories` goal を使います。
 
 ```sh
-mvn -N jp.igapyon:miku-indexgen-maven-plugin:1.1.2:index-child-directories \
+mvn jp.igapyon:miku-indexgen-maven-plugin:1.2.1:index-child-directories \
   -Dmiku-indexgen.inputParentDirectory=docs-parent \
   -Dmiku-indexgen.outputDirectory=target/generated-index \
   -Dmiku-indexgen.markdown=true
@@ -369,11 +367,12 @@ Maven plugin を使うと、Maven project から単一 directory または child
 - [`miku-indexgen` Releases](https://github.com/igapyon/miku-indexgen/releases)
 - [`miku-indexgen-java`](https://github.com/igapyon/miku-indexgen-java)
 - [`miku-indexgen-java` Releases](https://github.com/igapyon/miku-indexgen-java/releases)
+- [`miku-indexgen-java-maven`](https://github.com/igapyon/miku-indexgen-java-maven)
 - [`miku-soft-catalog`](https://github.com/igapyon/miku-soft-catalog)
 
 ## Appendix
 
-この記事の整理時には、作業用ディレクトリに `miku-indexgen` と `miku-indexgen-java` の repository を clone し、Node CLI、Java CLI、Maven plugin の代表的な実行例を確認しました。実施日は 2026-05-09 です。
+この記事の整理時には、作業用ディレクトリに `miku-indexgen`、`miku-indexgen-java`、`miku-indexgen-java-maven` の repository を clone し、Node CLI、Java CLI、Maven plugin の代表的な実行例を確認しました。初回実施日は 2026-05-09 です。その後、2026-05-16 に Maven plugin repository の分離と 1.2.1 系の構成を反映しました。
 
 確認した内容は次の通りです。
 
@@ -384,8 +383,8 @@ Maven plugin を使うと、Maven project から単一 directory または child
 - Java CLI の `--help`
 - Java CLI の `--input-directory`、`--output-directory`、`--markdown`、`--json-summary-path` による `index.json` / `index.md` 生成
 - Java CLI の `--input-parent-directory` による child directory batch
-- `mvn package` による Java CLI jar と Maven plugin の build
-- `mvn install` による Maven plugin の local install
+- `mvn package` による Java CLI jar の build
+- `mvn install` による Java runtime artifact と Maven plugin artifact の local install
 - Maven plugin の `index` goal
 - Maven plugin の `index-child-directories` goal
 
@@ -393,4 +392,4 @@ Maven plugin を使うと、Maven project から単一 directory または child
 
 Node 側では、`npm run build` により 50 件の test が成功し、`dist/main.js` で CLI 実行できることを確認しました。
 
-Java 側では、`mvn package` により 48 件の test が成功し、`miku-indexgen-1.1.2.jar` と `miku-indexgen-maven-plugin-1.1.2.jar` が生成されることを確認しました。
+Java CLI 側では、`mvn package` により `miku-indexgen-1.2.1.jar` が生成されることを確認しました。Maven plugin 側では、分離された `miku-indexgen-java-maven` repository で `miku-indexgen-maven-plugin-1.2.1` を使った `index` / `index-child-directories` の実行形態を確認しました。
