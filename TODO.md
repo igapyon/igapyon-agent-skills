@@ -8,16 +8,38 @@
 
 - [ ] `skills/igapyon-note-writer/references/general/20260516-general-content-agent-skills.md` に、コンテンツ型 Agent Skill の中にも種類があることを短く追記する
 - [ ] 既存記事では詳細分類まで踏み込まず、新記事への導線として扱う
-- [ ] 新記事「コンテンツ型 Agent Skill にはどんな種類があるか」を作成し、知識ベース型、テンプレート型、文体・キャラクター型、レビュー基準型、事例集型、索引・入口型などを整理する
-- [ ] 新記事では、各分類が排他的ではなく複合しうること、構成の分類と接続方法の分類を混ぜすぎないことを書く
-- [ ] 新記事では、知識ベース型 Agent Skill を、厳選型、蓄積型、照合型、まとめ育成型、索引付き知識ベースとして整理する
-- [ ] 蓄積型では、高品質少量 knowledge を待つと始められない現場があり、粒度や品質にばらつきのある中品質大量 knowledge を先にためる運用を書く
-- [ ] 照合型では、古い設計情報、更新が追いついていない設計メモ、機能強化の変更メモ、最新版ソースコードを併せて読むことで意味が出ることを書く
-- [ ] 古い設計情報には、ソースコードから読み取りにくい要求、思想、判断理由、当時の制約や優先順位が残っていることを書く
-- [ ] まとめ育成型では、中品質大量 knowledge をもとに、要約・観点整理によって高品質少量 knowledge を導出し、Agent Skill に戻す循環を書く
-- [ ] 知識ベース型 Agent Skill は、vector DB や embedding index を明示的に使わなくても、Codex や GitHub Copilot が repository 内の Markdown / source code を探索して RAG っぽく効くことを書く
-- [ ] 本格的な RAG 基盤ではなく、repo-native な知識ベース運用として説明し、最近の生成AI agent の能力向上によって成立していることを書く
-- [ ] 静的な Markdown 群でも、生成AI agent が読み、照合し、要約し、作業に反映すると、知性に似たものを感じさせることを書く
+- [x] 新記事「コンテンツ型 Agent Skill にはどんな種類があるか」を作成し、知識ベース型、テンプレート型、文体・キャラクター型、レビュー基準型、事例集型、索引・入口型などを整理する
+- [x] 新記事では、各分類が排他的ではなく複合しうること、構成の分類と接続方法の分類を混ぜすぎないことを書く
+- [x] 新記事では、知識ベース型 Agent Skill を、厳選型、蓄積型、照合型、まとめ育成型、索引付き知識ベースとして整理する
+- [x] 蓄積型では、高品質少量 knowledge を待つと始められない現場があり、粒度や品質にばらつきのある中品質大量 knowledge を先にためる運用を書く
+- [x] 照合型では、古い設計情報、更新が追いついていない設計メモ、機能強化の変更メモ、最新版ソースコードを併せて読むことで意味が出ることを書く
+- [x] 古い設計情報には、ソースコードから読み取りにくい要求、思想、判断理由、当時の制約や優先順位が残っていることを書く
+- [x] まとめ育成型では、中品質大量 knowledge をもとに、要約・観点整理によって高品質少量 knowledge を導出し、Agent Skill に戻す循環を書く
+- [x] 知識ベース型 Agent Skill は、vector DB や embedding index を明示的に使わなくても、Codex や GitHub Copilot が repository 内の Markdown / source code を探索して RAG っぽく効くことを書く
+- [x] 本格的な RAG 基盤ではなく、repo-native な知識ベース運用として説明し、最近の生成AI agent の能力向上によって成立していることを書く
+- [x] 静的な Markdown 群でも、生成AI agent が読み、照合し、要約し、作業に反映すると、知性に似たものを感じさせることを書く
+- [x] `skills/igapyon-note-writer/references/general/20260523-general-content-agent-skill-types.md` の公開・内容確定後、`skills/igapyon-mikuku-agent/references/examples/articles/` に文体参考用コピーとして反映する
+
+## 作成済みだが未公開候補の記事
+
+- [ ] `skills/igapyon-note-writer/references/miku-indexgen/20260523-miku-indexgen-spec-draft.md`
+  - `[miku-indexgen] AI エージェントに読ませる前に、ディレクトリの索引を作る`
+  - `URL: 未公開`、`状態: 下書き`
+- [ ] `skills/igapyon-note-writer/references/general/20260523-general-content-agent-skill-types.md`
+  - `コンテンツ型 Agent Skill にはどんな種類があるか`
+  - `URL: 未公開`、`状態: 下書き`
+- [ ] `skills/igapyon-note-writer/references/mikuscore/2026XXXX-mikuscore-skills-intro.md`
+  - `[mikuscore] 譜面フォーマット変換の前提を、毎回説明しなくてよくしたかった話`
+  - Note 側で `URL: （未記入）`
+- [ ] `skills/igapyon-qiita-writer/references/mikuscore/2026XXXX-mikuscore-skills-intro.md`
+  - `[mikuscore] Agent Skills で MusicXML / ABC / MIDI などの変換方針を会話で扱いやすくした`
+  - Qiita 側で `URL: （未記入）`
+- [ ] `skills/igapyon-qiita-writer/references/mikuproject/20260409-mikuproject-agent-skills-wbs-planning.md`
+  - `[mikuproject] Agent Skills で WBS の叩き台作成とブラッシュアップ`
+  - front matter はあるが `url` / `published_to` が未記入
+- [ ] 素材メモ扱いか公開記事候補かを確認する
+  - `skills/igapyon-qiita-writer/references/general/20260430-miku-soft-architecture-topic-bank.md` は `URL: N/A`
+  - `skills/igapyon-qiita-writer/references/miku-xlsx2md/xlsx2md-feature-list-memo.md` は URL 行なし
 
 ## igapyon-miku-soft-developer review 整理
 
