@@ -77,12 +77,19 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 # 実施内容
 
 1. `{{IMAGE_PROMPT_PATH}}` の Markdown ファイルを読む
-2. `{{MIKUKU_IMAGE_PATH}}` の画像を参照画像として扱う
-3. 画像生成AI用プロンプト本文を画像生成ツールへ渡す
-4. 参照画像として `{{MIKUKU_IMAGE_PATH}}` を添付または指定する
-5. 横長ポスター構図のグラレコ説明画像を生成する
-6. `{{IMAGE_OUTPUT_PATH}}`、`{{RUN_OUTPUT_DIR}}/graphic-recording.png`、または Git 管理外であることを確認できた `workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording.png` へ画像ファイルとして保存する
-7. 最後に、生成画像の保存先を短く報告する
+2. `{{MIKUKU_IMAGE_PATH}}` の画像が存在することを確認する
+3. `{{MIKUKU_IMAGE_PATH}}` の画像を、この生成実行用の参照画像としてロード、添付、または指定する
+4. 画像生成AI用プロンプト本文を画像生成ツールへ渡す
+5. 参照画像として `{{MIKUKU_IMAGE_PATH}}` を添付または指定する
+6. 横長ポスター構図のグラレコ説明画像を生成する
+7. 生成画像を `{{IMAGE_OUTPUT_PATH}}`、`{{RUN_OUTPUT_DIR}}/graphic-recording.png`、または Git 管理外であることを確認できた `workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording.png` へコピーまたは保存する
+8. `image-generation-report.md` に元画像パス、みくく参照画像パス、ワークスペース側の保存先を記録する
+9. 最後に、生成画像の保存先を短く報告する
+
+`{{MIKUKU_IMAGE_PATH}}` はパス文字列としてプロンプト内に書くだけでなく、画像生成ツールが対応している場合は実際の参照画像入力として渡してください。
+別の生成実行でロード済みの参照画像が今回の生成へ引き継がれるとは扱わないでください。
+
+組み込み `imagegen` を使う場合、生成画像は通常 `$CODEX_HOME/generated_images/...` 配下へ保存されます。プロジェクトで使う画像は、生成後に上記の出力先へコピーしてください。元画像は削除しないでください。
 
 ---
 
@@ -94,6 +101,8 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 
 - 画像生成AI用プロンプト本文
 - みくく参照画像 `{{MIKUKU_IMAGE_PATH}}`
+
+出力先を直接指定できない画像生成ツールでも、生成後に画像ファイルを出力先へコピーできる場合は生成済みとして扱ってよいです。
 
 ---
 

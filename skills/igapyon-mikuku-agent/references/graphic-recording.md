@@ -20,11 +20,17 @@
 
 ## 使用するプロンプト
 
-グラレコ生成では、次の 3 つのプロンプトを順番に使います。
+記事全体を 1 枚のグラレコ画像にする場合は、次の 3 つのプロンプトを順番に使います。
 
 - [graphic-recording/10-article-to-graphic-recording-text-prompt.md](graphic-recording/10-article-to-graphic-recording-text-prompt.md)
 - [graphic-recording/20-graphic-recording-explainer-image-prompt.md](graphic-recording/20-graphic-recording-explainer-image-prompt.md)
 - [graphic-recording/30-generate-graphic-recording-image-prompt.md](graphic-recording/30-generate-graphic-recording-image-prompt.md)
+
+記事内の `##` 見出しごとに複数のグラレコ画像を作る場合は、次のプロンプトを順番に使います。
+
+- [graphic-recording/40-article-section-graphic-recording-batch-prompt.md](graphic-recording/40-article-section-graphic-recording-batch-prompt.md)
+- [graphic-recording/50-generate-section-graphic-recording-images-prompt.md](graphic-recording/50-generate-section-graphic-recording-images-prompt.md)
+- [graphic-recording/60-inspect-section-graphic-recording-images-prompt.md](graphic-recording/60-inspect-section-graphic-recording-images-prompt.md)
 
 ## 入力
 
