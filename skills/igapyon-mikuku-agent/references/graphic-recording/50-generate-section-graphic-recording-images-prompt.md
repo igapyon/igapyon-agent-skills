@@ -4,6 +4,10 @@
 
 このプロンプトは、画像生成だけを担当します。記事分割、セクション本文作成、画像生成AI用プロンプト作成は `40-article-section-graphic-recording-batch-prompt.md` の担当です。
 
+このプロンプトでは、元記事 Markdown、`section-source.md`、`section-text.md`、`image-prompt.md` を変更してはいけません。
+画像生成結果に合わせて本文やプロンプトを直す必要がある場合は、生成済みファイルを直接書き換えず、`TODO.md` に再生成状態を記録し、必要な調整案を別ファイルへ保存してください。
+元記事への画像リンク挿入や本文修正は、ユーザーが明示的に許可した場合だけ別作業として行います。
+
 速度優先運用では、画像生成後に対象セクションへ `graphic-recording.png` をコピーし、`TODO.md` を更新したらすぐ次へ進んでください。
 `image-generation-report.md`、`copy-generated-image.md`、`run-state.md`、`ls -lh`、`file`、目視確認は各セクションごとに実行しません。
 必要になった場合だけ、後からまとめて検品・記録してください。
