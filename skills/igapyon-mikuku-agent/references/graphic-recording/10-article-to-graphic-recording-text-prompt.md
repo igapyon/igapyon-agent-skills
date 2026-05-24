@@ -16,7 +16,7 @@
 
 `{{ARTICLE_PATH}}` は読み取り専用の入力ファイルです。
 このプロンプトでは、元記事 Markdown を変更、上書き、追記、整形、校正、画像リンク挿入してはいけません。
-作成してよいのは、指定された出力先または Git 管理外の `{{RUN_OUTPUT_DIR}}` 配下の生成物だけです。
+作成してよいのは、指定された出力先または処理開始時のカレントフォルダ配下の `{{RUN_OUTPUT_DIR}}` にある生成物だけです。
 元記事へ入れるための貼り付け例や alt text が必要な場合も、元記事へ直接書かず、別ファイルとして保存してください。
 
 ---
@@ -43,16 +43,18 @@
 
 `{{OUTPUT_PATH}}` と `{{RUN_OUTPUT_DIR}}` がどちらも未指定の場合は、次の順序で保存先を決めてください。
 
-1. `{{ARTICLE_PATH}}` が属する Git リポジトリのルートを確認する
-2. そのルート直下の `workplace/` を候補にする
-3. `workplace/` が Git 管理外として扱われることを確認する
-4. 確認できた場合のみ、現在日時を使って以下の実行ディレクトリを作成する
+1. 処理開始時のカレントフォルダを保存先ベースにする
+2. カレントフォルダ直下の `workplace/` を候補にする
+3. `workplace/` が存在しない場合は作成する
+4. カレントフォルダが Git リポジトリ内の場合だけ、`workplace/` が Git 管理外として扱われることを確認する
+5. カレントフォルダが Git リポジトリでない場合は、別の場所を探さず、その `workplace/` を使う
+6. 現在日時を使って以下の実行ディレクトリを作成する
 
 ```text
-<記事が属するGitリポジトリ>/workplace/<YYYYMMDDHHmmss>-graphic-recording/
+<処理開始時のカレントフォルダ>/workplace/<YYYYMMDDHHmmss>-graphic-recording/
 ```
 
-5. その下に以下のファイル名で保存する
+7. その下に以下のファイル名で保存する
 
 ```text
 graphic-recording-text.md
@@ -64,14 +66,14 @@ graphic-recording-text.md
 /Users/igapyon/Documents/git/igapyon-agent-skills/workplace/20260524095030-graphic-recording/graphic-recording-text.md
 ```
 
-確認方法の例:
+カレントフォルダが Git リポジトリ内の場合の確認方法の例:
 
 ```bash
-git rev-parse --show-toplevel
 git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording-text.md
 ```
 
-`workplace/` が存在しない、または Git 管理外であることを確認できない場合は、勝手にリポジトリ内へ保存しないでください。
+カレントフォルダが Git リポジトリ内で、`workplace/` が Git 管理外であることを確認できない場合は、勝手に別の場所へ保存しないでください。
+カレントフォルダが Git リポジトリでない場合は、Git 管理外確認を要求せず、カレントフォルダ直下の `workplace/` を作成して使ってください。
 
 その場合は、ファイル保存の代わりに Markdown 本文をそのまま出力し、保存先を指定するには `{{OUTPUT_PATH}}` を渡す必要があることを短く伝えてください。
 
@@ -234,8 +236,8 @@ examples  = 温度感
 2. 記事内容をグラレコ制作用の整理テキストへ変換する
 3. `{{OUTPUT_PATH}}` が指定されている場合はそこへ保存する
 4. `{{OUTPUT_PATH}}` が未指定で `{{RUN_OUTPUT_DIR}}` が指定されている場合は、`{{RUN_OUTPUT_DIR}}/graphic-recording-text.md` へ保存する
-5. どちらも未指定の場合は、Git 管理外であることを確認できた `workplace/<YYYYMMDDHHmmss>-graphic-recording/` 配下へ保存する
-6. Git 管理外の保存先を確認できない場合は、ファイル保存せず Markdown 本文を出力する
+5. どちらも未指定の場合は、処理開始時のカレントフォルダ直下の `workplace/<YYYYMMDDHHmmss>-graphic-recording/` 配下へ保存する
+6. カレントフォルダが Git リポジトリ内で Git 管理外の保存先を確認できない場合は、ファイル保存せず Markdown 本文を出力する
 7. 最後に、保存した場合は保存先パスを短く報告する
 
 実施中、`{{ARTICLE_PATH}}` には一切書き込まないでください。

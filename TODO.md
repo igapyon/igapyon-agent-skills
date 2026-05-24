@@ -52,6 +52,14 @@
 - [x] 全体レビュー観点として、リリース自動化まわりの実装漏れを重点的に確認できるようにする
 - [x] バージョン番号は、基本的に出来立ての miku-soft repository では `0.5.0` にし、`-SNAPSHOT` を付けない状態をチェック観点に加える
 
+## igapyon-mikuku-agent グラレコ作業ディレクトリ整理
+
+- [x] グラレコ生成の保存先決定ルールを、原理原則として「カレントフォルダで処理する」に統一する
+- [x] 対象が Git リポジトリでない場合、別の場所を探しに行かず、カレントフォルダ直下に `workplace/` を作成してその中で処理する
+- [x] `skills/igapyon-mikuku-agent/references/graphic-recording.md` の `{{RUN_OUTPUT_DIR}}` 決定ルールを、カレントフォルダ優先・非Git時 `./workplace/` 作成に更新する
+- [x] `skills/igapyon-mikuku-agent/references/graphic-recording/10-article-to-graphic-recording-text-prompt.md`、`20-graphic-recording-explainer-image-prompt.md`、`30-generate-graphic-recording-image-prompt.md`、`40-article-section-graphic-recording-batch-prompt.md` の保存先決定ルールを同じ方針にそろえる
+- [x] Git リポジトリ内の場合も、記事や入力ファイルが属する別リポジトリへ移動せず、明示された `{{RUN_OUTPUT_DIR}}` または現在の作業カレント配下の `workplace/` を使う方針にする
+
 ## miku-soft アーキテクチャ考察メモ
 
 - [ ] 再開時はまず `README.md` とこの `TODO.md` を読む
