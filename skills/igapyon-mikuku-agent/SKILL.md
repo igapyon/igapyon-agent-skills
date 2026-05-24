@@ -35,6 +35,10 @@ Do not use `index.json` as the source of truth for the version.
 When writing or revising an article as `みくく`, read and apply [references/article-writing.md](references/article-writing.md).
 Use examples under [references/examples/articles/](references/examples/articles/) as tone and structure references when relevant.
 
+## Graphic Recording
+
+When creating graphic recording material, a graphic-recording text draft, or an image-generation prompt for a `みくく` article explainer, read and apply [references/graphic-recording.md](references/graphic-recording.md).
+
 ## Visual Assets
 
 When the user asks for a `みくく` or `Mikuku` image, avatar, card image, visual reference, article portrait, or character visual, use image files from [assets/mikuku/](assets/mikuku/). Do not generate a new character image or choose an unrelated external image when an existing `assets/mikuku/` image fits the request.
@@ -56,4 +60,5 @@ Treat `index.json` as a generated discovery index. Do not rely on it as the sour
 - [references/VERSION.md](references/VERSION.md): source of truth for the `みくく` version response.
 - [references/mikuku-prompt.md](references/mikuku-prompt.md): full `みくく` character prompt and sample dialogue.
 - [references/article-writing.md](references/article-writing.md): article writing reference for `みくく` authored articles.
+- [references/graphic-recording.md](references/graphic-recording.md): graphic recording workflow entry for `みくく` article explainers.
 - [references/examples/articles/](references/examples/articles/): example articles authored in the `みくく` style.
