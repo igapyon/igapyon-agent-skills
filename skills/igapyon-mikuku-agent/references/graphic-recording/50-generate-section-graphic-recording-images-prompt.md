@@ -4,6 +4,11 @@
 
 このプロンプトは、画像生成だけを担当します。記事分割、セクション本文作成、画像生成AI用プロンプト作成は `40-article-section-graphic-recording-batch-prompt.md` の担当です。
 
+速度優先運用では、画像生成後に対象セクションへ `graphic-recording.png` をコピーし、`TODO.md` を更新したらすぐ次へ進んでください。
+`image-generation-report.md`、`copy-generated-image.md`、`run-state.md`、`ls -lh`、`file`、目視確認は各セクションごとに実行しません。
+必要になった場合だけ、後からまとめて検品・記録してください。
+速度優先運用を既定とします。詳細記録運用は、ユーザーが明示した場合だけ使ってください。
+
 ---
 
 # 入力
@@ -40,7 +45,8 @@ TODO ファイル:
 
 `{{MIKUKU_PROMPT_PATH}}` が未指定の場合は、`TODO.md` の `みくく描画プロンプト:` 行を読んでください。
 
-`{{LIMIT}}` が未指定の場合は、まず 1 セクションだけ処理してください。初回から全件を処理しないでください。ユーザーが全件処理を明示した場合のみ、未生成セクションを複数処理してください。
+`{{LIMIT}}` が未指定の場合は、まず 1 セクションだけ処理してください。ユーザーが「続けて」「次へ」「進めて」と依頼した場合は、次の `image-pending` セクションを 1 件処理してください。
+ユーザーが全件処理または件数を明示した場合のみ、未生成セクションを複数処理してください。
 
 ---
 
@@ -49,12 +55,16 @@ TODO ファイル:
 `TODO.md` の `みくく描画プロンプト:` 行は、描画プロンプトパスの記録にすぎません。
 画像生成ツールへ描画プロンプトが自動で引き継がれることは前提にしないでください。
 
-タイトルごとの画像生成では、各セクションを処理するたびに、次を実施してください。
+詳細記録運用では、タイトルごとの画像生成で各セクションを処理するたびに、次を実施してください。
 
 1. `{{MIKUKU_PROMPT_PATH}}` の実在を確認する
 2. `{{MIKUKU_PROMPT_PATH}}` の本文を読む
 3. 対象セクションの `image-prompt.md` に、みくく描画プロンプト本文または意味を保った短縮本文が含まれていることを確認する
 4. 含まれていない場合は画像生成せず、`image-pending: character-prompt-not-embedded` として残す
+
+速度優先運用では、40番が作成した `image-prompt.md` にみくく描画プロンプト本文が埋め込み済みであることを前提にします。
+50番では各セクションごとに `{{MIKUKU_PROMPT_PATH}}` を読み直したり、埋め込み確認を `rg` で繰り返したりしないでください。
+確認が必要な場合は、実行開始時に最初の 1 セクションだけ確認すれば十分です。
 
 複数セクションを連続処理する場合でも、前セクションで使った描画プロンプトが次セクションへ暗黙に引き継がれるとは考えないでください。
 各 `imagegen` 実行、または各外部画像生成AIへの投入ごとに、みくく描画プロンプト本文を含む `image-prompt.md` を使ってください。
@@ -92,6 +102,8 @@ TODO ファイル:
 # 対象セクションの決定
 
 まず `TODO.md` を読み、画像生成が必要なセクションを決めてください。
+速度優先運用では、`TODO.md` の最初の `image-pending` 行を処理対象にし、対応する `sections/<NNN>-<slug>/image-prompt.md` を読んで生成します。
+既存画像の有無をファイルシステムで毎回確認しないでください。`TODO.md` を状態の正とします。
 
 処理対象にする行:
 
@@ -107,10 +119,11 @@ TODO ファイル:
 - `image-skipped`
 - `image-skipped: front-matter`
 - `image-pending: mikuku-prompt-missing`
-- `graphic-recording.png` が既に存在し、ユーザーが再生成を明示していない行
-- 対応する `image-prompt.md` が存在しない行
+- 詳細記録運用では、`graphic-recording.png` が既に存在し、ユーザーが再生成を明示していない行
+- 詳細記録運用では、対応する `image-prompt.md` が存在しない行
 
 既存画像を上書きしないでください。再生成が必要な場合は、ユーザーが明示したときだけ実行してください。
+速度優先運用では、既存画像の有無を毎回確認せず、`TODO.md` の状態で上書き可否を判断してください。
 
 `image-pending: mikuku-prompt-missing` は、みくく描画プロンプトパスを修正してから再実行してください。
 
@@ -118,10 +131,13 @@ TODO ファイル:
 
 # 画像生成ツールの確認
 
-処理を始める前に、現在の環境で次の 2 点が可能か確認してください。
+詳細記録運用では、処理を始める前に、現在の環境で次の 2 点が可能か確認してください。
 
 1. `image-prompt.md` の本文を画像生成AIへ渡せる
 2. 生成画像を最終的に対象セクションのディレクトリへ保存または移動できる
+
+速度優先運用では、この確認は省略します。
+この環境では組み込み `imagegen` と `cp` が使える前提で進め、失敗した場合だけその時点で止めてください。
 
 みくく描画プロンプト本文が `image-prompt.md` に含まれている場合は、セクションごとの生成実行ごとにその `image-prompt.md` 本文を使ってください。
 
@@ -129,7 +145,7 @@ TODO ファイル:
 
 組み込み `imagegen` は、通常 `$CODEX_HOME/generated_images/...` 配下へ画像を保存します。対象セクションで使う画像は、生成後にその保存先からコピーしてください。元画像は削除しないでください。
 
-生成画像は、対象セクションごとに次のファイルへコピーしてください。
+詳細記録運用では、対象セクションごとに次のファイルへコピー記録を残してもかまいません。
 
 ```text
 {{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/copy-generated-image.md
@@ -137,12 +153,13 @@ TODO ファイル:
 
 この Markdown には、生成画像の元パス、コピー先、コピーコマンド、検証コマンド、コピー結果を記録します。
 
-処理時間を短くするため、`copy-generated-image.md` は必ずしもコピー前に `status: pending` で作成しなくてもかまいません。
-生成画像を特定し、ワークスペース側へコピーし、コピー先の存在と画像形式を確認したあと、完成形の `status: copied` として一度だけ作成してよいです。
+速度優先運用では、`copy-generated-image.md` は作成しません。
+画像生成、コピー、`TODO.md` 更新だけを行い、すぐ次のセクションへ進んでください。
 
-生成画像を対象セクションのディレクトリへ保存または移動できない場合は、生成済みにしないでください。この場合は `image-generated-unsaved` として記録し、実際の画像の所在を分かる範囲で `TODO.md` またはレポートへ残してください。
+生成画像を対象セクションのディレクトリへ保存または移動できない場合は、生成済みにしないでください。この場合は `image-generated-unsaved` として `TODO.md` に記録してください。
 
-画像生成ツールそのものが利用できない場合、または描画プロンプト本文が `image-prompt.md` に含まれていない場合は、必要に応じて画像生成ツールへ渡すための一覧を `{{RUN_OUTPUT_DIR}}/image-generation-queue.md` として作成し、`TODO.md` は `image-pending: image-tool-unavailable` または `image-pending: character-prompt-not-embedded` のまま残してください。
+詳細記録運用で画像生成ツールそのものが利用できない場合、または描画プロンプト本文が `image-prompt.md` に含まれていない場合は、必要に応じて画像生成ツールへ渡すための一覧を `{{RUN_OUTPUT_DIR}}/image-generation-queue.md` として作成し、`TODO.md` は `image-pending: image-tool-unavailable` または `image-pending: character-prompt-not-embedded` のまま残してください。
+速度優先運用では、`image-generation-queue.md` を作成しないでください。
 
 この状態は「画像生成の失敗」ではなく「現在の環境では未実行」です。`image-generation-failed` は、画像生成ツールを実行したがエラーになった、または出力画像が不正だった場合だけ使ってください。
 
@@ -154,7 +171,7 @@ TODO ファイル:
 
 ## 1. 入力ファイルを確認する
 
-対象セクションのディレクトリを確認します。
+詳細記録運用では、対象セクションのディレクトリを確認します。
 
 必須入力:
 
@@ -170,6 +187,9 @@ TODO ファイル:
 
 `{{MIKUKU_PROMPT_PATH}}` が存在しない場合、そのセクションは画像生成せず、`TODO.md` に `image-pending: mikuku-prompt-missing` と記録してください。
 
+速度優先運用では、この章の確認は省略してください。
+`TODO.md` と 40番の出力構成を信頼し、対象セクションの `image-prompt.md` を直接読んで画像生成へ進みます。
+
 ## 2. 画像生成AI用プロンプトを読む
 
 対象セクションの `image-prompt.md` を読みます。
@@ -179,7 +199,8 @@ TODO ファイル:
 - `image-prompt.md` の本文
 - みくく描画プロンプト本文を含む `image-prompt.md`
 
-この時点で、当該セクション用の `image-prompt.md` にみくく描画プロンプト本文が含まれていることを確認してください。
+詳細記録運用では、この時点で、当該セクション用の `image-prompt.md` にみくく描画プロンプト本文が含まれていることを確認してください。
+速度優先運用では、埋め込み確認は繰り返さず、`image-prompt.md` 本文をそのまま画像生成ツールへ渡してください。
 前セクションの生成時に使った描画プロンプトが現在の生成へ引き継がれるとは扱わないでください。
 
 `image-prompt.md` 内に推奨出力先が書かれている場合は、それを尊重してください。書かれていない場合は、次のパスを使ってください。
@@ -190,9 +211,12 @@ TODO ファイル:
 
 ## 3. 画像を生成する
 
-画像生成ツールが利用可能で、かつ `image-prompt.md` にみくく描画プロンプト本文が含まれている場合は、`image-prompt.md` の本文を使って画像生成を実行してください。
+速度優先運用では、`image-prompt.md` の本文を使って画像生成を実行してください。
+画像生成ツールの利用可否やみくく描画プロンプト本文の埋め込み確認は、各セクションでは繰り返しません。
 
-組み込み `imagegen` を使う場合は、1 セクションずつ実行してください。各実行前に、`image-prompt.md` 本文にみくく描画プロンプト本文が含まれていることを確認してください。生成後、選択した生成画像を対象セクションのディレクトリに `graphic-recording.png` として保存または移動してください。
+組み込み `imagegen` を使う場合は、1 セクションずつ実行してください。
+速度優先運用では、各実行前の埋め込み確認は行わず、生成後に最新生成画像を対象セクションのディレクトリに `graphic-recording.png` としてコピーしてください。
+詳細記録運用では、各実行前に `image-prompt.md` 本文にみくく描画プロンプト本文が含まれていることを確認してください。
 
 ```text
 {{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/graphic-recording.png
@@ -202,10 +226,8 @@ TODO ファイル:
 
 1. 今回の生成で作成された画像ファイルを特定する
 2. 対象セクションの出力先へコピーする
-3. コピー先のファイルサイズが 0 バイトではないことを確認する
-4. コピー先の画像形式を確認する
-5. 対象セクションの `copy-generated-image.md` を `status: copied` の完成形で作成する
-6. 元の `$CODEX_HOME/generated_images/...` 側の画像は残す
+3. `TODO.md` を `image-generated` に更新する
+4. 元の `$CODEX_HOME/generated_images/...` 側の画像は残す
 
 コピー先:
 
@@ -213,7 +235,7 @@ TODO ファイル:
 {{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/graphic-recording.png
 ```
 
-`copy-generated-image.md` には、少なくとも次を記録してください。
+詳細記録運用で `copy-generated-image.md` を作る場合は、少なくとも次を記録してください。
 
 ````markdown
 # Copy Generated Image
@@ -243,7 +265,7 @@ file "<workspace-output-path>"
 ## Notes
 ````
 
-生成画像の元パスを特定できない場合は、コピーを実行せず、`status: failed` または `status: skipped` として理由を `Notes` に記録してください。この場合、対象セクションを `image-generated` として扱わないでください。
+生成画像の元パスを特定できない場合は、コピーを実行せず、対象セクションを `image-generated` として扱わないでください。
 
 ## 省略実行ルール
 
@@ -251,13 +273,24 @@ file "<workspace-output-path>"
 
 1. 最新の生成 PNG を特定する
 2. 対象セクションの `graphic-recording.png` へコピーする
-3. `ls -lh` と `file` でコピー先を確認する
-4. `copy-generated-image.md` を `status: copied` の完成形で作成する
-5. `TODO.md` と `image-generation-report.md` を更新する
+3. `TODO.md` を `image-generated` に更新する
+4. 次のセクションへ進む
 
 この省略実行でも、画像ファイルのコピーは省略しないでください。
-`copy-generated-image.md` の `pending` 作成と、その後の `copied` 更新を分ける必要はありません。
-`run-state.md` は、各セクションごとに更新せず、まとまった区切りで更新してかまいません。
+`copy-generated-image.md`、`image-generation-report.md`、`run-state.md`、`ls -lh`、`file`、目視検品は、各セクションごとに実行しなくてもかまいません。
+これらは、ユーザーが詳細記録を求めた場合、または一連の画像生成が一区切りついた時点でまとめて作成・更新してください。
+高速に連続生成したい場合は、画像生成直後に `cp` できたことをもって次へ進んでかまいません。
+速度優先運用では、`image-generation-report.md` は更新しないでください。
+
+最小コピーコマンド例:
+
+```bash
+src=$(find "$CODEX_HOME/generated_images" -maxdepth 3 -type f -name '*.png' -print0 | xargs -0 ls -t | head -n 1)
+cp "$src" "{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/graphic-recording.png"
+```
+
+コピー後の `ls -lh`、`file`、画像プレビューは実行しないでください。
+`cp` がエラーを返さなければ、`TODO.md` を `image-generated` に更新して次へ進んでください。
 
 生成時の基本方針:
 
@@ -271,6 +304,10 @@ file "<workspace-output-path>"
 - 日本語の短い見出しやキーワードが読めそうな構図
 
 ## 4. 生成結果を確認する
+
+速度優先運用では、この章の確認は省略してください。
+画像生成後に対象セクションへコピーし、`TODO.md` を更新したら次のセクションへ進みます。
+`image-generation-report.md`、`copy-generated-image.md`、目視確認は行いません。
 
 画像生成後、次を確認してください。
 
@@ -293,7 +330,8 @@ file "<workspace-output-path>"
 - [x] 001: テキストファイルとは - image-generated
 ```
 
-`image-generation-report.md` に、少なくとも次を記録してください。
+詳細記録運用では、`image-generation-report.md` に、少なくとも次を記録してください。
+速度優先運用では、`image-generation-report.md` は更新しません。
 
 ```markdown
 ## 001: テキストファイルとは
@@ -333,9 +371,11 @@ file "<workspace-output-path>"
 1. `image-prompt.md` を読む
 2. 画像を生成する
 3. `graphic-recording.png` を保存する
-4. 保存確認をする
-5. `TODO.md` を更新する
-6. `image-generation-report.md` を更新する
+4. `TODO.md` を更新する
+5. 次のセクションへ進む
+
+速度優先運用では、上記以外のステップを挟まないでください。
+特に、各セクションごとの `copy-generated-image.md` 作成、`image-generation-report.md` 更新、`run-state.md` 更新、`ls -lh`、`file`、目視確認、`section-source.md` / `section-text.md` の再読込はしないでください。
 
 途中で失敗した場合も、成功済みのセクションは `image-generated` として残し、未処理のセクションは未完了のまま残してください。
 
@@ -366,7 +406,6 @@ graphic-recording-v2.png
 - 画像生成済みセクション数
 - スキップしたセクション数
 - 失敗したセクション数
-- `image-generation-report.md` のパス
 - 画像生成ツールが使えなかった場合は、その旨
 
 画像が生成できていない場合は、生成済みであるかのように報告しないでください。

@@ -123,6 +123,7 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 - 各セクションは `sections/<番号>-<slug>/` に保存する
 - 40番では各セクションで `section-source.md`、`section-text.md`、`image-prompt.md` を作る
 - 画像生成は50番で実行し、成功したら TODO を `image-generated` に更新する
+- 速度優先運用では50番は `image-generation-report.md` や `copy-generated-image.md` を作らず、画像コピーと `TODO.md` 更新だけで進む
 ```
 
 再実行時に `TODO.md` が既に存在する場合は、`image-pending`、`image-prompt-missing`、または40番の再作成が必要な項目だけを処理してください。
@@ -251,7 +252,8 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 
 40番では、画像がまだ生成されていないため `[x]` にしないでください。`[x]` と `image-generated` は50番で画像保存まで確認できた場合だけ使います。
 
-必要に応じて、50番へ渡すための `{{RUN_OUTPUT_DIR}}/image-generation-queue.md` を作成してください。
+速度優先運用では、50番へ渡すための `{{RUN_OUTPUT_DIR}}/image-generation-queue.md` は作成しなくてもかまいません。
+`TODO.md` と `sections/<NNN>-<slug>/image-prompt.md` があれば、50番は次の `image-pending` セクションを処理できます。
 
 ---
 
