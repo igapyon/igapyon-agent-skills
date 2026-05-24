@@ -24,6 +24,10 @@
 `{{MIKUKU_PROMPT_PATH}}` の Markdown 本文を読み、キャラクター外観の正本描画プロンプトとして扱ってください。
 画像生成AI用プロンプトには、このパスだけでなく、描画プロンプト本文そのものを含めてください。
 
+このプロンプトは画像生成AI用プロンプトを作るためのものです。
+元記事 Markdown やグラレコ制作用テキストを、画像内テキスト調整や貼り付け例作成のために変更してはいけません。
+記事へ貼るための Markdown スニペットや alt text が必要な場合は、元記事へ直接挿入せず、`{{RUN_OUTPUT_DIR}}` 配下の別ファイルとして保存してください。
+
 ---
 
 # 出力先
@@ -225,3 +229,5 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/image-prompt.md
 6. どちらも未指定の場合は、Git 管理外であることを確認できた `workplace/<YYYYMMDDHHmmss>-graphic-recording/` 配下へ保存する
 7. Git 管理外の保存先を確認できない場合は、ファイル保存せず画像生成AI用プロンプト本文を出力する
 8. 最後に、保存した場合は保存先パスを短く報告する
+
+実施中、元記事 Markdown と `{{GRAPHIC_RECORDING_TEXT_PATH}}` は読み取り専用入力として扱い、変更しないでください。
