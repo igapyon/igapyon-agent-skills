@@ -33,6 +33,8 @@
 - [graphic-recording/20-graphic-recording-explainer-image-prompt.md](graphic-recording/20-graphic-recording-explainer-image-prompt.md)
 - [graphic-recording/30-generate-graphic-recording-image-prompt.md](graphic-recording/30-generate-graphic-recording-image-prompt.md)
 
+記事全体の代表画像を作ってから章ごとの画像生成へ進む場合は、30番で全体画像を採用したあと、追加の全体画像バリエーション生成を続けず、次の 40番、50番、60番へ進んでください。
+
 記事内の `##` 見出しごとに複数のグラレコ画像を作る場合は、次のプロンプトを順番に使います。
 
 - [graphic-recording/40-article-section-graphic-recording-batch-prompt.md](graphic-recording/40-article-section-graphic-recording-batch-prompt.md)
@@ -87,6 +89,15 @@
 
 Git 管理外の保存先を確認できない場合は、勝手にリポジトリ内へ保存せず、本文出力にフォールバックします。
 
+## 記事全体画像のバリエーション上限
+
+記事全体 1 枚のグラレコ画像は、章ごと画像生成へ進む前の代表画像フェーズとして扱います。
+
+記事全体画像のバリエーション生成は、ユーザーが明示的に追加再生成を依頼しない限り、最大 3 枚までにしてください。
+1-3 枚の候補を生成したら、その時点で最も適した 1 枚を代表画像として採用し、追加の全体画像バリエーション生成を続けず、次に `##` 見出しごとのセクション画像生成へ進んでください。
+
+同一性崩れ、重大な破綻、保存失敗などで候補として使えない画像は失敗として記録してよいですが、その場合も無制限に再生成せず、最大 3 回を目安に一度停止し、未解決点を報告してください。
+
 ## 実行ゲート
 
 グラレコ作業では、実際に読んだ入力と処理状態を固定してから次へ進んでください。
@@ -115,7 +126,7 @@ Git 管理外の保存先を確認できない場合は、勝手にリポジト�
 
 - workflow-read: yes
 - article-read: yes
-- mode: whole-article | sections
+- mode: whole-article | sections | whole-article-then-sections
 - run-output-dir:
 - workplace-gitignored: yes | no
 - prompts-read:
@@ -132,8 +143,12 @@ Git 管理外の保存先を確認できない場合は、勝手にリポジト�
 - text-prompt-generation: available | unavailable
 - character-prompt-embedded: yes | no
 - copy-instruction-created: yes | no
+- whole-article-variation-limit: 3
+- whole-article-variations-generated:
+- whole-article-selected:
 - generated-source-path:
 - workspace-output-path:
+- next-step: section-batch | section-image-generation | report
 - current-status:
 ```
 
