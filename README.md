@@ -71,6 +71,7 @@ macOS が生成する `.DS_Store` は Git 管理対象外とするため、repo 
 
 `.codex/skills/` は Codex から利用するためのローカル配備先です。  
 この repo では `skills/` 配下を正本として管理し、`.codex/skills/` 配下のコピーは Git 管理対象外とします。
+`skills/` から `.codex/skills/` への反映は、必要なタイミングで手動実行します。Maven の `package` フェーズでは自動コピーしません。
 
 ## Codex skills 更新後の反映 tips
 

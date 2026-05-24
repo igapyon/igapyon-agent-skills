@@ -54,16 +54,18 @@
 
 `{{IMAGE_OUTPUT_PATH}}` と `{{RUN_OUTPUT_DIR}}` がどちらも未指定の場合は、次の順序で保存先を決めてください。
 
-1. `{{IMAGE_PROMPT_PATH}}` が属する Git リポジトリのルートを確認する
-2. そのルート直下の `workplace/` を候補にする
-3. `workplace/` が Git 管理外として扱われることを確認する
-4. 確認できた場合のみ、現在日時を使って以下の実行ディレクトリを作成する
+1. 処理開始時のカレントフォルダを保存先ベースにする
+2. カレントフォルダ直下の `workplace/` を候補にする
+3. `workplace/` が存在しない場合は作成する
+4. カレントフォルダが Git リポジトリ内の場合だけ、`workplace/` が Git 管理外として扱われることを確認する
+5. カレントフォルダが Git リポジトリでない場合は、別の場所を探さず、その `workplace/` を使う
+6. 現在日時を使って以下の実行ディレクトリを作成する
 
 ```text
-<入力ファイルが属するGitリポジトリ>/workplace/<YYYYMMDDHHmmss>-graphic-recording/
+<処理開始時のカレントフォルダ>/workplace/<YYYYMMDDHHmmss>-graphic-recording/
 ```
 
-5. その下に以下のファイル名で保存する
+7. その下に以下のファイル名で保存する
 
 ```text
 graphic-recording.png
@@ -75,14 +77,14 @@ graphic-recording.png
 /Users/igapyon/Documents/git/igapyon-agent-skills/workplace/20260524095030-graphic-recording/graphic-recording.png
 ```
 
-確認方法の例:
+カレントフォルダが Git リポジトリ内の場合の確認方法の例:
 
 ```bash
-git rev-parse --show-toplevel
 git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording.png
 ```
 
-`workplace/` が存在しない、または Git 管理外であることを確認できない場合は、勝手にリポジトリ内へ保存しないでください。
+カレントフォルダが Git リポジトリ内で、`workplace/` が Git 管理外であることを確認できない場合は、勝手に別の場所へ保存しないでください。
+カレントフォルダが Git リポジトリでない場合は、Git 管理外確認を要求せず、カレントフォルダ直下の `workplace/` を作成して使ってください。
 
 ---
 
@@ -126,7 +128,7 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 8. 横長ポスター構図のグラレコ説明画像を生成する
 9. 生成画像の元ファイルパスを特定する
 10. `copy-generated-image.md` を作成し、元画像パス、コピー先、実行するコピーコマンド、確認コマンドを記録する
-11. 生成画像を `{{IMAGE_OUTPUT_PATH}}`、`{{RUN_OUTPUT_DIR}}/graphic-recording.png`、または Git 管理外であることを確認できた `workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording.png` へコピーまたは保存する
+11. 生成画像を `{{IMAGE_OUTPUT_PATH}}`、`{{RUN_OUTPUT_DIR}}/graphic-recording.png`、または処理開始時のカレントフォルダ直下の `workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording.png` へコピーまたは保存する
 12. コピー先の存在、ファイルサイズ、画像形式を確認し、`copy-generated-image.md` を結果付きで更新する
 13. `image-generation-report.md` に元画像パス、みくく描画プロンプトパス、コピー手順記録パス、ワークスペース側の保存先、候補数、採用画像、次工程、または未実行理由を記録する
 14. 代表画像を採用できた場合は、追加の全体画像バリエーション生成を続けず、章ごとの画像生成へ進む

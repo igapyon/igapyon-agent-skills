@@ -7,6 +7,10 @@
 記事全体の代表画像生成フェーズの後にこのプロンプトを使う場合は、全体画像の追加バリエーション生成へ戻らないでください。
 このプロンプトでは、章ごとの素材作成へ移行し、`TODO.md` と `sections/<NNN>-<slug>/image-prompt.md` を作ることに集中してください。
 
+重要: セクション処理の開始時に、全対象セクション分の `sections/<NNN>-<slug>/` ディレクトリと `section-source.md` を先に一括作成してください。
+`section-source.md` は、元記事を `##` 見出しごとに分割した読み取りコピーだけを保存します。
+1 セクションずつ、ディレクトリ作成、`section-source.md` 作成、`section-text.md` 作成、`image-prompt.md` 作成までをまとめて進める処理順にしないでください。
+
 ---
 
 # 入力
@@ -46,23 +50,25 @@
 
 `{{RUN_OUTPUT_DIR}}` が未指定の場合は、次の順序で保存先を決めてください。
 
-1. `{{ARTICLE_PATH}}` が属する Git リポジトリのルートを確認する
-2. そのルート直下の `workplace/` を候補にする
-3. `workplace/` が Git 管理外として扱われることを確認する
-4. 確認できた場合のみ、現在日時を使って以下の実行ディレクトリを作成する
+1. 処理開始時のカレントフォルダを保存先ベースにする
+2. カレントフォルダ直下の `workplace/` を候補にする
+3. `workplace/` が存在しない場合は作成する
+4. カレントフォルダが Git リポジトリ内の場合だけ、`workplace/` が Git 管理外として扱われることを確認する
+5. カレントフォルダが Git リポジトリでない場合は、別の場所を探さず、その `workplace/` を使う
+6. 現在日時を使って以下の実行ディレクトリを作成する
 
 ```text
-<記事が属するGitリポジトリ>/workplace/<YYYYMMDDHHmmss>-section-graphic-recording/
+<処理開始時のカレントフォルダ>/workplace/<YYYYMMDDHHmmss>-section-graphic-recording/
 ```
 
-確認方法の例:
+カレントフォルダが Git リポジトリ内の場合の確認方法の例:
 
 ```bash
-git rev-parse --show-toplevel
 git check-ignore -q workplace/<YYYYMMDDHHmmss>-section-graphic-recording/TODO.md
 ```
 
-`workplace/` が存在しない、または Git 管理外であることを確認できない場合は、勝手にリポジトリ内へ保存しないでください。
+カレントフォルダが Git リポジトリ内で、`workplace/` が Git 管理外であることを確認できない場合は、勝手に別の場所へ保存しないでください。
+カレントフォルダが Git リポジトリでない場合は、Git 管理外確認を要求せず、カレントフォルダ直下の `workplace/` を作成して使ってください。
 
 ---
 
@@ -107,9 +113,35 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 
 ---
 
+# セクション初期化フェーズ
+
+`##` 見出しの抽出と対象外セクションの判定が終わったら、最初に全対象セクション分の作業場所を初期化してください。
+
+初期化フェーズで行うこと:
+
+1. `{{RUN_OUTPUT_DIR}}/sections/` を作成する
+2. 全対象セクションについて `sections/<NNN>-<slug>/` を作成する
+3. 全対象セクションについて `section-source.md` を保存する
+4. `TODO.md` を作成し、全対象セクションを `image-pending` として並べる
+
+初期化フェーズで行わないこと:
+
+- `section-text.md` の作成
+- `image-prompt.md` の作成
+- 画像生成
+- 元記事 Markdown への書き込み
+
+この初期化フェーズは、最初のセクションだけでなく全セクションに対して一括で完了させてください。
+以後のセクションごとの処理では、既に存在する `sections/<NNN>-<slug>/section-source.md` を入力として使います。
+
+再実行時に `TODO.md` が既に存在する場合も、未初期化の対象セクションがあれば、先に不足している `sections/<NNN>-<slug>/` と `section-source.md` を補完してください。
+その後で、`section-text.md` または `image-prompt.md` が不足しているセクションだけを処理してください。
+
+---
+
 # TODO.md
 
-最初に、`{{RUN_OUTPUT_DIR}}/TODO.md` を作成してください。
+セクション初期化フェーズで、`{{RUN_OUTPUT_DIR}}/TODO.md` を作成してください。
 
 `TODO.md` には、抽出した `##` 見出しをセクション単位で並べます。
 
@@ -129,7 +161,8 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 ## 出力ルール
 
 - 各セクションは `sections/<番号>-<slug>/` に保存する
-- 40番では各セクションで `section-source.md`、`section-text.md`、`image-prompt.md` を作る
+- 40番では最初に全セクションの `sections/<番号>-<slug>/` と `section-source.md` を一括作成する
+- 40番では初期化完了後、各セクションで `section-text.md` と `image-prompt.md` を作る
 - 画像生成は50番で実行し、成功したら TODO を `image-generated` に更新する
 - 速度優先運用では50番は `image-generation-report.md` や `copy-generated-image.md` を作らず、画像コピーと `TODO.md` 更新だけで進む
 ```
@@ -142,7 +175,7 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 
 # 出力構成
 
-各 `##` セクションごとに、以下のディレクトリを作成します。
+セクション初期化フェーズで、各 `##` セクションごとに以下のディレクトリを一括作成します。
 
 ```text
 {{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/
@@ -157,9 +190,9 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 
 各セクションの主な生成物:
 
-- `section-source.md`: 元記事から切り出した `##` 見出しと本文
-- `section-text.md`: グラレコ制作用整理テキスト
-- `image-prompt.md`: 画像生成AI用プロンプト
+- `section-source.md`: 元記事から切り出した `##` 見出しと本文。初期化フェーズで全セクション分を一括作成します。
+- `section-text.md`: グラレコ制作用整理テキスト。初期化フェーズ完了後に作成します。
+- `image-prompt.md`: 画像生成AI用プロンプト。初期化フェーズ完了後に作成します。
 
 `graphic-recording.png` は 50番で作成します。40番では生成済みとして扱わないでください。
 
@@ -167,17 +200,20 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 
 # セクションごとの処理
 
-各セクションについて、次の順序で処理してください。
+セクション初期化フェーズが全セクション分完了していることを確認してから、各セクションについて次の順序で処理してください。
 
-## 1. セクション本文を保存する
+まだ全対象セクションの `sections/<NNN>-<slug>/section-source.md` がそろっていない場合は、`section-text.md` や `image-prompt.md` の作成へ進まず、先に初期化フェーズを完了してください。
 
-対象の `##` 見出しと本文を、そのまま以下へ保存します。
+## 1. セクション本文を確認する
+
+対象の `##` 見出しと本文は、初期化フェーズで以下へ保存済みである必要があります。
 
 ```text
 {{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/section-source.md
 ```
 
 これは元記事からの読み取りコピーです。`section-source.md` の作成時も、元記事側には一切書き込まないでください。
+不足している場合は、そのセクションだけを個別処理へ進めず、全対象セクションの `section-source.md` がそろうように初期化フェーズを補完してください。
 
 ## 2. グラレコ制作用整理テキストを作る
 

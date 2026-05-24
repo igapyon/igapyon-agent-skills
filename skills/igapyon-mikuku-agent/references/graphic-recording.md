@@ -23,7 +23,7 @@
 7. グラレコ制作用整理テキストを作る
 8. 画像生成AI用プロンプトを作る
 9. みくく描画プロンプト本文を含む画像生成AI用プロンプトで画像生成を実行する、または未実行理由を記録する
-10. 生成物を Git 管理外の作業場所へ保存する
+10. 生成物をカレントフォルダ配下の作業場所へ保存する
 
 ## 使用するプロンプト
 
@@ -41,6 +41,11 @@
 - [graphic-recording/50-generate-section-graphic-recording-images-prompt.md](graphic-recording/50-generate-section-graphic-recording-images-prompt.md)
 - [graphic-recording/60-inspect-section-graphic-recording-images-prompt.md](graphic-recording/60-inspect-section-graphic-recording-images-prompt.md)
 
+`##` 見出しごとの複数枚で作る場合は、40番の開始時に全対象セクション分の `sections/<NNN>-<slug>/` ディレクトリと `section-source.md` を一括作成してください。
+`section-source.md` は、元記事を `##` 見出しごとに分割した読み取りコピーです。
+1 セクションずつ、ディレクトリ作成から `image-prompt.md` 作成までをまとめて進める処理順にはしないでください。
+全セクションの `section-source.md` がそろってから、各セクションの `section-text.md` と `image-prompt.md` を作成し、その後で50番の画像生成へ進みます。
+
 ## 入力
 
 ユーザーから、対象記事の Markdown ファイルパスを受け取ります。
@@ -53,7 +58,8 @@
 
 ## 出力
 
-生成物は、原則として Git 管理外の作業ディレクトリへ保存します。
+生成物は、原則として処理開始時のカレントフォルダ配下の作業ディレクトリへ保存します。
+入力記事や中間ファイルが別の Git リポジトリに属していても、そのリポジトリのルートを探して移動しないでください。
 
 出力ディレクトリ:
 
@@ -63,13 +69,15 @@
 
 `{{RUN_OUTPUT_DIR}}` が未指定の場合は、次の順序で保存先を決めてください。
 
-1. `{{ARTICLE_PATH}}` が属する Git リポジトリのルートを確認する
-2. そのルート直下の `workplace/` を候補にする
-3. `workplace/` が Git 管理外として扱われることを確認する
-4. 確認できた場合のみ、以下の形式の実行ディレクトリを作る
+1. 処理開始時のカレントフォルダを保存先ベースにする
+2. カレントフォルダ直下の `workplace/` を候補にする
+3. `workplace/` が存在しない場合は作成する
+4. カレントフォルダが Git リポジトリ内の場合だけ、`workplace/` が Git 管理外として扱われることを確認する
+5. カレントフォルダが Git リポジトリでない場合は、別の場所を探さず、その `workplace/` を使う
+6. 以下の形式の実行ディレクトリを作る
 
 ```text
-<記事が属するGitリポジトリ>/workplace/<YYYYMMDDHHmmss>-graphic-recording/
+<処理開始時のカレントフォルダ>/workplace/<YYYYMMDDHHmmss>-graphic-recording/
 ```
 
 例:
@@ -85,9 +93,18 @@
 - `copy-generated-image.md`: 生成画像を作業ディレクトリへコピーするための記録と手順
 - `graphic-recording.png`: グラレコ説明画像
 
-保存先は原則として同じ `{{RUN_OUTPUT_DIR}}` 配下に揃えます。`workplace/` を使う場合は、その場所が Git 管理外であることを確認できた場合だけ保存してください。
+`##` 見出しごとの複数枚で作る場合の主な生成物は次のとおりです。
 
-Git 管理外の保存先を確認できない場合は、勝手にリポジトリ内へ保存せず、本文出力にフォールバックします。
+- `TODO.md`: セクション別画像生成の進行状況
+- `sections/<NNN>-<slug>/section-source.md`: 元記事から切り出したセクション本文。40番の初期化時に全セクション分を一括作成します。
+- `sections/<NNN>-<slug>/section-text.md`: セクション別グラレコ制作用整理テキスト
+- `sections/<NNN>-<slug>/image-prompt.md`: セクション別画像生成AI用プロンプト
+- `sections/<NNN>-<slug>/graphic-recording.png`: 50番で生成、保存するセクション別画像
+
+保存先は原則として同じ `{{RUN_OUTPUT_DIR}}` 配下に揃えます。`workplace/` を使う場合、Git 管理外確認はカレントフォルダが Git リポジトリ内の場合だけ必要です。
+
+カレントフォルダが Git リポジトリ内で、`workplace/` が Git 管理外であることを確認できない場合は、勝手に別の場所へ保存せず、本文出力にフォールバックします。
+カレントフォルダが Git リポジトリでない場合は、Git 管理外確認を要求せず、カレントフォルダ直下の `workplace/` を作成して使います。
 
 ## 記事全体画像のバリエーション上限
 
@@ -109,7 +126,8 @@ Git 管理外の保存先を確認できない場合は、勝手にリポジト�
 - 記事全体 1 枚か、`##` 見出しごとの複数枚かを決めた
 - 使用する個別プロンプトを読んだ
 - `{{RUN_OUTPUT_DIR}}` を決めた
-- `{{RUN_OUTPUT_DIR}}` が Git 管理外であることを確認した、または保存せず本文出力へフォールバックすると決めた
+- `{{RUN_OUTPUT_DIR}}` がカレントフォルダ配下であることを確認した
+- カレントフォルダが Git リポジトリ内の場合は、`{{RUN_OUTPUT_DIR}}` が Git 管理外であることを確認した、または保存せず本文出力へフォールバックすると決めた
 - 使用する `{{MIKUKU_PROMPT_PATH}}` を決め、実在を確認し、本文を読んだ
 - 画像生成ツールがテキストプロンプト生成に対応していることを確認した
 
@@ -128,11 +146,14 @@ Git 管理外の保存先を確認できない場合は、勝手にリポジト�
 - article-read: yes
 - mode: whole-article | sections | whole-article-then-sections
 - run-output-dir:
-- workplace-gitignored: yes | no
+- workplace-gitignored: yes | no | not-a-git-repo
 - prompts-read:
   - 10-article-to-graphic-recording-text-prompt.md
   - 20-graphic-recording-explainer-image-prompt.md
   - 30-generate-graphic-recording-image-prompt.md
+  - 40-article-section-graphic-recording-batch-prompt.md
+  - 50-generate-section-graphic-recording-images-prompt.md
+  - 60-inspect-section-graphic-recording-images-prompt.md
 - article-path:
 - mikuku-prompt:
 - mikuku-prompt-exists: yes | no
@@ -246,7 +267,9 @@ Git 管理外の保存先を確認できない場合は、勝手にリポジト�
 
 上記の「出力」ルールに従い、`{{RUN_OUTPUT_DIR}}` を決めてください。
 
-`{{RUN_OUTPUT_DIR}}` が未指定で、Git 管理外の `workplace/` を確認できた場合は、現在日時を使って次の形式のディレクトリを作成します。
+`{{RUN_OUTPUT_DIR}}` が未指定の場合は、処理開始時のカレントフォルダ直下に `workplace/` を作成し、現在日時を使って次の形式のディレクトリを作成します。
+カレントフォルダが Git リポジトリ内の場合だけ、`workplace/` が Git 管理外であることを確認してください。
+カレントフォルダが Git リポジトリでない場合は、別の場所を探しに行かず、この `workplace/` を使ってください。
 
 ```text
 workplace/<YYYYMMDDHHmmss>-graphic-recording/
@@ -285,6 +308,9 @@ workplace/<YYYYMMDDHHmmss>-graphic-recording/
 未確認の項目がある場合は、処理を進めず、該当ファイルを読んで状態を更新してください。
 
 ### 6. グラレコ制作用テキストを作る
+
+記事全体 1 枚で作る場合は、この手順 6 から手順 8 までを実行します。
+`##` 見出しごとの複数枚で作る場合は、この手順 6 から手順 8 ではなく、次の「6A. セクション別素材を一括初期化する」へ進んでください。
 
 まず、[graphic-recording/10-article-to-graphic-recording-text-prompt.md](graphic-recording/10-article-to-graphic-recording-text-prompt.md) の方針に従って、記事本文をグラレコ制作用の整理テキストへ変換してください。
 
@@ -349,6 +375,32 @@ workplace/<YYYYMMDDHHmmss>-graphic-recording/
 
 画像生成ツールが使えない環境、または画像生成ツールがテキストプロンプトを受け取れない環境では、画像生成は実行せず、画像生成AI用プロンプトのパス、みくく描画プロンプトのパス、推奨する画像出力パス、未実行理由を報告してください。
 
+### 6A. セクション別素材を一括初期化する
+
+`##` 見出しごとの複数枚で作る場合、または記事全体の代表画像を採用した後に章ごとの画像生成へ進む場合は、[graphic-recording/40-article-section-graphic-recording-batch-prompt.md](graphic-recording/40-article-section-graphic-recording-batch-prompt.md) を使います。
+
+40番では、最初に次を全対象セクション分まとめて完了してください。
+
+1. `##` 見出しを抽出する
+2. `{{RUN_OUTPUT_DIR}}/sections/` を作成する
+3. 各セクションの `sections/<NNN>-<slug>/` を作成する
+4. 各セクションの `section-source.md` を保存する
+5. `TODO.md` に全対象セクションを `image-pending` として並べる
+
+この一括初期化が完了するまでは、`section-text.md`、`image-prompt.md`、画像生成へ進まないでください。
+初期化完了後、既に作成済みの `section-source.md` を入力として、各セクションの `section-text.md` と `image-prompt.md` を作成します。
+
+### 7A. セクション別画像を生成する
+
+全対象セクションの `section-source.md`、処理対象セクションの `section-text.md`、`image-prompt.md` がそろったら、[graphic-recording/50-generate-section-graphic-recording-images-prompt.md](graphic-recording/50-generate-section-graphic-recording-images-prompt.md) を使って画像生成へ進みます。
+
+50番では、セクションディレクトリや `section-source.md` を新規作成しないでください。
+不足がある場合は50番で補完せず、40番へ戻って初期化または素材作成を完了してください。
+
+### 8A. セクション別画像を検品する
+
+必要に応じて、[graphic-recording/60-inspect-section-graphic-recording-images-prompt.md](graphic-recording/60-inspect-section-graphic-recording-images-prompt.md) を使って、生成済みのセクション別画像をまとめて確認してください。
+
 ## 最終報告
 
 処理後、保存したファイルのパスを短く報告してください。
@@ -359,7 +411,8 @@ workplace/<YYYYMMDDHHmmss>-graphic-recording/
 - グラレコ説明画像、または画像生成ツールへ渡すための入力情報
 - 実行単位の出力ディレクトリ
 
-Git 管理外の保存先を確認できない場合は、ファイル保存せず本文を出力してください。
+カレントフォルダが Git リポジトリ内で Git 管理外の保存先を確認できない場合は、ファイル保存せず本文を出力してください。
+カレントフォルダが Git リポジトリでない場合は、カレントフォルダ直下の `workplace/` を作成して保存してください。
 
 ## 注意点
 
