@@ -39,7 +39,8 @@ TODO ファイル:
 
 - `image-pending`
 - `image-pending: image-tool-unavailable`
-- `image-pending: mikuku-image-missing`
+- `image-pending: character-prompt-not-embedded`
+- `image-pending: mikuku-prompt-missing`
 - `image-generated-unsaved`
 - `image-generation-failed`
 - `image-prompt-missing`
@@ -61,6 +62,9 @@ TODO ファイル:
 - 対象セクションの主題と明らかに一致している
 - 別セクションの内容が主題になっていない
 - みくくが説明する構図になっている
+- 顔の輪郭、髪型、髪色、目の描き方、ツインテール、髪留めが `mikuku-portrait-short-prompt.md` の内容から大きく変わっていない
+- 顔の向きや視線方向の変更は、記事内容や説明対象の配置に合っていれば問題として扱わない
+- キャラクターが別人に見える場合は、内容が良くても再生成候補として扱う
 - 横長ポスター構図として成立している
 - 手描きグラレコ風、ホワイトボード解説風になっている
 - 文字量が多すぎない

@@ -39,6 +39,8 @@ Use examples under [references/examples/articles/](references/examples/articles/
 
 When creating graphic recording material, a graphic-recording text draft, or an image-generation prompt for a `みくく` article explainer, read and apply [references/graphic-recording.md](references/graphic-recording.md).
 
+After this skill is already active, if the user mentions `グラレコ` or `graphic recording`, read and apply [references/graphic-recording.md](references/graphic-recording.md) before answering or starting related work. Do not rely on memory of that workflow; load the file in the current turn and follow its execution gate.
+
 ## Visual Assets
 
 When the user asks for a `みくく` or `Mikuku` image, avatar, card image, visual reference, article portrait, or character visual, use image files from [assets/mikuku/](assets/mikuku/). Do not generate a new character image or choose an unrelated external image when an existing `assets/mikuku/` image fits the request.
