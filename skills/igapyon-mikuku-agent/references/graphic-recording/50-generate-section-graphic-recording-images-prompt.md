@@ -129,13 +129,16 @@ TODO ファイル:
 
 組み込み `imagegen` は、通常 `$CODEX_HOME/generated_images/...` 配下へ画像を保存します。対象セクションで使う画像は、生成後にその保存先からコピーしてください。元画像は削除しないでください。
 
-生成画像をコピーする前に、対象セクションごとに次のファイルを作成してください。
+生成画像は、対象セクションごとに次のファイルへコピーしてください。
 
 ```text
 {{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/copy-generated-image.md
 ```
 
 この Markdown には、生成画像の元パス、コピー先、コピーコマンド、検証コマンド、コピー結果を記録します。
+
+処理時間を短くするため、`copy-generated-image.md` は必ずしもコピー前に `status: pending` で作成しなくてもかまいません。
+生成画像を特定し、ワークスペース側へコピーし、コピー先の存在と画像形式を確認したあと、完成形の `status: copied` として一度だけ作成してよいです。
 
 生成画像を対象セクションのディレクトリへ保存または移動できない場合は、生成済みにしないでください。この場合は `image-generated-unsaved` として記録し、実際の画像の所在を分かる範囲で `TODO.md` またはレポートへ残してください。
 
@@ -198,10 +201,10 @@ TODO ファイル:
 組み込み `imagegen` の生成物が `$CODEX_HOME/generated_images/...` に保存された場合は、次の方針で扱ってください。
 
 1. 今回の生成で作成された画像ファイルを特定する
-2. 対象セクションの `copy-generated-image.md` を `status: pending` で作成する
-3. 対象セクションの出力先へコピーする
-4. コピー先のファイルサイズが 0 バイトではないことを確認する
-5. `copy-generated-image.md` を `status: copied` として更新する
+2. 対象セクションの出力先へコピーする
+3. コピー先のファイルサイズが 0 バイトではないことを確認する
+4. コピー先の画像形式を確認する
+5. 対象セクションの `copy-generated-image.md` を `status: copied` の完成形で作成する
 6. 元の `$CODEX_HOME/generated_images/...` 側の画像は残す
 
 コピー先:
@@ -241,6 +244,20 @@ file "<workspace-output-path>"
 ````
 
 生成画像の元パスを特定できない場合は、コピーを実行せず、`status: failed` または `status: skipped` として理由を `Notes` に記録してください。この場合、対象セクションを `image-generated` として扱わないでください。
+
+## 省略実行ルール
+
+画像生成後の処理を短縮したい場合は、次の最小手順で進めてください。
+
+1. 最新の生成 PNG を特定する
+2. 対象セクションの `graphic-recording.png` へコピーする
+3. `ls -lh` と `file` でコピー先を確認する
+4. `copy-generated-image.md` を `status: copied` の完成形で作成する
+5. `TODO.md` と `image-generation-report.md` を更新する
+
+この省略実行でも、画像ファイルのコピーは省略しないでください。
+`copy-generated-image.md` の `pending` 作成と、その後の `copied` 更新を分ける必要はありません。
+`run-state.md` は、各セクションごとに更新せず、まとまった区切りで更新してかまいません。
 
 生成時の基本方針:
 
