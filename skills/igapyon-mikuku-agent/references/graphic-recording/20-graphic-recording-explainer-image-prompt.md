@@ -1,7 +1,7 @@
 # グラレコ説明画像 生成AIプロンプト
 
 次の入力パスで指定されたグラレコ制作用テキストを読み、
-指定された「みくく」画像のパスを参照画像として使い、技術記事の内容をグラフィックレコーディング（グラレコ）風にまとめた大きな説明ポスター画像の生成AIプロンプトを作成してください。
+指定された「みくく」描画プロンプトファイルを読み、技術記事の内容をグラフィックレコーディング（グラレコ）風にまとめた大きな説明ポスター画像の生成AIプロンプトを作成してください。
 
 作成した画像生成AI用プロンプトは、指定された出力パスへ Markdown ファイルとして保存してください。
 
@@ -15,13 +15,14 @@
 {{GRAPHIC_RECORDING_TEXT_PATH}}
 ```
 
-みくく画像のパス:
+みくく描画プロンプトのパス:
 
 ```text
-{{MIKUKU_IMAGE_PATH}}
+{{MIKUKU_PROMPT_PATH}}
 ```
 
-`{{MIKUKU_IMAGE_PATH}}` の画像を、キャラクター外観の参照画像として扱ってください。
+`{{MIKUKU_PROMPT_PATH}}` の Markdown 本文を読み、キャラクター外観の正本描画プロンプトとして扱ってください。
+画像生成AI用プロンプトには、このパスだけでなく、描画プロンプト本文そのものを含めてください。
 
 ---
 
@@ -99,7 +100,16 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/image-prompt.md
 
 ## キャラクター
 
-* `{{MIKUKU_IMAGE_PATH}}` のみくく画像をベースにする
+* `{{MIKUKU_PROMPT_PATH}}` の本文をベースにする
+* 画像生成AI用プロンプト内に `{{MIKUKU_PROMPT_PATH}}` の本文を含める
+* パスだけを書いて済ませない
+* 同じキャラクター `Mikuku` / `みくく` として扱う
+* キャラクターを再設計しない
+* 顔の輪郭、髪型、髪色、目の描き方、ツインテール、髪留め、全体の性格印象を維持する
+* 変更してよいのは、場面、ポーズ、表情、構図、持ち物、説明している内容だけ
+* 顔の向きと視線方向は、記事内容やグラレコ内の説明対象に合わせて生成前に変更してよい
+* 例: 右側のみくくが左側の図解を見る、中央の見出しを見上げる、吹き出し側へ視線を向ける
+* `same character`, `do not redesign`, `preserve character identity`, `canonical character reference` の意図を明確に含める
 * ツインテール
 * やわらかい茶髪
 * 少し困り顔
@@ -208,8 +218,8 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/image-prompt.md
 # 実施手順
 
 1. `{{GRAPHIC_RECORDING_TEXT_PATH}}` の Markdown ファイルを読む
-2. `{{MIKUKU_IMAGE_PATH}}` の画像をキャラクター参照画像として扱う
-3. その内容をもとに、画像生成AIへ渡せる最終プロンプトを作成する
+2. `{{MIKUKU_PROMPT_PATH}}` の Markdown ファイルを読む
+3. グラレコ制作用テキストとみくく描画プロンプト本文をもとに、画像生成AIへ渡せる最終プロンプトを作成する
 4. `{{OUTPUT_PATH}}` が指定されている場合はそこへ保存する
 5. `{{OUTPUT_PATH}}` が未指定で `{{RUN_OUTPUT_DIR}}` が指定されている場合は、`{{RUN_OUTPUT_DIR}}/image-prompt.md` へ保存する
 6. どちらも未指定の場合は、Git 管理外であることを確認できた `workplace/<YYYYMMDDHHmmss>-graphic-recording/` 配下へ保存する

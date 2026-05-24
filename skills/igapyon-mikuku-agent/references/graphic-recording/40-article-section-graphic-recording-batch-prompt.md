@@ -14,17 +14,17 @@
 {{ARTICLE_PATH}}
 ```
 
-みくく画像のパス:
+みくく描画プロンプトのパス:
 
 ```text
-{{MIKUKU_IMAGE_PATH}}
+{{MIKUKU_PROMPT_PATH}}
 ```
 
-`{{MIKUKU_IMAGE_PATH}}` が未指定の場合は、次の候補から 1 つ選び、全セクションで同じ参照画像として使ってください。
+`{{MIKUKU_PROMPT_PATH}}` が未指定の場合は、次を使い、全セクションで同じ描画プロンプトとして使ってください。
 
-- `skills/igapyon-mikuku-agent/assets/mikuku/mikuku01.png`
-- `skills/igapyon-mikuku-agent/assets/mikuku/mikuku02.png`
-- `skills/igapyon-mikuku-agent/assets/mikuku/mikuku03.png`
+```text
+/Users/igapyon/Documents/git/igapyon-agent-skills/skills/igapyon-mikuku-agent/assets/mikuku/mikuku-portrait-short-prompt.md
+```
 
 ---
 
@@ -111,7 +111,7 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 # 見出し単位グラレコ画像 TODO
 
 記事: {{ARTICLE_PATH}}
-みくく画像: {{MIKUKU_IMAGE_PATH}}
+みくく描画プロンプト: {{MIKUKU_PROMPT_PATH}}
 
 ## 進行状況
 
@@ -191,7 +191,7 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 
 ## 3. セクション専用の画像生成プロンプトを作る
 
-`section-text.md` と `{{MIKUKU_IMAGE_PATH}}` を入力として、セクション専用の画像生成AI用プロンプトを作成します。
+`section-text.md` と `{{MIKUKU_PROMPT_PATH}}` の本文を入力として、セクション専用の画像生成AI用プロンプトを作成します。
 
 保存先:
 
@@ -203,19 +203,21 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 
 - みくくがその `##` セクションを説明している構図
 - セクション見出しを主題にした横長ポスター構図
+- 記事内容や説明対象の配置に合わせて、みくくの顔の向きや視線方向を調整してよいという指示
 - 手描きグラレコ風
 - ホワイトボード解説風
 - 図解、矢印、囲み、アイコン
 - セクション本文に基づく重要語
 - みくくの吹き出し
-- 参照画像として使う `{{MIKUKU_IMAGE_PATH}}`
-- 画像生成時に、各セクションごとに `{{MIKUKU_IMAGE_PATH}}` を参照画像として読み込み直す指示
+- 描画プロンプトとして使う `{{MIKUKU_PROMPT_PATH}}` の本文
+- 画像生成時に、各セクションごとに `{{MIKUKU_PROMPT_PATH}}` の本文を画像生成AI用プロンプトに埋め込む指示
+- パスだけを書いて済ませない、という注意
 - 画像内テキストとして使う短い正確表記
 - 画像内に長文を入れすぎない方針
 
-`TODO.md` の `みくく画像:` 行は、参照画像パスの記録です。
-画像生成ツールへ参照画像が自動で引き継がれることは前提にしないでください。
-各 `image-prompt.md` には、タイトルごとの画像生成時に `{{MIKUKU_IMAGE_PATH}}` を添付、指定、またはロードしてから生成することを明記してください。
+`TODO.md` の `みくく描画プロンプト:` 行は、描画プロンプトパスの記録です。
+画像生成ツールへ描画プロンプトが自動で引き継がれることは前提にしないでください。
+各 `image-prompt.md` には、タイトルごとの画像生成時に `{{MIKUKU_PROMPT_PATH}}` の本文を含めて生成することを明記してください。
 
 画像内テキストは、本文の長い見出しや文章をそのまま入れず、短いラベルへ整理してください。
 
