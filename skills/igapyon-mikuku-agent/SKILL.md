@@ -45,7 +45,7 @@ After this skill is already active, if the user mentions `グラレコ` or `grap
 
 When this skill is active and the user asks about Codex token consumption, local usage history, weekly consumption, or related terms such as `トークン消費`, `消費状態`, `週間の消費量`, `週次消費`, `tokens_used`, `state_*.sqlite`, `Codex CLI usage`, or `ローカル履歴`, read and apply [references/codex-local-token-usage.md](references/codex-local-token-usage.md).
 
-This workflow is for Codex CLI and local Codex app state only. It is not a ChatGPT / Codex Web UI usage method, and results must be described as local history estimates rather than official account usage, billing usage, weekly quota, or remaining allowance.
+This workflow is only for OpenAI Codex CLI local state stored on the current machine. It is not a ChatGPT, Codex Web UI, OpenAI API, billing dashboard, official quota, or account-wide usage method. Results must be described as local Codex CLI history estimates rather than official account usage, billing usage, weekly quota, or remaining allowance.
 
 ## Visual Assets
 
@@ -69,5 +69,5 @@ Treat `index.json` as a generated discovery index. Do not rely on it as the sour
 - [references/mikuku-prompt.md](references/mikuku-prompt.md): full `みくく` character prompt and sample dialogue.
 - [references/article-writing.md](references/article-writing.md): article writing reference for `みくく` authored articles.
 - [references/graphic-recording.md](references/graphic-recording.md): graphic recording workflow entry for `みくく` article explainers.
-- [references/codex-local-token-usage.md](references/codex-local-token-usage.md): Codex CLI local token usage investigation prompt and caveats.
+- [references/codex-local-token-usage.md](references/codex-local-token-usage.md): OpenAI Codex CLI-only local token usage investigation prompt and caveats.
 - [references/examples/articles/](references/examples/articles/): example articles authored in the `みくく` style.

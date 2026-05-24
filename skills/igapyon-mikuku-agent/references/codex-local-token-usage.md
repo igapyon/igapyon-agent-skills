@@ -1,16 +1,16 @@
-# Codex CLI Local Token Usage Investigation
+# OpenAI Codex CLI Local Token Usage Investigation
 
-This reference describes how to reproduce a local Codex token-usage investigation from the Codex state SQLite database.
+This reference describes how to reproduce a local token-usage investigation from the OpenAI Codex CLI state SQLite database.
 
 ## Scope
 
-This method is for Codex CLI and local Codex app environments that write state under `CODEX_HOME`, usually `~/.codex`.
+This method is only for OpenAI Codex CLI environments that write local state under `CODEX_HOME`, usually `~/.codex`.
 
-It is not a Web UI usage investigation method. The ChatGPT / Codex Web UI does not expose the local filesystem path `~/.codex/state_*.sqlite` to the assistant, so this method cannot inspect Web UI-only usage. Treat all results as local history estimates, not official account usage, billing usage, weekly quota, or remaining allowance.
+It is not a ChatGPT, Codex Web UI, OpenAI API, billing dashboard, official quota, or account-wide usage investigation method. Those surfaces do not expose the local OpenAI Codex CLI filesystem path `~/.codex/state_*.sqlite` to the assistant, so this method cannot inspect Web UI-only, API-only, or account-wide usage. Treat all results as local Codex CLI history estimates, not official account usage, billing usage, weekly quota, or remaining allowance.
 
 ## When to Use
 
-Use this reference when the user asks about local Codex token consumption and mentions words such as:
+Use this reference only when the user asks about OpenAI Codex CLI local token consumption and mentions words such as:
 
 - `トークン消費`
 - `消費状態`
@@ -29,12 +29,12 @@ Use or adapt the following prompt to reproduce the investigation in a later sess
 Codex CLI のローカル状態DBから、トークン消費状況を調べてください。
 
 重要:
-- この方法は Codex CLI / ローカル Codex アプリ環境専用です。
-- ChatGPT / Codex Web UI だけの利用量調査には使えません。
-- 公式な週次上限・残量・課金利用量ではなく、このマシンのローカル Codex 履歴に記録された tokens_used の集計です。
+- この方法は OpenAI Codex CLI のローカル状態DB専用です。
+- ChatGPT / Codex Web UI / OpenAI API / billing dashboard / account-wide usage の利用量調査には使えません。
+- 公式な週次上限・残量・課金利用量ではなく、このマシンのローカル OpenAI Codex CLI 履歴に記録された tokens_used の集計です。
 
 目的:
-- ~/.codex/state_*.sqlite の threads テーブルを確認し、tokens_used / created_at / updated_at を使って利用量を集計してください。
+- OpenAI Codex CLI が使う ~/.codex/state_*.sqlite の threads テーブルを確認し、tokens_used / created_at / updated_at を使って利用量を集計してください。
 - SQLite が WAL モードの場合があるので、DB本体だけでなく .sqlite-wal の更新時刻も確認してください。
 
 やってほしいこと:
@@ -44,7 +44,7 @@ Codex CLI のローカル状態DBから、トークン消費状況を調べて�
 4. 最新スレッド上位を表示する。
 5. JST基準で「今週」「先週」「直近7日」「その前の7日」の tokens_used 合計を出す。
 6. DBファイル本体、-wal、-shm の更新時刻を確認する。
-7. 結果には「これはローカル履歴ベースであり、公式のアカウント利用量や上限対比ではない」と明記する。
+7. 結果には「これは OpenAI Codex CLI のローカル履歴ベースであり、公式のアカウント利用量や上限対比ではない」と明記する。
 
 使うコマンド例:
 - codex doctor --json
@@ -62,4 +62,4 @@ Codex CLI のローカル状態DBから、トークン消費状況を調べて�
 - On macOS, `stat -f '%Sm %m %N' FILE` gives readable and epoch mtimes. On Linux, use `stat FILE` or `stat -c '%y %Y %n' FILE`.
 - SQLite may return data newer than the main DB file mtime because committed changes can still be in the `-wal` file.
 - Use absolute dates when explaining week boundaries, especially when the user asks about `今週`, `先週`, `今日`, or `昨日`.
-- Do not present the result as official OpenAI, ChatGPT, billing, or quota usage.
+- Do not present the result as official OpenAI, ChatGPT, Codex Web UI, OpenAI API, billing, quota, or account-wide usage.
