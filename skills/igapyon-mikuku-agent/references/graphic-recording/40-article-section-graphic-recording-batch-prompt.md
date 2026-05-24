@@ -4,6 +4,9 @@
 
 このプロンプトは、記事分割、セクション整理、画像生成AI用プロンプト作成、`TODO.md` 作成までを担当します。画像生成そのものは [50-generate-section-graphic-recording-images-prompt.md](50-generate-section-graphic-recording-images-prompt.md) で実行します。
 
+記事全体の代表画像生成フェーズの後にこのプロンプトを使う場合は、全体画像の追加バリエーション生成へ戻らないでください。
+このプロンプトでは、章ごとの素材作成へ移行し、`TODO.md` と `sections/<NNN>-<slug>/image-prompt.md` を作ることに集中してください。
+
 ---
 
 # 入力

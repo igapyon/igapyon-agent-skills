@@ -86,20 +86,51 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 
 ---
 
+# 記事全体画像のバリエーション上限
+
+このプロンプトで生成する記事全体画像は、章ごとの画像生成へ進む前の代表画像フェーズです。
+
+記事全体画像のバリエーション生成は、ユーザーが明示的に追加再生成を依頼しない限り、最大 3 枚までにしてください。
+1-3 枚の候補を生成したら、その時点で最も適した 1 枚を代表画像として採用し、追加の全体画像バリエーション生成を続けないでください。
+
+採用画像は原則として次に保存してください。
+
+```text
+{{RUN_OUTPUT_DIR}}/graphic-recording.png
+```
+
+複数候補を保存する場合は、次のように候補番号つきのファイル名を使ってください。
+
+```text
+{{RUN_OUTPUT_DIR}}/graphic-recording-variant-01.png
+{{RUN_OUTPUT_DIR}}/graphic-recording-variant-02.png
+{{RUN_OUTPUT_DIR}}/graphic-recording-variant-03.png
+```
+
+代表画像を採用したら、`image-generation-report.md` に候補数、採用画像、未採用理由、次工程を記録してください。
+次工程は、セクション用素材が未作成なら `40-article-section-graphic-recording-batch-prompt.md`、素材作成済みなら `50-generate-section-graphic-recording-images-prompt.md` です。
+
+同一性崩れ、重大な破綻、保存失敗などで候補として使えない画像は失敗として記録してよいですが、その場合も無制限に再生成せず、最大 3 回を目安に一度停止し、未解決点を報告してください。
+
+---
+
 # 実施内容
 
 1. `{{IMAGE_PROMPT_PATH}}` の Markdown ファイルを読む
 2. `{{MIKUKU_PROMPT_PATH}}` の Markdown ファイルが存在することを確認する
 3. `{{IMAGE_PROMPT_PATH}}` の本文に、みくく描画プロンプト本文または意味を保った短縮本文が含まれていることを確認する
 4. 画像生成ツールがテキストプロンプトを受け取れることを確認する
-5. 画像生成AI用プロンプト本文を画像生成ツールへ渡す
-6. 横長ポスター構図のグラレコ説明画像を生成する
-7. 生成画像の元ファイルパスを特定する
-8. `copy-generated-image.md` を作成し、元画像パス、コピー先、実行するコピーコマンド、確認コマンドを記録する
-9. 生成画像を `{{IMAGE_OUTPUT_PATH}}`、`{{RUN_OUTPUT_DIR}}/graphic-recording.png`、または Git 管理外であることを確認できた `workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording.png` へコピーまたは保存する
-10. コピー先の存在、ファイルサイズ、画像形式を確認し、`copy-generated-image.md` を結果付きで更新する
-11. `image-generation-report.md` に元画像パス、みくく描画プロンプトパス、コピー手順記録パス、ワークスペース側の保存先、または未実行理由を記録する
-12. 最後に、生成画像の保存先、または未生成の理由を短く報告する
+5. 既に記事全体画像の候補が何枚生成済みか確認する
+6. 候補が 3 枚以上ある場合は追加生成せず、代表画像の採用または次工程への移行を報告する
+7. 画像生成AI用プロンプト本文を画像生成ツールへ渡す
+8. 横長ポスター構図のグラレコ説明画像を生成する
+9. 生成画像の元ファイルパスを特定する
+10. `copy-generated-image.md` を作成し、元画像パス、コピー先、実行するコピーコマンド、確認コマンドを記録する
+11. 生成画像を `{{IMAGE_OUTPUT_PATH}}`、`{{RUN_OUTPUT_DIR}}/graphic-recording.png`、または Git 管理外であることを確認できた `workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording.png` へコピーまたは保存する
+12. コピー先の存在、ファイルサイズ、画像形式を確認し、`copy-generated-image.md` を結果付きで更新する
+13. `image-generation-report.md` に元画像パス、みくく描画プロンプトパス、コピー手順記録パス、ワークスペース側の保存先、候補数、採用画像、次工程、または未実行理由を記録する
+14. 代表画像を採用できた場合は、追加の全体画像バリエーション生成を続けず、章ごとの画像生成へ進む
+15. 最後に、生成画像の保存先、または未生成の理由と次工程を短く報告する
 
 `{{MIKUKU_PROMPT_PATH}}` はパス文字列としてプロンプト内に書くだけでなく、事前に本文を `{{IMAGE_PROMPT_PATH}}` へ埋め込んでください。
 別の生成実行で使った描画プロンプトが今回の生成へ暗黙に引き継がれるとは扱わないでください。
