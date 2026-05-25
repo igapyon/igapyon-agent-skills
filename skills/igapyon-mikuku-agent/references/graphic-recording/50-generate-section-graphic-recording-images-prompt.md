@@ -5,12 +5,12 @@
 このプロンプトは、画像生成だけを担当します。記事分割、セクション本文作成、画像生成AI用プロンプト作成は `40-article-section-graphic-recording-batch-prompt.md` の担当です。
 
 このプロンプトでは、元記事 Markdown、`section-source.md`、`section-text.md`、`image-prompt.md` を変更してはいけません。
-このプロンプトでは、`sections/<NNN>-<slug>/` ディレクトリ、`section-source.md`、`section-text.md`、`image-prompt.md` を新規作成してはいけません。
+このプロンプトでは、`sections/<NNN>/` ディレクトリ、`section-source.md`、`section-text.md`、`image-prompt.md` を新規作成してはいけません。
 不足がある場合は50番で補完せず、40番へ戻って、全対象セクション分の初期化と素材作成を完了してください。
 画像生成結果に合わせて本文やプロンプトを直す必要がある場合は、生成済みファイルを直接書き換えず、`TODO.md` に再生成状態を記録し、必要な調整案を別ファイルへ保存してください。
 元記事への画像リンク挿入や本文修正は、ユーザーが明示的に許可した場合だけ別作業として行います。
 
-速度優先運用では、画像生成後に対象セクションへ `graphic-recording.png` をコピーし、`TODO.md` を更新したらすぐ次へ進んでください。
+速度優先運用では、画像生成後に `copy-section-image.mjs` で対象セクションへ `graphic-recording.png` をコピーし、`TODO.md` を更新したらすぐ次へ進んでください。
 `image-generation-report.md`、`copy-generated-image.md`、`run-state.md`、`ls -lh`、`file`、目視確認は各セクションごとに実行しません。
 必要になった場合だけ、後からまとめて検品・記録してください。
 速度優先運用を既定とします。詳細記録運用は、ユーザーが明示した場合だけ使ってください。
@@ -83,7 +83,7 @@ TODO ファイル:
 # 前提
 
 `{{RUN_OUTPUT_DIR}}` は、40番プロンプトによって作成されたディレクトリです。
-40番では、画像生成へ進む前に、全対象セクション分の `sections/<NNN>-<slug>/section-source.md` を一括作成済みである必要があります。
+40番では、画像生成へ進む前に、全対象セクション分の `sections/<NNN>/section-source.md` を一括作成済みである必要があります。
 50番は、その既存構成を読み取って画像生成するだけです。
 
 想定する構成:
@@ -92,11 +92,11 @@ TODO ファイル:
 {{RUN_OUTPUT_DIR}}/
   TODO.md
   sections/
-    001-.../
+    001/
       section-source.md
       section-text.md
       image-prompt.md
-    002-.../
+    002/
       section-source.md
       section-text.md
       image-prompt.md
@@ -105,7 +105,7 @@ TODO ファイル:
 各セクションの画像出力先:
 
 ```text
-{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/graphic-recording.png
+{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png
 ```
 
 ---
@@ -113,7 +113,7 @@ TODO ファイル:
 # 対象セクションの決定
 
 まず `TODO.md` を読み、画像生成が必要なセクションを決めてください。
-速度優先運用では、`TODO.md` の最初の `image-pending` 行を処理対象にし、対応する `sections/<NNN>-<slug>/image-prompt.md` を読んで生成します。
+速度優先運用では、`TODO.md` の最初の `image-pending` 行を処理対象にし、対応する `sections/<NNN>/image-prompt.md` を読んで生成します。
 既存画像の有無をファイルシステムで毎回確認しないでください。`TODO.md` を状態の正とします。
 
 処理対象にする行:
@@ -148,7 +148,7 @@ TODO ファイル:
 2. 生成画像を最終的に対象セクションのディレクトリへ保存または移動できる
 
 速度優先運用では、この確認は省略します。
-この環境では組み込み `imagegen` と `cp` が使える前提で進め、失敗した場合だけその時点で止めてください。
+この環境では組み込み `imagegen` と `copy-section-image.mjs` が使える前提で進め、失敗した場合だけその時点で止めてください。
 
 みくく描画プロンプト本文が `image-prompt.md` に含まれている場合は、セクションごとの生成実行ごとにその `image-prompt.md` 本文を使ってください。
 
@@ -159,7 +159,7 @@ TODO ファイル:
 詳細記録運用では、対象セクションごとに次のファイルへコピー記録を残してもかまいません。
 
 ```text
-{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/copy-generated-image.md
+{{RUN_OUTPUT_DIR}}/sections/<NNN>/copy-generated-image.md
 ```
 
 この Markdown には、生成画像の元パス、コピー先、コピーコマンド、検証コマンド、コピー結果を記録します。
@@ -217,7 +217,7 @@ TODO ファイル:
 `image-prompt.md` 内に推奨出力先が書かれている場合は、それを尊重してください。書かれていない場合は、次のパスを使ってください。
 
 ```text
-{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/graphic-recording.png
+{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png
 ```
 
 ## 3. 画像を生成する
@@ -230,7 +230,7 @@ TODO ファイル:
 詳細記録運用では、各実行前に `image-prompt.md` 本文にみくく描画プロンプト本文が含まれていることを確認してください。
 
 ```text
-{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/graphic-recording.png
+{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png
 ```
 
 組み込み `imagegen` の生成物が `$CODEX_HOME/generated_images/...` に保存された場合は、次の方針で扱ってください。
@@ -243,7 +243,7 @@ TODO ファイル:
 コピー先:
 
 ```text
-{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/graphic-recording.png
+{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png
 ```
 
 詳細記録運用で `copy-generated-image.md` を作る場合は、少なくとも次を記録してください。
@@ -290,18 +290,18 @@ file "<workspace-output-path>"
 この省略実行でも、画像ファイルのコピーは省略しないでください。
 `copy-generated-image.md`、`image-generation-report.md`、`run-state.md`、`ls -lh`、`file`、目視検品は、各セクションごとに実行しなくてもかまいません。
 これらは、ユーザーが詳細記録を求めた場合、または一連の画像生成が一区切りついた時点でまとめて作成・更新してください。
-高速に連続生成したい場合は、画像生成直後に `cp` できたことをもって次へ進んでかまいません。
+高速に連続生成したい場合は、画像生成直後に `copy-section-image.mjs` でコピーと `TODO.md` 更新ができたことをもって次へ進んでかまいません。
 速度優先運用では、`image-generation-report.md` は更新しないでください。
 
 最小コピーコマンド例:
 
 ```bash
 src=$(find "$CODEX_HOME/generated_images" -maxdepth 3 -type f -name '*.png' -print0 | xargs -0 ls -t | head -n 1)
-cp "$src" "{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/graphic-recording.png"
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/copy-section-image.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --section "<NNN>" --src "$src"
 ```
 
 コピー後の `ls -lh`、`file`、画像プレビューは実行しないでください。
-`cp` がエラーを返さなければ、`TODO.md` を `image-generated` に更新して次へ進んでください。
+`copy-section-image.mjs` がエラーを返さなければ、`TODO.md` は `image-generated` に更新済みとして次へ進んでください。
 
 生成時の基本方針:
 
@@ -348,12 +348,12 @@ cp "$src" "{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/graphic-recording.png"
 ## 001: テキストファイルとは
 
 - status: image-generated
-- prompt: sections/001-text-file/image-prompt.md
+- prompt: sections/001/image-prompt.md
 - mikuku-prompt: skills/igapyon-mikuku-agent/assets/mikuku/mikuku-portrait-short-prompt.md
 - character-prompt-embedded: yes
 - generated-source: <imagegen が保存した元画像パス>
-- workspace-output: sections/001-text-file/graphic-recording.png
-- copy-instruction: sections/001-text-file/copy-generated-image.md
+- workspace-output: sections/001/graphic-recording.png
+- copy-instruction: sections/001/copy-generated-image.md
 ```
 
 画像生成ができなかった場合は、理由を短く残してください。

@@ -41,7 +41,7 @@
 - [graphic-recording/50-generate-section-graphic-recording-images-prompt.md](graphic-recording/50-generate-section-graphic-recording-images-prompt.md)
 - [graphic-recording/60-inspect-section-graphic-recording-images-prompt.md](graphic-recording/60-inspect-section-graphic-recording-images-prompt.md)
 
-`##` 見出しごとの複数枚で作る場合は、40番の開始時に全対象セクション分の `sections/<NNN>-<slug>/` ディレクトリと `section-source.md` を一括作成してください。
+`##` 見出しごとの複数枚で作る場合は、40番の開始時に全対象セクション分の `sections/<NNN>/` ディレクトリと `section-source.md` を一括作成してください。
 `section-source.md` は、元記事を `##` 見出しごとに分割した読み取りコピーです。
 1 セクションずつ、ディレクトリ作成から `image-prompt.md` 作成までをまとめて進める処理順にはしないでください。
 全セクションの `section-source.md` がそろってから、各セクションの `section-text.md` と `image-prompt.md` を作成し、その後で50番の画像生成へ進みます。
@@ -96,10 +96,10 @@
 `##` 見出しごとの複数枚で作る場合の主な生成物は次のとおりです。
 
 - `TODO.md`: セクション別画像生成の進行状況
-- `sections/<NNN>-<slug>/section-source.md`: 元記事から切り出したセクション本文。40番の初期化時に全セクション分を一括作成します。
-- `sections/<NNN>-<slug>/section-text.md`: セクション別グラレコ制作用整理テキスト
-- `sections/<NNN>-<slug>/image-prompt.md`: セクション別画像生成AI用プロンプト
-- `sections/<NNN>-<slug>/graphic-recording.png`: 50番で生成、保存するセクション別画像
+- `sections/<NNN>/section-source.md`: 元記事から切り出したセクション本文。40番の初期化時に全セクション分を一括作成します。
+- `sections/<NNN>/section-text.md`: セクション別グラレコ制作用整理テキスト
+- `sections/<NNN>/image-prompt.md`: セクション別画像生成AI用プロンプト
+- `sections/<NNN>/graphic-recording.png`: 50番で生成、保存するセクション別画像
 
 保存先は原則として同じ `{{RUN_OUTPUT_DIR}}` 配下に揃えます。`workplace/` を使う場合、Git 管理外確認はカレントフォルダが Git リポジトリ内の場合だけ必要です。
 
@@ -383,12 +383,25 @@ workplace/<YYYYMMDDHHmmss>-graphic-recording/
 
 1. `##` 見出しを抽出する
 2. `{{RUN_OUTPUT_DIR}}/sections/` を作成する
-3. 各セクションの `sections/<NNN>-<slug>/` を作成する
+3. 各セクションの `sections/<NNN>/` を作成する
 4. 各セクションの `section-source.md` を保存する
 5. `TODO.md` に全対象セクションを `image-pending` として並べる
 
+可能であれば、初期化フェーズでは次のスクリプトを使ってください。
+
+```bash
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/split-article-sections.mjs --article "{{ARTICLE_PATH}}" --out "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
+```
+
+このスクリプトは、元記事を変更せず、全対象セクション分の `sections/<NNN>/section-source.md` と `TODO.md` を一括作成します。
+
 この一括初期化が完了するまでは、`section-text.md`、`image-prompt.md`、画像生成へ進まないでください。
-初期化完了後、既に作成済みの `section-source.md` を入力として、各セクションの `section-text.md` と `image-prompt.md` を作成します。
+初期化完了後、既に作成済みの `section-source.md` を入力として、各セクションの `section-text.md` を作成します。
+`section-text.md` 作成後の `image-prompt.md` 合成では、可能であれば次のスクリプトを使ってください。
+
+```bash
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-section-image-prompts.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
+```
 
 ### 7A. セクション別画像を生成する
 
@@ -396,6 +409,18 @@ workplace/<YYYYMMDDHHmmss>-graphic-recording/
 
 50番では、セクションディレクトリや `section-source.md` を新規作成しないでください。
 不足がある場合は50番で補完せず、40番へ戻って初期化または素材作成を完了してください。
+
+画像生成後のコピーと `TODO.md` 更新では、可能であれば次のスクリプトを使ってください。
+
+```bash
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/copy-section-image.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --section "<NNN>" --src "<GENERATED_IMAGE_PATH>"
+```
+
+作業ディレクトリの状態確認では、必要に応じて次のスクリプトを使ってください。
+
+```bash
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/validate-run-dir.mjs --run-dir "{{RUN_OUTPUT_DIR}}"
+```
 
 ### 8A. セクション別画像を検品する
 
