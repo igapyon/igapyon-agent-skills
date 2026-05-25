@@ -3,11 +3,12 @@
 次の記事パスで指定された Markdown 記事を読み、`##` 見出しごとに、みくくが説明するグラフィックレコーディング（グラレコ）画像を作るための素材を準備してください。
 
 このプロンプトは、記事分割、セクション整理、画像生成AI用プロンプト作成、`TODO.md` 作成までを担当します。画像生成そのものは [50-generate-section-graphic-recording-images-prompt.md](50-generate-section-graphic-recording-images-prompt.md) で実行します。
+本文理解が必要な `section-text.md` は LLM が作成し、`section-text.md` とみくく描画プロンプト本文を合成した `image-prompt.md` は、可能であれば `compose-section-image-prompts.mjs` で作成してください。
 
 記事全体の代表画像生成フェーズの後にこのプロンプトを使う場合は、全体画像の追加バリエーション生成へ戻らないでください。
-このプロンプトでは、章ごとの素材作成へ移行し、`TODO.md` と `sections/<NNN>-<slug>/image-prompt.md` を作ることに集中してください。
+このプロンプトでは、章ごとの素材作成へ移行し、`TODO.md` と `sections/<NNN>/image-prompt.md` を作ることに集中してください。
 
-重要: セクション処理の開始時に、全対象セクション分の `sections/<NNN>-<slug>/` ディレクトリと `section-source.md` を先に一括作成してください。
+重要: セクション処理の開始時に、全対象セクション分の `sections/<NNN>/` ディレクトリと `section-source.md` を先に一括作成してください。
 `section-source.md` は、元記事を `##` 見出しごとに分割した読み取りコピーだけを保存します。
 1 セクションずつ、ディレクトリ作成、`section-source.md` 作成、`section-text.md` 作成、`image-prompt.md` 作成までをまとめて進める処理順にしないでください。
 
@@ -120,9 +121,17 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 初期化フェーズで行うこと:
 
 1. `{{RUN_OUTPUT_DIR}}/sections/` を作成する
-2. 全対象セクションについて `sections/<NNN>-<slug>/` を作成する
+2. 全対象セクションについて `sections/<NNN>/` を作成する
 3. 全対象セクションについて `section-source.md` を保存する
 4. `TODO.md` を作成し、全対象セクションを `image-pending` として並べる
+
+可能であれば、初期化フェーズでは次のスクリプトを使ってください。
+
+```bash
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/split-article-sections.mjs --article "{{ARTICLE_PATH}}" --out "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
+```
+
+このスクリプトは、元記事を変更せず、全対象セクション分の `sections/<NNN>/section-source.md` と `TODO.md` を一括作成します。
 
 初期化フェーズで行わないこと:
 
@@ -132,9 +141,9 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 - 元記事 Markdown への書き込み
 
 この初期化フェーズは、最初のセクションだけでなく全セクションに対して一括で完了させてください。
-以後のセクションごとの処理では、既に存在する `sections/<NNN>-<slug>/section-source.md` を入力として使います。
+以後のセクションごとの処理では、既に存在する `sections/<NNN>/section-source.md` を入力として使います。
 
-再実行時に `TODO.md` が既に存在する場合も、未初期化の対象セクションがあれば、先に不足している `sections/<NNN>-<slug>/` と `section-source.md` を補完してください。
+再実行時に `TODO.md` が既に存在する場合も、未初期化の対象セクションがあれば、先に不足している `sections/<NNN>/` と `section-source.md` を補完してください。
 その後で、`section-text.md` または `image-prompt.md` が不足しているセクションだけを処理してください。
 
 ---
@@ -160,9 +169,9 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 
 ## 出力ルール
 
-- 各セクションは `sections/<番号>-<slug>/` に保存する
-- 40番では最初に全セクションの `sections/<番号>-<slug>/` と `section-source.md` を一括作成する
-- 40番では初期化完了後、各セクションで `section-text.md` と `image-prompt.md` を作る
+- 各セクションは `sections/<番号>/` に保存する
+- 40番では最初に全セクションの `sections/<番号>/` と `section-source.md` を一括作成する
+- 40番では初期化完了後、各セクションで `section-text.md` を作り、`compose-section-image-prompts.mjs` で `image-prompt.md` を作る
 - 画像生成は50番で実行し、成功したら TODO を `image-generated` に更新する
 - 速度優先運用では50番は `image-generation-report.md` や `copy-generated-image.md` を作らず、画像コピーと `TODO.md` 更新だけで進む
 ```
@@ -178,14 +187,14 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 セクション初期化フェーズで、各 `##` セクションごとに以下のディレクトリを一括作成します。
 
 ```text
-{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/
+{{RUN_OUTPUT_DIR}}/sections/<NNN>/
 ```
 
 例:
 
 ```text
-{{RUN_OUTPUT_DIR}}/sections/001-text-file/
-{{RUN_OUTPUT_DIR}}/sections/002-utf-8-encoding/
+{{RUN_OUTPUT_DIR}}/sections/001/
+{{RUN_OUTPUT_DIR}}/sections/002/
 ```
 
 各セクションの主な生成物:
@@ -202,14 +211,14 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 
 セクション初期化フェーズが全セクション分完了していることを確認してから、各セクションについて次の順序で処理してください。
 
-まだ全対象セクションの `sections/<NNN>-<slug>/section-source.md` がそろっていない場合は、`section-text.md` や `image-prompt.md` の作成へ進まず、先に初期化フェーズを完了してください。
+まだ全対象セクションの `sections/<NNN>/section-source.md` がそろっていない場合は、`section-text.md` や `image-prompt.md` の作成へ進まず、先に初期化フェーズを完了してください。
 
 ## 1. セクション本文を確認する
 
 対象の `##` 見出しと本文は、初期化フェーズで以下へ保存済みである必要があります。
 
 ```text
-{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/section-source.md
+{{RUN_OUTPUT_DIR}}/sections/<NNN>/section-source.md
 ```
 
 これは元記事からの読み取りコピーです。`section-source.md` の作成時も、元記事側には一切書き込まないでください。
@@ -222,7 +231,7 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 保存先:
 
 ```text
-{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/section-text.md
+{{RUN_OUTPUT_DIR}}/sections/<NNN>/section-text.md
 ```
 
 重視する観点:
@@ -236,55 +245,33 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 
 記事全体の別セクションにある情報を勝手に混ぜないでください。
 
-## 3. セクション専用の画像生成プロンプトを作る
+## 3. セクション専用の画像生成プロンプトを合成する
 
 `section-text.md` と `{{MIKUKU_PROMPT_PATH}}` の本文を入力として、セクション専用の画像生成AI用プロンプトを作成します。
+可能であれば、次のスクリプトを使ってください。
+
+```bash
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-section-image-prompts.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}" --section "<NNN>"
+```
+
+複数セクション分の `section-text.md` が作成済みの場合は、`--section` を省略して未作成の `image-prompt.md` をまとめて作成してかまいません。
+
+```bash
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-section-image-prompts.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
+```
+
+このスクリプトは、`section-text.md` の本文、`{{MIKUKU_PROMPT_PATH}}` の本文、同一性維持ルール、横長グラレコ画像の固定方針を合成し、`image-prompt.md` を作成します。
+既存の `image-prompt.md` は、`--overwrite` を指定しない限り上書きしません。
 
 保存先:
 
 ```text
-{{RUN_OUTPUT_DIR}}/sections/<NNN>-<slug>/image-prompt.md
+{{RUN_OUTPUT_DIR}}/sections/<NNN>/image-prompt.md
 ```
 
-プロンプトには、以下を含めてください。
-
-- みくくがその `##` セクションを説明している構図
-- セクション見出しを主題にした横長ポスター構図
-- 記事内容や説明対象の配置に合わせて、みくくの顔の向きや視線方向を調整してよいという指示
-- 手描きグラレコ風
-- ホワイトボード解説風
-- 図解、矢印、囲み、アイコン
-- セクション本文に基づく重要語
-- みくくの吹き出し
-- 描画プロンプトとして使う `{{MIKUKU_PROMPT_PATH}}` の本文
-- 画像生成時に、各セクションごとに `{{MIKUKU_PROMPT_PATH}}` の本文を画像生成AI用プロンプトに埋め込む指示
-- パスだけを書いて済ませない、という注意
-- 画像内テキストとして使う短い正確表記
-- 画像内に長文を入れすぎない方針
-
-`TODO.md` の `みくく描画プロンプト:` 行は、描画プロンプトパスの記録です。
-画像生成ツールへ描画プロンプトが自動で引き継がれることは前提にしないでください。
-各 `image-prompt.md` には、タイトルごとの画像生成時に `{{MIKUKU_PROMPT_PATH}}` の本文を含めて生成することを明記してください。
-
-画像内テキストは、本文の長い見出しや文章をそのまま入れず、短いラベルへ整理してください。
-
-推奨形式:
-
-```markdown
-## 画像内テキスト 正確表記
-
-- セクション見出しを短くした表記
-- 重要キーワード 1
-- 重要キーワード 2
-- みくくの短い吹き出し
-
-## 画像内テキスト方針
-
-- 長文は避ける
-- 重要語は短く区切る
-- 日本語ラベルは少数に絞る
-- 画像生成時に文字が崩れても、原文本文は変更しない
-```
+スクリプトを使えない場合だけ、同等の内容を手動で作成してください。
+その場合も、`{{MIKUKU_PROMPT_PATH}}` のパスだけで済ませず、本文を `image-prompt.md` に埋め込んでください。
+画像内テキストは、`section-text.md` の語句を短く整理し、長文を入れすぎないでください。
 
 ## 4. TODO.md を更新する
 
@@ -299,7 +286,7 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 40番では、画像がまだ生成されていないため `[x]` にしないでください。`[x]` と `image-generated` は50番で画像保存まで確認できた場合だけ使います。
 
 速度優先運用では、50番へ渡すための `{{RUN_OUTPUT_DIR}}/image-generation-queue.md` は作成しなくてもかまいません。
-`TODO.md` と `sections/<NNN>-<slug>/image-prompt.md` があれば、50番は次の `image-pending` セクションを処理できます。
+`TODO.md` と `sections/<NNN>/image-prompt.md` があれば、50番は次の `image-pending` セクションを処理できます。
 
 ---
 

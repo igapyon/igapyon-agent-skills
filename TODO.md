@@ -59,22 +59,34 @@
 - [x] `skills/igapyon-mikuku-agent/references/graphic-recording.md` の `{{RUN_OUTPUT_DIR}}` 決定ルールを、カレントフォルダ優先・非Git時 `./workplace/` 作成に更新する
 - [x] `skills/igapyon-mikuku-agent/references/graphic-recording/10-article-to-graphic-recording-text-prompt.md`、`20-graphic-recording-explainer-image-prompt.md`、`30-generate-graphic-recording-image-prompt.md`、`40-article-section-graphic-recording-batch-prompt.md` の保存先決定ルールを同じ方針にそろえる
 - [x] Git リポジトリ内の場合も、記事や入力ファイルが属する別リポジトリへ移動せず、明示された `{{RUN_OUTPUT_DIR}}` または現在の作業カレント配下の `workplace/` を使う方針にする
+- [x] `skills/igapyon-mikuku-agent/references/graphic-recording/scripts/split-article-sections.mjs` を追加し、記事 Markdown から `sections/001/section-source.md` 形式で一括分割できるようにする
+- [x] `skills/igapyon-mikuku-agent/references/graphic-recording/scripts/copy-section-image.mjs` を追加し、生成画像を `sections/<NNN>/graphic-recording.png` へ明示コピーして `TODO.md` を更新できるようにする
+- [x] `skills/igapyon-mikuku-agent/references/graphic-recording/scripts/validate-run-dir.mjs` を追加し、`TODO.md` と各セクションの4ファイル構成を検証できるようにする
+- [x] `skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-section-image-prompts.mjs` を追加し、LLM が作成した `section-text.md` とみくく描画プロンプト本文を合成して `image-prompt.md` を作れるようにする
 
 ## miku-soft アーキテクチャ考察メモ
 
-- [ ] 再開時はまず `README.md` とこの `TODO.md` を読む
-- [ ] その後、`workplace/miku-soft/miku-soft-*` を読み込んでから作業を再開する
-- [ ] 現在の記事シリーズ用ネタ貯蔵庫は `skills/igapyon-qiita-writer/references/general/20260430-miku-soft-architecture-topic-bank.md`
-- [ ] 今回は記事完成ではなく、Qiita 記事化する前の論点出しとして進めている
-- [ ] 現在の主題は `miku-soft` のソフトウェアアーキテクチャ
-- [ ] 中心論点は、`Web App` は人間向け確認 surface、それ以外の `CLI` / `Java runtime` / `Agent Skills` / `MCP` は生成AI・Agent・Automation 向け surface という整理
-- [ ] `Single-file Web App` を最初の成果物に置くため、基軸言語は TypeScript / JavaScript になる、という言語選択の論点を追記済み
-- [ ] TypeScript で開発し、JavaScript にトランスパイルし、外部ネットワーク遮断でも動く Single-file Web App として配布する、という方針を追記済み
-- [ ] 外部ネットワーク遮断と説明可能性のため、外部ライブラリ依存は極力減らし、core 近傍は原則スクラッチ開発とする論点を追記済み
-- [ ] ただし複雑性・安全性・既存エコシステム接続・描画などの理由がある場合は OSS ライブラリ利用可、という例外方針も追記済み
+- [x] 再開時はまず `README.md` とこの `TODO.md` を読む
+- [x] その後、`workplace/miku-soft/miku-soft-*` を読み込んでから作業を再開する
+  - 2026-05-25 時点では `workplace/miku-soft/` は存在しないため、`skills/igapyon-miku-soft-developer/references/miku-soft-basic/` を参照元として作業継続
+- [x] 現在の記事シリーズ用ネタ貯蔵庫は `skills/igapyon-qiita-writer/references/general/20260430-miku-soft-architecture-topic-bank.md`
+- [x] 今回は記事完成ではなく、Qiita 記事化する前の論点出しとして進めている
+- [x] 現在の主題は `miku-soft` のソフトウェアアーキテクチャ
+- [x] 中心論点は、`Web App` は人間向け確認 surface、それ以外の `CLI` / `Java runtime` / `Agent Skills` / `MCP` は生成AI・Agent・Automation 向け surface という整理
+- [x] `Single-file Web App` を最初の成果物に置くため、基軸言語は TypeScript / JavaScript になる、という言語選択の論点を追記済み
+- [x] TypeScript で開発し、JavaScript にトランスパイルし、外部ネットワーク遮断でも動く Single-file Web App として配布する、という方針を追記済み
+- [x] 外部ネットワーク遮断と説明可能性のため、外部ライブラリ依存は極力減らし、core 近傍は原則スクラッチ開発とする論点を追記済み
+- [x] ただし複雑性・安全性・既存エコシステム接続・描画などの理由がある場合は OSS ライブラリ利用可、という例外方針も追記済み
+- [x] `20260430-miku-soft-architecture-topic-bank.md` に、Web UI は人間向け確認 surface、CLI は agent / script / CI 向け実行 surface という対比を追記済み
+- [x] `20260430-miku-soft-architecture-topic-bank.md` に、エントリポイントごとの読者を混ぜない整理と、CLI 内包型 Agent Skills の分担を追記済み
+- [x] `20260430-miku-soft-architecture-topic-bank.md` に、Single-file Web App 起点でも Web UI 中心主義にしない、という記事化候補を追記済み
+- [x] `20260430-miku-soft-architecture-topic-bank.md` に、projection / patch / validate / apply の artifact pipeline 論点を追記済み
+- [x] `20260430-miku-soft-architecture-topic-bank.md` に、CLI help を AI-era runtime contract として扱う記事化候補を追記済み
+- [x] `20260430-miku-soft-architecture-topic-bank.md` に、MCP server は protocol adapter であり、HTTP 化では transport / server operation policy が増えるという論点を追記済み
 - [ ] 次回以降、記事としてまとめる場合は、現在の `20260430-miku-soft-architecture-topic-bank.md` を完成稿ではなく素材メモとして扱い、必要に応じて複数記事へ分割する
 - [ ] `生成AI駆動開発における README / docs / TODO / workplace` は `skills/igapyon-qiita-writer/references/general/20260430-general-ai-dev-docs-workplace.md` として執筆開始済み
-- [ ] 再開時は `20260430-general-ai-dev-docs-workplace.md` の初稿を読み、Qiita 記事としての構成、見出し、説明粒度、画像追加の要否を確認する
+- [x] 再開時は `20260430-general-ai-dev-docs-workplace.md` の初稿を読み、Qiita 記事としての構成、見出し、説明粒度、画像追加の要否を確認する
+  - 公開済み URL は記事内に記録済み: https://qiita.com/igapyon/items/e2002183dcdadf00ec59
 - [ ] `20260430-miku-soft-architecture-topic-bank.md` 側では、同テーマを「執筆開始」として更新済み
 
 ## miku-indexgen-java / miku-indexgen-java-maven 分離反映
