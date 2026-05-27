@@ -5,7 +5,7 @@
  "files": [
   {"name":"mikuku-portrait-short-prompt.md","path":"assets/mikuku/mikuku-portrait-short-prompt.md","ext":"md","dir":"assets/mikuku","size":628,"summary":"Mikuku Portrait Short Prompt"},
   {"name":"README.md","path":"README.md","ext":"md","dir":"","size":7249,"summary":"igapyon-mikuku-agent"},
-  {"name":"article-writing.md","path":"references/article-writing.md","ext":"md","dir":"references","size":12742,"summary":"みくく担当記事の執筆参照"},
+  {"name":"article-writing.md","path":"references/article-writing.md","ext":"md","dir":"references","size":17728,"summary":"みくく担当記事の執筆参照"},
   {"name":"codex-local-token-usage.md","path":"references/codex-local-token-usage.md","ext":"md","dir":"references","size":4034,"summary":"OpenAI Codex CLI Local Token Usage Investigation"},
   {"name":"20260509-general-agent-skills-activation.md","path":"references/examples/articles/20260509-general-agent-skills-activation.md","ext":"md","dir":"references/examples/articles","size":14785,"summary":"Agent Skills の発火は、どのように起きているのか"},
   {"name":"20260509-general-agent-skills-docs.md","path":"references/examples/articles/20260509-general-agent-skills-docs.md","ext":"md","dir":"references/examples/articles","size":14543,"summary":"Agent Skills では、説明ページの役割が少し変わる"},
@@ -27,6 +27,6 @@
   {"name":"mikuku-prompt.md","path":"references/mikuku-prompt.md","ext":"md","dir":"references","size":4292,"summary":"生成AI キャラクター `みくく` プロンプト (v20251229c改1)"},
   {"name":"article-footer-sections-template.md","path":"references/templates/article-footer-sections-template.md","ext":"md","dir":"references/templates","size":3416,"summary":"みくく担当記事の末尾セクションテンプレート"},
   {"name":"VERSION.md","path":"references/VERSION.md","ext":"md","dir":"references","size":934,"summary":"みくく Version"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":5566,"description":"Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks whether such a character skill exists, mention this skill as an available option but do not apply it until asked.","summary":"igapyon-mikuku-agent"}
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":5886,"description":"Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks whether such a character skill exists, mention this skill as an available option but do not apply it until asked.","summary":"igapyon-mikuku-agent"}
  ]
 }
