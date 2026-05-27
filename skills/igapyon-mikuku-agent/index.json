@@ -4,6 +4,7 @@
  "basePath": ".",
  "files": [
   {"name":"mikuku-portrait-short-prompt.md","path":"assets/mikuku/mikuku-portrait-short-prompt.md","ext":"md","dir":"assets/mikuku","size":628,"summary":"Mikuku Portrait Short Prompt"},
+  {"name":"README.md","path":"README.md","ext":"md","dir":"","size":7249,"summary":"igapyon-mikuku-agent"},
   {"name":"article-writing.md","path":"references/article-writing.md","ext":"md","dir":"references","size":12742,"summary":"みくく担当記事の執筆参照"},
   {"name":"codex-local-token-usage.md","path":"references/codex-local-token-usage.md","ext":"md","dir":"references","size":4034,"summary":"OpenAI Codex CLI Local Token Usage Investigation"},
   {"name":"20260509-general-agent-skills-activation.md","path":"references/examples/articles/20260509-general-agent-skills-activation.md","ext":"md","dir":"references/examples/articles","size":14785,"summary":"Agent Skills の発火は、どのように起きているのか"},
