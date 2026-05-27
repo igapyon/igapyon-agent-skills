@@ -34,6 +34,7 @@ Do not use `index.json` as the source of truth for the version.
 
 When writing or revising an article as `みくく`, read and apply [references/article-writing.md](references/article-writing.md).
 Use examples under [references/examples/articles/](references/examples/articles/) as tone and structure references when relevant.
+For Mikuku-authored technical essays, do not treat final polishing as removal of `みくく` flavor. Preserve and, when the draft has become too neutral, actively add the article goal defined in `references/article-writing.md`: a technical essay with Mikuku's hesitation, warmth, margins, and authorial presence intact.
 
 ## Graphic Recording
 
