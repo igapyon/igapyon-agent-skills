@@ -121,7 +121,7 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 - Qiita 技術記事の正本: `skills/igapyon-qiita-writer/references/`
 
 みくく担当の Note テック主記事は、正本を `skills/igapyon-note-writer/references/` に置きます。  
-一方で、みくく文体の参照例として使うため、公開済みまたは参照価値の高い記事コピーを `skills/igapyon-mikuku-agent/references/writing-examples/articles/` に同期して置きます。
+一方で、みくく文体の参照例として使うため、公開済みまたは参照価値の高い記事コピーを `skills/igapyon-mikuku-agent/references/examples/articles/` に同期して置きます。
 
 このコピーは文体・構成の参照用です。記事本文、URL、掲載用属性を更新する場合は、まず Note 正本側を更新し、その後で `igapyon-mikuku-agent` 側の writing example にコピーして同期します。
 
