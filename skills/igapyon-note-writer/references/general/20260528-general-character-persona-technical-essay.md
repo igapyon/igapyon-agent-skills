@@ -1,6 +1,6 @@
 ---
-title: AI agent 時代の、キャラクター人格つき技術エッセイ制作
-tags: #生成AI #AIagent #AgentSkills #技術エッセイ #mikuku
+title: AI agent とキャラクター人格で技術エッセイを書くということ
+tags: #生成AI #AIagent #AgentSkills #mikuku
 author: igapyon
 slide: false
 published_to: note
