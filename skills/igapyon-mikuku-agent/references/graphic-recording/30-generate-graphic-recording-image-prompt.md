@@ -137,6 +137,13 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 `{{MIKUKU_PROMPT_PATH}}` はパス文字列としてプロンプト内に書くだけでなく、事前に本文を `{{IMAGE_PROMPT_PATH}}` へ埋め込んでください。
 別の生成実行で使った描画プロンプトが今回の生成へ暗黙に引き継がれるとは扱わないでください。
 
+画像生成AI用プロンプト本文に持ち物の制約が明記されていない場合は、画像生成ツールへ渡す直前に次の補助制約を追加してください。
+既存プロンプトに、みくくが物を持つ指示が残っている場合も、次の補助制約を優先してください。
+
+```text
+Do not let Mikuku hold any objects.
+```
+
 組み込み `imagegen` が `prompt` しか受け取れない環境でも、`{{IMAGE_PROMPT_PATH}}` にみくく描画プロンプト本文が含まれていれば生成を実行できます。
 
 組み込み `imagegen` の生成画像は通常 `$CODEX_HOME/generated_images/...` 配下へ保存されます。プロジェクトで使う画像は、生成後に上記の出力先へコピーしてください。元画像は削除しないでください。

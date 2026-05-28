@@ -302,6 +302,7 @@ node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-se
 - 可愛い技術解説ポスター
 - 日本語の見出しや短いキーワードが読めそうな構成
 - 情報量は多すぎず、1 セクションの主題に絞る
+- みくくに物を持たせない
 
 避けたいもの:
 
@@ -311,6 +312,7 @@ node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-se
 - 暗い色味
 - 写実寄り
 - 無機質な企業プレゼン風
+- みくくが物を持つ構図
 
 ---
 

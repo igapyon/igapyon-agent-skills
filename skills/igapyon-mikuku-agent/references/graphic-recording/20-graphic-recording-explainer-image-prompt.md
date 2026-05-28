@@ -112,7 +112,7 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/image-prompt.md
 * 同じキャラクター `Mikuku` / `みくく` として扱う
 * キャラクターを再設計しない
 * 顔の輪郭、髪型、髪色、目の描き方、ツインテール、髪留め、全体の性格印象を維持する
-* 変更してよいのは、場面、ポーズ、表情、構図、持ち物、説明している内容だけ
+* 変更してよいのは、場面、ポーズ、表情、構図、説明している内容だけ
 * 顔の向きと視線方向は、記事内容やグラレコ内の説明対象に合わせて生成前に変更してよい
 * 例: 右側のみくくが左側の図解を見る、中央の見出しを見上げる、吹き出し側へ視線を向ける
 * `same character`, `do not redesign`, `preserve character identity`, `canonical character reference` の意図を明確に含める
@@ -121,8 +121,7 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/image-prompt.md
 * 少し困り顔
 * 優しい表情
 * アニメ調
-* 手にペンやポインターを持つ
-* グラレコを指し示して説明している
+* みくくに物を持たせない
 
 ---
 
@@ -218,6 +217,7 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/image-prompt.md
 * SF感が強すぎる
 * 暗すぎる色味
 * 写実寄り
+* みくくが物を持つ構図
 
 ---
 
