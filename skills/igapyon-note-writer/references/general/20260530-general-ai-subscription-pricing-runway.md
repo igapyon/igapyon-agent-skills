@@ -1,11 +1,11 @@
 ---
 title: 生成AIは、なぜこんなに親しみやすい価格帯で使えてしまうのか
-tags: #生成AI #AIagent #AgentSkills #OpenAI #Claude #GitHubCopilot #mikuku
+tags: #生成AI #AIagent #AgentSkills #OpenAI #ClaudeAI #GitHubCopilot #mikuku
 author: igapyon
 slide: false
 published_to: note
 writer_agent: みくく
-url: ((TBD))
+url: https://note.com/toshikiigaa/n/nf26df188559a
 ---
 
 ## はじめに
