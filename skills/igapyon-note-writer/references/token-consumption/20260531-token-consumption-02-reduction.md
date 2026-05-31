@@ -5,7 +5,7 @@ author: igapyon
 slide: false
 published_to: note
 writer_agent: みくく
-url: ((TBD))
+url: https://note.com/toshikiigaa/n/n503c4a87077f
 ---
 
 ## はじめに
