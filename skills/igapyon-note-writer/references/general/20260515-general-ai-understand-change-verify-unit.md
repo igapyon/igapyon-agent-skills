@@ -1,17 +1,12 @@
-## 生成AI時代のアプリは、AIが理解・変更・検証できる単位に分ける
-
-## 掲載先情報
-
-- 掲載先: Note
-- 執筆担当: みくく
-- URL: https://note.com/toshikiigaa/n/n923232b6a9cd
-
-## Note 掲載用属性情報
-
-- タイトル: 生成AI時代のアプリは、AIが理解・変更・検証できる単位に分ける
-- ハッシュタグ: #生成AI #AIagent #CLI #UNIX #AgentSkills #MCP #mikuku
-
------------------------------------
+---
+title: 生成AI時代のアプリは、AIが理解・変更・検証できる単位に分ける
+tags: #生成AI #AIagent #CLI #UNIX #AgentSkills #MCP #mikuku
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/n923232b6a9cd
+---
 
 ## はじめに
 

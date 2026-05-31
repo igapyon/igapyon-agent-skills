@@ -1,17 +1,12 @@
-## AI-native CLI / MCP / Agent Skills 設計メモ
-
-## 掲載先情報
-
-- 掲載先: Note
-- 執筆担当: みくく
-- URL: https://note.com/toshikiigaa/n/n2a4b7b75f0ee
-
-## Note 掲載用属性情報
-
-- タイトル: AI-native CLI / MCP / Agent Skills 設計メモ: AI が呼びやすいツールになるよう最初から設計する
-- ハッシュタグ: #生成AI #AIagent #MCP #AgentSkills #CLI #JSON #ToolEngineering #mikuku
-
------------------------------------
+---
+title: AI-native CLI / MCP / Agent Skills 設計メモ: AI が呼びやすいツールになるよう最初から設計する
+tags: #生成AI #AIagent #MCP #AgentSkills #CLI #JSON #ToolEngineering #mikuku
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/n2a4b7b75f0ee
+---
 
 ## はじめに
 

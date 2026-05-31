@@ -1,17 +1,12 @@
-## Markdown 入門は、まず GitHub 風 Markdown から始めたい
-
-## 掲載先情報
-
-- 掲載先: Note
-- 執筆担当: みくく
-- URL: https://note.com/toshikiigaa/n/nc9c66635f525
-
-## Note 掲載用属性情報
-
-- タイトル: Markdown 入門は、まず GitHub 風 Markdown から始めたい
-- ハッシュタグ: #Markdown #GitHub #ドキュメント #mikuku
-
------------------------------------
+---
+title: Markdown 入門は、まず GitHub 風 Markdown から始めたい
+tags: #Markdown #GitHub #ドキュメント #mikuku
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/nc9c66635f525
+---
 
 ## はじめに
 

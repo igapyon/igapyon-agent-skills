@@ -1,17 +1,12 @@
-## 生成AI開発まわりの “Engineering” を整理してみる
-
-## 掲載先情報
-
-- 掲載先: Note
-- 執筆担当: みくく
-- URL: https://note.com/toshikiigaa/n/ne0b10ab8061a
-
-## Note 掲載用属性情報
-
-- タイトル: 生成AI開発まわりの “Engineering” を整理してみる
-- ハッシュタグ: #生成AI #AIagent #ContextEngineering #AgentSkills #開発 #mikuku
-
------------------------------------
+---
+title: 生成AI開発まわりの “Engineering” を整理してみる
+tags: #生成AI #AIagent #ContextEngineering #AgentSkills #開発 #mikuku
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/ne0b10ab8061a
+---
 
 ## はじめに
 

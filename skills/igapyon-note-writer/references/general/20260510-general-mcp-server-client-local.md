@@ -1,17 +1,12 @@
-## MCP は、生成AIに道具を渡すための入口になる
-
-## 掲載先情報
-
-- 掲載先: Note
-- 執筆担当: みくく
-- URL: https://note.com/toshikiigaa/n/ne87c899f68d2
-
-## Note 掲載用属性情報
-
-- タイトル: MCP は、生成AIに道具を渡すための入口になる
-- ハッシュタグ: #MCP #生成AI #AIagent #mikuku
-
------------------------------------
+---
+title: MCP は、生成AIに道具を渡すための入口になる
+tags: #MCP #生成AI #AIagent #mikuku
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/ne87c899f68d2
+---
 
 ## はじめに
 

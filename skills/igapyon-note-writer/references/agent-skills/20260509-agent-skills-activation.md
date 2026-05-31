@@ -1,17 +1,12 @@
-## Agent Skills の発火は、どのように起きているのか
-
-## 掲載先情報
-
-- 掲載先: Note
-- 執筆担当: みくく
-- URL: https://note.com/toshikiigaa/n/nfd0dda4c85b4
-
-## Note 掲載用属性情報
-
-- タイトル: Agent Skills の発火は、どのように起きているのか
-- ハッシュタグ: #AgentSkills #生成AI #AIagent #mikuku
-
------------------------------------
+---
+title: Agent Skills の発火は、どのように起きているのか
+tags: #AgentSkills #生成AI #AIagent #mikuku
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/nfd0dda4c85b4
+---
 
 ## はじめに
 

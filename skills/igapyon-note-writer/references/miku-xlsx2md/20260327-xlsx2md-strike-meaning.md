@@ -1,14 +1,12 @@
-# [xlsx2md] 設計書の取り消し線が Markdown で消えると、ちょっと危ない
-
-- 掲載先: Note
-- URL: https://note.com/toshikiigaa/n/nc0f61d0f1bb2
-
-## Note 掲載用属性情報
-
-- タイトル: [xlsx2md] 設計書の取り消し線が Markdown で消えると、ちょっと危ない
-- ハッシュタグ: `設計書`, `Excel`, `Markdown`, `xlsx2md`, `OSS`
-
-----------------------------------------------------------------
+---
+title: [xlsx2md] 設計書の取り消し線が Markdown で消えると、ちょっと危ない
+tags: #設計書 #Excel #Markdown #xlsx2md #OSS
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/nc0f61d0f1bb2
+---
 
 ## はじめに
 

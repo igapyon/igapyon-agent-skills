@@ -1,11 +1,12 @@
-## 生成AI agent と開発するとき、README・docs・TODO は会話の外の記憶になる
-
-- 掲載先: Note
-- URL: https://note.com/toshikiigaa/n/n5dcb66e47151
-- タイトル: 生成AI agent と開発するとき、README・docs・TODO は会話の外の記憶になる
-- ハッシュタグ: #生成AI, #TODO, #AI駆動開発, #readme, #生成AI駆動開発
-
-----------------------------------------------------------------
+---
+title: 生成AI agent と開発するとき、README・docs・TODO は会話の外の記憶になる
+tags: #生成AI #TODO #AI駆動開発 #readme #生成AI駆動開発
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/n5dcb66e47151
+---
 
 ## はじめに
 

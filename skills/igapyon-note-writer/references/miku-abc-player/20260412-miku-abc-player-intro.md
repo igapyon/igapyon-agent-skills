@@ -1,12 +1,12 @@
-## [miku-abc-player] `ABC` 記譜法の譜面を、ちょっと五線譜で見たくなった
-
-- 掲載先: Note
-- URL: https://note.com/toshikiigaa/n/n5be1d51d336a
-
-## Note 掲載用属性情報
-
-- タイトル: [miku-abc-player] `ABC` 記譜法の譜面を、ちょっと五線譜で見たくなった
-- ハッシュタグ: #MIDI #譜面 #musescore #記譜法 #MusicXML #mikuk #ABC記譜法 #文字譜 #mikuscore
+---
+title: [miku-abc-player] `ABC` 記譜法の譜面を、ちょっと五線譜で見たくなった
+tags: #MIDI #譜面 #musescore #記譜法 #MusicXML #mikuk #ABC記譜法 #文字譜 #mikuscore
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/n5be1d51d336a
+---
 
 ## はじめに
 

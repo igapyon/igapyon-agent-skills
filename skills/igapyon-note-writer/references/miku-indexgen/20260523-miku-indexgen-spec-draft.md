@@ -1,16 +1,12 @@
-## [miku-indexgen] AI エージェントに読ませる前に、ディレクトリの索引を作る
-
-- 掲載先: Note
-- URL: 未公開
-- 状態: 下書き
-
-## Note 掲載用属性情報
-
-- タイトル: [miku-indexgen] AI エージェントに読ませる前に、ディレクトリの索引を作る
-- ハッシュタグ: `生成AI`, `CLI`, `Markdown`, `JSON`, `個人開発`
-- 担当: みくく
-
-----------------------------------------------------------------
+---
+title: [miku-indexgen] AI エージェントに読ませる前に、ディレクトリの索引を作る
+tags: #生成AI #CLI #Markdown #JSON #個人開発
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: ((TBD))
+---
 
 ## はじめに
 
