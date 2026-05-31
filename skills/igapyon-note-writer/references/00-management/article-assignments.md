@@ -11,10 +11,10 @@
 
 | 記事ファイル | 掲載先 | 担当 | 使用 Agent Skills | 備考 |
 |---|---|---|---|---|
-| `references/general/20260509-general-agent-skills-docs.md` | Note | みくく | `igapyon-qiita-writer`, `igapyon-mikuku-agent` | Note テック主記事 |
-| `references/general/20260509-general-agent-skills-activation.md` | Note | みくく | `igapyon-qiita-writer`, `igapyon-mikuku-agent` | Note テック主記事 |
+| `references/agent-skills/20260509-agent-skills-docs.md` | Note | みくく | `igapyon-qiita-writer`, `igapyon-mikuku-agent` | Note テック主記事 |
+| `references/agent-skills/20260509-agent-skills-activation.md` | Note | みくく | `igapyon-qiita-writer`, `igapyon-mikuku-agent` | Note テック主記事 |
 | `references/general/20260510-general-mcp-server-client-local.md` | Note | みくく | `igapyon-mikuku-agent` | Note テック主記事 |
-| `references/general/20260514-general-agent-skills-natural-language-programming.md` | Note | みくく | `igapyon-mikuku-agent` | Note テック主記事 |
+| `references/agent-skills/20260514-agent-skills-natural-language-programming.md` | Note | みくく | `igapyon-mikuku-agent` | Note テック主記事 |
 | `references/general/20260514-general-ai-engineering-overview.md` | Note | みくく | `igapyon-mikuku-agent` | Note テック主記事 |
 | `references/general/20260514-general-ai-native-cli-mcp-agent-skills.md` | Note | みくく | `igapyon-mikuku-agent` | Note テック主記事 |
-| `references/general/20260523-general-content-agent-skill-types.md` | Note | みくく | `igapyon-note-writer`, `igapyon-mikuku-agent` | Note テック主記事、下書き |
+| `references/agent-skills/20260523-content-agent-skill-types.md` | Note | みくく | `igapyon-note-writer`, `igapyon-mikuku-agent` | Note テック主記事、下書き |

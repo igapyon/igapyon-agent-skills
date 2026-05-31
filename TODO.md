@@ -6,7 +6,13 @@
 
 ## Note 記事 TODO
 
-- [ ] `skills/igapyon-note-writer/references/general/20260516-general-content-agent-skills.md` に、コンテンツ型 Agent Skill の中にも種類があることを短く追記する
+- [ ] 旧素材メモ `xxxxxxxx-general-content-agent-skills-token-context.md` から、3本の記事へ未展開だった補助論点を必要なら別記事または追補へ展開する
+  - キャッシュやバッチ処理によるトークン消費量抑制
+  - 用途に対して過剰に高価なモデルを使わない、というモデル選択の観点
+  - 課金体系によっては Web UI のほうが有利な場合もある、という利用形態ごとの注意
+  - 扱っているトークン自体の質が高まると、回答や作業の安定感も良くなる、という副産物の表現
+  - いずれも `20260530-token-consumption-01-basics.md`、`20260531-token-consumption-02-reduction.md`、`20260531-token-consumption-03-agent-skills-reduction.md` の中心主題からはやや外れるため、現時点では TODO に留める
+- [ ] `skills/igapyon-note-writer/references/agent-skills/20260516-content-agent-skills.md` に、コンテンツ型 Agent Skill の中にも種類があることを短く追記する
 - [ ] 既存記事では詳細分類まで踏み込まず、新記事への導線として扱う
 - [x] 新記事「コンテンツ型 Agent Skill にはどんな種類があるか」を作成し、知識ベース型、テンプレート型、文体・キャラクター型、レビュー基準型、事例集型、索引・入口型などを整理する
 - [x] 新記事では、各分類が排他的ではなく複合しうること、構成の分類と接続方法の分類を混ぜすぎないことを書く
@@ -18,14 +24,14 @@
 - [x] 知識ベース型 Agent Skill は、vector DB や embedding index を明示的に使わなくても、Codex や GitHub Copilot が repository 内の Markdown / source code を探索して RAG っぽく効くことを書く
 - [x] 本格的な RAG 基盤ではなく、repo-native な知識ベース運用として説明し、最近の生成AI agent の能力向上によって成立していることを書く
 - [x] 静的な Markdown 群でも、生成AI agent が読み、照合し、要約し、作業に反映すると、知性に似たものを感じさせることを書く
-- [x] `skills/igapyon-note-writer/references/general/20260523-general-content-agent-skill-types.md` の公開・内容確定後、`skills/igapyon-mikuku-agent/references/examples/articles/` に文体参考用コピーとして反映する
+- [x] `skills/igapyon-note-writer/references/agent-skills/20260523-content-agent-skill-types.md` の公開・内容確定後、`skills/igapyon-mikuku-agent/references/examples/articles/` に文体参考用コピーとして反映する
 
 ## 作成済みだが未公開候補の記事
 
 - [ ] `skills/igapyon-note-writer/references/miku-indexgen/20260523-miku-indexgen-spec-draft.md`
   - `[miku-indexgen] AI エージェントに読ませる前に、ディレクトリの索引を作る`
   - `URL: 未公開`、`状態: 下書き`
-- [ ] `skills/igapyon-note-writer/references/general/20260523-general-content-agent-skill-types.md`
+- [ ] `skills/igapyon-note-writer/references/agent-skills/20260523-content-agent-skill-types.md`
   - `コンテンツ型 Agent Skill にはどんな種類があるか`
   - `URL: 未公開`、`状態: 下書き`
 - [ ] `skills/igapyon-note-writer/references/mikuscore/2026XXXX-mikuscore-skills-intro.md`
