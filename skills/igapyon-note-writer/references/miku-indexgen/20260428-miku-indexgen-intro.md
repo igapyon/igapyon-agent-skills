@@ -1,14 +1,12 @@
-## [miku-indexgen] AI にファイルを読ませる前に、まず地図が欲しかった話
-
-- 掲載先: Note
-- URL: https://note.com/toshikiigaa/n/n5b0ac55dce0a
-
-## Note 掲載用属性情報
-
-- タイトル: [miku-indexgen] AI にファイルを読ませる前に、まず地図が欲しかった話
-- ハッシュタグ: `生成AI`, `CLI`, `Markdown`, `個人開発`, `Node.js`
-
-----------------------------------------------------------------
+---
+title: [miku-indexgen] AI にファイルを読ませる前に、まず地図が欲しかった話
+tags: #生成AI #CLI #Markdown #個人開発 #Node.js
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/n5b0ac55dce0a
+---
 
 ## はじめに
 

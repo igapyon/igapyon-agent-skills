@@ -5,7 +5,7 @@ author: igapyon
 slide: false
 published_to: note
 writer_agent: みくく
-url: ((TBD))
+url: https://note.com/toshikiigaa/n/n8e8cd6897ed8
 ---
 
 ## はじめに
@@ -32,9 +32,9 @@ Agent Skills は、AI agent に知識や手順を追加する仕組みです。�
 
 このトークン消費量の話は、次の流れで考えています。
 
-- `20260530-token-consumption-01-basics.md`: 生成AIとトークンの基本
-- `20260531-token-consumption-02-reduction.md`: 生成AIのトークン消費量を抑える一般的な考え方
-- `20260531-token-consumption-03-agent-skills-reduction.md`: Agent Skills に特化したトークン消費量の抑制
+- [生成AIとトークンの基本](https://note.com/toshikiigaa/n/n8e9122aaedef)
+- [生成AIのトークン消費量を抑える考え方](https://note.com/toshikiigaa/n/n503c4a87077f)
+- Agent Skills に特化したトークン消費量の抑制
 
 前2本で、トークンとは何か、入力トークンと出力トークン、コンテキストウィンドウ、会話履歴、資料やファイルの読み込みについて整理しました。
 
@@ -401,5 +401,5 @@ Agent Skills でトークン消費量を抑えることは、単に `SKILL.md` �
 
 ## 関連リンク
 
-- [生成AIとトークンの基本](./20260530-token-consumption-01-basics.md)
-- [生成AIのトークン消費量を抑える考え方](./20260531-token-consumption-02-reduction.md)
+- [生成AIとトークンの基本](https://note.com/toshikiigaa/n/n8e9122aaedef)
+- [生成AIのトークン消費量を抑える考え方](https://note.com/toshikiigaa/n/n503c4a87077f)

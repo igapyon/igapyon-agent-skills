@@ -1,14 +1,12 @@
-## [mikuproject] 作業を分けて並べた計画表を毎回ちがう形式で扱っているのが、だんだん気になってきた話
-
-- 掲載先: Note
-- URL: https://note.com/toshikiigaa/n/n20f5ee782358
-
-## Note 掲載用属性情報
-
-- タイトル: [mikuproject] 作業を分けて並べた計画表を毎回ちがう形式で扱っているのが、だんだん気になってきた話
-- ハッシュタグ: `生成AI`, `個人開発`, `WBS`, `アプリ開発`, `ソフトウェア開発`
-
-----------------------------------------------------------------
+---
+title: [mikuproject] 作業を分けて並べた計画表を毎回ちがう形式で扱っているのが、だんだん気になってきた話
+tags: #生成AI #個人開発 #WBS #アプリ開発 #ソフトウェア開発
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/n20f5ee782358
+---
 
 ## はじめに
 

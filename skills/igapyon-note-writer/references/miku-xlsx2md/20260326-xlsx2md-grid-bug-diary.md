@@ -1,14 +1,12 @@
-## [xlsx2md] Excel 方眼を Markdown にする記事を書こうとしたら、およよとなった話
-
-- 掲載先: Note
-- URL: https://note.com/toshikiigaa/n/ne63f03142852
-
-## Note 掲載用属性情報
-
-- タイトル: [xlsx2md] Excel 方眼を Markdown にする記事を書こうとしたら、およよとなった話
-- ハッシュタグ: `生成AI`, `アプリ開発`, `個人開発`, `Excel`, `Markdown`
-
-----------------------------------------------------------------
+---
+title: [xlsx2md] Excel 方眼を Markdown にする記事を書こうとしたら、およよとなった話
+tags: #生成AI #アプリ開発 #個人開発 #Excel #Markdown
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/ne63f03142852
+---
 
 ## はじめに
 

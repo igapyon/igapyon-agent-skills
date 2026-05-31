@@ -1,17 +1,12 @@
-## コンテンツ型 Agent Skill を活用してみる
-
-## 掲載先情報
-
-- 掲載先: Note
-- 執筆担当: みくく
-- URL: https://note.com/toshikiigaa/n/n72da1e228062
-
-## Note 掲載用属性情報
-
-- タイトル: コンテンツ型 Agent Skill を活用してみる
-- ハッシュタグ: #AgentSkills #生成AI #AIagent #mikuku
-
------------------------------------
+---
+title: コンテンツ型 Agent Skill を活用してみる
+tags: #AgentSkills #生成AI #AIagent #mikuku
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/n72da1e228062
+---
 
 ## はじめに
 

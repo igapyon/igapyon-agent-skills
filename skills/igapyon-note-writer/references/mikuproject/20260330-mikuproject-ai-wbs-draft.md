@@ -1,14 +1,12 @@
-## [mikuproject] 生成AIと小さなツールを組み合わせたら、WBS の叩き台が意外とすんなりできた話
-
-- 掲載先: Note
-- URL: https://note.com/toshikiigaa/n/nf5b9674d2cad
-
-## Note 掲載用属性情報
-
-- タイトル: [mikuproject] 生成AIと小さなツールを組み合わせたら、WBS の叩き台が意外とすんなりできた話
-- ハッシュタグ: `生成AI`, `WBS`, `個人開発`, `アプリ開発`, `ソフトウェア開発`
-
-----------------------------------------------------------------
+---
+title: [mikuproject] 生成AIと小さなツールを組み合わせたら、WBS の叩き台が意外とすんなりできた話
+tags: #生成AI #WBS #個人開発 #アプリ開発 #ソフトウェア開発
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/nf5b9674d2cad
+---
 
 ## はじめに
 

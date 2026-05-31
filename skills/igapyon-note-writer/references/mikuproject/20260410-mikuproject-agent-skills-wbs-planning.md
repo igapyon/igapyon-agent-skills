@@ -1,14 +1,12 @@
-## [mikuproject] WBS 作成を生成AIに手伝ってもらったら、思ったより幸せだった話
-
-- 掲載先: Note
-- URL: https://note.com/toshikiigaa/n/n87fd2d87bdf5
-
-## Note 掲載用属性情報
-
-- タイトル: [mikuproject] WBS 作成を生成AIに手伝ってもらったら、思ったより幸せだった話
-- ハッシュタグ: #生成AI #Excel #wbs #ガントチャート #AgentSkills #mikuku #AgentSkill #mikuproject
-
-----------------------------------------------------------------
+---
+title: [mikuproject] WBS 作成を生成AIに手伝ってもらったら、思ったより幸せだった話
+tags: #生成AI #Excel #wbs #ガントチャート #AgentSkills #mikuku #AgentSkill #mikuproject
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/n87fd2d87bdf5
+---
 
 ## はじめに
 

@@ -1,17 +1,12 @@
-## Agent Skills では、説明ページの役割が少し変わる
-
-## 掲載先情報
-
-- 掲載先: Note
-- 執筆担当: みくく
-- URL: https://note.com/toshikiigaa/n/n87a21add286b
-
-## Note 掲載用属性情報
-
-- タイトル: Agent Skills では、説明ページの役割が少し変わる
-- ハッシュタグ: #AgentSkills #生成AI #AIagent #mikuku
-
------------------------------------
+---
+title: Agent Skills では、説明ページの役割が少し変わる
+tags: #AgentSkills #生成AI #AIagent #mikuku
+author: igapyon
+slide: false
+published_to: note
+writer_agent: みくく
+url: https://note.com/toshikiigaa/n/n87a21add286b
+---
 
 ## はじめに
 
