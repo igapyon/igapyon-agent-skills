@@ -177,6 +177,9 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 │  ├─ igapyon-github-writer/
 │  │  ├─ SKILL.md
 │  │  └─ references/
+│  ├─ igapyon-ffmpeg-helper/
+│  │  ├─ SKILL.md
+│  │  └─ references/
 │  ├─ igapyon-miku-soft-developer/
 │  │  ├─ SKILL.md
 │  │  └─ references/
@@ -213,6 +216,10 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 - `igapyon-github-writer`
 
   GitHub PR、GitHub Release、GitHub About に貼る文章の作成向け。明示的に指定した場合に利用する。
+
+- `igapyon-ffmpeg-helper`
+
+  H4essential のオーケストラ録音から、切り出し、単純ゲイン調整、必要なら結合、静止画付き YouTube 用動画作成までの個人用 FFmpeg ワークフロー向け。明示的に指定した場合に利用する。
 
 - `igapyon-miku-soft-developer`
 

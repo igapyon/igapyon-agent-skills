@@ -1,0 +1,4 @@
+interface:
+  display_name: "igapyon FFmpeg Helper"
+  short_description: "Guide igapyon-specific FFmpeg recording workflows."
+  default_prompt: "Use igapyon-ffmpeg-helper to guide my H4essential orchestra recording workflow."
