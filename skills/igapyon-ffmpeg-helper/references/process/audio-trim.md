@@ -16,7 +16,8 @@ Ask for these if missing:
 - end time, optional
 - output WAV path
 
-Use one trim command per selected WAV in multiple-file workflows.
+Use one trim command per selected WAV in multiple-file workflows. Also use one
+trim command per cut when a single source WAV is split into multiple parts.
 
 If trim times are missing, ask the user to listen in VLC and provide the start
 and/or end times when trimming is needed. Do not infer musical cut points
@@ -62,6 +63,59 @@ cut memo:
   note: second section
 ```
 
+For a single source WAV split into multiple parts, keep the same input path and
+ask for one item per part:
+
+```text
+cut memo:
+1.
+  input: 260503_113659_TrMic.WAV
+  start: 00:07:06
+  end: 00:17:41
+  output: 260503_113659-part1_trim.wav
+  note: first piece
+2.
+  input: 260503_113659_TrMic.WAV
+  start: 00:19:10
+  end: 00:28:42
+  output: 260503_113659-part2_trim.wav
+  note: second piece
+```
+
+## Part Naming
+
+When a single source WAV is split into multiple musical items or sections, use
+`part1`, `part2`, and so on. Keep the original H4essential recording id at the
+front of every generated filename.
+
+Recommended pattern:
+
+```text
+<recording-id>-partN_trim.wav
+<recording-id>-partN_gain-meta.json
+<recording-id>-partN_gain-hires-tp0p5-plain.wav
+<recording-id>-partN_gain-verify-meta.json
+<recording-id>-partN-youtube.mp4
+```
+
+Example:
+
+```text
+260503_113659-part1_trim.wav
+260503_113659-part1_gain-hires-tp0p5-plain.wav
+260503_113659-part1-youtube.mp4
+```
+
+For a concatenated final output made from several parts of the same source, use:
+
+```text
+260503_113659-parts-merged-youtube.mp4
+```
+
+Avoid generic stage names like `01_trim.wav` when the source is being split into
+multiple deliverables. Numbered names are acceptable for internal scratch files,
+but final and logged artifacts should preserve the recording id and part number.
+
 Accept these time formats:
 
 - `HH:MM:SS`
@@ -92,7 +146,8 @@ When the user returns a cut memo:
 
 1. Parse the input, start, end, output, and note fields.
 2. Preserve the listed order for multiple files.
-3. Generate one trim or staging command per memo item.
+3. Generate one trim or staging command per memo item, including multiple parts
+   from the same input WAV.
 4. Write outputs under the current job directory, even if the memo only gives a
    short output file name.
 5. Log each generated trim command to `commands.log`.
@@ -103,32 +158,32 @@ When the user returns a cut memo:
 For leading and trailing margin cuts, prefer:
 
 ```sh
-ffmpeg -i "input.WAV" -ss 00:01:23 -to 00:12:34 -c:a pcm_f32le "workplace/h4essential-260114_160901/01_trim.wav"
+ffmpeg -i "input.WAV" -ss 00:01:23 -to 00:12:34 -c:a pcm_f32le "workplace/ffmpeg-helper-260114_160901/01_trim.wav"
 ```
 
 For leading-margin-only cuts, omit `-to`:
 
 ```sh
-ffmpeg -i "input.WAV" -ss 00:01:23 -c:a pcm_f32le "workplace/h4essential-260114_160901/01_trim.wav"
+ffmpeg -i "input.WAV" -ss 00:01:23 -c:a pcm_f32le "workplace/ffmpeg-helper-260114_160901/01_trim.wav"
 ```
 
 For trailing-margin-only cuts, omit `-ss`:
 
 ```sh
-ffmpeg -i "input.WAV" -to 00:12:34 -c:a pcm_f32le "workplace/h4essential-260114_160901/01_trim.wav"
+ffmpeg -i "input.WAV" -to 00:12:34 -c:a pcm_f32le "workplace/ffmpeg-helper-260114_160901/01_trim.wav"
 ```
 
 For no-trim staging, use a clear staged output name:
 
 ```sh
-ffmpeg -i "input.WAV" -c:a pcm_f32le "workplace/h4essential-260114_160901/01_trim.wav"
+ffmpeg -i "input.WAV" -c:a pcm_f32le "workplace/ffmpeg-helper-260114_160901/01_trim.wav"
 ```
 
 If the source is not 32-bit float WAV or the user wants a simpler command, omit
 the explicit codec and let FFmpeg choose an appropriate WAV format:
 
 ```sh
-ffmpeg -i "input.WAV" -ss 00:01:23 -to 00:12:34 "workplace/h4essential-260114_160901/01_trim.wav"
+ffmpeg -i "input.WAV" -ss 00:01:23 -to 00:12:34 "workplace/ffmpeg-helper-260114_160901/01_trim.wav"
 ```
 
 ## Notes

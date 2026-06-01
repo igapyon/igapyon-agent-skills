@@ -14,7 +14,9 @@ but only the volume-only route is used for finishing.
 - Do not use limiting.
 - Do not use loudness normalization in the finishing command.
 - If `input_tp` is already above `-0.5 dBTP`, apply negative gain.
-- Let the user choose hi-res or lo-res output for the finishing command.
+- Let the user choose hi-res or lo-res output for the finishing command; default
+  to hi-res when the user does not specify.
+- Tell the user that hi-res intermediate WAV files will be larger.
 
 ## Output Resolution Choice
 
@@ -32,8 +34,11 @@ lo-res:
   -c:a pcm_s16le
 ```
 
-If the user does not choose, ask once. For YouTube upload video creation, the
-later video step still converts audio to AAC 48 kHz.
+If the user does not choose, use hi-res and mention that the intermediate WAV
+file will be larger. For the default YouTube MP4 video creation step, the
+prepared WAV audio is converted to AAC. If the user explicitly asks for the
+source-preserving MKV route, the prepared WAV audio can be copied with
+`-c:a copy`.
 
 ## Phase 1: Measurement
 
@@ -41,7 +46,7 @@ Generate a measurement command that writes the loudnorm JSON output to a file.
 Prefer redirection over `tee` so command failure is easier to detect.
 
 ```sh
-ffmpeg -hide_banner -i "workplace/h4essential-260114_160901/01_trim.wav" -af loudnorm=print_format=json -f null - > "workplace/h4essential-260114_160901/01_gain-meta.json" 2>&1
+ffmpeg -hide_banner -i "workplace/ffmpeg-helper-260114_160901/01_trim.wav" -af loudnorm=print_format=json -f null - > "workplace/ffmpeg-helper-260114_160901/01_gain-meta.json" 2>&1
 ```
 
 Ask the user to paste the JSON measurement output when you cannot run the
@@ -51,6 +56,18 @@ Before generating a finishing command, verify that the measurement output
 contains a parseable JSON object and a numeric `input_tp`. If `input_tp` is
 missing or not numeric, stop and inspect the measurement output instead of
 guessing a gain value.
+
+## User-Facing Note for Low Peaks
+
+When the user asks why an H4essential recording's measured peak is low, explain
+briefly in Japanese:
+
+```text
+H4essential の 32-bit float 録音では、ピークが低めに見えることは十分あります。32-bit float は後から大きく持ち上げる前提にしやすく、クリップ回避のためのヘッドルームを広く取れるので、小さくても不自然な値ではありません。
+```
+
+Use this as supportive context only. It does not change the peak-based gain
+calculation or the `-0.5 dBTP` target.
 
 ## Calculate Gain
 
@@ -77,13 +94,13 @@ normalization.
 Lo-res output:
 
 ```sh
-ffmpeg -i "workplace/h4essential-260114_160901/01_trim.wav" -af "volume=+6.8dB" -ar 44100 -sample_fmt s16 -c:a pcm_s16le "workplace/h4essential-260114_160901/01_gain-lores-tp0p5-plain.wav"
+ffmpeg -i "workplace/ffmpeg-helper-260114_160901/01_trim.wav" -af "volume=+6.8dB" -ar 44100 -sample_fmt s16 -c:a pcm_s16le "workplace/ffmpeg-helper-260114_160901/01_gain-lores-tp0p5-plain.wav"
 ```
 
 Hi-res output:
 
 ```sh
-ffmpeg -i "workplace/h4essential-260114_160901/01_trim.wav" -af "volume=+6.8dB" -ar 192000 -sample_fmt s32 -c:a pcm_s24le "workplace/h4essential-260114_160901/01_gain-hires-tp0p5-plain.wav"
+ffmpeg -i "workplace/ffmpeg-helper-260114_160901/01_trim.wav" -af "volume=+6.8dB" -ar 192000 -sample_fmt s32 -c:a pcm_s24le "workplace/ffmpeg-helper-260114_160901/01_gain-hires-tp0p5-plain.wav"
 ```
 
 For multiple WAVs, repeat both phases separately for each trimmed WAV before
@@ -100,7 +117,7 @@ This is not another processing pass; it only confirms the resulting peak.
 Lo-res example:
 
 ```sh
-ffmpeg -hide_banner -i "workplace/h4essential-260114_160901/01_gain-lores-tp0p5-plain.wav" -af loudnorm=print_format=json -f null - > "workplace/h4essential-260114_160901/01_gain-verify-meta.json" 2>&1
+ffmpeg -hide_banner -i "workplace/ffmpeg-helper-260114_160901/01_gain-lores-tp0p5-plain.wav" -af loudnorm=print_format=json -f null - > "workplace/ffmpeg-helper-260114_160901/01_gain-verify-meta.json" 2>&1
 ```
 
 Check that the verification output contains a numeric `input_tp` close to the
