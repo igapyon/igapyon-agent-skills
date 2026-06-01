@@ -4,6 +4,88 @@
 - [ ] skill 配布先が必要になったら mirror 方針を決める
 - [ ] UI metadata が必要になったら skill 用の `agents/openai.yaml` を検討する
 
+## igapyon-ffmpeg-helper 作業メモ
+
+- [x] `skills/igapyon-ffmpeg-helper/` を新規 Agent Skill として作成した
+- [x] hard trigger 方針にした
+  - 発火する例: `igapyon-ffmpeg-helper`, `igapyon FFmpeg helper`, `ffmpeg helper`, `FFmpeg helper workflow`, `FFmpeg helper runbook`, `ffmpeg runbook igapyon`, `igapyon ffmpeg runbook`
+  - 通常の FFmpeg / H4essential / YouTube / loudnorm / gain / trim 相談では自動発火しない
+- [x] `SKILL.md` は入口とガードレールに絞り、詳細は `references/` に分離した
+- [x] first cut workflow を `references/workflows/h4essential-orchestra-youtube.md` に作成した
+  - H4essential オーケストラ録音フォルダ
+  - WAV トラック選択
+  - VLC で人間が切れ目確認
+  - cut memo を agent に戻す
+  - trim
+  - loudnorm JSON 測定
+  - `volume=...dB` の単純ゲイン仕上げ
+  - 必要なら結合
+  - 静止画 + 音声で YouTube 用 MP4 作成
+  - YouTube Studio で手動アップロード
+- [x] process runbook を `references/process/` に分割した
+  - `h4essential-input-discovery.md`
+  - `workspace-and-command-log.md`
+  - `audio-trim.md`
+  - `peak-gain-normalize.md`
+  - `audio-concat.md`
+  - `still-image-youtube-video.md`
+  - `youtube-manual-upload.md`
+- [x] H4essential 入力仕様を記録した
+  - 例: `/Volumes/ZOOM_H4E/260114_160901/260114_160901_TrMic.WAV`
+  - 実処理は録音フォルダをローカルに複数コピーしてから開始
+  - `TrMic`, `TrLR`, `Tr1`, `Tr2` を候補として扱う
+  - `TrMic` と `TrLR` が両方ある場合などは勝手に選ばず確認する
+- [x] trim 方針を記録した
+  - first cut では切れ目・ファイル境界は人間判断
+  - VLC 使用を強く推奨
+  - cut memo 形式を定義
+  - `01:23` は 1分23秒
+  - `00:01:23.500`, `83.5` のような小数秒指定も許容
+  - 前だけカット、後ろだけカット、両端カット、カットなしに対応
+- [x] 音量調整方針を記録した
+  - 参照元: `https://igapyon.github.io/local-html-tools/ffmpeg/ffmpeg-loudnorm-cmdline-gen.html`
+  - 仕上げ処理としての loudnorm は使わない
+  - 測定フェーズでは `loudnorm=print_format=json` で `input_tp` を得る
+  - 仕上げフェーズでは `volume=...dB` のみ
+  - target true peak は `-0.5 dBTP`
+  - コンプなし、リミッターなし
+  - hi-res / lo-res を選択可能
+    - hi-res: `-ar 192000 -sample_fmt s32 -c:a pcm_s24le`
+    - lo-res: `-ar 44100 -sample_fmt s16 -c:a pcm_s16le`
+  - 仕上げ後に verification measurement を行う方針を追加した
+- [x] 作業フォルダ方針を記録した
+  - per-job directory: `workplace/h4essential-260114_160901/` など
+  - `commands.log` に実行/提示コマンドを残す
+  - 作業フォルダ内にログや測定出力を積極的に保存してよい
+  - 例: `ffmpeg-version.txt`, `01_gain-meta.json`, `01_gain-verify-meta.json`, `01_trim.log`, `01_gain.log`, `youtube-video.log`
+- [x] `ffmpeg -version` は必須にした
+  - conversion command 実行前に必ず実行
+  - `commands.log` に記録
+  - `ffmpeg-version.txt` に保存
+  - 失敗したら workflow を止める
+- [x] YouTube 動画作成方針を記録した
+  - 静止画 + 音声
+  - MP4 / H.264 / yuv420p / AAC 48kHz 320kbps
+  - 1920x1080, 画像全体を保持して padding
+  - `-movflags +faststart`
+  - YouTube API ではなく YouTube Studio から手動アップロード
+- [x] 自己レビューして改善した
+  - `ffmpeg -version` をログ化
+  - 測定コマンドを `tee` ではなく redirection へ寄せた
+  - `input_tp` が parse できない場合は次へ進まない
+  - 仕上げ後の再測定を追加
+  - no-trim 判定の文言を整理
+- [x] 検証済み
+  - `python3 /Users/igapyon/.codex/skills/.system/skill-creator/scripts/quick_validate.py /Users/igapyon/Documents/git/igapyon-agent-skills/skills/igapyon-ffmpeg-helper`
+  - `mvn generate-resources`
+- [ ] 再開時の確認候補
+  - `commands.log` だけでなく各 ffmpeg 実行ログをどこまで標準化するか
+  - `ffmpeg -version` のコマンド自体も `commands.log` に記録する現方針で十分か
+  - hi-res / lo-res のデフォルトを決めるか、毎回聞くか
+  - verification measurement の許容誤差を明文化するか
+  - 無音検知を「VLC確認用の候補出し」として process 化するか
+  - `README.md` の skill 一覧説明をさらに詳しくするか
+
 ## Note 記事 TODO
 
 - [ ] 旧素材メモ `xxxxxxxx-general-content-agent-skills-token-context.md` から、3本の記事へ未展開だった補助論点を必要なら別記事または追補へ展開する
