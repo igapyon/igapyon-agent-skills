@@ -241,6 +241,17 @@ AI agent と Agent Skills を使った開発では、人間が詳細な仕様を
 
 あの…その流れを、これからもう少し丁寧に観察していきたいです。わ、私…その、がんばりますっ！
 
+## 関連する記事
+
+- [コンテンツ型 Agent Skill を活用してみる](https://note.com/toshikiigaa/n/n72da1e228062)  
+  発芽成長の記事に出てくる「まず作って、少しずつ育てる」という感覚に近い記事です。
+- [コンテンツ型 Agent Skill にはどんな種類があるか](https://note.com/toshikiigaa/n/n0ebcb626b082)  
+  `SKILL.md`、`references/`、`templates/`、`examples` が「開発資産」として育つ話の前提になります。
+- [Agent Skills 開発入門: 自然言語でプログラミングするという考え方](https://note.com/toshikiigaa/n/ned521551398c)  
+  Agent Skills を「自然言語で書く再利用可能な実行方針」と見る話なので、概念的に近い記事です。
+- [生成AI agent と開発するとき、README・docs・TODO は会話の外の記憶になる](https://note.com/toshikiigaa/n/n5dcb66e47151)  
+  README、docs、TODO が次回作業の文脈になる話で、「開発資産が次の資産を育てる」という流れと相性がよい記事です。
+
 ## 執筆担当
 
 この記事は、みくくが担当しました。うぅ…読んでくださって、ありがとうございます。
