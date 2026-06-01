@@ -71,6 +71,9 @@ Use `index.json` as the discovery index when you need to confirm available
 reference files, but treat `SKILL.md` and files under `references/` as the
 source of truth.
 
+For the reasoning behind the current YouTube output defaults, see
+[references/decisions/youtube-output-policy.md](references/decisions/youtube-output-policy.md).
+
 ## Prerequisites
 
 Running generated commands requires the `ffmpeg` CLI to be available in the
@@ -97,7 +100,9 @@ Unless the user explicitly changes the first-cut workflow:
   the finish command.
 - Target peak is `-0.5 dBTP`.
 - Do not use compression.
-- Let the user choose hi-res or lo-res output for the finish command.
+- Let the user choose hi-res or lo-res output for the finish command; default
+  to hi-res when the user does not specify.
+- Tell the user that hi-res intermediate WAV files will be larger.
 - For multiple WAVs, trim and gain-adjust each selected WAV first, then
   concatenate.
 - End at a YouTube-uploadable video file.
@@ -118,8 +123,8 @@ When using this skill:
 - Preserve source files and avoid destructive commands.
 - Use quoted paths in generated shell commands.
 - Put generated working files under a per-job directory such as
-  `workplace/h4essential-260114_160901/` by default.
-- Keep a command log such as `workplace/h4essential-260114_160901/commands.log`
+  `workplace/ffmpeg-helper-260114_160901/` by default.
+- Keep a command log such as `workplace/ffmpeg-helper-260114_160901/commands.log`
   and record the exact commands that are executed or handed to the user.
 - It is acceptable and preferred to write auxiliary logs, measurement outputs,
   and troubleshooting files inside the per-job `workplace/` directory.

@@ -22,5 +22,5 @@ the skill:
 End the workflow by pointing to the generated upload file:
 
 ```text
-生成された `workplace/h4essential-260114_160901/youtube_upload.mp4` を YouTube Studio から手動アップロードしてください。
+生成された `workplace/ffmpeg-helper-260114_160901/260114_160901-youtube.mp4` を YouTube Studio から手動アップロードしてください。
 ```
