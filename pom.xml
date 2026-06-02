@@ -10,6 +10,12 @@
 
   <name>igapyon-agent-skills</name>
 
+  <properties>
+    <external.miku-indexgen-skills.repo>https://github.com/igapyon/miku-indexgen-skills.git</external.miku-indexgen-skills.repo>
+    <external.miku-indexgen-skills.ref>v1.4.4.1</external.miku-indexgen-skills.ref>
+    <external.miku-indexgen-skills.skillName>igapyon-miku-indexgen</external.miku-indexgen-skills.skillName>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
@@ -32,6 +38,45 @@
                 <argument>${project.basedir}/skills</argument>
               </arguments>
             </configuration>
+          </execution>
+          <execution>
+            <id>prepare-release-staging</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>sh</executable>
+              <arguments>
+                <argument>${project.basedir}/scripts/prepare-release-staging.sh</argument>
+                <argument>${project.basedir}</argument>
+                <argument>${project.build.directory}/release-staging</argument>
+                <argument>${external.miku-indexgen-skills.repo}</argument>
+                <argument>${external.miku-indexgen-skills.ref}</argument>
+                <argument>${external.miku-indexgen-skills.skillName}</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.7.1</version>
+        <configuration>
+          <descriptors>
+            <descriptor>src/assembly/release.xml</descriptor>
+          </descriptors>
+          <finalName>${project.artifactId}-${project.version}</finalName>
+          <appendAssemblyId>false</appendAssemblyId>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-release-archive</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

@@ -248,3 +248,22 @@ mvn clean package
 ```
 
 生成された `index.json` は、skill と一緒にコミットします。
+
+## Release archive
+
+GitHub Release に添付する利用者向け archive は、次のコマンドで作成します。
+
+```sh
+mvn clean package
+```
+
+生成物は `target/igapyon-agent-skills-<version>.zip` です。
+
+archive には `README.md`、`INSTALL.md`、`LICENSE`、`pom.xml`、`.mvn/`、`lib/`、`skills/` を含めます。
+利用者は archive を展開し、`INSTALL.md` の手順で `skills/*` を自分の Codex skills directory へコピーします。
+
+release archive には、この repo の `skills/` に加えて、外部管理の `igapyon-miku-indexgen` skill も同梱します。
+外部 skill は `mvn package` の `prepare-package` フェーズで `target/release-staging/skills/` に取得し、archive 化します。
+取得元は `pom.xml` の `external.miku-indexgen-skills.*` properties で固定します。
+
+GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、生成された zip を GitHub Release asset として添付します。
