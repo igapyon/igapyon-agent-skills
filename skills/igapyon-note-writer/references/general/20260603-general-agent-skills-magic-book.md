@@ -1,11 +1,11 @@
 ---
 title: 生成AIの Agent Skills は魔法書に近い
-tags: #生成AI #プロンプトエンジニアリング #AIエージェント #AgentSkills #技術エッセイ #mikuku
+tags: #生成AI #PromptEngineering #AIagent #AgentSkills #mikuku
 author: igapyon
 slide: false
 published_to: note
 writer_agent: みくく
-url: ((TBD))
+url: https://note.com/toshikiigaa/n/n118093b21838
 ---
 
 ## はじめに
@@ -103,6 +103,8 @@ Agent Skills でも、これはとても大事です。あの…ここは、み�
 自分の文体、自分の作業の癖、自分のリポジトリの事情、自分がよく失敗するところ。そういうものを少しずつ書き足していくと、魔法書はだんだん自分の手に合ってきます。
 
 使ってみると、効きすぎる呪文があります。弱すぎる呪文もあります。思った方向と違う効果が出ることもあります。
+
+このあたりで、『涼宮ハルヒ』の自主映画づくりにあった、撮影用の設定がふっと現実側ににじむ感じを少し思い出します。
 
 そのたびに、少しずつ書き足したり、調整したりします。ぱたぱた…余白に小さく注釈を書き込んでいく感じです。
 
