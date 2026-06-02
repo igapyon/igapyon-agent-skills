@@ -262,8 +262,15 @@ mvn clean package
 archive には `README.md`、`INSTALL.md`、`LICENSE`、`pom.xml`、`.mvn/`、`lib/`、`skills/` を含めます。
 利用者は archive を展開し、`INSTALL.md` の手順で `skills/*` を自分の Codex skills directory へコピーします。
 
-release archive には、この repo の `skills/` に加えて、外部管理の `igapyon-miku-indexgen` skill も同梱します。
+release archive には、この repo の `skills/` に加えて、外部管理の miku-soft 系 skill も同梱します。
 外部 skill は `mvn package` の `prepare-package` フェーズで `target/release-staging/skills/` に取得し、archive 化します。
-取得元は `pom.xml` の `external.miku-indexgen-skills.*` properties で固定します。
+取得元は `pom.xml` の `external.*` properties で固定します。
+
+同梱する外部 skill は次の通りです。
+
+- `miku-indexgen-skills` `v1.4.4.1`: `skills/igapyon-miku-indexgen/`
+- `miku-text-bundle-skills` `v0.8.1`: `skills/miku-text-bundle/`
+- `mikuproject-skills` `v0.8.1.1`: `skills/mikuproject/`
+- `mikuscore-skills` `v0.1.0`: `skills/mikuscore/`
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、生成された zip を GitHub Release asset として添付します。

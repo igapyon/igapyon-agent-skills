@@ -14,6 +14,15 @@
     <external.miku-indexgen-skills.repo>https://github.com/igapyon/miku-indexgen-skills.git</external.miku-indexgen-skills.repo>
     <external.miku-indexgen-skills.ref>v1.4.4.1</external.miku-indexgen-skills.ref>
     <external.miku-indexgen-skills.skillName>igapyon-miku-indexgen</external.miku-indexgen-skills.skillName>
+    <external.miku-text-bundle-skills.repo>https://github.com/igapyon/miku-text-bundle-skills.git</external.miku-text-bundle-skills.repo>
+    <external.miku-text-bundle-skills.ref>v0.8.1</external.miku-text-bundle-skills.ref>
+    <external.miku-text-bundle-skills.skillName>miku-text-bundle</external.miku-text-bundle-skills.skillName>
+    <external.mikuproject-skills.repo>https://github.com/igapyon/mikuproject-skills.git</external.mikuproject-skills.repo>
+    <external.mikuproject-skills.ref>v0.8.1.1</external.mikuproject-skills.ref>
+    <external.mikuproject-skills.skillName>mikuproject</external.mikuproject-skills.skillName>
+    <external.mikuscore-skills.repo>https://github.com/igapyon/mikuscore-skills.git</external.mikuscore-skills.repo>
+    <external.mikuscore-skills.ref>v0.1.0</external.mikuscore-skills.ref>
+    <external.mikuscore-skills.skillName>mikuscore</external.mikuscore-skills.skillName>
   </properties>
 
   <build>
@@ -54,6 +63,15 @@
                 <argument>${external.miku-indexgen-skills.repo}</argument>
                 <argument>${external.miku-indexgen-skills.ref}</argument>
                 <argument>${external.miku-indexgen-skills.skillName}</argument>
+                <argument>${external.miku-text-bundle-skills.repo}</argument>
+                <argument>${external.miku-text-bundle-skills.ref}</argument>
+                <argument>${external.miku-text-bundle-skills.skillName}</argument>
+                <argument>${external.mikuproject-skills.repo}</argument>
+                <argument>${external.mikuproject-skills.ref}</argument>
+                <argument>${external.mikuproject-skills.skillName}</argument>
+                <argument>${external.mikuscore-skills.repo}</argument>
+                <argument>${external.mikuscore-skills.ref}</argument>
+                <argument>${external.mikuscore-skills.skillName}</argument>
               </arguments>
             </configuration>
           </execution>
