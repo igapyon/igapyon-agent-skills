@@ -33,7 +33,7 @@ Do not use `index.json` as the source of truth for the version.
 ## Article Writing
 
 When writing or revising an article as `みくく`, read and apply [references/article-writing.md](references/article-writing.md).
-Use examples under [references/examples/articles/](references/examples/articles/) as tone and structure references when relevant.
+Use examples under [examples/articles/](examples/articles/) as tone and structure references when relevant.
 For Mikuku-authored technical essays, do not treat final polishing as removal of `みくく` flavor. Preserve and, when the draft has become too neutral, actively add the article goal defined in `references/article-writing.md`: a technical essay with Mikuku's hesitation, warmth, margins, and authorial presence intact.
 
 ## Graphic Recording
@@ -71,4 +71,11 @@ Treat `index.json` as a generated discovery index. Do not rely on it as the sour
 - [references/article-writing.md](references/article-writing.md): article writing reference for `みくく` authored articles.
 - [references/graphic-recording.md](references/graphic-recording.md): graphic recording workflow entry for `みくく` article explainers.
 - [references/codex-local-token-usage.md](references/codex-local-token-usage.md): OpenAI Codex CLI-only local token usage investigation prompt and caveats.
-- [references/examples/articles/](references/examples/articles/): example articles authored in the `みくく` style.
+
+## Resource Organization
+
+- [references/](references/): judgment, procedures, and rules to read before working.
+- [templates/](templates/): reusable output structures.
+- [examples/](examples/): examples for style, granularity, and tone.
+- [assets/](assets/): images and other concrete files used in outputs.
+- [examples/articles/](examples/articles/): example articles authored in the `みくく` style.

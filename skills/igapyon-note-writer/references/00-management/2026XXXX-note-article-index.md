@@ -22,6 +22,7 @@ url: https://note.com/toshikiigaa/n/nde411c861a5a
 
 ## Agent Skills
 
+- [生成AIの Agent Skills は魔法書に近い](https://note.com/toshikiigaa/n/n118093b21838)
 - [Agent Skills による開発資産の発芽成長](https://note.com/toshikiigaa/n/ne9593f75fccd)
 - [Agent Skill を作っていて、BASIC とマシン語を思い出した](https://note.com/toshikiigaa/n/n142354986e19)
 - [コンテンツ型 Agent Skill にはどんな種類があるか](https://note.com/toshikiigaa/n/n0ebcb626b082)
@@ -32,6 +33,7 @@ url: https://note.com/toshikiigaa/n/nde411c861a5a
 
 ## 生成AI・AI agent
 
+- [生成AIモデルの仕組み入門：トークン、ベクトル、Attention、学習](https://note.com/toshikiigaa/n/ne5ef9e60e293)
 - [生成AIは、なぜこんなに親しみやすい価格帯で使えてしまうのか](https://note.com/toshikiigaa/n/nf26df188559a)
 - [AI agent とキャラクター人格で技術エッセイを書くということ](https://note.com/toshikiigaa/n/ne68cf56c07f3)
 - [OpenAI / Codex の UI を、公式名称と自分の理解に分けて整理してみる](https://note.com/toshikiigaa/n/n1234a1d255a9)
@@ -39,7 +41,7 @@ url: https://note.com/toshikiigaa/n/nde411c861a5a
 - [Markdown 入門は、まず GitHub 風 Markdown から始めたい](https://note.com/toshikiigaa/n/nc9c66635f525)
 - [生成AI時代のアプリは、AIが理解・変更・検証できる単位に分ける](https://note.com/toshikiigaa/n/n923232b6a9cd)
 - [AI-native CLI / MCP / Agent Skills 設計メモ: AI が呼びやすいツールになるよう最初から設計する](https://note.com/toshikiigaa/n/n2a4b7b75f0ee)
-- [生成AI開発まわりの "Engineering" を整理してみる](https://note.com/toshikiigaa/n/ne0b10ab8061a)
+- [生成AI開発まわりの “Engineering” を整理してみる](https://note.com/toshikiigaa/n/ne0b10ab8061a)
 - [MCP は、生成AIに道具を渡すための入口になる](https://note.com/toshikiigaa/n/ne87c899f68d2)
 - [生成AI agent と開発するとき、README・docs・TODO は会話の外の記憶になる](https://note.com/toshikiigaa/n/n5dcb66e47151)
 - [生成AIと長く話していたら、日本語の使い方が少し変わってきた](https://note.com/toshikiigaa/n/nca7cdb17f5db)
@@ -60,6 +62,10 @@ url: https://note.com/toshikiigaa/n/nde411c861a5a
 
 ## 下書き・未公開
 
+- アジャイルという考え方に入門する
+- Mermaidから入るUML入門：図を書きながらクラス図・シーケンス図・状態遷移図を覚える
+- 現代のアジャイルは、周辺語が多すぎる
+- オブジェクト指向という考え方に入門する
 - \[miku-indexgen\] AI エージェントに読ませる前に、ディレクトリの索引を作る
 - \[mikuscore\] 譜面フォーマット変換の前提を、毎回説明しなくてよくしたかった話
 
