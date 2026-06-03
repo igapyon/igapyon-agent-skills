@@ -28,6 +28,26 @@ UML を学ぼうとすると、最初にたくさんの図の名前が出てき�
 
 最初に、もの同士の関係を書いてみます。ここでは、利用者が注文を持つ、という小さな例にします。
 
+Markdown では、コードブロックの先頭を `mermaid` にすると、対応している環境で Mermaid 図として解釈されます。つまり、Markdown の中に ` ```mermaid ` と書いて、その中に Mermaid の記述を置くと、ただの文字列ではなく図として表示されることがあります。
+
+```text
+classDiagram
+    class User {
+        +String name
+        +String email
+        +login()
+        +logout()
+    }
+
+    class Order {
+        +int id
+        +Date orderedAt
+        +total()
+    }
+
+    User "1" --> "0..*" Order : places
+```
+
 ```mermaid
 classDiagram
     class User {
@@ -61,6 +81,21 @@ Mermaid では、`classDiagram` と書くとクラス図のような図を書け
 
 次は、注文を作るときのやり取りを書いてみます。
 
+```text
+sequenceDiagram
+    actor User
+    participant App
+    participant Service
+    participant Database
+
+    User->>App: 注文する
+    App->>Service: createOrder()
+    Service->>Database: insert(order)
+    Database-->>Service: OK
+    Service-->>App: 注文ID
+    App-->>User: 注文完了
+```
+
 ```mermaid
 sequenceDiagram
     actor User
@@ -89,6 +124,16 @@ Mermaid では、`sequenceDiagram` と書くと、登場人物や部品の間で
 
 次は、注文の状態が変わる様子を書いてみます。
 
+```text
+stateDiagram-v2
+    [*] --> Draft
+    Draft --> Submitted: 提出
+    Submitted --> Approved: 承認
+    Submitted --> Rejected: 差し戻し
+    Rejected --> Draft: 修正
+    Approved --> [*]
+```
+
 ```mermaid
 stateDiagram-v2
     [*] --> Draft
@@ -111,6 +156,16 @@ Mermaid では、`stateDiagram-v2` と書くと、状態と状態遷移を表せ
 ## 処理の流れを書いてみる
 
 次は、注文処理の流れを、もう少しフローチャートに近い形で書いてみます。
+
+```text
+flowchart TD
+    A[注文開始] --> B{在庫はあるか}
+    B -- はい --> C[注文を登録]
+    B -- いいえ --> D[在庫切れを通知]
+    C --> E[確認メールを送信]
+    D --> F[終了]
+    E --> F
+```
 
 ```mermaid
 flowchart TD
@@ -137,6 +192,20 @@ UML には **ユースケース図** もあります。ユースケース図は�
 
 Mermaid には、UML のユースケース図そのものを表す専用構文はありません。そこで、簡単な説明用であれば `flowchart` で近似することがあります。
 
+```text
+flowchart LR
+    User[利用者]
+    Admin[管理者]
+
+    UC1((商品を検索する))
+    UC2((注文する))
+    UC3((商品を管理する))
+
+    User --- UC1
+    User --- UC2
+    Admin --- UC3
+```
+
 ```mermaid
 flowchart LR
     User[利用者]
@@ -157,6 +226,18 @@ flowchart LR
 ## 部品同士の依存を書いてみる
 
 もうひとつ、設計メモでよく出てくるのが、部品同士の依存関係です。たとえば、画面、API、サービス、データベースがどのようにつながっているのかを、簡単に見たいことがあります。
+
+```text
+flowchart LR
+    Web[Web画面]
+    API[API]
+    Service[注文サービス]
+    DB[(データベース)]
+
+    Web --> API
+    API --> Service
+    Service --> DB
+```
 
 ```mermaid
 flowchart LR
