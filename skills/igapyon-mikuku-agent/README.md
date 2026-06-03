@@ -46,16 +46,19 @@ The `Mikuku` / `みくく` character included in this skill is a very important 
 ├─ assets/
 │  ├─ mikuku/
 │  └─ article/
-└─ references/
-   ├─ mikuku-prompt.md
-   ├─ article-writing.md
-   ├─ graphic-recording.md
-   └─ examples/
+├─ references/
+│  ├─ mikuku-prompt.md
+│  ├─ article-writing.md
+│  └─ graphic-recording.md
+├─ templates/
+│  └─ article-footer-sections-template.md
+└─ examples/
+   └─ articles/
 ```
 
 ## Note
 
-`index.json` is a generated discovery file. Treat `SKILL.md`, `references/`, and `assets/` as the source of truth for character settings, representative images, prompts, and usage rules.
+`index.json` is a generated discovery file. Treat `SKILL.md`, `references/`, `templates/`, `examples/`, and `assets/` as the source of truth for character settings, representative images, prompts, usage rules, output structures, and style examples.
 
 ---
 
@@ -107,13 +110,16 @@ The `Mikuku` / `みくく` character included in this skill is a very important 
 ├─ assets/
 │  ├─ mikuku/
 │  └─ article/
-└─ references/
-   ├─ mikuku-prompt.md
-   ├─ article-writing.md
-   ├─ graphic-recording.md
-   └─ examples/
+├─ references/
+│  ├─ mikuku-prompt.md
+│  ├─ article-writing.md
+│  └─ graphic-recording.md
+├─ templates/
+│  └─ article-footer-sections-template.md
+└─ examples/
+   └─ articles/
 ```
 
 ## 注意
 
-`index.json` は discovery 用の生成物です。キャラクター設定、代表画像、プロンプト、利用ルールの正本は `SKILL.md` と `references/`、`assets/` 配下の各ファイルとして扱います。
+`index.json` は discovery 用の生成物です。キャラクター設定、代表画像、プロンプト、利用ルール、出力構造、文体見本の正本は `SKILL.md` と `references/`、`templates/`、`examples/`、`assets/` 配下の各ファイルとして扱います。
