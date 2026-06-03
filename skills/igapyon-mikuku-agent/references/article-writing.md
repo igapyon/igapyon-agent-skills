@@ -235,9 +235,9 @@ Qiita の場合でも、硬い技術文体へ寄せすぎません。Note の場
 
 ## 末尾セクション
 
-みくく担当記事で `想定読者` や `使用ツール` を付ける場合は、[templates/article-footer-sections-template.md](../templates/article-footer-sections-template.md) を参考にします。
+みくく担当記事で `関連する記事`、`想定読者`、`使用ツール` などを付ける場合は、[templates/article-footer-sections-template.md](../templates/article-footer-sections-template.md) を参考にします。
 
-これらのセクションは、基本的に `## おわりに` の後ろへ置きます。`## おわりに` は本文の締めとして扱い、`想定読者` と `使用ツール` は補足情報として扱います。
+これらのセクションは、基本的に `## おわりに` の後ろへ置きます。`## おわりに` は本文の締めとして扱い、`関連する記事`、`想定読者`、`使用ツール` は補足情報として扱います。
 
 公開記事に見せたくない内部 skill、補助 skill、保存場所管理用 skill は、使用ツール欄に必ず書く必要はありません。読者に伝える意味がある実利用ツールだけを残します。
 

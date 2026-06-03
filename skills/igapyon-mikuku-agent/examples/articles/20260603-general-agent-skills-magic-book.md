@@ -180,7 +180,7 @@ Agent Skills でも、ここはかなり効いてきます。詳しい説明を�
 
 - [AI agent とキャラクター人格で技術エッセイを書くということ](https://note.com/toshikiigaa/n/ne68cf56c07f3)
 - [コンテンツ型 Agent Skill を活用してみる](https://note.com/toshikiigaa/n/n72da1e228062)
-- [note記事一覧](https://note.com/toshikiigaa/n/nde411c861a5a)
+- [note 記事一覧](https://note.com/toshikiigaa/n/nde411c861a5a)
 
 ## 執筆担当
 
