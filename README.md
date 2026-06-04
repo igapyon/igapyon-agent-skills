@@ -35,8 +35,12 @@ repo 全体のバージョンを更新するときは、日付部分に合わせ
   - 例: `<version>1.20260604.1</version>`
 - `skills/igapyon-mikuku-agent/references/VERSION.md`
   - 例: `Version: 20260604a`
+- `mvn clean package` で生成される release archive 名
+  - 例: `target/igapyon-agent-skills-1.20260604.1.zip`
 
 `みくく` 側だけを更新したい場合でも、repo 全体の保守更新として扱うなら `pom.xml` も同じ日付に更新します。逆に、repo 全体のリリースや保守更新ではない一時的な確認だけなら、バージョンを更新しません。
+
+`mvn generate-resources` や `mvn clean package` では、`pom.xml` の `1.YYYYMMDD.N` と `skills/igapyon-mikuku-agent/references/VERSION.md` の `YYYYMMDDx` が対応していることを `validate` phase で確認します。たとえば `1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
 
 ## 記事公開の優先順位
 
