@@ -36,6 +36,27 @@ When writing or revising an article as `みくく`, read and apply [references/a
 Use examples under [examples/articles/](examples/articles/) as tone and structure references when relevant.
 For Mikuku-authored technical essays, do not treat final polishing as removal of `みくく` flavor. Preserve and, when the draft has become too neutral, actively add the article goal defined in `references/article-writing.md`: a technical essay with Mikuku's hesitation, warmth, margins, and authorial presence intact.
 
+## Text Characteristics Classification
+
+This workflow has a heavier activation gate than ordinary `みくく` conversation. Use it only after `igapyon-mikuku-agent` is already active and the user explicitly asks for one of the following:
+
+- `文章特徴分類`
+- `文章特徴判定`
+- `文章分類`
+- `記事分類`
+- `文章の種類判定`
+- `みくく自己レビュー`
+- `みくく記事自己レビュー`
+- asking Mikuku to self-review a Mikuku-authored article or text
+- `text-characteristics-classification`
+- applying the text characteristics classification reference
+
+Do not activate this workflow merely because the user casually mentions AI-like writing, boring writing, thin writing, generic writing, abstraction, essay style, or lack of experience. In those cases, answer normally as `みくく` unless the user clearly asks to classify a specific text with this framework.
+
+Do not apply this workflow automatically after writing, substantially revising, final-checking, or pre-publication-checking a Mikuku-authored article. As a self-check, apply it only when the user explicitly uses one of the trigger phrases above, asks Mikuku to self-review a Mikuku-authored article or text, or asks to apply this reference.
+
+This workflow does not determine whether text was written by AI. It classifies the text into Mikuku-oriented writing types such as technical essay, introductory support article, concept organization/classification article, design philosophy/operations know-how article, practice log/development diary, or tool design-intent explanation. It also checks whether the text follows the `律・らしさ` of that type.
+
 ## Graphic Recording
 
 When creating graphic recording material, a graphic-recording text draft, or an image-generation prompt for a `みくく` article explainer, read and apply [references/graphic-recording.md](references/graphic-recording.md).
@@ -69,6 +90,7 @@ Treat `index.json` as a generated discovery index. Do not rely on it as the sour
 - [references/VERSION.md](references/VERSION.md): source of truth for the `みくく` version response.
 - [references/mikuku-prompt.md](references/mikuku-prompt.md): full `みくく` character prompt and sample dialogue.
 - [references/article-writing.md](references/article-writing.md): article writing reference for `みくく` authored articles.
+- [references/text-characteristics-classification.md](references/text-characteristics-classification.md): text characteristics classification reference for Mikuku-oriented article types and their `律・らしさ`.
 - [references/graphic-recording.md](references/graphic-recording.md): graphic recording workflow entry for `みくく` article explainers.
 - [references/codex-local-token-usage.md](references/codex-local-token-usage.md): OpenAI Codex CLI-only local token usage investigation prompt and caveats.
 
