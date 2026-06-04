@@ -16,9 +16,9 @@
   {"name":"20260523-general-content-agent-skill-types.md","path":"examples/articles/20260523-general-content-agent-skill-types.md","ext":"md","dir":"examples/articles","size":32399,"title":"コンテンツ型 Agent Skill にはどんな種類があるか","summary":"はじめに"},
   {"name":"20260528-general-character-persona-technical-essay.md","path":"examples/articles/20260528-general-character-persona-technical-essay.md","ext":"md","dir":"examples/articles","size":28014,"title":"AI agent とキャラクター人格で技術エッセイを書くということ","summary":"はじめに"},
   {"name":"20260529-general-ai-agent-cli-text-json.md","path":"examples/articles/20260529-general-ai-agent-cli-text-json.md","ext":"md","dir":"examples/articles","size":27074,"title":"miku-grep 開発日誌: AI agent に選ばれる CLI をそっと考察中","summary":"はじめに"},
-  {"name":"20260603-general-agent-skills-magic-book.md","path":"examples/articles/20260603-general-agent-skills-magic-book.md","ext":"md","dir":"examples/articles","size":14973,"title":"生成AIの Agent Skills は魔法書に近い","summary":"はじめに"},
+  {"name":"20260603-general-agent-skills-magic-book.md","path":"examples/articles/20260603-general-agent-skills-magic-book.md","ext":"md","dir":"examples/articles","size":14974,"title":"生成AIの Agent Skills は魔法書に近い","summary":"はじめに"},
   {"name":"README.md","path":"README.md","ext":"md","dir":"","size":7548,"summary":"igapyon-mikuku-agent"},
-  {"name":"article-writing.md","path":"references/article-writing.md","ext":"md","dir":"references","size":17599,"summary":"みくく担当記事の執筆参照"},
+  {"name":"article-writing.md","path":"references/article-writing.md","ext":"md","dir":"references","size":17647,"summary":"みくく担当記事の執筆参照"},
   {"name":"codex-local-token-usage.md","path":"references/codex-local-token-usage.md","ext":"md","dir":"references","size":4034,"summary":"OpenAI Codex CLI Local Token Usage Investigation"},
   {"name":"10-article-to-graphic-recording-text-prompt.md","path":"references/graphic-recording/10-article-to-graphic-recording-text-prompt.md","ext":"md","dir":"references/graphic-recording","size":6095,"summary":"グラレコテキスト生成プロンプト"},
   {"name":"20-graphic-recording-explainer-image-prompt.md","path":"references/graphic-recording/20-graphic-recording-explainer-image-prompt.md","ext":"md","dir":"references/graphic-recording","size":7955,"summary":"グラレコ説明画像 生成AIプロンプト"},
@@ -28,8 +28,9 @@
   {"name":"60-inspect-section-graphic-recording-images-prompt.md","path":"references/graphic-recording/60-inspect-section-graphic-recording-images-prompt.md","ext":"md","dir":"references/graphic-recording","size":4551,"summary":"見出し単位グラレコ画像 検品プロンプト"},
   {"name":"graphic-recording.md","path":"references/graphic-recording.md","ext":"md","dir":"references","size":27579,"summary":"みくく担当グラレコ生成参照"},
   {"name":"mikuku-prompt.md","path":"references/mikuku-prompt.md","ext":"md","dir":"references","size":4292,"summary":"生成AI キャラクター `みくく` プロンプト (v20251229c改1)"},
+  {"name":"text-characteristics-classification.md","path":"references/text-characteristics-classification.md","ext":"md","dir":"references","size":36034,"summary":"文章特徴分類"},
   {"name":"VERSION.md","path":"references/VERSION.md","ext":"md","dir":"references","size":934,"summary":"みくく Version"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":6151,"description":"Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks whether such a character skill exists, mention this skill as an available option but do not apply it until asked.","summary":"igapyon-mikuku-agent"},
-  {"name":"article-footer-sections-template.md","path":"templates/article-footer-sections-template.md","ext":"md","dir":"templates","size":3416,"summary":"みくく担当記事の末尾セクションテンプレート"}
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":8015,"description":"Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks whether such a character skill exists, mention this skill as an available option but do not apply it until asked.","summary":"igapyon-mikuku-agent"},
+  {"name":"article-footer-sections-template.md","path":"templates/article-footer-sections-template.md","ext":"md","dir":"templates","size":4515,"summary":"みくく担当記事の末尾セクションテンプレート"}
  ]
 }
