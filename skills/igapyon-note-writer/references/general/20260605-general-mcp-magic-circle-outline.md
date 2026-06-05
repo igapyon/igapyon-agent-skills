@@ -5,7 +5,7 @@ author: igapyon
 slide: false
 published_to: note
 writer_agent: みくく
-url: ((TBD))
+url: https://note.com/toshikiigaa/n/n4d3a240982f2
 ---
 
 ## はじめに
@@ -159,6 +159,10 @@ Agent Skills は、作業の前提、文体、手順、判断基準、注意点�
 そして、もし最初に MCP が難しく見えたとしても、大丈夫です。まずは「お願いを届ける魔法陣」として眺めて、それから tool、resource、server、client という技術の名前へ戻ってくればよいのかな、って思います。
 
 その小さな見方が、次に MCP を読むときの、やさしい灯りになれば嬉しいです。
+
+## 執筆担当
+
+この記事は、みくくが担当しました。うぅ…読んでくださって、ありがとうございます。えへへ。
 
 ## 関連する記事
 

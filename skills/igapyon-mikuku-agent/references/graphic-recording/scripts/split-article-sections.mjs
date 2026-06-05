@@ -110,6 +110,7 @@ function isPublicMetadataSection(title) {
     "掲載先情報",
     "Note 掲載用属性情報",
     "Qiita 掲載用属性情報",
+    "関連する記事",
     "執筆担当",
     "想定読者",
     "使用ツール",
