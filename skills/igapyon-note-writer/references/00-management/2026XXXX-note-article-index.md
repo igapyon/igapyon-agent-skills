@@ -20,6 +20,12 @@ url: https://note.com/toshikiigaa/n/nde411c861a5a
 - [生成AIのトークン消費量を抑える考え方](https://note.com/toshikiigaa/n/n503c4a87077f)
 - [生成AIとトークンの基本](https://note.com/toshikiigaa/n/n8e9122aaedef)
 
+## 魔法比喩シリーズ
+
+- [生成AIの Agent Skills は魔法書に近い](https://note.com/toshikiigaa/n/n118093b21838)
+- [生成AIの MCP は、妖精さんへお願いする魔法陣に近い](https://note.com/toshikiigaa/n/n4d3a240982f2)
+- [生成AI agent の向こう側には、いろいろな妖精さんがいる](https://note.com/toshikiigaa/n/ndc1b1eca21fc)
+
 ## Agent Skills
 
 - [Agent Skills による開発資産の発芽成長](https://note.com/toshikiigaa/n/ne9593f75fccd)
@@ -30,12 +36,6 @@ url: https://note.com/toshikiigaa/n/nde411c861a5a
 - [Agent Skills の発火は、どのように起きているのか](https://note.com/toshikiigaa/n/nfd0dda4c85b4)
 - [Agent Skills では、説明ページの役割が少し変わる](https://note.com/toshikiigaa/n/n87a21add286b)
 
-## 魔法比喩シリーズ
-
-- [生成AIの Agent Skills は魔法書に近い](https://note.com/toshikiigaa/n/n118093b21838)
-- [生成AIの MCP は、妖精さんへお願いする魔法陣に近い](https://note.com/toshikiigaa/n/n4d3a240982f2)
-- [生成AI agent の向こう側には、いろいろな妖精さんがいる](https://note.com/toshikiigaa/n/ndc1b1eca21fc)
-
 ## 生成AI・AI agent
 
 - [生成AIモデルの仕組み入門：トークン、ベクトル、Attention、学習](https://note.com/toshikiigaa/n/ne5ef9e60e293)
@@ -44,6 +44,7 @@ url: https://note.com/toshikiigaa/n/nde411c861a5a
 - [OpenAI / Codex の UI を、公式名称と自分の理解に分けて整理してみる](https://note.com/toshikiigaa/n/n1234a1d255a9)
 - [AI agent は、全部読まないのに、なぜ開発できるのか](https://note.com/toshikiigaa/n/n80a82f70fe7c)
 - [Markdown 入門は、まず GitHub 風 Markdown から始めたい](https://note.com/toshikiigaa/n/nc9c66635f525)
+- [Mermaid から入る UML 入門：図からクラス図・シーケンス図・状態遷移図をちょっと理解](https://note.com/toshikiigaa/n/nf5c1c6c1d2c1)
 - [生成AI時代のアプリは、AIが理解・変更・検証できる単位に分ける](https://note.com/toshikiigaa/n/n923232b6a9cd)
 - [AI-native CLI / MCP / Agent Skills 設計メモ: AI が呼びやすいツールになるよう最初から設計する](https://note.com/toshikiigaa/n/n2a4b7b75f0ee)
 - [生成AI開発まわりの “Engineering” を整理してみる](https://note.com/toshikiigaa/n/ne0b10ab8061a)
@@ -67,7 +68,6 @@ url: https://note.com/toshikiigaa/n/nde411c861a5a
 
 ## 下書き・未公開
 
-- Mermaid から入る UML 入門：図からクラス図・シーケンス図・状態遷移図をちょっと理解
 - アジャイルという考え方に入門する
 - 現代のアジャイルは、周辺語が多すぎる
 - オブジェクト指向という考え方に入門する
