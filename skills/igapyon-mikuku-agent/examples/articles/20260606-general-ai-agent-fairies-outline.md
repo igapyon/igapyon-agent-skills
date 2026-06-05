@@ -5,8 +5,7 @@ author: igapyon
 slide: false
 published_to: note
 writer_agent: みくく
-url: ((TBD))
-status: draft
+url: https://note.com/toshikiigaa/n/ndc1b1eca21fc
 release_date: 2026-06-06
 ---
 
@@ -202,8 +201,9 @@ MCP は、魔法陣です。生成AI agent が、会話の外にある道具や�
 
 ## 関連する記事
 
-- [生成AIの MCP は、妖精さんへお願いする魔法陣に近い](https://note.com/toshikiigaa/n/n4d3a240982f2)
 - [生成AIの Agent Skills は魔法書に近い](https://note.com/toshikiigaa/n/n118093b21838)
+- [生成AIの MCP は、妖精さんへお願いする魔法陣に近い](https://note.com/toshikiigaa/n/n4d3a240982f2)
+- [生成AI agent の向こう側には、いろいろな妖精さんがいる](https://note.com/toshikiigaa/n/ndc1b1eca21fc)
 - [note記事一覧](https://note.com/toshikiigaa/n/nde411c861a5a)
 
 ## 執筆担当

@@ -22,7 +22,6 @@ url: https://note.com/toshikiigaa/n/nde411c861a5a
 
 ## Agent Skills
 
-- [生成AIの Agent Skills は魔法書に近い](https://note.com/toshikiigaa/n/n118093b21838)
 - [Agent Skills による開発資産の発芽成長](https://note.com/toshikiigaa/n/ne9593f75fccd)
 - [Agent Skill を作っていて、BASIC とマシン語を思い出した](https://note.com/toshikiigaa/n/n142354986e19)
 - [コンテンツ型 Agent Skill にはどんな種類があるか](https://note.com/toshikiigaa/n/n0ebcb626b082)
@@ -30,6 +29,12 @@ url: https://note.com/toshikiigaa/n/nde411c861a5a
 - [Agent Skills 開発入門: 自然言語でプログラミングするという考え方](https://note.com/toshikiigaa/n/ned521551398c)
 - [Agent Skills の発火は、どのように起きているのか](https://note.com/toshikiigaa/n/nfd0dda4c85b4)
 - [Agent Skills では、説明ページの役割が少し変わる](https://note.com/toshikiigaa/n/n87a21add286b)
+
+## 魔法比喩シリーズ
+
+- [生成AIの Agent Skills は魔法書に近い](https://note.com/toshikiigaa/n/n118093b21838)
+- [生成AIの MCP は、妖精さんへお願いする魔法陣に近い](https://note.com/toshikiigaa/n/n4d3a240982f2)
+- [生成AI agent の向こう側には、いろいろな妖精さんがいる](https://note.com/toshikiigaa/n/ndc1b1eca21fc)
 
 ## 生成AI・AI agent
 

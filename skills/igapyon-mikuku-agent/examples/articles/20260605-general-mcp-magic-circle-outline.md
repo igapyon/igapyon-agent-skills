@@ -166,8 +166,9 @@ Agent Skills は、作業の前提、文体、手順、判断基準、注意点�
 
 ## 関連する記事
 
-- 生成AI agent の向こう側には、いろいろな妖精さんがいる
 - [生成AIの Agent Skills は魔法書に近い](https://note.com/toshikiigaa/n/n118093b21838)
+- [生成AIの MCP は、妖精さんへお願いする魔法陣に近い](https://note.com/toshikiigaa/n/n4d3a240982f2)
+- [生成AI agent の向こう側には、いろいろな妖精さんがいる](https://note.com/toshikiigaa/n/ndc1b1eca21fc)
 - [note記事一覧](https://note.com/toshikiigaa/n/nde411c861a5a)
 
 ## 想定読者
