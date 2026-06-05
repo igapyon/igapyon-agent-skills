@@ -178,6 +178,7 @@ Agent Skills でも、ここはかなり効いてきます。詳しい説明を�
 
 ## 関連する記事
 
+- [生成AIの MCP は、妖精さんへお願いする魔法陣に近い](https://note.com/toshikiigaa/n/n4d3a240982f2)
 - [AI agent とキャラクター人格で技術エッセイを書くということ](https://note.com/toshikiigaa/n/ne68cf56c07f3)
 - [コンテンツ型 Agent Skill を活用してみる](https://note.com/toshikiigaa/n/n72da1e228062)
 - [note記事一覧](https://note.com/toshikiigaa/n/nde411c861a5a)
