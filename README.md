@@ -281,8 +281,8 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 
 同梱する外部 skill は次の通りです。
 
-- `miku-indexgen-skills` `v1.4.4.1`: `skills/igapyon-miku-indexgen/`
-- `miku-text-bundle-skills` `v0.8.1`: `skills/miku-text-bundle/`
+- `miku-indexgen-skills` `v1.5.1.1`: `skills/igapyon-miku-indexgen/`
+- `miku-text-bundle-skills` `v0.9.0.1`: `skills/igapyon-miku-text-bundle/`
 - `mikuproject-skills` `v0.8.1.1`: `skills/mikuproject/`
 - `mikuscore-skills` `v0.1.0`: `skills/mikuscore/`
 

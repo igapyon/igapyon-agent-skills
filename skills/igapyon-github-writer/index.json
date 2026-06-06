@@ -3,11 +3,11 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":4533,"description":"Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, or asks to inspect the current branch status using igapyon-github-writer. If the user only asks whether such a skill exists, mention this skill as a...","summary":"igapyon-github-writer"},
   {"name":"about-writing.md","path":"references/about-writing.md","ext":"md","dir":"references","size":1136,"summary":"GitHub About Writing"},
   {"name":"branch-status.md","path":"references/branch-status.md","ext":"md","dir":"references","size":2672,"summary":"GitHub Branch Status"},
   {"name":"github-writing-rules.md","path":"references/github-writing-rules.md","ext":"md","dir":"references","size":3946,"summary":"GitHub Writing Rules"},
   {"name":"pr-writing.md","path":"references/pr-writing.md","ext":"md","dir":"references","size":3055,"summary":"GitHub PR Writing"},
-  {"name":"release-writing.md","path":"references/release-writing.md","ext":"md","dir":"references","size":3555,"summary":"GitHub Release Writing"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":4533,"description":"Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, or asks to inspect the current branch status using igapyon-github-writer. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.","summary":"igapyon-github-writer"}
+  {"name":"release-writing.md","path":"references/release-writing.md","ext":"md","dir":"references","size":3555,"summary":"GitHub Release Writing"}
  ]
 }

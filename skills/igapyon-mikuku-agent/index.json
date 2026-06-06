@@ -3,6 +3,8 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
+  {"name":"README.md","path":"README.md","ext":"md","dir":"","size":7548,"summary":"igapyon-mikuku-agent"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":8015,"description":"Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks whether such a character skill exists, me...","summary":"igapyon-mikuku-agent"},
   {"name":"agent-skills-magic-book-prompt.md","path":"assets/article/agent-skills-magic-book-prompt.md","ext":"md","dir":"assets/article","size":1593,"summary":"Agent Skills Magic Book Prompt"},
   {"name":"mikuku-portrait-short-prompt.md","path":"assets/mikuku/mikuku-portrait-short-prompt.md","ext":"md","dir":"assets/mikuku","size":628,"summary":"Mikuku Portrait Short Prompt"},
   {"name":"20260509-general-agent-skills-activation.md","path":"examples/articles/20260509-general-agent-skills-activation.md","ext":"md","dir":"examples/articles","size":14785,"summary":"Agent Skills の発火は、どのように起きているのか"},
@@ -20,20 +22,18 @@
   {"name":"20260603-general-agent-skills-magic-book.md","path":"examples/articles/20260603-general-agent-skills-magic-book.md","ext":"md","dir":"examples/articles","size":15082,"title":"生成AIの Agent Skills は魔法書に近い","summary":"はじめに"},
   {"name":"20260605-general-mcp-magic-circle-outline.md","path":"examples/articles/20260605-general-mcp-magic-circle-outline.md","ext":"md","dir":"examples/articles","size":16392,"title":"生成AIの MCP は、妖精さんへお願いする魔法陣に近い","summary":"はじめに"},
   {"name":"20260606-general-ai-agent-fairies-outline.md","path":"examples/articles/20260606-general-ai-agent-fairies-outline.md","ext":"md","dir":"examples/articles","size":22402,"title":"生成AI agent の向こう側には、いろいろな妖精さんがいる","summary":"はじめに"},
-  {"name":"README.md","path":"README.md","ext":"md","dir":"","size":7548,"summary":"igapyon-mikuku-agent"},
+  {"name":"VERSION.md","path":"references/VERSION.md","ext":"md","dir":"references","size":934,"summary":"みくく Version"},
   {"name":"article-writing.md","path":"references/article-writing.md","ext":"md","dir":"references","size":20286,"summary":"みくく担当記事の執筆参照"},
   {"name":"codex-local-token-usage.md","path":"references/codex-local-token-usage.md","ext":"md","dir":"references","size":4034,"summary":"OpenAI Codex CLI Local Token Usage Investigation"},
+  {"name":"graphic-recording.md","path":"references/graphic-recording.md","ext":"md","dir":"references","size":28068,"summary":"みくく担当グラレコ生成参照"},
   {"name":"10-article-to-graphic-recording-text-prompt.md","path":"references/graphic-recording/10-article-to-graphic-recording-text-prompt.md","ext":"md","dir":"references/graphic-recording","size":6095,"summary":"グラレコテキスト生成プロンプト"},
   {"name":"20-graphic-recording-explainer-image-prompt.md","path":"references/graphic-recording/20-graphic-recording-explainer-image-prompt.md","ext":"md","dir":"references/graphic-recording","size":7955,"summary":"グラレコ説明画像 生成AIプロンプト"},
   {"name":"30-generate-graphic-recording-image-prompt.md","path":"references/graphic-recording/30-generate-graphic-recording-image-prompt.md","ext":"md","dir":"references/graphic-recording","size":11232,"summary":"グラレコ説明画像 生成実行プロンプト"},
   {"name":"40-article-section-graphic-recording-batch-prompt.md","path":"references/graphic-recording/40-article-section-graphic-recording-batch-prompt.md","ext":"md","dir":"references/graphic-recording","size":15906,"summary":"見出し単位グラレコ画像 バッチ生成プロンプト"},
   {"name":"50-generate-section-graphic-recording-images-prompt.md","path":"references/graphic-recording/50-generate-section-graphic-recording-images-prompt.md","ext":"md","dir":"references/graphic-recording","size":21172,"summary":"見出し単位グラレコ画像 生成実行プロンプト"},
   {"name":"60-inspect-section-graphic-recording-images-prompt.md","path":"references/graphic-recording/60-inspect-section-graphic-recording-images-prompt.md","ext":"md","dir":"references/graphic-recording","size":4551,"summary":"見出し単位グラレコ画像 検品プロンプト"},
-  {"name":"graphic-recording.md","path":"references/graphic-recording.md","ext":"md","dir":"references","size":28068,"summary":"みくく担当グラレコ生成参照"},
   {"name":"mikuku-prompt.md","path":"references/mikuku-prompt.md","ext":"md","dir":"references","size":4292,"summary":"生成AI キャラクター `みくく` プロンプト (v20251229c改1)"},
   {"name":"text-characteristics-classification.md","path":"references/text-characteristics-classification.md","ext":"md","dir":"references","size":38306,"summary":"文章特徴分類"},
-  {"name":"VERSION.md","path":"references/VERSION.md","ext":"md","dir":"references","size":934,"summary":"みくく Version"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":8015,"description":"Use only when the user explicitly asks Codex to speak or collaborate as the Japanese character agent \"みくく\", mentions みくく, Mikuku, igapyon-mikuku, or explicitly asks to apply the みくく prompt. If the user only asks whether such a character skill exists, mention this skill as an available option but do not apply it until asked.","summary":"igapyon-mikuku-agent"},
   {"name":"article-footer-sections-template.md","path":"templates/article-footer-sections-template.md","ext":"md","dir":"templates","size":4515,"summary":"みくく担当記事の末尾セクションテンプレート"}
  ]
 }

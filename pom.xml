@@ -5,14 +5,14 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20260606.1</version>
+  <version>1.20260607.1</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
 
   <properties>
     <external.miku-indexgen-skills.repo>https://github.com/igapyon/miku-indexgen-skills.git</external.miku-indexgen-skills.repo>
-    <external.miku-indexgen-skills.ref>v1.4.4.1</external.miku-indexgen-skills.ref>
+    <external.miku-indexgen-skills.ref>v1.5.1.1</external.miku-indexgen-skills.ref>
     <external.miku-indexgen-skills.skillName>igapyon-miku-indexgen</external.miku-indexgen-skills.skillName>
     <external.miku-text-bundle-skills.repo>https://github.com/igapyon/miku-text-bundle-skills.git</external.miku-text-bundle-skills.repo>
     <external.miku-text-bundle-skills.ref>v0.9.0.1</external.miku-text-bundle-skills.ref>
@@ -57,7 +57,7 @@
               <executable>java</executable>
               <arguments>
                 <argument>-jar</argument>
-                <argument>${project.basedir}/lib/miku-indexgen-1.4.4.jar</argument>
+                <argument>${project.basedir}/lib/miku-indexgen-1.5.1.jar</argument>
                 <argument>--input-parent-directory</argument>
                 <argument>${project.basedir}/skills</argument>
               </arguments>

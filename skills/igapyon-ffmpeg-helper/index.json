@@ -3,6 +3,7 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":5942,"description":"Use only on hard trigger: the user explicitly names igapyon-ffmpeg-helper, says to use/apply the FFmpeg helper skill, or uses a specific activation phrase such as igapyon FFmpeg helper, ffmpeg helper workflow, FFmpeg helper runbook, ffmpeg runbook igapy...","summary":"igapyon-ffmpeg-helper"},
   {"name":"youtube-output-policy.md","path":"references/decisions/youtube-output-policy.md","ext":"md","dir":"references/decisions","size":5212,"summary":"YouTube Output Policy Decision"},
   {"name":"audio-concat.md","path":"references/process/audio-concat.md","ext":"md","dir":"references/process","size":1676,"summary":"Audio Concatenation"},
   {"name":"audio-trim.md","path":"references/process/audio-trim.md","ext":"md","dir":"references/process","size":5865,"summary":"Audio Trim"},
@@ -11,7 +12,6 @@
   {"name":"still-image-youtube-video.md","path":"references/process/still-image-youtube-video.md","ext":"md","dir":"references/process","size":7056,"summary":"Still Image + Audio YouTube Video"},
   {"name":"workspace-and-command-log.md","path":"references/process/workspace-and-command-log.md","ext":"md","dir":"references/process","size":3050,"summary":"Workspace and Command Log"},
   {"name":"youtube-manual-upload.md","path":"references/process/youtube-manual-upload.md","ext":"md","dir":"references/process","size":714,"summary":"YouTube Manual Upload"},
-  {"name":"h4essential-orchestra-youtube.md","path":"references/workflows/h4essential-orchestra-youtube.md","ext":"md","dir":"references/workflows","size":6329,"summary":"H4essential Orchestra Recording to YouTube Workflow"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":5942,"description":"Use only on hard trigger: the user explicitly names igapyon-ffmpeg-helper, says to use/apply the FFmpeg helper skill, or uses a specific activation phrase such as igapyon FFmpeg helper, ffmpeg helper workflow, FFmpeg helper runbook, ffmpeg runbook igapyon, or igapyon ffmpeg runbook. This skill is for igapyon's personal FFmpeg runbooks, including the H4essential orchestra recording to YouTube workflow. Do not use for ordinary FFmpeg questions, H4essential mentions, YouTube/video/audio conversion questions, loudnorm/gain questions, or generic workflow discussion unless the user explicitly triggers this skill.","summary":"igapyon-ffmpeg-helper"}
+  {"name":"h4essential-orchestra-youtube.md","path":"references/workflows/h4essential-orchestra-youtube.md","ext":"md","dir":"references/workflows","size":6329,"summary":"H4essential Orchestra Recording to YouTube Workflow"}
  ]
 }
