@@ -152,6 +152,19 @@
 - [x] `skills/igapyon-mikuku-agent/references/graphic-recording/scripts/validate-run-dir.mjs` を追加し、`TODO.md` と各セクションの4ファイル構成を検証できるようにする
 - [x] `skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-section-image-prompts.mjs` を追加し、LLM が作成した `section-text.md` とみくく描画プロンプト本文を合成して `image-prompt.md` を作れるようにする
 
+## miku Agent Skills 同梱名の igapyon- prefix 移行
+
+- [x] `miku-indexgen-skills` は同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリを `igapyon-miku-indexgen` にする方針へ移行済み
+- [x] `miku-text-bundle-skills` は `v0.9.0.1` で同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリを `igapyon-miku-text-bundle` にする方針へ移行済み
+- [ ] `mikuproject-skills` も同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリに `igapyon-` prefix を付ける方針へ移行する
+  - 現状の同梱先: `skills/mikuproject/`
+  - 移行候補: `skills/igapyon-mikuproject/`
+  - 互換 trigger として `mikuproject` は維持する
+- [ ] `mikuscore-skills` も同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリに `igapyon-` prefix を付ける方針へ移行する
+  - 現状の同梱先: `skills/mikuscore/`
+  - 移行候補: `skills/igapyon-mikuscore/`
+  - 互換 trigger として `mikuscore` は維持する
+
 ## miku-soft アーキテクチャ考察メモ
 
 - [x] 再開時はまず `README.md` とこの `TODO.md` を読む

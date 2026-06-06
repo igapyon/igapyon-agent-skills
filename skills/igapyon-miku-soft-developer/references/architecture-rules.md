@@ -39,6 +39,23 @@ Keep product semantics in the product core or upstream runtime artifacts. Treat
 Web Apps, CLI, Java CLI, Agent Skills, and MCP as entrypoints or adapters
 unless the relevant basic document says otherwise.
 
+## Cross-Runtime Ordering Rule
+
+When a miku-soft product needs deterministic ordering for file paths,
+generated artifacts, reports, indexes, bundle contents, diagnostics, or other
+user-visible structured output, prefer comparing normalized relative path
+strings by UTF-16 code unit order.
+
+Normalize local paths to POSIX-style `/` separators before comparing. Do not
+use locale collation, language-specific sort order, natural sort, or numeric
+sort unless the product-specific specification explicitly requires it.
+
+This rule is preferred because UTF-16 string comparison is available and
+straightforward to align across Node.js, browser JavaScript, and Java. It keeps
+Node / Java straight-conversion output parity easier to test and avoids hidden
+differences caused by platform locale, ICU / CLDR version, or runtime-specific
+collation behavior.
+
 ## Early Sister Reference Rule
 
 For new creation in any miku-soft layer, inspect the closest same-layer sister
