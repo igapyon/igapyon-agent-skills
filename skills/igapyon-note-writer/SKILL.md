@@ -134,9 +134,9 @@ Note の `tags` は、実際の掲載用ハッシュタグに合わせて `#` �
 
 ## Reference Usage
 
-`references/` 配下の記事は、Note 記事の正本であり、Note 公開管理例としても使います。文体そのものの第一参考は、みくく担当記事の実例と `igapyon-mikuku-agent` 側の文章規則です。
+Note 記事の正本は、GitHub リポジトリ `https://github.com/igapyon/mikuku-articles` です。ローカル作業では、この `igapyon-agent-skills` リポジトリの姉妹パスに `../mikuku-articles/` が存在することを前提にしてよく、2026 年の記事は `../mikuku-articles/2026/` 配下の Markdown として扱います。日付ディレクトリごとに本文、画像、公開用の関連ファイルを置きます。文体そのものの第一参考は、みくく担当記事の実例と `igapyon-mikuku-agent` 側の文章規則です。
 
-Note 記事を新規作成・更新する場合は、`skills/igapyon-note-writer/references/` 配下の Markdown を正本として扱います。`workplace/*/docs/articles/note/` などに旧配置や作業メモがある場合でも、公開・更新対象の本文はこの skill 配下の `references/` に置きます。
+Note 記事を新規作成・更新する場合は、`../mikuku-articles/2026/YYYYMMDD/` 配下の Markdown を正本として扱います。`skills/igapyon-note-writer/references/` は、未移行の管理メモ、日付未確定の下書き、または移行保留の旧資料だけを置く場所です。`references/` に同名記事があり、`../mikuku-articles/2026/` 側にも同名ファイルがある場合は、`../mikuku-articles/2026/` 側を正本として扱います。
 
 主に見る観点は次の通りです。
 
@@ -151,14 +151,10 @@ Note 記事を新規作成・更新する場合は、`skills/igapyon-note-writer
 
 題材が近い場合は、該当プロジェクト配下の記事を優先して参照します。
 
-- `references/general/`
-- `references/miku-abc-player/`
-- `references/miku-indexgen/`
-- `references/miku-xlsx2md/`
-- `references/mikuproject/`
-- `references/mikuscore/`
+- `../mikuku-articles/2026/YYYYMMDD/`
+- `references/` 配下に残る未移行または日付未確定の記事
 
-索引が必要なときは `index.json` を使って、関連しそうな記事を探します。
+ローカル skill 内の索引が必要なときは `index.json` を使って、残っている管理メモや未移行記事を探します。正本記事群の探索では、`../mikuku-articles/2026/` 配下を直接検索します。
 
 参照記事の表現を長くコピーしないでください。参考にするのは、正本管理、掲載情報、技術エッセイとしての流れ、段落のまとまり、補足文の置き方です。
 
@@ -174,7 +170,7 @@ Note 記事を新規作成・更新する場合は、`skills/igapyon-note-writer
 
 Note へ記事をアップロードする際は、本文 Markdown とは別の後工程として、原則として `##` 見出しごとにグラフィックレコーディング風の画像を挟みます。
 
-この画像生成は、記事本文の執筆や正本 Markdown の管理とは分けて扱います。正本 Markdown には、原則として画像リンクや画像差し込み用の記述を追加しません。
+この画像生成は、記事本文の執筆や正本 Markdown の管理とは分けて扱います。現在の正本には、Note 公開用の画像リンクが含まれる場合があります。明示的な依頼なしに、既存の画像リンクを追加、削除、移動しないでください。
 
 グラレコ画像の生成、セクション分割、画像生成AI用プロンプト作成、検品は、`skills/igapyon-mikuku-agent/references/graphic-recording.md` のワークフローを正とします。
 
