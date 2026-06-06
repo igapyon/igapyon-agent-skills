@@ -1,0 +1,12 @@
+{
+ "generator": "miku-indexgen",
+ "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
+ "basePath": ".",
+ "files": [
+  {"name":"diary-structure.md","path":"references/diary-structure.md","ext":"md","dir":"references","size":6238,"summary":"Diary Structure Reference"},
+  {"name":"workflow.md","path":"references/workflow.md","ext":"md","dir":"references","size":4220,"summary":"Diary Writer Workflow"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":2618,"description":"Use only when the user explicitly asks for igapyon-diary-writer, asks to create or update igapyon diary entries, asks to work with the diary repository as igapyon's own diary data, or asks for diary content that must follow igapyonv3 .src.md conventions. Do not use for Mikuku-authored Note articles, mikuku-articles, generic Japanese writing, or ordinary Markdown unless the diary repository or this skill is explicitly involved.","summary":"igapyon-diary-writer"},
+  {"name":"diary-entry-template.md","path":"templates/diary-entry-template.md","ext":"md","dir":"templates","size":257,"summary":"{{title}}"},
+  {"name":"year-index-template.md","path":"templates/year-index-template.md","ext":"md","dir":"templates","size":203,"summary":"<#assign localYear=\"{{year}}\" /> <@localyearlist /> / [keyword](../keyword/index.html) / [memo](../memo/index.html)"}
+ ]
+}
