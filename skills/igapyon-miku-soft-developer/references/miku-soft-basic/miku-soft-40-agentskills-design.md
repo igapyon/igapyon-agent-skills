@@ -71,6 +71,8 @@ Java application versions:
 
 Agent Skills versions:
 
+- `miku-indexgen-skills`
+- `miku-text-bundle-skills`
 - `miku-grep-skills`
 - `miku-readfile-skills`
 - `mikuproject-skills`
@@ -220,6 +222,7 @@ For new miku Agent Skills work, prefer the CLI-backed or CLI plus MCP-backed pat
 Observed examples:
 
 - `miku-readfile-skills` and `miku-grep-skills` show the compact CLI-backed shape with `runtime/`, `lib/`, runtime smoke tests, bundle tests, and explicit non-activation for generic file operations.
+- `miku-indexgen-skills` shows the newer naming shape where the repository and release asset keep the `-skills` suffix while the installed skill directory and `SKILL.md` frontmatter use `igapyon-miku-indexgen`.
 - `mikuproject-skills` shows CLI plus MCP backend policy, operation capability maps, strict `*-only` behavior, preferred fallback behavior, and handoff-only no-execution behavior.
 
 ### Sister Project Reference Principles
@@ -557,6 +560,20 @@ Release bundle tests should inspect the final bundle or zip contents. They shoul
 
 New `-skills` repositories should create the installable bundle shape from the initial skeleton stage. Do not wait until late packaging work to discover whether the skill can run after installation.
 
+Repository and package names may keep the product's repository-level `-skills` suffix while the installable Agent Skill name omits that suffix and carries the `igapyon-` prefix. This is the preferred newer shape when aligning with `miku-indexgen-skills`.
+
+Use the following name roles deliberately:
+
+- repository name: `<product>-skills`
+- package name: `<product>-skills`, unless the repository has an explicit different package policy
+- release zip name: `igapyon-<product>-skills-<version>.zip`, unless an established release convention already differs
+- Agent Skill formal name: `igapyon-<product>`
+- `SKILL.md` frontmatter `name`: `igapyon-<product>`
+- installed skill directory: `skills/igapyon-<product>/`
+- runtime artifact directory: `skills/igapyon-<product>/runtime/`
+
+Compatibility trigger names may include the upstream product name and the repository-style `-skills` name, such as `<product>` and `<product>-skills`, when this helps older user prompts continue to activate the same skill. These aliases should be documented as triggers in `SKILL.md`; they should not create additional skill directories or separate product identities.
+
 The normal bundle output should be rooted at `skills/`.
 
 Recommended shape:
@@ -582,6 +599,8 @@ bundle/igapyon-<repo-name>-<version>.zip
 ```
 
 Use the repository's existing release naming convention when it is already established, but keep the zip rooted so that extracting or copying the bundle installs `skills/<skill-name>/...` in the expected shape.
+
+For example, `miku-text-bundle-skills` should keep its repository and package name as `miku-text-bundle-skills` and its release zip as `igapyon-miku-text-bundle-skills-<version>.zip`. Its installable Agent Skill name, `SKILL.md` frontmatter `name`, and archive directory should be `igapyon-miku-text-bundle`, giving an installed path of `skills/igapyon-miku-text-bundle/` and runtime artifacts under `skills/igapyon-miku-text-bundle/runtime/`.
 
 Bundle contents tests should be added early. They should verify that required files such as `skills/<skill-name>/SKILL.md`, `references/`, `agents/` when provided, skill-local `assets/` when provided, skill-local `lib/` when used, and `runtime/` when runtime artifacts are required are included. They should also verify that development-only files such as `tests/`, root-level `docs/` when not needed at runtime, `bundle/`, `node_modules/`, `.DS_Store`, and `workplace/` contents are excluded.
 
@@ -873,6 +892,7 @@ Agent Skills maintenance focuses on keeping the skill aligned with upstream prod
 Important maintenance questions:
 
 - Does the skill still activate only for intended requests?
+- Are repository/package/release names and installed Agent Skill names intentionally separated or intentionally identical?
 - Does the declared runtime path still exist in development and bundled installs?
 - Did upstream API names, document kinds, or diagnostics change?
 - Do smoke tests cover the main workflows users actually ask for?
@@ -897,6 +917,7 @@ Before treating a new `-skills` repository as usable, confirm at least the follo
 - Upstream product and semantic center are named
 - Sister `-skills` reference was inspected, or its local absence was recorded
 - Skill name and activation rule are fixed
+- Repository/package/release asset naming and installed skill directory naming are fixed
 - Product boundary and non-goals are written in `SKILL.md`
 - Runtime lookup order is documented
 - Upstream API / CLI / runtime surface is identified

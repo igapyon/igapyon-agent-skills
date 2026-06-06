@@ -71,6 +71,16 @@ Bundled starter templates are available under `assets/agent-skills/`:
 After copying these templates, replace `__REPO_NAME__`, `__SKILL_NAME__`,
 `__SKILL_TITLE__`, `__PRODUCT_NAME__`, and `__VERSION__`.
 
+For newer miku-soft Agent Skills naming, distinguish repository naming from
+installable skill naming before replacing placeholders. A repository and
+package may remain `<product>-skills`, and the release zip may remain
+`igapyon-<product>-skills-<version>.zip`, while the installed Agent Skill name,
+`SKILL.md` frontmatter `name`, and archive directory use `igapyon-<product>`.
+In that shape, runtime artifacts belong under
+`skills/igapyon-<product>/runtime/`, and compatibility triggers such as
+`<product>` and `<product>-skills` may be documented in `SKILL.md` without
+creating additional skill directories.
+
 ## Release Asset Workflow
 
 `.github/workflows/release-build.yml` is a standard starter asset for new
@@ -109,13 +119,14 @@ remain human GitHub or registry operations as described in
 7. Fix the upstream URL and compatibility source before designing runtime lookup or tests.
 8. For CLI-backed work, confirm that required runtime artifacts have been placed under `skills/<skill-name>/runtime/`.
 9. Decide the implementation maturity pattern: handoff-only, CLI-backed, or CLI plus MCP-backed.
-10. For new `-skills` repositories, create `build:bundle` and `build:bundle:zip` from the initial skeleton stage.
-11. Put required skill helpers under `skills/<skill-name>/lib/`, not root-level `lib/`, unless the repository explicitly owns a separate root tool.
-12. Describe runtime artifact lookup, artifact roles, diagnostics, and handoff points when relevant.
-13. Keep backend policy strict: `*-only` policies must not silently fallback, and `handoff-only` must not execute runtime operations.
-14. Verify bundle contents include required skill files and runtime artifacts while excluding development-only files.
-15. Add isolated bundle smoke when the skill depends on runtime artifacts.
-16. Treat the sister-reference summary as required implementation context for new creation work.
-17. Use sister projects as shape references only; do not copy `workplace/` contents into the target repository wholesale.
-18. Add the local GitHub Actions release asset workflow from the starter template by default, or record the explicit reason for omitting it.
-19. Update indexes and validation output after adding or changing skill files.
+10. Fix repository/package/release zip naming separately from the installed Agent Skill name, `SKILL.md` frontmatter `name`, archive directory, and runtime directory.
+11. For new `-skills` repositories, create `build:bundle` and `build:bundle:zip` from the initial skeleton stage.
+12. Put required skill helpers under `skills/<skill-name>/lib/`, not root-level `lib/`, unless the repository explicitly owns a separate root tool.
+13. Describe runtime artifact lookup, artifact roles, diagnostics, and handoff points when relevant.
+14. Keep backend policy strict: `*-only` policies must not silently fallback, and `handoff-only` must not execute runtime operations.
+15. Verify bundle contents include required skill files and runtime artifacts while excluding development-only files.
+16. Add isolated bundle smoke when the skill depends on runtime artifacts.
+17. Treat the sister-reference summary as required implementation context for new creation work.
+18. Use sister projects as shape references only; do not copy `workplace/` contents into the target repository wholesale.
+19. Add the local GitHub Actions release asset workflow from the starter template by default, or record the explicit reason for omitting it.
+20. Update indexes and validation output after adding or changing skill files.
