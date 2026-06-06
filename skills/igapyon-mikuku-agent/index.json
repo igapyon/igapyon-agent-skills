@@ -3,6 +3,7 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
+  {"name":"agent-skills-magic-book-prompt.md","path":"assets/article/agent-skills-magic-book-prompt.md","ext":"md","dir":"assets/article","size":1593,"summary":"Agent Skills Magic Book Prompt"},
   {"name":"mikuku-portrait-short-prompt.md","path":"assets/mikuku/mikuku-portrait-short-prompt.md","ext":"md","dir":"assets/mikuku","size":628,"summary":"Mikuku Portrait Short Prompt"},
   {"name":"20260509-general-agent-skills-activation.md","path":"examples/articles/20260509-general-agent-skills-activation.md","ext":"md","dir":"examples/articles","size":14785,"summary":"Agent Skills の発火は、どのように起きているのか"},
   {"name":"20260509-general-agent-skills-docs.md","path":"examples/articles/20260509-general-agent-skills-docs.md","ext":"md","dir":"examples/articles","size":14543,"summary":"Agent Skills では、説明ページの役割が少し変わる"},
