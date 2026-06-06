@@ -24,9 +24,9 @@ Examples:
 - About mode: `GitHub Aboutを書きたい`, `About文`, `リポジトリ説明`, `GitHub説明文`
 - Branch Status mode: `github-writerでブランチ状況`, `今のブランチの状況`, `PR前にブランチ状態を見たい`, `現在ブランチの確認`
 
-If the mode is clear but required evidence is missing, do not draft yet. Ask for the missing target:
+If the mode is clear but required evidence is missing, do not draft yet. Ask for the missing target, except for PR mode's default target rule:
 
-- PR mode: ask for the target commit ID, explicit Git range, or branch comparison.
+- PR mode: if the user asks for PR text without specifying a commit ID, Git range, branch comparison, or working-tree target, first run `git log --oneline --decorate -1` to resolve the current latest commit, then use that single commit as the PR target. Do not include uncommitted working-tree changes.
 - Release mode: ask for the start commit ID, explicit Git range, or tag/range target.
 - About mode: ask whether to use `README.md` and project metadata, or ask for the source text when repository evidence is not obvious.
 

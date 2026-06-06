@@ -24,6 +24,7 @@ Use these interpretations unless the user explicitly says otherwise:
 - `<commit> の変更内容`: use exactly that single commit.
 - `<base>..<head>`: use Git's normal exclusive-left range; changes reachable from `<head>` but not from `<base>`.
 - `<base>...<head>`: use Git's normal merge-base comparison semantics.
+- PR request without a commit ID, explicit Git range, branch comparison, or working-tree target: first run `git log --oneline --decorate -1` to resolve the current latest commit ID, then use that single commit as the PR target. Inspect it as `<resolved-commit>` / `<resolved-commit>^..<resolved-commit>` and do not include uncommitted working-tree changes.
 - Release request with only a start commit ID: implicitly treat it as `<start>` through `HEAD`, including the change introduced by `<start>`; use `<start>^..HEAD`.
 - `<start> から HEAD まで` with wording that says `<start>` itself is included: use `<start>^..HEAD`.
 - `<start> から HEAD まで` in Release mode: treat `<start>` itself as included by default; use `<start>^..HEAD` unless the user explicitly says to exclude `<start>`.
@@ -37,6 +38,14 @@ For PR text, a request that says `対象コミット <commit> における変更
 For Release text, a start commit ID implies `from <start> through HEAD, including <start>`. Inspect `<start>^..HEAD` unless the user explicitly provides another range.
 
 After resolving the target, inspect the requested evidence.
+
+For a PR request without an explicit target:
+
+```sh
+git log --oneline --decorate -1
+```
+
+Use the commit ID shown by that command as the single commit target for the following inspection commands. Do not silently use an older commit ID from the conversation when the user's latest request omits the target.
 
 For a single commit:
 
