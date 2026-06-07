@@ -10,7 +10,8 @@
 - 1 skill = 1 directory
 - skill ごとの詳細仕様は各 `SKILL.md` に書く
 - skill の具体ルール、例、長めの手順は `references/` 配下に置く
-- Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を正本として管理する
+- Note 記事 Markdown は、姉妹リポジトリ `../mikuku-articles/` を正本として管理する
+- Qiita 記事 Markdown は、`skills/igapyon-qiita-writer/references/` を正本として管理する
 - skill を新規作成・更新した後は、`SKILL.md` が必要な `references/` を案内していること、必要に応じて `index.json` を参照することを確認する
 - repo 全体の運用ルールはこの `README.md` に書く
 - 作業メモは repo 直下の `TODO.md` に集約する
@@ -54,13 +55,15 @@ Qiita では、Note のテック主記事をもとに、技術詳細、手順、
 従来型の Note 記事も引き続き作成します。  
 こちらはうさぴょん担当とし、Note らしい柔らかい文体で、開発背景、使いどころ、利用イメージ、つまずきや意図などを含めた読み物として整えます。
 
-記事の正本管理は従来どおり、媒体ごとに分けます。
+記事の正本管理は、媒体ごとに分けます。
 
-- Note 向け記事の正本: `skills/igapyon-note-writer/references/`
+- Note 向け記事の正本: `../mikuku-articles/`
+  - 公開済み記事: `../mikuku-articles/2026/<MM>/<YYYYMMDD>/`
+  - 未公開記事: `../mikuku-articles/2026/draft/`
 - Qiita 技術記事の正本: `skills/igapyon-qiita-writer/references/`
 
 Qiita 側は投稿頻度や下書き作成数に制限がかかる場合があるため、公開は間隔を空けて行います。  
-大量の記事移行や連続公開が必要な場合でも、まずこの repo の `references/` に正本を保持し、公開作業は媒体側の制限に合わせて進めます。
+Note 記事の下書きや移行中の記事は、`../mikuku-articles/2026/draft/` に平置きで保持し、公開日が決まった段階で日付ディレクトリへ移します。
 
 ## 移行期の writer skill 運用
 
@@ -73,7 +76,7 @@ Note 優先運用への移行期は、掲載媒体ではなく記事タイプで
 こちらは、技術詳細を詰め込みすぎず、背景、感触、読み物としての流れを優先します。
 
 記事ファイルの正本配置は、利用した writer skill ではなく掲載媒体に合わせます。  
-そのため、`igapyon-qiita-writer` で作成した Note テック主記事でも、Note 掲載用の正本は `skills/igapyon-note-writer/references/` に置きます。
+そのため、`igapyon-qiita-writer` で作成した Note テック主記事でも、Note 掲載用の正本は `../mikuku-articles/` に置きます。
 
 ## .gitignore の扱い
 
@@ -128,24 +131,24 @@ skill を利用する際は、`SKILL.md` を入口とし、具体ルール、例
 `skill-creator` などで skill を作成した直後は、必要な具体ルールを `SKILL.md` に詰め込みすぎず、`references/` へ分離します。  
 また、参照資料の全体像を探す必要がある skill では、`SKILL.md` に `index.json` を discovery index として使う旨を明記します。
 
-Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を正本として管理します。
+Note / Qiita 記事 Markdown は、媒体ごとの正本置き場で管理します。
 
-- Note 記事の正本: `skills/igapyon-note-writer/references/`
+- Note 記事の正本: `../mikuku-articles/`
 - Qiita 技術記事の正本: `skills/igapyon-qiita-writer/references/`
 
-みくく担当の Note テック主記事は、正本を `skills/igapyon-note-writer/references/` に置きます。  
+みくく担当の Note テック主記事は、正本を `../mikuku-articles/` に置きます。  
 一方で、みくく文体の参照例として使うため、公開済みまたは参照価値の高い記事コピーを `skills/igapyon-mikuku-agent/references/examples/articles/` に同期して置きます。
 
 このコピーは文体・構成の参照用です。記事本文、URL、掲載用属性を更新する場合は、まず Note 正本側を更新し、その後で `igapyon-mikuku-agent` 側の writing example にコピーして同期します。
 
-`references/general/` は、特定の `miku` 系プロダクトに分類されない一般記事用の置き場です。  
-`miku` 系プロダクトの記事は、各 writer skill の `references/<project>/` に置きます。
+`../mikuku-articles/2026/draft/` は、日付未確定または未公開の Note 記事を階層なしで置く場所です。  
+公開済み Note 記事は、`../mikuku-articles/2026/<MM>/<YYYYMMDD>/` 配下の記事パッケージとして管理します。
 
-`workplace/*/docs/articles/` などに記事メモや旧配置の Markdown が残っている場合でも、記事として更新・公開対象にする正本は writer skill 配下の `references/` です。
+`workplace/*/docs/articles/` やこの repo の旧配置に記事メモや Markdown が残っている場合でも、Note 記事として更新・公開対象にする正本は `../mikuku-articles/` 側です。
 
 ## docs/articles 集約状況
 
-記事管理は、Qiita 向け記事を `skills/igapyon-qiita-writer/references/`、Note 向け記事を `skills/igapyon-note-writer/references/` に集約し、そこを正本として扱う方針です。
+記事管理は現在、Qiita 向け記事を `skills/igapyon-qiita-writer/references/`、Note 向け記事を `../mikuku-articles/` に集約し、そこを正本として扱う方針です。
 
 2026-05-06 時点で、`workplace/*/docs/articles/qiita/` 配下の有意な記事本文は、`README.md` と `TEMPLATE.md` を除き、すべて `skills/igapyon-qiita-writer/references/` 側に同一内容で存在することを確認済みです。
 
@@ -157,7 +160,7 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 - `mikuproject`: 4 件
 - `mikuscore`: 2 件
 
-同じく 2026-05-06 時点で、`workplace/*/docs/articles/note/` 配下の有意な記事本文は、`README.md` と `TEMPLATE.md` を除き、すべて `skills/igapyon-note-writer/references/` 側に同一内容で存在することを確認済みです。
+同じく 2026-05-06 時点で、`workplace/*/docs/articles/note/` 配下の有意な記事本文は、`README.md` と `TEMPLATE.md` を除き、いったん `skills/igapyon-note-writer/references/` 側に同一内容で集約済みであることを確認しました。現在は、公開済み記事を含む Note 正本を `../mikuku-articles/` 側へ移しています。
 
 対象は次の通りです。
 
@@ -168,9 +171,9 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 - `mikuscore`: 2 件
 
 `mikuscore` の記事は、`workplace/docs-articles/mikuscore-devel/` と `workplace/docs-articles/miku-abc-player-devel/vendor/mikuscore/` の両方に重複して存在する場合があります。  
-集約先の `references/mikuscore/` では 1 セットとして保持します。
+Note 正本側では、`../mikuku-articles/` に 1 セットとして保持します。
 
-`references/general/` 配下の記事は、`workplace/*/docs/articles/` 由来ではない一般記事を、この repo 側で集約管理するための置き場です。
+一般記事の Note 下書きは、`../mikuku-articles/2026/draft/` に置きます。
 
 ## 構成
 
@@ -182,7 +185,7 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 │  │  └─ references/
 │  ├─ igapyon-note-writer/
 │  │  ├─ SKILL.md
-│  │  └─ references/
+│  │  └─ templates/
 │  ├─ igapyon-companion-techpost-writer/
 │  │  └─ SKILL.md
 │  ├─ igapyon-companion-musicpost-writer/

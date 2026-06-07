@@ -134,9 +134,9 @@ Note の `tags` は、実際の掲載用ハッシュタグに合わせて `#` �
 
 ## Reference Usage
 
-Note 記事の正本は、GitHub リポジトリ `https://github.com/igapyon/mikuku-articles` です。ローカル作業では、この `igapyon-agent-skills` リポジトリの姉妹パスに `../mikuku-articles/` が存在することを前提にしてよく、2026 年の記事は `../mikuku-articles/2026/` 配下の Markdown として扱います。日付ディレクトリごとに本文、画像、公開用の関連ファイルを置きます。文体そのものの第一参考は、みくく担当記事の実例と `igapyon-mikuku-agent` 側の文章規則です。
+Note 記事の正本は、GitHub リポジトリ `https://github.com/igapyon/mikuku-articles` です。ローカル作業では、この `igapyon-agent-skills` リポジトリの姉妹パスに `../mikuku-articles/` が存在することを前提にしてよく、2026 年の記事は `../mikuku-articles/2026/` 配下の Markdown として扱います。公開済み記事は日付ディレクトリごとに本文、画像、公開用の関連ファイルを置きます。未公開記事は `../mikuku-articles/2026/draft/` に階層なしで置きます。文体そのものの第一参考は、みくく担当記事の実例と `igapyon-mikuku-agent` 側の文章規則です。
 
-Note 記事を新規作成・更新する場合は、`../mikuku-articles/2026/YYYYMMDD/` 配下の Markdown を正本として扱います。`skills/igapyon-note-writer/references/` は、未移行の管理メモ、日付未確定の下書き、または移行保留の旧資料だけを置く場所です。`references/` に同名記事があり、`../mikuku-articles/2026/` 側にも同名ファイルがある場合は、`../mikuku-articles/2026/` 側を正本として扱います。
+Note 記事を新規作成・更新する場合は、未公開なら `../mikuku-articles/2026/draft/`、公開済みまたは公開日確定済みなら `../mikuku-articles/2026/<MM>/<YYYYMMDD>/` 配下の Markdown を正本として扱います。`skills/igapyon-note-writer/references/` は使いません。
 
 `diary` は、いがぴょん本人の日記データ正本です。`igapyonv3` は、その `diary` を処理するための生成・変換ツールです。どちらも、みくく担当 Note 記事の正本、参考文体、運用例、または記事管理例として参照しません。`igapyon-note-writer` の作業では、`diary` と `igapyonv3` を見ないでください。
 
@@ -153,10 +153,10 @@ Note 記事を新規作成・更新する場合は、`../mikuku-articles/2026/YY
 
 題材が近い場合は、該当プロジェクト配下の記事を優先して参照します。
 
-- `../mikuku-articles/2026/YYYYMMDD/`
-- `references/` 配下に残る未移行または日付未確定の記事
+- `../mikuku-articles/2026/<MM>/<YYYYMMDD>/`
+- `../mikuku-articles/2026/draft/`
 
-ローカル skill 内の索引が必要なときは `index.json` を使って、残っている管理メモや未移行記事を探します。正本記事群の探索では、`../mikuku-articles/2026/` 配下を直接検索します。
+正本記事群の探索では、`../mikuku-articles/2026/` 配下を直接検索します。
 
 参照記事の表現を長くコピーしないでください。参考にするのは、正本管理、掲載情報、技術エッセイとしての流れ、段落のまとまり、補足文の置き方です。
 

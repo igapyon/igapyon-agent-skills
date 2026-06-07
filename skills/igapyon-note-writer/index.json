@@ -3,14 +3,7 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":13849,"description":"Use only when the user explicitly asks for igapyon-note-writer, asks for Note publishing metadata or Note canonical article management, or asks to prepare a Mikuku-authored Japanese technical essay for Note. Do not use for generic proofreading, ordinary...","summary":"igapyon-note-writer"},
-  {"name":"2026XXXX-note-article-index.md","path":"references/00-management/2026XXXX-note-article-index.md","ext":"md","dir":"references/00-management","size":6448,"title":"note 記事一覧","summary":"はじめに"},
-  {"name":"article-assignments.md","path":"references/00-management/article-assignments.md","ext":"md","dir":"references/00-management","size":1621,"summary":"Note 記事担当一覧"},
-  {"name":"202606xx-general-agile-thinking.md","path":"references/general/202606xx-general-agile-thinking.md","ext":"md","dir":"references/general","size":17908,"title":"アジャイルという考え方に入門する","summary":"はじめに"},
-  {"name":"202606xx-general-modern-agile-terms.md","path":"references/general/202606xx-general-modern-agile-terms.md","ext":"md","dir":"references/general","size":15693,"title":"現代のアジャイルは、周辺語が多すぎる","summary":"はじめに"},
-  {"name":"202606xx-general-object-oriented-thinking.md","path":"references/general/202606xx-general-object-oriented-thinking.md","ext":"md","dir":"references/general","size":17509,"title":"オブジェクト指向という考え方に入門する","summary":"はじめに"},
-  {"name":"20260523-miku-indexgen-spec-draft.md","path":"references/miku-indexgen/20260523-miku-indexgen-spec-draft.md","ext":"md","dir":"references/miku-indexgen","size":8717,"title":"[miku-indexgen] AI エージェントに読ませる前に、ディレクトリの索引を作る","summary":"はじめに"},
-  {"name":"2026XXXX-mikuscore-skills-intro.md","path":"references/mikuscore/2026XXXX-mikuscore-skills-intro.md","ext":"md","dir":"references/mikuscore","size":5404,"title":"[mikuscore] 譜面フォーマット変換の前提を、毎回説明しなくてよくしたかった話","summary":"はじめに"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":13602,"description":"Use only when the user explicitly asks for igapyon-note-writer, asks for Note publishing metadata or Note canonical article management, or asks to prepare a Mikuku-authored Japanese technical essay for Note. Do not use for generic proofreading, ordinary...","summary":"igapyon-note-writer"},
   {"name":"general-note-article-template.md","path":"templates/general-note-article-template.md","ext":"md","dir":"templates","size":2255,"title":"記事タイトル","summary":"はじめに"}
  ]
 }
