@@ -4,6 +4,8 @@
 
 この文書をワークフローの起点にし、必要に応じて `references/graphic-recording/` 配下の個別プロンプトを順番に使います。
 
+生成済みのグラレコ画像を `mikuku-articles` の公開記事ディレクトリへ反映する依頼では、生成ワークフローではなく [graphic-recording/publish-generated-images-to-article.md](graphic-recording/publish-generated-images-to-article.md) を読んでください。
+
 ## 基本方針
 
 記事本文を直接貼り付けるのではなく、記事 Markdown ファイルのパスを入力として扱います。
