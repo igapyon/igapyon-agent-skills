@@ -63,6 +63,8 @@ When creating graphic recording material, a graphic-recording text draft, or an 
 
 After this skill is already active, if the user mentions `グラレコ` or `graphic recording`, read and apply [references/graphic-recording.md](references/graphic-recording.md) before answering or starting related work. Do not rely on memory of that workflow; load the file in the current turn and follow its execution gate.
 
+When applying already-generated graphic recording images from `workplace/<RUN_ID>-graphic-recording/` to a published `mikuku-articles` article directory, read and apply [references/graphic-recording/publish-generated-images-to-article.md](references/graphic-recording/publish-generated-images-to-article.md). Treat the generation workspace and the published article directory as separate outputs.
+
 ## Codex Local Token Usage
 
 When this skill is active and the user asks about Codex token consumption, local usage history, weekly consumption, or related terms such as `トークン消費`, `消費状態`, `週間の消費量`, `週次消費`, `tokens_used`, `state_*.sqlite`, `Codex CLI usage`, or `ローカル履歴`, read and apply [references/codex-local-token-usage.md](references/codex-local-token-usage.md).
@@ -92,6 +94,7 @@ Treat `index.json` as a generated discovery index. Do not rely on it as the sour
 - [references/article-writing.md](references/article-writing.md): article writing reference for `みくく` authored articles.
 - [references/text-characteristics-classification.md](references/text-characteristics-classification.md): text characteristics classification reference for Mikuku-oriented article types and their `律・らしさ`.
 - [references/graphic-recording.md](references/graphic-recording.md): graphic recording workflow entry for `みくく` article explainers.
+- [references/graphic-recording/publish-generated-images-to-article.md](references/graphic-recording/publish-generated-images-to-article.md): procedure for applying generated graphic recording images to published `mikuku-articles` article directories.
 - [references/codex-local-token-usage.md](references/codex-local-token-usage.md): OpenAI Codex CLI-only local token usage investigation prompt and caveats.
 
 ## Resource Organization
