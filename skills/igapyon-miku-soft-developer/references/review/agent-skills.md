@@ -91,9 +91,12 @@ For CLI-backed skills, check these points:
 Check these points:
 
 - installable bundles include `SKILL.md`, needed references, skill-local helper
-  files, and required runtime artifacts
+  files, the generated `index.json` discovery artifact, and required runtime
+  artifacts
 - bundle tests exclude development-only files such as `tests/`, `bundle/`,
   `node_modules/`, `.DS_Store`, and `workplace/` contents
+- structure or validation tests fail when `skills/<skill-name>/index.json` is
+  missing
 - skill-local helpers live under `skills/<skill-name>/lib/` when they are
   required in installed bundles
 - release zip names and bundle paths are product-specific and versioned
@@ -116,6 +119,8 @@ Use this severity guidance during Review mode:
   skill-local runtime paths.
 - Medium: bundle tests do not verify required files and development-only
   exclusions.
+- Medium: `index.json` is missing, stale, or not checked by structure and
+  release bundle tests.
 - Low: minor naming or documentation issues make artifact roles or backend
   behavior harder to understand.
 

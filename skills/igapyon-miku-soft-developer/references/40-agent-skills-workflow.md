@@ -52,6 +52,8 @@ Bundled starter templates are available under `assets/agent-skills/`:
 - `tests/release-bundle-contents.test.mjs`
   - Verifies required skill files are included and development-only files are
     excluded from the release zip.
+  - Verifies `skills/<skill-name>/index.json` is included as the mandatory
+    generated discovery artifact.
 - `tests/isolated-bundle-smoke.test.mjs`
   - Copies the generated bundle to a temporary directory and verifies the
     installed bundle shape.
@@ -67,6 +69,9 @@ Bundled starter templates are available under `assets/agent-skills/`:
 - `skills/__SKILL_NAME__/`
   - Minimal skill skeleton with `SKILL.md`, optional `agents/openai.yaml`,
     `references/INDEX.md`, `lib/`, and `runtime/`.
+  - After copying the skeleton, generate `skills/<skill-name>/index.json`
+    with `miku-indexgen`; do not maintain a fixed handwritten template for
+    this generated file.
 
 After copying these templates, replace `__REPO_NAME__`, `__SKILL_NAME__`,
 `__SKILL_TITLE__`, `__PRODUCT_NAME__`, and `__VERSION__`.
@@ -104,9 +109,10 @@ remain human GitHub or registry operations as described in
 1. Read [activation-policy.md](activation-policy.md) for strict activation behavior.
 2. Read [architecture-rules.md](architecture-rules.md).
 3. Read the Agent Skills basic document.
-4. Inspect the upstream product README, runtime artifacts, CLI/API contracts, existing skill files, references, assets, tests, README, docs, TODO, and generated indexes.
-5. For new creation, inspect existing `-skills` sister application checkouts under `workplace/` for the same maturity pattern, especially `SKILL.md`, `runtime/`, `lib/`, `scripts/`, `tests/`, `.github/workflows/`, `references/runtime/`, and bundle output. If no checkout is available, write down that absence and the closest public or documented reference before designing files.
-6. For new creation, before scaffolding or initial file design, summarize which sister project was used, which maturity pattern it represents, and which concrete repository-shape decisions were adopted or rejected.
+4. For each existing skill, read `skills/<skill-name>/index.json` first when it exists, then use it to choose the specific bundled reference files to open.
+5. Inspect the upstream product README, runtime artifacts, CLI/API contracts, existing skill files, references, assets, tests, README, docs, TODO, and generated indexes.
+6. For new creation, inspect existing `-skills` sister application checkouts under `workplace/` for the same maturity pattern, especially `SKILL.md`, `index.json`, `runtime/`, `lib/`, `scripts/`, `tests/`, `.github/workflows/`, `references/runtime/`, and bundle output. If no checkout is available, write down that absence and the closest public or documented reference before designing files.
+7. For new creation, before scaffolding or initial file design, summarize which sister project was used, which maturity pattern it represents, and which concrete repository-shape decisions were adopted or rejected.
 
 ## Checklist
 
@@ -121,12 +127,14 @@ remain human GitHub or registry operations as described in
 9. Decide the implementation maturity pattern: handoff-only, CLI-backed, or CLI plus MCP-backed.
 10. Fix repository/package/release zip naming separately from the installed Agent Skill name, `SKILL.md` frontmatter `name`, archive directory, and runtime directory.
 11. For new `-skills` repositories, create `build:bundle` and `build:bundle:zip` from the initial skeleton stage.
-12. Put required skill helpers under `skills/<skill-name>/lib/`, not root-level `lib/`, unless the repository explicitly owns a separate root tool.
-13. Describe runtime artifact lookup, artifact roles, diagnostics, and handoff points when relevant.
-14. Keep backend policy strict: `*-only` policies must not silently fallback, and `handoff-only` must not execute runtime operations.
-15. Verify bundle contents include required skill files and runtime artifacts while excluding development-only files.
-16. Add isolated bundle smoke when the skill depends on runtime artifacts.
-17. Treat the sister-reference summary as required implementation context for new creation work.
-18. Use sister projects as shape references only; do not copy `workplace/` contents into the target repository wholesale.
-19. Add the local GitHub Actions release asset workflow from the starter template by default, or record the explicit reason for omitting it.
-20. Update indexes and validation output after adding or changing skill files.
+12. Treat `skills/<skill-name>/index.json` as a mandatory generated discovery artifact by default for miku-soft Agent Skills.
+13. Put required skill helpers under `skills/<skill-name>/lib/`, not root-level `lib/`, unless the repository explicitly owns a separate root tool.
+14. Describe runtime artifact lookup, artifact roles, diagnostics, and handoff points when relevant.
+15. Keep backend policy strict: `*-only` policies must not silently fallback, and `handoff-only` must not execute runtime operations.
+16. Verify bundle contents include `SKILL.md`, `index.json`, required references, required skill files, and runtime artifacts while excluding development-only files.
+17. Add structure or validation tests that fail when `skills/<skill-name>/index.json` is missing.
+18. Add isolated bundle smoke when the skill depends on runtime artifacts.
+19. Treat the sister-reference summary as required implementation context for new creation work.
+20. Use sister projects as shape references only; do not copy `workplace/` contents into the target repository wholesale.
+21. Add the local GitHub Actions release asset workflow from the starter template by default, or record the explicit reason for omitting it.
+22. After adding or changing `SKILL.md`, references, assets, or other bundled skill files, regenerate `skills/<skill-name>/index.json` with `miku-indexgen --refresh-index skills/<skill-name>/index.json` or the repository's documented equivalent, then update validation output.

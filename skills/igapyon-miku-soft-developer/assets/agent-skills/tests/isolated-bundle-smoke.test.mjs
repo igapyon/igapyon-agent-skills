@@ -21,6 +21,7 @@ test("generated bundle works from an isolated install shape", () => {
 
   const installedSkillRoot = path.resolve(isolatedRoot, "skills", skillName);
   assert.equal(fs.existsSync(path.resolve(installedSkillRoot, "SKILL.md")), true);
+  assert.equal(fs.existsSync(path.resolve(installedSkillRoot, "index.json")), true);
 
   const runtimeRoot = path.resolve(installedSkillRoot, "runtime");
   if (!fs.existsSync(runtimeRoot)) {
