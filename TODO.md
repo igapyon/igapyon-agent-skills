@@ -165,6 +165,10 @@
 
 - [x] `miku-indexgen-skills` は同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリを `igapyon-miku-indexgen` にする方針へ移行済み
 - [x] `miku-text-bundle-skills` は `v0.9.0.1` で同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリを `igapyon-miku-text-bundle` にする方針へ移行済み
+- [x] `miku-grep-skills` は `v0.10.1.1` で同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリを `igapyon-miku-grep` にする方針へ移行済み
+  - 互換 trigger として `miku-grep` は維持する
+- [ ] `miku-readfile-skills` もいずれ外部管理 miku-soft 系 skill として release archive に同梱する
+  - 同梱時は GitHub latest release と skill directory 名を確認し、`pom.xml` の `external.*` properties と `README.md` の同梱一覧を更新する
 - [ ] `mikuproject-skills` も同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリに `igapyon-` prefix を付ける方針へ移行する
   - 現状の同梱先: `skills/mikuproject/`
   - 移行候補: `skills/igapyon-mikuproject/`

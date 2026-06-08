@@ -17,6 +17,9 @@
     <external.miku-text-bundle-skills.repo>https://github.com/igapyon/miku-text-bundle-skills.git</external.miku-text-bundle-skills.repo>
     <external.miku-text-bundle-skills.ref>v0.9.0.1</external.miku-text-bundle-skills.ref>
     <external.miku-text-bundle-skills.skillName>igapyon-miku-text-bundle</external.miku-text-bundle-skills.skillName>
+    <external.miku-grep-skills.repo>https://github.com/igapyon/miku-grep-skills.git</external.miku-grep-skills.repo>
+    <external.miku-grep-skills.ref>v0.10.1.1</external.miku-grep-skills.ref>
+    <external.miku-grep-skills.skillName>igapyon-miku-grep</external.miku-grep-skills.skillName>
     <external.mikuproject-skills.repo>https://github.com/igapyon/mikuproject-skills.git</external.mikuproject-skills.repo>
     <external.mikuproject-skills.ref>v0.8.1.1</external.mikuproject-skills.ref>
     <external.mikuproject-skills.skillName>mikuproject</external.mikuproject-skills.skillName>
@@ -81,6 +84,9 @@
                 <argument>${external.miku-text-bundle-skills.repo}</argument>
                 <argument>${external.miku-text-bundle-skills.ref}</argument>
                 <argument>${external.miku-text-bundle-skills.skillName}</argument>
+                <argument>${external.miku-grep-skills.repo}</argument>
+                <argument>${external.miku-grep-skills.ref}</argument>
+                <argument>${external.miku-grep-skills.skillName}</argument>
                 <argument>${external.mikuproject-skills.repo}</argument>
                 <argument>${external.mikuproject-skills.ref}</argument>
                 <argument>${external.mikuproject-skills.skillName}</argument>

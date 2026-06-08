@@ -286,6 +286,7 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 
 - `miku-indexgen-skills` `v1.5.1.1`: `skills/igapyon-miku-indexgen/`
 - `miku-text-bundle-skills` `v0.9.0.1`: `skills/igapyon-miku-text-bundle/`
+- `miku-grep-skills` `v0.10.1.1`: `skills/igapyon-miku-grep/`
 - `mikuproject-skills` `v0.8.1.1`: `skills/mikuproject/`
 - `mikuscore-skills` `v0.1.0`: `skills/mikuscore/`
 
