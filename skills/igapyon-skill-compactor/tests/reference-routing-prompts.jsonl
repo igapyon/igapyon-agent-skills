@@ -4,3 +4,4 @@
 {"id":"route-004","prompt":"igapyon-skill-compactorで、記事由来の思想だけ軽く確認したい。","expected":"route","target":"distilled/token-efficiency-design-essence.md","checks":["choose distilled entry point","avoid original articles unless needed"]}
 {"id":"route-005","prompt":"igapyon-skill-compactorで、front matterの書き方を確認したい。","expected":"route","target":"references/agent-skill/frontmatter-templates.md","checks":["choose frontmatter templates","avoid unrelated checklists"]}
 {"id":"route-006","prompt":"igapyon-skill-compactorの発火テストを別セッションで確認したい。","expected":"route","target":"tests/INDEX.md","checks":["choose tests index","validation-only material"]}
+{"id":"route-007","prompt":"igapyon-skill-compactorのconservative/structural/summaryの違いを例で確認したい。","expected":"route","target":"examples/compaction-modes-example.md","checks":["choose compaction mode example","avoid unrelated front matter examples"]}

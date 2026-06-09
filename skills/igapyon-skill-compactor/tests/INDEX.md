@@ -44,7 +44,8 @@ runtime unless validating trigger behavior, routing, or output contracts.
 - Add cases only when they protect trigger intent, output contract, routing, or
   behavior that could regress.
 - Prefer expected values from a small enum such as `activate`,
-  `do-not-activate`, `mention-only`, `preserve`, `route`, or `ask-human`.
+  `do-not-activate`, `mention-only`, `preserve`, `conservative`,
+  `structural`, `summary`, `route`, or `ask-human`.
 - Run test prompts in read-only or no-edit mode unless the test explicitly
   checks editing behavior in a disposable copy.
 
