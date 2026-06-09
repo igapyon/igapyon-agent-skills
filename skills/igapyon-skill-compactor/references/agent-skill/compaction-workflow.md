@@ -87,6 +87,9 @@ expected results as design questions for the human, not as failures to hide.
 
 ## 7. Choose The Treatment
 
+- Choose the compaction mode before rewriting. Use
+  [compaction-modes.md](compaction-modes.md). Default to `conservative` when
+  the user has not specified a stronger mode.
 - Compact when one coherent skill has too much always-loaded detail.
 - Split when unrelated jobs only share a directory, name, or historical origin.
 - Toolize when the work is deterministic, repetitive, or better verified outside the model.

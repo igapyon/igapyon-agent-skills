@@ -114,6 +114,10 @@ reference routing, or output contracts after changing this skill.
 
 ## Compaction Rules
 
+- Default to `conservative` compaction unless the user explicitly requests a
+  different mode.
+- Use [references/agent-skill/compaction-modes.md](references/agent-skill/compaction-modes.md)
+  when choosing or explaining compaction mode.
 - Preserve meaning before reducing size.
 - Prefer deletion of generic explanation over deletion of task-specific rules.
 - Prefer moving detailed examples to references over leaving them in `SKILL.md`.
