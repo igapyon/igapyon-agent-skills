@@ -193,6 +193,9 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 │  ├─ igapyon-github-writer/
 │  │  ├─ SKILL.md
 │  │  └─ references/
+│  ├─ igapyon-diary-writer/
+│  │  ├─ SKILL.md
+│  │  └─ references/
 │  ├─ igapyon-ffmpeg-helper/
 │  │  ├─ SKILL.md
 │  │  └─ references/
@@ -203,7 +206,13 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 │  │  ├─ SKILL.md
 │  │  ├─ assets/
 │  │  └─ references/
-│  └─ igapyon-repo-conventions/
+│  ├─ igapyon-repo-conventions/
+│  │  ├─ SKILL.md
+│  │  └─ references/
+│  ├─ igapyon-reviewer/
+│  │  ├─ SKILL.md
+│  │  └─ references/
+│  └─ igapyon-skill-compactor/
 │     ├─ SKILL.md
 │     └─ references/
 ├─ pom.xml
@@ -233,6 +242,10 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 
   GitHub PR、GitHub Release、GitHub About に貼る文章の作成向け。明示的に指定した場合に利用する。
 
+- `igapyon-diary-writer`
+
+  igapyon diary repository の日記エントリ作成・更新向け。明示的に指定した場合、または diary repository の作業が明確な場合に利用する。
+
 - `igapyon-ffmpeg-helper`
 
   H4essential のオーケストラ録音から、切り出し、単純ゲイン調整、必要なら結合、静止画付き YouTube 用動画作成までの個人用 FFmpeg ワークフロー向け。明示的に指定した場合に利用する。
@@ -248,6 +261,14 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 - `igapyon-repo-conventions`
 
   Git / GitHub repository の `.gitignore`、`workplace/`、`.codex/skills/`、Java / Maven 設定、README 運用ルールの整理向け。明示的に指定した場合に利用する。
+
+- `igapyon-reviewer`
+
+  コード、記事、ドキュメント、UI 文言、CLI 文言などのレビュー向け。明示的に `igapyon-reviewer` の利用を指定した場合に利用する。
+
+- `igapyon-skill-compactor`
+
+  肥大化した Agent Skill の token-efficiency 設計、分割、参照化、蒸留、チェックリスト化、tool 化判断向け。明示的に指定した場合、または Agent Skill の compact / slim / token bloat reduction が明確な場合に利用する。
 
 ## index.json の更新
 

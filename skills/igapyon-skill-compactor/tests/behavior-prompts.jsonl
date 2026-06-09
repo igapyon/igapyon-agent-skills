@@ -1,0 +1,5 @@
+{"id":"behavior-001","prompt":"igapyon-skill-compactorでこのAgent Skillを短くして。ただし発火条件、禁止事項、出力形式は変えないで。","expected":"preserve","checks":["preserve activation contract","preserve safety constraints","preserve output contract"]}
+{"id":"behavior-002","prompt":"このSkillの同じ文章を全部一本化して。副作用は気にしなくてよい。igapyon-skill-compactorを使って。","expected":"ask-human","checks":["do not commonize blindly","surface behavior-change risk","ask before risky commonization"]}
+{"id":"behavior-003","prompt":"igapyon-skill-compactorで、長いexamplesをSKILL.mdから外へ逃がして。","expected":"preserve","checks":["move examples out of always-loaded context","keep when-to-read routing","do not delete reusable examples"]}
+{"id":"behavior-004","prompt":"igapyon-skill-compactorで、testsの代表プロンプトをSKILL.md本文に全部入れて。","expected":"do-not-apply-requested-shape","checks":["keep test prompts out of runtime context","use top-level tests","avoid SKILL.md bloat"]}
+{"id":"behavior-005","prompt":"igapyon-skill-compactorで、意味が同じか不明な重複文を共通化してよいか判断して。","expected":"ask-human","checks":["compare scope and meaning","preserve local deltas","ask human on uncertain commonization"]}
