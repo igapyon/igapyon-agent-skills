@@ -39,17 +39,18 @@ instructions. If the user does not specify a mode, use `conservative`.
 For a small before/after example of all three modes, read
 [../../examples/compaction-modes-example.md](../../examples/compaction-modes-example.md).
 
-## Technical Inventory Rule
+## Structured Inventory Rule
 
-For technical Agent Skills, prompts, workflows, and repository procedures,
-extract an inventory before compacting. Incomplete inventories reduce
-reproducibility.
+For Agent Skills, prompts, workflows, repository procedures, writing guidance,
+review criteria, and other structured knowledge, extract an inventory before
+compacting. Incomplete inventories reduce reproducibility.
 
 Inventory extraction is not limited to existing Markdown lists. Also extract
 embedded list items from prose, then consolidate them with nearby explicit
 lists into one typed inventory. Commands, paths, conditions, prohibitions,
-exceptions, fallback behavior, validation steps, and generated artifacts often
-appear inside sentences; losing those embedded items is still information loss.
+exceptions, fallback behavior, validation steps, generated artifacts, tone
+rules, review criteria, examples, and decision boundaries often appear inside
+sentences; losing those embedded items is still information loss.
 
 Inventory candidates include:
 
@@ -57,10 +58,33 @@ Inventory candidates include:
 - inputs, outputs, preconditions, and postconditions
 - required steps, optional steps, and fallback steps
 - commands, file paths, tool names, runtime artifacts, and generated artifacts
+- roles, audiences, tone rules, style constraints, and writing boundaries
+- review criteria, checklist items, scoring axes, and severity rules
 - lists, tables, matrices, option sets, and checklists
 - prohibitions, exceptions, thresholds, warnings, and human-confirmation points
 - validation commands, expected results, and known risks
 - reference-routing rules and required examples
+
+Choose the inventory representation independently from compaction mode. The
+mode controls how much information to preserve; the representation controls how
+the preserved structure is expressed.
+
+Use the representation that preserves the source structure with the least
+ambiguity and reasonable token cost:
+
+- unordered lists for independent items such as constraints, prohibitions,
+  files, references, tone rules, and review criteria
+- ordered lists for steps, priority order, fallback order, and check sequence
+- tables for comparisons, option sets, matrices, and repeated attributes
+- Mermaid diagrams for branching flows, state transitions, dependencies,
+  reference routing, complex fallback paths, and decision logic that would be
+  longer or less clear as bullets
+- short prose for surrounding context that is not itself structural
+
+Mermaid is not tied to `conservative`, `structural`, or `summary`. Use it in
+any mode when the source relationship is better represented as a diagram than
+as bullets, a table, or prose. Do not use Mermaid when it adds tokens without
+making ordering, branching, dependency, or state meaning clearer.
 
 Apply the inventory by mode:
 
@@ -71,7 +95,7 @@ Apply the inventory by mode:
 - `summary`: use the inventory as the selection input, assign importance, keep
   representative high-value items, then write the summary.
 
-Do not summarize technical material directly from prose when an inventory can
+Do not summarize structured material directly from prose when an inventory can
 be extracted first.
 
 If an apparent list is split between bullets and prose, merge both sources into
@@ -79,7 +103,7 @@ one inventory before deciding what to preserve, restructure, or summarize.
 
 ## Round-Trip Check Rule
 
-When compaction may affect technical reproducibility, validate the result by
+When compaction may affect reproducibility, validate the result by
 extracting an inventory from the compacted output and comparing it with the
 source inventory.
 
@@ -87,8 +111,8 @@ Expected comparison by mode:
 
 - `conservative`: source inventory and compacted-output inventory should
   substantially match. Any missing command, path, prohibition, validation step,
-  activation boundary, output contract, or hard condition is a regression unless
-  the user explicitly accepted that loss.
+  activation boundary, output contract, tone rule, review criterion, or hard
+  condition is a regression unless the user explicitly accepted that loss.
 - `structural`: all explicit structural items should remain present, though
   surrounding prose may be gone.
 - `summary`: critical and high-importance inventory items should remain
@@ -105,7 +129,7 @@ Use `conservative` as the default.
 Preserve:
 
 - activation triggers and non-triggers
-- technical inventory items from the Technical Inventory Rule
+- structured inventory items from the Structured Inventory Rule
 - safety, refusal, repository, and domain constraints
 - output contracts, required sections, and validation surfaces
 - lists, enumerations, option sets, required files, command shapes, and
@@ -133,7 +157,7 @@ operational skeleton reliable.
 
 Preserve:
 
-- technical inventory items from the Technical Inventory Rule
+- structured inventory items from the Structured Inventory Rule
 - lists, tables, ordered steps, matrices, option sets, and required checklists
 - all explicit criteria, thresholds, exceptions, warnings, and hard boundaries
 - names of files, directories, tools, commands, references, and generated
@@ -156,7 +180,7 @@ or accepts lower reconstruction fidelity.
 Preserve:
 
 - the target skill's distinctive purpose and behavior
-- the high-importance technical inventory items needed to preserve distinctive
+- the high-importance structured inventory items needed to preserve distinctive
   behavior
 - activation and non-activation boundaries
 - safety-critical and behavior-critical constraints
