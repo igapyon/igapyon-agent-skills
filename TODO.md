@@ -26,14 +26,15 @@
 
 - [x] RAG-ready 的な前処理観点として、優先度の高い3件を `igapyon-skill-compactor` に反映した
   - [x] Typed Inventory Schema 相当
-    - `Technical Inventory Rule` として、commands / paths / inputs / outputs / constraints / prohibitions / fallbacks / validation / risks / references などを型付き一覧として扱う方針を追加
-    - 箇条書きだけでなく、文中に埋まったコマンド、パス、条件、禁止事項、例外、fallback、検証、生成物も抽出して、近くの明示一覧と統合する方針を追加
+    - `Structured Inventory Rule` として、commands / paths / inputs / outputs / constraints / prohibitions / fallbacks / validation / risks / references に加え、tone rules / review criteria / style constraints なども型付き一覧として扱う方針を追加
+    - 箇条書きだけでなく、文中に埋まったコマンド、パス、条件、禁止事項、例外、fallback、検証、生成物、文体規則、レビュー基準なども抽出して、近くの明示一覧と統合する方針を追加
   - [x] Importance / Criticality 相当
-    - `summary` でも、まず技術一覧を抽出し、重要度を付け、代表要素を残してから要約する方針を追加
-    - `conservative` / `structural` / `summary` それぞれで、技術一覧をどう維持・選別するかを明文化
+    - `summary` でも、まず structured inventory を抽出し、重要度を付け、代表要素を残してから要約する方針を追加
+    - `conservative` / `structural` / `summary` それぞれで、structured inventory をどう維持・選別するかを明文化
+    - Mermaid / 箇条書き / 表 / 短い文章はモードではなく対象構造に基づいて選ぶ、という representation 選択ルールを追加
   - [x] Round-Trip Check 相当
-    - 圧縮後から技術一覧を再抽出し、元の一覧と比較する `Round-Trip Check Rule` を追加
-    - `behavior-009` から `behavior-013` として、技術一覧維持、summary 前の一覧抽出、隣接近接重複の局所統合、文中埋め込み要素の一覧統合、round-trip inventory 比較を `codex exec` 実評価で確認
+    - 圧縮後から structured inventory を再抽出し、元の一覧と比較する `Round-Trip Check Rule` を追加
+    - `behavior-009` から `behavior-015` として、一覧維持、summary 前の一覧抽出、隣接近接重複の局所統合、文中埋め込み要素の一覧統合、round-trip inventory 比較、非技術の文章スタイル指示の structured inventory 抽出、Mermaid のモード非依存な表現形式選択を `codex exec` 実評価で確認
 - [ ] RAG-ready 的な前処理観点の残り候補は保留する
   - [ ] Canonical Facts
   - [ ] Provenance
