@@ -4,6 +4,39 @@
 - [ ] skill 配布先が必要になったら mirror 方針を決める
 - [ ] UI metadata が必要になったら skill 用の `agents/openai.yaml` を検討する
 
+## 絶対パス残存の懸念
+
+- [ ] リポジトリ内に残る実環境依存の絶対パスを相対パスまたは環境変数表記へ置き換える
+  - [x] `skills/igapyon-skill-compactor/references/agent-skill/frontmatter-templates.md`
+    - `$CODEX_HOME` 表記へ修正済み
+    - `skills/igapyon-skill-compactor/index.json` は `miku-indexgen` で再生成済み
+  - `skills/igapyon-mikuku-agent/references/graphic-recording.md`
+  - `skills/igapyon-mikuku-agent/references/graphic-recording/*.md`
+  - `skills/igapyon-mikuku-agent/references/graphic-recording/scripts/*.mjs`
+    - `igapyon-agent-skills` 内の `workplace/` や `assets/` を絶対パス参照している
+    - scripts は実行時に壊れる可能性があるため、相対パス化または `import.meta.url` 起点への修正を検討する
+  - `skills/igapyon-ffmpeg-helper/references/decisions/youtube-output-policy.md`
+    - sibling repo `local-html-tools` への参照を相対パス化できるか確認する
+  - `skills/igapyon-miku-soft-developer/references/existing-miku-soft-repositories.md`
+    - sibling checkout 置き場の説明が個人環境の絶対パスになっている
+  - この `TODO.md` 内にも過去検証コマンドとして絶対パスが残っている
+- [ ] 例示目的の `/Users/<name>/...`、`/home/<name>/...`、`/tmp/example` などは実パスではないため、置換対象から除外してよいか確認する
+
+## igapyon-skill-compactor 次段階
+
+- [ ] `igapyon-skill-compactor` を実際に肥大化した既存 Agent Skill へ適用し、運用上の違和感を確認する
+  - 使いにくいチェック項目がないか
+  - 過剰に読ませる参照がないか
+  - `SKILL.md` から必要な参照へ迷わず辿れるか
+  - `distilled/` で十分な場面と元資料へ戻る場面が分かれるか
+  - 出力サマリが実務にちょうどよいか
+- [ ] 実適用で見つかった違和感を、1件ずつ小さく改善する
+- [ ] `distilled/`、`tests/`、`templates/`、`examples/`、`assets/` などのトップ層構造を、他の Agent Skills にも横展開できるか確認する
+  - 蒸留済み資料が一級の runtime entry point なら top-level `distilled/` を検討する
+  - activation / non-activation / behavior / reference-routing prompts などの検証資産は top-level `tests/` を検討する
+  - 既存の `references/distilled/` や参照内テストプロンプトを移動する場合は、`SKILL.md`、`index.json`、参照リンク、README の導線も更新する
+  - 小さなSkillやlegacy構造では、移動せず現状維持の方が軽い場合もある
+
 ## igapyon-ffmpeg-helper 作業メモ
 
 - [x] `skills/igapyon-ffmpeg-helper/` を新規 Agent Skill として作成した
