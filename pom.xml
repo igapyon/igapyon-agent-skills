@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20260609.1</version>
+  <version>1.20260609.3</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -15,8 +15,11 @@
     <external.miku-indexgen-skills.ref>v1.5.1.1</external.miku-indexgen-skills.ref>
     <external.miku-indexgen-skills.skillName>igapyon-miku-indexgen</external.miku-indexgen-skills.skillName>
     <external.miku-text-bundle-skills.repo>https://github.com/igapyon/miku-text-bundle-skills.git</external.miku-text-bundle-skills.repo>
-    <external.miku-text-bundle-skills.ref>v0.9.0.1</external.miku-text-bundle-skills.ref>
+    <external.miku-text-bundle-skills.ref>v1.0.0</external.miku-text-bundle-skills.ref>
     <external.miku-text-bundle-skills.skillName>igapyon-miku-text-bundle</external.miku-text-bundle-skills.skillName>
+    <external.miku-repo-bundle-skills.repo>https://github.com/igapyon/miku-repo-bundle-skills.git</external.miku-repo-bundle-skills.repo>
+    <external.miku-repo-bundle-skills.ref>v0.5.0.1</external.miku-repo-bundle-skills.ref>
+    <external.miku-repo-bundle-skills.skillName>igapyon-miku-repo-bundle</external.miku-repo-bundle-skills.skillName>
     <external.miku-grep-skills.repo>https://github.com/igapyon/miku-grep-skills.git</external.miku-grep-skills.repo>
     <external.miku-grep-skills.ref>v0.10.1.1</external.miku-grep-skills.ref>
     <external.miku-grep-skills.skillName>igapyon-miku-grep</external.miku-grep-skills.skillName>
@@ -84,6 +87,9 @@
                 <argument>${external.miku-text-bundle-skills.repo}</argument>
                 <argument>${external.miku-text-bundle-skills.ref}</argument>
                 <argument>${external.miku-text-bundle-skills.skillName}</argument>
+                <argument>${external.miku-repo-bundle-skills.repo}</argument>
+                <argument>${external.miku-repo-bundle-skills.ref}</argument>
+                <argument>${external.miku-repo-bundle-skills.skillName}</argument>
                 <argument>${external.miku-grep-skills.repo}</argument>
                 <argument>${external.miku-grep-skills.ref}</argument>
                 <argument>${external.miku-grep-skills.skillName}</argument>
