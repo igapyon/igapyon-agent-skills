@@ -216,7 +216,7 @@
 ## miku Agent Skills 同梱名の igapyon- prefix 移行
 
 - [x] `miku-indexgen-skills` は同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリを `igapyon-miku-indexgen` にする方針へ移行済み
-- [x] `miku-text-bundle-skills` は `v1.0.0` で同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリを `igapyon-miku-text-bundle` にする方針へ移行済み
+- [x] `miku-text-bundle-skills` は `v1.0.1` で同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリを `igapyon-miku-text-bundle` にする方針へ移行済み
 - [x] `miku-repo-bundle-skills` は `v0.5.0.1` で release archive に同梱する
   - 同梱先: `skills/igapyon-miku-repo-bundle/`
   - status: experimental
