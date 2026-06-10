@@ -47,17 +47,19 @@ compacting. Incomplete inventories reduce reproducibility.
 
 Inventory extraction is not limited to existing Markdown lists. Also extract
 embedded list items from prose, then consolidate them with nearby explicit
-lists into one typed inventory. Commands, paths, conditions, prohibitions,
-exceptions, fallback behavior, validation steps, generated artifacts, tone
-rules, review criteria, examples, and decision boundaries often appear inside
-sentences; losing those embedded items is still information loss.
+lists into one typed inventory. Commands, paths, source code examples,
+conditions, prohibitions, exceptions, fallback behavior, validation steps,
+generated artifacts, tone rules, review criteria, examples, and decision
+boundaries often appear inside sentences or code fences; losing those embedded
+items is still information loss.
 
 Inventory candidates include:
 
 - activation and non-activation triggers
 - inputs, outputs, preconditions, and postconditions
 - required steps, optional steps, and fallback steps
-- commands, file paths, tool names, runtime artifacts, and generated artifacts
+- commands, file paths, source code examples, tool names, runtime artifacts,
+  and generated artifacts
 - roles, audiences, tone rules, style constraints, and writing boundaries
 - review criteria, checklist items, scoring axes, and severity rules
 - lists, tables, matrices, option sets, and checklists
@@ -101,6 +103,34 @@ be extracted first.
 If an apparent list is split between bullets and prose, merge both sources into
 one inventory before deciding what to preserve, restructure, or summarize.
 
+## Source Code Example Rule
+
+Treat source code examples, code fences, command examples, configuration
+snippets, JSON/XML/YAML examples, and API call samples as structured inventory,
+not as ordinary explanatory prose.
+
+In `conservative` mode:
+
+- do not delete a source code example just because it is long
+- do not replace a source code example with prose such as "the code does X"
+  unless the user explicitly accepts that loss
+- preserve exact code examples when they define syntax, API shape, file format,
+  invocation order, expected output, edge cases, or behavior boundaries
+- when a long code example should not remain in `SKILL.md`, move it to
+  `examples/`, `templates/`, `references/`, or `assets/` and leave a clear
+  routing instruction instead of summarizing it away
+- if only part of a code example is reusable boilerplate, preserve the
+  behavior-bearing lines and state what was intentionally omitted
+
+In `structural` mode, code examples may be shortened only when the retained
+snippet still preserves the syntax, API shape, and behavior boundary being
+taught.
+
+In `summary` mode, code examples may be summarized only when exact code fidelity
+is not required for the user's requested output. If exact code is needed for
+reconstruction, keep a minimal representative snippet or route to the full
+example.
+
 ## Round-Trip Check Rule
 
 When compaction may affect reproducibility, validate the result by
@@ -126,6 +156,13 @@ revise the compaction before reporting success.
 
 Use `conservative` as the default.
 
+Conservative mode is not summary mode. Do not compress by replacing concrete
+material with a general description. The expected result is a lower-token
+version that preserves source-specific facts, examples, code, conditions, and
+behavior contracts. Rewording, local deduplication, moving long material with
+clear routing, and deleting generic explanation are allowed; information loss is
+not.
+
 Preserve:
 
 - activation triggers and non-triggers
@@ -136,6 +173,8 @@ Preserve:
   reference-routing rules
 - uncommon domain facts, local conventions, and project-specific vocabulary
 - examples when they carry behavior, tone, boundary, or quality information
+- source code examples and code fences unless they are explicitly non-normative
+  and safely reconstructable, or are moved with a clear reference route
 
 May omit:
 

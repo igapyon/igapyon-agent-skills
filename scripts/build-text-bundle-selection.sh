@@ -46,11 +46,6 @@ generate_bundle \
   "mikuku-agent-text-bundle"
 
 generate_bundle \
-  "$BASE_DIR/skills/igapyon-repo-conventions" \
-  "miku-repo-conventions-text-bundle" \
-  "miku-repo-conventions-text-bundle"
-
-generate_bundle \
   "$BASE_DIR/skills/igapyon-skill-compactor" \
   "miku-skill-compactor-text-bundle" \
   "miku-skill-compactor-text-bundle"

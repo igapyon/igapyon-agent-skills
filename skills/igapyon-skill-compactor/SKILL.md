@@ -121,6 +121,9 @@ reference routing, or output contracts after changing this skill.
 - Preserve meaning before reducing size.
 - Prefer deletion of generic explanation over deletion of task-specific rules.
 - Prefer moving detailed examples to references over leaving them in `SKILL.md`.
+- In `conservative` mode, do not summarize away source code examples, code
+  fences, configuration snippets, or API examples; preserve them or move them
+  with a clear reference route unless the user explicitly accepts that loss.
 - Use `distilled/` for human- or agent-approved distilled Markdown derived from
   larger source materials, and keep it updated when sources or decisions change.
 - Keep frontmatter `description` precise because it is part of activation.
