@@ -12,12 +12,12 @@ audience:
   - agent
   - maintainer
 created: 2026-06-10
-updated: 2026-06-10
+updated: 2026-06-11
 sources:
   - type: human-input
     label: user-defined compaction mode policy for igapyon-skill-compactor
     role: primary
-    checked: 2026-06-10
+    checked: 2026-06-11
 ---
 
 # Compaction Modes
@@ -49,7 +49,8 @@ Inventory extraction is not limited to existing Markdown lists. Also extract
 embedded list items from prose, then consolidate them with nearby explicit
 lists into one typed inventory. Commands, paths, source code examples,
 conditions, prohibitions, exceptions, fallback behavior, validation steps,
-generated artifacts, tone rules, review criteria, examples, and decision
+generated artifacts, populated form values, specific IDs, URLs, logs, test
+results, concrete evidence, tone rules, review criteria, examples, and decision
 boundaries often appear inside sentences or code fences; losing those embedded
 items is still information loss.
 
@@ -60,6 +61,8 @@ Inventory candidates include:
 - required steps, optional steps, and fallback steps
 - commands, file paths, source code examples, tool names, runtime artifacts,
   and generated artifacts
+- populated form values, specific IDs, URLs, logs, test results, concrete
+  evidence, and other instance-specific observations
 - roles, audiences, tone rules, style constraints, and writing boundaries
 - review criteria, checklist items, scoring axes, and severity rules
 - lists, tables, matrices, option sets, and checklists
@@ -140,9 +143,11 @@ source inventory.
 Expected comparison by mode:
 
 - `conservative`: source inventory and compacted-output inventory should
-  substantially match. Any missing command, path, prohibition, validation step,
-  activation boundary, output contract, tone rule, review criterion, or hard
-  condition is a regression unless the user explicitly accepted that loss.
+  substantially match. Any missing command, path, populated form value,
+  specific ID, URL, log entry, test result, concrete evidence, prohibition,
+  validation step, activation boundary, output contract, tone rule, review
+  criterion, or hard condition is a regression unless the user explicitly
+  accepted that loss.
 - `structural`: all explicit structural items should remain present, though
   surrounding prose may be gone.
 - `summary`: critical and high-importance inventory items should remain
@@ -172,6 +177,9 @@ Preserve:
 - lists, enumerations, option sets, required files, command shapes, and
   reference-routing rules
 - uncommon domain facts, local conventions, and project-specific vocabulary
+- populated form values, specific IDs, URLs, logs, test results, concrete
+  evidence, and other instance-specific data; do not summarize these into
+  generic descriptions
 - examples when they carry behavior, tone, boundary, or quality information
 - source code examples and code fences unless they are explicitly non-normative
   and safely reconstructable, or are moved with a clear reference route
@@ -183,6 +191,8 @@ May omit:
 - adjacent near-duplicate sentences when they share the same local context and
   no trigger, safety, validation, output, audience, timing, or repository
   distinction is lost
+- empty table rows, blank form fields, placeholders, and generic boilerplate
+  instructions that do not contain instance-specific data
 - ordinary Markdown, filesystem, or Agent Skill conventions already clear from
   surrounding structure
 
