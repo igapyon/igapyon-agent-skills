@@ -245,7 +245,7 @@ Agent Skills の発火は、Codex に渡された skill 一覧と、ユーザー
 
 - エディタ: VS Code
   - 記事 Markdown の確認と作業場所
-- 生成 AI agent: OpenAI Codex
+- 生成 AI agent: OpenAI Codex CLI
   - 記事構成の整理、本文 Markdown の更新
 - 利用モデル: GPT-5.5（執筆時点）
   - 対話による執筆、構成整理、文面調整
