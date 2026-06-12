@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20260610.2</version>
+  <version>1.20260613.2</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
