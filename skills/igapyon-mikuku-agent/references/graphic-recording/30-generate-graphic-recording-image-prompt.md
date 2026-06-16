@@ -148,6 +148,28 @@ Do not let Mikuku hold any objects.
 
 組み込み `imagegen` の生成画像は通常 `$CODEX_HOME/generated_images/...` 配下へ保存されます。プロジェクトで使う画像は、生成後に上記の出力先へコピーしてください。元画像は削除しないでください。
 
+ただし、環境や Codex のバージョンによっては、生成画像が `$CODEX_HOME/generated_images/...` に新規 PNG として保存されず、Codex セッション JSONL の `image_generation_end.payload.result` に PNG の base64 として記録される場合があります。
+`$CODEX_HOME/generated_images/...` に今回生成分の PNG を特定できない場合は、生成失敗として扱う前に、次のフォールバックを試してください。
+
+1. 現在の Codex セッション JSONL を特定する
+2. `image_generation_end` イベントの `payload.result` が空でないことを確認する
+3. 複数の `image_generation_end` がある場合は、今回の生成直後のイベント、または最新イベントを使う
+4. `payload.result` を base64 decode して `{{RUN_OUTPUT_DIR}}/graphic-recording.png` へ保存する
+5. `file` とファイルサイズで PNG として復元できたことを確認する
+6. `copy-generated-image.md` と `image-generation-report.md` には、元画像パスの代わりに `session-jsonl`、`event-type: image_generation_end`、復元先を記録する
+
+復元コマンド例:
+
+```bash
+jq -r 'select(.type=="event_msg" and .payload.type=="image_generation_end") | .payload.result' "$SESSION_JSONL" \
+  | tail -n 1 \
+  | base64 -d \
+  > "{{RUN_OUTPUT_DIR}}/graphic-recording.png"
+
+file "{{RUN_OUTPUT_DIR}}/graphic-recording.png"
+ls -lh "{{RUN_OUTPUT_DIR}}/graphic-recording.png"
+```
+
 ## コピー手順記録
 
 画像生成後は、コピーを実行する前に `{{RUN_OUTPUT_DIR}}/copy-generated-image.md` を作成してください。
@@ -159,6 +181,9 @@ Do not let Mikuku hold any objects.
 
 - status: pending | copied | failed | skipped
 - generated-source-path:
+- generated-source-kind: file | session-jsonl
+- session-jsonl:
+- session-event-type:
 - workspace-output-path:
 - source-exists: yes | no
 - workspace-output-exists: yes | no
@@ -183,7 +208,8 @@ file "<workspace-output-path>"
 
 コピー後は `status: copied`、`workspace-output-exists: yes`、ファイルサイズ、画像形式を更新してください。
 
-生成画像の元パスを特定できない場合は、コピーを実行せず、`status: failed` または `status: skipped` として理由を `Notes` に記録してください。この場合、`graphic-recording.png` を生成済みとして報告しないでください。
+生成画像の元パスを特定できない場合でも、セッション JSONL から正常な PNG を復元できた場合は生成済みとして扱ってよいです。
+ファイル元パスもセッション JSONL 復元もどちらも使えない場合は、コピーを実行せず、`status: failed` または `status: skipped` として理由を `Notes` に記録してください。この場合、`graphic-recording.png` を生成済みとして報告しないでください。
 
 ---
 
