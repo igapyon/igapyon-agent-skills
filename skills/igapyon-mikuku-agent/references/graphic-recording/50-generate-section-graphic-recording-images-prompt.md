@@ -156,6 +156,10 @@ TODO ファイル:
 
 組み込み `imagegen` は、通常 `$CODEX_HOME/generated_images/...` 配下へ画像を保存します。対象セクションで使う画像は、生成後にその保存先からコピーしてください。元画像は削除しないでください。
 
+ただし、環境や Codex のバージョンによっては、生成画像が `$CODEX_HOME/generated_images/...` に新規 PNG として保存されず、Codex セッション JSONL の `image_generation_end.payload.result` に PNG の base64 として記録される場合があります。
+`$CODEX_HOME/generated_images/...` に今回生成分の PNG を特定できない場合は、生成失敗として扱う前に、セッション JSONL からの復元をフォールバックとして試してください。
+復元できた PNG は、対象セクションの `graphic-recording.png` として保存します。
+
 詳細記録運用では、対象セクションごとに次のファイルへコピー記録を残してもかまいません。
 
 ```text
@@ -253,6 +257,22 @@ Do not let Mikuku hold any objects.
 {{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png
 ```
 
+`$CODEX_HOME/generated_images/...` に今回生成分の PNG を特定できない場合は、Codex セッション JSONL の `image_generation_end.payload.result` から PNG を復元してください。
+複数の `image_generation_end` がある場合は、今回の生成直後のイベント、または最新イベントを使います。
+復元後は、`file` とファイルサイズで PNG として正常に保存できたことを確認してください。
+
+復元コマンド例:
+
+```bash
+jq -r 'select(.type=="event_msg" and .payload.type=="image_generation_end") | .payload.result' "$SESSION_JSONL" \
+  | tail -n 1 \
+  | base64 -d \
+  > "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
+
+file "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
+ls -lh "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
+```
+
 詳細記録運用で `copy-generated-image.md` を作る場合は、少なくとも次を記録してください。
 
 ````markdown
@@ -261,6 +281,9 @@ Do not let Mikuku hold any objects.
 - status: pending | copied | failed | skipped
 - section:
 - generated-source-path:
+- generated-source-kind: file | session-jsonl
+- session-jsonl:
+- session-event-type:
 - workspace-output-path:
 - source-exists: yes | no
 - workspace-output-exists: yes | no
@@ -283,7 +306,8 @@ file "<workspace-output-path>"
 ## Notes
 ````
 
-生成画像の元パスを特定できない場合は、コピーを実行せず、対象セクションを `image-generated` として扱わないでください。
+生成画像の元パスを特定できない場合でも、セッション JSONL から正常な PNG を復元できた場合は、対象セクションを `image-generated` として扱ってよいです。
+ファイル元パスもセッション JSONL 復元もどちらも使えない場合は、コピーを実行せず、対象セクションを `image-generated` として扱わないでください。
 
 ## 省略実行ルール
 
@@ -306,6 +330,18 @@ file "<workspace-output-path>"
 src=$(find "$CODEX_HOME/generated_images" -maxdepth 3 -type f -name '*.png' -print0 | xargs -0 ls -t | head -n 1)
 node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/copy-section-image.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --section "<NNN>" --src "$src"
 ```
+
+`$CODEX_HOME/generated_images` に新規 PNG が見つからない場合の最小復元コマンド例:
+
+```bash
+jq -r 'select(.type=="event_msg" and .payload.type=="image_generation_end") | .payload.result' "$SESSION_JSONL" \
+  | tail -n 1 \
+  | base64 -d \
+  > "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
+```
+
+セッション JSONL から正常な PNG を復元できた場合も、対象セクションの `TODO.md` は `image-generated` に更新してください。
+復元できない場合は `image-generated-unsaved` または `image-generation-failed` として扱い、生成済みにはしないでください。
 
 コピー後の `ls -lh`、`file`、画像プレビューは実行しないでください。
 `copy-section-image.mjs` がエラーを返さなければ、`TODO.md` は `image-generated` に更新済みとして次へ進んでください。
