@@ -451,6 +451,15 @@ node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-se
 node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/copy-section-image.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --section "<NNN>" --src "<GENERATED_IMAGE_PATH>"
 ```
 
+`$CODEX_HOME/generated_images` に生成 PNG が見つからず、Codex セッション JSONL の `image_generation_end.payload.result` から復元する場合は、復元専用スクリプトを使ってください。
+このスクリプトは画像ファイルの復元だけを行い、`TODO.md` は更新しません。
+
+```bash
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-generated-image-from-session.mjs --session-jsonl "$SESSION_JSONL" --out "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
+```
+
+復元後に PNG として正常に保存できたことを確認してから、対象セクションの `TODO.md` を `image-generated` に更新してください。
+
 作業ディレクトリの状態確認では、必要に応じて次のスクリプトを使ってください。
 
 ```bash
