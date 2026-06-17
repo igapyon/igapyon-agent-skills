@@ -264,10 +264,9 @@ Do not let Mikuku hold any objects.
 復元コマンド例:
 
 ```bash
-jq -r 'select(.type=="event_msg" and .payload.type=="image_generation_end") | .payload.result' "$SESSION_JSONL" \
-  | tail -n 1 \
-  | base64 -d \
-  > "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-generated-image-from-session.mjs \
+  --session-jsonl "$SESSION_JSONL" \
+  --out "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
 
 file "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
 ls -lh "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
@@ -334,10 +333,9 @@ node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/copy-secti
 `$CODEX_HOME/generated_images` に新規 PNG が見つからない場合の最小復元コマンド例:
 
 ```bash
-jq -r 'select(.type=="event_msg" and .payload.type=="image_generation_end") | .payload.result' "$SESSION_JSONL" \
-  | tail -n 1 \
-  | base64 -d \
-  > "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-generated-image-from-session.mjs \
+  --session-jsonl "$SESSION_JSONL" \
+  --out "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
 ```
 
 セッション JSONL から正常な PNG を復元できた場合も、対象セクションの `TODO.md` は `image-generated` に更新してください。
