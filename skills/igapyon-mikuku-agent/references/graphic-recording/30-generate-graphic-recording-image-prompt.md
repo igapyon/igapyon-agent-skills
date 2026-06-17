@@ -161,10 +161,9 @@ Do not let Mikuku hold any objects.
 復元コマンド例:
 
 ```bash
-jq -r 'select(.type=="event_msg" and .payload.type=="image_generation_end") | .payload.result' "$SESSION_JSONL" \
-  | tail -n 1 \
-  | base64 -d \
-  > "{{RUN_OUTPUT_DIR}}/graphic-recording.png"
+node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-generated-image-from-session.mjs \
+  --session-jsonl "$SESSION_JSONL" \
+  --out "{{RUN_OUTPUT_DIR}}/graphic-recording.png"
 
 file "{{RUN_OUTPUT_DIR}}/graphic-recording.png"
 ls -lh "{{RUN_OUTPUT_DIR}}/graphic-recording.png"
