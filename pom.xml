@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20260613.2</version>
+  <version>1.20260620.1</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -23,6 +23,12 @@
     <external.miku-grep-skills.repo>https://github.com/igapyon/miku-grep-skills.git</external.miku-grep-skills.repo>
     <external.miku-grep-skills.ref>v0.10.1.1</external.miku-grep-skills.ref>
     <external.miku-grep-skills.skillName>igapyon-miku-grep</external.miku-grep-skills.skillName>
+    <external.miku-prompt-lint-skills.repo>https://github.com/igapyon/miku-prompt-lint-skills.git</external.miku-prompt-lint-skills.repo>
+    <external.miku-prompt-lint-skills.ref>v0.4.1</external.miku-prompt-lint-skills.ref>
+    <external.miku-prompt-lint-skills.skillName>igapyon-miku-prompt-lint</external.miku-prompt-lint-skills.skillName>
+    <external.miku-readfile-skills.repo>https://github.com/igapyon/miku-readfile-skills.git</external.miku-readfile-skills.repo>
+    <external.miku-readfile-skills.ref>v0.5.0.2</external.miku-readfile-skills.ref>
+    <external.miku-readfile-skills.skillName>miku-readfile</external.miku-readfile-skills.skillName>
     <external.mikuproject-skills.repo>https://github.com/igapyon/mikuproject-skills.git</external.mikuproject-skills.repo>
     <external.mikuproject-skills.ref>v0.8.1.1</external.mikuproject-skills.ref>
     <external.mikuproject-skills.skillName>mikuproject</external.mikuproject-skills.skillName>
@@ -93,6 +99,12 @@
                 <argument>${external.miku-grep-skills.repo}</argument>
                 <argument>${external.miku-grep-skills.ref}</argument>
                 <argument>${external.miku-grep-skills.skillName}</argument>
+                <argument>${external.miku-prompt-lint-skills.repo}</argument>
+                <argument>${external.miku-prompt-lint-skills.ref}</argument>
+                <argument>${external.miku-prompt-lint-skills.skillName}</argument>
+                <argument>${external.miku-readfile-skills.repo}</argument>
+                <argument>${external.miku-readfile-skills.ref}</argument>
+                <argument>${external.miku-readfile-skills.skillName}</argument>
                 <argument>${external.mikuproject-skills.repo}</argument>
                 <argument>${external.mikuproject-skills.ref}</argument>
                 <argument>${external.mikuproject-skills.skillName}</argument>
