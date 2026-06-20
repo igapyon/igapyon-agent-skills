@@ -305,8 +305,8 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 
 同梱する外部 skill は次の通りです。
 
-- `miku-indexgen-skills` `v1.5.1.1`: `skills/igapyon-miku-indexgen/`
-- `miku-text-bundle-skills` `v1.0.1`: `skills/igapyon-miku-text-bundle/`
+- `miku-indexgen-skills` `v1.6.1`: `skills/igapyon-miku-indexgen/`
+- `miku-text-bundle-skills` `v1.1.1.2`: `skills/igapyon-miku-text-bundle/`
 - `miku-repo-bundle-skills` `v0.5.0.1` (experimental): `skills/igapyon-miku-repo-bundle/`
 - `miku-grep-skills` `v0.10.1.1` (experimental): `skills/igapyon-miku-grep/`
 - `miku-prompt-lint-skills` `v0.4.1`: `skills/igapyon-miku-prompt-lint/`

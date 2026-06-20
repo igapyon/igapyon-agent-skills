@@ -12,10 +12,10 @@
 
   <properties>
     <external.miku-indexgen-skills.repo>https://github.com/igapyon/miku-indexgen-skills.git</external.miku-indexgen-skills.repo>
-    <external.miku-indexgen-skills.ref>v1.5.1.1</external.miku-indexgen-skills.ref>
+    <external.miku-indexgen-skills.ref>v1.6.1</external.miku-indexgen-skills.ref>
     <external.miku-indexgen-skills.skillName>igapyon-miku-indexgen</external.miku-indexgen-skills.skillName>
     <external.miku-text-bundle-skills.repo>https://github.com/igapyon/miku-text-bundle-skills.git</external.miku-text-bundle-skills.repo>
-    <external.miku-text-bundle-skills.ref>v1.0.1</external.miku-text-bundle-skills.ref>
+    <external.miku-text-bundle-skills.ref>v1.1.1.2</external.miku-text-bundle-skills.ref>
     <external.miku-text-bundle-skills.skillName>igapyon-miku-text-bundle</external.miku-text-bundle-skills.skillName>
     <external.miku-repo-bundle-skills.repo>https://github.com/igapyon/miku-repo-bundle-skills.git</external.miku-repo-bundle-skills.repo>
     <external.miku-repo-bundle-skills.ref>v0.5.0.1</external.miku-repo-bundle-skills.ref>
