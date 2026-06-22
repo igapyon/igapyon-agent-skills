@@ -10,7 +10,8 @@ Shared writing rules for `igapyon-github-writer`.
 - Do not invent intent, benefits, compatibility, version numbers, release dates, test results, package publication status, or external URLs.
 - If information is missing, write `未確認`, `要確認`, or omit that claim.
 - If making an inference from file names or diffs, mark it with `推測:`.
-- The final answer must be one Markdown block wrapped with outer tildes: start with `~~~~markdown` and end with `~~~~`.
+- The drafted GitHub text in the final answer must be wrapped with outer tildes: start with `~~~~markdown` and end with `~~~~`.
+- If the draft was saved to a file, mention only the relative saved path outside the wrapped block. Do not include absolute paths.
 
 ## Evidence Workflow
 
@@ -66,3 +67,32 @@ git diff --no-ext-diff --no-renames <range>
 When the resolved range uses `START^..HEAD` and `START^` is unavailable, inspect the root case explicitly and mark uncertainties as `要確認`.
 
 Prefer concise summaries over copying large diffs. Mention only files, modules, behavior, and documents that are visible in the inspected evidence.
+
+## Draft Save Rules
+
+For PR, Release, and About modes, save the final drafted Markdown to a local file unless the user explicitly says not to save.
+
+Do not save Branch Status output by default. Branch Status is a report, not GitHub paste-ready drafted text.
+
+Save only the inner Markdown draft, without the outer `~~~~markdown` wrapper.
+
+Resolve the save base in this order:
+
+1. Determine the repository root with `git rev-parse --show-toplevel`. If that fails, use the current working directory as the project-equivalent root.
+2. If `<root>/workplace/` exists, save under `<root>/workplace/github-writer/`.
+3. If `<root>/temp/` exists, save under `<root>/temp/github-writer/`.
+4. If neither exists, create `<root>/workplace/github-writer/` and save there.
+
+Do not save outside the project-equivalent root unless the user explicitly provides an output path.
+
+Use safe, lowercase filenames based on local time. Include a 12-digit year-month-day-hour-minute timestamp (`YYYYMMDDHHMM`) in PR draft filenames so repeated drafts on the same branch remain sortable and easy to resolve:
+
+- PR mode: `pr-<branch-slug>-<YYYYMMDDHHMM>.md` when the current branch name is available; otherwise `pr-<YYYYMMDDHHMM>.md`
+- Release mode: `release-<YYYYMMDDHHMM>.md`
+- About mode: `about-<YYYYMMDDHHMM>.md`
+
+For `<branch-slug>`, use the current branch from `git branch --show-current`. Sanitize it by lowercasing it and replacing characters outside `[a-z0-9._-]` with `-`. If the sanitized branch is empty, omit it.
+
+Do not overwrite an existing draft file. If a generated path already exists, add another short suffix such as `-2`.
+
+After saving, report the saved path relative to the repository root or current working directory. Never report a home directory or absolute path.

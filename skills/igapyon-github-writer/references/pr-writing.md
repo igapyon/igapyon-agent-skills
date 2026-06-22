@@ -34,11 +34,12 @@ Interpret that request as:
 - inclusion: only the change introduced by `<commit>`
 - output language: Japanese
 - output format: Markdown
-- required top-level headings: `# PR Title` and `# PR Body`
+- first line: PR title text only, without a heading marker or label
+- following content: PR body Markdown
 - final wrapper: one block from `~~~~markdown` to `~~~~`
 - source of facts: the current conversation, the user's input, and inspected local Git evidence only
 
-The final Markdown must keep the top-level headings exactly as `# PR Title` and `# PR Body` so downstream tooling can parse the response.
+Do not add artificial labels or headings such as `# PR Title`, `# PR Body`, `PR Title:`, or `PR Body:`. The drafted text should be directly usable as the PR title and PR body content.
 
 ## Drafting Rules
 
@@ -56,11 +57,7 @@ Draft for reviewers:
 Use this output shape:
 
 ```markdown
-# PR Title
-
 ...
-
-# PR Body
 
 ## 概要
 

@@ -50,6 +50,16 @@ generate_bundle \
   "miku-skill-compactor-text-bundle" \
   "miku-skill-compactor-text-bundle"
 
+generate_bundle \
+  "$BASE_DIR/skills/igapyon-agent-state-management" \
+  "igapyon-agent-state-management-text-bundle" \
+  "igapyon-agent-state-management-text-bundle"
+
+generate_bundle \
+  "$BASE_DIR/skills/igapyon-github-writer" \
+  "igapyon-github-writer-text-bundle" \
+  "igapyon-github-writer-text-bundle"
+
 (cd "$WORKPLACE_DIR" && zip -r "$(basename "$ZIP_PATH")" text-bundle-dist)
 
 echo "generated: $DIST_DIR"

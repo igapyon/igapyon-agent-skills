@@ -244,7 +244,7 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 
 - `igapyon-github-writer`
 
-  GitHub PR、GitHub Release、GitHub About に貼る文章の作成向け。明示的に指定した場合に利用する。
+  GitHub PR、GitHub Release、GitHub About に貼る文章の作成向け。明示的に指定した場合に利用する。作文した Markdown は、通常の応答に加えて、ローカルの `workplace/github-writer/` に保存する。`workplace/` がなく `temp/` がある場合のみ `temp/github-writer/` を使い、どちらもなければ `workplace/github-writer/` を作成する。明示指示がある場合に限り、作成済み PR 文面をローカル Git commit message に反映する workflow も扱う。
 
 - `igapyon-diary-writer`
 
@@ -325,3 +325,23 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 - `mikuscore-skills` `v0.1.0`: `skills/mikuscore/`
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、生成された zip を GitHub Release asset として添付します。
+
+## 厳選 text bundle
+
+AI へ渡す参照素材や、Web UI インタフェースへ内容をコピー＆ペーストして利用するための軽量な確認用 bundle として、厳選した skill だけを text bundle 化できます。
+
+```sh
+scripts/build-text-bundle-selection.sh
+```
+
+このスクリプトは、release staging 内の `igapyon-miku-text-bundle` runtime を使い、選んだ skill directory だけを `workplace/text-bundle-dist/` に text bundle として出力します。  
+あわせて、取り回しやすい zip として `workplace/igapyon-agent-skills-bundle-selection-<version>.zip` も生成します。
+
+現在の厳選対象は次の通りです。
+
+- `skills/igapyon-mikuku-agent/`
+- `skills/igapyon-skill-compactor/`
+- `skills/igapyon-agent-state-management/`
+- `skills/igapyon-github-writer/`
+
+`igapyon-miku-text-bundle` runtime がまだ release staging にない場合は、スクリプト内で `mvn package` を実行して staging を準備します。通常の release archive は利用者向けの skill 配布物であり、この厳選 text bundle はブラウザ上のチャットや Web UI へ貼り付けて使いやすくするための、AI 参照・確認・持ち運び用の小さな補助成果物です。

@@ -259,6 +259,101 @@
   - 公開済み URL は記事内に記録済み: https://qiita.com/igapyon/items/e2002183dcdadf00ec59
 - [ ] `20260430-miku-soft-architecture-topic-bank.md` 側では、同テーマを「執筆開始」として更新済み
 
+### miku-soft 候補プロダクト案
+
+- [x] miku-soft 利用範囲限定の Office / OOXML 共通基盤を検討する
+  - 名称: `miku-ms-office-core`
+  - GitHub repository: https://github.com/igapyon/miku-ms-office-core
+  - 状態: リポジトリ作成済み、着手済み
+  - 目的: 汎用 Office ライブラリではなく、Microsoft Office 系ファイルについて miku-soft で実際に利用している範囲だけを共通化する
+  - 命名理由: `miku-office-core` より Microsoft Office 対象であることが明確で、`miku-msoffice-core` より単語境界が読みやすい
+  - 対象候補:
+    - `miku-docx2md`
+    - `miku-xlsx2md`
+    - `miku-md2docx`
+    - `miku-md2xlsx`
+    - `mikuproject`
+    - 将来候補の `miku-pptx2md`
+    - 将来候補の `miku-md2pptx`
+  - 初期共通化候補:
+    - ZIP / OOXML package の読み書き
+    - ZIP entry timestamp normalization
+    - ZIP entry ordering
+    - ZIP compression policy
+    - relationships 解決
+    - content types / part path の扱い
+    - XML helper
+    - media 抽出・格納
+    - diagnostics 共通形式
+    - miku-soft 共通の path normalization / UTF-16 sort 方針
+  - 初期非目標:
+    - 汎用 OOXML 実装
+    - Microsoft Office 互換の完全実装
+    - DOCX / XLSX / PPTX / MS Project の意味解釈をすべて一つにまとめること
+    - 各プロダクト固有の Markdown 変換方針や出力判断を共通基盤へ押し込むこと
+  - 判断メモ:
+    - 既存 miku-soft Office 系プロダクトは、基本的にプロジェクト内で Office ファイルの入出力を自前実装してきた
+    - PPTX 系列を追加する前に、重複している低層処理だけを miku-soft 内部向けに整理する段階に来ている
+    - 共通化対象は「miku-soft が使う範囲」に限定し、汎用ライブラリ化でスコープを広げない
+  - 設計エッセンス:
+    - `miku-ms-office-core` は Office 文書の意味を知っている汎用ライブラリではなく、miku-soft 各プロダクトが自分の意味解釈に集中するための共通配管とする
+    - 共通化する線は、ZIP container、ZIP entry timestamp / ordering / compression、OPC package、relationships、content types、part path、media、XML helper、diagnostics まで
+    - ZIP 内ファイルのタイムスタンプ制御は、DOCX / XLSX / PPTX の意味解釈ではなく、再現性ある Microsoft Office 系 package 生成のための低層方針として扱う
+    - DOCX の文書解釈、XLSX の表・セル解釈、PPTX のスライド解釈、Markdown 変換判断、Markdown から Office への組み立て判断は各プロダクトの価値として残す
+    - この線を超えると既存の汎用 Office / OOXML ライブラリに近づき、miku-soft の小ささ、説明可能性、用途限定性が崩れやすい
+- [x] 「次はなに」と問われたら、次の miku-soft 候補として PPTX 系列を進める
+  - 第一候補: `miku-pptx2md`
+  - 第二候補: `miku-md2pptx`
+  - 理由: `miku-docx2md` / `miku-xlsx2md` / `miku-md2docx` / `miku-md2xlsx` と自然につながる Office 文書変換系列であり、AI-friendly Markdown / JSON への橋渡しとして価値が分かりやすい
+  - 進め方: まず `miku-pptx2md` の名前確認、姉妹リポジトリ調査、最小仕様の確定から始める
+- [x] `miku-pptx2md` の実現性を検討する
+  - 位置づけ: `miku-docx2md` / `miku-xlsx2md` の姉妹となる 10 main application
+  - 目的: PowerPoint `.pptx` をローカルで読み、スライド構造を AI-friendly / script-friendly / human-reviewable な Markdown と JSON に抽出する
+  - 入力: `.pptx`
+  - 出力候補:
+    - `output.md`: スライド単位の Markdown
+    - `output.json`: スライド、テキスト、画像、ノート、diagnostics の構造化データ
+    - `media/`: 画像を書き出す場合の抽出先
+  - 初期 CLI 案: `miku-pptx2md input.pptx output.md [options]`
+  - 初期スコープ:
+    - スライドごとに `## Slide N: <title>` を生成する
+    - タイトル、本文、箇条書き、テキストボックスを抽出する
+    - speaker notes を抽出できる場合は `### Notes` として出力する
+    - 画像は `![alt](media/...)` として参照する
+    - 表は可能なら Markdown table にする
+    - 未対応要素、読み飛ばし、欠落、変換ロスは diagnostics に出す
+  - 初期非目標:
+    - PowerPoint の完全な視覚レイアウト再現
+    - SmartArt、グラフ、埋め込みオブジェクト、アニメーション、複雑な重なり順の完全変換
+  - 判断メモ:
+    - PPTX は ZIP + OOXML なので実装可能性は高い
+    - 見た目再現ではなく意味構造の抽出に絞ると miku-soft の方針と合う
+    - 正式決定前に GitHub 上の `miku-pptx2md` 名の現況確認が必要
+- [x] `miku-md2pptx` の実現性を検討する
+  - 位置づけ: `miku-md2docx` / `miku-md2xlsx` の姉妹となる 10 main application
+  - 目的: Markdown から実用的な PowerPoint `.pptx` をローカル生成し、AI や人間が作ったアウトラインをプレゼン資料の初稿へ橋渡しする
+  - 入力: Markdown
+  - 出力候補:
+    - `output.pptx`: 生成した PowerPoint ファイル
+    - `output.json`: Markdown から解釈した slide model と diagnostics
+  - 初期 CLI 案: `miku-md2pptx input.md output.pptx [options]`
+  - 初期スコープ:
+    - `---` または見出しレベルでスライドを分割する
+    - slide title、箇条書き、本文、画像、speaker notes を基本要素として扱う
+    - テーマ、ページ比率、フォント、余白などは少数の安全な既定値から始める
+    - 変換不能な Markdown 要素や、収まりきらないテキストは diagnostics に出す
+    - 生成前の slide model JSON を保存できるようにする
+  - 初期非目標:
+    - 任意の Markdown を美しい商用スライドへ自動デザインすること
+    - PowerPoint の全レイアウト機能、アニメーション、複雑な図形、SmartArt、グラフの完全生成
+    - 入力 Markdown の曖昧な意図を過剰に推測すること
+  - 判断メモ:
+    - `miku-pptx2md` より「出力仕様をどう絞るか」が重要
+    - OOXML の PPTX 生成を完全自前にするのは初期版では重いため、PPTX 書き出しライブラリ採用を検討する余地がある
+    - ただし Markdown 解析、slide model、diagnostics、AI-facing 出力は miku 側の責務として持つのがよい
+    - `miku-pptx2md` と対になるが、同一リポジトリにまとめず別アプリとして考える方が miku-soft の命名と責務に合う
+    - 正式決定前に GitHub 上の `miku-md2pptx` 名の現況確認が必要
+
 ## miku-indexgen-java / miku-indexgen-java-maven 分離反映
 
 - [x] `skills/igapyon-qiita-writer/references/miku-indexgen/20260509-miku-indexgen-usage.md` の差分を確認する
