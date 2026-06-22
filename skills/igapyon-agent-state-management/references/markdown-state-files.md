@@ -1,4 +1,4 @@
-# Three Markdown State Files
+# Markdown State Files
 
 Use this reference when setting up or resuming lightweight AI agent state management in a repository.
 
@@ -8,14 +8,15 @@ The goal is to externalize the minimum state needed for an AI agent and a human 
 
 This workflow has two closely related uses:
 
-- Setup: create or align `GOAL.md`, `TODO.md`, and `DECISIONS.md`.
-- Resume: read existing repository state and any available state files to recover the current objective, next tasks, blockers, and decisions.
+- Setup: create or align `GOAL.md`, `TODO.md`, `DECISIONS.md`, and `HANDOFF.md`.
+- Resume: read existing repository state and any available state files to recover the current objective, next tasks, blockers, decisions, and handoff summary.
 
 The default files are:
 
 - `GOAL.md`: what the work is trying to accomplish and how to know when it is done
-- `TODO.md`: the current working state, next tasks, blockers, and repeated failures
+- `TODO.md`: active tasks, blockers, and repeated failures
 - `DECISIONS.md`: important decisions, rejected options, and the reasons behind them
+- `HANDOFF.md`: compact resume notes for the next human or AI agent
 
 This is a Context Engineering convention, not a product-specific config format. The front matter is a readable hint for agents and humans; it is not assumed to be interpreted by any tool automatically.
 
@@ -24,11 +25,12 @@ This is a Context Engineering convention, not a product-specific config format. 
 Use or adapt this prompt when the user asks to initialize the convention:
 
 ````markdown
-このリポジトリに、AI エージェント作業用の状態管理ファイルを3つ作成してください。
+このリポジトリに、AI エージェント作業用の状態管理ファイルを作成してください。
 
 - `GOAL.md`
 - `TODO.md`
 - `DECISIONS.md`
+- `HANDOFF.md`
 
 ただし、同名ファイルがすでに存在する場合は、上書きしないでください。
 既存の `TODO.md` が人間用TODOやプロジェクト運用ファイルとして使われている場合は、新しいTODOファイルを増やさず、既存 `TODO.md` の中に `## AI Agent Current Tasks` セクションを追加して、AI エージェント用の現在地をそこへ記録してください。
@@ -47,10 +49,10 @@ Use or adapt this prompt when the user says `igapyon 作業再開` or otherwise 
 このリポジトリの AI エージェント作業状態を確認して、作業再開ポイントを整理してください。
 
 まず `git status --short`、`README.md`、既存の `TODO.md` を確認してください。
-`GOAL.md`、`DECISIONS.md` が存在する場合はそれも読んでください。
+`GOAL.md`、`DECISIONS.md`、`HANDOFF.md` が存在する場合はそれも読んでください。
 
-新しい `GOAL.md`、`TODO.md`、`DECISIONS.md` は、まだ作成しないでください。
-既存状態から、現在の目的、次にやること、blocker、重要な判断、確認が必要な点を短くまとめてください。
+新しい `GOAL.md`、`TODO.md`、`DECISIONS.md`、`HANDOFF.md` は、まだ作成しないでください。
+既存状態から、現在の目的、次にやること、blocker、重要な判断、handoff 要約、確認が必要な点を短くまとめてください。
 ```
 
 ## Existing TODO.md Section
@@ -60,7 +62,7 @@ When an existing `TODO.md` should be preserved, add only this section if it is m
 ```markdown
 ## AI Agent Current Tasks
 
-This section tracks the current working state for AI agents.
+This section tracks active work items for AI agents.
 Update this section while working. Do not rewrite unrelated TODO items.
 
 ### Tasks
@@ -83,12 +85,13 @@ If the same failure appears 3 times, stop and ask the user.
 ## Operating Rules
 
 - Keep `GOAL.md` focused on objective, done conditions, and stop conditions.
-- Keep `TODO.md` focused on current state, not full history.
+- Keep `TODO.md` focused on active tasks, blockers, and repeated failures, not full history or handoff prose.
 - Keep `DECISIONS.md` focused on important decisions and their reasons, not every thought or command.
+- Keep `HANDOFF.md` focused on compact resume notes, not task tracking or long work logs.
 - Use `Retry Log` only when the same task or error repeats.
 - If the same failure appears three times for the same underlying cause, stop and ask the user.
 - Prefer updating existing compatible sections over adding duplicate sections.
-- If a tool-specific entry file exists, such as `AGENTS.md` or `CLAUDE.md`, optionally add a short pointer such as: `Before working, check GOAL.md, TODO.md, and DECISIONS.md.`
+- If a tool-specific entry file exists, such as `AGENTS.md` or `CLAUDE.md`, optionally add a short pointer such as: `Before working, check GOAL.md, TODO.md, DECISIONS.md, and HANDOFF.md.`
 
 ## Creation Templates
 
@@ -97,3 +100,4 @@ Use the files under `templates/` as the source templates:
 - `templates/GOAL.md`
 - `templates/TODO.md`
 - `templates/DECISIONS.md`
+- `templates/HANDOFF.md`

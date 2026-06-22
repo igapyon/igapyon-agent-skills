@@ -13,12 +13,12 @@ update_when:
 
 # Todo
 
-This file tracks the current working state for the AI agent.
-Update this while working so the next agent can resume from the current state.
+This file tracks the active tasks, blockers, and repeated failures for the AI agent.
+Use `HANDOFF.md` for compact resume notes for the next human or agent.
 
 ## AI Agent Current Tasks
 
-This section tracks the current working state for AI agents.
+This section tracks active work items for AI agents.
 Update this section while working. Do not rewrite unrelated TODO items.
 
 ### Tasks
