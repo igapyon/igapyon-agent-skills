@@ -1,0 +1,6 @@
+interface:
+  display_name: "Agent State Management"
+  short_description: "Manage AI agent state with three Markdown files"
+  default_prompt: "Use $igapyon-agent-state-management to set up GOAL.md, TODO.md, and DECISIONS.md for this repository."
+policy:
+  allow_implicit_invocation: false
