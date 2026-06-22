@@ -199,6 +199,10 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 │  ├─ igapyon-ffmpeg-helper/
 │  │  ├─ SKILL.md
 │  │  └─ references/
+│  ├─ igapyon-agent-state-management/
+│  │  ├─ SKILL.md
+│  │  ├─ references/
+│  │  └─ templates/
 │  ├─ igapyon-miku-soft-developer/
 │  │  ├─ SKILL.md
 │  │  └─ references/
@@ -249,6 +253,12 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 - `igapyon-ffmpeg-helper`
 
   H4essential のオーケストラ録音から、切り出し、単純ゲイン調整、必要なら結合、静止画付き YouTube 用動画作成までの個人用 FFmpeg ワークフロー向け。明示的に指定した場合に利用する。
+
+- `igapyon-agent-state-management`
+
+  AI エージェント作業用の `GOAL.md`、`TODO.md`、`DECISIONS.md` による軽量な状態管理ファイルの作成・整理・運用向け。発火は `igapyon-agent-state-management` の明示、または `igapyon 状態管理`、`igapyon 作業状態`、`igapyon 作業再開`、`igapyon 3ファイル`、`igapyon goal`、`igapyon todo` などの `igapyon` 付き合言葉を基本とする。`igapyon 作業再開` では、3ファイルを新規作成せず、まず既存の repo 状態、`TODO.md`、`GOAL.md`、`DECISIONS.md` などを読んで再開ポイントを整理する。
+
+  名前を思い出せない場合は、`igapyon 状態管理` または `igapyon 作業再開` を合言葉として使う。
 
 - `igapyon-miku-soft-developer`
 
