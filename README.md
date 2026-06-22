@@ -256,7 +256,7 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 
 - `igapyon-agent-state-management`
 
-  AI エージェント作業用の `GOAL.md`、`TODO.md`、`DECISIONS.md` による軽量な状態管理ファイルの作成・整理・運用向け。発火は `igapyon-agent-state-management` の明示、または `igapyon 状態管理`、`igapyon 作業状態`、`igapyon 作業再開`、`igapyon 3ファイル`、`igapyon goal`、`igapyon todo` などの `igapyon` 付き合言葉を基本とする。`igapyon 作業再開` では、3ファイルを新規作成せず、まず既存の repo 状態、`TODO.md`、`GOAL.md`、`DECISIONS.md` などを読んで再開ポイントを整理する。
+  AI エージェント作業用の `GOAL.md`、`TODO.md`、`DECISIONS.md`、`HANDOFF.md` による軽量な状態管理ファイルの作成・整理・運用向け。発火は `igapyon-agent-state-management` の明示、または `igapyon 状態管理`、`igapyon 作業状態`、`igapyon 作業再開`、`igapyon goal`、`igapyon todo`、`igapyon handoff` などの `igapyon` 付き合言葉を基本とする。`igapyon 作業再開` では、状態管理ファイルを新規作成せず、まず既存の repo 状態、`TODO.md`、`GOAL.md`、`DECISIONS.md`、`HANDOFF.md` などを読んで再開ポイントを整理する。
 
   名前を思い出せない場合は、`igapyon 状態管理` または `igapyon 作業再開` を合言葉として使う。
 
