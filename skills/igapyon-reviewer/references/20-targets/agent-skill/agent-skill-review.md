@@ -24,6 +24,9 @@ Use it together with:
   reviewing installable skill bundles or release zips
 - [generated-artifact-review.md](../artifacts/generated-artifact-review.md) when checking
   generated indexes or other generated files
+- [evidence-acquisition-review.md](../../10-perspectives/provenance-and-officialness/evidence-acquisition-review.md)
+  when the skill generates, modifies, or recommends source code, or when
+  hallucination resistance and missing-information handling are in scope
 
 For new or updated miku-soft style Agent Skills, consult sibling skills or
 sibling product repositories when they provide a safer or more efficient
@@ -102,6 +105,31 @@ Check whether `SKILL.md`:
 Flag issues when detailed review rules, domain knowledge, examples, or long
 procedures are copied into `SKILL.md` instead of being placed under
 `references/`.
+
+## Evidence Acquisition Checks
+
+Use [evidence-acquisition-review.md](../../10-perspectives/provenance-and-officialness/evidence-acquisition-review.md)
+when an Agent Skill may generate, modify, or recommend source code, or when the
+review asks whether the skill prevents unsupported output.
+
+For code-generation skills, check whether the skill chooses an appropriate
+evidence strictness mode. Implementation-ready code should normally require
+agents to obtain missing information before writing code. The skill should
+direct agents to inspect local files, search the repository, run appropriate
+diagnostics, check official documentation when external behavior matters, or ask
+the user with a concrete prompt when the information cannot otherwise be
+obtained.
+
+The review should not require every workflow to stop on every unknown. A skill
+may support lighter exploratory drafts, examples, or design sketches when it
+clearly labels assumptions and prevents them from being treated as verified
+implementation facts.
+
+Flag issues when a skill only says "do not hallucinate" but does not say how to
+get missing implementation facts, or when it allows code generation from
+unverified assumptions about APIs, file paths, commands, dependencies,
+configuration, environment, versions, security requirements, or acceptance
+criteria.
 
 ## `index.json` Checks
 
@@ -465,6 +493,9 @@ Use these severity levels:
   discoverable.
 - Medium: examples are missing for fragile output shapes, command patterns, or
   workflows where examples are needed for stable agent behavior.
+- Medium: a code-generation skill says not to hallucinate but does not require
+  concrete evidence acquisition or user prompting for missing implementation
+  facts.
 - Medium: bundle includes local-only or development-only files.
 - Low: prompt wording leans on broad identity assignment where context,
   examples, constraints, or templates would make the behavior more stable.

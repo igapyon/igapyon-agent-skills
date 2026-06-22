@@ -1,0 +1,13 @@
+{
+ "generator": "miku-indexgen",
+ "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
+ "basePath": ".",
+ "files": [
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":4539,"description":"Use only when the user explicitly names igapyon-agent-state-management or uses an igapyon-prefixed trigger phrase such as igapyon 状態管理, igapyon agent 状態管理, igapyon 作業状態, igapyon 作業再開, igapyon goal, igapyon todo, igapyon handoff, or igapyon GOAL TODO DEC...","summary":"Igapyon Agent State Management"},
+  {"name":"markdown-state-files.md","path":"references/markdown-state-files.md","ext":"md","dir":"references","size":4998,"summary":"Markdown State Files"},
+  {"name":"DECISIONS.md","path":"templates/DECISIONS.md","ext":"md","dir":"templates","size":578,"summary":"Decisions"},
+  {"name":"GOAL.md","path":"templates/GOAL.md","ext":"md","dir":"templates","size":680,"summary":"Goal"},
+  {"name":"HANDOFF.md","path":"templates/HANDOFF.md","ext":"md","dir":"templates","size":913,"summary":"Handoff"},
+  {"name":"TODO.md","path":"templates/TODO.md","ext":"md","dir":"templates","size":893,"summary":"Todo"}
+ ]
+}

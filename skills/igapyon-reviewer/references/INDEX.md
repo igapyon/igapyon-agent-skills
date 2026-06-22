@@ -76,12 +76,15 @@ Use these entries when the review is about a cross-cutting concern.
   [Secrets and Credentials Review](10-perspectives/privacy-and-secrets/secrets-and-credentials-review.md)
 - Official terminology and primary-source links:
   [Official Terminology Review](10-perspectives/provenance-and-officialness/official-terminology-review.md),
-  [Public URL and Link Review](10-perspectives/provenance-and-officialness/public-url-link-review.md)
+  [Public URL and Link Review](10-perspectives/provenance-and-officialness/public-url-link-review.md),
+  [Evidence Acquisition Review](10-perspectives/provenance-and-officialness/evidence-acquisition-review.md)
 - AI-agent readability and searchability:
   [Markdown Structure Review](20-targets/markdown/markdown-structure-review.md),
   [JSON Agent Grepability Review](20-targets/structured-data/json-agent-grepability-review.md),
   [XML Agent Grepability Review](20-targets/structured-data/xml-agent-grepability-review.md),
   [Read-Only Skill Content Format Review](20-targets/agent-skill/read-only-skill-content-format-review.md)
+- Hallucination resistance and missing-information handling:
+  [Evidence Acquisition Review](10-perspectives/provenance-and-officialness/evidence-acquisition-review.md)
 - Refactoring and accumulated structure:
   [Refactoring Need Review](10-perspectives/maintenance/refactoring-need-review.md)
 
@@ -112,7 +115,7 @@ user explicitly asks for miku-soft / igapyon conventions.
   - `safety-and-respect/`: respect, harm, human-rights, and compliance-adjacent wording.
   - `privacy-and-secrets/`: credentials, private data, and secret leakage.
   - `rights-and-licenses/`: copyright, originality, OSS licensing, notices, and attribution.
-  - `provenance-and-officialness/`: official terminology, primary-source URLs, and link trust.
+  - `provenance-and-officialness/`: official terminology, primary-source URLs, link trust, and evidence acquisition.
   - `writing/`: writing style, AI-text naturalness, and public Japanese final checks.
   - `maintenance/`: refactoring and accumulated-structure review.
 - `20-targets/`: target-specific reviews.

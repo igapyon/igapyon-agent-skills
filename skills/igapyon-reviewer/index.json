@@ -3,9 +3,11 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3045,"description":"Use only when the user explicitly mentions igapyon-reviewer or explicitly asks to use igapyon's reviewer skill. Once named, participate as a review-only skill for code, repositories, articles, documentation, social posts, GitHub text, README text, UI te...","summary":"igapyon-reviewer"},
   {"name":"project-convention-detection-review.md","path":"references/00-start-here/project-convention-detection-review.md","ext":"md","dir":"references/00-start-here","size":6750,"summary":"Project Convention Detection Review"},
   {"name":"refactoring-need-review.md","path":"references/10-perspectives/maintenance/refactoring-need-review.md","ext":"md","dir":"references/10-perspectives/maintenance","size":6395,"summary":"Refactoring Need Review"},
   {"name":"secrets-and-credentials-review.md","path":"references/10-perspectives/privacy-and-secrets/secrets-and-credentials-review.md","ext":"md","dir":"references/10-perspectives/privacy-and-secrets","size":3459,"summary":"Secrets and Credentials Review"},
+  {"name":"evidence-acquisition-review.md","path":"references/10-perspectives/provenance-and-officialness/evidence-acquisition-review.md","ext":"md","dir":"references/10-perspectives/provenance-and-officialness","size":8274,"summary":"Evidence Acquisition Review"},
   {"name":"official-terminology-review.md","path":"references/10-perspectives/provenance-and-officialness/official-terminology-review.md","ext":"md","dir":"references/10-perspectives/provenance-and-officialness","size":5332,"summary":"Official Terminology Review"},
   {"name":"public-url-link-review.md","path":"references/10-perspectives/provenance-and-officialness/public-url-link-review.md","ext":"md","dir":"references/10-perspectives/provenance-and-officialness","size":6866,"summary":"Public URL and Link Review"},
   {"name":"rights-and-originality-review.md","path":"references/10-perspectives/rights-and-licenses/rights-and-originality-review.md","ext":"md","dir":"references/10-perspectives/rights-and-licenses","size":17781,"summary":"Rights and Originality Review"},
@@ -14,7 +16,7 @@
   {"name":"japanese-public-text-final-check.md","path":"references/10-perspectives/writing/japanese-public-text-final-check.md","ext":"md","dir":"references/10-perspectives/writing","size":2410,"summary":"Japanese Public Text Final Check"},
   {"name":"writing-style-review.md","path":"references/10-perspectives/writing/writing-style-review.md","ext":"md","dir":"references/10-perspectives/writing","size":4812,"summary":"Writing Style Review"},
   {"name":"agent-skill-cli-integration-review.md","path":"references/20-targets/agent-skill/agent-skill-cli-integration-review.md","ext":"md","dir":"references/20-targets/agent-skill","size":5288,"summary":"Agent Skill CLI Integration Review"},
-  {"name":"agent-skill-review.md","path":"references/20-targets/agent-skill/agent-skill-review.md","ext":"md","dir":"references/20-targets/agent-skill","size":20893,"summary":"Agent Skill Review"},
+  {"name":"agent-skill-review.md","path":"references/20-targets/agent-skill/agent-skill-review.md","ext":"md","dir":"references/20-targets/agent-skill","size":22645,"summary":"Agent Skill Review"},
   {"name":"read-only-skill-content-format-review.md","path":"references/20-targets/agent-skill/read-only-skill-content-format-review.md","ext":"md","dir":"references/20-targets/agent-skill","size":5769,"summary":"Read-Only Skill Content Format Review"},
   {"name":"archive-package-contents-review.md","path":"references/20-targets/artifacts/archive-package-contents-review.md","ext":"md","dir":"references/20-targets/artifacts","size":7047,"summary":"Archive and Package Contents Review"},
   {"name":"generated-artifact-review.md","path":"references/20-targets/artifacts/generated-artifact-review.md","ext":"md","dir":"references/20-targets/artifacts","size":4561,"summary":"Generated Artifact Review"},
@@ -29,7 +31,6 @@
   {"name":"repository-work-handoff-review.md","path":"references/30-timing/handoff/repository-work-handoff-review.md","ext":"md","dir":"references/30-timing/handoff","size":9614,"summary":"Repository Work Handoff Review"},
   {"name":"software-completion-review.md","path":"references/30-timing/release/software-completion-review.md","ext":"md","dir":"references/30-timing/release","size":16869,"summary":"Software Completion Review"},
   {"name":"version-consistency-review.md","path":"references/30-timing/release/version-consistency-review.md","ext":"md","dir":"references/30-timing/release","size":3172,"summary":"Version Consistency Review"},
-  {"name":"INDEX.md","path":"references/INDEX.md","ext":"md","dir":"references","size":7097,"summary":"igapyon-reviewer Reference Index"},
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3045,"description":"Use only when the user explicitly mentions igapyon-reviewer or explicitly asks to use igapyon's reviewer skill. Once named, participate as a review-only skill for code, repositories, articles, documentation, social posts, GitHub text, README text, UI text, CLI text, or short text. Do not use this skill for ordinary feedback, proofreading, rewriting, implementation, repository cleanup, or generic review requests unless the user names igapyon-reviewer or explicitly asks to use this reviewer skill.","summary":"igapyon-reviewer"}
+  {"name":"INDEX.md","path":"references/INDEX.md","ext":"md","dir":"references","size":7397,"summary":"igapyon-reviewer Reference Index"}
  ]
 }

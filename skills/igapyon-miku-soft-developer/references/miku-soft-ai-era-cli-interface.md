@@ -72,6 +72,121 @@ References
 Small CLIs may combine sections, but they should still cover the same contract
 points when those points affect safe execution.
 
+## Observed miku CLI Series Pattern
+
+Existing `miku-*` CLI tools that are especially agent-facing tend to expose
+more than a traditional option list. The strongest examples are small
+local-first tools such as `miku-grep`, `miku-readfile`, and `miku-indexgen`.
+
+The common pattern is:
+
+- local-first execution is part of the product boundary
+- the CLI is a primary product surface, not just a debug helper
+- AI agents and scripts are treated as first-class callers
+- structured JSON is used when the result is intended for downstream tools
+- human-readable text is allowed, but it is not the only contract
+- stdout, stderr, generated files, and exit codes have distinct meanings
+- expected partial failures are represented as diagnostics rather than hidden
+  in prose
+- root boundaries, skipped inputs, unsupported inputs, and resource limits are
+  visible enough for an agent to avoid over-reading or over-trusting output
+
+Representative roles:
+
+- `miku-grep`: find candidate files or paths before reading them; optionally
+  return structured result JSON, agent summaries, and handoff hints for
+  `miku-readfile`
+- `miku-readfile`: read only explicitly selected root-relative files and return
+  decoded text plus metadata and diagnostics as JSON
+- `miku-indexgen`: scan a directory and generate `index.json` and optional
+  `index.md` so an agent can inspect a compact file inventory before opening
+  full documents
+
+These tools show that the important help question is not only "which option
+does what?" but "can a non-interactive caller determine whether this command is
+safe to run, what it reads, what it writes, which output is stable, and how to
+interpret failure?"
+
+## Recommended Agent-Facing Help Skeleton
+
+Use this skeleton when a CLI is primarily consumed by AI agents, scripts, Agent
+Skills, CI jobs, or MCP adapters. Product-specific help may be shorter, but it
+should not omit contract sections that affect safe execution.
+
+```text
+<command> - short operational description
+
+Usage:
+  <command> [options] <required-input>
+  <command> < request.json > result.json
+  <command> --version
+  <command> --help
+
+Description:
+  State the implemented operation in concrete terms such as scan, read,
+  convert, validate, generate, normalize, inspect, or bundle.
+
+When to use:
+  State the caller workflow this tool supports, especially when it is one step
+  in a chain such as search -> read -> bundle -> convert.
+
+Primary contract:
+  stdin   request JSON when stdin mode is supported
+  stdout  result JSON or declared primary textual output
+  stderr  usage errors, progress logs, verbose logs, and unexpected runtime
+          messages
+
+Inputs:
+  State accepted file, directory, stdin, encoding, extension, and format
+  boundaries. State whether paths are root-relative, whether absolute paths are
+  rejected, and whether symlinks, binary files, generated files, dotfiles, or
+  ignored files are skipped.
+
+Outputs:
+  Separate terminal output from files written to disk. Name which output is
+  stable for machine use.
+
+Generated artifacts:
+  List generated files and directories. State whether they are safe to
+  regenerate and whether humans should avoid hand-maintaining them.
+
+Default behavior:
+  State defaults that affect file selection, recursion, output location,
+  overwrite behavior, encoding, resource limits, ignore handling, and result
+  shape.
+
+Overwrite behavior:
+  State whether files are overwritten, skipped, merged, or protected.
+
+Machine-readable output contract:
+  State the stable JSON, Markdown, archive, report, manifest, or result shape
+  briefly, and point to the detailed spec.
+
+Diagnostics / warnings:
+  State where diagnostics appear and whether unsupported, skipped, partial,
+  lossy, fallback, or resource-limited behavior is structured.
+
+Exit codes:
+  0  success
+  1  expected failure with structured result when possible
+  2  invalid CLI usage or malformed input
+  3  unexpected runtime error
+
+Options:
+  List options with defaults and side effects when they affect inputs, outputs,
+  generated artifacts, diagnostics, or overwrite behavior.
+
+Examples:
+  Provide safe copy-paste examples that match implemented behavior.
+
+References:
+  Link to detailed CLI specs, output format specs, README sections, or Agent
+  Skill references.
+```
+
+The skeleton is intentionally contract-first. Put options after the runtime
+contract so an agent does not have to infer side effects from isolated flags.
+
 ## Runtime Contract Content
 
 ### Usage

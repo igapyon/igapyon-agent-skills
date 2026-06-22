@@ -10,11 +10,12 @@ After `igapyon-github-writer` is active, enter PR mode for similar wording such 
 
 ## Target Rules
 
-- A commit ID or explicit Git range is required input for PR drafting.
-- If the user asks for PR text without a commit ID, commit range, branch comparison, or explicit working-tree target, ask for the target before drafting.
-- In that case, ask briefly in Japanese, for example: `対象コミットID、Git範囲、またはブランチ比較を教えてください。`
+- If the user asks for PR text without a commit ID, commit range, branch comparison, or explicit working-tree target, first run `git log --oneline --decorate -1` to resolve the current latest commit ID.
+- Use the commit ID shown by that command as the single commit PR target.
+- Interpret that default as `<resolved-commit>^..<resolved-commit>` for the change content, and inspect the single commit `<resolved-commit>`.
+- This default means committed history only. Do not include uncommitted working-tree changes unless the user explicitly asks for them.
 - If the user says `対象コミット <commit> における変更内容`, draft from exactly that commit.
-- Do not include parent commits, child commits, `HEAD`, or the current working tree unless the user explicitly asks for them.
+- Do not include parent commits, child commits, additional ranges, or the current working tree unless the user explicitly asks for them.
 - If the user gives a commit range, use that range exactly after applying the shared target-resolution rules.
 - If the PR target cannot be resolved from the request, ask for the commit, range, or branch comparison before drafting.
 
@@ -33,11 +34,12 @@ Interpret that request as:
 - inclusion: only the change introduced by `<commit>`
 - output language: Japanese
 - output format: Markdown
-- required top-level headings: `# PR Title` and `# PR Body`
+- first line: PR title text only, without a heading marker or label
+- following content: PR body Markdown
 - final wrapper: one block from `~~~~markdown` to `~~~~`
 - source of facts: the current conversation, the user's input, and inspected local Git evidence only
 
-The final Markdown must keep the top-level headings exactly as `# PR Title` and `# PR Body` so downstream tooling can parse the response.
+Do not add artificial labels or headings such as `# PR Title`, `# PR Body`, `PR Title:`, or `PR Body:`. The drafted text should be directly usable as the PR title and PR body content.
 
 ## Drafting Rules
 
@@ -55,11 +57,7 @@ Draft for reviewers:
 Use this output shape:
 
 ```markdown
-# PR Title
-
 ...
-
-# PR Body
 
 ## 概要
 

@@ -1,0 +1,7 @@
+{"id":"route-001","prompt":"igapyon-skill-compactorで、まず全体の省トークン技を確認したい。","expected":"route","target":"references/system/token-efficiency-techniques.md","checks":["choose system techniques","do not read all references first"]}
+{"id":"route-002","prompt":"igapyon-skill-compactorで、個別Agent Skillの発火条件とSKILL.md配置をチェックしたい。","expected":"route","target":"references/checklists/agent-skill.md","checks":["choose agent-skill checklist","activation and placement focus"]}
+{"id":"route-003","prompt":"igapyon-skill-compactorで、作業前・作業後にいつチェックリストを見るべきか確認したい。","expected":"route","target":"references/checklists/checklist-timing.md","checks":["choose checklist timing","avoid duplicating timing rules"]}
+{"id":"route-004","prompt":"igapyon-skill-compactorで、記事由来の思想だけ軽く確認したい。","expected":"route","target":"distilled/token-efficiency-design-essence.md","checks":["choose distilled entry point","avoid original articles unless needed"]}
+{"id":"route-005","prompt":"igapyon-skill-compactorで、front matterの書き方を確認したい。","expected":"route","target":"references/agent-skill/frontmatter-templates.md","checks":["choose frontmatter templates","avoid unrelated checklists"]}
+{"id":"route-006","prompt":"igapyon-skill-compactorの発火テストを別セッションで確認したい。","expected":"route","target":"tests/INDEX.md","checks":["choose tests index","validation-only material"]}
+{"id":"route-007","prompt":"igapyon-skill-compactorのconservative/structural/summaryの違いを例で確認したい。","expected":"route","target":"examples/compaction-modes-example.md","checks":["choose compaction mode example","avoid unrelated front matter examples"]}

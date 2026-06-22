@@ -10,7 +10,8 @@
 - 1 skill = 1 directory
 - skill ごとの詳細仕様は各 `SKILL.md` に書く
 - skill の具体ルール、例、長めの手順は `references/` 配下に置く
-- Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を正本として管理する
+- Note 記事 Markdown は、姉妹リポジトリ `../mikuku-articles/` を正本として管理する
+- Qiita 記事 Markdown は、`skills/igapyon-qiita-writer/references/` を正本として管理する
 - skill を新規作成・更新した後は、`SKILL.md` が必要な `references/` を案内していること、必要に応じて `index.json` を参照することを確認する
 - repo 全体の運用ルールはこの `README.md` に書く
 - 作業メモは repo 直下の `TODO.md` に集約する
@@ -29,6 +30,19 @@ repo 全体のバージョンを更新するときは、日付部分に合わせ
 `みくく` のバージョンは `YYYYMMDDx` 形式で、`YYYYMMDD` を repo 全体のバージョンの日付部分と揃えます。  
 同じ日付内の更新は、`みくく` 側では `a`, `b`, `c` ... と suffix を進め、repo 全体のバージョンでは対応する `N` を `1`, `2`, `3` ... と進めます。
 
+バージョン更新時は、次の両方を確認します。
+
+- root の `pom.xml`
+  - 例: `<version>1.20260604.1</version>`
+- `skills/igapyon-mikuku-agent/references/VERSION.md`
+  - 例: `Version: 20260604a`
+- `mvn clean package` で生成される release archive 名
+  - 例: `target/igapyon-agent-skills-1.20260604.1.zip`
+
+`みくく` 側だけを更新したい場合でも、repo 全体の保守更新として扱うなら `pom.xml` も同じ日付に更新します。逆に、repo 全体のリリースや保守更新ではない一時的な確認だけなら、バージョンを更新しません。
+
+`mvn generate-resources` や `mvn clean package` では、`pom.xml` の `1.YYYYMMDD.N` と `skills/igapyon-mikuku-agent/references/VERSION.md` の `YYYYMMDDx` が対応していることを `validate` phase で確認します。たとえば `1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
+
 ## 記事公開の優先順位
 
 技術記事は、まず Note 向けの記事として作成・公開することを優先します。
@@ -41,13 +55,15 @@ Qiita では、Note のテック主記事をもとに、技術詳細、手順、
 従来型の Note 記事も引き続き作成します。  
 こちらはうさぴょん担当とし、Note らしい柔らかい文体で、開発背景、使いどころ、利用イメージ、つまずきや意図などを含めた読み物として整えます。
 
-記事の正本管理は従来どおり、媒体ごとに分けます。
+記事の正本管理は、媒体ごとに分けます。
 
-- Note 向け記事の正本: `skills/igapyon-note-writer/references/`
+- Note 向け記事の正本: `../mikuku-articles/`
+  - 公開済み記事: `../mikuku-articles/2026/<MM>/<YYYYMMDD>/`
+  - 未公開記事: `../mikuku-articles/2026/draft/`
 - Qiita 技術記事の正本: `skills/igapyon-qiita-writer/references/`
 
 Qiita 側は投稿頻度や下書き作成数に制限がかかる場合があるため、公開は間隔を空けて行います。  
-大量の記事移行や連続公開が必要な場合でも、まずこの repo の `references/` に正本を保持し、公開作業は媒体側の制限に合わせて進めます。
+Note 記事の下書きや移行中の記事は、`../mikuku-articles/2026/draft/` に平置きで保持し、公開日が決まった段階で日付ディレクトリへ移します。
 
 ## 移行期の writer skill 運用
 
@@ -60,7 +76,7 @@ Note 優先運用への移行期は、掲載媒体ではなく記事タイプで
 こちらは、技術詳細を詰め込みすぎず、背景、感触、読み物としての流れを優先します。
 
 記事ファイルの正本配置は、利用した writer skill ではなく掲載媒体に合わせます。  
-そのため、`igapyon-qiita-writer` で作成した Note テック主記事でも、Note 掲載用の正本は `skills/igapyon-note-writer/references/` に置きます。
+そのため、`igapyon-qiita-writer` で作成した Note テック主記事でも、Note 掲載用の正本は `../mikuku-articles/` に置きます。
 
 ## .gitignore の扱い
 
@@ -71,6 +87,7 @@ macOS が生成する `.DS_Store` は Git 管理対象外とするため、repo 
 
 `.codex/skills/` は Codex から利用するためのローカル配備先です。  
 この repo では `skills/` 配下を正本として管理し、`.codex/skills/` 配下のコピーは Git 管理対象外とします。
+`skills/` から `.codex/skills/` への反映は、必要なタイミングで手動実行します。Maven の `package` フェーズでは自動コピーしません。
 
 ## Codex skills 更新後の反映 tips
 
@@ -114,24 +131,24 @@ skill を利用する際は、`SKILL.md` を入口とし、具体ルール、例
 `skill-creator` などで skill を作成した直後は、必要な具体ルールを `SKILL.md` に詰め込みすぎず、`references/` へ分離します。  
 また、参照資料の全体像を探す必要がある skill では、`SKILL.md` に `index.json` を discovery index として使う旨を明記します。
 
-Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を正本として管理します。
+Note / Qiita 記事 Markdown は、媒体ごとの正本置き場で管理します。
 
-- Note 記事の正本: `skills/igapyon-note-writer/references/`
+- Note 記事の正本: `../mikuku-articles/`
 - Qiita 技術記事の正本: `skills/igapyon-qiita-writer/references/`
 
-みくく担当の Note テック主記事は、正本を `skills/igapyon-note-writer/references/` に置きます。  
-一方で、みくく文体の参照例として使うため、公開済みまたは参照価値の高い記事コピーを `skills/igapyon-mikuku-agent/references/writing-examples/articles/` に同期して置きます。
+みくく担当の Note テック主記事は、正本を `../mikuku-articles/` に置きます。  
+一方で、みくく文体の参照例として使うため、公開済みまたは参照価値の高い記事コピーを `skills/igapyon-mikuku-agent/references/examples/articles/` に同期して置きます。
 
 このコピーは文体・構成の参照用です。記事本文、URL、掲載用属性を更新する場合は、まず Note 正本側を更新し、その後で `igapyon-mikuku-agent` 側の writing example にコピーして同期します。
 
-`references/general/` は、特定の `miku` 系プロダクトに分類されない一般記事用の置き場です。  
-`miku` 系プロダクトの記事は、各 writer skill の `references/<project>/` に置きます。
+`../mikuku-articles/2026/draft/` は、日付未確定または未公開の Note 記事を階層なしで置く場所です。  
+公開済み Note 記事は、`../mikuku-articles/2026/<MM>/<YYYYMMDD>/` 配下の記事パッケージとして管理します。
 
-`workplace/*/docs/articles/` などに記事メモや旧配置の Markdown が残っている場合でも、記事として更新・公開対象にする正本は writer skill 配下の `references/` です。
+`workplace/*/docs/articles/` やこの repo の旧配置に記事メモや Markdown が残っている場合でも、Note 記事として更新・公開対象にする正本は `../mikuku-articles/` 側です。
 
 ## docs/articles 集約状況
 
-記事管理は、Qiita 向け記事を `skills/igapyon-qiita-writer/references/`、Note 向け記事を `skills/igapyon-note-writer/references/` に集約し、そこを正本として扱う方針です。
+記事管理は現在、Qiita 向け記事を `skills/igapyon-qiita-writer/references/`、Note 向け記事を `../mikuku-articles/` に集約し、そこを正本として扱う方針です。
 
 2026-05-06 時点で、`workplace/*/docs/articles/qiita/` 配下の有意な記事本文は、`README.md` と `TEMPLATE.md` を除き、すべて `skills/igapyon-qiita-writer/references/` 側に同一内容で存在することを確認済みです。
 
@@ -143,7 +160,7 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 - `mikuproject`: 4 件
 - `mikuscore`: 2 件
 
-同じく 2026-05-06 時点で、`workplace/*/docs/articles/note/` 配下の有意な記事本文は、`README.md` と `TEMPLATE.md` を除き、すべて `skills/igapyon-note-writer/references/` 側に同一内容で存在することを確認済みです。
+同じく 2026-05-06 時点で、`workplace/*/docs/articles/note/` 配下の有意な記事本文は、`README.md` と `TEMPLATE.md` を除き、いったん `skills/igapyon-note-writer/references/` 側に同一内容で集約済みであることを確認しました。現在は、公開済み記事を含む Note 正本を `../mikuku-articles/` 側へ移しています。
 
 対象は次の通りです。
 
@@ -154,9 +171,9 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 - `mikuscore`: 2 件
 
 `mikuscore` の記事は、`workplace/docs-articles/mikuscore-devel/` と `workplace/docs-articles/miku-abc-player-devel/vendor/mikuscore/` の両方に重複して存在する場合があります。  
-集約先の `references/mikuscore/` では 1 セットとして保持します。
+Note 正本側では、`../mikuku-articles/` に 1 セットとして保持します。
 
-`references/general/` 配下の記事は、`workplace/*/docs/articles/` 由来ではない一般記事を、この repo 側で集約管理するための置き場です。
+一般記事の Note 下書きは、`../mikuku-articles/2026/draft/` に置きます。
 
 ## 構成
 
@@ -168,7 +185,7 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 │  │  └─ references/
 │  ├─ igapyon-note-writer/
 │  │  ├─ SKILL.md
-│  │  └─ references/
+│  │  └─ templates/
 │  ├─ igapyon-companion-techpost-writer/
 │  │  └─ SKILL.md
 │  ├─ igapyon-companion-musicpost-writer/
@@ -176,6 +193,16 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 │  ├─ igapyon-github-writer/
 │  │  ├─ SKILL.md
 │  │  └─ references/
+│  ├─ igapyon-diary-writer/
+│  │  ├─ SKILL.md
+│  │  └─ references/
+│  ├─ igapyon-ffmpeg-helper/
+│  │  ├─ SKILL.md
+│  │  └─ references/
+│  ├─ igapyon-agent-state-management/
+│  │  ├─ SKILL.md
+│  │  ├─ references/
+│  │  └─ templates/
 │  ├─ igapyon-miku-soft-developer/
 │  │  ├─ SKILL.md
 │  │  └─ references/
@@ -183,7 +210,13 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 │  │  ├─ SKILL.md
 │  │  ├─ assets/
 │  │  └─ references/
-│  └─ igapyon-repo-conventions/
+│  ├─ igapyon-repo-conventions/
+│  │  ├─ SKILL.md
+│  │  └─ references/
+│  ├─ igapyon-reviewer/
+│  │  ├─ SKILL.md
+│  │  └─ references/
+│  └─ igapyon-skill-compactor/
 │     ├─ SKILL.md
 │     └─ references/
 ├─ pom.xml
@@ -211,7 +244,21 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 
 - `igapyon-github-writer`
 
-  GitHub PR、GitHub Release、GitHub About に貼る文章の作成向け。明示的に指定した場合に利用する。
+  GitHub PR、GitHub Release、GitHub About に貼る文章の作成向け。明示的に指定した場合に利用する。作文した Markdown は、通常の応答に加えて、ローカルの `workplace/github-writer/` に保存する。`workplace/` がなく `temp/` がある場合のみ `temp/github-writer/` を使い、どちらもなければ `workplace/github-writer/` を作成する。明示指示がある場合に限り、作成済み PR 文面をローカル Git commit message に反映する workflow も扱う。
+
+- `igapyon-diary-writer`
+
+  igapyon diary repository の日記エントリ作成・更新向け。明示的に指定した場合、または diary repository の作業が明確な場合に利用する。
+
+- `igapyon-ffmpeg-helper`
+
+  H4essential のオーケストラ録音から、切り出し、単純ゲイン調整、必要なら結合、静止画付き YouTube 用動画作成までの個人用 FFmpeg ワークフロー向け。明示的に指定した場合に利用する。
+
+- `igapyon-agent-state-management`
+
+  AI エージェント作業用の `GOAL.md`、`TODO.md`、`DECISIONS.md`、`HANDOFF.md` による軽量な状態管理ファイルの作成・整理・運用向け。発火は `igapyon-agent-state-management` の明示、または `igapyon 状態管理`、`igapyon 作業状態`、`igapyon 作業再開`、`igapyon goal`、`igapyon todo`、`igapyon handoff` などの `igapyon` 付き合言葉を基本とする。`igapyon 作業再開` では、状態管理ファイルを新規作成せず、まず既存の repo 状態、`TODO.md`、`GOAL.md`、`DECISIONS.md`、`HANDOFF.md` などを読んで再開ポイントを整理する。
+
+  名前を思い出せない場合は、`igapyon 状態管理` または `igapyon 作業再開` を合言葉として使う。
 
 - `igapyon-miku-soft-developer`
 
@@ -224,6 +271,14 @@ Note / Qiita 記事 Markdown は、各 writer skill 配下の `references/` を�
 - `igapyon-repo-conventions`
 
   Git / GitHub repository の `.gitignore`、`workplace/`、`.codex/skills/`、Java / Maven 設定、README 運用ルールの整理向け。明示的に指定した場合に利用する。
+
+- `igapyon-reviewer`
+
+  コード、記事、ドキュメント、UI 文言、CLI 文言などのレビュー向け。明示的に `igapyon-reviewer` の利用を指定した場合に利用する。
+
+- `igapyon-skill-compactor`
+
+  肥大化した Agent Skill の token-efficiency 設計、分割、参照化、蒸留、チェックリスト化、tool 化判断向け。明示的に指定した場合、または Agent Skill の compact / slim / token bloat reduction が明確な場合に利用する。
 
 ## index.json の更新
 
@@ -240,3 +295,53 @@ mvn clean package
 ```
 
 生成された `index.json` は、skill と一緒にコミットします。
+
+## Release archive
+
+GitHub Release に添付する利用者向け archive は、次のコマンドで作成します。
+
+```sh
+mvn clean package
+```
+
+生成物は `target/igapyon-agent-skills-<version>.zip` です。
+
+archive には `README.md`、`INSTALL.md`、`LICENSE`、`pom.xml`、`.mvn/`、`lib/`、`skills/` を含めます。
+利用者は archive を展開し、`INSTALL.md` の手順で `skills/*` を自分の Codex skills directory へコピーします。
+
+release archive には、この repo の `skills/` に加えて、外部管理の miku-soft 系 skill も同梱します。
+外部 skill は `mvn package` の `prepare-package` フェーズで `target/release-staging/skills/` に取得し、archive 化します。
+取得元は `pom.xml` の `external.*` properties で固定します。
+
+同梱する外部 skill は次の通りです。
+
+- `miku-indexgen-skills` `v1.6.1`: `skills/igapyon-miku-indexgen/`
+- `miku-text-bundle-skills` `v1.1.1.2`: `skills/igapyon-miku-text-bundle/`
+- `miku-repo-bundle-skills` `v0.5.0.1` (experimental): `skills/igapyon-miku-repo-bundle/`
+- `miku-grep-skills` `v0.10.1.1` (experimental): `skills/igapyon-miku-grep/`
+- `miku-prompt-lint-skills` `v0.4.1`: `skills/igapyon-miku-prompt-lint/`
+- `miku-readfile-skills` `v0.5.0.2`: `skills/miku-readfile/`
+- `mikuproject-skills` `v0.8.1.1`: `skills/mikuproject/`
+- `mikuscore-skills` `v0.1.0`: `skills/mikuscore/`
+
+GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、生成された zip を GitHub Release asset として添付します。
+
+## 厳選 text bundle
+
+AI へ渡す参照素材や、Web UI インタフェースへ内容をコピー＆ペーストして利用するための軽量な確認用 bundle として、厳選した skill だけを text bundle 化できます。
+
+```sh
+scripts/build-text-bundle-selection.sh
+```
+
+このスクリプトは、release staging 内の `igapyon-miku-text-bundle` runtime を使い、選んだ skill directory だけを `workplace/text-bundle-dist/` に text bundle として出力します。  
+あわせて、取り回しやすい zip として `workplace/igapyon-agent-skills-bundle-selection-<version>.zip` も生成します。
+
+現在の厳選対象は次の通りです。
+
+- `skills/igapyon-mikuku-agent/`
+- `skills/igapyon-skill-compactor/`
+- `skills/igapyon-agent-state-management/`
+- `skills/igapyon-github-writer/`
+
+`igapyon-miku-text-bundle` runtime がまだ release staging にない場合は、スクリプト内で `mvn package` を実行して staging を準備します。通常の release archive は利用者向けの skill 配布物であり、この厳選 text bundle はブラウザ上のチャットや Web UI へ貼り付けて使いやすくするための、AI 参照・確認・持ち運び用の小さな補助成果物です。

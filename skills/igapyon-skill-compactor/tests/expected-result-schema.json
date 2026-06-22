@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "igapyon-skill-compactor test result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "actual", "pass", "reason", "target", "notes"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Test case id from a JSONL prompt file."
+    },
+    "actual": {
+      "type": "string",
+      "enum": [
+        "activate",
+        "do-not-activate",
+        "mention-only",
+        "preserve",
+        "conservative",
+        "structural",
+        "summary",
+        "route",
+        "ask-human",
+        "do-not-apply-requested-shape",
+        "fail"
+      ]
+    },
+    "pass": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "target": {
+      "type": ["string", "null"],
+      "description": "Expected or actual routed file when the test is a routing case."
+    },
+    "notes": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -71,6 +71,8 @@ Java application versions:
 
 Agent Skills versions:
 
+- `miku-indexgen-skills`
+- `miku-text-bundle-skills`
 - `miku-grep-skills`
 - `miku-readfile-skills`
 - `mikuproject-skills`
@@ -220,6 +222,7 @@ For new miku Agent Skills work, prefer the CLI-backed or CLI plus MCP-backed pat
 Observed examples:
 
 - `miku-readfile-skills` and `miku-grep-skills` show the compact CLI-backed shape with `runtime/`, `lib/`, runtime smoke tests, bundle tests, and explicit non-activation for generic file operations.
+- `miku-indexgen-skills` shows the newer naming shape where the repository and release asset keep the `-skills` suffix while the installed skill directory and `SKILL.md` frontmatter use `igapyon-miku-indexgen`.
 - `mikuproject-skills` shows CLI plus MCP backend policy, operation capability maps, strict `*-only` behavior, preferred fallback behavior, and handoff-only no-execution behavior.
 
 ### Sister Project Reference Principles
@@ -531,6 +534,7 @@ The purpose of bundling both paths is not to make the skill layer heavier. It is
 Typical bundle contents:
 
 - `SKILL.md`
+- `index.json` as the generated discovery index
 - references needed by the skill
 - skill-local scripts
 - single jar Java CLI runtime when provided
@@ -551,11 +555,25 @@ Examples:
 
 Bundle-building scripts should be deterministic enough that changes are reviewable. A zipped bundle should be created by a documented command such as `npm run build:bundle` or `npm run build:bundle:zip`.
 
-Release bundle tests should inspect the final bundle or zip contents. They should assert that required entries such as `skills/<skill-name>/SKILL.md`, required references, skill-local helper files, skill-local assets when provided, and required runtime artifacts are present. They should also assert that development-only entries such as `tests/`, root-level `docs/` when not needed at runtime, `bundle/`, `node_modules/`, `.DS_Store`, and `workplace/` contents are absent.
+Release bundle tests should inspect the final bundle or zip contents. They should assert that required entries such as `skills/<skill-name>/SKILL.md`, `skills/<skill-name>/index.json`, required references, skill-local helper files, skill-local assets when provided, and required runtime artifacts are present. They should also assert that development-only entries such as `tests/`, root-level `docs/` when not needed at runtime, `bundle/`, `node_modules/`, `.DS_Store`, and `workplace/` contents are absent.
 
 ### Initial Bundle Skeleton Principles
 
 New `-skills` repositories should create the installable bundle shape from the initial skeleton stage. Do not wait until late packaging work to discover whether the skill can run after installation.
+
+Repository and package names may keep the product's repository-level `-skills` suffix while the installable Agent Skill name omits that suffix and carries the `igapyon-` prefix. This is the preferred newer shape when aligning with `miku-indexgen-skills`.
+
+Use the following name roles deliberately:
+
+- repository name: `<product>-skills`
+- package name: `<product>-skills`, unless the repository has an explicit different package policy
+- release zip name: `igapyon-<product>-skills-<version>.zip`, unless an established release convention already differs
+- Agent Skill formal name: `igapyon-<product>`
+- `SKILL.md` frontmatter `name`: `igapyon-<product>`
+- installed skill directory: `skills/igapyon-<product>/`
+- runtime artifact directory: `skills/igapyon-<product>/runtime/`
+
+Compatibility trigger names may include the upstream product name and the repository-style `-skills` name, such as `<product>` and `<product>-skills`, when this helps older user prompts continue to activate the same skill. These aliases should be documented as triggers in `SKILL.md`; they should not create additional skill directories or separate product identities.
 
 The normal bundle output should be rooted at `skills/`.
 
@@ -566,6 +584,7 @@ bundle/<repo-name>/
   skills/
     <skill-name>/
       SKILL.md
+      index.json
       agents/        when provided
       assets/        when provided
       references/
@@ -583,7 +602,9 @@ bundle/igapyon-<repo-name>-<version>.zip
 
 Use the repository's existing release naming convention when it is already established, but keep the zip rooted so that extracting or copying the bundle installs `skills/<skill-name>/...` in the expected shape.
 
-Bundle contents tests should be added early. They should verify that required files such as `skills/<skill-name>/SKILL.md`, `references/`, `agents/` when provided, skill-local `assets/` when provided, skill-local `lib/` when used, and `runtime/` when runtime artifacts are required are included. They should also verify that development-only files such as `tests/`, root-level `docs/` when not needed at runtime, `bundle/`, `node_modules/`, `.DS_Store`, and `workplace/` contents are excluded.
+For example, `miku-text-bundle-skills` should keep its repository and package name as `miku-text-bundle-skills` and its release zip as `igapyon-miku-text-bundle-skills-<version>.zip`. Its installable Agent Skill name, `SKILL.md` frontmatter `name`, and archive directory should be `igapyon-miku-text-bundle`, giving an installed path of `skills/igapyon-miku-text-bundle/` and runtime artifacts under `skills/igapyon-miku-text-bundle/runtime/`.
+
+Bundle contents tests should be added early. They should verify that required files such as `skills/<skill-name>/SKILL.md`, `skills/<skill-name>/index.json`, `references/`, `agents/` when provided, skill-local `assets/` when provided, skill-local `lib/` when used, and `runtime/` when runtime artifacts are required are included. They should also verify that development-only files such as `tests/`, root-level `docs/` when not needed at runtime, `bundle/`, `node_modules/`, `.DS_Store`, and `workplace/` contents are excluded.
 
 When runtime artifacts are required, add an isolated bundle smoke test. The test should build the bundle, copy or extract it into a temporary directory, and verify that runtime artifact lookup and a minimal runtime command work from inside the installed bundle shape.
 
@@ -658,6 +679,8 @@ Agent Skills keep README, `SKILL.md`, references, and docs roles separate.
 - when the skill activates
 - what the skill is allowed to do
 - the most important workflow rules
+- that agents should read `index.json` first as the generated discovery index
+  before opening larger bundled reference documents
 - runtime lookup discipline
 - hard boundaries and common mistakes
 - where detailed references are located
@@ -692,6 +715,7 @@ repository root
   skills/
     <skill-name>/
       SKILL.md
+      index.json
       agents/
       assets/
       references/
@@ -711,6 +735,7 @@ For example, `mikuproject-skills` should move toward this shape when both runtim
 skills/
   mikuproject/
     SKILL.md
+    index.json
     agents/
     assets/
     references/
@@ -797,6 +822,7 @@ The normal inputs are the skill files and the received runtime artifacts:
 - single jar Java CLI runtime
 - single JavaScript CLI runtime
 - `SKILL.md`
+- generated `index.json`
 - references and small skill-local scripts
 
 Common commands:
@@ -812,6 +838,13 @@ npm run build:bundle:zip
 Normal skill packaging should not compile or copy broader upstream runtime contents. It should consume received single jar and single JavaScript runtime artifacts.
 
 The build script should fail when required runtime files are missing. It should not silently create a skill bundle that cannot run the documented workflow.
+
+`index.json` is mandatory by default for miku-soft Agent Skills. It is a
+generated discovery artifact, not the source of truth. Keep the canonical
+instructions and reference content in `SKILL.md` and Markdown files under
+`references/`, regenerate `index.json` with `miku-indexgen` after skill files
+or references change, commit it with the skill, and validate its presence in
+structure and release bundle tests.
 
 ## Product-Specific Notes
 
@@ -873,6 +906,7 @@ Agent Skills maintenance focuses on keeping the skill aligned with upstream prod
 Important maintenance questions:
 
 - Does the skill still activate only for intended requests?
+- Are repository/package/release names and installed Agent Skill names intentionally separated or intentionally identical?
 - Does the declared runtime path still exist in development and bundled installs?
 - Did upstream API names, document kinds, or diagnostics change?
 - Do smoke tests cover the main workflows users actually ask for?
@@ -897,6 +931,7 @@ Before treating a new `-skills` repository as usable, confirm at least the follo
 - Upstream product and semantic center are named
 - Sister `-skills` reference was inspected, or its local absence was recorded
 - Skill name and activation rule are fixed
+- Repository/package/release asset naming and installed skill directory naming are fixed
 - Product boundary and non-goals are written in `SKILL.md`
 - Runtime lookup order is documented
 - Upstream API / CLI / runtime surface is identified
