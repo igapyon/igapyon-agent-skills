@@ -4,6 +4,27 @@
 - [ ] skill 配布先が必要になったら mirror 方針を決める
 - [ ] UI metadata が必要になったら skill 用の `agents/openai.yaml` を検討する
 
+## AI Agent Current Tasks
+
+This section tracks active work items for AI agents.
+Update this section while working. Do not rewrite unrelated TODO items.
+
+### Tasks
+
+- [x] Initialize lightweight AI agent state files for this repository.
+- [ ] Use this section for the next concrete repository maintenance task.
+
+### Blockers
+
+- なし
+
+### Retry Log
+
+Use this section only when the same task or error is repeated.
+If the same failure appears 3 times, stop and ask the user.
+
+- なし
+
 ## 絶対パス残存の懸念
 
 - [ ] リポジトリ内に残る実環境依存の絶対パスを相対パスまたは環境変数表記へ置き換える
