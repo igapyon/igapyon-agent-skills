@@ -12,7 +12,46 @@ Update this section while working. Do not rewrite unrelated TODO items.
 ### Tasks
 
 - [x] Initialize lightweight AI agent state files for this repository.
-- [ ] Use this section for the next concrete repository maintenance task.
+- [x] Fix installed Codex skill visibility issues found on 2026-06-23.
+  - Affected source skills in this repository:
+    - `skills/igapyon-agent-state-management/agents/openai.yaml`
+    - `skills/igapyon-skill-compactor/agents/openai.yaml`
+  - Current finding: installed copies exist under `/Users/igapyon/.codex/skills`,
+    but these skills are absent from the session's available-skills list.
+  - Likely cause: both affected skills contain
+    `policy.allow_implicit_invocation: false`, while visible hard-trigger
+    skills such as `igapyon-miku-prompt-lint` and `igapyon-ffmpeg-helper` do
+    not use that policy field.
+  - Proposed fix: remove `policy.allow_implicit_invocation: false` from these
+    `agents/openai.yaml` files, relying on `SKILL.md` trigger wording to
+    prevent accidental activation.
+  - Changed in repository: removed `policy.allow_implicit_invocation: false`
+    from both affected `agents/openai.yaml` files.
+  - Installed copies updated under `/Users/igapyon/.codex/skills`.
+  - Verified in fresh session: `igapyon-agent-state-management` and
+    `igapyon-skill-compactor` appear in the loaded skill list.
+- [x] Prevent template Agent Skill assets from being loaded as real skills.
+  - Current symptom: `skills/igapyon-miku-soft-developer/assets/agent-skills/skills/__SKILL_NAME__/SKILL.md`
+    appears in Codex's available-skills list as `__SKILL_NAME__`.
+  - Proposed fix: move the template out of any directory shape matching
+    `*/skills/*/SKILL.md`, rename the template file so it is not `SKILL.md`, or
+    adjust the packaging/install process to exclude nested template skills from
+    installed `.codex/skills` discovery.
+  - Changed in repository: moved the skeleton from
+    `assets/agent-skills/skills/__SKILL_NAME__/` to
+    `assets/agent-skills/templates/skill/`, renamed template `SKILL.md` to
+    `SKILL.md.template`, and updated workflow references.
+  - Installed copy updated under `/Users/igapyon/.codex/skills`.
+  - Verified in fresh session: `__SKILL_NAME__` no longer appears in the
+    available-skills list.
+- [ ] Update bundled skills later.
+  - User note on 2026-06-23: bundled skills will need to be updated later.
+  - Before starting, identify which bundled skills are meant and whether the
+    source of truth is this repository's `skills/` tree, installed
+    `/Users/igapyon/.codex/skills`, or plugin/cache-provided skills.
+  - After updating, refresh any generated indexes or package artifacts required
+    by the affected skills and verify the loaded available-skills list if
+    discovery behavior may change.
 
 ### Blockers
 
@@ -161,6 +200,8 @@ If the same failure appears 3 times, stop and ask the user.
 
 ## Note 記事 TODO
 
+- [x] 新記事候補「GPT-5.5とQwen3では、最適なプロンプト / Agent Skills 像が異なる」は記事側リポジトリへ移動済み
+  - 主題: コンテンツ型 Agent Skills は共通資産に保ち、GPT-5.5 / Qwen3-Thinking 併用時はモデルの思考特性に合わせて駆動方法や進め方を分ける
 - [ ] 旧素材メモ `xxxxxxxx-general-content-agent-skills-token-context.md` から、3本の記事へ未展開だった補助論点を必要なら別記事または追補へ展開する
   - キャッシュやバッチ処理によるトークン消費量抑制
   - 用途に対して過剰に高価なモデルを使わない、というモデル選択の観点
