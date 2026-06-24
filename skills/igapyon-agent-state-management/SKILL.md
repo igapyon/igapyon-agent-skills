@@ -59,6 +59,28 @@ Read `DECISIONS.md` before making or revisiting important decisions, especially 
 
 Read and update `HANDOFF.md` when pausing work, handing work to another agent, or preparing a compact resume summary. Keep it as a concise current-state summary, not a full work log.
 
+## User-Decision Blocked State
+
+If all safe autonomous work is complete, the remaining work requires explicit user judgment, repeating would only restate the same waiting condition, and the goal is not complete, mark the active goal as `blocked` instead of leaving it open.
+
+Use this especially when the only remaining decisions are human choices such as whether to commit or discard a rollback, whether to keep or discard binary artifact changes, or whether to continue after the user explicitly says to pause, stop, or `中断`.
+
+Before blocking, update the state files when they exist:
+
+- `TODO.md`: list the unresolved decisions under blockers or current tasks.
+- `HANDOFF.md`: record the safe stopping point, next valid user actions, and last verification status.
+- `DECISIONS.md`: record only decisions that have actually been made, not pending choices.
+
+When reporting the blocked state, include:
+
+- `Status: blocked`
+- `Reason: user decision required`
+- the exact remaining decisions
+- the current safe stopping point
+- the next valid user actions
+
+Do not keep sending repeated waiting summaries after this condition is reached. Block once and wait for a new user instruction.
+
 ## Existing Files
 
 If a repository already has a human-oriented `TODO.md`, do not replace it and do not force front matter into it.
