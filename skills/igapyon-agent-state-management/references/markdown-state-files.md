@@ -93,9 +93,9 @@ If the same failure appears 3 times, stop and ask the user.
 - Prefer updating existing compatible sections over adding duplicate sections.
 - If a tool-specific entry file exists, such as `AGENTS.md` or `CLAUDE.md`, optionally add a short pointer such as: `Before working, check GOAL.md, TODO.md, DECISIONS.md, and HANDOFF.md.`
 
-## Blocking on User Decisions
+## Interrupting on User Decisions
 
-Mark the active goal as `blocked` when all of these are true:
+Stop work and report the state as interrupted when all of these are true:
 
 - All work the agent can safely perform autonomously is complete.
 - Every remaining item requires explicit user judgment.
@@ -108,7 +108,7 @@ Common examples:
 - The user must decide whether to keep or discard binary artifact changes.
 - The user explicitly says to pause, stop, or `中断`, and the remaining work already requires user input.
 
-Before marking the goal blocked, update existing state files with the current stopping point:
+Before reporting the interruption, update existing state files with the current stopping point:
 
 - `TODO.md`: unresolved decisions under `Tasks` or `Blockers`.
 - `HANDOFF.md`: safe stopping point, next valid user actions, and last verification status.
@@ -117,7 +117,7 @@ Before marking the goal blocked, update existing state files with the current st
 Use this reporting shape:
 
 ```text
-Status: blocked
+Status: interrupted
 Reason: user decision required
 
 Remaining decisions:
@@ -130,7 +130,7 @@ Next user actions:
 - ((valid instruction the user can give next))
 ```
 
-Do not keep responding with repeated waiting summaries after this condition is reached. Block once and wait for a new user instruction.
+Do not keep responding with repeated waiting summaries after this condition is reached. Report the interruption once and wait for a new user instruction.
 
 ## Creation Templates
 
