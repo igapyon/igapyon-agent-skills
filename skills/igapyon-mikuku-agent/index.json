@@ -27,7 +27,7 @@
   {"name":"VERSION.md","path":"references/VERSION.md","ext":"md","dir":"references","size":934,"summary":"みくく Version"},
   {"name":"article-writing.md","path":"references/article-writing.md","ext":"md","dir":"references","size":21488,"summary":"みくく担当記事の執筆参照"},
   {"name":"codex-local-token-usage.md","path":"references/codex-local-token-usage.md","ext":"md","dir":"references","size":4034,"summary":"OpenAI Codex CLI Local Token Usage Investigation"},
-  {"name":"graphic-recording.md","path":"references/graphic-recording.md","ext":"md","dir":"references","size":29085,"summary":"みくく担当グラレコ生成参照"},
+  {"name":"graphic-recording.md","path":"references/graphic-recording.md","ext":"md","dir":"references","size":30379,"summary":"みくく担当グラレコ生成参照"},
   {"name":"10-article-to-graphic-recording-text-prompt.md","path":"references/graphic-recording/10-article-to-graphic-recording-text-prompt.md","ext":"md","dir":"references/graphic-recording","size":6095,"summary":"グラレコテキスト生成プロンプト"},
   {"name":"20-graphic-recording-explainer-image-prompt.md","path":"references/graphic-recording/20-graphic-recording-explainer-image-prompt.md","ext":"md","dir":"references/graphic-recording","size":7955,"summary":"グラレコ説明画像 生成AIプロンプト"},
   {"name":"30-generate-graphic-recording-image-prompt.md","path":"references/graphic-recording/30-generate-graphic-recording-image-prompt.md","ext":"md","dir":"references/graphic-recording","size":13004,"summary":"グラレコ説明画像 生成実行プロンプト"},

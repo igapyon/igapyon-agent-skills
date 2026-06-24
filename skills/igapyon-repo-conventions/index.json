@@ -3,7 +3,8 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":2772,"description":"Use only when the user explicitly asks to apply or review igapyon's repository conventions for a local Git or GitHub repository, or explicitly mentions igapyon-repo-conventions. Covers repo-side .gitignore rules, .DS_Store exclusion, workplace/.gitkeep ...","summary":"igapyon-repo-conventions"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3283,"description":"Use only when the user explicitly asks to apply or review igapyon's repository conventions for a local Git or GitHub repository, or explicitly mentions igapyon-repo-conventions. Covers repo-side .gitignore rules, .DS_Store exclusion, workplace/.gitkeep ...","summary":"igapyon-repo-conventions"},
+  {"name":"direct-child-repo-uncommitted-repositories.md","path":"references/direct-child-repo-uncommitted-repositories.md","ext":"md","dir":"references","size":2092,"summary":"Direct Child Repository Uncommitted Repositories"},
   {"name":"repository-rules.md","path":"references/repository-rules.md","ext":"md","dir":"references","size":3680,"summary":"Repository Rules"},
   {"name":"CONTRIBUTING.md","path":"references/template/CONTRIBUTING.md","ext":"md","dir":"references/template","size":1501,"summary":"Contributing to PROJECT_NAME"},
   {"name":"CONTRIBUTORS.md","path":"references/template/CONTRIBUTORS.md","ext":"md","dir":"references/template","size":161,"summary":"Contributors"},
