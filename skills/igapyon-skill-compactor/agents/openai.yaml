@@ -2,5 +2,3 @@ interface:
   display_name: "Skill Compactor"
   short_description: "Compact oversized Agent Skills"
   default_prompt: "Use $igapyon-skill-compactor to compact this oversized Agent Skill while preserving behavior."
-policy:
-  allow_implicit_invocation: false

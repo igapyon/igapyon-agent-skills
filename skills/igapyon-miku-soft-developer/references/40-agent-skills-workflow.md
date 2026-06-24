@@ -66,14 +66,20 @@ Bundled starter templates are available under `assets/agent-skills/`:
     verification and zip naming to the target skill.
   - Omit only when the repository intentionally does not use GitHub Release
     assets, and record that reason.
-- `skills/__SKILL_NAME__/`
-  - Minimal skill skeleton with `SKILL.md`, optional `agents/openai.yaml`,
-    `references/INDEX.md`, `lib/`, and `runtime/`.
+- `templates/skill/`
+  - Minimal skill skeleton to copy to `skills/<skill-name>/`, with
+    `SKILL.md.template`, optional `agents/openai.yaml`, `references/INDEX.md`,
+    `lib/`, and `runtime/`.
+  - Rename `SKILL.md.template` to `SKILL.md` after copying it into the target
+    skill directory. The template does not use the literal `SKILL.md` filename
+    inside this repository so Codex skill discovery will not load it as a real
+    installed skill.
   - After copying the skeleton, generate `skills/<skill-name>/index.json`
     with `miku-indexgen`; do not maintain a fixed handwritten template for
     this generated file.
 
-After copying these templates, replace `__REPO_NAME__`, `__SKILL_NAME__`,
+After copying these templates, place `templates/skill/` at
+`skills/<skill-name>/`, then replace `__REPO_NAME__`, `__SKILL_NAME__`,
 `__SKILL_TITLE__`, `__PRODUCT_NAME__`, and `__VERSION__`.
 
 For newer miku-soft Agent Skills naming, distinguish repository naming from

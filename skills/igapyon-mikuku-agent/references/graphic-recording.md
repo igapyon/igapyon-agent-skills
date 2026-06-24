@@ -27,6 +27,19 @@
 9. みくく描画プロンプト本文を含む画像生成AI用プロンプトで画像生成を実行する、または未実行理由を記録する
 10. 生成物をカレントフォルダ配下の作業場所へ保存する
 
+## 画像種別の既定
+
+ユーザーが記事 Markdown に対して「グラレコ画像を作成してください」と依頼し、記事全体 1 枚、`##` 見出しごと、代表画像のみ、章ごとの画像のみなどの画像種別を明示していない場合は、既定で `whole-article-then-sections` として扱ってください。
+
+この既定では、次の順序で両方を作成します。
+
+1. 記事全体の代表グラレコ画像
+2. 本文理解を助ける各 `##` 見出しごとのグラレコ画像
+
+ユーザーが「代表画像だけ」「記事全体 1 枚だけ」「章ごとだけ」「`##` 見出しごとだけ」など、作成する画像種別を明示した場合は、その指定を優先してください。
+
+記事内に対象となる `##` 見出しが存在しない場合、または対象候補が末尾補足セクションだけの場合は、記事全体の代表グラレコ画像だけを作成し、章ごとの画像を作らなかった理由を報告してください。
+
 ## 使用するプロンプト
 
 記事全体を 1 枚のグラレコ画像にする場合は、次の 3 つのプロンプトを順番に使います。
@@ -136,7 +149,7 @@
 
 - 現在のターンで、この `graphic-recording.md` を読んだ
 - 対象記事 Markdown を読んだ
-- 記事全体 1 枚か、`##` 見出しごとの複数枚かを決めた
+- mode を `whole-article`、`sections`、`whole-article-then-sections` のいずれかに決めた
 - 使用する個別プロンプトを読んだ
 - `{{RUN_OUTPUT_DIR}}` を決めた
 - `{{RUN_OUTPUT_DIR}}` がカレントフォルダ配下であることを確認した
@@ -283,6 +296,8 @@
 - [graphic-recording/40-article-section-graphic-recording-batch-prompt.md](graphic-recording/40-article-section-graphic-recording-batch-prompt.md)
 - [graphic-recording/50-generate-section-graphic-recording-images-prompt.md](graphic-recording/50-generate-section-graphic-recording-images-prompt.md)
 - [graphic-recording/60-inspect-section-graphic-recording-images-prompt.md](graphic-recording/60-inspect-section-graphic-recording-images-prompt.md)
+
+画像種別の指定がなく、既定の `whole-article-then-sections` で作る場合は、記事全体用の 10番、20番、30番と、`##` 見出しごと用の 40番、50番、60番をすべて読んでください。
 
 ### 1. 記事を読む
 
