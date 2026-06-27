@@ -12,6 +12,9 @@ This mode changes local Git history. Do not run it automatically after drafting 
 - Inspect `git status -sb` before changing anything.
 - Inspect the commits that would be collapsed with `git log --oneline --decorate <base>..HEAD`.
 - Inspect the change size with `git diff --stat <base>...HEAD` or another appropriate diff command before resetting.
+- Create a local backup branch at the current `HEAD` immediately before running `git reset --soft`, using [backup-branch.md](backup-branch.md).
+- Do not proceed to `git reset --soft` if backup branch creation fails.
+- Prefer running backup branch creation and `git reset --soft` as one shell command joined with `&&`, so a single approval can cover the local history rewrite while still stopping if backup creation fails.
 - Do not proceed if there are unrelated uncommitted changes unless the user explicitly confirms how to handle them.
 - Do not run `git reset --hard`, `git checkout --`, `git push`, `gh pr create`, or any remote-changing command in this workflow.
 - `git fetch origin` is allowed only to refresh local remote-tracking information.
@@ -57,7 +60,7 @@ git status -sb
 git fetch origin
 git log --oneline --decorate "$BASE"..HEAD
 git diff --stat "$BASE"...HEAD
-git reset --soft "$BASE"
+git branch backup/<YYYY-MM-DD-HHMM> HEAD && git reset --soft "$BASE"
 git commit -F "$PR_DRAFT"
 git log --oneline --decorate -3
 git status -sb
@@ -70,6 +73,7 @@ Replace the example `BASE` and `PR_DRAFT` values with the confirmed values befor
 After execution, report:
 
 - the base used for `git reset --soft`
+- the backup branch created before `git reset --soft`
 - the saved PR draft path used for `git commit -F`
 - whether `git commit -F` succeeded
 - the new commit hash if available
