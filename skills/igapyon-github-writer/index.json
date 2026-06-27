@@ -3,7 +3,7 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":6149,"description":"Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, rebuild local commits with soft reset and a drafted PR text as the commit message, create a local backup branch, or inspect the current branch status...","summary":"igapyon-github-writer"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":6149,"description":"Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, rebuild local commits with soft reset and a drafted PR text as the commit message, create a local backup branch, or inspect the current branch statu...","summary":"igapyon-github-writer"},
   {"name":"about-writing.md","path":"references/about-writing.md","ext":"md","dir":"references","size":1136,"summary":"GitHub About Writing"},
   {"name":"backup-branch.md","path":"references/backup-branch.md","ext":"md","dir":"references","size":2440,"summary":"Backup Branch"},
   {"name":"branch-status.md","path":"references/branch-status.md","ext":"md","dir":"references","size":2672,"summary":"GitHub Branch Status"},
