@@ -1,15 +1,15 @@
 ---
 name: igapyon-github-writer
-description: Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, rebuild local commits with soft reset and a drafted PR text as the commit message, or asks to inspect the current branch status using igapyon-github-writer. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
+description: Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, rebuild local commits with soft reset and a drafted PR text as the commit message, create a local backup branch, or inspect the current branch status using igapyon-github-writer. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
 ---
 
 # igapyon-github-writer
 
-This skill drafts Markdown text for GitHub surfaces from local repository evidence. It can also save drafted GitHub text to a local Markdown file, rebuild local commits with soft reset and a drafted PR text as the commit message, and report the current branch status as preparation for GitHub writing work.
+This skill drafts Markdown text for GitHub surfaces from local repository evidence. It can also save drafted GitHub text to a local Markdown file, rebuild local commits with soft reset and a drafted PR text as the commit message, create a local backup branch at the current `HEAD`, and report the current branch status as preparation for GitHub writing work.
 
-Use it only for GitHub writing text, local draft-file saving for that text, explicit PR soft-reset recommit work, and the local branch-status checks that prepare that writing. Do not create PRs, tags, releases, issues, branches, commits, or remote changes unless the user separately asks for that operation.
+Use it only for GitHub writing text, local draft-file saving for that text, explicit PR soft-reset recommit work, explicit local backup-branch creation, and the local branch-status checks that prepare that writing. Do not create PRs, tags, releases, issues, non-backup branches, commits, or remote changes unless the user separately asks for that operation.
 
-Do not use this skill for generic commit summaries, changelogs, branch inspection, or repository cleanup unless the user explicitly asks for GitHub PR, GitHub Release, GitHub About text, PR soft-reset recommit from drafted PR text, branch status through this skill, or names this skill.
+Do not use this skill for generic commit summaries, changelogs, branch inspection, backup operations, or repository cleanup unless the user explicitly asks for GitHub PR, GitHub Release, GitHub About text, PR soft-reset recommit from drafted PR text, local backup-branch creation through this skill, branch status through this skill, or names this skill.
 
 If the user asks whether there is a skill for GitHub PR, Release, or About text, mention this skill as an available option, but do not apply it until the user asks to use it.
 
@@ -23,6 +23,7 @@ Examples:
 - Release mode: `release textつくりたい`, `リリース文を作りたい`, `release notes`, `リリースノート`, `GitHub Release本文`
 - About mode: `GitHub Aboutを書きたい`, `About文`, `リポジトリ説明`, `GitHub説明文`
 - PR Soft Reset Recommit mode: `PR文面でsoft resetしてcommitし直す`, `PR文面をcommit messageに反映して再コミット`, `作文したPR文面でgit commitし直す`
+- Backup Branch mode: `github-writerでバックアップブランチ`, `backup/2026-06-27-2230 みたいなブランチを作る`, `現在HEADをバックアップ`, `soft reset前のバックアップだけ作る`
 - Branch Status mode: `github-writerでブランチ状況`, `今のブランチの状況`, `PR前にブランチ状態を見たい`, `現在ブランチの確認`
 
 If the mode is clear but required evidence is missing, do not draft yet. Ask for the missing target, except for PR mode's default target rule:
@@ -33,9 +34,9 @@ If the mode is clear but required evidence is missing, do not draft yet. Ask for
 
 ## Core Workflow
 
-1. Identify whether the request is for PR, Release, About text, PR Soft Reset Recommit, or Branch Status.
+1. Identify whether the request is for PR, Release, About text, PR Soft Reset Recommit, Backup Branch, or Branch Status.
 2. Read [references/github-writing-rules.md](references/github-writing-rules.md) before drafting.
-3. Read the mode-specific reference: [references/pr-writing.md](references/pr-writing.md), [references/release-writing.md](references/release-writing.md), [references/about-writing.md](references/about-writing.md), [references/pr-soft-reset-recommit.md](references/pr-soft-reset-recommit.md), or [references/branch-status.md](references/branch-status.md).
+3. Read the mode-specific reference: [references/pr-writing.md](references/pr-writing.md), [references/release-writing.md](references/release-writing.md), [references/about-writing.md](references/about-writing.md), [references/pr-soft-reset-recommit.md](references/pr-soft-reset-recommit.md), [references/backup-branch.md](references/backup-branch.md), or [references/branch-status.md](references/branch-status.md).
 4. Inspect only the repository evidence needed for the requested mode.
 5. Draft or report from evidence without inventing unsupported facts.
 6. For PR, Release, and About modes, save the drafted Markdown using the shared draft-save rules unless the user says not to save.
@@ -51,6 +52,7 @@ Use these mode-specific references:
 - [references/release-writing.md](references/release-writing.md) for GitHub Release title and body drafting
 - [references/about-writing.md](references/about-writing.md) for GitHub About text drafting
 - [references/pr-soft-reset-recommit.md](references/pr-soft-reset-recommit.md) for rebuilding local commits with soft reset and a drafted PR text as the commit message
+- [references/backup-branch.md](references/backup-branch.md) for creating a local backup branch at the current `HEAD`
 - [references/branch-status.md](references/branch-status.md) for current branch status reporting before GitHub writing work
 
 Use `index.json` as the discovery index when you need to confirm the available bundled reference files, but treat `SKILL.md` and files under `references/` as the source of truth.
