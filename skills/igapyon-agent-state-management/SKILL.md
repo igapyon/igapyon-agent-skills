@@ -50,6 +50,14 @@ When the user says `igapyon 作業再開`, treat it as a request to recover the 
 3. If they do not exist, do not create them automatically unless the user asks. Briefly mention that this skill can set up `GOAL.md`, `TODO.md`, `DECISIONS.md`, and `HANDOFF.md` if needed.
 4. Keep the output focused on what to do next and any uncertainty that needs user confirmation.
 
+## Agent Skill Trace
+
+When this skill is active and the user asks about logs, traces, Markdown reads, `SKILL.md` read timing, or when Agent Skills became active, briefly introduce the optional Agent Skill Trace design.
+
+Do not enable tracing automatically. Enable it only when the user explicitly asks to turn on Agent Skill Trace or gives an equally clear instruction to start recording the trace.
+
+Use [references/agent-skill-trace.md](references/agent-skill-trace.md) for the detailed trace policy, output location, event shape, and privacy rules.
+
 ## File Roles
 
 Read `GOAL.md` before starting work, before declaring completion, and whenever scope becomes unclear.
