@@ -1,15 +1,11 @@
 name: Release CLI runtime
 
+# miku-soft Java release assets are created when a GitHub Release is published.
+# Create or choose a v* tag in the GitHub Release UI; this workflow builds from
+# that tag and attaches prepared assets to the same release.
 on:
-  push:
-    tags:
-      - "v*"
-  workflow_dispatch:
-    inputs:
-      tag_name:
-        description: "GitHub Release tag to attach the CLI runtime to"
-        required: true
-        type: string
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -21,13 +17,12 @@ env:
 jobs:
   release-cli-runtime:
     runs-on: ubuntu-latest
-    if: startsWith(github.event.inputs.tag_name || github.ref_name, 'v')
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag_name || github.ref }}
+          ref: ${{ github.event.release.tag_name }}
 
       - name: Set up Java 21 for build
         uses: actions/setup-java@v4
@@ -41,9 +36,17 @@ jobs:
 
       - name: Prepare release assets
         env:
-          TAG_NAME: ${{ github.event.inputs.tag_name || github.ref_name }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
           set -euo pipefail
+          case "${TAG_NAME}" in
+            v*) ;;
+            *)
+              echo "Release tag must start with v: ${TAG_NAME}" >&2
+              exit 1
+              ;;
+          esac
+
           VERSION="${TAG_NAME#v}"
           ARTIFACT_ID="$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)"
           POM_VERSION="$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
@@ -74,8 +77,6 @@ jobs:
       - name: Upload CLI runtime to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          tag_name: ${{ github.event.release.tag_name }}
           files: release-assets/*
           overwrite_files: true
-          draft: false
-          prerelease: false
