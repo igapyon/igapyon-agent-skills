@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20260628.2</version>
+  <version>1.20260628.3</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -26,6 +26,9 @@
     <external.miku-prompt-lint-skills.repo>https://github.com/igapyon/miku-prompt-lint-skills.git</external.miku-prompt-lint-skills.repo>
     <external.miku-prompt-lint-skills.ref>v0.4.1</external.miku-prompt-lint-skills.ref>
     <external.miku-prompt-lint-skills.skillName>igapyon-miku-prompt-lint</external.miku-prompt-lint-skills.skillName>
+    <external.miku-ms-office-skills.repo>https://github.com/igapyon/miku-ms-office-skills.git</external.miku-ms-office-skills.repo>
+    <external.miku-ms-office-skills.ref>v0.4.0.2</external.miku-ms-office-skills.ref>
+    <external.miku-ms-office-skills.skillName>igapyon-miku-ms-office</external.miku-ms-office-skills.skillName>
     <external.miku-readfile-skills.repo>https://github.com/igapyon/miku-readfile-skills.git</external.miku-readfile-skills.repo>
     <external.miku-readfile-skills.ref>v0.5.0.2</external.miku-readfile-skills.ref>
     <external.miku-readfile-skills.skillName>miku-readfile</external.miku-readfile-skills.skillName>
@@ -102,6 +105,9 @@
                 <argument>${external.miku-prompt-lint-skills.repo}</argument>
                 <argument>${external.miku-prompt-lint-skills.ref}</argument>
                 <argument>${external.miku-prompt-lint-skills.skillName}</argument>
+                <argument>${external.miku-ms-office-skills.repo}</argument>
+                <argument>${external.miku-ms-office-skills.ref}</argument>
+                <argument>${external.miku-ms-office-skills.skillName}</argument>
                 <argument>${external.miku-readfile-skills.repo}</argument>
                 <argument>${external.miku-readfile-skills.ref}</argument>
                 <argument>${external.miku-readfile-skills.skillName}</argument>
