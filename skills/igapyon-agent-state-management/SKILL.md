@@ -5,20 +5,21 @@ description: Use only when the user explicitly names igapyon-agent-state-managem
 
 # Igapyon Agent State Management
 
-This skill helps set up and maintain a small Markdown-based state-management convention for AI agent work.
-
-The default convention uses these repository-local files:
+Set up, resume, and maintain a small repository-local Markdown state convention
+for AI agent work:
 
 - `GOAL.md`: define the objective, completion conditions, and stop conditions
 - `TODO.md`: track active tasks, blockers, and repeated failures
 - `DECISIONS.md`: record important decisions and reasons
 - `HANDOFF.md`: summarize the current state for the next human or agent
 
-Use this as a repository workflow skill. It is not tied to a specific character agent, model, editor, or vendor.
+This is a repository workflow skill, not a character-agent, model, editor, or
+vendor-specific workflow.
 
 ## Trigger Phrases
 
-This skill intentionally uses hard triggers. Prefer these phrases when the user has forgotten the exact skill name:
+This skill intentionally uses hard triggers. Use it only for the frontmatter
+description triggers. Useful user-facing phrases:
 
 - `igapyon 状態管理`
 - `igapyon 作業状態`
@@ -28,7 +29,10 @@ This skill intentionally uses hard triggers. Prefer these phrases when the user 
 - `igapyon handoff`
 - `igapyon GOAL TODO DECISIONS HANDOFF`
 
-When answering a general question such as "what skills are available?", describe this skill as the one for `igapyon 状態管理` and `igapyon 作業再開`.
+When answering "what skills are available?", describe this as the skill for
+`igapyon 状態管理` and `igapyon 作業再開`.
+
+Use [index.json](index.json) before reading multiple references.
 
 ## Core Workflow
 
@@ -36,14 +40,15 @@ When answering a general question such as "what skills are available?", describe
 2. Check whether `GOAL.md`, `TODO.md`, `DECISIONS.md`, or `HANDOFF.md` already exist.
 3. Do not overwrite existing files without reading them first.
 4. If `TODO.md` already exists, preserve its existing purpose and add or update only `## AI Agent Current Tasks` when appropriate.
-5. Use [references/markdown-state-files.md](references/markdown-state-files.md) for the detailed setup rules and initial prompt.
+5. Use [references/markdown-state-files.md](references/markdown-state-files.md) for setup, resume, existing-file handling, README notes, harness-operation decisions, interruption handling, and templates.
 6. When a root `README.md` exists, add or propose a short AI-agent note that points agents to `GOAL.md`, `TODO.md`, `DECISIONS.md`, and `HANDOFF.md`.
 7. Use templates from [templates/](templates/) when creating new files.
 8. Keep the state files lightweight. Do not turn them into long work logs or broad project documentation.
 
 ## Resume Workflow
 
-When the user says `igapyon 作業再開`, treat it as a request to recover the current repository working state, not necessarily to create new files.
+When the user says `igapyon 作業再開`, recover the current repository working
+state; do not assume new files should be created.
 
 1. Inspect the repository state with ordinary local context such as `git status --short`, `README.md`, existing `TODO.md`, and any existing `GOAL.md`, `DECISIONS.md`, or `HANDOFF.md`.
 2. If the state files already exist, read them and summarize the current objective, next tasks, blockers, relevant decisions, and handoff notes.
@@ -52,59 +57,39 @@ When the user says `igapyon 作業再開`, treat it as a request to recover the 
 
 ## Agent Skill Trace
 
-When this skill is active and the user asks about logs, traces, Markdown reads, `SKILL.md` read timing, or when Agent Skills became active, briefly introduce the optional Agent Skill Trace design.
+When this skill is active and the user asks about logs, traces, Markdown reads,
+`SKILL.md` read timing, or when Agent Skills became active, briefly introduce
+the optional Agent Skill Trace design.
 
-Do not enable tracing automatically. Enable it only when the user explicitly asks to turn on Agent Skill Trace or gives an equally clear instruction to start recording the trace.
+Do not enable tracing automatically. Enable it only when the user explicitly
+asks to turn on Agent Skill Trace or gives an equally clear instruction.
 
 Use [references/agent-skill-trace.md](references/agent-skill-trace.md) for the detailed trace policy, output location, event shape, and privacy rules.
 
 ## File Roles
 
-Read `GOAL.md` before starting work, before declaring completion, and whenever scope becomes unclear.
+Read and update the state files by role:
 
-Read and update `TODO.md` during work when task status changes, blockers appear, new work is found, or the same failure repeats.
-
-Read `DECISIONS.md` before making or revisiting important decisions, especially when the work appears to loop.
-
-Use `## Harness Operations Decisions` in `DECISIONS.md` for repository-local decisions about build, test, package, comparison, roundtrip, or similar verification harness execution. Record reusable execution decisions, not full failure logs.
-
-Read and update `HANDOFF.md` when pausing work, handing work to another agent, or preparing a compact resume summary. Keep it as a concise current-state summary, not a full work log.
+- `GOAL.md`: before starting, before declaring completion, and when scope is unclear.
+- `TODO.md`: active tasks, blockers, new work, and repeated failures.
+- `DECISIONS.md`: important decisions, loops, rejected options, and reusable `## Harness Operations Decisions`; do not paste full failure logs.
+- `HANDOFF.md`: pauses, handoffs, compact resume summaries, and latest verification state.
 
 ## User-Decision Interruption
 
-If all safe autonomous work is complete, the remaining work requires explicit user judgment, repeating would only restate the same waiting condition, and the goal is not complete, stop work and report the state as interrupted. Do not change the active goal status for this condition.
+If all safe autonomous work is complete and only explicit user judgment remains,
+update existing state files, report `Status: interrupted` with the exact
+remaining decisions and safe stopping point, then wait. Do not change active
+goal status for this condition.
 
-Use this especially when the only remaining decisions are human choices such as whether to commit or discard a rollback, whether to keep or discard binary artifact changes, or whether to continue after the user explicitly says to pause, stop, or `中断`.
-
-Before interrupting, update the state files when they exist:
-
-- `TODO.md`: list the unresolved decisions under blockers or current tasks.
-- `HANDOFF.md`: record the safe stopping point, next valid user actions, and last verification status.
-- `DECISIONS.md`: record only decisions that have actually been made, not pending choices.
-
-When reporting the interrupted state, include:
-
-- `Status: interrupted`
-- `Reason: user decision required`
-- the exact remaining decisions
-- the current safe stopping point
-- the next valid user actions
-
-Do not keep sending repeated waiting summaries after this condition is reached. Report the interruption once and wait for a new user instruction.
+Use [references/markdown-state-files.md](references/markdown-state-files.md) for the full interruption rules and reporting shape.
 
 ## Existing Files
 
-If a repository already has a human-oriented `TODO.md`, do not replace it and do not force front matter into it.
-
-Instead, add or update this section only:
-
-```markdown
-## AI Agent Current Tasks
-```
-
-If the section already exists, update it in place. Do not duplicate it.
-
-If `GOAL.md`, `DECISIONS.md`, or `HANDOFF.md` already exists, read it and propose a scoped change or add compatible sections. Do not assume it is an AI-agent state file unless the contents indicate that role.
+If a repository already has a human-oriented `TODO.md`, do not replace it and
+do not force front matter into it. Add or update only `## AI Agent Current Tasks`.
+For existing `GOAL.md`, `DECISIONS.md`, or `HANDOFF.md`, read first and make a
+scoped compatible change only when the contents indicate the role.
 
 ## Templates
 
@@ -113,4 +98,5 @@ If `GOAL.md`, `DECISIONS.md`, or `HANDOFF.md` already exists, read it and propos
 - [templates/DECISIONS.md](templates/DECISIONS.md)
 - [templates/HANDOFF.md](templates/HANDOFF.md)
 
-Replace `((TBD: ...))` placeholders with concrete details when the current work is known. Leave them only when the user has not provided enough information.
+Replace `((TBD: ...))` placeholders with concrete details when known. Leave
+them only when the user has not provided enough information.
