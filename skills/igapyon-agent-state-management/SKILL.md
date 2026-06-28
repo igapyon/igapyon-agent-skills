@@ -1,6 +1,6 @@
 ---
 name: igapyon-agent-state-management
-description: Use only when the user explicitly names igapyon-agent-state-management or uses an igapyon-prefixed trigger phrase such as igapyon 状態管理, igapyon agent 状態管理, igapyon 作業状態, igapyon 作業再開, igapyon goal, igapyon todo, igapyon handoff, or igapyon GOAL TODO DECISIONS HANDOFF. Do not trigger for generic TODO.md maintenance, ordinary project planning, vague handoff discussion, ordinary work resumption, broad Context Engineering talk, or even the GOAL.md + TODO.md + DECISIONS.md + HANDOFF.md workflow unless the user also says igapyon or explicitly names this skill.
+description: Use only when the user explicitly names igapyon-agent-state-management or uses an igapyon-prefixed trigger phrase such as igapyon 状態管理, igapyon agent 状態管理, igapyon 作業状態, igapyon 作業再開, igapyon goal, igapyon todo, igapyon handoff, or igapyon GOAL TODO DECISIONS HANDOFF. Do not trigger for generic TODO.md maintenance, ordinary project planning, vague handoff discussion, ordinary work resumption, broad Context Engineering talk, generic build/test failures, or even the GOAL.md + TODO.md + DECISIONS.md + HANDOFF.md workflow unless the user also says igapyon or explicitly names this skill. When active, also supports repository-local Harness Operations Decisions in DECISIONS.md for reusable build/test/package/comparison/roundtrip execution decisions.
 ---
 
 # Igapyon Agent State Management
@@ -56,6 +56,8 @@ Read `GOAL.md` before starting work, before declaring completion, and whenever s
 Read and update `TODO.md` during work when task status changes, blockers appear, new work is found, or the same failure repeats.
 
 Read `DECISIONS.md` before making or revisiting important decisions, especially when the work appears to loop.
+
+Use `## Harness Operations Decisions` in `DECISIONS.md` for repository-local decisions about build, test, package, comparison, roundtrip, or similar verification harness execution. Record reusable execution decisions, not full failure logs.
 
 Read and update `HANDOFF.md` when pausing work, handing work to another agent, or preparing a compact resume summary. Keep it as a concise current-state summary, not a full work log.
 

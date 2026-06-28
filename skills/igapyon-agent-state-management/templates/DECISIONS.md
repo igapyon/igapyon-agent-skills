@@ -24,3 +24,14 @@ Read this before making or revisiting decisions, especially when the work seems 
 
 影響:
 ((TBD: その判断による影響や後続タスクを書く))
+
+## Harness Operations Decisions
+
+Use this section for reusable decisions about build/test/package/comparison/roundtrip harness execution. Do not paste full failure logs here.
+
+### YYYY-MM-DD: Run package before comparison harness
+
+- Context: The comparison harness reads generated artifacts from the build output directory.
+- Decision: Build the required artifacts before running the comparison harness.
+- Reason: Running comparison against missing or stale artifacts caused false failures.
+- Next time: Run the package step first, then run the focused comparison command.

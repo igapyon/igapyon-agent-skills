@@ -93,6 +93,57 @@ If the same failure appears 3 times, stop and ask the user.
 - Prefer updating existing compatible sections over adding duplicate sections.
 - If a tool-specific entry file exists, such as `AGENTS.md` or `CLAUDE.md`, optionally add a short pointer such as: `Before working, check GOAL.md, TODO.md, DECISIONS.md, and HANDOFF.md.`
 
+## Harness Operations Decisions
+
+Use this repository-local `DECISIONS.md` section when an active igapyon state-management workflow needs to preserve reusable decisions about build, test, package, comparison, roundtrip, or similar verification harness execution:
+
+```markdown
+## Harness Operations Decisions
+```
+
+Record decisions that should guide the next agent or human in this repository. Do not use this section as a raw failure log.
+
+Record:
+
+- failed execution patterns that are likely to repeat
+- known or suspected harness-operation causes
+- successful retry methods that should become the next standard approach
+- recommended execution order for future verification
+- harness design choices to avoid in this repository
+
+Do not record:
+
+- one-off shell input mistakes
+- full failure logs
+- temporary environment trouble with no reusable lesson
+- implementation bug details
+- long work logs that are too specific to reuse
+
+Use this entry shape:
+
+```markdown
+### YYYY-MM-DD: Short decision title
+
+- Context: What failed or what operational risk was found.
+- Decision: The reusable execution decision for this repository.
+- Reason: Why this decision reduces false failures or repeated work.
+- Next time: The recommended command order or harness precaution.
+```
+
+File-role split:
+
+- `TODO.md`: active verification tasks, blockers, repeated failures, and next attempts.
+- `DECISIONS.md`: reusable harness-operation decisions that should survive the current task.
+- `HANDOFF.md`: the latest safe stopping point and current verification status.
+
+Before treating a harness failure as a model reasoning problem or implementation bug, check whether:
+
+- multiple commands are reading or writing the same artifact directory at the same time
+- versioned jar, zip, bundle, or generated artifact names are hard-coded
+- a harness reads build artifacts before they have been generated
+- the `clean`, `package`, `test`, `comparison`, and `roundtrip` order is wrong for this repository
+- a successful retry should be turned into the next standard procedure
+
 ## Interrupting on User Decisions
 
 Stop work and report the state as interrupted when all of these are true:
