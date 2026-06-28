@@ -38,6 +38,7 @@ Use or adapt this prompt when the user asks to initialize the convention:
 新規作成するファイルには、AI エージェントが後から読んだときに用途が分かるよう、front matter と短い運用ヒントを入れてください。
 すでに同名ファイルが存在する場合は、上書きせず、内容を確認してから差分提案にしてください。
 既存 `TODO.md` に `## AI Agent Current Tasks` セクションを追加する場合は、既存ファイルの形式を尊重し、無理に front matter を追加しないでください。
+root の `README.md` が存在する場合は、AI agent 向け情報として `GOAL.md`、`TODO.md`、`DECISIONS.md`、`HANDOFF.md` を確認するよう促す短いセクションまたは箇条書きを追加してください。既存 README の構成を尊重し、README が存在しない場合はこの目的だけで新規作成しないでください。
 `((TBD: ...))` はプレースホルダーです。実際の作業内容が分かる場合は、作成時に具体的な内容へ置き換えてください。分からない場合は、TBD のまま残し、作業開始時に確認してください。
 ````
 
@@ -92,6 +93,41 @@ If the same failure appears 3 times, stop and ask the user.
 - If the same failure appears three times for the same underlying cause, stop and ask the user.
 - Prefer updating existing compatible sections over adding duplicate sections.
 - If a tool-specific entry file exists, such as `AGENTS.md` or `CLAUDE.md`, optionally add a short pointer such as: `Before working, check GOAL.md, TODO.md, DECISIONS.md, and HANDOFF.md.`
+
+## Root README.md Agent Note
+
+When setting up this workflow in a repository that already has a root
+`README.md`, add or propose a concise AI-agent note that tells future agents to
+check the state files before starting work.
+
+Do not create a new `README.md` solely for this purpose. Respect the existing
+README structure and keep the note short.
+
+Example:
+
+```markdown
+## AI Agent Notes
+
+Before working in this repository, check `GOAL.md`, `TODO.md`,
+`DECISIONS.md`, and `HANDOFF.md` when they exist. These files record the current
+objective, active tasks, decisions, and handoff notes for AI agent work.
+```
+
+## DECISIONS.md Update Trigger
+
+Do not write to `DECISIONS.md` merely because an AI agent attempt failed.
+
+Write or propose a `DECISIONS.md` entry only when the failure reveals a
+reusable repository policy, constraint, or preferred workflow. The decision
+should help prevent repeated work for a future human or agent.
+
+Use this rule of thumb:
+
+- If it is only a one-off failed attempt, do not record it in `DECISIONS.md`.
+- If it is useful current-state context, record it in `TODO.md` or `HANDOFF.md`.
+- If it becomes a reusable prevention rule, propose a `DECISIONS.md` entry.
+- If the policy update is small and obvious, the agent may add it directly.
+- If the policy change is strong or ambiguous, confirm it with the human first.
 
 ## Harness Operations Decisions
 

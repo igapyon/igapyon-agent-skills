@@ -37,8 +37,9 @@ When answering a general question such as "what skills are available?", describe
 3. Do not overwrite existing files without reading them first.
 4. If `TODO.md` already exists, preserve its existing purpose and add or update only `## AI Agent Current Tasks` when appropriate.
 5. Use [references/markdown-state-files.md](references/markdown-state-files.md) for the detailed setup rules and initial prompt.
-6. Use templates from [templates/](templates/) when creating new files.
-7. Keep the state files lightweight. Do not turn them into long work logs or broad project documentation.
+6. When a root `README.md` exists, add or propose a short AI-agent note that points agents to `GOAL.md`, `TODO.md`, `DECISIONS.md`, and `HANDOFF.md`.
+7. Use templates from [templates/](templates/) when creating new files.
+8. Keep the state files lightweight. Do not turn them into long work logs or broad project documentation.
 
 ## Resume Workflow
 
