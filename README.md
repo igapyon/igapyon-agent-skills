@@ -320,7 +320,7 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 - `miku-repo-bundle-skills` `v0.5.0.1` (experimental): `skills/igapyon-miku-repo-bundle/`
 - `miku-grep-skills` `v0.10.1.1` (experimental): `skills/igapyon-miku-grep/`
 - `miku-prompt-lint-skills` `v0.4.1`: `skills/igapyon-miku-prompt-lint/`
-- `miku-ms-office-skills` `v0.4.0.2`: `skills/igapyon-miku-ms-office/`
+- `miku-ms-office-skills` `v0.4.1`: `skills/igapyon-miku-ms-office/`
 - `miku-readfile-skills` `v0.5.0.2`: `skills/miku-readfile/`
 - `mikuproject-skills` `v0.8.1.1`: `skills/mikuproject/`
 - `mikuscore-skills` `v0.1.0`: `skills/mikuscore/`
