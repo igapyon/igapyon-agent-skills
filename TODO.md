@@ -44,7 +44,7 @@ Update this section while working. Do not rewrite unrelated TODO items.
   - Installed copy updated under `/Users/igapyon/.codex/skills`.
   - Verified in fresh session: `__SKILL_NAME__` no longer appears in the
     available-skills list.
-- [ ] Update bundled skills later.
+- [x] Update bundled skills later.
   - User note on 2026-06-23: bundled skills will need to be updated later.
   - Before starting, identify which bundled skills are meant and whether the
     source of truth is this repository's `skills/` tree, installed
@@ -52,6 +52,14 @@ Update this section while working. Do not rewrite unrelated TODO items.
   - After updating, refresh any generated indexes or package artifacts required
     by the affected skills and verify the loaded available-skills list if
     discovery behavior may change.
+  - Completed on 2026-06-29 for release-bundled external skills in `pom.xml`.
+    Checked upstream tags for all 9 external skill repositories; only
+    `miku-ms-office-skills` had a newer tag than the pinned ref.
+  - Changed release pin and README list from `miku-ms-office-skills` `v0.4.1`
+    to `v0.4.2`.
+  - Verified with `mvn package`; release staging and
+    `target/igapyon-agent-skills-1.20260629.2.zip` were generated
+    successfully.
 
 ### Blockers
 

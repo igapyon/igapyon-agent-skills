@@ -24,10 +24,13 @@ Keep it concise. Do not use this as a full work log or a replacement for `TODO.m
 - `policy.allow_implicit_invocation: false` was removed from `igapyon-agent-state-management` and `igapyon-skill-compactor` `agents/openai.yaml` files.
 - The miku-soft Agent Skill starter skeleton was moved from `assets/agent-skills/skills/__SKILL_NAME__/SKILL.md` to `assets/agent-skills/templates/skill/SKILL.md.template`.
 - `DECISIONS.md` records the durable policy: avoid hidden discovery controls and keep skill templates outside discovery shapes.
+- 2026-06-29 release-bundled external skill refs were checked against upstream tags.
+  Only `miku-ms-office-skills` needed an update; `pom.xml` and README now pin
+  it at `v0.4.2`.
 
 ## Next Action
 
-- Resume later with the open `TODO.md` AI Agent task: update bundled skills after identifying the affected bundled skills and source of truth.
+- No open bundled-skill update task remains after the 2026-06-29 check.
 - For any later new work, read `GOAL.md`, then check `TODO.md` and update `## AI Agent Current Tasks` with the active task.
 
 ## Relevant Files
@@ -50,3 +53,6 @@ Keep it concise. Do not use this as a full work log or a replacement for `TODO.m
 - 2026-06-23: Source and installed copies were checked: no `allow_implicit_invocation` remained in the two affected skills.
 - 2026-06-23: Source and installed `igapyon-miku-soft-developer/assets/agent-skills` trees were checked: no real `SKILL.md` template remained under the starter assets.
 - 2026-06-23: Fresh Codex session skill list includes `igapyon-agent-state-management` and `igapyon-skill-compactor`, and does not include `__SKILL_NAME__`.
+- 2026-06-29: `mvn package` passed after updating the release-bundled
+  `miku-ms-office-skills` ref to `v0.4.2`; the generated zip includes
+  `skills/igapyon-miku-ms-office/runtime/miku-xlsx2md-1.2.3.mjs`.
