@@ -6,6 +6,8 @@ This is not `git commit --amend`. It resets `HEAD` back to a confirmed base whil
 
 This mode changes local Git history. Do not run it automatically after drafting PR text. Do not run it for generic commit summaries or ordinary PR drafting.
 
+This workflow may automate the local-only history rewrite with the bundled Node helper when the user explicitly asks for PR Soft Reset Recommit. The human review gates are expected at push, PR creation, and PR merge. The helper must not push, create PRs, merge PRs, or change remotes.
+
 ## Safety Rules
 
 - Require an explicit user request before running Git commands that rewrite the current commit state.
@@ -19,7 +21,7 @@ This mode changes local Git history. Do not run it automatically after drafting 
 - Do not run `git reset --hard`, `git checkout --`, `git push`, `gh pr create`, or any remote-changing command in this workflow.
 - `git fetch origin` is allowed only to refresh local remote-tracking information.
 - `git reset --soft <base>` rewrites `HEAD` while preserving index and working tree changes. Treat it as a history-rewrite operation and mention that clearly before running it.
-- Default base is `origin/devel` only when the user asks for that base or the repository convention clearly uses it. Otherwise ask for the base branch or remote-tracking ref.
+- Resolve the base from local Git before asking the user. Prefer the current branch upstream (`@{u}`), then local `origin/HEAD`, then local `origin/devel`. Ask for the base branch or remote-tracking ref only when local Git cannot resolve any of those.
 
 ## Inputs
 
@@ -34,7 +36,21 @@ If there is no saved PR draft file, stop this workflow and first create or save 
 
 ## PR Draft Resolution
 
-When the user asks to reuse the PR draft created by PR mode but does not provide `PR_DRAFT`, resolve the candidate lightly from the standard draft-save locations before asking:
+When the user asks to reuse the PR draft created by PR mode but does not provide `PR_DRAFT`, prefer using the bundled Node helper in default read-only mode to resolve the candidate from the standard draft-save locations:
+
+```sh
+node skills/igapyon-github-writer/references/scripts/pr-soft-reset-recommit-preflight.mjs
+```
+
+If `PR_DRAFT` is already known, pass it explicitly:
+
+```sh
+node skills/igapyon-github-writer/references/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/github-writer/pr-devel-YYYYMMDDHHMM.md
+```
+
+Without `--apply`, the helper is read-only. It may run local Git inspection commands, resolve the current-branch PR draft candidate, choose a backup branch candidate, and print the final command shape. It must not create branches, reset commits, commit changes, push, or modify files in default mode.
+
+If Node is unavailable or the helper fails, resolve the candidate manually:
 
 1. Determine the current branch with `git branch --show-current`.
 2. Sanitize it with the same `<branch-slug>` rules from `github-writing-rules.md`.
@@ -48,7 +64,38 @@ Before running `git reset --soft`, report the resolved `PR_DRAFT` path and treat
 
 ## Command Shape
 
-When the user explicitly asks to apply the saved PR draft as the commit message and both inputs are confirmed, use this shape:
+When the user explicitly asks to apply the saved PR draft as the commit message and both inputs are confirmed, first run the helper without `--apply` unless it was already run during PR draft resolution:
+
+```sh
+node skills/igapyon-github-writer/references/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/github-writer/pr-devel-YYYYMMDDHHMM.md
+```
+
+Review the preflight output before any history rewrite:
+
+- confirm `base` exists
+- confirm `base source` is appropriate
+- confirm `PR draft` is the intended saved draft
+- confirm `backup branch candidate`
+- confirm `Commits To Collapse`
+- confirm `Diff Stat`
+- confirm `git status -sb` does not show unrelated uncommitted changes
+
+After that, prefer applying the local-only rewrite with the Node helper:
+
+```sh
+node skills/igapyon-github-writer/references/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/github-writer/pr-devel-YYYYMMDDHHMM.md --apply
+```
+
+The helper will:
+
+- create the backup branch at current `HEAD`
+- run `git reset --soft <base>`
+- run `git commit -F <PR_DRAFT>`
+- report the new `HEAD` and final `git status -sb`
+
+The helper refuses `--apply` when there are existing uncommitted changes unless `--allow-dirty` is also passed. Use `--allow-dirty` only when the user has explicitly confirmed that those uncommitted changes are intentional and should participate in the recommit context.
+
+If Node is unavailable or the helper fails before changing history, use this manual shape:
 
 The example is POSIX-shell style for clarity. When running on Windows PowerShell, cmd.exe, or another shell, translate variable assignment, quoting, and path syntax to the active shell while preserving the same Git steps.
 
@@ -67,6 +114,8 @@ git status -sb
 ```
 
 Replace the example `BASE` and `PR_DRAFT` values with the confirmed values before running.
+
+The Node helper replaces the manual local rewrite only when invoked with `--apply`. It still must not push, create a PR, merge a PR, or change remotes.
 
 ## Output
 
