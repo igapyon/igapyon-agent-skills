@@ -8,7 +8,7 @@
   {"name":"backup-branch.md","path":"references/backup-branch.md","ext":"md","dir":"references","size":2440,"summary":"Backup Branch"},
   {"name":"branch-status.md","path":"references/branch-status.md","ext":"md","dir":"references","size":2672,"summary":"GitHub Branch Status"},
   {"name":"github-writing-rules.md","path":"references/github-writing-rules.md","ext":"md","dir":"references","size":5848,"summary":"GitHub Writing Rules"},
-  {"name":"pr-soft-reset-recommit.md","path":"references/pr-soft-reset-recommit.md","ext":"md","dir":"references","size":4768,"summary":"PR Soft Reset Recommit"},
+  {"name":"pr-soft-reset-recommit.md","path":"references/pr-soft-reset-recommit.md","ext":"md","dir":"references","size":7378,"summary":"PR Soft Reset Recommit"},
   {"name":"pr-writing.md","path":"references/pr-writing.md","ext":"md","dir":"references","size":3124,"summary":"GitHub PR Writing"},
   {"name":"release-writing.md","path":"references/release-writing.md","ext":"md","dir":"references","size":3555,"summary":"GitHub Release Writing"}
  ]
