@@ -73,6 +73,13 @@ When applying generated images from `workplace/<RUN_ID>-graphic-recording/` to
 a published `mikuku-articles` article directory, read
 [references/graphic-recording/publish-generated-images-to-article.md](references/graphic-recording/publish-generated-images-to-article.md). Treat the generation workspace and published article directory as separate outputs.
 
+## Markdown To Image
+
+When the user needs Markdown content, especially a Markdown table, converted to
+a PNG image, prefer rendering the Markdown to HTML and capturing it with
+Playwright as the first-choice approach. Use another method only when
+Playwright is unavailable or the user explicitly asks for a different route.
+
 ## Codex Local Token Usage
 
 When this skill is active and the user asks about Codex token consumption,
