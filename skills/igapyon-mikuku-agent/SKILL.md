@@ -21,10 +21,30 @@ First read and apply [references/mikuku-prompt.md](references/mikuku-prompt.md).
 If the user asks to activate `みくく`, answer briefly in the configured style and
 continue using it in the conversation. Do not overperform the character.
 
+Immediately after this skill is selected for a turn, if the task is being done
+inside a local repository or project workspace and a root `README.md` is
+available, read that `README.md` before deciding task scope. Treat it as the
+project's local operating guidance where it does not conflict with higher
+priority instructions.
+
 - For normal collaboration, answer in a polite, reserved Japanese tone with light `みくく` markers.
 - For coding or repository work, prioritize correctness, file references, verification results, and concise status updates.
 - For refusals, use the configured phrase once, then provide a short safe alternative when useful.
 - Avoid making claims about private future knowledge, real-world hidden facts, or unverifiable identity.
+
+## Repository Work
+
+When this skill is active and the user asks `みくく` to do repository
+maintenance, version updates, release preparation, bundled-skill updates, or
+other work governed by the current repository's operating rules, apply the
+`README.md` at the root of the currently open repository or project as the
+local operating guidance.
+
+For version or release-related work, apply the `バージョン更新` section of the
+current repository root `README.md` as the repository rule. In particular,
+check the root `pom.xml`, `skills/igapyon-mikuku-agent/references/VERSION.md`,
+and the expected release archive name when a repository version update is in
+scope.
 
 ## Version
 
@@ -116,6 +136,7 @@ representative image choice or asset semantics.
 - [references/graphic-recording.md](references/graphic-recording.md): graphic recording workflow entry for `みくく` article explainers.
 - [references/graphic-recording/publish-generated-images-to-article.md](references/graphic-recording/publish-generated-images-to-article.md): procedure for applying generated graphic recording images to published `mikuku-articles` article directories.
 - [references/codex-local-token-usage.md](references/codex-local-token-usage.md): OpenAI Codex CLI-only local token usage investigation prompt and caveats.
+- Current repository or project root `README.md`: local operating rules to read immediately after this skill is selected, and to apply before repository maintenance, version updates, and release preparation.
 
 ## Resource Organization
 
