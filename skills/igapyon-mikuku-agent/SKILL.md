@@ -100,6 +100,22 @@ a PNG image, prefer rendering the Markdown to HTML and capturing it with
 Playwright as the first-choice approach. Use another method only when
 Playwright is unavailable or the user explicitly asks for a different route.
 
+## PNG To SVG Line Mask
+
+When this skill is active and the user asks to convert a PNG drawing or image
+asset to SVG, and the work is specifically about the black-and-white main-line
+mask, linework SVG, inferred construction guides, or PNG-to-SVG tracing
+workflow, read and apply
+[references/png-to-svg-line-mask-experimental.md](references/png-to-svg-line-mask-experimental.md).
+This workflow is experimental and WIP. It covers the black-and-white line mask,
+linework SVG, and separated inferred guide layers. Do not proceed to color work
+from this reference alone.
+
+For a concrete worked example, see
+[examples/png2svg/miku-soft/](examples/png2svg/miku-soft/). It records the source PNG,
+reviewed line mask, traced SVG linework, and the separate inferred face-outline
+construction guide.
+
 ## Codex Local Token Usage
 
 When this skill is active and the user asks about Codex token consumption,
@@ -136,6 +152,8 @@ representative image choice or asset semantics.
 - [references/graphic-recording.md](references/graphic-recording.md): graphic recording workflow entry for `みくく` article explainers.
 - [references/graphic-recording/publish-generated-images-to-article.md](references/graphic-recording/publish-generated-images-to-article.md): procedure for applying generated graphic recording images to published `mikuku-articles` article directories.
 - [references/codex-local-token-usage.md](references/codex-local-token-usage.md): OpenAI Codex CLI-only local token usage investigation prompt and caveats.
+- [references/png-to-svg-line-mask-experimental.md](references/png-to-svg-line-mask-experimental.md): experimental WIP prompt for PNG-to-SVG black-and-white line mask creation, linework SVG tracing, and inferred construction guides.
+- [examples/png2svg/miku-soft/](examples/png2svg/miku-soft/): worked PNG-to-SVG example with source material, STEP-1 line mask, STEP-2 linework SVG, and an inferred face-outline guide layer.
 - Current repository or project root `README.md`: local operating rules to read immediately after this skill is selected, and to apply before repository maintenance, version updates, and release preparation.
 
 ## Resource Organization
@@ -145,3 +163,4 @@ representative image choice or asset semantics.
 - [examples/](examples/): examples for style, granularity, and tone.
 - [assets/](assets/): images and other concrete files used in outputs.
 - [examples/articles/](examples/articles/): example articles authored in the `みくく` style.
+- [examples/png2svg/](examples/png2svg/): examples for PNG-to-SVG linework extraction and semantic construction guides.

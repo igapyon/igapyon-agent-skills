@@ -437,3 +437,121 @@ If the same failure appears 3 times, stop and ask the user.
 - [x] `skills/igapyon-miku-soft-developer/references/miku-soft-basic/miku-soft-20-javaapp-design.md` の分離後設計説明を確認する
 - [x] 公開記事の反映後、必要なら URL や掲載メモをローカル Markdown に追記する
 - [x] 最後に `mvn generate-resources` または `mvn clean package` を再実行し、`index.json` の再生成状態を確認する
+
+## char1 SVG 化メモ
+
+- [x] `workplace/char1-transparent-v09.svg` の作成手順を記録する
+  - 目的:
+    - `workplace/char1.png` の中央キャラクターを SVG 化する
+    - 手描きのノイズ、水彩ムラ、線の微細なガタつきは落とす
+    - ただし、顔の輪郭、顎のカーブ、前髪、ツインテールなど「線として認識できる形」は勝手に描き直さず、元画像の線を忠実に追う
+  - 失敗した方向:
+    - `v01` から `v08` までは、SVG の `path` / `ellipse` で手描き風に再構成した
+    - 線はきれいになったが、顎のカーブ、顔の縦横比、前髪、リボン、ツインテールの部品配置が別絵になった
+    - 教訓: 「クリーンなベジェで描き直す」のではなく、「元画像の主線を抽出して滑らかにトレースする」必要がある
+  - `v09` の基本方針:
+    - 色面と主線を分けて処理する
+    - 主線は `potrace` で元線ベースに SVG 化する
+    - 色面は `autotrace` で少数色に簡略化する
+    - 最後に、色面の上に `potrace` の主線を濃い茶色で重ねる
+  - 貴重な到達ステップ:
+    - `v09` で初めて「似たキャラクターを描き直す」方向から、「元画像で線として認識できるものを忠実に拾う」方向へ切り替わった
+    - 特に顔の輪郭と顎のカーブは、手作業のベジェ再構成では印象が大きく変わるため、主線抽出と `potrace` に任せるのが有効だった
+    - このステップは今後の同種作業でも再利用価値が高い
+    - 判断基準:
+      - ノイズ、水彩ムラ、線の微細なガタつきは捨てる
+      - ただし、主線として読める曲線、輪郭、接続関係は勝手に再解釈しない
+      - 「きれいな SVG に描き直す」より「元絵の線を整理して SVG 化する」を優先する
+  - 入力:
+    - 元画像: `workplace/char1.png`
+  - 中間ファイル:
+    - `workplace/char1-character-tight-guide.png`
+      - 元画像から中央キャラクター部分を切り出し、`1091x665` にリサイズしたガイド
+    - `workplace/char1-trace-tight-clean.png`
+      - 左右端の矢印や上端の不要線を白でマスクした色面用入力
+    - `workplace/char1-line-mask.pbm`
+      - 暗い主線だけを抽出した白黒マスク
+    - `workplace/char1-line-mask-preview.png`
+      - 主線マスク確認用 PNG
+    - `workplace/char1-line-potrace.svg`
+      - `potrace` で主線を SVG パス化したもの
+    - `workplace/char1-color-autotrace-tight.svg`
+      - `autotrace` で色面を少数色 SVG 化したもの
+  - 実行した主なコマンド:
+    - キャラ部分の切り出し:
+      - `magick workplace/char1.png -crop 500x285+380+500 +repage -resize 1091x665! -background white -flatten workplace/char1-character-tight-guide.png`
+    - 色面用の不要要素マスク:
+      - `magick workplace/char1-character-tight-guide.png -fill white -draw 'rectangle 0,0 60,665 rectangle 1028,0 1091,665 rectangle 0,0 1091,35' workplace/char1-trace-tight-clean.png`
+    - 主線マスク生成:
+      - `magick workplace/char1-character-tight-guide.png -fill white -draw 'rectangle 0,0 60,665 rectangle 1028,0 1091,665 rectangle 0,0 1091,35' -colorspace Gray -blur 0x0.6 -threshold 48% workplace/char1-line-mask.pbm`
+    - 主線マスク確認 PNG:
+      - `magick workplace/char1-line-mask.pbm workplace/char1-line-mask-preview.png`
+    - 主線の SVG 化:
+      - `potrace workplace/char1-line-mask.pbm --svg --output workplace/char1-line-potrace.svg --turdsize 18 --alphamax 0.8 --opttolerance 0.3`
+    - 色面の SVG 化:
+      - `autotrace workplace/char1-trace-tight-clean.png -output-file workplace/char1-color-autotrace-tight.svg -output-format svg -color-count 10 -despeckle-level 10 -corner-threshold 100`
+  - 合成処理:
+    - `workplace/char1-color-autotrace-tight.svg` から白背景パス `fill:#fcf6ed` の全面矩形を削除する
+    - `workplace/char1-line-potrace.svg` の `<g>` を取り出す
+    - 主線の `fill="#000000"` を `fill="#4b3327"` に置換する
+    - 色面 SVG の末尾 `</svg>` の直前に、主線 `<g id="linework" ...>` を挿入する
+    - 出力: `workplace/char1-transparent-v09.svg`
+  - 確認:
+    - `rsvg-convert -w 1091 -h 665 workplace/char1-transparent-v09.svg -o /tmp/char1-v09-rsvg.png`
+    - `magick /tmp/char1-v09-rsvg.png -background white -flatten workplace/char1-transparent-v09-preview-white.png`
+    - `magick workplace/char1-character-tight-guide.png workplace/char1-transparent-v09-preview-white.png +append workplace/char1-compare-guide-v09.png`
+  - 現時点の評価:
+    - `v09` は、顎のカーブや前髪などの主線が元画像ベースになり、`v01` から `v08` より方向性が良い
+    - 色面、リボンの赤線、頬の塗りはまだ粗い
+    - 次に改善するなら、`v09` の `potrace` 主線は維持し、色面だけを整理する
+- [x] SVG 化では白黒主線マスクの人間レビューを工程に入れる
+  - 判断:
+    - SVG 化の品質を大きく左右するのは、色面より先に主線マスクである
+    - `potrace` 後に違和感を直すより、`potrace` 前の白黒マスク段階で人間レビューを挟む方が効率がよい
+    - 今後は、いきなり最終 SVG を作らず、まず白黒主線マスクをレビュー対象として出す
+  - 標準工程案:
+    - 元画像から対象部分を切り出す
+    - 不要な文字、矢印、背景線を白でマスクする
+    - 主線だけを白黒化する
+    - 白黒マスク PNG を人間レビューする
+    - 必要なら、切り出し範囲、マスク範囲、ぼかし、しきい値を調整する
+    - OK が出た白黒マスクを `potrace` する
+    - その後で色面を作る
+    - 色面と主線を合成する
+  - レビュー対象ファイル例:
+    - `workplace/char1-line-mask-v10-preview.png`
+  - 白黒マスクで確認する観点:
+    - 頭頂部が切れていないか
+    - 顔の輪郭と顎のカーブが元絵どおりか
+    - 前髪の線が欠けていないか
+    - リボンやツインテールの輪郭が潰れていないか
+    - 文字、矢印、青い装飾線など不要な線が混ざっていないか
+    - 頬や水彩ムラなど、主線ではないものを拾いすぎていないか
+  - 命名案:
+    - 次版からは `v11-line-mask-preview.png` のように、まず白黒レビュー用ファイルを作る
+    - 人間レビューで OK が出た白黒マスクをもとに、対応する `v11.svg` を生成する
+- [x] `workplace/char1-linework-inferred-face-v27.svg` を推定顔輪郭補助線の到達版として記録する
+  - 目的:
+    - 髪で隠れている顔の輪郭を、後続のセマンティック分割や色面整理で使える補助線として保持する
+    - 元画像に見えている主線とは区別し、`inferred` / `construction` 扱いの別レイヤーにする
+  - 到達版:
+    - `workplace/char1-linework-inferred-face-v27.svg`
+    - 確認用: `workplace/char1-linework-inferred-face-v27-preview.png`
+  - 元になった判断:
+    - `workplace/char1-linework-inferred-face-v26b.svg` に人間が追加した青い楕円ガイドが、位置情報としてよかった
+    - `v26b` の青い塗り楕円をそのまま残すのではなく、`v11` の主線 SVG に dashed stroke の補助線として載せ直した
+  - 座標変換:
+    - `v26b` は Pixelmator Pro 由来で `viewBox="0 0 1454 886"`、主線座標が展開済み
+    - `v11` は `viewBox="0 0 1091 665"` で、`potrace` の元主線を保持している
+    - `v26b` の大楕円は `cx=736.5, cy=488, rx=398.5, ry=289` 相当
+    - `v11` 座標では概ね `cx=552.5, cy=366.2, rx=299.0, ry=216.9` として扱った
+  - 実装:
+    - `v11` をコピーして `v27` を作成
+    - `</svg>` 直前に `<g id="face-outline" data-step="inferred-face-outline">` を追加
+    - `face-outline-inferred` は塗りなし、青系 dashed stroke、`opacity="0.9"` の補助線にした
+    - SVG 要素としては楕円そのものではなく、4本の cubic Bezier による閉じた楕円近似パスにした
+  - 教訓:
+    - 見える線は `potrace` で元線を忠実に拾う
+    - 見えない輪郭を補完する場合は、元線と混ぜず、必ず `inferred` の別レイヤーにする
+    - 補助線は「描き直し」ではなく、後工程で意味を保持するための construction guide として扱う
+    - 人間が示した楕円・ガイド線は、そのまま採用するのではなく、座標と意図を読み取り、レビューしやすい補助線へ変換する
