@@ -3,7 +3,8 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":13602,"description":"Use only when the user explicitly asks for igapyon-note-writer, asks for Note publishing metadata or Note canonical article management, or asks to prepare a Mikuku-authored Japanese technical essay for Note. Do not use for generic proofreading, ordinary...","summary":"igapyon-note-writer"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":14573,"description":"Use only when the user explicitly asks for igapyon-note-writer, asks for Note publishing metadata or Note canonical article management, or asks to prepare a Mikuku-authored Japanese technical essay for Note. Do not use for generic proofreading, ordinary...","summary":"igapyon-note-writer"},
+  {"name":"note-markdown-table-images.md","path":"references/note-markdown-table-images.md","ext":"md","dir":"references","size":1717,"summary":"Note Markdown Table Images"},
   {"name":"general-note-article-template.md","path":"templates/general-note-article-template.md","ext":"md","dir":"templates","size":2255,"title":"記事タイトル","summary":"はじめに"}
  ]
 }
