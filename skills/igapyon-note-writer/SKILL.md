@@ -23,6 +23,7 @@ Note 媒体に掲載する、みくく担当の技術エッセイを管理・整
 - 既存 Note 正本の流れ、段落、掲載情報の確認
 - Qiita など別媒体向け原稿から、共通する事実差分だけを Note 正本へ移すこと
 - Note 公開時のグラレコ画像生成工程への案内
+- Note の表示制約に合わせた Markdown 表の画像化工程への案内
 
 本文の主担当は、基本的にみくくです。`igapyon-note-writer` は、みくく文体そのものを詳細に定義し直すのではなく、Note 媒体に載せるための管理・整形・公開補助を担当します。
 
@@ -38,6 +39,8 @@ Note 媒体に掲載する、みくく担当の技術エッセイを管理・整
 - 「Note 公開前に掲載情報を確認して」
 - 「みくく担当記事を Note に出す形にして」
 - 「Qiita ではなく Note 側の正本へ反映して」
+- 「Note 用に Markdown の表を画像化して」
+- 「Note で表が表示できないので画像にして」
 
 次の依頼では、この skill を無理に使いません。
 
@@ -178,6 +181,12 @@ Note へ記事をアップロードする際は、本文 Markdown とは別の�
 
 `igapyon-note-writer` 側では、Note 公開時に `##` 見出しごとのグラレコ画像を用意する前提だけを持ち、グラレコ生成の詳細手順は重複して定義しません。
 
+## Note Markdown Table Images
+
+Note のシステム都合で Markdown の表を PNG 画像に変換する必要がある場合は、[references/note-markdown-table-images.md](references/note-markdown-table-images.md) を読んで適用します。
+
+この工程は Note 公開用の後工程です。正本 Markdown を書き換えず、生成 PNG は Git 管理外の作業領域に置きます。
+
 ## Output Patterns
 
 ### Full Article Draft
@@ -220,6 +229,9 @@ Note へ記事をアップロードする際は、本文 Markdown とは別の�
 - 参照記事の本文を長く流用しない
 - 誇張した成果や宣伝文にしない
 - Note 公開用のグラレコ画像リンクを、明示的な依頼なしに正本 Markdown へ直接書き込まない
+- Note 公開用の Markdown 表画像リンクを、明示的な依頼なしに正本 Markdown へ直接書き込まない
+- Note の表示制約に合わせた表画像化のために、正本 Markdown の表を削除または置換しない
+- Markdown 表から生成した PNG を、明示的な依頼なしに Git 管理対象の本文ディレクトリへ置かない
 - グラレコ画像生成の詳細手順を `igapyon-note-writer` 側へ重複して持たない
 - Note 公開時の標準工程から、`##` 見出しごとのグラレコ画像生成を勝手に省略しない
 
