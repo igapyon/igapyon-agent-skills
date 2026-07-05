@@ -1,7 +1,7 @@
 # miku-soft PNG to SVG Example
 
 This example records the useful path found while converting the miku-soft
-character image `char1.png` to SVG. The goal is not to redraw the character. The
+character image `miku-soft.png` to SVG. The goal is not to redraw the character. The
 goal is to extract the original linework faithfully while removing noise, then
 add semantic construction guides as separate layers when needed.
 
@@ -19,7 +19,7 @@ add semantic construction guides as separate layers when needed.
 
 Source image:
 
-- [00-source/char1.png](00-source/char1.png)
+- [00-source/miku-soft.png](00-source/miku-soft.png)
 
 The source contains a full diagram. The target subject is the central character
 face. Text, arrows, surrounding document icons, background marks, and decorative
@@ -31,8 +31,8 @@ Create a black-and-white mask from the cropped character subject.
 
 Artifacts:
 
-- [01-line-mask/char1-line-mask-v11.pbm](01-line-mask/char1-line-mask-v11.pbm)
-- [01-line-mask/char1-line-mask-v11-preview.png](01-line-mask/char1-line-mask-v11-preview.png)
+- [01-line-mask/miku-soft-line-mask-v01.pbm](01-line-mask/miku-soft-line-mask-v01.pbm)
+- [01-line-mask/miku-soft-line-mask-v01-preview.png](01-line-mask/miku-soft-line-mask-v01-preview.png)
 
 Review points:
 
@@ -50,7 +50,7 @@ Trace the approved mask into SVG.
 
 Artifact:
 
-- [02-linework-svg/char1-linework-v11.svg](02-linework-svg/char1-linework-v11.svg)
+- [02-linework-svg/miku-soft-linework-v02.svg](02-linework-svg/miku-soft-linework-v02.svg)
 
 This SVG is still black-and-white linework. It should preserve the original
 visible line shape. Do not correct the jaw, hair, or twin-tail shape by
@@ -62,14 +62,14 @@ Add hidden or inferred semantic geometry only as a separate guide layer.
 
 Artifacts:
 
-- [03-inferred-guides/char1-linework-inferred-face-v27.svg](03-inferred-guides/char1-linework-inferred-face-v27.svg)
-- [03-inferred-guides/char1-linework-inferred-face-v27-preview.png](03-inferred-guides/char1-linework-inferred-face-v27-preview.png)
+- [03-inferred-guides/miku-soft-linework-inferred-face-v03.svg](03-inferred-guides/miku-soft-linework-inferred-face-v03.svg)
+- [03-inferred-guides/miku-soft-linework-inferred-face-v03-preview.png](03-inferred-guides/miku-soft-linework-inferred-face-v03-preview.png)
 
 During the work, the human provided an ellipse-like guide showing the intended
-position and scale of the hidden face outline. `v27` converts that positional
+position and scale of the hidden face outline. `v03` converts that positional
 intent into a clean dashed `face-outline-inferred` construction layer on top of
 the STEP-2 linework. The temporary human-guide SVG is intentionally not kept in
-this example, because the reviewed result is `v27`.
+this example, because the reviewed result is `v03`.
 
 Important rules:
 
