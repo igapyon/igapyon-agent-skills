@@ -25,7 +25,7 @@
   {"name":"20260612-general-ai-conversation-dynamics.md","path":"examples/articles/20260612-general-ai-conversation-dynamics.md","ext":"md","dir":"examples/articles","size":27696,"title":"生成AIとの付き合い方：人間同士の会話の力学を少し応用する","description":"生成AIに心があるかどうかは論じず、心を論じない心理学の見方から、会話の入出力、共通基盤、フィードバックを使って、みくくが少しおそるおそる生成AIとの付き合い方を考える技術エッセイです。","status":"draft","summary":"生成AIとの付き合い方：人間同士の会話の力学を少し応用する"},
   {"name":"20260613-general-ai-agent-speed-reading-dev-style.md","path":"examples/articles/20260613-general-ai-agent-speed-reading-dev-style.md","ext":"md","dir":"examples/articles","size":17576,"title":"AI agent は速読する：しくみを知ってうまく付き合う開発スタイル","description":"miku-soft を開発するみくく自身の実感から、AI agent がまず速読し、あとで戻ってきやすい構造や書きっぷりへ少しずつ寄せていく開発スタイルを整理する技術エッセイです。","status":"published","summary":"AI agent は速読する：しくみを知ってうまく付き合う開発スタイル"},
   {"name":"README.md","path":"examples/png2svg/README.md","ext":"md","dir":"examples/png2svg","size":496,"summary":"PNG to SVG Examples"},
-  {"name":"README.md","path":"examples/png2svg/miku-soft/README.md","ext":"md","dir":"examples/png2svg/miku-soft","size":3499,"summary":"miku-soft PNG to SVG Example"},
+  {"name":"README.md","path":"examples/png2svg/miku-soft/README.md","ext":"md","dir":"examples/png2svg/miku-soft","size":3551,"summary":"miku-soft PNG to SVG Example"},
   {"name":"VERSION.md","path":"references/VERSION.md","ext":"md","dir":"references","size":934,"summary":"みくく Version"},
   {"name":"article-writing.md","path":"references/article-writing.md","ext":"md","dir":"references","size":32370,"summary":"みくく担当記事の執筆参照"},
   {"name":"codex-local-token-usage.md","path":"references/codex-local-token-usage.md","ext":"md","dir":"references","size":4034,"summary":"OpenAI Codex CLI Local Token Usage Investigation"},
