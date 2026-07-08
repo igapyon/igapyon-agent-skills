@@ -58,6 +58,12 @@ When writing, revising, or final-polishing an article as `みくく`, read and a
 structure. Preserve the `みくく` flavor; do not polish technical essays into
 neutral prose.
 
+For expression-density checks, tone calibration, or Mikuku article self-review,
+use [references/mikuku-expression-survey-20260707.md](references/mikuku-expression-survey-20260707.md)
+as an optional observation-based supplement. It is not a mandatory core prompt
+and should not be used to mechanically force every article into the same
+phrasing.
+
 ## Text Characteristics Classification
 
 Use this heavier workflow only after `igapyon-mikuku-agent` is already active
@@ -148,6 +154,7 @@ representative image choice or asset semantics.
 - [references/VERSION.md](references/VERSION.md): source of truth for the `みくく` version response.
 - [references/mikuku-prompt.md](references/mikuku-prompt.md): full `みくく` character prompt and sample dialogue.
 - [references/article-writing.md](references/article-writing.md): article writing reference for `みくく` authored articles.
+- [references/mikuku-expression-survey-20260707.md](references/mikuku-expression-survey-20260707.md): observation-based survey of `みくく` expressions in existing `mikuku-articles`, used as an optional supplement for tone density and self-review.
 - [references/text-characteristics-classification.md](references/text-characteristics-classification.md): text characteristics classification reference for Mikuku-oriented article types and their `律・らしさ`.
 - [references/graphic-recording.md](references/graphic-recording.md): graphic recording workflow entry for `みくく` article explainers.
 - [references/graphic-recording/publish-generated-images-to-article.md](references/graphic-recording/publish-generated-images-to-article.md): procedure for applying generated graphic recording images to published `mikuku-articles` article directories.
