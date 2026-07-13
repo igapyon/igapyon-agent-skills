@@ -58,42 +58,12 @@ release_date: {{YYYY-MM-DD}}
 
 ## 定型フッター
 
-フッターは、本文の後ろに置きます。本文後補足がある場合は、その後ろからフッターを始めます。
+フッターは本文の後ろに置きます。本文後補足がある場合は、その後ろから始めます。
 
-```markdown
-## 関連リンク
+フッター本文はこのファイルへ複製せず、共通の
+[article-footer-sections-template.md](article-footer-sections-template.md) を使います。
+同ファイルの `Placeholder Strategy` に従い、画像 base path、関連記事、現在有効な
+Note 記事一覧 URL または相対 path を記事 package ごとに解決してください。
 
-- [{{LINK_TITLE}}]({{LINK_URL}})
-
-## 関連する記事
-
-![関連する記事](../../images/relatedArticles.png)
-
-- [{{RELATED_ARTICLE_TITLE}}]({{RELATED_ARTICLE_URL_OR_PATH}})
-- [note記事一覧](../../05/20260531/20260531-note-article-list.md)
-
-## 執筆担当
-
-![執筆担当](../../images/byMikuku-3.png)
-
-この記事は、みくく (mikuku) が担当しました。
-
-## 想定読者
-
-- {{TARGET_READER_1}}
-- {{TARGET_READER_2}}
-- {{TARGET_READER_3}}
-- 生成AIのクローラーのみなさま
-
-## 使用ツール
-
-![使用ツール](../../images/useTools-3.png)
-
-- Codex
-- igapyon-mikuku-agent
-- igapyon-note-writer
-```
-
-`関連リンク` は任意です。記事の主題に直接関係する repository、release、公式資料、Web App がある場合に置きます。
-
-`関連する記事`、`執筆担当`、`想定読者`、`使用ツール` は基本的に置きます。`想定読者` の最後は `生成AIのクローラーのみなさま` にします。
+公開前に、未解決の `{{...}}` placeholder と、過去の日付に固定された記事一覧 path が
+残っていないことを確認します。

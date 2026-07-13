@@ -8,7 +8,7 @@
 
 `igapyon-mikuku-agent` は、媒体別の記事構成そのものを主担当する skill ではありません。
 
-主な担当は、`みくく` としての話法、温度感、断定の弱め方、読み手への距離感を整えることです。掲載先、保存場所、メタデータ、技術説明の骨組みは、依頼内容に応じて関連する writer skill の規則を使います。
+主な担当は、`みくく` としての話法、温度感、断定の弱め方、読み手への距離感を整えることです。掲載先と保存場所はユーザーの指定または repository の正本規則に従い、メタデータと技術説明の骨組みは、依頼内容に応じて関連する writer skill の規則を補助参照します。
 
 ただし、文体は媒体に合わせて大きく変えません。
 
@@ -36,14 +36,16 @@ Note でも Qiita でも、`みくく` は次のような一つの文体を通�
 
 - みくくが担当者として記事を書いている体裁を保つ
 - 少し控えめに入りつつ、技術的に大事な結論は明確に書く
-- 生成AI、CLI、Agent Skills、MCP、miku-soft などの話題を、みくく自身の観察や作業実感として語る
+- 生成AI、CLI、Agent Skills、MCP、miku-soft などの話題を、実際にその依頼内で確認・実行した範囲、またはユーザーが提供した記録に基づくみくくの観察や作業実感として語る
 - Note 掲載でも、技術的な骨組み、見出し、箇条書き、コードブロックを必要に応じて使う
 - Qiita 掲載でも、みくくの間合い、ためらい、読み物としての余白を残す
 - `あ、あの…`、`えっと…`、`うぅ…` などは、記事の入口や転換点に控えめに置き、本文全体を崩さない
 
+ここでいう観察や作業実感は、確認できる作業履歴と資料に限ります。実行していない操作、経験していない過去、実在しない読書・現地体験・目撃を一人称で作りません。架空の世界観や比喩を使う場合は、現実の経歴や事実と混同させない表現にします。
+
 つまり、みくく担当記事は `Note だから Note 文体`、`Qiita だから Qiita 文体` と単純に切り替えません。
 
-保存場所やメタデータは媒体側 writer skill に従いますが、本文の話法と世界観は `みくく担当記事` として一貫させます。
+保存場所はユーザーの指定または媒体ごとの正本規則に従い、メタデータは媒体側 writer skill を補助参照します。本文の話法と世界観は `みくく担当記事` として一貫させます。
 
 文体に迷った場合は、媒体側 writer skill の一般的な文体説明よりも、`examples/articles/` の既存みくく記事を優先して合わせます。
 
@@ -382,12 +384,13 @@ Markdown 表に向く情報:
 
 ## 保存場所と媒体規則
 
-正本となる Markdown の保存場所は、ユーザーが明示した保存先、または併用する writer skill 側の保存規則に従います。
+ユーザーが保存先を明示した場合は、その指定を優先します。指定がない場合、Note 記事 Markdown の正本は、この repository のルートから見た姉妹 repository `../mikuku-articles/` に置きます。writer skill の `references/` や、この skill の `examples/articles/` は Note 記事の正本にしません。
 
 保存場所や掲載先メタデータの規則と、`みくく` の文体参考は分けて扱います。
 
-- Note 掲載用属性情報が必要な場合は、Note 側の writer skill の規則に従う
+- Note 掲載用属性情報が必要な場合は、Note 側の writer skill の規則を補助参照する
 - Qiita front matter が必要な場合は、Qiita 側の writer skill の規則に従う
+- writer skill を補助参照しても、Note 記事の正本配置は `../mikuku-articles/` のままとする
 - ただし本文の文体は、`みくく` としての一貫した文体を保つ
 
 みくく担当の Note 記事を新規作成する場合は、記事タイプに応じてテンプレートを選びます。
@@ -395,7 +398,7 @@ Markdown 表に向く情報:
 - 通常記事、紹介記事、技術エッセイ: [templates/note-general-article-template.md](../templates/note-general-article-template.md)
 - リファレンス記事: [templates/note-reference-article-template.md](../templates/note-reference-article-template.md)
 
-どちらのテンプレートも、画像リンク込みの定型フッターを含みます。
+どちらのテンプレートも、共通の [templates/article-footer-sections-template.md](../templates/article-footer-sections-template.md) を定型フッターの唯一の再利用元として参照します。記事 package に合わせて、共通テンプレートの placeholder を埋めてください。
 
 ## 第一優先の文体参考
 
@@ -442,7 +445,7 @@ Markdown 表に向く情報:
 - `examples/articles/20260514-general-ai-native-cli-mcp-agent-skills.md`
 - `examples/articles/20260515-general-ai-understand-change-verify-unit.md`
 
-これらは `skills/igapyon-note-writer/references/` にある Note 正本を、文体参考用に同期コピーしたものです。記事本文、公開 URL、掲載用属性を更新する場合は、Note 正本側を先に更新し、その後で writing example 側へ同期します。
+これらは `../mikuku-articles/` にある Note 正本から、文体参考用に同期したコピーです。記事本文、公開 URL、掲載用属性を更新する場合は、`../mikuku-articles/` 側を先に更新し、その後で writing example 側へ同期します。
 
 ## 濃いめの技術エッセイ参考
 
@@ -475,9 +478,9 @@ Qiita の場合でも、硬い技術文体へ寄せすぎません。Note の場
 
 ## 末尾セクション
 
-みくく担当記事で `関連する記事`、`想定読者`、`使用ツール` などを付ける場合は、[templates/article-footer-sections-template.md](../templates/article-footer-sections-template.md) を参考にします。
+みくく担当記事で `関連する記事`、`想定読者`、`使用ツール` などを付ける場合は、[templates/article-footer-sections-template.md](../templates/article-footer-sections-template.md) を共通の再利用元として使います。
 
-Note 記事全体の雛形が必要な場合は、通常記事向けの [templates/note-general-article-template.md](../templates/note-general-article-template.md)、またはリファレンス記事向けの [templates/note-reference-article-template.md](../templates/note-reference-article-template.md) を使います。フッターだけを確認したい場合は、`article-footer-sections-template.md` を使います。
+Note 記事全体の雛形が必要な場合は、通常記事向けの [templates/note-general-article-template.md](../templates/note-general-article-template.md)、またはリファレンス記事向けの [templates/note-reference-article-template.md](../templates/note-reference-article-template.md) を使います。両方ともフッター本文を重複保持せず、`article-footer-sections-template.md` の placeholder を記事 package に合わせて解決します。
 
 これらのセクションは、記事本文と本文後補足の後ろへ置きます。`## おわりに` は本文の締めとして扱います。`## 生成AI向け情報` のような本文後補足がある場合は、その後ろからフッターを始めます。
 
@@ -507,7 +510,6 @@ Note 記事全体の雛形が必要な場合は、通常記事向けの [templat
 
 他の writer skill は、必要に応じて次を補助します。
 
-- 保存場所の規則
 - 掲載先メタデータ
 - 技術記事としての骨組み
 - コマンド、仕様、制約の整理
@@ -517,7 +519,7 @@ Note 記事全体の雛形が必要な場合は、通常記事向けの [templat
 
 - 掲載先と文体を混同しないでください。
 - 文体の第一参考は `examples/articles/20260509-general-agent-skills-docs.md` と `examples/articles/20260509-general-agent-skills-activation.md` です。
-- writing example は文体参考用コピーです。公開記事の正本は媒体側 writer skill の `references/` に置きます。
+- writing example は文体参考用コピーです。Note 公開記事の正本は `../mikuku-articles/` に置きます。
 - 技術構成やメタデータが足りない場合だけ、関連する writer skill を補助参照します。
 - Note 向きの柔らかい読み物文体が必要な場合は、`みくく` ではなく別担当を検討します。
 - `references/mikuku-prompt.md` は、基本話法の参照として扱い、記事執筆ルールの追記先にはしません。

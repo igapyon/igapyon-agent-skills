@@ -36,7 +36,7 @@
 `{{MIKUKU_PROMPT_PATH}}` が未指定の場合は、次を使い、全セクションで同じ描画プロンプトとして使ってください。
 
 ```text
-/Users/igapyon/Documents/git/igapyon-agent-skills/skills/igapyon-mikuku-agent/assets/mikuku/mikuku-portrait-short-prompt.md
+{{SKILL_DIR}}/assets/mikuku/mikuku-portrait-short-prompt.md
 ```
 
 ---
@@ -139,7 +139,7 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 可能であれば、初期化フェーズでは次のスクリプトを使ってください。
 
 ```bash
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/split-article-sections.mjs --article "{{ARTICLE_PATH}}" --out "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.mjs" --article "{{ARTICLE_PATH}}" --out "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
 ```
 
 このスクリプトは、元記事を変更せず、全対象セクション分の `sections/<NNN>/section-source.md` と `TODO.md` を一括作成します。
@@ -256,19 +256,78 @@ node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/split-arti
 
 記事全体の別セクションにある情報を勝手に混ぜないでください。
 
+### `section-text.md` の出力契約
+
+`section-text.md` は単なる短い要約ではなく、画像生成AIがセクションの意味、関係、配置を判断するための描画設計用の中間成果物です。
+数個の平坦な箇条書きと漠然とした「図」の一文だけで終了しないでください。
+
+原則として、次の構造を使ってください。
+
+```markdown
+# セクション見出し
+
+## 主題
+
+- このセクションが伝える中心内容を1〜3項目
+
+## 図解キーワード
+
+- 画像内のラベルやアイコンへ変換できる重要語を3〜8項目
+
+## 関係・流れ・対比
+
+- 表、ASCII図、または関係を示す箇条書きを最低1つ
+
+## グラレコ構図案
+
+- 左:
+- 中央:
+- 右:
+- みくくの表情・視線:
+- 吹き出し:
+
+## 正確性メモ
+
+- 記事本文に明記された事実だけを使う
+- 記事にないモデル名、数値、評価、生成環境などを補わない
+```
+
+構造を選ぶときは、セクションの内容に最も合う関係を具体化してください。
+
+- 手順や時間変化がある場合: 矢印を使った流れ
+- 複数要素の違いが中心の場合: 表または左右の対比
+- 役割分担が中心の場合: 要素ごとのカードやレイヤー
+- 判断方法が中心の場合: 分岐フロー
+- 数量差が中心の場合: 棒、ゲージ、目盛り
+- 注意点が中心の場合: 主図と注意ボックス
+
+`グラレコ構図案` では、少なくとも3つの画面領域、みくくの位置または視線、吹き出しの短い実文を指定してください。
+画像生成AIが記事本文を読み直さなくても、何をどこへ描くか判断できる具体性を持たせてください。
+
+セクションが非常に短く、いずれかの項目に根拠のある内容を置けない場合は、記事にない情報で水増しせず、その項目に `該当なし` と理由を短く記載してください。
+正確性メモは画像内へ描く文言ではなく、生成時の事実確認用メモとして扱います。
+
+### 情報の正確性
+
+`section-source.md` に書かれていない事実を、一般知識、別セクション、ファイル名、ディレクトリ名、現在の実行モデル、過去の会話から推測して追加しないでください。
+とくに、記事の作成モデル、画像生成モデル、日付、価格、credits、バージョン、公式評価は、対象セクションに明記されている場合だけ記載してください。
+
+記事本文の内容と、グラレコを作っている現在の実行環境を混同しないでください。
+構図、アイコン、色、表情、視線などの視覚表現は提案してかまいませんが、それらを記事の事実として扱わないでください。
+
 ## 3. セクション専用の画像生成プロンプトを合成する
 
 `section-text.md` と `{{MIKUKU_PROMPT_PATH}}` の本文を入力として、セクション専用の画像生成AI用プロンプトを作成します。
 可能であれば、次のスクリプトを使ってください。
 
 ```bash
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-section-image-prompts.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}" --section "<NNN>"
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/compose-section-image-prompts.mjs" --run-dir "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}" --section "<NNN>"
 ```
 
 複数セクション分の `section-text.md` が作成済みの場合は、`--section` を省略して未作成の `image-prompt.md` をまとめて作成してかまいません。
 
 ```bash
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-section-image-prompts.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/compose-section-image-prompts.mjs" --run-dir "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
 ```
 
 このスクリプトは、`section-text.md` の本文、`{{MIKUKU_PROMPT_PATH}}` の本文、同一性維持ルール、横長グラレコ画像の固定方針を合成し、`image-prompt.md` を作成します。

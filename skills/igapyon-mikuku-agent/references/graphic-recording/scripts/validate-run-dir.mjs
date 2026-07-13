@@ -48,7 +48,7 @@ async function exists(filePath) {
 function parseTodo(todo) {
   const sections = new Map();
   for (const line of todo.split("\n")) {
-    const match = line.match(/^- \[([ xX])\] (\d{3}): (.+?) - ([a-z0-9-]+)\s*$/);
+    const match = line.match(/^- \[([ xX])\] (\d{3}): (.+) - (image-\S.*)\s*$/);
     if (match) {
       sections.set(match[2], {
         checked: match[1].toLowerCase() === "x",

@@ -2,6 +2,13 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const defaultMikukuPrompt = path.resolve(
+  scriptDir,
+  "../../../assets/mikuku/mikuku-portrait-short-prompt.md"
+);
 
 const usage = `Usage:
   node split-article-sections.mjs --article <article.md> --out <run-output-dir> [--mikuku-prompt <path>] [--force]
@@ -11,6 +18,9 @@ Creates:
   <run-output-dir>/sections/001/section-source.md
   <run-output-dir>/sections/002/section-source.md
   ...
+
+Default Mikuku prompt:
+  <skill-dir>/assets/mikuku/mikuku-portrait-short-prompt.md
 `;
 
 function parseArgs(argv) {
@@ -198,9 +208,7 @@ async function main() {
     );
   }
 
-  const mikukuPrompt =
-    args.mikukuPrompt ??
-    "/Users/igapyon/Documents/git/igapyon-agent-skills/skills/igapyon-mikuku-agent/assets/mikuku/mikuku-portrait-short-prompt.md";
+  const mikukuPrompt = path.resolve(args.mikukuPrompt ?? defaultMikukuPrompt);
   await writeNewOrSame(
     path.join(outDir, "TODO.md"),
     buildTodo(articlePath, mikukuPrompt, sections),

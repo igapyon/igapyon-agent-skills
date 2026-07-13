@@ -6,10 +6,10 @@ import path from "node:path";
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 const usage = `Usage:
-  node restore-generated-image-from-session.mjs --session-jsonl <session.jsonl> --out <image-path> [--overwrite]
+  node restore-generated-image-from-session.mjs --session-jsonl <session.jsonl> --after-line <N> --out <image-path> [--overwrite]
 
 Restores:
-  latest image_generation_end.payload.result PNG base64 -> <image-path>
+  last image_generation_end.payload.result PNG base64 strictly after line N -> <image-path>
 `;
 
 function parseArgs(argv) {
@@ -22,6 +22,8 @@ function parseArgs(argv) {
       args.overwrite = true;
     } else if (arg === "--session-jsonl") {
       args.sessionJsonl = argv[++i];
+    } else if (arg === "--after-line") {
+      args.afterLine = argv[++i];
     } else if (arg === "--out") {
       args.out = argv[++i];
     } else {
@@ -29,6 +31,17 @@ function parseArgs(argv) {
     }
   }
   return args;
+}
+
+function parseAfterLine(value) {
+  if (!/^\d+$/.test(value ?? "")) {
+    throw new Error("--after-line must be a non-negative integer line number.");
+  }
+  const afterLine = Number(value);
+  if (!Number.isSafeInteger(afterLine)) {
+    throw new Error("--after-line exceeds the maximum safe integer.");
+  }
+  return afterLine;
 }
 
 async function assertFile(filePath, label) {
@@ -85,7 +98,7 @@ function stripDataUrlPrefix(value) {
 function decodePngBase64(value) {
   const normalized = stripDataUrlPrefix(value.trim()).replace(/\s+/g, "");
   if (!normalized) {
-    throw new Error("Latest image_generation_end.payload.result is empty.");
+    throw new Error("Selected image_generation_end.payload.result is empty.");
   }
   const image = Buffer.from(normalized, "base64");
   if (image.length < pngSignature.length || !image.subarray(0, pngSignature.length).equals(pngSignature)) {
@@ -94,12 +107,23 @@ function decodePngBase64(value) {
   return image;
 }
 
-function findLatestImageResult(jsonlText) {
-  let latest = null;
-  let latestLineNumber = 0;
+function findImageResultAfterLine(jsonlText, afterLine) {
+  let selected = null;
+  let selectedLineNumber = 0;
   const lines = jsonlText.split(/\r?\n/);
 
+  const logicalLineCount = lines.at(-1) === "" ? lines.length - 1 : lines.length;
+  if (afterLine > logicalLineCount) {
+    throw new Error(
+      `--after-line ${afterLine} exceeds session JSONL line count ${logicalLineCount}.`,
+    );
+  }
+
   for (let i = 0; i < lines.length; i += 1) {
+    const lineNumber = i + 1;
+    if (lineNumber <= afterLine) {
+      continue;
+    }
     const line = lines[i].trim();
     if (!line) {
       continue;
@@ -118,16 +142,18 @@ function findLatestImageResult(jsonlText) {
       typeof record?.payload?.result === "string" &&
       record.payload.result.trim() !== ""
     ) {
-      latest = record.payload.result;
-      latestLineNumber = i + 1;
+      selected = record.payload.result;
+      selectedLineNumber = lineNumber;
     }
   }
 
-  if (!latest) {
-    throw new Error("No image_generation_end.payload.result found in session JSONL.");
+  if (!selected) {
+    throw new Error(
+      `No non-empty image_generation_end.payload.result found strictly after line ${afterLine}.`,
+    );
   }
 
-  return { result: latest, lineNumber: latestLineNumber };
+  return { result: selected, lineNumber: selectedLineNumber };
 }
 
 async function main() {
@@ -136,24 +162,27 @@ async function main() {
     process.stdout.write(usage);
     return;
   }
-  if (!args.sessionJsonl || !args.out) {
+  if (!args.sessionJsonl || args.afterLine === undefined || !args.out) {
     throw new Error(usage);
   }
 
   const sessionJsonl = path.resolve(args.sessionJsonl);
   const out = path.resolve(args.out);
+  const afterLine = parseAfterLine(args.afterLine);
 
   await assertFile(sessionJsonl, "Session JSONL");
   await assertParentDirectory(out);
   await assertWritableDestination(out, args.overwrite);
 
   const jsonlText = await readFile(sessionJsonl, "utf8");
-  const { result, lineNumber } = findLatestImageResult(jsonlText);
+  const { result, lineNumber } = findImageResultAfterLine(jsonlText, afterLine);
   const image = decodePngBase64(result);
 
   await writeFile(out, image);
 
-  process.stdout.write(`Restored image_generation_end payload from line ${lineNumber} -> ${out}\n`);
+  process.stdout.write(
+    `Restored image_generation_end payload from line ${lineNumber} (strictly after ${afterLine}) -> ${out}\n`,
+  );
   process.stdout.write(`Wrote ${image.length} bytes\n`);
 }
 

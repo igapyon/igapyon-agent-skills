@@ -1,0 +1,31 @@
+# Graphic Recording Run State
+
+- workflow-read: yes | no
+- article-read: yes | no
+- mode: whole-article | sections | whole-article-then-sections
+- skill-dir:
+- run-output-dir:
+- workplace-gitignored: yes | no | not-a-git-repo
+- prompts-read:
+- article-path:
+- mikuku-prompt:
+- mikuku-prompt-exists: yes | no
+- mikuku-prompt-read: yes | no
+- article-source-read-only: yes
+- article-modified: no
+- image-tool:
+- session-jsonl:
+- session-after-line:
+- session-event-line:
+- text-prompt-generation: available | unavailable
+- character-prompt-embedded: yes | no
+- copy-instruction-created: yes | no
+- whole-article-default-candidates: 1
+- whole-article-variation-limit: 3
+- whole-article-variations-requested:
+- whole-article-variations-generated:
+- whole-article-selected:
+- generated-source-path:
+- workspace-output-path:
+- next-step: section-batch | section-image-generation | report
+- current-status:
