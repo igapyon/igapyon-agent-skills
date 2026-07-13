@@ -71,12 +71,6 @@
 graphic-recording.png
 ```
 
-保存先例:
-
-```text
-/Users/igapyon/Documents/git/igapyon-agent-skills/workplace/20260524095030-graphic-recording/graphic-recording.png
-```
-
 カレントフォルダが Git リポジトリ内の場合の確認方法の例:
 
 ```bash
@@ -90,10 +84,10 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 
 # 記事全体画像のバリエーション上限
 
-このプロンプトで生成する記事全体画像は、章ごとの画像生成へ進む前の代表画像フェーズです。
+このプロンプトで生成する記事全体画像は、`whole-article` では最終成果物です。明示的な `whole-article-then-sections` では、章ごとの画像生成へ進む前の代表画像フェーズとして扱います。
 
-記事全体画像のバリエーション生成は、ユーザーが明示的に追加再生成を依頼しない限り、最大 3 枚までにしてください。
-1-3 枚の候補を生成したら、その時点で最も適した 1 枚を代表画像として採用し、追加の全体画像バリエーション生成を続けないでください。
+既定では候補を 1 枚だけ生成してください。ユーザーが追加候補またはバリエーションを明示的に求めた場合だけ候補を増やし、合計 3 枚を上限にしてください。
+候補を生成したら、その時点で最も適した 1 枚を代表画像として採用し、明示されていない追加バリエーションを生成しないでください。
 
 採用画像は原則として次に保存してください。
 
@@ -110,9 +104,9 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 ```
 
 代表画像を採用したら、`image-generation-report.md` に候補数、採用画像、未採用理由、次工程を記録してください。
-次工程は、セクション用素材が未作成なら `40-article-section-graphic-recording-batch-prompt.md`、素材作成済みなら `50-generate-section-graphic-recording-images-prompt.md` です。
+`whole-article` の次工程は `report` です。ユーザーが章ごとの画像も明示した `whole-article-then-sections` の場合だけ、セクション用素材が未作成なら `40-article-section-graphic-recording-batch-prompt.md`、素材作成済みなら `50-generate-section-graphic-recording-images-prompt.md` へ進みます。
 
-同一性崩れ、重大な破綻、保存失敗などで候補として使えない画像は失敗として記録してよいですが、その場合も無制限に再生成せず、最大 3 回を目安に一度停止し、未解決点を報告してください。
+同一性崩れ、重大な破綻、保存失敗などで候補として使えない画像は失敗として記録してよいですが、その場合も無制限に再生成せず、初回を含む最大 3 回で一度停止し、未解決点を報告してください。
 
 ---
 
@@ -123,16 +117,18 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 3. `{{IMAGE_PROMPT_PATH}}` の本文に、みくく描画プロンプト本文または意味を保った短縮本文が含まれていることを確認する
 4. 画像生成ツールがテキストプロンプトを受け取れることを確認する
 5. 既に記事全体画像の候補が何枚生成済みか確認する
-6. 候補が 3 枚以上ある場合は追加生成せず、代表画像の採用または次工程への移行を報告する
-7. 画像生成AI用プロンプト本文を画像生成ツールへ渡す
-8. 横長ポスター構図のグラレコ説明画像を生成する
-9. 生成画像の元ファイルパスを特定する
-10. `copy-generated-image.md` を作成し、元画像パス、コピー先、実行するコピーコマンド、確認コマンドを記録する
-11. 生成画像を `{{IMAGE_OUTPUT_PATH}}`、`{{RUN_OUTPUT_DIR}}/graphic-recording.png`、または処理開始時のカレントフォルダ直下の `workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording.png` へコピーまたは保存する
-12. コピー先の存在、ファイルサイズ、画像形式を確認し、`copy-generated-image.md` を結果付きで更新する
-13. `image-generation-report.md` に元画像パス、みくく描画プロンプトパス、コピー手順記録パス、ワークスペース側の保存先、候補数、採用画像、次工程、または未実行理由を記録する
-14. 代表画像を採用できた場合は、追加の全体画像バリエーション生成を続けず、章ごとの画像生成へ進む
-15. 最後に、生成画像の保存先、または未生成の理由と次工程を短く報告する
+6. 候補が 1 枚以上あり、ユーザーが追加候補を明示していない場合は追加生成しない。追加候補が明示されていても、候補が 3 枚以上なら追加生成しない
+7. セッション JSONL 復元を使う可能性がある場合は、画像生成の直前にセッション JSONL の現在の最終行番号を `SESSION_AFTER_LINE` として記録する
+8. 画像生成AI用プロンプト本文を画像生成ツールへ渡す
+9. 横長ポスター構図のグラレコ説明画像を生成する
+10. 現在の画像生成ツール呼び出しが返した正確な元ファイルパスを使う。生成画像ディレクトリ全体から最新 PNG を探索してはいけない
+11. 今回の生成画像パスが返らなかった場合だけ、手順 7 の行番号より後のセッションイベントから復元する
+12. `copy-generated-image.md` を作成し、元画像パスまたはセッション復元情報、コピー先、実行するコピーコマンド、確認コマンドを記録する
+13. 生成画像を `{{IMAGE_OUTPUT_PATH}}`、`{{RUN_OUTPUT_DIR}}/graphic-recording.png`、または処理開始時のカレントフォルダ直下の `workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording.png` へコピーまたは保存する
+14. コピー先の存在、ファイルサイズ、画像形式を確認し、`copy-generated-image.md` を結果付きで更新する
+15. `image-generation-report.md` に元画像パスまたはセッション復元情報、みくく描画プロンプトパス、コピー手順記録パス、ワークスペース側の保存先、候補数、採用画像、次工程、または未実行理由を記録する
+16. 代表画像を採用できた場合は、追加の全体画像バリエーション生成を続けない。`whole-article-then-sections` が明示された場合だけ章ごとの画像生成へ進み、それ以外は報告へ進む
+17. 最後に、生成画像の保存先、または未生成の理由と次工程を短く報告する
 
 `{{MIKUKU_PROMPT_PATH}}` はパス文字列としてプロンプト内に書くだけでなく、事前に本文を `{{IMAGE_PROMPT_PATH}}` へ埋め込んでください。
 別の生成実行で使った描画プロンプトが今回の生成へ暗黙に引き継がれるとは扱わないでください。
@@ -146,23 +142,31 @@ Do not let Mikuku hold any objects.
 
 組み込み `imagegen` が `prompt` しか受け取れない環境でも、`{{IMAGE_PROMPT_PATH}}` にみくく描画プロンプト本文が含まれていれば生成を実行できます。
 
-組み込み `imagegen` の生成画像は通常 `$CODEX_HOME/generated_images/...` 配下へ保存されます。プロジェクトで使う画像は、生成後に上記の出力先へコピーしてください。元画像は削除しないでください。
+組み込み `imagegen` の生成画像は通常 `$CODEX_HOME/generated_images/...` 配下へ保存されます。プロジェクトで使う画像は、現在の `imagegen` 呼び出しが返した正確な保存先から上記の出力先へコピーしてください。元画像は削除しないでください。
+`find`、更新日時順の並べ替え、ディレクトリ全体の「最新 PNG」などで元画像を推測してはいけません。
 
 ただし、環境や Codex のバージョンによっては、生成画像が `$CODEX_HOME/generated_images/...` に新規 PNG として保存されず、Codex セッション JSONL の `image_generation_end.payload.result` に PNG の base64 として記録される場合があります。
 `$CODEX_HOME/generated_images/...` に今回生成分の PNG を特定できない場合は、生成失敗として扱う前に、次のフォールバックを試してください。
 
-1. 現在の Codex セッション JSONL を特定する
-2. `image_generation_end` イベントの `payload.result` が空でないことを確認する
-3. 複数の `image_generation_end` がある場合は、今回の生成直後のイベント、または最新イベントを使う
-4. `payload.result` を base64 decode して `{{RUN_OUTPUT_DIR}}/graphic-recording.png` へ保存する
-5. `file` とファイルサイズで PNG として復元できたことを確認する
-6. `copy-generated-image.md` と `image-generation-report.md` には、元画像パスの代わりに `session-jsonl`、`event-type: image_generation_end`、復元先を記録する
+1. 画像生成前に現在の Codex セッション JSONL を特定する
+2. 画像生成の直前に、その JSONL の現在の最終行番号を `SESSION_AFTER_LINE` として記録する
+3. 画像生成を 1 回実行する
+4. 今回の生成画像パスが返らなかった場合だけ、`SESSION_AFTER_LINE` より後の `image_generation_end.payload.result` を復元候補にする
+5. `payload.result` を base64 decode して `{{RUN_OUTPUT_DIR}}/graphic-recording.png` へ保存する
+6. `file` とファイルサイズで PNG として復元できたことを確認する
+7. `copy-generated-image.md` と `image-generation-report.md` には、元画像パスの代わりに `session-jsonl`、`session-after-line`、`event-type: image_generation_end`、採用したイベント行番号、復元先を記録する
+
+生成前の基準行より前にあるイベントは、内容や更新日時にかかわらず今回の生成結果として使ってはいけません。
 
 復元コマンド例:
 
 ```bash
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-generated-image-from-session.mjs \
+SESSION_AFTER_LINE=$(awk 'END { print NR }' "$SESSION_JSONL")
+# この行番号を記録した直後に、現在の記事全体用 imagegen を 1 回実行する
+
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/restore-generated-image-from-session.mjs" \
   --session-jsonl "$SESSION_JSONL" \
+  --after-line "$SESSION_AFTER_LINE" \
   --out "{{RUN_OUTPUT_DIR}}/graphic-recording.png"
 
 file "{{RUN_OUTPUT_DIR}}/graphic-recording.png"
@@ -182,7 +186,9 @@ ls -lh "{{RUN_OUTPUT_DIR}}/graphic-recording.png"
 - generated-source-path:
 - generated-source-kind: file | session-jsonl
 - session-jsonl:
+- session-after-line:
 - session-event-type:
+- session-event-line:
 - workspace-output-path:
 - source-exists: yes | no
 - workspace-output-exists: yes | no

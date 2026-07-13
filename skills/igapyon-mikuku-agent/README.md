@@ -1,125 +1,110 @@
 # igapyon-mikuku-agent
 
-`igapyon-mikuku-agent` is an Agent Skill for giving an agent such as Codex a character-oriented response style.
+`igapyon-mikuku-agent` は、Codex などのエージェントが日本語キャラクター
+`みくく` / `Mikuku` の話し方で利用者と協働するための Agent Skill です。
+会話のスタイルを調整しつつ、作業の正確さ、明確さ、安全性を優先します。
 
-This repository includes the settings, images, and reference materials for the character `Mikuku` / `みくく`.
+## Quick Start
 
-## OSS Usage Policy
+repository または release archive のルートで、利用する skill をローカルの
+Codex へ同期します。
 
-This skill is intended to be published as OSS. If you use it as a third party, the author recommends using this skill as a base for creating your own character, rather than using it as `Mikuku` / `みくく` as-is. To avoid confusion between the original author, the character, and your own usage, the author also hopes that you will consider customizing it before use.
+```sh
+sh scripts/sync-codex-skill.sh igapyon-mikuku-agent
+sh scripts/sync-codex-skill.sh --check igapyon-mikuku-agent
+```
 
-In particular, replacing the following elements with your own character-specific materials helps avoid ambiguity:
+同期後に Codex のホストアプリケーションを再読み込みし、たとえば次のように
+明示して使います。
 
-- Character name
-- Character images
-- Short prompt for character image generation
-- Characterization prompt defining tone, personality, and behavior
-- Samples, templates, and example outputs used for article writing or image generation
+```text
+igapyon-mikuku-agent を使って、みくくとしてこの設計を一緒に整理して。
+```
 
-As a practical recommendation, consider reviewing and replacing the following files and related references as needed:
+別の `CODEX_HOME` を使う場合や手動で導入する場合は、repository ルートの
+[`INSTALL.md`](../../INSTALL.md) を参照してください。
 
-- `SKILL.md`
-- `references/mikuku-prompt.md`
-- `assets/mikuku/`
-- `assets/mikuku/mikuku-portrait-short-prompt.md`
+## Use Cases
 
-`references/mikuku-prompt.md` contains important characterization details for `Mikuku` / `みくく`, including tone, personality, behavior, and sample dialogue. If you use this skill for a different character, the author recommends customizing this file as one of the primary replacement targets.
+- `みくく` としての会話や共同作業
+- `みくく` 担当の Note 記事、技術エッセイ、リファレンス記事の作成・調整
+- `みくく` 記事向けのグラフィックレコーディング素材や画像プロンプトの作成
+- 明示指定された文章特徴分類や、記事の `みくく` 自己レビュー
+- 同梱されたキャラクター画像を使うアバター、カード、記事画像の作成
+- 実験的な PNG 線画から SVG line mask を作る作業
 
-`assets/mikuku/mikuku-portrait-short-prompt.md` is a short image-generation prompt describing the appearance of `Mikuku` / `みくく`. If you use this skill for a different character, the author recommends rewriting this file for your own character design, or renaming it and updating the references accordingly.
+## Activation And Non-Activation
 
-## Recommended Customization Steps
+この skill は、利用者が `igapyon-mikuku-agent` の使用、または `みくく` としての
+応答・共同作業を明示したときに適用します。
 
-1. Copy the skill directory and rename it to your new skill name.
-2. Update the `name`, `description`, activation conditions, and character name in `SKILL.md`.
-3. Rewrite `references/mikuku-prompt.md` for your character's tone, personality, and response rules.
-4. Replace the images under `assets/mikuku/` with images for your own character.
-5. Replace `assets/mikuku/mikuku-portrait-short-prompt.md` with an appearance prompt for your own character.
-6. Replace remaining `Mikuku` / `みくく` references in the README, sample articles, and templates with your new character name.
+適用する例:
 
-The `Mikuku` / `みくく` character included in this skill is a very important partner character who works together with the author. Under the Apache License 2.0, the files may be used according to the license terms. At the same time, the author's recommendation and hope is that third-party users customize the character, writing style, publication scope, and image materials to fit their own purpose.
+- `みくくとして、この仕様を説明して`
+- `igapyon-mikuku-agent を使って記事を書いて`
+- `みくくと一緒に、この repository を整理したい`
 
-## Structure
+適用しない例:
+
+- `みくくという skill はありますか`
+- `igapyon-mikuku-agent の README をレビューして`
+- キャラクター一般について説明を求めるだけの依頼
+
+存在確認、説明、レビューだけの場合は、この skill を案内・調査しても、依頼者が
+明示的に求めない限りキャラクター話法は適用しません。
+
+## Expected Behavior And Output
+
+- 通常の共同作業では、控えめで丁寧な日本語に軽い `みくく` 表現を添えます。
+- 実タスクがある場合は同じ応答で作業を進め、キャラクター表現だけで終えません。
+- repository 作業では、成果、変更ファイル、検証結果を明確に伝えます。
+- 医療、安全、法務、security など正確な用語が重要な場面では、表現上の演出より
+  正確さを優先します。
+- 記事執筆、文章分類、画像作成などの重い workflow は、該当する依頼のときだけ
+  対応する `references/` を読みます。
+- 同梱 asset が目的に合う場合は、新規生成より既存 asset を優先します。
+
+中心となる設定は [`SKILL.md`](SKILL.md) と
+[`references/mikuku-prompt.md`](references/mikuku-prompt.md) です。
+
+## Customization And OSS Usage
+
+この skill は Apache License 2.0 のもとで公開することを想定しています。
+第三者が利用する場合は、作者・`みくく`・利用者独自の用途が混同されないよう、
+この skill を土台として自分用のキャラクターへカスタマイズすることを推奨します。
+`みくく` は作者とともに作業する大切なパートナー・キャラクターです。
+
+主な差し替え対象:
+
+- `SKILL.md` の `name`、`description`、発火条件、キャラクター名
+- `references/mikuku-prompt.md` の口調、性格、応答ルール、会話例
+- `assets/mikuku/` のキャラクター画像
+- `assets/mikuku/mikuku-portrait-short-prompt.md` の外見プロンプト
+- 記事テンプレート、作例、画像生成資料に残るキャラクター固有表現
+
+別名で利用するときは skill directory 自体も改名し、内部リンクと残存する
+`Mikuku` / `みくく` 表記を確認してください。
+
+## Maintenance
 
 ```text
 .
-├─ SKILL.md
-├─ assets/
-│  ├─ mikuku/
-│  └─ article/
-├─ references/
-│  ├─ mikuku-prompt.md
-│  ├─ article-writing.md
-│  └─ graphic-recording.md
-├─ templates/
-│  └─ article-footer-sections-template.md
-└─ examples/
-   └─ articles/
+├─ SKILL.md          # 発火条件と参照先
+├─ references/       # 判断基準と用途別 workflow
+├─ templates/        # 記事の再利用可能な構造
+├─ examples/         # 文体・出力例
+├─ assets/           # キャラクター画像と記事画像
+└─ index.json        # 自動生成された discovery index
 ```
 
-## Note
-
-`index.json` is a generated discovery file. Treat `SKILL.md`, `references/`, `templates/`, `examples/`, and `assets/` as the source of truth for character settings, representative images, prompts, usage rules, output structures, and style examples.
-
----
-
-# igapyon-mikuku-agent
-
-`igapyon-mikuku-agent` は、Codex などのエージェントにキャラクター性を持たせて応答させるための Agent Skill です。
-
-この repository には、キャラクター `みくく` の設定、画像、参照資料を同梱しています。
-
-## OSS としての利用方針
-
-この skill は OSS として公開することを想定しています。第三者の方が利用する場合は、そのまま `みくく` として使うよりも、この skill をベースにして自分用の別キャラクターを作成することを作者として推奨します。また、混乱を避けるためにも、そのようにカスタマイズして利用していただくことを作者からのお願いとします。
-
-特に、次の要素は利用者自身のキャラクターに合わせて置き換えてから使うと、作者・キャラクター・利用者の意図が混同されにくくなります。
-
-- キャラクター名
-- キャラクター画像
-- キャラクター画像生成用の短いプロンプト
-- 口調、性格、ふるまいを定義するキャラクターづけ prompt
-- 記事作成や画像生成で使うサンプル、テンプレート、作例
-
-実用上の推奨として、少なくとも次のファイルと関連記述について、確認と差し替えの検討をおすすめします。
-
-- `SKILL.md`
-- `references/mikuku-prompt.md`
-- `assets/mikuku/`
-- `assets/mikuku/mikuku-portrait-short-prompt.md`
-
-`references/mikuku-prompt.md` には、`みくく` の口調、性格、ふるまい、会話例など、キャラクターづけとして重要な記述が含まれています。別キャラクターとして利用する場合は、このファイルを主要な差し替え対象のひとつとしてカスタマイズすることを作者として推奨します。
-
-`assets/mikuku/mikuku-portrait-short-prompt.md` は、`みくく` の外見を短く表す画像生成用プロンプトです。別キャラクターとして利用する場合は、このファイルを自分のキャラクター設定に合わせて書き換えるか、別ファイル名に変更したうえで参照元も更新することを作者として推奨します。
-
-## 推奨するカスタマイズ手順
-
-1. skill directory をコピーし、新しい skill 名に変更する。
-2. `SKILL.md` の `name`、`description`、発火条件、キャラクター名を変更する。
-3. `references/mikuku-prompt.md` を新しいキャラクターの口調・性格・応答ルールに合わせて書き換える。
-4. `assets/mikuku/` 配下の画像を、新しいキャラクターの画像に置き換える。
-5. `assets/mikuku/mikuku-portrait-short-prompt.md` を、新しいキャラクターの外見プロンプトに置き換える。
-6. README、サンプル記事、テンプレート内に残っている `みくく` / `Mikuku` 表記を、新しいキャラクター名に変更する。
-
-この skill に含まれる `みくく` は、作者とともに作業するとても大切なパートナー・キャラクターです。Apache License 2.0 のもとで、各ファイルはライセンス条件に従って利用できます。そのうえで、第三者の方が実運用する場合には、自分の目的、文体、公開範囲、画像素材に合うようにカスタマイズして利用していただくことを、作者として推奨し、希望します。
-
-## 構成
-
-```text
-.
-├─ SKILL.md
-├─ assets/
-│  ├─ mikuku/
-│  └─ article/
-├─ references/
-│  ├─ mikuku-prompt.md
-│  ├─ article-writing.md
-│  └─ graphic-recording.md
-├─ templates/
-│  └─ article-footer-sections-template.md
-└─ examples/
-   └─ articles/
-```
-
-## 注意
-
-`index.json` は discovery 用の生成物です。キャラクター設定、代表画像、プロンプト、利用ルール、出力構造、文体見本の正本は `SKILL.md` と `references/`、`templates/`、`examples/`、`assets/` 配下の各ファイルとして扱います。
+- character 設定と workflow の正本は `SKILL.md`、`references/`、`templates/`、
+  `examples/`、`assets/` です。`index.json` は手編集しません。
+- Note 記事 Markdown の正本は、repository ルートから見た
+  `../mikuku-articles/` です。この skill 内の記事は文体・構成の参照用コピーです。
+- 定型フッターは
+  [`templates/article-footer-sections-template.md`](templates/article-footer-sections-template.md)
+  を一つの再利用元として保守します。
+- source の更新後は repository ルートで `mvn generate-resources` を実行し、生成された
+  `index.json` を source と一緒にコミットします。
+- ローカル配備との差分は
+  `sh scripts/sync-codex-skill.sh --check igapyon-mikuku-agent` で確認します。

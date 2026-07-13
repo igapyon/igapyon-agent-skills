@@ -2,9 +2,13 @@
 
 import { readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const defaultMikukuPrompt =
-  "/Users/igapyon/Documents/git/igapyon-agent-skills/skills/igapyon-mikuku-agent/assets/mikuku/mikuku-portrait-short-prompt.md";
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const defaultMikukuPrompt = path.resolve(
+  scriptDir,
+  "../../../assets/mikuku/mikuku-portrait-short-prompt.md"
+);
 
 const usage = `Usage:
   node compose-section-image-prompts.mjs --run-dir <run-output-dir> [--mikuku-prompt <path>] [--section <NNN>] [--overwrite]
@@ -14,7 +18,7 @@ Creates:
 
 Inputs:
   <run-output-dir>/sections/<NNN>/section-text.md
-  <mikuku-prompt>
+  <mikuku-prompt> (default: <skill-dir>/assets/mikuku/mikuku-portrait-short-prompt.md)
 `;
 
 function parseArgs(argv) {

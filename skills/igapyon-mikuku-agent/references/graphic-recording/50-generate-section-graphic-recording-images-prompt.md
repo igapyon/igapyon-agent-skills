@@ -10,8 +10,9 @@
 画像生成結果に合わせて本文やプロンプトを直す必要がある場合は、生成済みファイルを直接書き換えず、`TODO.md` に再生成状態を記録し、必要な調整案を別ファイルへ保存してください。
 元記事への画像リンク挿入や本文修正は、ユーザーが明示的に許可した場合だけ別作業として行います。
 
-速度優先運用では、画像生成後に `copy-section-image.mjs` で対象セクションへ `graphic-recording.png` をコピーし、`TODO.md` を更新したらすぐ次へ進んでください。
+速度優先運用では、画像生成後に `copy-section-image.mjs` で対象セクションへ `graphic-recording.png` をコピーし、同スクリプトの自動 PNG 検証と `TODO.md` 更新に成功したらすぐ次へ進んでください。
 `image-generation-report.md`、`copy-generated-image.md`、`run-state.md`、`ls -lh`、`file`、目視確認は各セクションごとに実行しません。
+目視確認を省略しても、0 バイト確認と PNG シグネチャ確認を行う `copy-section-image.mjs` の自動検証は省略してはいけません。
 必要になった場合だけ、後からまとめて検品・記録してください。
 速度優先運用を既定とします。詳細記録運用は、ユーザーが明示した場合だけ使ってください。
 
@@ -154,11 +155,13 @@ TODO ファイル:
 
 組み込み `imagegen` が利用可能な場合は、出力先を直接指定できないことだけを理由に保留しないでください。まず `imagegen` で 1 セクション分を生成し、生成された画像をワークスペース内の対象セクションディレクトリへ保存または移動してください。
 
-組み込み `imagegen` は、通常 `$CODEX_HOME/generated_images/...` 配下へ画像を保存します。対象セクションで使う画像は、生成後にその保存先からコピーしてください。元画像は削除しないでください。
+組み込み `imagegen` は、通常 `$CODEX_HOME/generated_images/...` 配下へ画像を保存します。対象セクションで使う画像は、現在の `imagegen` 呼び出しが返した正確な保存先からコピーしてください。元画像は削除しないでください。
+`$CODEX_HOME/generated_images` 全体を検索し、更新日時が最も新しい PNG を今回の生成結果とみなしてはいけません。
 
 ただし、環境や Codex のバージョンによっては、生成画像が `$CODEX_HOME/generated_images/...` に新規 PNG として保存されず、Codex セッション JSONL の `image_generation_end.payload.result` に PNG の base64 として記録される場合があります。
-`$CODEX_HOME/generated_images/...` に今回生成分の PNG を特定できない場合は、生成失敗として扱う前に、セッション JSONL からの復元をフォールバックとして試してください。
-復元できた PNG は、対象セクションの `graphic-recording.png` として保存します。
+現在の画像生成ツール呼び出しから今回生成分の正確な PNG パスが返らなかった場合は、生成失敗として扱う前に、セッション JSONL からの復元をフォールバックとして試してください。
+このフォールバックを使うには、各 `imagegen` 実行の直前にセッション JSONL の最終行番号を記録しておく必要があります。復元対象は、その生成前行番号より後のイベントだけです。
+復元した PNG は一度対象セクションの `generated-from-session.png` として保存し、`copy-section-image.mjs` の自動検証を通して `graphic-recording.png` へコピーします。
 
 詳細記録運用では、対象セクションごとに次のファイルへコピー記録を残してもかまいません。
 
@@ -169,7 +172,7 @@ TODO ファイル:
 この Markdown には、生成画像の元パス、コピー先、コピーコマンド、検証コマンド、コピー結果を記録します。
 
 速度優先運用では、`copy-generated-image.md` は作成しません。
-画像生成、コピー、`TODO.md` 更新だけを行い、すぐ次のセクションへ進んでください。
+画像生成、検証付きコピー、`TODO.md` 更新だけを行い、すぐ次のセクションへ進んでください。
 
 生成画像を対象セクションのディレクトリへ保存または移動できない場合は、生成済みにしないでください。この場合は `image-generated-unsaved` として `TODO.md` に記録してください。
 
@@ -236,8 +239,16 @@ TODO ファイル:
 Do not let Mikuku hold any objects.
 ```
 
+セッション JSONL 復元を使う可能性がある場合は、各画像生成の直前に現在の最終行番号を記録してください。
+複数セクションを処理するときも、基準行番号は一括取得せず、各 `imagegen` 実行の直前に取り直します。
+
+```bash
+SESSION_AFTER_LINE=$(awk 'END { print NR }' "$SESSION_JSONL")
+# この行番号を記録した直後に、現在のセクション用 imagegen を 1 回実行する
+```
+
 組み込み `imagegen` を使う場合は、1 セクションずつ実行してください。
-速度優先運用では、各実行前の埋め込み確認は行わず、生成後に最新生成画像を対象セクションのディレクトリに `graphic-recording.png` としてコピーしてください。
+速度優先運用では、各実行前の埋め込み確認は行わず、生成後に現在の `imagegen` 呼び出しが返した正確な画像パスを `copy-section-image.mjs` へ渡してください。
 詳細記録運用では、各実行前に `image-prompt.md` 本文にみくく描画プロンプト本文が含まれていることを確認してください。
 
 ```text
@@ -246,10 +257,11 @@ Do not let Mikuku hold any objects.
 
 組み込み `imagegen` の生成物が `$CODEX_HOME/generated_images/...` に保存された場合は、次の方針で扱ってください。
 
-1. 今回の生成で作成された画像ファイルを特定する
-2. 対象セクションの出力先へコピーする
-3. `TODO.md` を `image-generated` に更新する
-4. 元の `$CODEX_HOME/generated_images/...` 側の画像は残す
+1. 現在の画像生成ツール呼び出しが返した正確な画像ファイルパスを受け取る
+2. そのパスを `copy-section-image.mjs` の `--src` に渡す
+3. 同スクリプトが 0 バイト確認と PNG シグネチャ確認を行った後、対象セクションの出力先へコピーする
+4. 検証とコピーに成功した場合だけ、同スクリプトが `TODO.md` を `image-generated` に更新する
+5. 元の `$CODEX_HOME/generated_images/...` 側の画像は残す
 
 コピー先:
 
@@ -257,19 +269,22 @@ Do not let Mikuku hold any objects.
 {{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png
 ```
 
-`$CODEX_HOME/generated_images/...` に今回生成分の PNG を特定できない場合は、Codex セッション JSONL の `image_generation_end.payload.result` から PNG を復元してください。
-複数の `image_generation_end` がある場合は、今回の生成直後のイベント、または最新イベントを使います。
-復元後は、`file` とファイルサイズで PNG として正常に保存できたことを確認してください。
+現在の画像生成ツール呼び出しから今回生成分の正確な PNG パスが返らなかった場合は、Codex セッション JSONL の `image_generation_end.payload.result` から PNG を復元してください。
+復元専用スクリプトには、当該 `imagegen` 実行の直前に記録した `SESSION_AFTER_LINE` を必須の `--after-line` として渡します。指定行以前のイベントは今回の生成結果として使えません。
+復元後は `copy-section-image.mjs` を実行し、0 バイト確認と PNG シグネチャ確認に成功した場合だけ最終ファイルのコピーと `TODO.md` 更新を行ってください。
 
 復元コマンド例:
 
 ```bash
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-generated-image-from-session.mjs \
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/restore-generated-image-from-session.mjs" \
   --session-jsonl "$SESSION_JSONL" \
-  --out "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
+  --after-line "$SESSION_AFTER_LINE" \
+  --out "{{RUN_OUTPUT_DIR}}/sections/<NNN>/generated-from-session.png"
 
-file "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
-ls -lh "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/copy-section-image.mjs" \
+  --run-dir "{{RUN_OUTPUT_DIR}}" \
+  --section "<NNN>" \
+  --src "{{RUN_OUTPUT_DIR}}/sections/<NNN>/generated-from-session.png"
 ```
 
 詳細記録運用で `copy-generated-image.md` を作る場合は、少なくとも次を記録してください。
@@ -282,7 +297,9 @@ ls -lh "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
 - generated-source-path:
 - generated-source-kind: file | session-jsonl
 - session-jsonl:
+- session-after-line:
 - session-event-type:
+- session-event-line:
 - workspace-output-path:
 - source-exists: yes | no
 - workspace-output-exists: yes | no
@@ -292,7 +309,10 @@ ls -lh "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
 ## Copy Command
 
 ```bash
-cp "<generated-source-path>" "<workspace-output-path>"
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/copy-section-image.mjs" \
+  --run-dir "{{RUN_OUTPUT_DIR}}" \
+  --section "<NNN>" \
+  --src "<generated-source-path>"
 ```
 
 ## Verify Commands
@@ -305,44 +325,57 @@ file "<workspace-output-path>"
 ## Notes
 ````
 
-生成画像の元パスを特定できない場合でも、セッション JSONL から正常な PNG を復元できた場合は、対象セクションを `image-generated` として扱ってよいです。
+画像生成ツールから正確な元パスが返らない場合でも、生成前行番号より後のセッション JSONL イベントから PNG を復元し、`copy-section-image.mjs` の自動検証とコピーに成功した場合は、対象セクションを `image-generated` として扱ってよいです。
 ファイル元パスもセッション JSONL 復元もどちらも使えない場合は、コピーを実行せず、対象セクションを `image-generated` として扱わないでください。
 
 ## 省略実行ルール
 
 画像生成後の処理を短縮したい場合は、次の最小手順で進めてください。
 
-1. 最新の生成 PNG を特定する
-2. 対象セクションの `graphic-recording.png` へコピーする
-3. `TODO.md` を `image-generated` に更新する
-4. 次のセクションへ進む
+1. 画像生成の直前にセッション JSONL の基準行番号を記録する
+2. 現在の画像生成ツール呼び出しが返した正確な PNG パスを受け取る。パスが返らない場合だけ、基準行より後のセッションイベントから復元する
+3. `copy-section-image.mjs` へ正確なパスまたは復元ファイルのパスを渡す
+4. 同スクリプトによる 0 バイト確認、PNG シグネチャ確認、コピー、`TODO.md` 更新が成功したことを確認する
+5. 次のセクションへ進む
 
 この省略実行でも、画像ファイルのコピーは省略しないでください。
 `copy-generated-image.md`、`image-generation-report.md`、`run-state.md`、`ls -lh`、`file`、目視検品は、各セクションごとに実行しなくてもかまいません。
 これらは、ユーザーが詳細記録を求めた場合、または一連の画像生成が一区切りついた時点でまとめて作成・更新してください。
-高速に連続生成したい場合は、画像生成直後に `copy-section-image.mjs` でコピーと `TODO.md` 更新ができたことをもって次へ進んでかまいません。
+高速に連続生成したい場合は、画像生成直後に `copy-section-image.mjs` で自動検証、コピー、`TODO.md` 更新ができたことをもって次へ進んでかまいません。
 速度優先運用では、`image-generation-report.md` は更新しないでください。
 
 最小コピーコマンド例:
 
 ```bash
-src=$(find "$CODEX_HOME/generated_images" -maxdepth 3 -type f -name '*.png' -print0 | xargs -0 ls -t | head -n 1)
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/copy-section-image.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --section "<NNN>" --src "$src"
+# GENERATED_IMAGE_PATH は、現在の imagegen 呼び出しが返した正確なパスを使う
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/copy-section-image.mjs" \
+  --run-dir "{{RUN_OUTPUT_DIR}}" \
+  --section "<NNN>" \
+  --src "$GENERATED_IMAGE_PATH"
 ```
 
-`$CODEX_HOME/generated_images` に新規 PNG が見つからない場合の最小復元コマンド例:
+`GENERATED_IMAGE_PATH` を生成画像ディレクトリ全体の検索や更新日時順で決めてはいけません。
+
+現在の画像生成ツール呼び出しから正確な PNG パスが返らない場合の最小復元コマンド例:
 
 ```bash
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-generated-image-from-session.mjs \
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/restore-generated-image-from-session.mjs" \
   --session-jsonl "$SESSION_JSONL" \
-  --out "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
+  --after-line "$SESSION_AFTER_LINE" \
+  --out "{{RUN_OUTPUT_DIR}}/sections/<NNN>/generated-from-session.png"
+
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/copy-section-image.mjs" \
+  --run-dir "{{RUN_OUTPUT_DIR}}" \
+  --section "<NNN>" \
+  --src "{{RUN_OUTPUT_DIR}}/sections/<NNN>/generated-from-session.png"
 ```
 
-セッション JSONL から正常な PNG を復元できた場合も、対象セクションの `TODO.md` は `image-generated` に更新してください。
+`SESSION_AFTER_LINE` は、現在のセクション用 `imagegen` 実行の直前に記録した値でなければなりません。
+セッション JSONL から復元した場合も、`copy-section-image.mjs` が自動検証に成功したときだけ、同スクリプトによる対象セクションの `TODO.md` 更新を許可してください。
 復元できない場合は `image-generated-unsaved` または `image-generation-failed` として扱い、生成済みにはしないでください。
 
 コピー後の `ls -lh`、`file`、画像プレビューは実行しないでください。
-`copy-section-image.mjs` がエラーを返さなければ、`TODO.md` は `image-generated` に更新済みとして次へ進んでください。
+`copy-section-image.mjs` がエラーを返さなければ、0 バイト確認と PNG シグネチャ確認は成功し、`TODO.md` は `image-generated` に更新済みとして次へ進んでください。
 
 生成時の基本方針:
 
@@ -357,8 +390,8 @@ node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-ge
 
 ## 4. 生成結果を確認する
 
-速度優先運用では、この章の確認は省略してください。
-画像生成後に対象セクションへコピーし、`TODO.md` を更新したら次のセクションへ進みます。
+速度優先運用では、この章の目視確認と手動確認は省略してください。
+ただし、`copy-section-image.mjs` による 0 バイト確認と PNG シグネチャ確認は必須です。自動検証、対象セクションへのコピー、`TODO.md` 更新に成功したら次のセクションへ進みます。
 `image-generation-report.md`、`copy-generated-image.md`、目視確認は行いません。
 
 画像生成後、次を確認してください。
@@ -376,7 +409,8 @@ node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-ge
 
 ## 5. TODO.md を更新する
 
-画像生成が完了したセクションは、`TODO.md` の該当行を次のように更新してください。
+画像生成が完了したセクションは、`copy-section-image.mjs` の自動検証とコピーが成功した後に、同スクリプトが `TODO.md` の該当行を次のように更新します。
+検証付きコピーより先に手動で `image-generated` へ変更してはいけません。
 
 ```markdown
 - [x] 001: テキストファイルとは - image-generated
@@ -390,9 +424,12 @@ node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-ge
 
 - status: image-generated
 - prompt: sections/001/image-prompt.md
-- mikuku-prompt: skills/igapyon-mikuku-agent/assets/mikuku/mikuku-portrait-short-prompt.md
+- mikuku-prompt: {{MIKUKU_PROMPT_PATH}}
 - character-prompt-embedded: yes
 - generated-source: <imagegen が保存した元画像パス>
+- session-jsonl: <セッション復元時だけ記録>
+- session-after-line: <セッション復元時だけ記録>
+- session-event-line: <セッション復元時だけ記録>
 - workspace-output: sections/001/graphic-recording.png
 - copy-instruction: sections/001/copy-generated-image.md
 ```
@@ -422,8 +459,8 @@ node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-ge
 
 1. `image-prompt.md` を読む
 2. 画像を生成する
-3. `graphic-recording.png` を保存する
-4. `TODO.md` を更新する
+3. 現在の生成に対応する正確な画像パスを `copy-section-image.mjs` へ渡し、自動検証と `graphic-recording.png` へのコピーを行う
+4. 同スクリプトによる `TODO.md` 更新の成功を確認する
 5. 次のセクションへ進む
 
 速度優先運用では、上記以外のステップを挟まないでください。

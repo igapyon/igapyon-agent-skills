@@ -57,6 +57,23 @@
 
 本文後補足がない記事では、`## おわりに` の直後にフッターを始めます。
 
+## Placeholder Strategy
+
+このファイルを定型フッターの唯一の再利用元とし、通常記事テンプレートや
+リファレンス記事テンプレートへ同じフッター本文を複製しません。記事を作るときは、
+必要なセクションをこのファイルから取り込み、次の placeholder を記事 package に
+合わせて解決します。
+
+| placeholder | 入れる値 |
+| --- | --- |
+| `{{FOOTER_IMAGE_BASE_PATH}}` | 記事 Markdown から共通フッター画像 directory までの相対 path。末尾の `/` は付けない。 |
+| `{{RELATED_ARTICLE_TITLE}}` | 関連記事の公開タイトル。 |
+| `{{RELATED_ARTICLE_URL_OR_PATH}}` | 関連記事の公開 URL、または Note 正本内で有効な相対 path。 |
+| `{{NOTE_ARTICLE_LIST_URL_OR_PATH}}` | 現在有効な Note 記事一覧の公開 URL、または `../mikuku-articles/` の正本で確認した相対 path。 |
+
+日付を固定した記事一覧 path をテンプレートへ書き戻さないでください。公開先や記事
+package の構造が変わっても、placeholder を解決する箇所だけを調整します。
+
 ## 関連リンクテンプレート
 
 記事の主題に直接関係する repository、release、公式資料、Web App などを置きます。リファレンス記事では、読者や AI agent が対象 tool の一次情報へ移動しやすいように、`## 関連リンク` を `## 関連する記事` より前に置けます。
@@ -80,11 +97,10 @@
 ```markdown
 ## 関連する記事
 
-![関連する記事](../../images/relatedArticles.png)
+![関連する記事]({{FOOTER_IMAGE_BASE_PATH}}/relatedArticles.png)
 
-- [AI agent とキャラクター人格で技術エッセイを書くということ](https://note.com/toshikiigaa/n/ne68cf56c07f3)
-- [コンテンツ型 Agent Skill を活用してみる](https://note.com/toshikiigaa/n/n72da1e228062)
-- [note記事一覧](https://note.com/toshikiigaa/n/nde411c861a5a)
+- [{{RELATED_ARTICLE_TITLE}}]({{RELATED_ARTICLE_URL_OR_PATH}})
+- [note記事一覧]({{NOTE_ARTICLE_LIST_URL_OR_PATH}})
 ```
 
 ## 執筆担当テンプレート
@@ -92,7 +108,7 @@
 ```markdown
 ## 執筆担当
 
-![執筆担当](../../images/byMikuku-3.png)
+![執筆担当]({{FOOTER_IMAGE_BASE_PATH}}/byMikuku-3.png)
 
 この記事は、みくく (mikuku) が担当しました。
 ```
@@ -120,7 +136,7 @@
 ```markdown
 ## 使用ツール
 
-![使用ツール](../../images/useTools-3.png)
+![使用ツール]({{FOOTER_IMAGE_BASE_PATH}}/useTools-3.png)
 
 - Codex
 - igapyon-mikuku-agent
@@ -146,7 +162,7 @@
 - `関連リンク` は任意とする。置く場合は、記事の主題に直接関係する repository、release、公式資料、Web App などを置く。
 - `関連する記事` は必須とする。
 - `関連する記事` は、`関連リンク` がある場合はその後ろに置く。`関連リンク` がない場合はフッターの先頭に置く。
-- `関連する記事` リストの最後は、必ず `[note記事一覧](https://note.com/toshikiigaa/n/nde411c861a5a)` にする。
+- `関連する記事` リストの最後は、必ず `[note記事一覧]({{NOTE_ARTICLE_LIST_URL_OR_PATH}})` にし、placeholder を現在有効な URL または正本内の相対 path へ解決する。
 - `執筆担当`、`想定読者`、`使用ツール` は必須とする。
 - `想定読者` は、記事の主題に合わせて 3-5 項目程度に絞る。
 - `想定読者` リストの最後は、必ず `生成AIのクローラーのみなさま` にする。

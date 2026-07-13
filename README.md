@@ -85,9 +85,34 @@ macOS が生成する `.DS_Store` は Git 管理対象外とするため、repo 
 `workplace/` は clone した外部リポジトリ、展開した zip、生成物、検証用ファイルなどを置くローカル作業フォルダです。  
 `workplace/` 配下の作業物は Git 管理対象外とし、ディレクトリを維持するための `workplace/.gitkeep` だけを Git 管理下に入れます。
 
-`.codex/skills/` は Codex から利用するためのローカル配備先です。  
-この repo では `skills/` 配下を正本として管理し、`.codex/skills/` 配下のコピーは Git 管理対象外とします。
-`skills/` から `.codex/skills/` への反映は、必要なタイミングで手動実行します。Maven の `package` フェーズでは自動コピーしません。
+Codex から利用するローカル配備先は `$CODEX_HOME/skills/` です。`CODEX_HOME` が
+未指定の場合は `$HOME/.codex` を使います。この repo では `skills/` 配下を正本として
+管理し、ローカル配備先のコピーは Git 管理対象外とします。Maven の `package`
+フェーズではローカル配備先へ自動コピーしません。
+
+repo 内の `.codex/` は任意のローカル出力用として directory 全体を無視します。
+
+## Codex skill のローカル同期
+
+source とローカル配備先の drift を避けるため、skill 名を一つ指定して同期します。
+
+```sh
+sh scripts/sync-codex-skill.sh igapyon-mikuku-agent
+sh scripts/sync-codex-skill.sh --check igapyon-mikuku-agent
+```
+
+同期は `skills/<skill-name>/` を `$CODEX_HOME/skills/<skill-name>/` へ反映し、source に
+ない配備先ファイルを削除します。`.DS_Store` は同期対象外です。`--check` は変更せずに
+内容差分、追加、削除の有無を確認します。
+
+別の Codex home を使う場合は明示できます。
+
+```sh
+CODEX_HOME=/path/to/codex-home sh scripts/sync-codex-skill.sh igapyon-mikuku-agent
+```
+
+スクリプトは skill 名と source の `SKILL.md` を検証し、repository 内の正本から
+名前の一致する配備先だけを更新します。
 
 ## Codex skills 更新後の反映 tips
 
@@ -137,7 +162,7 @@ Note / Qiita 記事 Markdown は、媒体ごとの正本置き場で管理しま
 - Qiita 技術記事の正本: `skills/igapyon-qiita-writer/references/`
 
 みくく担当の Note テック主記事は、正本を `../mikuku-articles/` に置きます。  
-一方で、みくく文体の参照例として使うため、公開済みまたは参照価値の高い記事コピーを `skills/igapyon-mikuku-agent/references/examples/articles/` に同期して置きます。
+一方で、みくく文体の参照例として使うため、公開済みまたは参照価値の高い記事コピーを `skills/igapyon-mikuku-agent/examples/articles/` に同期して置きます。
 
 このコピーは文体・構成の参照用です。記事本文、URL、掲載用属性を更新する場合は、まず Note 正本側を更新し、その後で `igapyon-mikuku-agent` 側の writing example にコピーして同期します。
 
@@ -209,7 +234,9 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 │  ├─ igapyon-mikuku-agent/
 │  │  ├─ SKILL.md
 │  │  ├─ assets/
-│  │  └─ references/
+│  │  ├─ references/
+│  │  ├─ templates/
+│  │  └─ examples/
 │  ├─ igapyon-repo-conventions/
 │  │  ├─ SKILL.md
 │  │  └─ references/
@@ -296,6 +323,15 @@ mvn clean package
 
 生成された `index.json` は、skill と一緒にコミットします。
 
+生成後の drift 確認は次を実行します。
+
+```sh
+sh scripts/check-generated-indexes.sh
+```
+
+release workflow でも `mvn clean package` の後に同じ検査を行い、生成結果が commit
+済みの `index.json` と一致しない場合は release を停止します。
+
 ## Release archive
 
 GitHub Release に添付する利用者向け archive は、次のコマンドで作成します。
@@ -306,11 +342,15 @@ mvn clean package
 
 生成物は `target/igapyon-agent-skills-<version>.zip` です。
 
-archive には `README.md`、`INSTALL.md`、`LICENSE`、`pom.xml`、`.mvn/`、`lib/`、`skills/` を含めます。
-利用者は archive を展開し、`INSTALL.md` の手順で `skills/*` を自分の Codex skills directory へコピーします。
+archive には `README.md`、`INSTALL.md`、`LICENSE`、`pom.xml`、`.mvn/`、`lib/`、
+`src/assembly/`、`skills/`、`scripts/`、`EXTERNAL_SKILLS.lock` を含めます。
+利用者は archive を展開し、`INSTALL.md` の手順で利用する skill 名を指定して自分の
+Codex skills directory へ同期します。
 
 release archive には、この repo の `skills/` に加えて、外部管理の miku-soft 系 skill も同梱します。
 外部 skill は `mvn package` の `prepare-package` フェーズで `target/release-staging/skills/` に取得し、archive 化します。
+生成した `EXTERNAL_SKILLS.lock` に repository、ref、skill 名を記録します。展開済み archive から同じ POM で再 package する場合は、lock と一致する同梱済み外部 skill を再利用します。
+release staging に全 skill をそろえた後、同梱した index generator で staging 内の `index.json` を一括更新し、外部 skill も含めた archive 内の discovery index を整合させます。
 取得元は `pom.xml` の `external.*` properties で固定します。
 
 同梱する外部 skill は次の通りです。
@@ -325,7 +365,9 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 - `mikuproject-skills` `v0.8.1.1`: `skills/mikuproject/`
 - `mikuscore-skills` `v0.1.0`: `skills/mikuscore/`
 
-GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、生成された zip を GitHub Release asset として添付します。
+GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
+生成 index の drift がないことを確認してから、生成された zip を GitHub Release asset
+として添付します。
 
 ## 厳選 text bundle
 
