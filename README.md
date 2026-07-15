@@ -356,7 +356,7 @@ release staging に全 skill をそろえた後、同梱した index generator �
 同梱する外部 skill は次の通りです。
 
 - `miku-indexgen-skills` `v1.6.2`: `skills/igapyon-miku-indexgen/`
-- `miku-text-bundle-skills` `v1.3.0`: `skills/igapyon-miku-text-bundle/`
+- `miku-text-bundle-skills` `v1.4.0`: `skills/igapyon-miku-text-bundle/`
 - `miku-repo-bundle-skills` `v0.5.0.1` (experimental): `skills/igapyon-miku-repo-bundle/`
 - `miku-grep-skills` `v0.10.1.1` (experimental): `skills/igapyon-miku-grep/`
 - `miku-prompt-lint-skills` `v0.4.1`: `skills/igapyon-miku-prompt-lint/`
