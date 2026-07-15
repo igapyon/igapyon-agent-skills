@@ -38,7 +38,7 @@
   {"name":"60-inspect-section-graphic-recording-images-prompt.md","path":"references/graphic-recording/60-inspect-section-graphic-recording-images-prompt.md","ext":"md","dir":"references/graphic-recording","size":4551,"summary":"見出し単位グラレコ画像 検品プロンプト"},
   {"name":"publish-generated-images-to-article.md","path":"references/graphic-recording/publish-generated-images-to-article.md","ext":"md","dir":"references/graphic-recording","size":5824,"summary":"みくく記事グラレコ画像の公開記事反映手順"},
   {"name":"mikuku-expression-survey-20260707.md","path":"references/mikuku-expression-survey-20260707.md","ext":"md","dir":"references","size":24307,"summary":"mikuku-articles みくく的表現調査 2026-07-07"},
-  {"name":"mikuku-prompt.md","path":"references/mikuku-prompt.md","ext":"md","dir":"references","size":6953,"summary":"生成AI キャラクター `みくく` プロンプト (v20260714a)"},
+  {"name":"mikuku-prompt.md","path":"references/mikuku-prompt.md","ext":"md","dir":"references","size":6953,"summary":"生成AI キャラクター `みくく` プロンプト (v20260716a)"},
   {"name":"png-to-svg-line-mask-experimental.md","path":"references/png-to-svg-line-mask-experimental.md","ext":"md","dir":"references","size":6015,"summary":"PNG to SVG Linework Prompt (experimental, WIP)"},
   {"name":"text-characteristics-classification.md","path":"references/text-characteristics-classification.md","ext":"md","dir":"references","size":40094,"summary":"文章特徴分類"},
   {"name":"article-footer-sections-template.md","path":"templates/article-footer-sections-template.md","ext":"md","dir":"templates","size":7079,"summary":"みくく担当記事の末尾セクションテンプレート"},
