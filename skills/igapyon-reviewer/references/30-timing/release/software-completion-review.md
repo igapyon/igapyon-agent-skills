@@ -131,9 +131,9 @@ Check whether the implemented behavior appears finished:
 - structured data generation/parsing code uses library APIs for escaping,
   encoding, namespaces, JSON syntax, and streaming when appropriate, rather than
   unsafe ad hoc string construction
-- miku-soft or nearby igapyon project source files include the expected
-  `Copyright 2026 Toshiki Iga` and `SPDX-License-Identifier: Apache-2.0`
-  header when that convention applies
+- miku-soft or nearby igapyon project source files follow the confirmed
+  repository convention for copyright year or year range, copyright holder,
+  and `SPDX-License-Identifier: Apache-2.0` when that convention applies
 - non-miku-soft source files are not treated as missing headers unless the
   repository has its own visible header or SPDX convention
 - copied or redistributed OSS libraries under `lib/`, `vendor/`, `runtime/`, or
@@ -343,11 +343,6 @@ Public readiness: ready / not ready / internal-only / unclear
 Release readiness: ready / partial / missing / not applicable
 Test confidence: sufficient / partial / weak / not checked
 ```
-
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
 
 If the result is mostly complete, say what remains before a public release or
 version tag. If the result is unclear, name the evidence that must be checked

@@ -150,10 +150,5 @@ Public link readiness: ready / partial / risky / not checked
 Primary-source URL readiness: ready / partial / risky / not checked
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 Do not fetch private URLs or perform network checks during review mode unless
 the user explicitly asks for link verification and the environment permits it.

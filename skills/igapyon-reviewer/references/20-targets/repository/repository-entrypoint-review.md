@@ -228,11 +228,6 @@ TODO: maintained / missing / stale / not applicable
 Markdown freshness: current / stale / mixed / not checked
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 Do not rewrite the README unless the user asks for revision. In review mode,
 point out missing sections, audience mismatch, and structure problems with
 targeted suggestions.

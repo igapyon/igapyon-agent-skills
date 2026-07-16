@@ -176,10 +176,5 @@ Contents checked by: listing / dry-run / tests / not checked
 Distribution readiness: ready / partial / risky / not checked
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 Do not create, extract, delete, upload, or publish artifacts during review mode
 unless the user explicitly asks to switch to maintenance work.

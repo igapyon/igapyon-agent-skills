@@ -13,8 +13,10 @@ privacy issues, defamation risk, and human-rights concerns.
 Run this review before style, clarity, correctness, AI-text naturalness, or
 technical quality review.
 
-Report serious safety or respect concerns first, even when the text is otherwise
-well written or technically correct.
+This is the review execution order: inspect safety and respect before the other
+lenses. In the consolidated final report, order all findings by severity and
+place safety and respect findings first only within the same severity, as the
+canonical report template requires.
 
 Do not soften or hide a serious concern behind minor wording advice. If a risk
 is uncertain, describe it as a possible reading rather than a confirmed problem.
@@ -162,11 +164,6 @@ issue, not a safety issue.
 Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Safety and Respect Review` section
 unless the user explicitly asks for per-lens reports. Use the canonical fields for
 every finding.
-
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
 
 For short text, keep the review short. For article-length text, list only the
 highest-signal findings first and avoid line-by-line nitpicking unless the user

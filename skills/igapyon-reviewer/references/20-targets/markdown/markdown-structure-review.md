@@ -143,10 +143,5 @@ Structure readiness: ready / partial / broken / not checked
 Agent readability: good / partial / weak / not checked
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 Do not reformat the whole document during review mode unless the user asks for
 revision.

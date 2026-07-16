@@ -100,10 +100,5 @@ When material, add only these lens-specific assessment notes:
 Platform readiness: broad / documented-specific / risky / not checked
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 Do not change scripts or commands during review mode unless the user asks for
 maintenance work.

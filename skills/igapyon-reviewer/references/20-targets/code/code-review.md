@@ -102,14 +102,5 @@ Use these severity levels:
 Contribute findings to the
 [Consolidated Review Report](../../templates/consolidated-review-report.md).
 Do not emit a standalone `Code Review` section unless the user explicitly asks
-for per-lens reports. For each code finding, include:
-
-- Severity
-- Status
-- Location and evidence
-- User or system impact
-- Suggested direction
-
-When no material code issue is found, state the code scope and verification
-that were actually checked in the consolidated assessment notes. Do not emit a
-separate no-issue block or imply that unreviewed paths are correct.
+for per-lens reports. Use the canonical fields for every finding. Express user
+or system impact through the canonical `Why it matters` field.
