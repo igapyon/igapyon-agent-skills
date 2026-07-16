@@ -133,11 +133,6 @@ Scope: technology names / provider names / licenses / products / APIs / mixed
 Verification basis: local docs / official source checked / not checked
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 Do not browse or claim an official spelling was verified unless it was actually
 checked. When uncertain, report the item as "verify official expression" rather
 than as a confirmed error.

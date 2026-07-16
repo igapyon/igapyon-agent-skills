@@ -74,6 +74,62 @@
   - 2026-07-16: model/version、reasoning/runtime、比較 prompt、評価方法、確認日を
     必要な evidence として定義した。no-evidence の独立テストで言語由来の finding が
     出ず、比較性能だけが未確認範囲として残ることを確認した
+- [x] [Medium] 統合レポート契約を全 review lens で完全に一本化する
+  - 正本は `references/templates/consolidated-review-report.md` とし、finding の field 名と
+    並び順を各 reference で再定義しない
+  - `references/20-targets/code/code-review.md` の `Review Output` から独自 field 一覧を除き、
+    `Lens`、`Issue`、`Why it matters` を含む canonical field を使う指示へそろえる
+  - `references/10-perspectives/safety-and-respect/safety-and-respect-review.md` の
+    safety-first は「レビュー時に最初に確認する」と「最終出力では同じ severity 内で先に
+    並べる」を分けて記述し、`SKILL.md` の全体 severity 順と矛盾させない
+  - 各 lens の `Review Output` は canonical template へのリンク、lens 固有の assessment
+    notes、review mode の制約だけを残し、共通契約の重複記述を削減する
+  - `rg -n 'User or system impact|Report serious safety or respect concerns first' skills/igapyon-reviewer`
+    を実行し、旧 field 名と曖昧な優先順位表現が残っていないことを確認する
+  - code finding と safety finding を含む multi-lens forward test を実施し、Critical → High →
+    Medium → Low、同一 severity では safety-first、全 finding が canonical field を使うことを
+    確認する
+  - `mvn generate-resources` を実行し、`skills/igapyon-reviewer/index.json` の差分が変更した
+    Markdown の size など意図した更新だけであることを確認する
+  - 2026-07-17: canonical template を field 名と最終順序の唯一の正本として明記し、
+    Code Review の独自 field と Safety Review の曖昧な順序を修正した。28 lens すべての
+    template 導線を静的検証し、共通契約の重複記述を削減した
+  - 2026-07-17: Codex CLI 0.144.5 / gpt-5.6-sol の fresh session で Code と Safety の
+    multi-lens test を実行し、Critical Safety → Critical Code → Medium Code、canonical field、
+    `REVIEWER WORKFLOW` を確認した
+- [x] [Medium] miku-soft の著作権 header 判定から固定年 `2026` を除く
+  - 対象は `references/00-start-here/project-convention-detection-review.md`、
+    `references/10-perspectives/rights-and-licenses/rights-and-originality-review.md`、
+    `references/30-timing/release/software-completion-review.md` とする
+  - header 例は `Copyright <YEAR> Toshiki Iga` などの placeholder にし、年、権利者、SPDX は
+    対象 repository の文書化された規約または確認済み既存 header から判定する
+  - 単年、年範囲、原著作年を許容し、確認済み規約がない場合は固定年との差を finding にしない
+  - `rg -n 'Copyright 2026 Toshiki Iga' skills/igapyon-reviewer` の結果が 0 件になることを
+    確認する
+  - `2026` 単年、`2026-2027` 年範囲、header 規約不明の3ケースで forward test を実施し、
+    確認済み規約との不一致だけが finding になることを確認する
+  - `mvn generate-resources` を実行し、`skills/igapyon-reviewer/index.json` を更新する
+  - 2026-07-17: 3 reference の固定年を `<YEAR>` と確認済み repository 規約に基づく
+    判定へ変更し、固定文字列の残存 0 件と index 更新を確認した
+  - 2026-07-17: Codex CLI 0.144.5 / gpt-5.6-sol の fresh session で単年一致、年範囲一致、
+    規約不明、確認済み規約との不一致を検証し、不一致ケースだけが finding になることを
+    確認した
+- [x] [Medium] 修正済み `igapyon-reviewer` をローカル Codex 配備先へ同期して再検証する
+  - 上記2タスクの内容と生成済み `index.json` を確定してから実施する
+  - `sh scripts/sync-codex-skill.sh igapyon-reviewer` で source を `$CODEX_HOME/skills/` へ同期する
+  - `sh scripts/sync-codex-skill.sh --check igapyon-reviewer` が終了コード 0 になることを確認する
+  - VS Code の `Developer: Reload Window`、または `codex exec --ephemeral` の fresh session
+    で source 版を読み直す
+  - should-trigger として「`igapyon-reviewer` を使って別のコードをレビューする」、
+    should-not-trigger として単なる名前の言及、存在確認、`igapyon-reviewer` 自体のレビューを
+    実行し、reviewer workflow と meta work が分離されることを確認する
+  - code と safety の multi-lens review を1件実行し、配備版でも canonical report、severity 順、
+    同一 severity の safety-first が守られることを確認する
+  - 実施日、同期 check、activation matrix、multi-lens test の結果をこの項目へ追記して完了にする
+  - 2026-07-17: source をローカル Codex 配備先へ同期し、`--check` の終了コード 0 を確認した
+  - 2026-07-17: Codex CLI 0.144.5 / gpt-5.6-sol の独立した ephemeral session で、別対象の
+    明示レビューは `REVIEWER WORKFLOW`、単純言及、存在確認、self-review は `META WORK` と
+    なることを確認した。multi-lens test でも canonical report と safety-first を確認した
 
 ## AI Agent Current Tasks
 

@@ -221,10 +221,5 @@ Git state: clean / dirty-intentional / dirty-risky / not checked
 Commit readiness: ready / partial / not ready / not requested
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 Do not stage, commit, clean, delete, or ignore files during review mode unless
 the user explicitly asks to switch to maintenance work.

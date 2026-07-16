@@ -118,11 +118,6 @@ When material, add only these lens-specific assessment notes:
 Overall: Low / Medium / High
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 If the text does not feel notably AI-like, say so directly and mention the few
 minor risks, if any.
 

@@ -92,10 +92,14 @@ that convention, check:
 
 ```text
 /*
- * Copyright 2026 Toshiki Iga
+ * Copyright <YEAR> Toshiki Iga
  * SPDX-License-Identifier: Apache-2.0
  */
 ```
+
+Treat `<YEAR>` as a placeholder, not as the current year by default. Confirm
+the exact year, year range, copyright holder, and SPDX identifier from the
+target repository's documented convention or authoritative existing headers.
 
 - Apache-2.0 repository licensing when that is the project convention
 - `THIRD_PARTY_NOTICES.md`, `CONTRIBUTORS.md`, `CONTRIBUTING.md`, and related
@@ -178,11 +182,6 @@ Evidence: ...
 Convention-specific checks applied: ...
 Convention-specific checks not applied: ...
 ```
-
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
 
 Do not let this section dominate the review when the classification is obvious.
 Use it to prevent over-applying miku-soft rules to non-miku-soft targets.

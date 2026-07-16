@@ -88,10 +88,5 @@ When material, add only these lens-specific assessment notes:
 Visible risk: low / medium / high / critical / unclear
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 If a real secret may have been committed or exposed, recommend removal and
 rotation. Do not print the secret value in the review output.

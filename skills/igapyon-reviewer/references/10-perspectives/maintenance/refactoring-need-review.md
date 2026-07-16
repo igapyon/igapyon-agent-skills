@@ -153,10 +153,5 @@ Pause recommended: yes / no / partial / not checked
 Scope: code / docs / Agent Skill / generated artifacts / repository layout / mixed
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 Do not perform refactoring during review mode unless the user explicitly asks to
 switch to maintenance work.

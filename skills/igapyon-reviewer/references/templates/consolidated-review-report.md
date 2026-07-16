@@ -4,6 +4,10 @@ Use this template for the final response unless the user explicitly requests
 separate reports for each review lens. Include only fields supported by the
 reviewed evidence.
 
+This template is the sole source of truth for finding field names and final
+ordering. Individual review lenses may define lens-specific assessment notes,
+but must not rename, omit, reorder, or redefine the canonical finding fields.
+
 ```text
 Review
 
@@ -37,6 +41,10 @@ it is not a finding severity. Never let a lens-specific rating replace
 Order findings globally by severity. Within the same severity, place safety
 and respect findings first. Merge duplicate root causes across lenses and cite
 the strongest evidence once.
+
+The order in which review lenses are executed is separate from final report
+ordering. For example, run safety and respect checks first when required, then
+apply the global severity order above when composing the final report.
 
 ## Multi-Lens Example
 

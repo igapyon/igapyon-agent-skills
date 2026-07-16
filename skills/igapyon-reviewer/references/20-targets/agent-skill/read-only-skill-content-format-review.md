@@ -134,10 +134,5 @@ Primary content format: Markdown / JSON / JSONL / XML / mixed / unclear
 Format choice: appropriate / questionable / risky / not checked
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 Do not convert or reformat content during review mode unless the user explicitly
 asks to switch to maintenance work.

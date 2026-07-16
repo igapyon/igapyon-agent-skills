@@ -190,11 +190,6 @@ Strictness mode: strict / balanced / exploratory / unclear
 Missing-info behavior: investigate / ask user / assume / unclear
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 Do not claim that a fact was verified unless the evidence was actually
 inspected. When the review cannot determine whether a fact is supported, report
 the missing evidence rather than filling it in.

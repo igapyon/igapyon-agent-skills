@@ -107,10 +107,5 @@ Commit suitability: suitable / risky / unclear
 Release suitability: suitable / risky / not applicable
 ```
 
-Lens-specific notes and ratings never replace finding severity, status, or
-location and evidence. When this lens finds no material issue, do not emit a
-separate no-issue block; preserve checked scope, verification, and residual risk
-in the consolidated assessment notes.
-
 Do not regenerate, delete, stage, or ignore files during review mode unless the
 user explicitly asks to switch to maintenance work.
