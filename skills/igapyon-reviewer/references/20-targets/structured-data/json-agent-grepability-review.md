@@ -207,23 +207,24 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when JSON grepability is in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `JSON Agent Grepability Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-JSON Agent Grepability Review
-
 Target: ...
 Format: JSON / JSONL / unclear
 Primary use: generated index / metadata / report / CLI output / package data / dataset / unclear
 Format choice: appropriate / questionable / wrong / not checked
 Line-oriented search readiness: good / partial / weak / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
+
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 Do not reformat JSON during review mode unless the user explicitly asks to
 switch to maintenance work.

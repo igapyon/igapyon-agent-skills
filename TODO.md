@@ -4,6 +4,77 @@
 - [ ] skill 配布先が必要になったら mirror 方針を決める
 - [ ] UI metadata が必要になったら skill 用の `agents/openai.yaml` を検討する
 
+## igapyon-reviewer 改善 TODO
+
+- [x] `SKILL.md` に全レビュー共通の短い実行・検証フローを追加する
+  - 対象範囲を確定する
+  - 必要な reference だけを選択する
+  - finding の根拠をファイル、行番号、コマンド結果などで示す
+  - 実行していない検証と残余リスクを明示する
+  - 2026-07-16: `Core Review Workflow` として反映した
+- [x] 汎用 Code Review の reference と `references/INDEX.md` の導線を追加する
+  - correctness、regression、error handling、security、test evidence を扱う
+  - Software Completion Review との役割の違いを明記する
+  - 2026-07-16: `references/20-targets/code/code-review.md` を追加した
+- [x] Code Review の forward test で見つかった `.DS_Store` 同期契約の不整合を修正する
+  - `scripts/sync-codex-skill.sh` から `--delete-excluded` を外し、除外対象を
+    drift として報告・削除しないようにした
+  - 一時 Codex home で `--check` と同期後も配備先の `.DS_Store` が残ることを確認した
+- [x] project convention の分類を複数軸へ整理する
+  - project family、artifact type、公開・ライセンス形態を分離する
+  - `igapyon-managed Agent Skill` と OSS / private-proprietary を併記可能にする
+  - classification 出力候補から欠落している `igapyon-managed Agent Skill` を修正する
+  - miku-soft、Maven、license、Agent Skill 固有規則を個別条件で適用する
+  - 2026-07-16: `Project Convention Detection Review` を更新した
+- [x] 複数 review lens の出力統合規則を定義する
+  - 通常は単一の severity 順 findings に統合する
+  - safety-first と全体 severity 順の優先関係を明記する
+  - 重複 finding と「問題なし」ブロックの扱いを定める
+  - 2026-07-16: `Output Integration` として反映した
+- [x] `references/INDEX.md` の参照条件を明確にする
+  - AI Text Naturalness は AI らしさが論点の場合に限定する
+  - Japanese Public Text Final Check は公開前の最終確認に限定する
+  - Agent Skill CLI Integration Review は CLI/runtime がある場合に限定する
+  - Read-Only Skill Content Format Review は reference-only の場合に限定する
+  - 2026-07-16: target と timing の導線へ条件を追記した
+- [x] `igapyon-reviewer` 自体に関する meta work を reviewer workflow の発火対象から除外する
+  - 対応する prompt lint Rule: `agent-skill/activation-boundary-mismatch`
+  - `skills/igapyon-reviewer/SKILL.md` の frontmatter と本文に、単なる名前の言及、
+    存在確認、この skill 自体の説明・レビュー・更新は meta work として扱う境界を追加する
+  - should-trigger 例として「`igapyon-reviewer` を使ってコードをレビューする」を確認する
+  - should-not-trigger 例として「`igapyon-reviewer` とは何か」、
+    「`igapyon-reviewer` の `SKILL.md` をレビュー・更新する」を確認する
+  - fresh session または同等の activation matrix で、reviewer workflow と meta work が
+    正しく分離されることを検証する
+  - 2026-07-16: frontmatter と本文へ meta-work carve-out を追加し、独立した
+    activation matrix で should-trigger 2件、should-not-trigger 3件を確認した
+- [x] 全 review lens の出力を、単一の再利用可能な統合レポート契約へそろえる
+  - 対応する prompt lint Rule: `context/weak-template`
+  - `references/templates/consolidated-review-report.md` などに、severity、場所・根拠、
+    影響、提案、確認済み／不確実／未確認の区別を含む共通 shape を定義する
+  - `SKILL.md` から共通 shape を直接案内し、各 reference の `Review Output` は
+    standalone report を要求せず、統合 findings に追加する lens 固有 field だけを示す
+  - AI Text Naturalness の `Overall: Low / Medium / High` などの lens 固有 rating は、
+    finding severity と混同しない位置づけを明記する
+  - safety-first、全体 severity 順、重複 finding の統合、未実施範囲の明示を含む
+    multi-lens の最小例を追加する
+  - 変更後に Markdown link、`index.json` 再生成差分、代表的な multi-lens 出力を検証する
+  - 2026-07-16: canonical template と multi-lens 例を追加し、全 lens の
+    `Review Output` を統合契約へ接続した。独立テストで単一レポート、severity 順、
+    evidence、lens 統合、未確認範囲の出力を確認した
+- [x] Prompt Language Checks を、モデル・runtime・評価根拠がある場合だけ適用する規則へ直す
+  - 対応する prompt lint Rule: `context/stale-or-unversioned-context`
+  - `references/20-targets/agent-skill/agent-skill-review.md` の
+    `Prompt Language Checks` と対応する severity 例を更新する
+  - 英語のほうが安定するという判断を使う場合は、対象モデル、reasoning/runtime、
+    評価方法、確認日または根拠を記録する
+  - 根拠がない場合は Japanese-only を finding にせず、対象環境で比較評価する候補として扱う
+  - 日本語のみで書かれた skill を、言語だけを理由に自動で Low finding にしない
+    forward-test case を追加する
+  - 2026-07-16: model/version、reasoning/runtime、比較 prompt、評価方法、確認日を
+    必要な evidence として定義した。no-evidence の独立テストで言語由来の finding が
+    出ず、比較性能だけが未確認範囲として残ることを確認した
+
 ## AI Agent Current Tasks
 
 This section tracks active work items for AI agents.

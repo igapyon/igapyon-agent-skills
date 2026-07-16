@@ -163,22 +163,23 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when archive or package contents are in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Archive and Package Contents Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Archive and Package Contents Review
-
 Artifact: ...
 Artifact role: runtime / source / npm package / jar / skill bundle / docs / unclear
 Contents checked by: listing / dry-run / tests / not checked
 Distribution readiness: ready / partial / risky / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
+
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 Do not create, extract, delete, upload, or publish artifacts during review mode
 unless the user explicitly asks to switch to maintenance work.

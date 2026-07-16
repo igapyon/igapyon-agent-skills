@@ -159,24 +159,14 @@ issue, not a safety issue.
 
 ## Review Output
 
-When findings exist, lead with a concise block like this:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Safety and Respect Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
 
-```text
-Safety and Respect Review
-
-Critical / High / Medium / Low:
-- Finding: ...
-  Why it matters: ...
-  Safer direction: ...
-```
-
-When no issues are found, say so briefly:
-
-```text
-Safety and Respect Review
-
-No major safety, respect, privacy, defamation, or human-rights concerns found.
-```
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 For short text, keep the review short. For article-length text, list only the
 highest-signal findings first and avoid line-by-line nitpicking unless the user

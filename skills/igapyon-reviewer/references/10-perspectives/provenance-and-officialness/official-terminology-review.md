@@ -122,20 +122,21 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when official terminology is in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Official Terminology Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Official Terminology Review
-
 Scope: technology names / provider names / licenses / products / APIs / mixed
 Verification basis: local docs / official source checked / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
+
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 Do not browse or claim an official spelling was verified unless it was actually
 checked. When uncertain, report the item as "verify official expression" rather

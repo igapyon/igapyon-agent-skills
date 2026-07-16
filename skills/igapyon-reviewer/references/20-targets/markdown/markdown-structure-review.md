@@ -132,29 +132,21 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when Markdown structure is in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Markdown Structure Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Markdown Structure Review
-
 Structure readiness: ready / partial / broken / not checked
 Agent readability: good / partial / weak / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
 
-When no material issue is found:
-
-```text
-Markdown Structure Review
-
-No major title, heading, fence, list, table, link, agent-readability, or
-block-structure issue found.
-```
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 Do not reformat the whole document during review mode unless the user asks for
 revision.

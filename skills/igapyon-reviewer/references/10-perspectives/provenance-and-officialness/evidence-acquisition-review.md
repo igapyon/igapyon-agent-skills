@@ -177,22 +177,23 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when evidence acquisition is in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Evidence Acquisition Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Evidence Acquisition Review
-
 Scope: code generation / prompt / Agent Skill / docs / mixed
 Evidence boundary: clear / partial / missing
 Strictness mode: strict / balanced / exploratory / unclear
 Missing-info behavior: investigate / ask user / assume / unclear
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
+
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 Do not claim that a fact was verified unless the evidence was actually
 inspected. When the review cannot determine whether a fact is supported, report

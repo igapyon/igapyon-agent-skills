@@ -139,29 +139,21 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when public URLs or links are in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Public URL and Link Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Public URL and Link Review
-
 Public link readiness: ready / partial / risky / not checked
 Primary-source URL readiness: ready / partial / risky / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
 
-When no material issue is visible:
-
-```text
-Public URL and Link Review
-
-No obvious broken, private, localhost, token-bearing, or stale public-link issue
-is visible from the reviewed material.
-```
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 Do not fetch private URLs or perform network checks during review mode unless
 the user explicitly asks for link verification and the environment permits it.

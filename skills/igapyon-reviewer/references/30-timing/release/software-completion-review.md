@@ -331,25 +331,23 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when judging completion:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Software Completion Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Software Completion Review
-
 Completion judgment: complete / mostly complete / not complete / unclear
 Public readiness: ready / not ready / internal-only / unclear
 Release readiness: ready / partial / missing / not applicable
 Test confidence: sufficient / partial / weak / not checked
-
-Blocking findings:
-- Severity: ...
-  Issue: ...
-  Why it blocks completion: ...
-  Suggested direction: ...
-
-Non-blocking follow-ups:
-- ...
 ```
+
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 If the result is mostly complete, say what remains before a public release or
 version tag. If the result is unclear, name the evidence that must be checked

@@ -56,26 +56,14 @@ Keep this review small:
 
 ## Review Output
 
-Use this format when a final Japanese text check is requested:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Japanese Public Text Final Check` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
 
-```text
-Japanese Public Text Final Check
-
-Findings:
-- ...
-
-Small fixes:
-- ...
-```
-
-When no material issue is found:
-
-```text
-Japanese Public Text Final Check
-
-No major typo, notation, comma, sentence-ending, or publication-polish issue
-found.
-```
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 If the text needs deeper work than a final check, say so and name the review
 that should take priority, such as safety and respect, AI text naturalness, or

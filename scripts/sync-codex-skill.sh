@@ -116,7 +116,7 @@ if [ "$MODE" = check ]; then
   FILTERED_FILE=$(mktemp "${TMPDIR:-/tmp}/sync-codex-skill-filtered.XXXXXX")
   trap 'rm -f "$TMP_FILE" "$FILTERED_FILE"' EXIT HUP INT TERM
 
-  LC_ALL=C rsync -nrlci --delete --delete-excluded --exclude='.DS_Store' \
+  LC_ALL=C rsync -nrlci --delete --exclude='.DS_Store' \
     "$SOURCE_DIR/" "$DEST_DIR/" >"$TMP_FILE"
 
   # macOS rsync 2.6 emits `.f..T....` for content-identical files whose only
@@ -134,7 +134,7 @@ if [ "$MODE" = check ]; then
 fi
 
 mkdir -p "$DEST_PARENT" "$DEST_DIR"
-rsync -a --delete --delete-excluded --exclude='.DS_Store' \
+rsync -a --delete --exclude='.DS_Store' \
   "$SOURCE_DIR/" "$DEST_DIR/"
 
 echo "Synced skill: $SKILL_NAME"

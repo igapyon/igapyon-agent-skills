@@ -12,23 +12,32 @@ paths, sizes, or summaries need to be checked mechanically.
 - [Safety and Respect Review](10-perspectives/safety-and-respect/safety-and-respect-review.md)
   is the first check for public, semi-public, interpersonal, user-facing, or
   community-facing text.
+- [Consolidated Review Report](templates/consolidated-review-report.md) is the
+  canonical final output shape for all selected review lenses.
 
 ## By Target
 
 Use these entries when the review target is clear.
 
 - Text and Japanese writing:
-  [AI Text Naturalness](10-perspectives/writing/ai-text-naturalness-review.md),
-  [Writing Style](10-perspectives/writing/writing-style-review.md),
-  [Japanese Public Text Final Check](10-perspectives/writing/japanese-public-text-final-check.md)
+  [Writing Style](10-perspectives/writing/writing-style-review.md) for ordinary
+  style review; [AI Text Naturalness](10-perspectives/writing/ai-text-naturalness-review.md)
+  only when AI-like impression or author voice is in scope; [Japanese Public
+  Text Final Check](10-perspectives/writing/japanese-public-text-final-check.md)
+  only for a requested final Japanese publication pass
+- Code:
+  [Code Review](20-targets/code/code-review.md) for correctness, regressions,
+  failure handling, security/privacy risks, and test evidence
 - Markdown:
   [Markdown Structure Review](20-targets/markdown/markdown-structure-review.md)
 - Repository:
   [Repository Entrypoint Review](20-targets/repository/repository-entrypoint-review.md)
 - Agent Skill:
-  [Agent Skill Review](20-targets/agent-skill/agent-skill-review.md),
-  [Agent Skill CLI Integration Review](20-targets/agent-skill/agent-skill-cli-integration-review.md),
+  [Agent Skill Review](20-targets/agent-skill/agent-skill-review.md) always;
+  [Agent Skill CLI Integration Review](20-targets/agent-skill/agent-skill-cli-integration-review.md)
+  only when a CLI, runtime, helper command, or external tool is involved;
   [Read-Only Skill Content Format Review](20-targets/agent-skill/read-only-skill-content-format-review.md)
+  only for reference-only skills or content-format decisions
 - CLI / tool:
   [CLI and Tool UX Review](20-targets/cli/cli-tool-ux-review.md)
 - Docs and examples:
@@ -49,7 +58,8 @@ Use these entries when the review is tied to a workflow moment.
 - Draft or publication preparation:
   [Safety and Respect](10-perspectives/safety-and-respect/safety-and-respect-review.md),
   [Writing Style](10-perspectives/writing/writing-style-review.md),
-  [Japanese Public Text Final Check](10-perspectives/writing/japanese-public-text-final-check.md),
+  [Japanese Public Text Final Check](10-perspectives/writing/japanese-public-text-final-check.md)
+  when final Japanese polish is requested,
   [Official Terminology](10-perspectives/provenance-and-officialness/official-terminology-review.md),
   [Public URL and Link Review](10-perspectives/provenance-and-officialness/public-url-link-review.md)
 - Commit or handoff:
@@ -120,6 +130,7 @@ user explicitly asks for miku-soft / igapyon conventions.
   - `maintenance/`: refactoring and accumulated-structure review.
 - `20-targets/`: target-specific reviews.
 - `30-timing/`: workflow-moment reviews.
+- `templates/`: reusable output contracts shared by all review lenses.
 
 Files live in one primary directory, but many reviews are intentionally linked
 from several sections above.
