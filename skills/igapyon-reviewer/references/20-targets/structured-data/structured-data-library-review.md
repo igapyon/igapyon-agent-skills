@@ -142,22 +142,23 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when structured data library choice is in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Structured Data Library Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Structured Data Library Review
-
 Target format: XML / JSON / JSONL / YAML / CSV / other / unclear
 Processing model: streaming / in-memory / mixed / unclear
 Library choice: appropriate / questionable / risky / not checked
 License fit: compatible / unclear / risky / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
+
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 Do not replace libraries or rewrite generation code during review mode unless
 the user explicitly asks to switch to maintenance work.

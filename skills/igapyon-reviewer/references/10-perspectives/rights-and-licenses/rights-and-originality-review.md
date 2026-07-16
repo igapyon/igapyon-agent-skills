@@ -376,29 +376,20 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when rights or originality are in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Rights and Originality Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Rights and Originality Review
-
 Visible risk: low / medium / high / critical / unclear
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Verification needed: ...
-  Safer direction: ...
 ```
 
-If no visible issue is found, say so carefully:
-
-```text
-Rights and Originality Review
-
-No obvious rights, license, attribution, or extreme-similarity issue is visible
-from the reviewed material. This is not a legal clearance.
-```
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 Do not rewrite, remove, or replace material during review mode unless the user
 explicitly asks for revision or cleanup.

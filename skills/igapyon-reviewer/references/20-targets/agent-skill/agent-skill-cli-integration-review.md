@@ -118,22 +118,23 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when CLI-backed Agent Skills are in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Agent Skill CLI Integration Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Agent Skill CLI Integration Review
-
 Backend pattern: cli-only / cli-preferred / mixed / unclear
 Runtime discovery: bundled / external / broad search / missing / not checked
 Operation mapping: clear / partial / weak / not checked
 Execution safety: clear / risky / unclear / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
+
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 Do not edit skill instructions, runtime files, or bundled artifacts during
 review mode unless the user explicitly asks to switch to maintenance work.

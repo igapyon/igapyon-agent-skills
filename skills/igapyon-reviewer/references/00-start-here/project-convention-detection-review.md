@@ -26,22 +26,25 @@ License 2.0, source file headers, `.mvn/jvm.config`, `index.json`,
 `THIRD_PARTY_NOTICES.md`, `CONTRIBUTORS.md`, `*-done` branches, or
 `lib/*-sources.jar`.
 
-## Classification
+## Classification Dimensions
 
-Classify the target before applying convention-specific findings:
+Record these dimensions separately before applying convention-specific findings.
+Do not collapse project family, artifact type, and distribution status into one
+label because they can coexist.
 
-- `miku-soft / nearby igapyon`: clearly part of the miku-soft series or nearby
-  igapyon repositories, or the user says to apply that convention
-- `igapyon-managed Agent Skill`: an Agent Skill managed in igapyon's local skill
-  style, especially under `skills/` with `SKILL.md` and `index.json`
-- `generic OSS`: public or reusable open source project, but not clearly
-  miku-soft
-- `private/proprietary`: private, internal, commercial, or non-OSS source
-- `unknown`: not enough information to classify safely
+- Project family: `miku-soft / nearby igapyon`, `other`, or `unknown`
+- Artifact type: `igapyon-managed Agent Skill`, software package, repository,
+  release artifact, document, or other relevant type
+- Distribution and license context: `public OSS`, `private/proprietary`,
+  internal-only, mixed, or `unknown`
 
-If classification is uncertain, say what evidence is missing and use generic
+For example, an `igapyon-managed Agent Skill` may also be `public OSS` or
+`private/proprietary`; that artifact type alone does not imply miku-soft source
+headers, Apache-2.0, Maven configuration, or public release obligations.
+
+If any dimension is uncertain, say what evidence is missing and use generic
 checks. Do not infer miku-soft conventions merely from Java, Node.js, Markdown,
-CLI, Maven, npm, or README presence.
+CLI, Maven, npm, README presence, or an `index.json` file.
 
 ## Evidence to Check
 
@@ -76,11 +79,14 @@ These checks can apply broadly, regardless of project convention:
 - CLI usability when the project provides a CLI
 - quickstart examples being copy-pasteable
 
-## miku-soft and Nearby igapyon Checks
+## Convention-Specific Checks
 
-Apply these actively only when the target is classified as `miku-soft / nearby
-igapyon`, `igapyon-managed Agent Skill`, or the user explicitly asks for those
-conventions:
+Apply each rule only when its own condition is met. Do not treat an
+`igapyon-managed Agent Skill` as evidence that every miku-soft repository rule
+applies.
+
+For `miku-soft / nearby igapyon` projects, or when the user explicitly asks for
+that convention, check:
 
 - miku-soft source file headers such as:
 
@@ -97,23 +103,26 @@ conventions:
 - Java / Maven `.mvn/jvm.config` IPv4-preference settings
 - copied Java `lib/*.jar` artifacts paired with matching `lib/*-sources.jar`
   when that convention or license expectation applies
-- `index.json` required and referenced from `SKILL.md` for igapyon-managed
-  Agent Skills
-- lean `SKILL.md` with detailed rules under `references/`
-- no cross-skill relative references such as `../other-skill/...`
 - `*-done` branch warning for nearby igapyon workflows
 - first-release or artifact naming conventions used by the miku-soft series
 
-For non-miku-soft targets, these are not default requirements. They may still
-be useful examples, but report them as optional inspiration unless the target's
-own docs adopt them.
+For an `igapyon-managed Agent Skill`, check independently of its distribution
+or project family:
 
-## OSS and Proprietary Distinction
+- `index.json` is present and referenced from `SKILL.md` as a discovery index
+- `SKILL.md` stays lean and places detailed material under `references/`
+- no runtime instruction reaches another skill's private files through a
+  cross-skill relative path such as `../other-skill/...`
+
+For other projects, report miku-soft practices only as optional inspiration
+unless the target's own documentation adopts them.
+
+## Distribution and License Context
 
 Do not require a project to be open source merely because it contains source
 code.
 
-For generic OSS projects:
+For public OSS projects:
 
 - check whether the project has a license if it is intended for reuse or public
   distribution
@@ -129,7 +138,7 @@ For private or proprietary projects:
 - check whether the repository's own internal copyright, SPDX, notice, or
   attribution convention is being followed if it is visible
 
-For unknown projects:
+For unknown distribution or license context:
 
 - avoid strong findings based on igapyon-specific preferences
 - phrase convention-specific gaps as questions or verification needs
@@ -140,9 +149,10 @@ For unknown projects:
 
 Use these severity levels:
 
-- High: a convention-specific rule is applied to the wrong project type in a
-  way that would mislead the user, for example requiring Toshiki Iga copyright
-  headers on unrelated private source.
+- High: a convention-specific rule is applied to the wrong project family,
+  artifact type, or distribution context in a way that would mislead the user,
+  for example requiring Toshiki Iga copyright headers on unrelated private
+  source.
 - High: the target is clearly miku-soft / nearby igapyon and misses a convention
   that affects release legality, package safety, or Agent Skill activation.
 - Medium: the project classification is unclear and a convention-dependent
@@ -154,14 +164,25 @@ Use these severity levels:
 
 ## Review Output
 
-When convention choice matters, include a short classification before findings:
+Contribute findings to the [Consolidated Review Report](../templates/consolidated-review-report.md). Do not emit a standalone `Project Convention Detection Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Project convention: miku-soft / nearby igapyon / generic OSS / private-proprietary / unknown
+Project family: miku-soft / nearby igapyon / other / unknown
+Artifact type: igapyon-managed Agent Skill / software package / repository / release artifact / document / other
+Distribution and license context: public OSS / private-proprietary / internal-only / mixed / unknown
 Evidence: ...
 Convention-specific checks applied: ...
 Convention-specific checks not applied: ...
 ```
+
+Lens-specific notes and ratings never replace finding severity, status, or
+location and evidence. When this lens finds no material issue, do not emit a
+separate no-issue block; preserve checked scope, verification, and residual risk
+in the consolidated assessment notes.
 
 Do not let this section dominate the review when the classification is obvious.
 Use it to prevent over-applying miku-soft rules to non-miku-soft targets.
