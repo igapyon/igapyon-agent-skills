@@ -22,8 +22,11 @@ sources:
 
 # Compaction Modes
 
-Use these modes when compacting Agent Skills or skill-adjacent runtime
-instructions. If the user does not specify a mode, use `conservative`.
+Use this detailed reference when inventory treatment, code/example
+preservation, representation selection, round-trip comparison, or mode ambiguity
+matters. Do not read it for a small local conservative edit when the core
+contract in `SKILL.md` is sufficient. If the user does not specify a mode, use
+`conservative`.
 
 ## Mode Summary
 

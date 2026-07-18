@@ -1,0 +1,16 @@
+{
+  "mode": "conservative",
+  "allowedLossByMode": {
+    "conservative": ["empty owner", "placeholder follow-up fields"],
+    "structural": ["empty owner", "placeholder follow-up fields", "connective prose"],
+    "summary": ["empty owner", "placeholder follow-up fields", "secondary prose"]
+  },
+  "requiredSubstrings": [
+    "INC-2026-0717-04",
+    "https://ops.example.invalid/incidents/INC-2026-0717-04",
+    "2026-07-17T08:15:04+09:00 ERROR queue depth=941",
+    "queue-drain-17",
+    "FAILED (expected < 100, actual 941)",
+    "unknown fields"
+  ]
+}
