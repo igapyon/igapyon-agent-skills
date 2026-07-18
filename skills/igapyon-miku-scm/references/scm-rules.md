@@ -14,6 +14,15 @@ This is the initial rule entry point for `igapyon-miku-scm`. Add detailed rules 
 
 - Treat `pr soft reset recommit` and `pr reset recommit` as explicit requests to run the `igapyon-github-writer` PR Soft Reset Recommit workflow.
 - Delegate PR draft composition, backup-branch creation, soft reset, and recommit behavior to `igapyon-github-writer`; do not duplicate that implementation in this skill.
+- Before delegating, require a clean working tree and run `git fetch origin` so the reset base is not resolved from stale remote-tracking information.
+- Resolve the reset base, then require it to be an ancestor of the current `HEAD`:
+
+```sh
+git merge-base --is-ancestor <base> HEAD
+```
+
+- If the ancestry check fails, stop. Do not soft-reset onto the advanced base because preserving the old index can accidentally record removal of changes that exist only on the new base. Recover by starting from the refreshed base and carrying forward only the new work, or use a separately approved rebase workflow.
+- Do not run this workflow from a branch ending in `-done`. Treat that branch as frozen and move legitimate follow-up work to a new branch from the refreshed base.
 - After the delegated workflow succeeds, immediately run:
 
 ```sh
@@ -35,22 +44,85 @@ Proceed only when all of these conditions hold:
 - the human explicitly says the displayed commit is OK and authorizes publication
 - the target `<current-branch>-done` local branch does not already exist
 
-After explicit approval, run these commands in order and stop immediately if any command fails:
+After explicit approval, run `git fetch origin`, resolve `<current-branch>`, and determine whether `origin/<current-branch>` already exists.
+
+- For a new remote branch, use normal initial publication and establish its upstream:
+
+```sh
+git push -u origin HEAD
+```
+
+- Only when the same remote branch already exists and the reviewed recommit intentionally rewrote its history, use:
 
 ```sh
 git push --force-with-lease origin HEAD
-git pull
-git branch -m "$(git branch --show-current)" "$(git branch --show-current)-done"
+```
+
+Treat `git push --force-with-lease origin HEAD` as an authorized remote history update only for this reviewed rewrite case. Do not replace it with plain `--force`, and do not use force for a new remote branch.
+
+After a successful push, do not run `git pull`. Fetch and compare the pushed remote feature branch with local `HEAD` instead:
+
+```sh
+git fetch origin
+git rev-list --left-right --count HEAD...origin/<current-branch>
+```
+
+Require the comparison result to be `0 0`. Only after it matches, run:
+
+```sh
+git branch -m "<current-branch>" "<current-branch>-done"
 git status -sb
 ```
 
-Treat `git push --force-with-lease origin HEAD` as an authorized remote history update only for this post-review workflow. Do not replace it with plain `--force`.
+Run the selected push, remote verification, rename, and status steps in order and stop immediately if any step fails. Do not treat earlier approval to run PR Soft Reset Recommit as approval to publish. Require the human's OK after displaying the new commit log. If push or remote verification fails, do not rename the branch. Do not create a Pull Request in this sequence.
 
-Do not treat earlier approval to run PR Soft Reset Recommit as approval to publish. Require the human's OK after displaying the new commit log. If push is rejected by the lease check, stop without pulling or renaming the branch and report the rejection. Do not create a Pull Request in this sequence.
+## Next Work Branch After PR Completion
+
+Run this workflow only after the Pull Request has been created and merged, and then the human explicitly instructs the agent to create the next work branch. Do not infer merge completion from local Git state, push output, or branch naming. Do not create the next work branch immediately after push or local `-done` rename while the PR is still open or its merge is unconfirmed.
+
+Interpret a local branch name ending in `-done` only as an operational marker that the post-recommit publication sequence probably reached the rename performed after push. It does not prove that a Pull Request was created or merged. Never use `-done` alone to decide that PR work is complete; require the human's explicit statement that the PR was merged before running this workflow.
+
+Treat a `-done` branch as frozen: do not add new work, stage changes, create commits, or run PR Soft Reset Recommit on it. If the prior PR was merged and the human requests continued work, refresh the base and create the next work branch first. If the prior PR was not merged but a correction is required, stop and require an explicitly designed recovery path instead of silently continuing on `-done`.
+
+Build the new branch name as:
+
+```text
+<base>-tiga<MMDD><hour-code><minute-tens-code><minute-ones-code>
+```
+
+Use these naming rules:
+
+- `<base>` is the base branch name, such as `devel`.
+- `tiga` identifies the user.
+- `<MMDD>` is the local month and day, such as `0718` for July 18.
+- Encode hour `0` through `23` with one zero-origin alphabet character: `a=0`, `b=1`, through `x=23`.
+- Encode the two decimal minute digits separately with zero-origin alphabet characters: `a=0`, `b=1`, through `j=9`.
+- Therefore minute `00` is `aa`, minute `45` is `ef`, and minute `59` is `fj`.
+
+For example, `devel-tiga0718tef` means base `devel`, user `tiga`, July 18, 19:45.
+
+After resolving a unique branch name from the current local date and time, run:
+
+```sh
+git fetch origin
+git switch -c devel-tiga0718tef origin/devel
+git status -sb
+```
+
+Replace the example branch and base with the resolved values. Stop if fetch fails or if the resolved local branch already exists. Report the final branch and status.
+
+For follow-up work accidentally committed after the previous PR content, prefer this recovery shape after human authorization:
+
+1. Preserve the current `HEAD` with a local backup branch.
+2. Run `git fetch origin` and create a new work branch from the refreshed base.
+3. Carry forward only commits or patches that contain work not already merged into the base.
+4. Verify the resulting diff against the base before publication.
+5. Publish the new remote branch with `git push -u origin HEAD`; do not force-push it.
 
 ## Initial Safety Rules
 
 - Inspect before changing.
+- Before `git add` or `git commit`, apply the mandatory human confirmation gate in [version-increment-confirmation.md](version-increment-confirmation.md).
 - Resolve the exact repository, branch, remote, commit, tag, release, and version target needed for the request.
 - Preserve unrelated working-tree changes.
 - Treat local Git work and remote GitHub work as separate operations.

@@ -27,9 +27,10 @@ Do not perform remote mutations, history rewrites, tag changes, release publicat
 3. Read [references/scm-rules.md](references/scm-rules.md).
 4. For local Git status inspection, read [references/local-git-readonly.md](references/local-git-readonly.md).
 5. For public GitHub source, branch, Issue, or Release inspection, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md).
-6. Preserve unrelated user changes.
-7. Separate local preparation from remote GitHub operations.
-8. Report what was inspected, changed, and left pending.
+6. Before any requested `git add` or `git commit`, read and follow [references/version-increment-confirmation.md](references/version-increment-confirmation.md).
+7. Preserve unrelated user changes.
+8. Separate local preparation from remote GitHub operations.
+9. Report what was inspected, changed, and left pending.
 
 ## Boundaries
 
