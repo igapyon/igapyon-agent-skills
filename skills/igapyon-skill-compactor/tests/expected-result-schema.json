@@ -1,45 +1,31 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "igapyon-skill-compactor test result",
+  "title": "igapyon-skill-compactor artifact evaluation",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "actual", "pass", "reason", "target", "notes"],
+  "required": ["verdict", "assertions", "reason", "notes"],
   "properties": {
-    "id": {
+    "verdict": {
       "type": "string",
-      "description": "Test case id from a JSONL prompt file."
+      "enum": ["pass", "fail"]
     },
-    "actual": {
-      "type": "string",
-      "enum": [
-        "activate",
-        "do-not-activate",
-        "mention-only",
-        "preserve",
-        "conservative",
-        "structural",
-        "summary",
-        "route",
-        "ask-human",
-        "do-not-apply-requested-shape",
-        "fail"
-      ]
-    },
-    "pass": {
-      "type": "boolean"
-    },
-    "reason": {
-      "type": "string"
-    },
-    "target": {
-      "type": ["string", "null"],
-      "description": "Expected or actual routed file when the test is a routing case."
-    },
-    "notes": {
-      "type": ["array", "null"],
+    "assertions": {
+      "type": "array",
       "items": {
-        "type": "string"
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "pass", "evidence"],
+        "properties": {
+          "id": { "type": "string" },
+          "pass": { "type": "boolean" },
+          "evidence": { "type": "string" }
+        }
       }
+    },
+    "reason": { "type": "string" },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
     }
   }
 }

@@ -279,7 +279,15 @@ Run all prompt tests:
 node skills/igapyon-skill-compactor/tests/run-codex-prompt-tests.mjs
 ```
 
-Results are written under `tests/results/` and are ignored by Git.
+Results are written under the repository-local,
+Git-ignored `workplace/skill-compactor-tests/` directory.
+Every run gets a new directory and records the source/installed hashes, Git
+commit, Codex version, model, reasoning level, sandbox, raw events, tool trace,
+and deterministic assertions. The runner sends only the case prompt to the SUT;
+hidden expectations are supplied later to an independent evaluator. It fails on
+missing or malformed output, wrong activation or route, forbidden reads/writes,
+critical-content loss, or evaluator failure. Use `--source-only` only while
+developing an intentionally unsynchronized source tree.
 
 ## Maintenance Notes
 

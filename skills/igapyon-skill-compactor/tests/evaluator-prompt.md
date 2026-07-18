@@ -1,54 +1,28 @@
 ---
-title: Codex Test Evaluator Prompt
-description: Prompt used by codex exec to evaluate igapyon-skill-compactor test cases.
+title: Compaction Artifact Evaluator
+description: Evaluates a raw compaction result after the SUT run; expectations are never sent to the SUT.
 topics:
   - tests
-  - codex-exec
-  - evaluation
+  - independent-evaluation
   - agent-skills
 category: test
-status: draft
+status: stable
 audience:
   - agent
   - maintainer
-created: 2026-06-09
-updated: 2026-06-09
+updated: 2026-07-17
 ---
 
-# Codex Test Evaluator Prompt
+# Compaction Artifact Evaluator
 
-You are evaluating one `igapyon-skill-compactor` test case.
+Evaluate only the supplied source artifact, result artifact, SUT response, and
+semantic checks. Do not apply or load `igapyon-skill-compactor`. Do not edit
+files or infer private reasoning.
 
-Do not edit files. Do not apply the skill. Decide what the skill should do
-according to the local files in `skills/igapyon-skill-compactor/`.
+For every semantic check ID, return exactly one assertion with concise evidence
+from the supplied artifacts. A check passes only when the result preserves the
+required meaning; a claim in the SUT response without supporting artifact
+evidence is insufficient. Return `verdict: fail` if any required assertion is
+missing, unsupported, or false.
 
-## Evaluation Rules
-
-- For activation tests, decide whether the prompt should:
-  - `activate`
-  - `do-not-activate`
-  - `mention-only`
-- For behavior tests, decide whether the expected behavior is preserved,
-  requires a human decision, or should not apply the requested shape.
-- For routing tests, decide which local file should be read first.
-- Prefer the trigger and non-trigger wording in `SKILL.md`.
-- If the case is ambiguous, use `ask-human` rather than inventing certainty.
-- Return only JSON matching `tests/expected-result-schema.json`.
-
-## Required Local Context
-
-Read only the smallest necessary local files:
-
-- `SKILL.md` for trigger and non-trigger behavior.
-- `index.json` when choosing a reference route.
-- A specific reference only if the route cannot be decided from `SKILL.md` and
-  `index.json`.
-
-## Result Fields
-
-- `id`: copied from the test case.
-- `actual`: one enum value from the schema.
-- `pass`: whether `actual` matches the test case `expected`.
-- `reason`: one concise sentence.
-- `target`: include when the case has or implies a routed file.
-- `notes`: optional short caveats.
+Return only JSON matching `expected-result-schema.json`.

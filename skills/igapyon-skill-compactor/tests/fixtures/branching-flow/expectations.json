@@ -1,0 +1,19 @@
+{
+  "mode": "conservative",
+  "allowedLossByMode": {
+    "conservative": ["generic state-machine explanation"],
+    "structural": ["generic state-machine explanation", "connective prose"],
+    "summary": ["generic state-machine explanation", "secondary prose"]
+  },
+  "requiredSubstrings": [
+    "pending",
+    "rejected",
+    "Retry-After",
+    "at most twice",
+    "deferred",
+    "failed",
+    "completed",
+    "receipt.json",
+    "retry count"
+  ]
+}

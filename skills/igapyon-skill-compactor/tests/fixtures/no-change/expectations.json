@@ -1,0 +1,14 @@
+{
+  "mode": "conservative",
+  "allowedLossByMode": {
+    "conservative": [],
+    "structural": [],
+    "summary": []
+  },
+  "expectUnchanged": true,
+  "requiredSubstrings": [
+    "Use only when the user explicitly asks exact-reply",
+    "Do not activate for general status questions",
+    "Return exactly `READY` and nothing else."
+  ]
+}

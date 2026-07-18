@@ -1,0 +1,17 @@
+{
+  "mode": "conservative",
+  "allowedLossByMode": {
+    "conservative": ["generic promotion rationale"],
+    "structural": ["generic promotion rationale", "connective prose"],
+    "summary": ["generic promotion rationale", "secondary wording"]
+  },
+  "requiredSubstrings": [
+    "config/staging.yaml",
+    "./scripts/validate-config.sh config/staging.yaml",
+    "exits non-zero",
+    "config/production.yaml",
+    "config/production.yaml.bak",
+    "Do not delete the backup",
+    "fallback status"
+  ]
+}

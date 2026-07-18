@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-07-17T00:00:00+09:00",
+  "purpose": "Known pre-redesign controlled result for comparison; not a passing forward-test artifact.",
+  "source": {
+    "gitCommit": "e303fc310e3069148572f32d72d72863e9b53c89",
+    "skillSha256": "7e7d88972fb9e5991007b4430f8da7352e2ee050374d520e91100766cd6eeada",
+    "installedSkillSha256": "7e7d88972fb9e5991007b4430f8da7352e2ee050374d520e91100766cd6eeada"
+  },
+  "runtime": {
+    "codexCli": "0.144.5",
+    "model": "gpt-5.6-sol",
+    "reasoningMode": "medium",
+    "sandbox": "read-only"
+  },
+  "fixture": "fixtures/deploy-helper/SKILL.md",
+  "observed": {
+    "sourceCharacters": 1140,
+    "resultCharacters": 839,
+    "characterReductionPercent": 26.4,
+    "totalRunTokens": 24927
+  },
+  "caveat": "totalRunTokens includes system, conversation, Skill-local context, reasoning, and output; it is not the incremental cost of this Skill alone."
+}
