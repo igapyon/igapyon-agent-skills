@@ -219,6 +219,201 @@ If the same failure appears 3 times, stop and ask the user.
 
 ## igapyon-skill-compactor 次段階
 
+### 実動作安定化（最優先）
+
+以下は上から順に実施する。少なくとも 1 から 8 まで完了するまでは、現行の
+prompt test が成功しても実動作が保証されたとは扱わず、肥大化した実 Skill への
+本格適用を開始しない。
+
+- [x] [High] 1. 現行実装の baseline と改善対象を固定する
+  - 対象を `skills/igapyon-skill-compactor/` の source 版とし、テスト開始時に
+    source 版と配備版の `SKILL.md` hash、Git commit、Codex CLI version、model、
+    reasoning mode、sandbox、実行日時を記録する
+  - source 版と配備版が一致しない場合はテストを開始せず、drift として失敗させる
+  - 現行の制御ケースとして、発火条件、`config/deploy.yaml`、service ID、health URL、
+    test、明示確認、deploy、health check、rollback、出力契約を含む小さな
+    `deploy-helper` fixture を保存する
+  - 現行再現値「入力 1,140 文字から 839 文字、約 26.4% 削減、実行全体
+    24,927 tokens」を比較用 baseline として記録する。ただし total tokens は
+    system/context/output を含むため、Skill 固有の純増値とは扱わない
+  - baseline の raw log と結果は run ID ごとの別ディレクトリへ保存し、後続 run で
+    同じ `${id}.json` や `summary.json` を上書きしない
+
+- [x] [High] 2. activation と meta work の境界を一意にする
+  - frontmatter `description` と本文の Activation Gate を同じ契約にそろえる
+  - 単に `igapyon-skill-compactor` という名前を出しただけでは適用せず、
+    「使う」「適用する」または具体的な Agent Skill compaction 依頼がある場合に発火する
+  - 存在確認、説明、設計相談、この Skill 自体の review・監査・不具合診断・更新は
+    compaction workflow を適用しない meta work として明記する
+  - この Skill 自体を実際に compact する依頼だけは、明示的な apply intent があれば
+    通常の compaction 対象として扱う
+  - activation matrix に最低限、explicit apply、Agent Skill compaction without name、
+    mention-only、existence question、self meta review、generic Markdown edit、
+    new Skill creation を含める
+  - should-trigger、should-not-trigger、mention-only の期待値が frontmatter、本文、
+    test case の3箇所で矛盾しないことを確認する
+
+- [x] [High] 3. `SKILL.md` に最小の実行契約を置く
+  - conditional reference を読まなくても、次の core loop だけは毎回実行されるようにする
+    1. 対象、最適化対象、mode、許容損失、変更可能範囲を確定する
+    2. source contract と typed structured inventory を抽出する
+    3. keep / move / rewrite / delete / split / no change の placement map を決める
+    4. 許可された範囲だけを変更する
+    5. 圧縮後から inventory を再抽出し、source inventory と比較する
+    6. critical item の欠落を修正してから、測定値と検証結果を報告する
+  - source contract には activation、non-activation、入力、出力、必須手順、順序、
+    command、path、ID、URL、code example、条件、禁止、例外、fallback、安全境界、
+    human confirmation、validation、reference route を含める
+  - `conservative` では critical item の欠落を失敗とし、曖昧な項目は削除せず保持する
+  - `structural` と `summary` で失ってよい情報を明記し、mode 名だけで許容損失を
+    暗黙決定しない
+  - architecture、split、toolization、MCP、意味が不明な共通化、critical item の削除だけを
+    human-decision point とする。通常の保守的な局所圧縮は不要な確認質問で止めない
+  - source が既に十分小さい、または削減効果が参照追加・保守コストを下回る場合は、
+    `no change` を正常な完了結果として選べるようにする
+
+- [x] [High] 4. compaction の成功条件を測定可能にする
+  - 作業前に、最適化対象を次から明示する
+    - always-loaded `SKILL.md`
+    - 通常の1回の実行で読む Skill-local context
+    - Skill directory 全体
+    - end-to-end の input / cached input / output / reasoning / rerun cost
+  - before / after で少なくとも UTF-8 bytes、line count、常時ロード対象、追加・削除した
+    reference 数を記録する。利用可能なら同一 tokenizer または同一 runtime の token 数も記録する
+  - token 測定方法が変わった結果を直接比較しない。model/runtime/tokenizer を結果へ含める
+  - 削減量だけでなく、保持した critical inventory、意図的に許容した loss、追加した
+    lookup step、通常実行で新たに必要になる reference read を報告する
+  - 固定の削減率だけを成功条件にしない。削減が小さくても安全上必要なら保持し、
+    将来の反復回数や runtime 経路から利益が見込めない場合は `no change` とする
+  - default の最終報告は mode / treatment、before-after、preserved critical contract、
+    moved/deleted、validation、remaining risk に絞る。該当しない system decision や
+    checklist 項目を儀式的に水増ししない
+
+- [x] [High] 5. reference routing を「必須」と「条件付き」に分離する
+  - `SKILL.md` に core loop と critical safeguards を残し、詳細 inventory 候補、mode の
+    長い説明、例、checklist、system-level techniques だけを conditional reference にする
+  - `references/agent-skill/compaction-modes.md` の案内を「mode 選択」だけにせず、
+    structured inventory、code preservation、round-trip の詳細が必要な時に読むことを明記する
+  - `references/agent-skill/compaction-workflow.md` は substantial edit、split、tool/MCP、
+    architecture などの大きな判断に限定し、小さな局所圧縮では読まない
+  - `references/system/token-efficiency-techniques.md` から checklist selector を小さな入口へ
+    分離し、既知の Agent Skill compaction で technique catalog 全体を読まない
+  - 各 route に「読む条件」と「読まない条件」を書き、既知の direct route がある場合は
+    discovery のためだけに `index.json` 全体を読まない
+  - 単純な conservative fixture では `README.md`、`tests/`、全 technique catalog、
+    無関係な checklist を読まないことを tool event で確認する
+  - `index.json` を Skill 全体の file inventory と呼ぶなら `.jsonl`、`.mjs`、`.yaml` も
+    生成対象へ含める。含めない場合は Markdown/JSON discovery index と明記し、runner、
+    test cases、`agents/openai.yaml` の別導線を用意する
+
+- [x] [High] 6. prompt test runner を raw execution と独立評価の二段に作り直す
+  - SUT 実行には `testCase.prompt` だけを渡し、`expected`、`checks`、期待 `target`、
+    既知の defect、修正案を渡さない
+  - repository-local Skill だけを隔離した一時 Codex environment へ stage し、実行前に
+    読み込む `SKILL.md` の locator と hash を検証する。隔離または同一性を証明できない場合は失敗する
+  - activation と routing は `--sandbox read-only`、編集 behavior は disposable fixture
+    だけを `workspace-write` にし、実 Skill や user workspace を変更しない
+  - SUT の JSON events、tool calls、読んだ local file、最終応答、fixture の before/after diff、
+    終了コードを run artifact として保存する
+  - SUT 完了後にだけ、独立 evaluator へ raw artifact と hidden expectations を渡す
+  - runner 自身が output file の存在、JSON parse、schema、`actual === expected`、target、
+    各 assertion、diff、禁止された file read を検査する
+  - output 欠落、invalid JSON、`pass: false`、wrong actual、wrong target、未評価 assertion、
+    critical inventory 欠落のどれか1件でもあれば suite を非ゼロ終了にする
+  - subprocess の終了コード 0 を semantic success と同一視しない
+  - baseline と post-change は別 run directory に保存し、比較 command と summary を生成する
+  - `expected-result-schema.json`、evaluator prompt、`tests/INDEX.md` の optional / required field、
+    enum、例を同じ契約にそろえる
+
+- [x] [High] 7. artifact を使う behavior test を追加する
+  - classification enum だけでなく、入力 fixture、圧縮後 artifact、source inventory、
+    output inventory、inventory diff、測定値を評価対象にする
+  - 最低限、次の fixture を用意する
+    - ID、URL、command、explicit confirmation、failure stop、rollback を含む deployment workflow
+    - code fence、configuration、API shape を含む Skill
+    - prose 内に command、path、禁止、fallback が埋め込まれた Skill
+    - populated form value、log、test result、concrete evidence を含む Skill
+    - tone、audience、禁止表現、output contract を含む writing Skill
+    - branching / state transition / fallback を含み、Mermaid の要否を判断する Skill
+    - 意味が異なる近似文と、同一 local context の単純重複を両方含む Skill
+    - 既に十分小さく、`no change` が正しい Skill
+  - 各 fixture で conservative / structural / summary の allowed loss を別々に定義する
+  - conservative では command、path、ID、URL、code、禁止、fallback、confirmation、
+    validation、activation、output contract の欠落を必ず失敗にする
+  - routing test は「読むべき target の自己申告」ではなく、tool event に実際の file read が
+    存在することと、不要な file read がないことを検査する
+
+- [x] [High] 8. runner 自体の failure detection を先に検証する
+  - `--codex-bin /usr/bin/true` のように終了コード 0 だが output を生成しない stub を使い、
+    suite が必ず失敗することを確認する
+  - valid JSON だが `pass: false`、wrong `actual`、wrong `target`、assertion 未評価の fixture を
+    それぞれ与え、すべて非ゼロ終了になることを確認する
+  - critical command、ID、URL、confirmation、rollback を1個ずつ意図的に落とした mutation を
+    評価し、各 mutation が対応 assertion で検出されることを確認する
+  - expected/checks を SUT input へ混入させた場合に harness validation が失敗する leakage check を追加する
+  - read-only case で write event が発生した場合、または disposable root 外への write が
+    試みられた場合に失敗する sandbox check を追加する
+
+- [x] [High] 9. fresh session で安定性と context load を受け入れ確認する
+  - activation / non-activation / mention-only / meta-work matrix を独立した fresh session で
+    最低3回実行し、結果が一致することを確認する
+  - conservative の critical preservation fixture と `no change` fixture を独立した fresh session で
+    最低2回実行し、inventory diff と treatment が一致することを確認する
+  - simple fixture の tool trace で、`SKILL.md` と高々1個の targeted reference だけで
+    完了できることを目標とし、余分な `README.md`、tests、全 checklist、全 techniques の読込を
+    regression として扱う
+  - total tokens だけでなく、Skill-local read bytes、tool call 数、出力 tokens、再試行回数を
+    baseline と比較する
+  - model 依存で結果が揺れる case は成功扱いにせず、期待を狭める、契約を明確にする、
+    deterministic assertion へ移す、または既知の不安定 case として隔離する
+
+- [x] [Medium] 10. source 更新、生成物、配備版を同一 artifact として検証する
+  - `SKILL.md`、必要な references、tests、runner、schema、README を更新する
+  - `mvn generate-resources` を実行し、`skills/igapyon-skill-compactor/index.json` の差分が
+    対象ファイルの追加・削除・size・metadata 変更だけであることを確認する
+  - repository validator と新しい prompt test suite を source 版に対して実行する
+  - `sh scripts/sync-codex-skill.sh igapyon-skill-compactor` で配備し、
+    `sh scripts/sync-codex-skill.sh --check igapyon-skill-compactor` が終了コード 0 になることを確認する
+  - fresh session で配備版 locator / hash を記録して acceptance suite を再実行する
+  - source 版でテストした artifact と最終配備 artifact の hash が同一であることを確認する
+  - 実行日、Codex/model/runtime、source/installed hash、baseline/post の測定値、
+    activation matrix、mutation test、残余リスクをこの TODO 項目へ追記して完了にする
+
+#### 完了証跡（2026-07-17、Asia/Tokyo）
+
+- baseline は `tests/baseline-known.json` に固定した。旧 `SKILL.md` hash は
+  `7e7d8897...eada`、既知の実行値は 1,140 文字から 839 文字（約 26.4%）、
+  run total 24,927 tokens。total は Skill 固有値ではなく比較上の注意値とした。
+- runtime は Codex CLI `0.144.5`、model `gpt-5.6-sol`、reasoning は主に `low`
+  （baseline と最初の critical run は `medium`）。各 run の正確な metadata、raw event、
+  stderr、trace、artifact diff、評価結果は Git 管理外の
+  `workplace/skill-compactor-tests/<run-id>/` に保存した。
+- activation / non-activation / mention-only / meta-work の 7 ケースを各3回、合計21 fresh
+  session で実行し 21/21 成功した（run `20260717T010228707Z-38727`）。
+- `deploy-helper` の critical preservation は独立 evaluator 込みで2回成功した。
+  command、path、service ID、URL、test failure stop、明示確認、initial request 境界、
+  health failure rollback、output contract を保持した。`no change` fixture も2/2成功し、
+  両回とも artifact 無変更、Skill-local read は `SKILL.md` だけだった。
+- routing 実トレースにより、reference を target workspace 相対で誤解決する欠陥を発見し、
+  loaded `SKILL.md` の親 directory 相対へ固定した。6 route の必要 reference read は確認済み。
+  route-001/003 は suite 中に CLI が exit 0 と最終応答を返しながら `turn.completed` event
+  だけを欠く一過性失敗があり、runner は失敗として検出した。両ケースの独立再実行は成功した。
+- runner unit test は15件成功。exit 0 / outputなし、invalid JSON、evaluator `pass:false`、
+  wrong/missing assertion、oracle leakage、read-only write、root外 write、command / ID / URL /
+  confirmation / rollback の個別 mutation、read detector の誤認を検出する。
+- simple case の post 値は input 75,594、cached input 67,328、output 1,660、reasoning 290
+  tokens。Skill-local read は `SKILL.md` のみ。旧 total 24,927とは計測境界が異なるため、
+  直接の削減率比較はしていない。
+- `mvn generate-resources`、repository validator、runner unit test、source prompt tests、
+  `sync-codex-skill.sh` と `--check` を完了した。最終 source / installed `SKILL.md` hash は
+  ともに `b8674992d2160eba1d1f6afca8cb221b6fd107b68d9926ab3030c07f61c7ef55`。
+  hash gate を有効にした配備後 fresh acceptance も成功した
+  （run `20260717T045557230Z-53170`）。
+- 残余リスクは Codex CLI event stream の一過性 `turn.completed` 欠落と、model/runtime 更新時の
+  token・routing 揺れ。runner はいずれも false green にせず、run artifact を残して非ゼロ終了する。
+
+### 既存の改善履歴と候補
+
 - [x] RAG-ready 的な前処理観点として、優先度の高い3件を `igapyon-skill-compactor` に反映した
   - [x] Typed Inventory Schema 相当
     - `Structured Inventory Rule` として、commands / paths / inputs / outputs / constraints / prohibitions / fallbacks / validation / risks / references に加え、tone rules / review criteria / style constraints なども型付き一覧として扱う方針を追加
@@ -239,6 +434,8 @@ If the same failure appears 3 times, stop and ask the user.
   - [ ] Contradiction / Duplicate Check
   - [ ] Mode-Specific Golden Examples の拡充
 - [ ] `igapyon-skill-compactor` を実際に肥大化した既存 Agent Skill へ適用し、運用上の違和感を確認する
+  - 前提: 上記「実動作安定化」の 1 から 10 を完了し、現行 prompt test の
+    self-classification ではなく raw execution と artifact diff で検証できる状態にする
   - 使いにくいチェック項目がないか
   - 過剰に読ませる参照がないか
   - `SKILL.md` から必要な参照へ迷わず辿れるか

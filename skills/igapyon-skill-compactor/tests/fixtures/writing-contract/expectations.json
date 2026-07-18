@@ -1,0 +1,18 @@
+{
+  "mode": "conservative",
+  "allowedLossByMode": {
+    "conservative": ["generic writing rationale"],
+    "structural": ["generic writing rationale", "connective prose"],
+    "summary": ["generic writing rationale", "secondary explanation"]
+  },
+  "requiredSubstrings": [
+    "existing users",
+    "calm, factual Japanese",
+    "革命的",
+    "絶対安全",
+    "unsupported performance claims",
+    "under 400 Japanese characters",
+    "`概要`, `互換性`, `移行`",
+    "compatibility information is missing"
+  ]
+}

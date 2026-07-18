@@ -1,0 +1,38 @@
+{
+  "mode": "conservative",
+  "allowedLossByMode": {
+    "conservative": ["duplicated generic safety prose"],
+    "structural": ["duplicated generic safety prose", "connective prose"],
+    "summary": ["duplicated generic safety prose", "connective prose", "secondary rationale"]
+  },
+  "requiredSubstrings": [
+    "config/deploy.yaml",
+    "svc-prod-042",
+    "https://example.invalid/health",
+    "npm test",
+    "./scripts/deploy.sh --service svc-prod-042",
+    "curl -fsS https://example.invalid/health",
+    "./scripts/rollback.sh --service svc-prod-042",
+    "status",
+    "commands run",
+    "test result",
+    "confirmation received",
+    "health result",
+    "rollback result"
+  ],
+  "expectChanged": true,
+  "forbiddenLosses": [
+    "activation",
+    "non-activation",
+    "config path",
+    "service ID",
+    "health URL",
+    "test gate",
+    "explicit confirmation",
+    "initial-request boundary",
+    "deploy command",
+    "health command",
+    "rollback command",
+    "output contract"
+  ]
+}

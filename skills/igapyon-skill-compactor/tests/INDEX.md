@@ -12,7 +12,7 @@ audience:
   - agent
   - maintainer
 created: 2026-06-09
-updated: 2026-06-09
+updated: 2026-07-17
 ---
 
 # Test Prompt Index
@@ -29,12 +29,15 @@ runtime unless validating trigger behavior, routing, or output contracts.
 - [reference-routing-prompts.jsonl](reference-routing-prompts.jsonl):
   representative prompts for choosing the correct reference, distilled,
   checklist, template, example, or test material.
-- [expected-result-schema.json](expected-result-schema.json): suggested JSON
-  shape for non-interactive or subagent test reports.
+- [expected-result-schema.json](expected-result-schema.json): required schema
+  for the independent evaluator result.
 - [evaluator-prompt.md](evaluator-prompt.md): prompt used by `codex exec` to
   evaluate a single test case.
 - [run-codex-prompt-tests.mjs](run-codex-prompt-tests.mjs): local runner that
-  invokes `codex exec` for JSONL test cases.
+  invokes `codex exec` first for the raw SUT and then for an independent evaluator.
+- [harness-lib.test.mjs](harness-lib.test.mjs): deterministic failure-detection,
+  mutation, leakage, and sandbox regression tests for the runner itself.
+- `fixtures/`: disposable Agent Skill artifacts and hidden expectations.
 
 ## Rules
 
@@ -43,9 +46,8 @@ runtime unless validating trigger behavior, routing, or output contracts.
 - Prefer meaningful IDs such as `activate-001`.
 - Add cases only when they protect trigger intent, output contract, routing, or
   behavior that could regress.
-- Prefer expected values from a small enum such as `activate`,
-  `do-not-activate`, `mention-only`, `preserve`, `conservative`,
-  `structural`, `summary`, `route`, or `ask-human`.
+- Never put `expected`, semantic checks, or the expected target into the raw SUT
+  prompt. Expectations remain runner-side and reach only the evaluator.
 - Run test prompts in read-only or no-edit mode unless the test explicitly
   checks editing behavior in a disposable copy.
 
@@ -76,21 +78,36 @@ Run one case:
 node skills/igapyon-skill-compactor/tests/run-codex-prompt-tests.mjs --case activate-001
 ```
 
-Run all cases and write JSON results under `tests/results/`:
+Repeat the selected case in independent ephemeral sessions:
+
+```bash
+node skills/igapyon-skill-compactor/tests/run-codex-prompt-tests.mjs --case activate-001 --repeat 3
+```
+
+Run all cases after source and installed hashes agree:
 
 ```bash
 node skills/igapyon-skill-compactor/tests/run-codex-prompt-tests.mjs
 ```
 
-The runner uses `codex exec --output-schema` and should be used only during
-validation, not normal runtime. It passes `--ephemeral` by default so test runs
-do not persist Codex session rollout files unless `--persist-session` is used.
+During source development, explicitly allow drift:
+
+```bash
+node skills/igapyon-skill-compactor/tests/run-codex-prompt-tests.mjs --source-only --case activate-001
+```
+
+Each invocation creates a unique run directory under the repository-local,
+Git-ignored `workplace/skill-compactor-tests/`. It saves
+metadata, raw JSON events, stderr, tool trace, fixture before/after, diff,
+deterministic assertions, and the evaluator result. Missing output, malformed
+events, wrong activation/routing, forbidden reads or writes, lost critical
+content, or any evaluator failure makes the command exit nonzero.
 
 ## Suggested Report
 
-Each test run should return compact records matching
+The independent evaluator must return records matching
 [expected-result-schema.json](expected-result-schema.json), for example:
 
 ```json
-{"id":"activate-001","actual":"activate","pass":true,"reason":"Explicit skill name and Agent Skill compaction request."}
+{"verdict":"pass","assertions":[{"id":"critical-command","pass":true,"evidence":"The exact command remains."}],"reason":"All requested semantic checks passed.","notes":[]}
 ```

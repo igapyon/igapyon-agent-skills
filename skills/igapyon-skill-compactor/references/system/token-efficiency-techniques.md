@@ -1,29 +1,8 @@
-# Token-Efficiency Checklist Index
+# Token-Efficiency Technique Catalog
 
-Use this index to choose the smallest checklist that fits the current work.
-
-For checklist timing, read [../checklists/checklist-timing.md](../checklists/checklist-timing.md) instead
-of repeating pre-work, during-work, and post-work instructions in each
-checklist.
-
-Keeping checklists in references reduces repeated prompt and `SKILL.md` size.
-Do not copy whole checklists into ordinary responses; summarize relevant checked
-items and unresolved risks.
-
-## Checklist Selection
-
-- Use [../checklists/workflow.md](../checklists/workflow.md) for the outer system
-  workflow: human discussion, R&D versus runtime, placement decisions, tooling,
-  MCP, output constraints, and validation planning.
-- Use [../checklists/agent-skill.md](../checklists/agent-skill.md) for individual Agent
-  Skill compaction: activation gates, `SKILL.md`, references, splitting,
-  trigger behavior, and validators.
-- Use [../checklists/prompt.md](../checklists/prompt.md) for prompt and stable-context
-  compaction: stable prefix material, changing inputs, output verbosity,
-  structured results, and reasoning load.
-
-When multiple layers apply, start with the workflow checklist, then read only
-the lower-level checklist needed for the selected treatment.
+Use this catalog only for advanced system-level technique selection. It is not
+the checklist entry point and should not be read for routine local compaction.
+Use [checklist-selection.md](checklist-selection.md) when a checklist is needed.
 
 Splitting checklists by use case is itself a token-efficiency technique: it
 keeps recurring checks reusable while avoiding loading unrelated checklist items
