@@ -25,6 +25,16 @@ Support documented workflows and read-only inspection for:
 
 Do not perform remote mutations, history rewrites, tag changes, release publication, or version changes until the relevant workflow is explicitly documented under `references/` and the user explicitly requests the operation.
 
+## Activation-Only Fast Path
+
+When the user explicitly activates `igapyon-miku-scm` but does not yet identify a concrete SCM task, repository question, or operation:
+
+1. Acknowledge that the skill is active and ask what SCM work the user wants to perform.
+2. Do not yet read [references/scm-rules.md](references/scm-rules.md) or inspect the repository branch and working tree.
+3. After the user supplies a concrete request, resume at Core Workflow step 1 and complete all required reading and repository checks before inspecting further or making changes.
+
+This fast path only defers initialization until there is enough information to classify the workflow. It does not waive any safety check or authorize local or remote mutation.
+
 ## Core Workflow
 
 1. Identify the requested SCM area and exact target repository.

@@ -23,14 +23,14 @@ Use the least-authorized level sufficient for the request. A lower level never i
 
 ## Startup Work Branch Checkout
 
-Immediately after activating `igapyon-miku-scm` for a local repository, inspect the current branch before beginning any requested workflow:
+After the user identifies a concrete SCM task for a local repository, inspect the current branch before beginning that workflow:
 
 ```sh
 git branch --show-current
 git status --porcelain
 ```
 
-Activation alone does not authorize branch creation or switching. Apply this section only when the user's requested workflow explicitly requires modifying tracked content or creating an ordinary commit and no more specific branch/history workflow owns the operation.
+Activation alone does not require repository inspection and does not authorize branch creation or switching. Apply this section only when the user's requested workflow explicitly requires modifying tracked content or creating an ordinary commit and no more specific branch/history workflow owns the operation.
 
 Do not apply Startup Work Branch Checkout for:
 
@@ -68,7 +68,7 @@ Use `switch` as the preferred modern Git term for this operation. The resulting 
 
 ## Startup Frozen Branch Guard
 
-Immediately after activating `igapyon-miku-scm` for a local repository, inspect the current branch with `git branch --show-current` before beginning the requested workflow. Classify the workflow before deciding whether the frozen branch blocks it.
+After the user identifies a concrete SCM task for a local repository, inspect the current branch with `git branch --show-current` before beginning the requested workflow. Classify the workflow before deciding whether the frozen branch blocks it.
 
 When the branch name ends in `-done`:
 
