@@ -88,7 +88,12 @@ git status -sb
 
 Run the selected push, remote verification, rename, and status steps in order and stop immediately if any step fails. Do not treat earlier approval to run PR Soft Reset Recommit as approval to publish. Require the human's OK after displaying the new commit log. If push or remote verification fails, do not rename the branch. Do not create a Pull Request in this sequence.
 
-After a successful push, remote verification, and local `-done` rename, derive the recommended tag name from the committed authoritative version and the repository's resolved tag convention. Include `推奨タグ名: <tag>` in the push completion report. If the convention cannot be resolved, report `推奨タグ名: 未解決` instead of guessing. This report does not authorize creating or pushing the tag.
+After a successful push, remote verification, and local `-done` rename:
+
+- Resolve the canonical GitHub browser URL from the selected repository remote under [github-repository-url.md](github-repository-url.md). Include `GitHubリポジトリ: <url>` in the push completion report. If it cannot be resolved safely, report `GitHubリポジトリ: 未解決` instead of guessing.
+- Derive the recommended tag name from the committed authoritative version and the repository's resolved tag convention. Include `推奨タグ名: <tag>` in the push completion report. If the convention cannot be resolved, report `推奨タグ名: 未解決` instead of guessing.
+
+This report does not authorize creating or pushing the tag.
 
 ## Next Work Branch After PR Completion
 
