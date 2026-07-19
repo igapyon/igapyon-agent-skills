@@ -28,20 +28,21 @@ Do not perform remote mutations, history rewrites, tag changes, release publicat
 ## Core Workflow
 
 1. Identify the requested SCM area and exact target repository.
-2. Inspect repository state before proposing or performing work.
-3. Read [references/scm-rules.md](references/scm-rules.md).
-4. Treat general repository or branch status requests, including `リポジトリ状態`, `このリポジトリの状態`, `ブランチ状況`, `repository state`, and `branch status`, as remote-freshness checks unless the user explicitly asks for local-only inspection. Read [references/local-git-readonly.md](references/local-git-readonly.md); for the fuller branch-status report, also read [references/github-branch-status.md](references/github-branch-status.md).
-5. For the integrated GitHub writing modes, read [references/github-writing-rules.md](references/github-writing-rules.md), then the requested mode: [references/github-pr-writing.md](references/github-pr-writing.md), [references/github-release-writing.md](references/github-release-writing.md), or [references/github-about-writing.md](references/github-about-writing.md).
-6. For PR soft-reset recommit, read [references/github-pr-soft-reset-recommit.md](references/github-pr-soft-reset-recommit.md) and [references/github-backup-branch.md](references/github-backup-branch.md), then use [scripts/pr-soft-reset-recommit-preflight.mjs](scripts/pr-soft-reset-recommit-preflight.mjs); for standalone backup or branch-status work, read [references/github-backup-branch.md](references/github-backup-branch.md) or [references/github-branch-status.md](references/github-branch-status.md).
-7. For a local repository GitHub URL query, read [references/github-repository-url.md](references/github-repository-url.md).
-8. For a public GitHub Issue rewrite that a human will paste into GitHub, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/github-issue-rewrite-handoff.md](references/github-issue-rewrite-handoff.md).
-9. Treat a request about GitHub tag status, including short phrases such as `タグ状況` or `tag status`, as a version, tag, Release, and distribution-asset consistency audit unless the user explicitly narrows the scope. Read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/version-tag-release-audit.md](references/version-tag-release-audit.md).
-10. For a requested version increment, read [references/version-increment.md](references/version-increment.md).
-11. For other public GitHub source, branch, Issue, or Release inspection, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md).
-12. Before any requested `git add` or `git commit`, read and follow [references/version-increment-confirmation.md](references/version-increment-confirmation.md).
-13. Preserve unrelated user changes.
-14. Separate local preparation from remote GitHub operations.
-15. Report what was inspected, changed, and left pending.
+2. Read [references/scm-rules.md](references/scm-rules.md).
+3. Immediately inspect the current branch with `git branch --show-current`. If it ends in `-done`, apply the Startup Frozen Branch Guard before continuing.
+4. Inspect repository state before proposing or performing work.
+5. Treat general repository or branch status requests, including `リポジトリ状態`, `このリポジトリの状態`, `ブランチ状況`, `repository state`, and `branch status`, as remote-freshness checks unless the user explicitly asks for local-only inspection. Read [references/local-git-readonly.md](references/local-git-readonly.md); for the fuller branch-status report, also read [references/github-branch-status.md](references/github-branch-status.md).
+6. For the integrated GitHub writing modes, read [references/github-writing-rules.md](references/github-writing-rules.md), then the requested mode: [references/github-pr-writing.md](references/github-pr-writing.md), [references/github-release-writing.md](references/github-release-writing.md), or [references/github-about-writing.md](references/github-about-writing.md).
+7. For PR soft-reset recommit, read [references/github-pr-soft-reset-recommit.md](references/github-pr-soft-reset-recommit.md) and [references/github-backup-branch.md](references/github-backup-branch.md), then use [scripts/pr-soft-reset-recommit-preflight.mjs](scripts/pr-soft-reset-recommit-preflight.mjs); for standalone backup or branch-status work, read [references/github-backup-branch.md](references/github-backup-branch.md) or [references/github-branch-status.md](references/github-branch-status.md).
+8. For a local repository GitHub URL query, read [references/github-repository-url.md](references/github-repository-url.md).
+9. For a public GitHub Issue rewrite that a human will paste into GitHub, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/github-issue-rewrite-handoff.md](references/github-issue-rewrite-handoff.md).
+10. Treat a request about GitHub tag status, including short phrases such as `タグ状況` or `tag status`, as a version, tag, Release, and distribution-asset consistency audit unless the user explicitly narrows the scope. Read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/version-tag-release-audit.md](references/version-tag-release-audit.md).
+11. For a requested version increment, read [references/version-increment.md](references/version-increment.md).
+12. For other public GitHub source, branch, Issue, or Release inspection, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md).
+13. Before any requested `git add` or `git commit`, read and follow [references/version-increment-confirmation.md](references/version-increment-confirmation.md). Read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) when resolving the latest public GitHub version tag for the confirmation display.
+14. Preserve unrelated user changes.
+15. Separate local preparation from remote GitHub operations.
+16. Report what was inspected, changed, and left pending.
 
 ## Boundaries
 

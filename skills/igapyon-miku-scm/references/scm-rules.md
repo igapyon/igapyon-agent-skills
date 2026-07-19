@@ -21,6 +21,20 @@ Do not treat SCM safety as a single READONLY-versus-write boundary. Classify eac
 
 Use the least-authorized level sufficient for the request. A lower level never implies authorization for a higher one. Preserve stricter workflow-specific prohibitions and confirmation gates when they apply.
 
+## Startup Frozen Branch Guard
+
+Immediately after activating `igapyon-miku-scm` for a local repository, inspect the current branch with `git branch --show-current` before beginning the requested workflow.
+
+When the branch name ends in `-done`:
+
+- Treat it as frozen. Do not edit files, stage, commit, reset, recommit, or begin other new work on that branch.
+- Treat `-done` only as evidence that the post-recommit publication flow probably reached its local rename. It does not prove that GitHub received a Pull Request or that the Pull Request was merged.
+- If the user's activating message explicitly reports that the Pull Request was merged, run the Next Work Branch After PR Completion workflow before doing any new work.
+- If merge completion has not been explicitly reported, stop before any mutating workflow and ask `GitHubのPRはマージ済みですか？` Do not infer the answer from local Git state, remote branch state, or the `-done` suffix.
+- If the user says the Pull Request is not merged, keep the branch frozen. Allow read-only inspection and reporting, but require an explicitly documented recovery path before applying a correction.
+
+After the human confirms that the Pull Request was merged, treat that confirmation as authorization to refresh the base and create the next work branch under the documented workflow. Continue other requested work only after switching to that new branch.
+
 ## PR Soft Reset Recommit Delegation
 
 - Treat `pr soft reset recommit` and `pr reset recommit` as explicit requests to run the PR Soft Reset Recommit workflow built into `igapyon-miku-scm`.

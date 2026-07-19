@@ -35,15 +35,25 @@ Unrelated working-tree changes, staging, or an ordinary local commit do not inva
 When no reusable session record can be verified:
 
 1. Inspect the intended staging or commit scope and preserve unrelated changes.
-2. Before the first `git add` or `git commit` in that batch, ask the human explicitly:
+2. Read the repository's authoritative and coupled version sources. Derive the corresponding tag candidate only when the repository convention is already resolved; otherwise report it as `未解決` instead of guessing.
+3. For a public GitHub repository, use the anonymous REST API workflow in [github-anonymous-readonly.md](github-anonymous-readonly.md) to list tags. Filter out tags that do not match the resolved version-tag convention, then identify the greatest version tag using the repository-defined ordering. For date-identifier tags, compare the date and decoded alphabetic sequence; for Semantic Versions, compare semantic version components. Do not use API response order, tagger date, or unrelated operational tags to decide which version tag is latest.
+4. If the GitHub repository or tag list cannot be resolved anonymously, show the latest GitHub version tag as `未確認`. A failed lookup does not by itself block the human confirmation gate.
+5. Before the first `git add` or `git commit` in that batch, show the current version information and ask the human explicitly. Use repository-defined labels when available; for the `igapyon-agent-skills` coupled versions, use this shape:
 
 ```text
+現在のバージョン:
+- リポジトリ: <authoritative-version>
+- みくく: <coupled-version>
+- 対応タグ候補: <tag-or-未解決>
+- GitHub最新バージョンタグ: <tag-or-未確認>
+
 バージョンのインクリメント忘れはありませんか？
 ```
 
-3. Wait for the human's answer. Do not run `git add` or `git commit` while the answer is pending.
-4. Proceed only after the human confirms that no required increment was forgotten, or after any required version change has been handled and the human confirms it.
-5. If the human says an increment is needed, stop the add/commit sequence. Do not change a version automatically unless a separately documented workflow and explicit instruction authorize it.
+6. If a version source cannot be read, show that value as `未確認`. Do not omit the current-version block or substitute a guessed value.
+7. Wait for the human's answer. Do not run `git add` or `git commit` while the answer is pending.
+8. Proceed only after the human confirms that no required increment was forgotten, or after any required version change has been handled and the human confirms it.
+9. If the human says an increment is needed, stop the add/commit sequence. Do not change a version automatically unless a separately documented workflow and explicit instruction authorize it.
 
 An explicit human confirmation satisfies the current batch even when no version increment is required. It also satisfies a later PR Soft Reset Recommit of that same confirmed content when the session record remains valid. Ask again for other later batches unless a reusable session version check record exists.
 
