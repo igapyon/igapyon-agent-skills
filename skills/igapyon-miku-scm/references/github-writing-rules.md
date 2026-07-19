@@ -21,6 +21,7 @@ Before drafting, first resolve the exact Git evidence target from the user's wor
 
 Use these interpretations unless the user explicitly says otherwise:
 
+- PR Soft Reset Recommit: resolve the reset base first and use exactly `<base>..HEAD`, covering every commit that will be collapsed. This mode overrides the generic PR latest-single-commit default.
 - `対象コミット <commit> における変更内容`: use exactly that single commit.
 - `<commit> の変更内容`: use exactly that single commit.
 - `<base>..<head>`: use Git's normal exclusive-left range; changes reachable from `<head>` but not from `<base>`.

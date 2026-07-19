@@ -10,6 +10,7 @@ After `igapyon-miku-scm` is active, enter PR mode for similar wording such as `p
 
 ## Target Rules
 
+- In PR Soft Reset Recommit mode, resolve the reset base first and draft from exactly `<base>..HEAD`, including every commit that the recommit will collapse. Do not use the latest-single-commit default in this mode.
 - If the user asks for PR text without a commit ID, commit range, branch comparison, or explicit working-tree target, first run `git log --oneline --decorate -1` to resolve the current latest commit ID.
 - Use the commit ID shown by that command as the single commit PR target.
 - Interpret that default as `<resolved-commit>^..<resolved-commit>` for the change content, and inspect the single commit `<resolved-commit>`.

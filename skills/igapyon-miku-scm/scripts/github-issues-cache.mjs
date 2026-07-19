@@ -79,6 +79,19 @@ function isFresh(metadata, maxAgeMinutes) {
   return Date.now() - fetchedAt <= maxAgeMinutes * 60 * 1000;
 }
 
+function githubApiError(response, page) {
+  const parts = [`GitHub API returned ${response.status} for page ${page}`];
+  if (response.status === 403 || response.status === 429) {
+    const remaining = response.headers.get("x-ratelimit-remaining") ?? "unknown";
+    const reset = response.headers.get("x-ratelimit-reset") ?? "unknown";
+    const retryAfter = response.headers.get("retry-after") ?? "unknown";
+    parts.push(`rate-limit remaining=${remaining}`);
+    parts.push(`reset=${reset}`);
+    parts.push(`retry-after=${retryAfter}`);
+  }
+  return new Error(parts.join("; "));
+}
+
 async function fetchIssues(repo, state) {
   const issues = [];
   let page = 1;
@@ -93,7 +106,7 @@ async function fetchIssues(repo, state) {
       },
     });
     if (!response.ok) {
-      throw new Error(`GitHub API returned ${response.status} for page ${page}`);
+      throw githubApiError(response, page);
     }
 
     const entries = await response.json();
