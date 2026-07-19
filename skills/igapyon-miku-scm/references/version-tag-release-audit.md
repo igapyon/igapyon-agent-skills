@@ -2,6 +2,12 @@
 
 Check whether committed project versions, Git tags, GitHub Releases, and downloadable distribution assets correspond without changing the repository or GitHub.
 
+## Default Interpretation of Tag Status
+
+When the user asks about GitHub tag status, including short phrases such as `タグ状況` or `tag status`, assume they also want the current committed project version compared with the corresponding GitHub tag and Release. Run the full current release status and distribution-asset checks unless the user explicitly limits the request to tag names, tag refs, or local-versus-remote tag synchronization.
+
+Do not stop after listing tags or comparing tag commit SHAs. Report the authoritative local version, expected tag, actual GitHub tag and target commit, corresponding Release, and expected distribution assets.
+
 ## Resolve the Version Source
 
 1. Resolve the exact repository and target branch. For a public GitHub repository, use the repository's default branch unless the user names another branch.
