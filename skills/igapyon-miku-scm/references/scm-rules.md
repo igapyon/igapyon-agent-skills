@@ -10,11 +10,22 @@ This is the initial rule entry point for `igapyon-miku-scm`. Add detailed rules 
 - Do not add, infer, or execute write behavior beyond an explicitly documented workflow unless the user explicitly resumes its design in a future task.
 - Keep each write workflow separate from anonymous READONLY rules and give it its own authorization and safety boundaries.
 
+## Graduated Authorization Model
+
+Do not treat SCM safety as a single READONLY-versus-write boundary. Classify each operation by its impact and require the corresponding authorization level:
+
+1. **Implicit inspection**: Run non-mutating local evidence commands such as `git status`, `git log`, and `git diff` when needed for an active SCM request.
+2. **Implicit freshness refresh**: For a general repository or branch status request, run `git fetch --prune` under [local-git-readonly.md](local-git-readonly.md). This may update local remote-tracking refs and prune stale ones, but it must not change the working tree or the remote repository.
+3. **Explicit local mutation**: Require an explicit user request and the operation-specific documented workflow before creating or renaming branches, changing versions, staging, committing, resetting, or otherwise changing local repository state. Apply any additional confirmation gate required by that workflow.
+4. **Human-approved remote mutation**: Require an explicitly documented remote workflow and a human approval at the workflow's designated checkpoint immediately before pushing or performing another remote mutation. Earlier approval for preparation does not carry forward across that checkpoint.
+
+Use the least-authorized level sufficient for the request. A lower level never implies authorization for a higher one. Preserve stricter workflow-specific prohibitions and confirmation gates when they apply.
+
 ## PR Soft Reset Recommit Delegation
 
 - Treat `pr soft reset recommit` and `pr reset recommit` as explicit requests to run the PR Soft Reset Recommit workflow built into `igapyon-miku-scm`.
 - Use [github-writing-rules.md](github-writing-rules.md), [github-pr-writing.md](github-pr-writing.md), [github-pr-soft-reset-recommit.md](github-pr-soft-reset-recommit.md), and [github-backup-branch.md](github-backup-branch.md) for PR draft composition, backup-branch creation, soft reset, and recommit behavior. Use the bundled `scripts/pr-soft-reset-recommit-preflight.mjs`; do not invoke `igapyon-github-writer`.
-- Do not invalidate a verified same-session version increment merely because this workflow starts. Re-read the version sources and rerun their alignment check before recommit; when they still match the session record, continue without the version reminder.
+- Do not invalidate a verified same-session version check merely because this workflow starts. This includes a completed increment and an explicit no-increment confirmation for the same content. Re-read the version sources, rerun their alignment check, and confirm that the recommit content has not changed; when they still match the session record, continue without the version reminder.
 - Before delegating, require a clean working tree and run `git fetch origin` so the reset base is not resolved from stale remote-tracking information.
 - Resolve the reset base, then require it to be an ancestor of the current `HEAD`:
 
