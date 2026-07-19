@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20260719.8</version>
+  <version>1.20260719.9</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -26,9 +26,9 @@
     <external.miku-prompt-lint-skills.repo>https://github.com/igapyon/miku-prompt-lint-skills.git</external.miku-prompt-lint-skills.repo>
     <external.miku-prompt-lint-skills.ref>v0.5.0</external.miku-prompt-lint-skills.ref>
     <external.miku-prompt-lint-skills.skillName>igapyon-miku-prompt-lint</external.miku-prompt-lint-skills.skillName>
-    <external.miku-m365-agent-builder-skills.repo>https://github.com/igapyon/miku-m365-agent-builder-skills.git</external.miku-m365-agent-builder-skills.repo>
-    <external.miku-m365-agent-builder-skills.ref>v0.4.3</external.miku-m365-agent-builder-skills.ref>
-    <external.miku-m365-agent-builder-skills.skillName>igapyon-miku-m365-agent-builder</external.miku-m365-agent-builder-skills.skillName>
+    <external.miku-ai-assistant-builder-skills.repo>https://github.com/igapyon/miku-ai-assistant-builder-skills.git</external.miku-ai-assistant-builder-skills.repo>
+    <external.miku-ai-assistant-builder-skills.ref>v0.7.1</external.miku-ai-assistant-builder-skills.ref>
+    <external.miku-ai-assistant-builder-skills.skillName>igapyon-miku-ai-assistant-builder</external.miku-ai-assistant-builder-skills.skillName>
     <external.miku-ms-office-skills.repo>https://github.com/igapyon/miku-ms-office-skills.git</external.miku-ms-office-skills.repo>
     <external.miku-ms-office-skills.ref>v0.6.2</external.miku-ms-office-skills.ref>
     <external.miku-ms-office-skills.skillName>igapyon-miku-ms-office</external.miku-ms-office-skills.skillName>
@@ -108,9 +108,9 @@
                 <argument>${external.miku-prompt-lint-skills.repo}</argument>
                 <argument>${external.miku-prompt-lint-skills.ref}</argument>
                 <argument>${external.miku-prompt-lint-skills.skillName}</argument>
-                <argument>${external.miku-m365-agent-builder-skills.repo}</argument>
-                <argument>${external.miku-m365-agent-builder-skills.ref}</argument>
-                <argument>${external.miku-m365-agent-builder-skills.skillName}</argument>
+                <argument>${external.miku-ai-assistant-builder-skills.repo}</argument>
+                <argument>${external.miku-ai-assistant-builder-skills.ref}</argument>
+                <argument>${external.miku-ai-assistant-builder-skills.skillName}</argument>
                 <argument>${external.miku-ms-office-skills.repo}</argument>
                 <argument>${external.miku-ms-office-skills.ref}</argument>
                 <argument>${external.miku-ms-office-skills.skillName}</argument>
