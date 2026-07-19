@@ -3,10 +3,14 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":2427,"description":"Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, or explicitly asks to perform Git, GitHub, GitHub Release, or version-management work under miku-soft SCM rules. Do not activate for generic Git ...","summary":"igapyon-miku-scm"},
-  {"name":"github-anonymous-readonly.md","path":"references/github-anonymous-readonly.md","ext":"md","dir":"references","size":1925,"summary":"GitHub Anonymous READONLY"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3628,"description":"Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, or explicitly asks to perform Git, GitHub, GitHub Release, or version-management work under miku-soft SCM rules. Supports date-based and Semantic...","summary":"igapyon-miku-scm"},
+  {"name":"github-anonymous-readonly.md","path":"references/github-anonymous-readonly.md","ext":"md","dir":"references","size":2166,"summary":"GitHub Anonymous READONLY"},
+  {"name":"github-issue-rewrite-handoff.md","path":"references/github-issue-rewrite-handoff.md","ext":"md","dir":"references","size":2004,"summary":"GitHub Issue Rewrite Handoff"},
+  {"name":"github-repository-url.md","path":"references/github-repository-url.md","ext":"md","dir":"references","size":1361,"summary":"GitHub Repository URL"},
   {"name":"local-git-readonly.md","path":"references/local-git-readonly.md","ext":"md","dir":"references","size":2154,"summary":"Local Git READONLY"},
   {"name":"scm-rules.md","path":"references/scm-rules.md","ext":"md","dir":"references","size":7736,"summary":"SCM Rules"},
-  {"name":"version-increment-confirmation.md","path":"references/version-increment-confirmation.md","ext":"md","dir":"references","size":1283,"summary":"Version Increment Confirmation Before Add or Commit"}
+  {"name":"version-increment-confirmation.md","path":"references/version-increment-confirmation.md","ext":"md","dir":"references","size":3234,"summary":"Version Increment Check Before Add or Commit"},
+  {"name":"version-increment.md","path":"references/version-increment.md","ext":"md","dir":"references","size":4020,"summary":"Version Increment"},
+  {"name":"version-tag-release-audit.md","path":"references/version-tag-release-audit.md","ext":"md","dir":"references","size":4893,"summary":"Version, Tag, Release, and Asset Audit"}
  ]
 }
