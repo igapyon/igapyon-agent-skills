@@ -77,6 +77,8 @@ git status -sb
 
 Run the selected push, remote verification, rename, and status steps in order and stop immediately if any step fails. Do not treat earlier approval to run PR Soft Reset Recommit as approval to publish. Require the human's OK after displaying the new commit log. If push or remote verification fails, do not rename the branch. Do not create a Pull Request in this sequence.
 
+After a successful push, remote verification, and local `-done` rename, derive the recommended tag name from the committed authoritative version and the repository's resolved tag convention. Include `推奨タグ名: <tag>` in the push completion report. If the convention cannot be resolved, report `推奨タグ名: 未解決` instead of guessing. This report does not authorize creating or pushing the tag.
+
 ## Next Work Branch After PR Completion
 
 Run this workflow when the human explicitly reports that the Pull Request was merged. Treat a clear report such as `GitHubでマージした`, `PRをマージした`, or `マージ完了` as both confirmation of the merge and authorization to refresh the base and create the next work branch; do not require a second instruction to create it. Do not infer merge completion from local Git state, push output, or branch naming. Do not create the next work branch immediately after push or local `-done` rename while the PR is still open or its merge is unconfirmed.
