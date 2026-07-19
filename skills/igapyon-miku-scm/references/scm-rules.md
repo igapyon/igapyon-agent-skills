@@ -30,7 +30,16 @@ git branch --show-current
 git status --porcelain
 ```
 
-Activation of this skill for a local repository explicitly authorizes only the startup branch preparation documented in this section. It does not authorize other local mutations or any remote mutation.
+Activation alone does not authorize branch creation or switching. Apply this section only when the user's requested workflow explicitly requires modifying tracked content or creating an ordinary commit and no more specific branch/history workflow owns the operation.
+
+Do not apply Startup Work Branch Checkout for:
+
+- READONLY inspection, status, URL, tag, Release, asset, source, branch, Issue, or Actions queries
+- PR, Release, About, or Issue drafting that writes only under `workplace/` or `temp/`
+- standalone backup-branch creation
+- PR Soft Reset Recommit, post-recommit publication, or Next Work Branch After PR Completion, which have their own branch rules
+
+For these excluded workflows, keep the current branch checked out and apply only their operation-specific rules.
 
 Apply these rules in order:
 
@@ -59,14 +68,15 @@ Use `switch` as the preferred modern Git term for this operation. The resulting 
 
 ## Startup Frozen Branch Guard
 
-Immediately after activating `igapyon-miku-scm` for a local repository, inspect the current branch with `git branch --show-current` before beginning the requested workflow.
+Immediately after activating `igapyon-miku-scm` for a local repository, inspect the current branch with `git branch --show-current` before beginning the requested workflow. Classify the workflow before deciding whether the frozen branch blocks it.
 
 When the branch name ends in `-done`:
 
 - Treat it as frozen. Do not edit files, stage, commit, reset, recommit, or begin other new work on that branch.
+- Allow READONLY inspection and local GitHub draft writing under `workplace/` or `temp/` without asking whether the Pull Request was merged.
 - Treat `-done` only as evidence that the post-recommit publication flow probably reached its local rename. It does not prove that GitHub received a Pull Request or that the Pull Request was merged.
 - If the user's activating message explicitly reports that the Pull Request was merged, run the Next Work Branch After PR Completion workflow before doing any new work.
-- If merge completion has not been explicitly reported, stop before any mutating workflow and ask `GitHubのPRはマージ済みですか？` Do not infer the answer from local Git state, remote branch state, or the `-done` suffix.
+- If merge completion has not been explicitly reported, stop only before a tracked-content or history-mutating workflow and ask `GitHubのPRはマージ済みですか？` Do not infer the answer from local Git state, remote branch state, or the `-done` suffix.
 - If the user says the Pull Request is not merged, keep the branch frozen. Allow read-only inspection and reporting, but require an explicitly documented recovery path before applying a correction.
 
 After the human confirms that the Pull Request was merged, treat that confirmation as authorization to refresh the base and create the next work branch under the documented workflow. Continue other requested work only after switching to that new branch.
@@ -75,6 +85,8 @@ After the human confirms that the Pull Request was merged, treat that confirmati
 
 - Treat `pr soft reset recommit` and `pr reset recommit` as explicit requests to run the PR Soft Reset Recommit workflow built into `igapyon-miku-scm`.
 - Use [github-writing-rules.md](github-writing-rules.md), [github-pr-writing.md](github-pr-writing.md), [github-pr-soft-reset-recommit.md](github-pr-soft-reset-recommit.md), and [github-backup-branch.md](github-backup-branch.md) for PR draft composition, backup-branch creation, soft reset, and recommit behavior. Use the bundled `scripts/pr-soft-reset-recommit-preflight.mjs`; do not invoke `igapyon-github-writer`.
+- Resolve the reset base before drafting. In this mode, override the generic latest-single-commit PR default and draft from the exact `<base>..HEAD` commit range that the helper will collapse. Inspect every commit and the complete diff for that range.
+- Before apply mode, compare the saved draft with `Commits To Collapse` and `Diff Stat`; require the title and body to cover every material change group in the collapsed range. If the draft covers a different scope, regenerate it before rewriting history.
 - Do not invalidate a verified same-session version check merely because this workflow starts. This includes a completed increment and an explicit no-increment confirmation for the same content. Re-read the version sources, rerun their alignment check, and confirm that the recommit content has not changed; when they still match the session record, continue without the version reminder.
 - Before delegating, require a clean working tree and run `git fetch origin` so the reset base is not resolved from stale remote-tracking information.
 - Resolve the reset base, then require it to be an ancestor of the current `HEAD`:
@@ -152,7 +164,26 @@ Run this workflow when the human explicitly reports that the Pull Request was me
 
 Interpret a local branch name ending in `-done` only as an operational marker that the post-recommit publication sequence probably reached the rename performed after push. It does not prove that a Pull Request was created or merged. Never use `-done` alone to decide that PR work is complete; require the human's explicit statement that the PR was merged before running this workflow.
 
-Treat a `-done` branch as frozen: do not add new work, stage changes, create commits, or run PR Soft Reset Recommit on it. After receiving the human's merge report, refresh the base and create the next work branch before continuing. If the prior PR was not merged but a correction is required, stop and require an explicitly designed recovery path instead of silently continuing on `-done`.
+Treat a `-done` branch as frozen: do not add new work, stage changes, create commits, or run PR Soft Reset Recommit on it. After receiving the human's merge report, refresh the base, run the non-blocking recommended-tag check below, and create the next work branch before continuing. If the prior PR was not merged but a correction is required, stop and require an explicitly designed recovery path instead of silently continuing on `-done`.
+
+### Non-Blocking Recommended Tag Check
+
+After `git fetch origin` succeeds and before creating the next work branch:
+
+1. Resolve the refreshed base commit, such as `origin/devel`.
+2. Read the authoritative version source from that exact base commit without switching or editing the frozen branch. Do not derive the version from the frozen working tree when it may differ from the refreshed base.
+3. Resolve the repository tag convention under [version-tag-release-audit.md](version-tag-release-audit.md) and derive the recommended tag. If the version source or convention cannot be resolved, report `推奨タグ確認: 未解決` with a warning and continue.
+4. Check the selected remote for an exact tag ref. Do not accept a prefix match or a similarly named operational tag. A suitable read-only command shape is:
+
+```sh
+git ls-remote --tags origin "refs/tags/<recommended-tag>" "refs/tags/<recommended-tag>^{}"
+```
+
+5. When the exact tag is absent, report `注意: 推奨タグ <recommended-tag> がリモートにありません。` Do not stop the next-work-branch workflow.
+6. When the tag exists, resolve its effective target commit, peeling an annotated tag when necessary, and compare it with the refreshed base commit. Report the tag as confirmed when they match. When they do not match, report both commit IDs as a warning and continue.
+7. When the remote tag query fails, report `注意: 推奨タグ <recommended-tag> のリモート確認に失敗しました。` and continue. Do not silently treat a failed query as an absent tag.
+
+This check is advisory. A missing, mismatched, unresolved, or temporarily unqueryable recommended tag must never block creation of the next work branch. It does not authorize creating, moving, or pushing a tag, and it does not replace the fuller Release and distribution-asset audit.
 
 Build the new branch name as:
 
@@ -171,15 +202,14 @@ Use these naming rules:
 
 For example, `devel-tiga0718tef` means base `devel`, user `tiga`, July 18, 19:45.
 
-After resolving a unique branch name from the current local date and time, run:
+After resolving a unique branch name from the current local date and time, fetch the base, perform the non-blocking recommended-tag check, then run:
 
 ```sh
-git fetch origin
 git switch -c devel-tiga0718tef origin/devel
 git status -sb
 ```
 
-Replace the example branch and base with the resolved values. Stop if fetch fails or if the resolved local branch already exists. Report the final branch and status.
+Replace the example branch and base with the resolved values. Stop if the base fetch fails or if the resolved local branch already exists. Do not stop for a tag-check warning. Report the recommended tag check result, final branch, and status.
 
 For follow-up work accidentally committed after the previous PR content, prefer this recovery shape after human authorization:
 

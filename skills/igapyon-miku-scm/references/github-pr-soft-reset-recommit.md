@@ -22,7 +22,8 @@ This workflow may automate the local-only history rewrite with the bundled Node 
 - `git fetch origin` is allowed only to refresh local remote-tracking information.
 - Do not ask the version-increment reminder again merely because this workflow will replace an already confirmed commit. Reuse a valid same-session version check under [version-increment-confirmation.md](version-increment-confirmation.md) after re-reading the version sources and rerunning their alignment check. Ask again if the content to recommit changed after the confirmation.
 - `git reset --soft <base>` rewrites `HEAD` while preserving index and working tree changes. Treat it as a history-rewrite operation and mention that clearly before running it.
-- Resolve the base from local Git before asking the user. Prefer the current branch upstream (`@{u}`), then local `origin/HEAD`, then local `origin/devel`. Ask for the base branch or remote-tracking ref only when local Git cannot resolve any of those.
+- Resolve the base from local Git before asking the user. Accept the current branch upstream only when it is not the remote counterpart of the current feature branch. Otherwise prefer the base encoded by a prescribed `<base>-tiga...` branch name, then local `origin/HEAD`, then local `origin/devel`. Ask for `--base` when the result is ambiguous.
+- Require the resolved base to be an ancestor of `HEAD`, require at least one commit in `<base>..HEAD`, and refuse a branch ending in `-done`. Enforce these checks both in the documented workflow and inside the helper immediately before apply mode.
 
 ## Inputs
 
@@ -32,6 +33,8 @@ This workflow has two required inputs:
 - `PR_DRAFT`: the saved PR draft file, preferably under `workplace/miku-scm/` or `temp/miku-scm/`
 
 The PR draft file must contain the inner Markdown draft, without the outer `~~~~markdown` wrapper.
+
+In this mode, the PR draft must be based on the exact `<base>..HEAD` range shown by preflight. It must cover every material change group in `Commits To Collapse` and `Diff Stat`; a draft based only on the latest commit is invalid when multiple commits will be collapsed.
 
 If there is no saved PR draft file, stop this workflow and first create or save the PR draft through PR mode. Do not use `mktemp`, inline heredoc, or `cat <<EOF` as a fallback.
 
@@ -75,10 +78,13 @@ Review the preflight output before any history rewrite:
 
 - confirm `base` exists
 - confirm `base source` is appropriate
+- confirm `base` is an ancestor of `HEAD`
+- confirm at least one commit will be collapsed
 - confirm `PR draft` is the intended saved draft
 - confirm `backup branch candidate`
 - confirm `Commits To Collapse`
 - confirm `Diff Stat`
+- compare the saved draft with the complete collapsed range and confirm every material change group is represented
 - confirm `git status -sb` does not show unrelated uncommitted changes
 
 After that, prefer applying the local-only rewrite with the Node helper:
