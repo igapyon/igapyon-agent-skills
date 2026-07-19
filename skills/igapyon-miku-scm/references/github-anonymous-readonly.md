@@ -10,6 +10,7 @@ Use anonymous REST API requests for:
 - branches
 - Issues and Issue comments
 - Releases and release assets
+- GitHub Actions runs, jobs, and step conclusions
 
 Do not use `gh`, request login, read a token, or send an `Authorization` header for these public READONLY operations.
 
@@ -31,6 +32,8 @@ Use `https://api.github.com` with these `GET` endpoint patterns:
 /repos/{owner}/{repo}/releases/latest
 /repos/{owner}/{repo}/releases/{release_id}
 /repos/{owner}/{repo}/releases/{release_id}/assets
+/repos/{owner}/{repo}/actions/runs?per_page=100
+/repos/{owner}/{repo}/actions/runs/{run_id}/jobs?per_page=100
 ```
 
 Use only `GET` or `HEAD`. Follow pagination when the response includes a next-page link.
@@ -43,6 +46,12 @@ Use only `GET` or `HEAD`. Follow pagination when the response includes a next-pa
 - On `403` or `429`, inspect rate-limit response headers and report the limit. Do not silently authenticate or repeatedly retry.
 - Anonymous access cannot inspect private repositories or non-public resources such as draft Releases.
 - Keep downloaded content in memory or local scratch space unless the user asks to save it.
+
+## GitHub Actions Log Handoff
+
+Use anonymous Actions run and job endpoints to identify the failing workflow, job, and step. If downloading the raw job log is rejected because authentication or repository permissions are required, do not request a token, login, or elevated GitHub access.
+
+Ask the human to open the failed step in the GitHub Actions UI and copy and paste the relevant error log into the conversation. Treat the pasted log as the evidence for the exact failure message. Local reproduction and repository comparison may continue while waiting, but clearly label conclusions inferred without the pasted log.
 
 ## Boundary
 

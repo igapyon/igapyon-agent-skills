@@ -329,8 +329,9 @@ mvn clean package
 sh scripts/check-generated-indexes.sh
 ```
 
-release workflow でも `mvn clean package` の後に同じ検査を行い、生成結果が commit
-済みの `index.json` と一致しない場合は release を停止します。
+この drift 確認は、タグ作成前のローカル確認や通常の開発フローで利用します。
+release workflow は `mvn clean package` で archive 内の `index.json` を再生成するため、
+commit 済み index との差分だけを理由に release を停止しません。
 
 ## Release archive
 
@@ -367,8 +368,8 @@ release staging に全 skill をそろえた後、同梱した index generator �
 - `mikuscore-skills` `v0.1.0`: `skills/mikuscore/`
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
-生成 index の drift がないことを確認してから、生成された zip を GitHub Release asset
-として添付します。
+生成された zip を GitHub Release asset として添付します。archive 内の `index.json` は
+package 処理で再生成されます。
 
 ## 厳選 text bundle
 
