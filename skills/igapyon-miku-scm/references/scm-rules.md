@@ -21,6 +21,42 @@ Do not treat SCM safety as a single READONLY-versus-write boundary. Classify eac
 
 Use the least-authorized level sufficient for the request. A lower level never implies authorization for a higher one. Preserve stricter workflow-specific prohibitions and confirmation gates when they apply.
 
+## Startup Work Branch Checkout
+
+Immediately after activating `igapyon-miku-scm` for a local repository, inspect the current branch before beginning any requested workflow:
+
+```sh
+git branch --show-current
+git status --porcelain
+```
+
+Activation of this skill for a local repository explicitly authorizes only the startup branch preparation documented in this section. It does not authorize other local mutations or any remote mutation.
+
+Apply these rules in order:
+
+1. If the current branch ends in `-done`, do not create or switch branches under this section. Apply the Startup Frozen Branch Guard.
+2. If the current branch already matches the prescribed `<base>-tiga<MMDD><hour-code><minute-tens-code><minute-ones-code>` work-branch form, keep it checked out and continue.
+3. If the current branch is the base branch, normally `devel`, require a clean working tree. If it is not clean, stop before switching and report the paths that prevent startup preparation.
+4. Fetch the selected remote, normally `origin`, and compare the local base with its remote-tracking branch:
+
+```sh
+git fetch origin
+git rev-list --left-right --count HEAD...origin/<base>
+```
+
+5. Require the comparison result to be `0 0`. If the local base is ahead, behind, diverged, or the fetch fails, stop without changing branches and report the state. Do not pull, reset, or discard commits automatically.
+6. Build a unique work-branch name using the naming rules under Next Work Branch After PR Completion. Confirm that the candidate does not already exist locally.
+7. Create the branch from the verified remote base and switch to it, then verify status:
+
+```sh
+git switch -c <resolved-work-branch> origin/<base>
+git status -sb
+```
+
+8. If the current branch is neither the base branch nor a prescribed work branch, do not switch automatically. Report the branch and wait for an explicit choice.
+
+Use `switch` as the preferred modern Git term for this operation. The resulting repository must be left with the prescribed work branch checked out before ordinary requested work begins.
+
 ## Startup Frozen Branch Guard
 
 Immediately after activating `igapyon-miku-scm` for a local repository, inspect the current branch with `git branch --show-current` before beginning the requested workflow.
@@ -105,9 +141,10 @@ Run the selected push, remote verification, rename, and status steps in order an
 After a successful push, remote verification, and local `-done` rename:
 
 - Resolve the canonical GitHub browser URL from the selected repository remote under [github-repository-url.md](github-repository-url.md). Include `GitHubリポジトリ: <url>` in the push completion report. If it cannot be resolved safely, report `GitHubリポジトリ: 未解決` instead of guessing.
+- Preserve the actual remote destination branch used by the successful push before renaming the local branch. Under [github-post-push-pr-url.md](github-post-push-pr-url.md), use that pushed branch—not a later local `-done` name or a differently named recovery branch—to resolve an existing Open PR URL or derive a PR creation URL. Include either `PR: <url>` or `PR作成URL: <url>` in the push completion report.
 - Derive the recommended tag name from the committed authoritative version and the repository's resolved tag convention. Include `推奨タグ名: <tag>` in the push completion report. If the convention cannot be resolved, report `推奨タグ名: 未解決` instead of guessing.
 
-This report does not authorize creating or pushing the tag.
+This report does not authorize creating a Pull Request or creating or pushing the tag.
 
 ## Next Work Branch After PR Completion
 
@@ -156,6 +193,7 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 
 - Inspect before changing.
 - Before `git add` or `git commit`, apply the mandatory human confirmation gate in [version-increment-confirmation.md](version-increment-confirmation.md).
+- After staging and immediately before `git commit`, run the repository-declared consistency gates in [repository-precommit-checks.md](repository-precommit-checks.md). Do not commit after a failed or invalidated check.
 - Resolve the exact repository, branch, remote, commit, tag, release, and version target needed for the request.
 - Preserve unrelated working-tree changes.
 - Treat local Git work and remote GitHub work as separate operations.
