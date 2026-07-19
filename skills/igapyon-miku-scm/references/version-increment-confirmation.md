@@ -20,12 +20,12 @@ Before `git add` or `git commit`, treat the version check as already satisfied w
 
 1. A session increment record exists for the same repository and branch.
 2. Every recorded authoritative or coupled version source still contains its recorded value and remains mutually aligned.
-3. No PR workflow, pull, push/publication boundary, merge, rebase, cherry-pick, reset, branch switch, or checkout that could replace versioned content has occurred since the record was established.
-4. There is no evidence that repository version policy or the authoritative version source changed.
+3. No content-replacing operation such as pull, merge, rebase, cherry-pick, mixed or hard reset, branch switch, or checkout of versioned content has occurred since the record was established.
+4. There is no evidence that repository version policy or the authoritative version source changed in a way that affects the recorded target version.
 
 Use read-only checks such as `git rev-parse --show-toplevel`, `git branch --show-current`, `git status -sb`, direct reads of the version sources, and the repository's alignment command. Use known actions in the current session to evaluate invalidating operations; do not rely on `git reflog` alone because it cannot reveal remote PR activity.
 
-Unrelated working-tree changes, staging, or an ordinary local commit do not invalidate a verified session increment record. A new add or commit batch alone does not require another reminder. If a version value changed after the record, revalidate it against repository policy and refresh the record when the new value is valid; otherwise ask the reminder.
+Unrelated working-tree changes, staging, or an ordinary local commit do not invalidate a verified session increment record. PR drafting, read-only preflight, backup-branch creation, and the documented PR soft-reset recommit also do not invalidate it because they preserve the versioned content. Before the recommit, re-read every recorded version source and rerun the alignment check; when the values remain valid, continue without asking the reminder. Do not ask merely because the PR workflow began or a new add or commit batch started. If a version value changed after the record, revalidate it against repository policy and refresh the record when the new value is valid; otherwise ask the reminder.
 
 ## Reminder Gate
 
@@ -44,4 +44,4 @@ When no reusable session record can be verified:
 
 An explicit human confirmation satisfies the current batch even when no version increment is required. Ask again for a later batch unless a valid session increment record exists.
 
-This gate governs whether staging and committing may proceed. Continue to use `igapyon-github-writer` for commit-message composition when its workflow is explicitly requested.
+This gate governs whether staging and committing may proceed. For a PR-derived commit message under this skill, use [github-writing-rules.md](github-writing-rules.md), [github-pr-writing.md](github-pr-writing.md), and [github-pr-soft-reset-recommit.md](github-pr-soft-reset-recommit.md).

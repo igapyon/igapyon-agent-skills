@@ -12,8 +12,9 @@ This is the initial rule entry point for `igapyon-miku-scm`. Add detailed rules 
 
 ## PR Soft Reset Recommit Delegation
 
-- Treat `pr soft reset recommit` and `pr reset recommit` as explicit requests to run the `igapyon-github-writer` PR Soft Reset Recommit workflow.
-- Delegate PR draft composition, backup-branch creation, soft reset, and recommit behavior to `igapyon-github-writer`; do not duplicate that implementation in this skill.
+- Treat `pr soft reset recommit` and `pr reset recommit` as explicit requests to run the PR Soft Reset Recommit workflow built into `igapyon-miku-scm`.
+- Use [github-writing-rules.md](github-writing-rules.md), [github-pr-writing.md](github-pr-writing.md), [github-pr-soft-reset-recommit.md](github-pr-soft-reset-recommit.md), and [github-backup-branch.md](github-backup-branch.md) for PR draft composition, backup-branch creation, soft reset, and recommit behavior. Use the bundled `scripts/pr-soft-reset-recommit-preflight.mjs`; do not invoke `igapyon-github-writer`.
+- Do not invalidate a verified same-session version increment merely because this workflow starts. Re-read the version sources and rerun their alignment check before recommit; when they still match the session record, continue without the version reminder.
 - Before delegating, require a clean working tree and run `git fetch origin` so the reset base is not resolved from stale remote-tracking information.
 - Resolve the reset base, then require it to be an ancestor of the current `HEAD`:
 
@@ -78,11 +79,11 @@ Run the selected push, remote verification, rename, and status steps in order an
 
 ## Next Work Branch After PR Completion
 
-Run this workflow only after the Pull Request has been created and merged, and then the human explicitly instructs the agent to create the next work branch. Do not infer merge completion from local Git state, push output, or branch naming. Do not create the next work branch immediately after push or local `-done` rename while the PR is still open or its merge is unconfirmed.
+Run this workflow when the human explicitly reports that the Pull Request was merged. Treat a clear report such as `GitHubでマージした`, `PRをマージした`, or `マージ完了` as both confirmation of the merge and authorization to refresh the base and create the next work branch; do not require a second instruction to create it. Do not infer merge completion from local Git state, push output, or branch naming. Do not create the next work branch immediately after push or local `-done` rename while the PR is still open or its merge is unconfirmed.
 
 Interpret a local branch name ending in `-done` only as an operational marker that the post-recommit publication sequence probably reached the rename performed after push. It does not prove that a Pull Request was created or merged. Never use `-done` alone to decide that PR work is complete; require the human's explicit statement that the PR was merged before running this workflow.
 
-Treat a `-done` branch as frozen: do not add new work, stage changes, create commits, or run PR Soft Reset Recommit on it. If the prior PR was merged and the human requests continued work, refresh the base and create the next work branch first. If the prior PR was not merged but a correction is required, stop and require an explicitly designed recovery path instead of silently continuing on `-done`.
+Treat a `-done` branch as frozen: do not add new work, stage changes, create commits, or run PR Soft Reset Recommit on it. After receiving the human's merge report, refresh the base and create the next work branch before continuing. If the prior PR was not merged but a correction is required, stop and require an explicitly designed recovery path instead of silently continuing on `-done`.
 
 Build the new branch name as:
 
