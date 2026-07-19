@@ -34,4 +34,4 @@ Do not:
 - add comments, labels, assignees, milestones, or state changes
 - imply that the Issue was updated
 
-This human-paste Issue workflow belongs to `igapyon-miku-scm`. Continue to delegate PR, Release, About, and commit-message writing to `igapyon-github-writer` only when that skill is explicitly requested.
+This human-paste Issue workflow belongs to `igapyon-miku-scm`. Use this skill's integrated GitHub writing references for PR, Release, About, and PR-derived commit-message work.

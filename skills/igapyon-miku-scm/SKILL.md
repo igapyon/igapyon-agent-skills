@@ -1,6 +1,6 @@
 ---
 name: igapyon-miku-scm
-description: Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, or explicitly asks to perform Git, GitHub, GitHub Release, or version-management work under miku-soft SCM rules. Supports date-based and Semantic Version increments, public GitHub Issue rewrite handoffs, and READONLY audits that compare committed package or Maven versions with tags, Releases, and required distribution assets. Do not activate for generic Git or GitHub questions, ordinary repository inspection, or release-note writing.
+description: Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, or explicitly asks to perform Git, GitHub writing, GitHub Release, or version-management work under miku-soft SCM rules. Supports PR, Release, and About drafting; PR soft-reset recommit; backup and branch-status workflows; date-based and Semantic Version increments; public GitHub Issue rewrite handoffs; and READONLY version, tag, Release, and asset audits. Do not activate for generic Git or GitHub questions, ordinary repository inspection, or release-note writing outside an explicit miku-soft SCM request.
 ---
 
 # igapyon-miku-scm
@@ -17,6 +17,8 @@ Support documented workflows and read-only inspection for:
 - GitHub operations
 - local repository GitHub URL resolution
 - public GitHub Issue rewrite handoff for human updates
+- GitHub PR, Release, and About drafting from repository evidence
+- PR soft-reset recommit, local backup branch, and branch-status workflows
 - GitHub Releases
 - version, tag, Release, and distribution-asset consistency audits
 - date-based and semantic version increment workflows
@@ -29,19 +31,22 @@ Do not perform remote mutations, history rewrites, tag changes, release publicat
 2. Inspect repository state before proposing or performing work.
 3. Read [references/scm-rules.md](references/scm-rules.md).
 4. For local Git status inspection, read [references/local-git-readonly.md](references/local-git-readonly.md).
-5. For a local repository GitHub URL query, read [references/github-repository-url.md](references/github-repository-url.md).
-6. For a public GitHub Issue rewrite that a human will paste into GitHub, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/github-issue-rewrite-handoff.md](references/github-issue-rewrite-handoff.md).
-7. For a version, tag, Release, and distribution-asset consistency audit, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/version-tag-release-audit.md](references/version-tag-release-audit.md).
-8. For a requested version increment, read [references/version-increment.md](references/version-increment.md).
-9. For other public GitHub source, branch, Issue, or Release inspection, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md).
-10. Before any requested `git add` or `git commit`, read and follow [references/version-increment-confirmation.md](references/version-increment-confirmation.md).
-11. Preserve unrelated user changes.
-12. Separate local preparation from remote GitHub operations.
-13. Report what was inspected, changed, and left pending.
+5. For the integrated GitHub writing modes, read [references/github-writing-rules.md](references/github-writing-rules.md), then the requested mode: [references/github-pr-writing.md](references/github-pr-writing.md), [references/github-release-writing.md](references/github-release-writing.md), or [references/github-about-writing.md](references/github-about-writing.md).
+6. For PR soft-reset recommit, read [references/github-pr-soft-reset-recommit.md](references/github-pr-soft-reset-recommit.md) and [references/github-backup-branch.md](references/github-backup-branch.md), then use [scripts/pr-soft-reset-recommit-preflight.mjs](scripts/pr-soft-reset-recommit-preflight.mjs); for standalone backup or branch-status work, read [references/github-backup-branch.md](references/github-backup-branch.md) or [references/github-branch-status.md](references/github-branch-status.md).
+7. For a local repository GitHub URL query, read [references/github-repository-url.md](references/github-repository-url.md).
+8. For a public GitHub Issue rewrite that a human will paste into GitHub, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/github-issue-rewrite-handoff.md](references/github-issue-rewrite-handoff.md).
+9. For a version, tag, Release, and distribution-asset consistency audit, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/version-tag-release-audit.md](references/version-tag-release-audit.md).
+10. For a requested version increment, read [references/version-increment.md](references/version-increment.md).
+11. For other public GitHub source, branch, Issue, or Release inspection, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md).
+12. Before any requested `git add` or `git commit`, read and follow [references/version-increment-confirmation.md](references/version-increment-confirmation.md).
+13. Preserve unrelated user changes.
+14. Separate local preparation from remote GitHub operations.
+15. Report what was inspected, changed, and left pending.
 
 ## Boundaries
 
-- Handle only the documented public GitHub Issue rewrite handoff in this skill. Treat commit-message composition and other SCM-facing writing, including GitHub PR, Release, and About text, as the responsibility of `igapyon-github-writer`. Use that skill only when it is explicitly requested and within its supported workflow contract.
+- Use the GitHub writing references and helper bundled in this skill when `igapyon-miku-scm` is active. Do not read, call, or depend on `skills/igapyon-github-writer` for the integrated workflow.
+- Keep the standalone `igapyon-github-writer` active and unchanged for requests that explicitly invoke that skill. Treat the two implementations as independent during coexistence; improve the miku-scm copy without silently synchronizing or overwriting the standalone skill.
 - Use `igapyon-repo-conventions` for repository layout and repository-side convention work when that skill is explicitly requested.
 - Keep SCM policy and SCM execution rules in this skill.
 
