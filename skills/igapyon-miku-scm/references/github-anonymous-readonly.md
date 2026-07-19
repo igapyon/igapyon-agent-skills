@@ -22,6 +22,8 @@ Use `https://api.github.com` with these `GET` endpoint patterns:
 /repos/{owner}/{repo}/contents/{path}?ref={branch-or-commit}
 /repos/{owner}/{repo}/branches
 /repos/{owner}/{repo}/branches/{branch}
+/repos/{owner}/{repo}/commits/{branch-or-tag}
+/repos/{owner}/{repo}/tags?per_page=100
 /repos/{owner}/{repo}/issues?state=all&per_page=100
 /repos/{owner}/{repo}/issues/{issue_number}
 /repos/{owner}/{repo}/issues/{issue_number}/comments
@@ -36,6 +38,7 @@ Use only `GET` or `HEAD`. Follow pagination when the response includes a next-pa
 ## Interpretation Rules
 
 - Treat a response containing a `pull_request` field from an Issues endpoint as a Pull Request rather than an Issue.
+- Resolve version files at the exact branch commit or tag commit being audited. Do not compare a historical tag only with the current default-branch file.
 - Treat anonymous `404` as unresolved: the repository or resource may not exist, may be private, or may not be anonymously visible.
 - On `403` or `429`, inspect rate-limit response headers and report the limit. Do not silently authenticate or repeatedly retry.
 - Anonymous access cannot inspect private repositories or non-public resources such as draft Releases.
