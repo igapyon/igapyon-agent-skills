@@ -52,6 +52,17 @@ Draft for reviewers:
 - mention missing or uncertain verification only when it is necessary for the PR text
 - do not describe user impact, behavior, or motivation unless supported by the inspected evidence or user input
 
+## Issue Linking
+
+- Read [github-anonymous-readonly.md](github-anonymous-readonly.md) and use its local open-Issue cache before downloading Issue data. Compare the resolved PR evidence with cached Issue titles, bodies, and stated completion conditions.
+- When the evidence clearly completes an Issue, add a final `## 関連Issue` section containing `Closes #<issue-number>`, even when the user did not supply the number.
+- When the evidence only partially addresses or otherwise relates to an Issue, use `Refs #<issue-number>` instead of a closing keyword.
+- When multiple Issues are plausible or completion is ambiguous, show the candidates and ask the human before adding a closing reference. Do not silently choose one.
+- When no Issue matches, omit `## 関連Issue`. When matching is unavailable or based on a stale fallback cache, disclose that limitation instead of guessing a closing reference.
+- Use one reference for each Issue independently supported by the inspected evidence. Do not infer Issue numbers from branch names, commit messages, diffs alone, or nearby GitHub activity; the Issue title or body must substantively match the change.
+- An Issue explicitly identified by the user still requires classifying the change as completing or merely relating to it before choosing `Closes` or `Refs`.
+- Treat automatic Issue closure as best effort. Do not require confirmation that GitHub closed the Issue before completing the PR drafting workflow; the user may close it manually if necessary.
+
 ## Output Shape
 
 Use this output shape:
@@ -69,3 +80,11 @@ Use this output shape:
 ```
 
 Add a `## 確認事項` section only when there are material unresolved items that should be shown in the PR text.
+
+When an Issue link applies, place `## 関連Issue` after the other PR body sections:
+
+```markdown
+## 関連Issue
+
+Closes #11
+```
