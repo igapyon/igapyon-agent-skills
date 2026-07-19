@@ -20,6 +20,7 @@ This workflow may automate the local-only history rewrite with the bundled Node 
 - Do not proceed if there are unrelated uncommitted changes unless the user explicitly confirms how to handle them.
 - Do not run `git reset --hard`, `git checkout --`, `git push`, `gh pr create`, or any remote-changing command in this workflow.
 - `git fetch origin` is allowed only to refresh local remote-tracking information.
+- Do not ask the version-increment reminder again merely because this workflow will replace an already confirmed commit. Reuse a valid same-session version check under [version-increment-confirmation.md](version-increment-confirmation.md) after re-reading the version sources and rerunning their alignment check. Ask again if the content to recommit changed after the confirmation.
 - `git reset --soft <base>` rewrites `HEAD` while preserving index and working tree changes. Treat it as a history-rewrite operation and mention that clearly before running it.
 - Resolve the base from local Git before asking the user. Prefer the current branch upstream (`@{u}`), then local `origin/HEAD`, then local `origin/devel`. Ask for the base branch or remote-tracking ref only when local Git cannot resolve any of those.
 
