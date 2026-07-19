@@ -59,7 +59,7 @@ A newer committed version without its tag or Release can be normal work in progr
 
 Determine the expected Release assets from repository documentation, build configuration, release scripts, and consistent recent Releases.
 
-- For an Agent Skill distribution, expect the installable distribution ZIP, such as `igapyon-miku-m365-agent-builder-skills-0.4.3.zip`.
+- For an Agent Skill distribution, expect the installable distribution ZIP, such as `igapyon-miku-ai-assistant-builder-skills-0.7.1.zip`.
 - For a Node.js module or CLI distributed as a single-file runtime, expect its `.mjs` asset.
 - For a Java module or CLI, expect its `.jar` asset.
 - When a project intentionally distributes multiple runtimes, require every artifact named by its build or release contract.
