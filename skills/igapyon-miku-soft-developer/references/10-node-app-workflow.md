@@ -105,6 +105,31 @@ Then ask or record which release asset should be attached, unless the user has c
 
 Creating or editing a local workflow file is allowed repository work. Pushing branches, opening pull requests, publishing releases, running `npm publish`, configuring secrets, or uploading release assets remains a human GitHub or registry operation as described in [repo-operations.md](repo-operations.md).
 
+## Node.js Compatibility Policy
+
+Keep three different version concerns separate.
+
+- Product compatibility is the Node.js range declared by `package.json`
+  `engines.node`. Set its lower bound to the oldest runtime actually verified
+  by CI. For the current starter baseline, use `>=20` and avoid an upper bound
+  unless the product has a demonstrated incompatibility with newer Node.js.
+- CI compatibility is the set of product runtimes tested on every change. For
+  the current starter baseline, test Node.js 20 and 24 so the declared minimum
+  and the release baseline are both exercised.
+- GitHub JavaScript Action runtime is selected by each Action major version; it
+  is not the product runtime selected by `actions/setup-node`. Use Node 24-aware
+  majors such as `actions/checkout@v6`, `actions/setup-node@v6`,
+  `actions/setup-java@v5`, and `softprops/action-gh-release@v3`.
+
+Use Node.js 24 for release builds to keep release artifact generation on one
+current, reproducible baseline. Do not narrow `engines.node` to Node.js 24 only
+merely because release automation builds with Node.js 24.
+
+Treat `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` and
+`FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` as temporary migration workarounds, not as
+the normal maintained solution. Prefer upgrading the Action majors and remove
+the workaround once the workflow uses Node 24-aware Actions.
+
 ## Release Bundle Workflow
 
 When a Node CLI main app publishes runtime artifacts through GitHub Releases,
@@ -155,7 +180,8 @@ Check these points:
   and uploading `release-assets/*.tgz` unless the user explicitly asked for
   the npm package tarball as the release asset.
 - Do not add a broad repository source ZIP or generic source archive as a custom uploaded release asset.
-- Actions runtime compatibility settings, such as Node.js version or JavaScript action runtime flags, are kept only when the reference project or current repository needs them.
+- The release build uses Node.js 24 while product compatibility remains defined
+  separately by `package.json` and the CI matrix.
 
 For a Release CLI/runtime bundle request, the expected release assets are normally:
 
@@ -196,23 +222,20 @@ on:
 permissions:
   contents: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 jobs:
   release-cli-runtime-bundles:
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.release.tag_name }}
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
           cache: npm
 
       - name: Install dependencies
@@ -271,7 +294,7 @@ jobs:
           cp bundle/<product>-sources.tgz "release-assets/<product>-sources-${RELEASE_VERSION}.tgz"
 
       - name: Upload release assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event.release.tag_name }}
           files: release-assets/*
@@ -280,11 +303,9 @@ jobs:
 
 If a repository needs a manual rerun path, add `workflow_dispatch` with a required `tag_name`, check out that explicit tag, and use it for release asset upload; keep a `v*` guard on the job. Do not add manual dispatch by default.
 
-If the repository does not require an Actions runtime compatibility environment
-variable, omit `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`. If the bundle files or
-smoke scripts use different names, adapt only those paths and commands while
-preserving the GitHub Release publish asset upload contract and the
-two-artifact CLI/runtime distinction.
+If the bundle files or smoke scripts use different names, adapt only those
+paths and commands while preserving the GitHub Release publish asset upload
+contract and the two-artifact CLI/runtime distinction.
 
 Do not treat Release asset upload as a substitute for local bundle verification. The local build and smoke contract should remain valid without GitHub Actions.
 

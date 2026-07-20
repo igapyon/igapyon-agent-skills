@@ -38,6 +38,8 @@ Bundled starter templates are available under `assets/agent-skills/`:
   - Starter npm metadata for build, test, and bundle orchestration.
   - Keep `private: true` unless the repository explicitly chooses npm
     publication.
+  - The starter declares `engines.node` as `>=20`; keep that lower bound only
+    while Node.js 20 remains covered by repository tests.
   - Replace `__REPO_NAME__` and `__VERSION__`.
 - `scripts/build-skill-bundle.mjs`
   - Builds `bundle/<repo-name>/skills/<skill-name>/...` from
@@ -66,6 +68,10 @@ Bundled starter templates are available under `assets/agent-skills/`:
     verification and zip naming to the target skill.
   - Omit only when the repository intentionally does not use GitHub Release
     assets, and record that reason.
+- `.github/workflows/ci.yml`
+  - Tests the declared minimum Node.js 20 runtime and the Node.js 24 release
+    baseline independently.
+  - Keep the matrix synchronized with `package.json` compatibility claims.
 - `templates/skill/`
   - Minimal skill skeleton to copy to `skills/<skill-name>/`, with
     `SKILL.md.template`, optional `agents/openai.yaml`, `references/INDEX.md`,
@@ -110,6 +116,13 @@ pushing tags or branches, publishing packages, and uploading release assets
 remain human GitHub or registry operations as described in
 [repo-operations.md](repo-operations.md).
 
+Keep the product runtime contract separate from the GitHub Actions runtime.
+The starter package supports Node.js `>=20`, CI verifies Node.js 20 and 24, and
+the release workflow builds with Node.js 24. The Action majors themselves must
+be Node 24-aware. Do not use `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` or
+`FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` as the maintained solution when supported
+Action majors are available.
+
 ## First Reads
 
 1. Read [activation-policy.md](activation-policy.md) for strict activation behavior.
@@ -143,4 +156,5 @@ remain human GitHub or registry operations as described in
 19. Treat the sister-reference summary as required implementation context for new creation work.
 20. Use sister projects as shape references only; do not copy `workplace/` contents into the target repository wholesale.
 21. Add the local GitHub Actions release asset workflow from the starter template by default, or record the explicit reason for omitting it.
-22. After adding or changing `SKILL.md`, references, assets, or other bundled skill files, regenerate `skills/<skill-name>/index.json` with `miku-indexgen --refresh-index skills/<skill-name>/index.json` or the repository's documented equivalent, then update validation output.
+22. Keep `engines.node`, the Node.js 20/24 CI matrix, the Node.js 24 release build, and Node 24-aware Action majors as separate but synchronized contracts.
+23. After adding or changing `SKILL.md`, references, assets, or other bundled skill files, regenerate `skills/<skill-name>/index.json` with `miku-indexgen --refresh-index skills/<skill-name>/index.json` or the repository's documented equivalent, then update validation output.

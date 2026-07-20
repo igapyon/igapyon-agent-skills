@@ -156,7 +156,20 @@ After a successful push, remote verification, and local `-done` rename:
 - Preserve the actual remote destination branch used by the successful push before renaming the local branch. Under [github-post-push-pr-url.md](github-post-push-pr-url.md), use that pushed branch—not a later local `-done` name or a differently named recovery branch—to resolve an existing Open PR URL or derive a PR creation URL. Include either `PR: <url>` or `PR作成URL: <url>` in the push completion report.
 - Derive the recommended tag name from the committed authoritative version and the repository's resolved tag convention. Include `推奨タグ名: <tag>` in the push completion report. If the convention cannot be resolved, report `推奨タグ名: 未解決` instead of guessing.
 
-This report does not authorize creating a Pull Request or creating or pushing the tag.
+This report does not authorize creating a Pull Request or creating or pushing the tag. Apply [github-release-tag-handoff.md](github-release-tag-handoff.md): the normal miku-soft next step is a human handoff to GitHub's Release creation screen, not a local `git tag` or tag push.
+
+## GitHub UI-First Release Tag Handoff
+
+When a recommended tag is reported after push or merge, use [github-release-tag-handoff.md](github-release-tag-handoff.md). Keep these facts distinct in user-facing reports:
+
+- whether the feature branch was pushed
+- whether the Pull Request was merged
+- whether the recommended release tag exists
+- whether a GitHub Release exists or is published
+
+Do not collapse them into an ambiguous statement such as `まだpushしていません`. If only the tag remains, say `推奨タグはまだ作成されていません` or `タグのGitHub UI handoffが未実施です`.
+
+Do not present local tag creation and push as the default continuation. Normally give the exact recommended tag name and let the human create or select it in GitHub's Release UI. Existing-tag movement or deletion is not part of this handoff.
 
 ## Next Work Branch After PR Completion
 
@@ -179,7 +192,7 @@ After `git fetch origin` succeeds and before creating the next work branch:
 git ls-remote --tags origin "refs/tags/<recommended-tag>" "refs/tags/<recommended-tag>^{}"
 ```
 
-5. When the exact tag is absent, report `注意: 推奨タグ <recommended-tag> がリモートにありません。` Do not stop the next-work-branch workflow.
+5. When the exact tag is absent, report `注意: 推奨タグ <recommended-tag> がリモートにありません。GitHubのRelease作成画面で人が新しいタグとして作成する想定です。` Do not stop the next-work-branch workflow and do not propose a local tag push as the default repair.
 6. When the tag exists, resolve its effective target commit, peeling an annotated tag when necessary, and compare it with the refreshed base commit. Report the tag as confirmed when they match. When they do not match, report both commit IDs as a warning and continue.
 7. When the remote tag query fails, report `注意: 推奨タグ <recommended-tag> のリモート確認に失敗しました。` and continue. Do not silently treat a failed query as an absent tag.
 
