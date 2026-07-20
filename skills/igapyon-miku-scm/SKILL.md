@@ -20,6 +20,7 @@ Support documented workflows and read-only inspection for:
 - GitHub PR, Release, and About drafting from repository evidence
 - PR soft-reset recommit, local backup branch, and branch-status workflows
 - GitHub Releases
+- GitHub UI-first Release tag handoff for human publication
 - version, tag, Release, and distribution-asset consistency audits
 - date-based and semantic version increment workflows
 
@@ -49,12 +50,13 @@ This fast path only defers initialization until there is enough information to c
 10. For a local repository GitHub URL query, read [references/github-repository-url.md](references/github-repository-url.md). For a post-push PR URL report, also read [references/github-post-push-pr-url.md](references/github-post-push-pr-url.md).
 11. For a new public GitHub Issue draft or an existing Issue rewrite that a human will paste into GitHub, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/github-issue-rewrite-handoff.md](references/github-issue-rewrite-handoff.md).
 12. Treat a request about GitHub tag status, including short phrases such as `タグ状況` or `tag status`, as a version, tag, Release, and distribution-asset consistency audit unless the user explicitly narrows the scope. Read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/version-tag-release-audit.md](references/version-tag-release-audit.md).
-13. For a requested version increment, read [references/version-increment.md](references/version-increment.md).
-14. For other public GitHub source, branch, Issue, or Release inspection, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md).
-15. Before any requested `git add` or `git commit`, read and follow [references/version-increment-confirmation.md](references/version-increment-confirmation.md) and [references/repository-precommit-checks.md](references/repository-precommit-checks.md). Read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) when resolving the latest public GitHub version tag for the confirmation display.
-16. Preserve unrelated user changes.
-17. Separate local preparation from remote GitHub operations.
-18. Report what was inspected, changed, and left pending.
+13. For recommended-tag guidance after push or merge, read [references/github-release-tag-handoff.md](references/github-release-tag-handoff.md). Treat GitHub Release UI creation by the human as the normal miku-soft handoff; do not present local `git tag` and tag push as the default next operation.
+14. For a requested version increment, read [references/version-increment.md](references/version-increment.md).
+15. For other public GitHub source, branch, Issue, or Release inspection, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md).
+16. Before any requested `git add` or `git commit`, read and follow [references/version-increment-confirmation.md](references/version-increment-confirmation.md) and [references/repository-precommit-checks.md](references/repository-precommit-checks.md). Read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) when resolving the latest public GitHub version tag for the confirmation display.
+17. Preserve unrelated user changes.
+18. Separate local preparation from remote GitHub operations.
+19. Report what was inspected, changed, and left pending.
 
 ## Boundaries
 
@@ -62,6 +64,7 @@ This fast path only defers initialization until there is enough information to c
 - Keep the standalone `igapyon-github-writer` active and unchanged for requests that explicitly invoke that skill. Treat the two implementations as independent during coexistence; improve the miku-scm copy without silently synchronizing or overwriting the standalone skill.
 - Use `igapyon-repo-conventions` for repository layout and repository-side convention work when that skill is explicitly requested.
 - Keep SCM policy and SCM execution rules in this skill.
+- Keep tag recommendation separate from tag mutation. The normal handoff is for the human to create or select the recommended tag in GitHub's Release UI.
 
 ## Verification
 

@@ -586,6 +586,15 @@ prompt test が成功しても実動作が保証されたとは扱わず、肥�
 
 ## igapyon-miku-soft-developer review 整理
 
+- [ ] Node.js 20 EOL後のスターター互換性方針を更新する
+  - 2026-07-20時点でNode.js 20はEOLだが、新規スターターが
+    `engines.node: ">=20"`、CIマトリクス `[20, 24]` を採用している
+  - 最低対応版をNode.js 22へ引き上げ、`engines.node`、CIマトリクス、
+    関連ドキュメントを `>=22` / `[22, 24]` へ同期することを検討する
+  - ReleaseビルドのNode.js 24は維持する
+  - `actions/checkout@v6`、`actions/setup-node@v6`、
+    `actions/setup-java@v5`、`softprops/action-gh-release@v3` は
+    Node.js 24対応世代として現行方針と整合している
 - [x] `skills/igapyon-miku-soft-developer/references/review/node-cli.md` に、他の review note と同じ `Severity Guidance` と `Review Output` を追加するか検討する
 - [x] `skills/igapyon-miku-soft-developer/references/review/` の入口として、各 review note の使い分けを説明する `README.md` または index 的な案内を追加するか検討する
 - [x] `skills/igapyon-miku-soft-developer/references/review/` 以下の review note 全体を整理し、ファイル粒度、見出し構成、分類条件、`Severity Guidance`、`Review Output` の揃い方を確認する

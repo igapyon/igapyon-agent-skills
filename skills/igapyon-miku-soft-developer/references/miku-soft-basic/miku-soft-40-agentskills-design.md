@@ -619,6 +619,30 @@ itself. Creating GitHub releases, pushing tags, publishing packages, and
 uploading assets remain human repository operations unless a separate workflow
 outside this skill explicitly authorizes them.
 
+Keep four contracts distinct in Node-backed Agent Skills repositories.
+
+- `package.json` declares the oldest supported product runtime. The current
+  starter baseline is `engines.node: ">=20"`, without an unnecessary upper
+  bound, while Node.js 20 remains verified.
+- CI verifies both the declared minimum and the release baseline; the current
+  starter matrix is Node.js 20 and 24.
+- Release artifact generation uses Node.js 24 as one fixed, reproducible build
+  baseline.
+- GitHub JavaScript Actions use Node 24-aware major versions. Their internal
+  runtime is separate from the product Node.js selected by `setup-node`.
+
+Do not use an Action deprecation warning as a reason to narrow the product's
+Node.js compatibility range. Upgrade the Action majors instead. Environment
+flags such as `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` and
+`FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` are temporary migration workarounds, not
+the maintained starter design.
+
+The installed skill bundle and its bundled JavaScript runtime may have a
+runtime requirement, but a user who only downloads or installs an already
+built release zip does not need the repository's release-build environment.
+Document repository build requirements separately from installed runtime
+requirements.
+
 Treat `release-build.yml` as a standard Agent Skills starter asset for new
 `-skills` repositories. For new repository creation, add or adapt it during
 initial scaffolding unless the user explicitly does not want GitHub Actions
