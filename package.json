@@ -1,5 +1,8 @@
 {
   "name": "igapyon-agent-skills",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "test:miku-scm": "node --test skills/igapyon-miku-scm/tests/post-recommit-publish.test.mjs"
+  }
 }

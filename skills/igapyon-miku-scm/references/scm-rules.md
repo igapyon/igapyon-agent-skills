@@ -111,6 +111,8 @@ git log -1 | head -n 20
 
 After a successful PR Soft Reset Recommit and the required `git log -1 | head -n 20` display, stop and wait for the human to inspect the commit log.
 
+Use [github-post-recommit-publish.md](github-post-recommit-publish.md) and the bundled `scripts/post-recommit-publish.mjs` as the authoritative implementation. Before asking for publication approval, run its read-only preflight with the reviewed full local commit SHA. Show the resulting exact remote state and apply arguments with the commit log. For an existing remote branch, the preflight full remote SHA is part of the human-reviewed publication plan; for a new remote branch, the reviewed plan records that the exact destination branch is absent.
+
 Proceed only when all of these conditions hold:
 
 - the environment is macOS
@@ -118,37 +120,11 @@ Proceed only when all of these conditions hold:
 - the human explicitly says the displayed commit is OK and authorizes publication
 - the target `<current-branch>-done` local branch does not already exist
 
-After explicit approval, run `git fetch origin`, resolve `<current-branch>`, and determine whether `origin/<current-branch>` already exists.
+After explicit approval, pass the exact preflight `apply_arguments` and `--apply` to the helper. Do not request another conversational approval after `ok push` while the reviewed local HEAD, branch, remote, and remote expectation remain unchanged. The helper must stop instead of guessing when any reviewed state changed.
 
-- For a new remote branch, use normal initial publication and establish its upstream:
+For a new remote branch, the helper uses `git push -u origin HEAD:refs/heads/<current-branch>`. For an existing reviewed recommit branch, it requires `--expected-remote-head <reviewed-full-sha>` and uses `git push --force-with-lease=refs/heads/<current-branch>:<reviewed-full-sha> origin HEAD:refs/heads/<current-branch>`. Never use a remote-tracking ref updated by the helper's own fetch as an implicit lease expectation. Do not replace the explicit lease with plain `--force`, and do not use force for a new remote branch.
 
-```sh
-git push -u origin HEAD
-```
-
-- Only when the same remote branch already exists and the reviewed recommit intentionally rewrote its history, use:
-
-```sh
-git push --force-with-lease origin HEAD
-```
-
-Treat `git push --force-with-lease origin HEAD` as an authorized remote history update only for this reviewed rewrite case. Do not replace it with plain `--force`, and do not use force for a new remote branch.
-
-After a successful push, do not run `git pull`. Fetch and compare the pushed remote feature branch with local `HEAD` instead:
-
-```sh
-git fetch origin
-git rev-list --left-right --count HEAD...origin/<current-branch>
-```
-
-Require the comparison result to be `0 0`. Only after it matches, run:
-
-```sh
-git branch -m "<current-branch>" "<current-branch>-done"
-git status -sb
-```
-
-Run the selected push, remote verification, rename, and status steps in order and stop immediately if any step fails. Do not treat earlier approval to run PR Soft Reset Recommit as approval to publish. Require the human's OK after displaying the new commit log. If push or remote verification fails, do not rename the branch. Do not create a Pull Request in this sequence.
+The helper runs fetch, push, post-push fetch, `0 0` comparison, rename, and status steps in order and stops immediately if any step fails. Do not run `git pull`. Only a successful `0 0` comparison permits the local `<current-branch>-done` rename. Do not treat earlier approval to run PR Soft Reset Recommit as approval to publish. Require the human's OK after displaying the new commit log and publication preflight. Do not create a Pull Request in this sequence.
 
 After a successful push, remote verification, and local `-done` rename:
 
