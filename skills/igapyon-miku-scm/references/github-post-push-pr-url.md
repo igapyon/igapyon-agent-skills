@@ -68,4 +68,4 @@ GitHubリポジトリ: <url-or-未解決>
 PR作成URL: <creation-url-or-未解決>
 ```
 
-Keep the recommended tag line required by the publication workflow. A PR URL report does not authorize PR creation, and a recommended tag does not authorize tag creation or push. Use [github-release-tag-handoff.md](github-release-tag-handoff.md) for the normal human handoff through GitHub's Release creation screen; do not present local tag push as the default continuation.
+Always follow the repository and PR URL lines with `推奨タグ名: <tag-or-未解決>`. End every successful push completion report with the exact sentence `PRとタグはgithub上で操作してください。` A PR URL report does not authorize PR creation, and a recommended tag does not authorize tag creation or push. Use [github-release-tag-handoff.md](github-release-tag-handoff.md) for the normal human handoff through GitHub's Release creation screen; do not present local tag push as the default continuation.

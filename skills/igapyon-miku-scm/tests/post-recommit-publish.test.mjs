@@ -114,6 +114,8 @@ test("apply publishes a new branch and renames locally only after equality", asy
 
   assert.equal(result.push_mode, "new-branch");
   assert.equal(result.comparison, "0 0");
+  assert.equal(result.recommended_tag, "unresolved");
+  assert.equal(result.human_handoff, "PRとタグはgithub上で操作してください。");
   assert.equal(git(state.repo, "branch", "--show-current"), `${state.branch}-done`);
   assert.equal(git(state.remote, "rev-parse", `refs/heads/${state.branch}`), state.expectedHead);
 });

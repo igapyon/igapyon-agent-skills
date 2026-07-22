@@ -135,6 +135,23 @@ the deterministic PR creation URL and mark the existing-PR lookup unconfirmed.
 A safely unresolved version or tag convention is also nonfatal and produces
 `recommended_tag: "unresolved"`.
 
+Every successful push completion report must include the recommended tag line,
+even when resolution failed:
+
+```text
+推奨タグ名: <tag-or-未解決>
+```
+
+End the report with this exact handoff sentence:
+
+```text
+PRとタグはgithub上で操作してください。
+```
+
+Do not replace it with `PRとタグはまだ作成していません。` or another status-only
+sentence. The helper returns the same text as `human_handoff`; use that field
+without paraphrasing.
+
 This workflow does not create, edit, or merge a Pull Request. It does not
 create, move, delete, or push a tag. It does not create or publish a GitHub
 Release, run `git pull`, stash or discard dirty changes, or open a browser.

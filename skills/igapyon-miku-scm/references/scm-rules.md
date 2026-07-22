@@ -131,6 +131,7 @@ After a successful push, remote verification, and local `-done` rename:
 - Resolve the canonical GitHub browser URL from the selected repository remote under [github-repository-url.md](github-repository-url.md). Include `GitHubリポジトリ: <url>` in the push completion report. If it cannot be resolved safely, report `GitHubリポジトリ: 未解決` instead of guessing.
 - Preserve the actual remote destination branch used by the successful push before renaming the local branch. Under [github-post-push-pr-url.md](github-post-push-pr-url.md), use that pushed branch—not a later local `-done` name or a differently named recovery branch—to resolve an existing Open PR URL or derive a PR creation URL. Include either `PR: <url>` or `PR作成URL: <url>` in the push completion report.
 - Derive the recommended tag name from the committed authoritative version and the repository's resolved tag convention. Include `推奨タグ名: <tag>` in the push completion report. If the convention cannot be resolved, report `推奨タグ名: 未解決` instead of guessing.
+- Always include the recommended-tag line in a successful push completion report, then end with the exact sentence `PRとタグはgithub上で操作してください。` Do not end with `PRとタグはまだ作成していません。` or omit the tag merely because it is unresolved.
 
 This report does not authorize creating a Pull Request or creating or pushing the tag. Apply [github-release-tag-handoff.md](github-release-tag-handoff.md): the normal miku-soft next step is a human handoff to GitHub's Release creation screen, not a local `git tag` or tag push.
 
