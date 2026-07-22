@@ -387,6 +387,7 @@ export async function runPublish(options, dependencies = {}) {
     ...prHandoff,
     version: recommended.version,
     recommended_tag: recommended.tag,
+    human_handoff: "PRとタグはgithub上で操作してください。",
     tag_mutation: false,
     pull_request_mutation: false,
   };
