@@ -6,7 +6,7 @@ This is the initial rule entry point for `igapyon-miku-scm`. Add detailed rules 
 
 - Keep public GitHub inspection READONLY by default.
 - Implement public GitHub inspection through the anonymous REST API workflow.
-- Defer general GitHub write operations, authentication, credential handling, and mutation workflows except for an explicitly documented human-approved workflow.
+- Defer general GitHub write operations, authentication, credential handling, and mutation workflows except for an explicitly documented human-approved workflow. The only direct `gh` mutation currently authorized is reviewed new public Issue creation through `gh issue create` under [github-issue-create.md](github-issue-create.md).
 - Do not add, infer, or execute write behavior beyond an explicitly documented workflow unless the user explicitly resumes its design in a future task.
 - Keep each write workflow separate from anonymous READONLY rules and give it its own authorization and safety boundaries.
 
@@ -219,6 +219,15 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 - Require an explicit user request before any remote mutation.
 - Do not rewrite history, force-push, move or delete tags, publish or delete releases, or change versions without a documented workflow and explicit authorization.
 - Verify repository state after an operation.
+
+## Human-Approved New Issue Creation
+
+- Keep Issue inspection anonymous and READONLY under [github-anonymous-readonly.md](github-anonymous-readonly.md).
+- Use [github-issue-rewrite-handoff.md](github-issue-rewrite-handoff.md) to create the local paste-ready draft.
+- When the user explicitly requests registration, use [github-issue-create.md](github-issue-create.md) and the bundled `scripts/github-issue-create.mjs` preflight/apply workflow.
+- Require approval after displaying the exact repository, title, body, draft digest, and planned operation. The helper may invoke only `gh issue create` and must not retry automatically.
+- Require the helper to persist a `pending` attempt before the remote request, block repeated repository-plus-digest attempts, record the confirmed Issue URL, and archive the unchanged draft under `created-issues/`. A pending or malformed attempt record is a stop condition, not permission to retry.
+- Do not use `gh` for inspection, authentication, Issue updates or lifecycle changes, or any non-Issue operation.
 
 ## Planned Rule Areas
 

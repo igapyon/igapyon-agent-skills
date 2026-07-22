@@ -80,15 +80,17 @@ Save only the inner Markdown draft, without the outer `~~~~markdown` wrapper.
 Resolve the save base in this order:
 
 1. Determine the repository root with `git rev-parse --show-toplevel`. If that fails, use the current working directory as the project-equivalent root.
-2. If `<root>/workplace/` exists, save under `<root>/workplace/miku-scm/`.
-3. If `<root>/temp/` exists, save under `<root>/temp/miku-scm/`.
-4. If neither exists, create `<root>/workplace/miku-scm/` and save there.
+2. If `<root>/workplace/` exists, use `<root>/workplace/miku-scm/` as the operational base.
+3. If `<root>/temp/` exists, use `<root>/temp/miku-scm/` as the operational base.
+4. If neither exists, create and use `<root>/workplace/miku-scm/`.
+
+For PR mode, create `pr-drafts/` under the resolved operational base and save there. Keep Release and About drafts directly under the operational base unless their workflow later defines a dedicated directory.
 
 Do not save outside the project-equivalent root unless the user explicitly provides an output path.
 
 Use safe, lowercase filenames based on local time. Include a 12-digit year-month-day-hour-minute timestamp (`YYYYMMDDHHMM`) in PR draft filenames so repeated drafts on the same branch remain sortable and easy to resolve:
 
-- PR mode: `pr-<branch-slug>-<YYYYMMDDHHMM>.md` when the current branch name is available; otherwise `pr-<YYYYMMDDHHMM>.md`
+- PR mode: `pr-drafts/pr-<branch-slug>-<YYYYMMDDHHMM>.md` when the current branch name is available; otherwise `pr-drafts/pr-<YYYYMMDDHHMM>.md`
 - Release mode: `release-<YYYYMMDDHHMM>.md`
 - About mode: `about-<YYYYMMDDHHMM>.md`
 
@@ -97,3 +99,5 @@ For `<branch-slug>`, use the current branch from `git branch --show-current`. Sa
 Do not overwrite an existing draft file. If a generated path already exists, add another short suffix such as `-2`.
 
 After saving, report the saved path relative to the repository root or current working directory. Never report a home directory or absolute path.
+
+After a Pull Request is created, GitHub is the source of truth for the PR. Keep the local file unchanged under `pr-drafts/` as the reviewed writing artifact; do not treat it as a synchronized copy of later GitHub edits or state.

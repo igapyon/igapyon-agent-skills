@@ -12,7 +12,7 @@ Use anonymous REST API requests for:
 - Releases and release assets
 - GitHub Actions runs, jobs, and step conclusions
 
-Do not use `gh`, request login, read a token, or send an `Authorization` header for these public READONLY operations.
+Do not use `gh`, request login, read a token, or send an `Authorization` header for these public READONLY operations. The sole `gh` exception is the separately documented, human-approved new-Issue creation workflow in [github-issue-create.md](github-issue-create.md); it does not replace anonymous inspection.
 
 ## Endpoint Patterns
 
@@ -83,4 +83,4 @@ Ask the human to open the failed step in the GitHub Actions UI and copy and past
 
 ## Boundary
 
-Anonymous READONLY inspection does not authorize GitHub mutation. Creating or updating Issues, Pull Requests, Releases, tags, branches, or repository settings belongs to a separately documented and explicitly requested workflow.
+Anonymous READONLY inspection does not authorize GitHub mutation. New public Issue creation has one narrow exception under [github-issue-create.md](github-issue-create.md). Updating Issues or mutating Pull Requests, Releases, tags, branches, or repository settings remains outside this rule and requires a separately documented and explicitly requested workflow.
