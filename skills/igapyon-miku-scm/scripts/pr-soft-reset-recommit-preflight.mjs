@@ -3,6 +3,7 @@
 import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs [--base <base>] [--pr-draft <path>] [--repo <path>] [--apply] [--allow-dirty]
@@ -129,15 +130,17 @@ function ymdhm(date) {
   ].join("");
 }
 
-function findDrafts(root, branch) {
+export function findDrafts(root, branch) {
   const slug = slugBranch(branch);
   if (!slug) return { slug, drafts: [] };
 
   const dirs = [
-    { rel: "workplace/miku-scm", priority: 0 },
-    { rel: "temp/miku-scm", priority: 0 },
-    { rel: "workplace/github-writer", priority: 1 },
-    { rel: "temp/github-writer", priority: 1 },
+    { rel: "workplace/miku-scm/pr-drafts", priority: 0 },
+    { rel: "temp/miku-scm/pr-drafts", priority: 0 },
+    { rel: "workplace/miku-scm", priority: 1 },
+    { rel: "temp/miku-scm", priority: 1 },
+    { rel: "workplace/github-writer", priority: 2 },
+    { rel: "temp/github-writer", priority: 2 },
   ];
   const drafts = [];
   const pattern = new RegExp(`^pr-${escapeRegExp(slug)}-(\\d{12})(?:-[a-z0-9._-]+)?\\.md$`);
@@ -197,7 +200,7 @@ function listBlock(lines) {
   return lines.length > 0 ? lines.map((line) => `- ${line}`).join("\n") : "- なし";
 }
 
-function main() {
+export function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
     console.log(usage);
@@ -360,11 +363,13 @@ ${finalStatus || "(empty)"}
 `);
 }
 
-try {
-  main();
-} catch (error) {
-  console.error(error instanceof Error ? error.message : String(error));
-  console.error("");
-  console.error(usage);
-  process.exitCode = 1;
+if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
+  try {
+    main();
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    console.error("");
+    console.error(usage);
+    process.exitCode = 1;
+  }
 }

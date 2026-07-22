@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:miku-scm": "node --test skills/igapyon-miku-scm/tests/post-recommit-publish.test.mjs"
+    "test:miku-scm": "node --test skills/igapyon-miku-scm/tests/*.test.mjs"
   }
 }

@@ -30,7 +30,7 @@ This workflow may automate the local-only history rewrite with the bundled Node 
 This workflow has two required inputs:
 
 - `BASE`: the confirmed reset base, such as `origin/devel`
-- `PR_DRAFT`: the saved PR draft file, preferably under `workplace/miku-scm/` or `temp/miku-scm/`
+- `PR_DRAFT`: the saved PR draft file, preferably under `workplace/miku-scm/pr-drafts/` or `temp/miku-scm/pr-drafts/`
 
 The PR draft file must contain the inner Markdown draft, without the outer `~~~~markdown` wrapper.
 
@@ -49,7 +49,7 @@ node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs
 If `PR_DRAFT` is already known, pass it explicitly:
 
 ```sh
-node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/miku-scm/pr-devel-YYYYMMDDHHMM.md
+node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md
 ```
 
 Without `--apply`, the helper is read-only. It may run local Git inspection commands, resolve the current-branch PR draft candidate, choose a backup branch candidate, and print the final command shape. It must not create branches, reset commits, commit changes, push, or modify files in default mode.
@@ -58,7 +58,7 @@ If Node is unavailable or the helper fails, resolve the candidate manually:
 
 1. Determine the current branch with `git branch --show-current`.
 2. Sanitize it with the same `<branch-slug>` rules from `github-writing-rules.md`.
-3. Look for PR draft files in `workplace/miku-scm/` and `temp/miku-scm/`, preferring files named `pr-<branch-slug>-<YYYYMMDDHHMM>.md`. During coexistence, use `workplace/github-writer/` and `temp/github-writer/` only as legacy fallback locations.
+3. Look for PR draft files in `workplace/miku-scm/pr-drafts/` and `temp/miku-scm/pr-drafts/`, preferring files named `pr-<branch-slug>-<YYYYMMDDHHMM>.md`. During migration, use `workplace/miku-scm/`, `temp/miku-scm/`, `workplace/github-writer/`, and `temp/github-writer/` only as legacy fallback locations.
 4. If multiple branch-matching drafts exist, choose the newest by the 12-digit timestamp embedded in the filename.
 5. If filename timestamps are missing or tied, use file modification time as a fallback and mention the ambiguity.
 
@@ -71,7 +71,7 @@ Before running `git reset --soft`, report the resolved `PR_DRAFT` path and treat
 When the user explicitly asks to apply the saved PR draft as the commit message and both inputs are confirmed, first run the helper without `--apply` unless it was already run during PR draft resolution:
 
 ```sh
-node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/miku-scm/pr-devel-YYYYMMDDHHMM.md
+node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md
 ```
 
 Review the preflight output before any history rewrite:
@@ -90,7 +90,7 @@ Review the preflight output before any history rewrite:
 After that, prefer applying the local-only rewrite with the Node helper:
 
 ```sh
-node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/miku-scm/pr-devel-YYYYMMDDHHMM.md --apply
+node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md --apply
 ```
 
 The helper will:
@@ -108,7 +108,7 @@ The example is POSIX-shell style for clarity. When running on Windows PowerShell
 
 ```sh
 BASE=origin/devel
-PR_DRAFT=workplace/miku-scm/pr-devel-YYYYMMDDHHMM.md
+PR_DRAFT=workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md
 
 git status -sb
 git fetch origin
