@@ -1,6 +1,6 @@
 # GitHub New Issue Creation
 
-Create a new public GitHub Issue only through the narrowly authorized `gh issue create` workflow. Keep all GitHub inspection on the anonymous REST API workflow and keep existing-Issue updates as human-paste handoffs.
+Create a new public GitHub Issue only through the narrowly authorized `gh issue create` workflow. Keep all GitHub inspection on the anonymous REST API workflow. Existing-Issue body updates use the separate workflow in [github-issue-update.md](github-issue-update.md).
 
 ## Authorization Boundary
 

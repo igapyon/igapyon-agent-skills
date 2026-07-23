@@ -1,6 +1,6 @@
 # GitHub Issue Draft and Rewrite Handoff
 
-Draft a new public GitHub Issue or retrieve and rewrite an existing Issue, then return paste-ready text. Drafting and existing-Issue rewriting remain READONLY against GitHub. A reviewed new-Issue draft may proceed separately through [github-issue-create.md](github-issue-create.md).
+Draft a new public GitHub Issue or retrieve and rewrite an existing Issue, then return paste-ready text. Drafting remains READONLY against GitHub. A reviewed new-Issue draft may proceed separately through [github-issue-create.md](github-issue-create.md), and a reviewed existing-Issue body update may proceed through [github-issue-update.md](github-issue-update.md).
 
 ## Workflow
 
@@ -23,9 +23,10 @@ workplace/miku-scm/
   created-issues/
   issue-attempts/
   issue-updates/
+  issue-update-attempts/
 ```
 
-Save new-Issue drafts under `new-issues/` and existing-Issue update drafts under `issue-updates/`. The creation workflow owns `created-issues/` and `issue-attempts/`; do not write those records manually. Do not save writing artifacts under `workplace/miku-scm/github-cache/`. Treat all of these directories as local operational data and do not stage or commit their contents.
+Save new-Issue drafts under `new-issues/` and existing-Issue update drafts under `issue-updates/`. The creation workflow owns `created-issues/` and `issue-attempts/`; the update workflow owns `issue-update-attempts/`. Do not write those records manually. Do not save writing artifacts under `workplace/miku-scm/github-cache/`. Treat all of these directories as local operational data and do not stage or commit their contents.
 
 Resolve the repository root with `git rev-parse --show-toplevel`. If that fails, use the current project-equivalent directory. Create the draft directory when needed.
 
@@ -70,14 +71,14 @@ Keep the draft ready to paste and save it according to Local Draft Save Rules un
 
 ## Human Handoff and Registration Boundary
 
-End after returning the drafted text and saved path unless the user explicitly requests registration of a reviewed new Issue. Existing-Issue updates always remain human-paste handoffs. For new-Issue registration, read and follow [github-issue-create.md](github-issue-create.md); drafting alone never authorizes the remote mutation.
+End after returning the drafted text and saved path unless the user explicitly requests registration of a reviewed new Issue or application of a reviewed existing-Issue body update. For new-Issue registration, read and follow [github-issue-create.md](github-issue-create.md). For an existing-Issue body update, read and follow [github-issue-update.md](github-issue-update.md). Drafting alone never authorizes either remote mutation.
 
 Do not:
 
 - create an Issue except through the separately approved `gh issue create` workflow
-- update an existing Issue through an API, browser, `gh`, or another tool
+- update an existing Issue except through the separately approved body-only workflow
 - request authentication or credentials
 - add comments, labels, assignees, milestones, or state changes
 - imply that the Issue was created or updated
 
-This human-paste Issue workflow belongs to `igapyon-miku-scm`. Use this skill's integrated GitHub writing references for PR, Release, About, and PR-derived commit-message work.
+This Issue drafting and handoff workflow belongs to `igapyon-miku-scm`. Use this skill's integrated GitHub writing references for PR, Release, About, and PR-derived commit-message work.

@@ -6,7 +6,7 @@ This is the initial rule entry point for `igapyon-miku-scm`. Add detailed rules 
 
 - Keep public GitHub inspection READONLY by default.
 - Implement public GitHub inspection through the anonymous REST API workflow.
-- Defer general GitHub write operations, authentication, credential handling, and mutation workflows except for an explicitly documented human-approved workflow. The only direct `gh` mutation currently authorized is reviewed new public Issue creation through `gh issue create` under [github-issue-create.md](github-issue-create.md).
+- Defer general GitHub write operations, authentication, credential handling, and mutation workflows except for an explicitly documented human-approved workflow. Direct `gh` mutation is limited to reviewed new public Issue creation under [github-issue-create.md](github-issue-create.md) and reviewed existing public Issue body updates under [github-issue-update.md](github-issue-update.md).
 - Do not add, infer, or execute write behavior beyond an explicitly documented workflow unless the user explicitly resumes its design in a future task.
 - Keep each write workflow separate from anonymous READONLY rules and give it its own authorization and safety boundaries.
 
@@ -228,7 +228,17 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 - When the user explicitly requests registration, use [github-issue-create.md](github-issue-create.md) and the bundled `scripts/github-issue-create.mjs` preflight/apply workflow.
 - Require approval after displaying the exact repository, title, body, draft digest, and planned operation. The helper may invoke only `gh issue create` and must not retry automatically.
 - Require the helper to persist a `pending` attempt before the remote request, block repeated repository-plus-digest attempts, record the confirmed Issue URL, and archive the unchanged draft under `created-issues/`. A pending or malformed attempt record is a stop condition, not permission to retry.
-- Do not use `gh` for inspection, authentication, Issue updates or lifecycle changes, or any non-Issue operation.
+- Do not use `gh` for inspection, authentication, existing-Issue changes, lifecycle changes, or any non-Issue operation under this creation workflow.
+
+## Human-Approved Existing Issue Body Update
+
+- Keep Issue inspection anonymous and READONLY under [github-anonymous-readonly.md](github-anonymous-readonly.md).
+- Create the local paste-ready update under [github-issue-rewrite-handoff.md](github-issue-rewrite-handoff.md).
+- When the user explicitly requests application, use [github-issue-update.md](github-issue-update.md) and the bundled `scripts/github-issue-update.mjs` preflight/apply workflow.
+- Require approval after displaying the exact Issue, complete current and proposed bodies, body diff, draft digest, current body digest, current `updated_at`, and planned command.
+- Permit only one `gh issue edit <number> --repo <owner/repo> --body-file <temporary-file>` call. Do not change the title or any Issue metadata.
+- Immediately before `gh`, require the public Issue title, body digest, and `updated_at` to equal the reviewed values. Record `conflict` and stop without mutation when they differ.
+- Persist a `pending` attempt before mutation, verify the exact body anonymously afterward, and record `updated`, `conflict`, or `unresolved`. Never retry the same draft automatically.
 
 ## Planned Rule Areas
 
