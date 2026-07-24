@@ -115,6 +115,33 @@ test("anonymous reader uses only GET without authorization and rejects Pull Requ
   await assert.rejects(pullReader("igapyon/example", 42), /Pull Request/);
 });
 
+test("anonymous reader bypasses shared caches only when requested", async () => {
+  const calls = [];
+  const reader = createAnonymousIssueReader(async (url, options) => {
+    calls.push({ url, options });
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        number: 42,
+        html_url: CURRENT.url,
+        title: CURRENT.title,
+        body: CURRENT.body,
+        updated_at: CURRENT.updatedAt,
+      }),
+    };
+  });
+
+  await reader("igapyon/example", 42, { cacheBypass: true });
+
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].url, /\?miku_scm_cache_bust=[0-9a-f-]+$/);
+  assert.equal(calls[0].options.cache, "no-store");
+  assert.equal(calls[0].options.headers["Cache-Control"], "no-cache");
+  assert.equal(calls[0].options.headers.Pragma, "no-cache");
+  assert.equal("Authorization" in calls[0].options.headers, false);
+});
+
 test("preflight rejects title changes", async (t) => {
   const state = await scenario(t, "Changed title\n\nNew body.\n");
   await assert.rejects(
@@ -176,9 +203,45 @@ test("apply invokes exactly one body-only gh edit and verifies the result", asyn
   assert.equal(submittedBody, "New body.\n");
   assert.equal(result.issue_url, CURRENT.url);
   assert.equal(result.verified_updated_at, "2026-07-23T01:03:04Z");
+  assert.equal(result.verification_attempts, 1);
   const record = JSON.parse(await readFile(path.join(state.root, result.attempt_record), "utf8"));
   assert.equal(record.status, "updated");
   assert.equal(record.issue_url, CURRENT.url);
+});
+
+test("post-update verification tolerates one stale anonymous GET without retrying mutation", async (t) => {
+  const state = await scenario(t);
+  const preflight = await runIssueUpdate(optionsFor(state), {
+    readIssue: async () => CURRENT,
+  });
+  const fresh = { ...CURRENT, body: "New body.\n", updatedAt: "2026-07-23T01:03:04Z" };
+  const reads = [CURRENT, CURRENT, fresh];
+  const readOptions = [];
+  const delays = [];
+  let ghCalls = 0;
+  const result = await runIssueUpdate(applyOptions(state, preflight), {
+    readIssue: async (_repository, _issueNumber, options) => {
+      readOptions.push(options);
+      return reads.shift();
+    },
+    gh: () => {
+      ghCalls += 1;
+      return { ok: true, status: 0, stdout: CURRENT.url, stderr: "" };
+    },
+    sleep: async (milliseconds) => {
+      delays.push(milliseconds);
+    },
+  });
+
+  assert.equal(result.status, "updated");
+  assert.equal(result.verification_attempts, 2);
+  assert.equal(ghCalls, 1);
+  assert.deepEqual(delays, [250]);
+  assert.equal(readOptions[0], undefined);
+  assert.deepEqual(readOptions.slice(1), [
+    { cacheBypass: true, verificationAttempt: 1 },
+    { cacheBypass: true, verificationAttempt: 2 },
+  ]);
 });
 
 test("apply records conflict and never invokes gh when the Issue changed after review", async (t) => {
@@ -254,15 +317,21 @@ test("post-update body mismatch is unresolved", async (t) => {
   const preflight = await runIssueUpdate(optionsFor(state), {
     readIssue: async () => CURRENT,
   });
-  const reads = [CURRENT, { ...CURRENT, body: "Unexpected body.\n" }];
+  let reads = 0;
   const result = await runIssueUpdate(applyOptions(state, preflight), {
-    readIssue: async () => reads.shift(),
+    readIssue: async () => {
+      reads += 1;
+      return reads === 1 ? CURRENT : { ...CURRENT, body: "Unexpected body.\n" };
+    },
     gh: () => ({ ok: true, status: 0, stdout: CURRENT.url, stderr: "" }),
+    sleep: async () => {},
   });
   assert.equal(result.status, "unresolved");
   assert.equal(result.stage, "post-update-verification");
+  assert.equal(reads, 4);
   const record = JSON.parse(await readFile(path.join(state.root, result.attempt_record), "utf8"));
   assert.equal(record.status, "unresolved");
+  assert.equal(record.verification_attempts, 3);
 });
 
 test("body diff has a bounded fallback for very large line matrices", () => {

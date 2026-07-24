@@ -12,7 +12,7 @@ Use anonymous REST API requests for:
 - Releases and release assets
 - GitHub Actions runs, jobs, and step conclusions
 
-Do not use `gh`, request login, read a token, or send an `Authorization` header for these public READONLY operations. The only `gh` exceptions are the separately documented, human-approved new-Issue creation workflow in [github-issue-create.md](github-issue-create.md) and existing-Issue body update workflow in [github-issue-update.md](github-issue-update.md); neither replaces anonymous inspection.
+Do not use `gh`, request login, read a token, or send an `Authorization` header for these public READONLY operations. The only `gh` exceptions are the separately documented, human-approved Issue creation, body update, comment, existing-label update, and close workflows; none replaces anonymous inspection.
 
 ## Endpoint Patterns
 
@@ -28,6 +28,8 @@ Use `https://api.github.com` with these `GET` endpoint patterns:
 /repos/{owner}/{repo}/issues?state=all&per_page=100
 /repos/{owner}/{repo}/issues/{issue_number}
 /repos/{owner}/{repo}/issues/{issue_number}/comments
+/repos/{owner}/{repo}/issues/comments/{comment_id}
+/repos/{owner}/{repo}/labels?per_page=100
 /repos/{owner}/{repo}/releases?per_page=100
 /repos/{owner}/{repo}/releases/latest
 /repos/{owner}/{repo}/releases/{release_id}
@@ -83,4 +85,4 @@ Ask the human to open the failed step in the GitHub Actions UI and copy and past
 
 ## Boundary
 
-Anonymous READONLY inspection does not authorize GitHub mutation. New public Issue creation has one narrow exception under [github-issue-create.md](github-issue-create.md), and an existing public Issue body has one narrow update exception under [github-issue-update.md](github-issue-update.md). Other Issue changes and mutations of Pull Requests, Releases, tags, branches, or repository settings remain outside this rule and require a separately documented and explicitly requested workflow.
+Anonymous READONLY inspection does not authorize GitHub mutation. The narrow Issue mutation exceptions are documented separately in [github-issue-create.md](github-issue-create.md), [github-issue-update.md](github-issue-update.md), [github-issue-comment.md](github-issue-comment.md), [github-issue-label-update.md](github-issue-label-update.md), and [github-issue-close.md](github-issue-close.md). Other Issue changes and mutations of Pull Requests, Releases, tags, branches, or repository settings remain outside this rule and require a separately documented and explicitly requested workflow.
