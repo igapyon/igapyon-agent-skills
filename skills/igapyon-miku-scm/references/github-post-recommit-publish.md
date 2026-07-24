@@ -30,6 +30,23 @@ local `-done` collision, remote, optional upstream, and exact remote branch
 state. It uses `git ls-remote` but does not fetch, push, create or rename a
 branch, or change a file.
 
+To save the reviewed state as the one-time publication plan used by the normal
+`ok push` handoff, append `--save-plan`. The helper stores JSON only below
+`workplace/miku-scm/ok-push/`, returns its relative path and SHA-256, and does
+not publish in that mode. After the human says `ok push`, apply that exact plan
+in one helper invocation:
+
+```sh
+node skills/igapyon-miku-scm/scripts/post-recommit-publish.mjs \
+  --apply-plan workplace/miku-scm/ok-push/<plan>.json \
+  --expected-plan-sha256 <reviewed-sha256>
+```
+
+Plan application rechecks the branch, HEAD, clean state, local `-done`
+collision, and remote expectation before pushing. It rejects path escape,
+digest changes, and a plan that already has an attempt record; it never retries
+the push automatically.
+
 The JSON result contains `apply_arguments`. Show the preflight result together
 with the reviewed commit log. Treat the local `HEAD`, pushed branch, remote,
 and either the existing remote full SHA or the assertion that the remote branch
