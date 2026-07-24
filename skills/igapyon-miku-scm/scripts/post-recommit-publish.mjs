@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { readFile } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
+import { mkdir, open, readFile, realpath, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
@@ -15,6 +16,12 @@ export const usage = `Usage:
     --expected-head <reviewed-full-sha> \\
     (--expected-remote-head <reviewed-full-sha> | --expect-new-remote-branch) \\
     --apply [--repo <path>] [--remote <name>]
+
+  node skills/igapyon-miku-scm/scripts/post-recommit-publish.mjs \\
+    --expected-head <reviewed-full-sha> --save-plan [--repo <path>] [--remote <name>]
+
+  node skills/igapyon-miku-scm/scripts/post-recommit-publish.mjs \\
+    --apply-plan <workplace/miku-scm/ok-push/*.json> --expected-plan-sha256 <sha256>
 
 Default mode is a read-only preflight. It resolves the exact remote branch
 state and returns the arguments that must be reviewed before apply mode.
@@ -32,6 +39,9 @@ export function parseArgs(argv, cwd = process.cwd()) {
     expectedRemoteHead: "",
     expectNewRemoteBranch: false,
     apply: false,
+    savePlan: false,
+    applyPlan: "",
+    expectedPlanSha256: "",
     help: false,
   };
 
@@ -51,6 +61,12 @@ export function parseArgs(argv, cwd = process.cwd()) {
       options.expectNewRemoteBranch = true;
     } else if (arg === "--apply") {
       options.apply = true;
+    } else if (arg === "--save-plan") {
+      options.savePlan = true;
+    } else if (arg === "--apply-plan") {
+      options.applyPlan = argv[++index] ?? "";
+    } else if (arg === "--expected-plan-sha256") {
+      options.expectedPlanSha256 = argv[++index] ?? "";
     } else {
       throw new Error(`Unknown argument: ${arg}`);
     }
@@ -60,6 +76,14 @@ export function parseArgs(argv, cwd = process.cwd()) {
   if (!options.repo) throw new Error("--repo must not be empty");
   if (!/^[A-Za-z0-9._-]+$/.test(options.remote)) {
     throw new Error("--remote must be a Git remote name");
+  }
+  if (options.applyPlan) {
+    if (options.expectedHead || options.expectedRemoteHead || options.expectNewRemoteBranch || options.apply || options.savePlan) {
+      throw new Error("--apply-plan cannot be combined with ordinary publication arguments");
+    }
+    if (!/^[0-9a-f]{64}$/i.test(options.expectedPlanSha256)) throw new Error("--apply-plan requires --expected-plan-sha256");
+    if (!/^workplace\/miku-scm\/ok-push\/[A-Za-z0-9._-]+\.json$/.test(options.applyPlan)) throw new Error("--apply-plan must be a plan under workplace/miku-scm/ok-push");
+    return options;
   }
   if (!SHA_PATTERN.test(options.expectedHead)) {
     throw new Error("--expected-head must be a full 40- or 64-character hexadecimal object ID");
@@ -73,7 +97,42 @@ export function parseArgs(argv, cwd = process.cwd()) {
   if (options.apply && !options.expectedRemoteHead && !options.expectNewRemoteBranch) {
     throw new Error("--apply requires --expected-remote-head or --expect-new-remote-branch");
   }
+  if (options.savePlan && (options.apply || options.expectedRemoteHead || options.expectNewRemoteBranch)) {
+    throw new Error("--save-plan is available only with ordinary read-only preflight");
+  }
   return options;
+}
+
+function sha256(value) { return createHash("sha256").update(value).digest("hex"); }
+
+function planDirectory(root) { return path.join(root, "workplace", "miku-scm", "ok-push"); }
+
+async function savePlan(root, result) {
+  const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 12);
+  const plan = { schema_version: 1, repository: result.repository, branch: result.branch, remote: result.remote,
+    reviewed_head: result.head, remote_branch: result.remote_branch, done_branch: `${result.branch}-done`,
+    preflight_at: new Date().toISOString(), push_mode: result.remote_branch.state === "absent" ? "new-branch" : "force-with-explicit-lease" };
+  const content = `${JSON.stringify(plan, null, 2)}\n`;
+  const digest = sha256(content);
+  const filename = `ok-push-${result.branch}-${result.head.slice(0, 12)}-${timestamp}.json`;
+  const directory = planDirectory(root);
+  await mkdir(directory, { recursive: true });
+  const file = path.join(directory, filename);
+  await writeFile(file, content, { encoding: "utf8", flag: "wx", mode: 0o600 });
+  return { ...result, plan_path: path.relative(root, file), plan_sha256: digest, publication_plan: plan };
+}
+
+async function loadPlan(options) {
+  const root = await realpath(options.repo);
+  const file = path.resolve(root, options.applyPlan);
+  const directory = await realpath(planDirectory(root));
+  if (!file.startsWith(`${directory}${path.sep}`)) throw new Error("Plan path escapes the plan directory");
+  const content = await readFile(file, "utf8");
+  if (sha256(content) !== options.expectedPlanSha256.toLowerCase()) throw new Error("Publication plan SHA-256 changed");
+  const plan = JSON.parse(content);
+  if (plan?.schema_version !== 1 || !SHA_PATTERN.test(plan.reviewed_head) || !/^[A-Za-z0-9._-]+$/.test(plan.remote)
+    || typeof plan.branch !== "string" || !["absent", "existing"].includes(plan?.remote_branch?.state)) throw new Error("Malformed publication plan");
+  return { root, file, plan };
 }
 
 export function createGitRunner() {
@@ -396,7 +455,37 @@ export async function cli(argv = process.argv.slice(2), dependencies = {}) {
     process.stdout.write(`${usage}\n`);
     return;
   }
-  const result = await runPublish(options, dependencies);
+  if (options.applyPlan) {
+    const loaded = await loadPlan(options);
+    const plan = loaded.plan;
+    const attempt = `${loaded.file}.attempt.json`;
+    const pending = { schema_version: 1, status: "pending", plan_sha256: options.expectedPlanSha256.toLowerCase(), started_at: new Date().toISOString() };
+    let handle;
+    try {
+      handle = await open(attempt, "wx", 0o600);
+      await handle.writeFile(`${JSON.stringify(pending, null, 2)}\n`, "utf8");
+      await handle.sync();
+    } catch (error) {
+      if (error?.code === "EEXIST") throw new Error("This publication plan already has an attempt. Do not retry it.");
+      throw error;
+    } finally { await handle?.close(); }
+    const ordinary = {
+      repo: loaded.root, remote: plan.remote, expectedHead: plan.reviewed_head,
+      expectedRemoteHead: plan.remote_branch.state === "existing" ? plan.remote_branch.head : "",
+      expectNewRemoteBranch: plan.remote_branch.state === "absent", apply: true, savePlan: false, applyPlan: "", expectedPlanSha256: "", help: false,
+    };
+    try {
+      const result = await runPublish(ordinary, dependencies);
+      await writeFile(attempt, `${JSON.stringify({ ...pending, status: "published", result_recorded_at: new Date().toISOString() }, null, 2)}\n`, "utf8");
+      process.stdout.write(`${JSON.stringify({ ...result, plan_path: options.applyPlan, plan_sha256: options.expectedPlanSha256.toLowerCase(), attempt_record: path.relative(loaded.root, attempt) }, null, 2)}\n`);
+    } catch (error) {
+      await writeFile(attempt, `${JSON.stringify({ ...pending, status: "unresolved", detail: error instanceof Error ? error.message : String(error), result_recorded_at: new Date().toISOString() }, null, 2)}\n`, "utf8");
+      throw error;
+    }
+    return;
+  }
+  let result = await runPublish(options, dependencies);
+  if (options.savePlan) result = await savePlan(await realpath(options.repo), result);
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 }
 

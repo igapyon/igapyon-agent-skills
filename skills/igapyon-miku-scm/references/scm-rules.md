@@ -152,6 +152,8 @@ Do not present local tag creation and push as the default continuation. Normally
 
 ## Next Work Branch After PR Completion
 
+The fixed helper `scripts/post-merge-next-work.mjs --confirmed-merged --apply` is the authoritative one-command implementation of this workflow. It requires a clean `-done` branch, fetches the base, performs the advisory exact-tag check, creates the prescribed next branch, and verifies `0 0`. Do not run a separate `git switch -c` when this helper is available.
+
 Run this workflow when the human explicitly reports that the Pull Request was merged. Treat a clear report such as `GitHubでマージした`, `PRをマージした`, or `マージ完了` as both confirmation of the merge and authorization to refresh the base and create the next work branch; do not require a second instruction to create it. Do not infer merge completion from local Git state, push output, or branch naming. Do not create the next work branch immediately after push or local `-done` rename while the PR is still open or its merge is unconfirmed.
 
 Interpret a local branch name ending in `-done` only as an operational marker that the post-recommit publication sequence probably reached the rename performed after push. It does not prove that a Pull Request was created or merged. Never use `-done` alone to decide that PR work is complete; require the human's explicit statement that the PR was merged before running this workflow.

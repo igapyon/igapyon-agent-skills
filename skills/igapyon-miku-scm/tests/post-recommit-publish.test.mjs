@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import {
@@ -10,6 +11,9 @@ import {
   parseArgs,
   runPublish,
 } from "../scripts/post-recommit-publish.mjs";
+import { run as runNextWork } from "../scripts/post-merge-next-work.mjs";
+
+const PUBLISH_SCRIPT = fileURLToPath(new URL("../scripts/post-recommit-publish.mjs", import.meta.url));
 
 function git(cwd, ...args) {
   return execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
@@ -25,7 +29,9 @@ async function scenario(t, { existingRemoteBranch = false } = {}) {
   git(repo, "config", "user.name", "Test User");
   git(repo, "config", "user.email", "test@example.invalid");
   await writeFile(path.join(repo, "README.md"), "base\n", "utf8");
-  git(repo, "add", "README.md");
+  await writeFile(path.join(repo, ".gitignore"), "workplace/\n", "utf8");
+  await writeFile(path.join(repo, "pom.xml"), "<project><version>1.20260725.3</version></project>\n", "utf8");
+  git(repo, "add", "README.md", ".gitignore", "pom.xml");
   git(repo, "commit", "-m", "base");
   git(repo, "branch", "-M", "devel");
   git(repo, "remote", "add", "origin", remote);
@@ -78,6 +84,44 @@ test("preflight is read-only and fixes the new-branch expectation", async (t) =>
   assert.equal(git(state.repo, "show-ref"), before);
   assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
   assert.equal(git(state.remote, "branch", "--list", state.branch), "");
+});
+
+test("plan CLI modes require a fixed plan path and digest", () => {
+  const plan = "workplace/miku-scm/ok-push/ok-push-devel-tiga0721kaa-123456789012-202607250900.json";
+  const digest = "a".repeat(64);
+  const options = parseArgs(["--apply-plan", plan, "--expected-plan-sha256", digest]);
+  assert.equal(options.applyPlan, plan);
+  assert.equal(options.expectedPlanSha256, digest);
+  assert.throws(() => parseArgs(["--apply-plan", "../plan.json", "--expected-plan-sha256", digest]), /plan under/);
+  assert.throws(() => parseArgs(["--expected-head", "a".repeat(40), "--save-plan", "--expect-new-remote-branch", "--apply"]), /save-plan/);
+});
+
+test("saved publication plan applies once and publishes the reviewed branch", async (t) => {
+  const state = await scenario(t);
+  const saved = JSON.parse(execFileSync(process.execPath, [PUBLISH_SCRIPT,
+    "--repo", state.repo, "--expected-head", state.expectedHead, "--save-plan"], { encoding: "utf8" }));
+  assert.match(saved.plan_path, /^workplace\/miku-scm\/ok-push\/.*\.json$/);
+  assert.match(saved.plan_sha256, /^[0-9a-f]{64}$/);
+  const published = JSON.parse(execFileSync(process.execPath, [PUBLISH_SCRIPT,
+    "--repo", state.repo, "--apply-plan", saved.plan_path,
+    "--expected-plan-sha256", saved.plan_sha256], { encoding: "utf8" }));
+  assert.equal(published.status, "published");
+  assert.equal(git(state.repo, "branch", "--show-current"), `${state.branch}-done`);
+  assert.throws(() => execFileSync(process.execPath, [PUBLISH_SCRIPT,
+    "--repo", state.repo, "--apply-plan", saved.plan_path,
+    "--expected-plan-sha256", saved.plan_sha256], { encoding: "utf8", stdio: "pipe" }));
+});
+
+test("post-merge helper creates the next work branch from refreshed devel", async (t) => {
+  const state = await scenario(t);
+  git(state.repo, "branch", "-m", state.branch, `${state.branch}-done`);
+  const result = await runNextWork({ repo: state.repo, remote: "origin", base: "devel", confirmedMerged: true, apply: true }, {
+    now: () => new Date("2026-07-25T08:45:00+09:00"),
+  });
+  assert.equal(result.status, "created");
+  assert.equal(result.final_branch, "devel-tiga0725ief");
+  assert.equal(result.comparison, "0 0");
+  assert.equal(git(state.repo, "branch", "--show-current"), "devel-tiga0725ief");
 });
 
 test("apply rejects a changed reviewed local HEAD before push", async (t) => {
