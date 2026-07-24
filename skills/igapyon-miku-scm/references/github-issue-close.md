@@ -18,14 +18,16 @@ Do not assemble or invoke `gh` independently. Do not add a closing comment in
 this command. Use the separately approved
 Issue-comment workflow when a comment is needed. Reopen is outside this scope.
 
+Its fixed READONLY command is `gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,stateReason,updatedAt`; it is distinct from the one close mutation.
+
 ## Preflight
 
-Retrieve the target Issue anonymously and require it to be Open. Show its
+Retrieve the target Issue with that fixed READONLY command and require it to be Open. Show its
 repository, number, URL, title, complete body, state, `updated_at`, selected
 reason, operation digest, and planned command.
 
 For `duplicate`, require exactly one different Issue number and retrieve that
-Issue anonymously. Show its URL, title, state, and snapshot SHA-256. Fix that
+Issue with that fixed READONLY command. Show its URL, title, state, and snapshot SHA-256. Fix that
 snapshot in the apply arguments and stop on an intervening change. Reject
 `--duplicate-of` for other reasons.
 
@@ -37,11 +39,9 @@ Apply requires the reviewed operation digest, target body digest, and
 `updated_at`. Persist `pending`, retrieve the target again, and record
 `conflict` without `gh` if it is no longer Open or the reviewed state changed.
 
-Invoke `gh issue close` once. Then retrieve the target anonymously with cache
-bypass and bounded READONLY retries. Require `closed` plus the selected state
-reason. Never retry the mutation.
+Invoke `gh issue close` once. Then retrieve the target with fixed READONLY `gh issue view` and bounded retries. Require `closed` plus the selected state reason. A pre-mutation read failure is `not-applied`; never retry the mutation.
 
-Attempt states are `pending`, `closed`, `conflict`, and `unresolved`.
+Attempt states are `pending`, `closed`, `conflict`, `not-applied`, and `unresolved`.
 
 ## Completion Report
 

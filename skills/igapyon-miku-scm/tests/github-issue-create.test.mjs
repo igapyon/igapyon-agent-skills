@@ -6,6 +6,8 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  createGhCreatedIssueReader,
+  createGhLabelReader,
   parseArgs,
   parseDraft,
   runIssueCreate,
@@ -85,24 +87,43 @@ test("apply invokes exactly gh issue create and sends only the body through the 
     {
       gh: (args) => {
         calls.push(args);
-        submittedBody = readFileSync(args[7], "utf8");
+        if (args[1] === "create") {
+          submittedBody = readFileSync(args[7], "utf8");
+          return {
+            ok: true,
+            status: 0,
+            stdout: "https://github.com/igapyon/example/issues/42",
+            stderr: "",
+          };
+        }
         return {
           ok: true,
           status: 0,
-          stdout: "https://github.com/igapyon/example/issues/42",
+          stdout: JSON.stringify({
+            number: 42,
+            url: "https://github.com/igapyon/example/issues/42",
+            labels: [],
+            parent: null,
+          }),
           stderr: "",
         };
       },
     },
   );
 
-  assert.equal(calls.length, 1);
+  assert.equal(calls.length, 2);
   assert.deepEqual(calls[0].slice(0, 6), [
     "issue", "create", "--repo", "igapyon/example", "--title", "A reviewed title",
   ]);
   assert.equal(calls[0][6], "--body-file");
+  assert.deepEqual(calls[1], [
+    "issue", "view", "42",
+    "--repo", "igapyon/example",
+    "--json", "number,url,labels,parent",
+  ]);
   assert.equal(submittedBody, "The reviewed body.\n");
   assert.equal(result.status, "created");
+  assert.equal(result.issue_verification.status, "verified");
   assert.equal(result.issue_url, "https://github.com/igapyon/example/issues/42");
   assert.equal(result.issue_number, 42);
   assert.equal(result.draft_archive.status, "archived");
@@ -200,6 +221,147 @@ test("helper rejects malformed drafts", () => {
   );
 });
 
+test("gh label reader uses one fixed read-only command and validates its JSON", async () => {
+  const calls = [];
+  const readLabels = createGhLabelReader((args) => {
+    calls.push(args);
+    return {
+      ok: true,
+      status: 0,
+      stdout: JSON.stringify([
+        { name: "bug" },
+        { name: "enhancement" },
+      ]),
+      stderr: "",
+    };
+  });
+
+  assert.deepEqual(await readLabels("igapyon/example"), ["bug", "enhancement"]);
+  assert.deepEqual(calls, [[
+    "label", "list",
+    "--repo", "igapyon/example",
+    "--limit", "1000",
+    "--json", "name",
+  ]]);
+
+  const malformed = createGhLabelReader(() => ({
+    ok: true,
+    status: 0,
+    stdout: JSON.stringify([{ name: "" }]),
+    stderr: "",
+  }));
+  await assert.rejects(malformed("igapyon/example"), /malformed label metadata/);
+});
+
+test("a gh label-list failure stops preflight before an attempt or mutation", async (t) => {
+  const state = await scenario(t);
+  const calls = [];
+  await assert.rejects(
+    runIssueCreate(
+      optionsWithLabels(state, ["enhancement"]),
+      {
+        gh: (args) => {
+          calls.push(args);
+          return {
+            ok: false,
+            status: 1,
+            stdout: "",
+            stderr: "label read failed",
+          };
+        },
+      },
+    ),
+    /gh label list failed: label read failed/,
+  );
+  assert.deepEqual(calls, [[
+    "label", "list",
+    "--repo", "igapyon/example",
+    "--limit", "1000",
+    "--json", "name",
+  ]]);
+  const attempts = path.join(state.root, "workplace", "miku-scm", "issue-attempts");
+  await assert.rejects(access(attempts), /ENOENT/);
+});
+
+test("gh created-Issue reader retrieves labels and parent in one fixed command", async () => {
+  const calls = [];
+  const readCreatedIssue = createGhCreatedIssueReader((args) => {
+    calls.push(args);
+    return {
+      ok: true,
+      status: 0,
+      stdout: JSON.stringify({
+        number: 300,
+        url: "https://github.com/igapyon/example/issues/300",
+        labels: [{ name: "enhancement" }],
+        parent: {
+          number: 275,
+          url: "https://github.com/igapyon/example/issues/275",
+        },
+      }),
+      stderr: "",
+    };
+  });
+
+  assert.deepEqual(await readCreatedIssue("igapyon/example", 300), {
+    number: 300,
+    url: "https://github.com/igapyon/example/issues/300",
+    labels: ["enhancement"],
+    parent: {
+      number: 275,
+      url: "https://github.com/igapyon/example/issues/275",
+    },
+  });
+  assert.deepEqual(calls, [[
+    "issue", "view", "300",
+    "--repo", "igapyon/example",
+    "--json", "number,url,labels,parent",
+  ]]);
+});
+
+test("post-create read failure is recorded without retrying the mutation", async (t) => {
+  const state = await scenario(t);
+  const readLabels = async () => ["enhancement"];
+  const preflight = await runIssueCreate(
+    optionsWithLabels(state, ["enhancement"]),
+    { readLabels },
+  );
+  const calls = [];
+  const result = await runIssueCreate(
+    applyOptions(state, preflight),
+    {
+      readLabels,
+      gh: (args) => {
+        calls.push(args);
+        if (args[1] === "create") {
+          return {
+            ok: true,
+            status: 0,
+            stdout: "https://github.com/igapyon/example/issues/42",
+            stderr: "",
+          };
+        }
+        return {
+          ok: false,
+          status: 1,
+          stdout: "",
+          stderr: "post-create read failed",
+        };
+      },
+    },
+  );
+
+  assert.equal(calls.filter((args) => args[1] === "create").length, 1);
+  assert.equal(calls.filter((args) => args[1] === "view").length, 1);
+  assert.equal(result.status, "created");
+  assert.equal(result.issue_verification.status, "unresolved");
+  assert.equal(result.label_verification.status, "unresolved");
+  assert.equal(result.parent_verification.status, "not-requested");
+  const receipt = JSON.parse(await readFile(path.join(state.root, result.attempt_record), "utf8"));
+  assert.equal(receipt.issue_verification.status, "unresolved");
+  assert.equal(receipt.label_verification.status, "unresolved");
+});
+
 test("preflight and apply create one reviewed sub-issue and verify its parent", async (t) => {
   const state = await scenario(t);
   const parent = {
@@ -278,6 +440,7 @@ test("preflight and apply create one reviewed sub-issue and verify its parent", 
           stdout: JSON.stringify({
             number: 300,
             url: "https://github.com/igapyon/example/issues/300",
+            labels: [],
             parent: {
               number: parent.number,
               url: parent.url,
@@ -398,10 +561,11 @@ test("preflight validates requested labels and apply fixes them to the reviewed 
     applyOptions(state, preflight),
     {
       readLabels,
-      readIssue: async () => ({
+      readCreatedIssue: async () => ({
         number: 42,
         url: "https://github.com/igapyon/example/issues/42",
         labels: ["documentation", "enhancement"],
+        parent: null,
       }),
       gh: (args) => {
         calls.push(args);
@@ -473,10 +637,11 @@ test("a created Issue with missing requested labels is recorded without retrying
     applyOptions(state, preflight),
     {
       readLabels,
-      readIssue: async () => ({
+      readCreatedIssue: async () => ({
         number: 42,
         url: "https://github.com/igapyon/example/issues/42",
         labels: ["bug"],
+        parent: null,
       }),
       gh: () => {
         calls += 1;

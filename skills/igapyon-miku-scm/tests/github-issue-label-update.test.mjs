@@ -4,13 +4,18 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { parseArgs, runIssueLabelUpdate } from "../scripts/github-issue-label-update.mjs";
+import {
+  createGhIssueReader,
+  createGhLabelReader,
+  parseArgs,
+  runIssueLabelUpdate,
+} from "../scripts/github-issue-label-update.mjs";
 
 const ISSUE = {
   number: 42,
   url: "https://github.com/igapyon/example/issues/42",
   title: "Example",
-  state: "open",
+  state: "OPEN",
   updatedAt: "2026-07-24T01:02:03Z",
   labels: ["bug"],
 };
@@ -154,4 +159,59 @@ test("verification retries reads but never repeats the label mutation", async (t
   assert.equal(result.verification_attempts, 2);
   assert.equal(calls, 1);
   assert.deepEqual(delays, [250]);
+});
+
+test("gh Issue reader uses one fixed READONLY command and validates its JSON", async () => {
+  const calls = [];
+  const reader = createGhIssueReader((args) => {
+    calls.push(args);
+    return {
+      ok: true,
+      status: 0,
+      stdout: JSON.stringify({ ...ISSUE, labels: ISSUE.labels.map((name) => ({ name })) }),
+      stderr: "",
+    };
+  });
+  assert.deepEqual(await reader("igapyon/example", 42), ISSUE);
+  assert.deepEqual(calls, [[
+    "issue", "view", "42",
+    "--repo", "igapyon/example",
+    "--json", "number,url,title,state,labels,updatedAt",
+  ]]);
+});
+
+test("gh label reader uses one fixed READONLY command and validates its JSON", async () => {
+  const calls = [];
+  const reader = createGhLabelReader((args) => {
+    calls.push(args);
+    return {
+      ok: true,
+      status: 0,
+      stdout: JSON.stringify(AVAILABLE.map((name) => ({ name }))),
+      stderr: "",
+    };
+  });
+  assert.deepEqual(await reader("igapyon/example"), AVAILABLE);
+  assert.deepEqual(calls, [[
+    "label", "list",
+    "--repo", "igapyon/example",
+    "--limit", "1000",
+    "--json", "name",
+  ]]);
+});
+
+test("pre-mutation READONLY failure is not-applied and invokes no mutation", async (t) => {
+  const state = await scenario(t);
+  const preflight = await runIssueLabelUpdate(optionsFor(state), {
+    readLabels: async () => AVAILABLE,
+    readIssue: async () => ISSUE,
+  });
+  let mutationCalls = 0;
+  const result = await runIssueLabelUpdate(applyOptions(state, preflight), {
+    readLabels: async () => AVAILABLE,
+    readIssue: async () => { throw new Error("gh issue view unavailable"); },
+    ghMutation: () => { mutationCalls += 1; },
+  });
+  assert.equal(result.status, "not-applied");
+  assert.equal(mutationCalls, 0);
 });

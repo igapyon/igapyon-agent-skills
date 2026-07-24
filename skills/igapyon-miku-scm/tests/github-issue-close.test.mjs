@@ -11,7 +11,7 @@ const ISSUE = {
   url: "https://github.com/igapyon/example/issues/42",
   title: "Example",
   body: "Body.\n",
-  state: "open",
+  state: "OPEN",
   stateReason: null,
   updatedAt: "2026-07-24T01:02:03Z",
 };
@@ -121,7 +121,7 @@ test("apply invokes one exact close and verifies state and reason", async (t) =>
   const preflight = await runIssueClose(optionsFor(state), {
     readIssue: async () => ISSUE,
   });
-  const reads = [ISSUE, { ...ISSUE, state: "closed", stateReason: "completed" }];
+  const reads = [ISSUE, { ...ISSUE, state: "CLOSED", stateReason: "completed" }];
   const calls = [];
   const result = await runIssueClose(applyOptions(state, preflight), {
     readIssue: async () => reads.shift(),
@@ -144,7 +144,7 @@ test("already closed or changed Issue is rejected before gh", async (t) => {
   const state = await scenario(t);
   await assert.rejects(
     runIssueClose(optionsFor(state), {
-      readIssue: async () => ({ ...ISSUE, state: "closed", stateReason: "completed" }),
+      readIssue: async () => ({ ...ISSUE, state: "CLOSED", stateReason: "completed" }),
     }),
     /Only an Open Issue/,
   );
@@ -168,7 +168,7 @@ test("post-close verification retries reads but never repeats close", async (t) 
   const reads = [
     ISSUE,
     ISSUE,
-    { ...ISSUE, state: "closed", stateReason: "completed" },
+    { ...ISSUE, state: "CLOSED", stateReason: "completed" },
   ];
   const delays = [];
   let calls = 0;

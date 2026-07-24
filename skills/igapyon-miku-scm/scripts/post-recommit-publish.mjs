@@ -226,29 +226,26 @@ async function resolveRecommendedTag(root, git) {
   return { version, tag: "unresolved" };
 }
 
-async function resolvePrHandoff(repository, branch, fetchImpl) {
+function createGhRunner() {
+  return (args) => {
+    const result = spawnSync("gh", args, { encoding: "utf8", maxBuffer: 1024 * 1024 });
+    return { ok: result.status === 0, stdout: (result.stdout || "").trim(), stderr: (result.stderr || "").trim(), error: result.error };
+  };
+}
+
+function resolvePrHandoff(repository, branch, gh) {
   if (!repository) {
     return { repository_url: "unresolved", pr_url: "unresolved", pr_lookup: "unresolved" };
   }
   const creationUrl = `${repository.url}/pull/new/${encodeURIComponent(branch)}`;
-  if (typeof fetchImpl !== "function") {
+  if (typeof gh !== "function") {
     return { repository_url: repository.url, pr_creation_url: creationUrl, pr_lookup: "unconfirmed" };
   }
   try {
-    const query = new URLSearchParams({ state: "open", head: `${repository.owner}:${branch}`, per_page: "100" });
-    const response = await fetchImpl(
-      `https://api.github.com/repos/${repository.owner}/${repository.repository}/pulls?${query}`,
-      {
-        headers: {
-          Accept: "application/vnd.github+json",
-          "User-Agent": "igapyon-miku-scm-post-recommit-publish",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-        signal: AbortSignal.timeout(10_000),
-      },
-    );
-    if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
-    const pulls = await response.json();
+    const result = gh(["pr", "list", "--repo", `${repository.owner}/${repository.repository}`,
+      "--head", branch, "--state", "open", "--limit", "100", "--json", "url"]);
+    if (!result?.ok) throw new Error(result?.stderr || result?.stdout || result?.error?.message || "gh pr list failed");
+    const pulls = JSON.parse(result.stdout);
     if (!Array.isArray(pulls)) throw new Error("GitHub API returned a non-array response");
     const urls = pulls.map((entry) => entry?.html_url).filter((url) => typeof url === "string" && url);
     if (urls.length === 1) {
@@ -281,7 +278,7 @@ function preflightApplyArguments(options, head, actualRemoteHead) {
 export async function runPublish(options, dependencies = {}) {
   const git = dependencies.git ?? createGitRunner();
   const platform = dependencies.platform ?? process.platform;
-  const fetchImpl = Object.hasOwn(dependencies, "fetchImpl") ? dependencies.fetchImpl : globalThis.fetch;
+  const gh = Object.hasOwn(dependencies, "gh") ? dependencies.gh : createGhRunner();
   const root = gitText(git, options.repo, ["rev-parse", "--show-toplevel"]);
   const branch = gitText(git, root, ["branch", "--show-current"], { allowFailure: true });
   if (!branch) throw new Error("Current branch is detached or unresolved");
@@ -372,7 +369,7 @@ export async function runPublish(options, dependencies = {}) {
   gitText(git, root, ["branch", "-m", branch, doneBranch]);
   const finalStatus = gitText(git, root, ["status", "-sb"]);
   const repository = canonicalGitHubRepository(remoteUrl);
-  const prHandoff = await resolvePrHandoff(repository, branch, fetchImpl);
+  const prHandoff = resolvePrHandoff(repository, branch, gh);
   const recommended = await resolveRecommendedTag(root, git);
 
   return {

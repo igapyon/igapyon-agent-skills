@@ -37,10 +37,11 @@ export const usage = `Usage:
 Default mode is a read-only preflight. Apply mode requires the reviewed
 draft and label-selection digests. When --parent is present, it also requires
 the reviewed parent snapshot digest. The helper invokes fixed non-interactive
-gh issue view reads and exactly one gh issue create mutation. Requested labels
-must already exist in the target repository. The helper persists a pending
-attempt before the mutation, archives confirmed drafts, and never authenticates,
-changes scopes, edits an existing Issue, or retries the mutation.`;
+gh label list and gh issue view reads and exactly one gh issue create mutation.
+Requested labels must already exist in the target repository. The helper
+persists a pending attempt before the mutation, archives confirmed drafts, and
+never authenticates, changes scopes, edits an existing Issue, or retries the
+mutation.`;
 
 export function parseArgs(argv, cwd = process.cwd()) {
   const options = {
@@ -350,17 +351,49 @@ export function createGhParentReader(gh = createGhRunner()) {
   };
 }
 
+export function createGhLabelReader(gh = createGhRunner()) {
+  return async (repository) => {
+    const result = gh([
+      "label", "list",
+      "--repo", repository,
+      "--limit", "1000",
+      "--json", "name",
+    ]);
+    const labels = parseGhJson(result, "gh label list");
+    if (
+      !Array.isArray(labels)
+      || labels.some((label) => typeof label?.name !== "string" || !label.name)
+    ) {
+      throw new Error("gh label list returned malformed label metadata");
+    }
+    const names = labels.map((label) => label.name);
+    if (new Set(names).size !== names.length) {
+      throw new Error("gh label list returned duplicate label names");
+    }
+    return names;
+  };
+}
+
 export function createGhCreatedIssueReader(gh = createGhRunner()) {
   return async (repository, issueNumber) => {
     const result = gh([
       "issue", "view", String(issueNumber),
       "--repo", repository,
-      "--json", "number,url,parent",
+      "--json", "number,url,labels,parent",
     ]);
     const issue = parseGhJson(result, "gh issue view created Issue");
     const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
-    if (issue?.number !== issueNumber || issue?.url !== expectedUrl) {
+    if (
+      issue?.number !== issueNumber
+      || issue?.url !== expectedUrl
+      || !Array.isArray(issue?.labels)
+      || issue.labels.some((label) => typeof label?.name !== "string" || !label.name)
+    ) {
       throw new Error("gh issue view does not exactly identify the created Issue");
+    }
+    const labels = issue.labels.map((label) => label.name);
+    if (new Set(labels).size !== labels.length) {
+      throw new Error("gh issue view returned duplicate label names");
     }
     const parent = issue.parent == null
       ? null
@@ -374,6 +407,7 @@ export function createGhCreatedIssueReader(gh = createGhRunner()) {
         !Number.isSafeInteger(parent.number)
         || parent.number <= 0
         || typeof parent.url !== "string"
+        || parent.url !== `https://github.com/${repository}/issues/${parent.number}`
       )
     ) {
       throw new Error("gh issue view returned malformed parent metadata");
@@ -381,75 +415,8 @@ export function createGhCreatedIssueReader(gh = createGhRunner()) {
     return {
       number: issue.number,
       url: issue.url,
+      labels,
       parent,
-    };
-  };
-}
-
-export function createAnonymousLabelReader(request = globalThis.fetch) {
-  return async (repository) => {
-    if (typeof request !== "function") throw new Error("fetch is unavailable");
-    const labels = [];
-    let page = 1;
-    while (true) {
-      const url = `https://api.github.com/repos/${repository}/labels?per_page=100&page=${page}`;
-      const response = await request(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/vnd.github+json",
-          "User-Agent": "igapyon-miku-scm",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      });
-      if (!response?.ok) {
-        throw new Error(
-          `Anonymous GitHub labels GET failed with HTTP ${response?.status ?? "unknown"}`,
-        );
-      }
-      const entries = await response.json();
-      if (!Array.isArray(entries) || entries.some((entry) => typeof entry?.name !== "string")) {
-        throw new Error("Anonymous GitHub labels response is malformed");
-      }
-      labels.push(...entries.map((entry) => entry.name));
-      const hasNext = /<[^>]+>;\s*rel="next"/.test(response.headers?.get?.("link") ?? "");
-      if (!hasNext) return labels;
-      page += 1;
-    }
-  };
-}
-
-export function createAnonymousIssueReader(request = globalThis.fetch) {
-  return async (repository, issueNumber) => {
-    if (typeof request !== "function") throw new Error("fetch is unavailable");
-    const url = `https://api.github.com/repos/${repository}/issues/${issueNumber}`;
-    const response = await request(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/vnd.github+json",
-        "User-Agent": "igapyon-miku-scm",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    });
-    if (!response?.ok) {
-      throw new Error(
-        `Anonymous GitHub Issue GET failed with HTTP ${response?.status ?? "unknown"}`,
-      );
-    }
-    const issue = await response.json();
-    const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
-    if (
-      issue?.pull_request
-      || issue?.number !== issueNumber
-      || issue?.html_url !== expectedUrl
-      || !Array.isArray(issue?.labels)
-      || issue.labels.some((label) => typeof label?.name !== "string")
-    ) {
-      throw new Error("Anonymous GitHub response does not exactly identify the created Issue");
-    }
-    return {
-      number: issue.number,
-      url: issue.html_url,
-      labels: issue.labels.map((label) => label.name),
     };
   };
 }
@@ -458,7 +425,7 @@ async function validateRequestedLabels(options, readLabels) {
   if (options.labels.length === 0) return [];
   const available = await readLabels(options.repository);
   if (!Array.isArray(available) || available.some((label) => typeof label !== "string")) {
-    throw new Error("Anonymous label reader returned malformed data");
+    throw new Error("Label reader returned malformed data");
   }
   const availableSet = new Set(available);
   const missing = options.labels.filter((label) => !availableSet.has(label));
@@ -489,8 +456,7 @@ function applyArguments(options, draft, parent) {
 
 export async function runIssueCreate(options, dependencies = {}) {
   const gh = dependencies.gh ?? createGhRunner();
-  const readLabels = dependencies.readLabels ?? createAnonymousLabelReader(dependencies.request);
-  const readIssue = dependencies.readIssue ?? createAnonymousIssueReader(dependencies.request);
+  const readLabels = dependencies.readLabels ?? createGhLabelReader(gh);
   const readParent = dependencies.readParent ?? createGhParentReader(gh);
   const readCreatedIssue = dependencies.readCreatedIssue ?? createGhCreatedIssueReader(gh);
   const draft = await resolveDraft(options);
@@ -558,7 +524,7 @@ export async function runIssueCreate(options, dependencies = {}) {
   }
 
   const pendingRecord = {
-    schema_version: 3,
+    schema_version: 4,
     status: "pending",
     repository: options.repository,
     source_draft: draft.relativeDraft,
@@ -601,26 +567,49 @@ export async function runIssueCreate(options, dependencies = {}) {
       );
     }
     const issueNumber = Number(issueUrl.match(/\/issues\/(\d+)$/)?.[1]);
+    if (!Number.isSafeInteger(issueNumber) || issueNumber <= 0) {
+      throw new Error(
+        "gh issue create returned an Issue URL with an invalid Issue number. Treat the remote outcome as unresolved and do not retry automatically.",
+      );
+    }
+    let observedCreatedIssue = null;
+    let createdIssueReadError = null;
+    try {
+      observedCreatedIssue = await readCreatedIssue(options.repository, issueNumber);
+    } catch (error) {
+      createdIssueReadError = error instanceof Error ? error.message : String(error);
+    }
+    const issueVerification = observedCreatedIssue
+      ? {
+          status: "verified",
+          observed_issue: {
+            number: observedCreatedIssue.number,
+            url: observedCreatedIssue.url,
+          },
+        }
+      : {
+          status: "unresolved",
+          detail: createdIssueReadError,
+        };
     let labelVerification = {
       status: options.labels.length === 0 ? "not-requested" : "unresolved",
       requested_labels: options.labels,
     };
     if (options.labels.length > 0) {
-      try {
-        const observed = await readIssue(options.repository, issueNumber);
-        const observedSet = new Set(observed.labels);
+      if (observedCreatedIssue) {
+        const observedSet = new Set(observedCreatedIssue.labels);
         const missing = options.labels.filter((label) => !observedSet.has(label));
         labelVerification = {
           status: missing.length === 0 ? "verified" : "mismatch",
           requested_labels: options.labels,
-          observed_labels: observed.labels,
+          observed_labels: observedCreatedIssue.labels,
           missing_labels: missing,
         };
-      } catch (error) {
+      } else {
         labelVerification = {
           status: "unresolved",
           requested_labels: options.labels,
-          detail: error instanceof Error ? error.message : String(error),
+          detail: createdIssueReadError,
         };
       }
     }
@@ -629,23 +618,22 @@ export async function runIssueCreate(options, dependencies = {}) {
       requested_parent: parent,
     };
     if (options.parent) {
-      try {
-        const observed = await readCreatedIssue(options.repository, issueNumber);
+      if (observedCreatedIssue) {
         const expectedParentUrl = `https://github.com/${options.repository}/issues/${options.parent}`;
         const matches = (
-          observed.parent?.number === options.parent
-          && observed.parent?.url === expectedParentUrl
+          observedCreatedIssue.parent?.number === options.parent
+          && observedCreatedIssue.parent?.url === expectedParentUrl
         );
         parentVerification = {
           status: matches ? "verified" : "mismatch",
           requested_parent: parent,
-          observed_parent: observed.parent,
+          observed_parent: observedCreatedIssue.parent,
         };
-      } catch (error) {
+      } else {
         parentVerification = {
           status: "unresolved",
           requested_parent: parent,
-          detail: error instanceof Error ? error.message : String(error),
+          detail: createdIssueReadError,
         };
       }
     }
@@ -654,6 +642,7 @@ export async function runIssueCreate(options, dependencies = {}) {
       status: "created",
       issue_number: issueNumber,
       issue_url: issueUrl,
+      issue_verification: issueVerification,
       label_verification: labelVerification,
       parent_verification: parentVerification,
       result_recorded_at: new Date().toISOString(),
@@ -686,6 +675,7 @@ export async function runIssueCreate(options, dependencies = {}) {
       ...common,
       issue_url: issueUrl,
       issue_number: issueNumber,
+      issue_verification: issueVerification,
       label_verification: labelVerification,
       parent_verification: parentVerification,
       draft_archive: archive,

@@ -21,14 +21,16 @@ Preflight must stop when the same repository and draft SHA-256 already has a `pe
 
 ## Allowed Command Surface
 
-The current helper permits these fixed READONLY commands when a parent is requested or a created parent relationship must be verified:
+The current helper permits these fixed READONLY commands:
 
 ```text
+gh label list --repo <owner/repo> --limit 1000 --json name
+
 gh issue view <parent-number> --repo <owner/repo> \
   --json number,url,title,state,updatedAt
 
 gh issue view <created-number> --repo <owner/repo> \
-  --json number,url,parent
+  --json number,url,labels,parent
 ```
 
 Its only authorized mutation command is:
@@ -39,20 +41,20 @@ gh issue create --repo <owner/repo> --title <reviewed-title> \
   [--label <reviewed-existing-label>]... [--parent <reviewed-parent-number>]
 ```
 
-Use [scripts/github-issue-create.mjs](../scripts/github-issue-create.mjs); do not assemble or invoke the commands independently. The helper separates the existing paste-ready draft into title and body, validates each requested label against the target repository's complete public label list, accepts at most one positive same-repository parent Issue number, writes only the body to a temporary file, invokes `gh` without a shell, and removes the temporary file afterward.
+Use [scripts/github-issue-create.mjs](../scripts/github-issue-create.mjs); do not assemble or invoke the commands independently. The helper separates the existing paste-ready draft into title and body, validates each requested label through the fixed `gh label list`, accepts at most one positive same-repository parent Issue number, writes only the body to a temporary file, invokes `gh` without a shell, and removes the temporary file afterward. After creation, it retrieves the exact Issue, complete labels, and optional parent in one fixed `gh issue view` call.
 
 When `--parent` is present, require the parent to be an exact Open Issue in the same repository. Fix its number, URL, title, state, and `updated_at` as one snapshot digest during preflight. Apply mode must retrieve that exact parent again and stop before mutation when the digest changes.
 
-Before preflight, inspect the repository's labels under [github-anonymous-readonly.md](github-anonymous-readonly.md). Actively select each exact existing label clearly supported by the Issue and repository conventions. Do not omit an evident classification merely because the human did not name a label. Do not infer an unsupported label, substitute a near-match such as `enhance` for an existing `enhancement`, or create a missing label.
+During drafting, inspect the repository's public labels under [github-anonymous-readonly.md](github-anonymous-readonly.md) and actively select each exact existing label clearly supported by the Issue and repository conventions. During registration preflight and apply, the helper independently validates the reviewed labels with its fixed `gh label list`. Do not omit an evident classification merely because the human did not name a label. Do not infer an unsupported label, substitute a near-match such as `enhance` for an existing `enhancement`, or create a missing label.
 
 Do not use:
 
 - any other `gh issue` subcommand, including `edit`, `comment`, `close`, `reopen`, `delete`, `develop`, `lock`, `pin`, `transfer`, `unlock`, or `unpin`
-- `gh api` or any non-Issue `gh` command
+- `gh api` or any non-Issue/non-label-list `gh` command
 - `gh auth`, token inspection, credential requests, or scope changes
 - interactive mode, `--web`, templates, assignees, milestones, projects, Issue types, blocking relationships, or metadata flags other than the reviewed repeated `--label` and optional single `--parent`
 - adding, removing, or replacing the parent of an existing Issue; adding or removing an existing sub-Issue
-- `gh label` commands or any attempt to create, edit, rename, or delete a label definition
+- any `gh label` command other than the fixed READONLY `gh label list`, or any attempt to create, edit, rename, or delete a label definition
 
 If authentication or authorization is unavailable, stop and report that the human must manage GitHub CLI authentication outside this skill. Do not broaden scopes or fall back to another mutation mechanism.
 
@@ -68,7 +70,7 @@ node skills/igapyon-miku-scm/scripts/github-issue-create.mjs \
   [--parent <parent-issue-number>]
 ```
 
-Repeat `--label` for each selected label, or omit it when no existing label is sufficiently supported. Add `--parent` only when the new Issue must be created as a reviewed sub-Issue. The helper accepts only new-Issue drafts beneath `workplace/miku-scm/new-issues/`, validates the paste-ready format and each selected label, checks for prior attempts, retrieves an optional parent through its fixed `gh issue view`, and returns every digest and exact apply arguments. It does not create attempt records or invoke the mutation command in preflight mode.
+Repeat `--label` for each selected label, or omit it when no existing label is sufficiently supported. Add `--parent` only when the new Issue must be created as a reviewed sub-Issue. The helper accepts only new-Issue drafts beneath `workplace/miku-scm/new-issues/`, validates the paste-ready format and each selected label through fixed READONLY `gh`, checks for prior attempts, retrieves an optional parent through its fixed `gh issue view`, and returns every digest and exact apply arguments. It does not create attempt records or invoke the mutation command in preflight mode.
 
 After explicit approval, pass the exact preflight digest and apply arguments:
 
@@ -84,7 +86,7 @@ node skills/igapyon-miku-scm/scripts/github-issue-create.mjs \
   --apply
 ```
 
-Pass exactly the reviewed repeated `--label` arguments and optional parent, or omit them when they were absent in the reviewed preflight. Apply mode must stop if the repository, draft path, any required digest, title, body, ordered label selection, or parent snapshot cannot be resolved exactly. It revalidates the selected labels and optional parent before claiming the attempt. Immediately before invoking the mutation, it atomically creates:
+Pass exactly the reviewed repeated `--label` arguments and optional parent, or omit them when they were absent in the reviewed preflight. Apply mode must stop if the repository, draft path, any required digest, title, body, ordered label selection, or parent snapshot cannot be resolved exactly. It revalidates the selected labels and optional parent through the same fixed READONLY commands before claiming the attempt. Immediately before invoking the mutation, it atomically creates:
 
 ```text
 workplace/miku-scm/issue-attempts/<owner>/<repo>/<draft-sha256>.json
@@ -92,7 +94,7 @@ workplace/miku-scm/issue-attempts/<owner>/<repo>/<draft-sha256>.json
 
 The initial status is `pending`. It is written and flushed before the remote request so a concurrent, interrupted, or later run cannot silently repeat the same attempt. The helper performs no automatic retry.
 
-After confirmed success, the helper records the Issue number, URL, requested labels, label-verification result, and parent-verification result with status `created`, then moves the unchanged draft to:
+After the mutation returns the exact Issue URL, the helper uses one fixed `gh issue view --json number,url,labels,parent` call to verify the created Issue and derive both the label- and parent-verification results. It records the Issue-verification, requested labels, label-verification, and parent-verification results with status `created`, then moves the unchanged draft to:
 
 ```text
 workplace/miku-scm/created-issues/<owner>/<repo>/
@@ -111,6 +113,7 @@ Treat creation as confirmed only when the command succeeds and returns the exact
 - reviewed labels and label-selection SHA-256 digest
 - label verification as `verified`, `mismatch`, `unresolved`, or `not-requested`
 - parent snapshot and digest, plus parent verification as `verified`, `mismatch`, `unresolved`, or `not-requested`
+- created-Issue verification as `verified` or `unresolved`
 - local attempt-record path
 - archived draft path, or a warning when local archival failed
 
