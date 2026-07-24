@@ -5,10 +5,12 @@ This is the initial rule entry point for `igapyon-miku-scm`. Add detailed rules 
 ## Current Development Policy
 
 - Keep public GitHub inspection READONLY by default.
-- Implement public GitHub inspection through the anonymous REST API workflow.
-- Defer general GitHub write operations, authentication, credential handling, and mutation workflows except for an explicitly documented human-approved workflow. Direct `gh` mutation is limited to the dedicated reviewed Issue creation, body update, comment, existing-label update, and close workflows documented in this skill.
+- Outside a documented helper, implement public GitHub inspection through the anonymous REST API workflow.
+- Inside a dedicated deterministic helper, prefer fixed `gh` commands for READONLY checks and authorized mutations under [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
+- Never let the AI Agent invoke `gh` directly. Do not assemble free-form `gh` commands, use a shell, accept arbitrary pass-through arguments, or expand one helper's allowlist implicitly.
+- Defer general GitHub write operations, authentication, credential handling, and mutation workflows except for an explicitly documented human-approved workflow. Direct `gh` mutation is limited to the dedicated reviewed Issue creation, content update, comment, existing-label update, and close workflows documented in this skill.
 - Do not add, infer, or execute write behavior beyond an explicitly documented workflow unless the user explicitly resumes its design in a future task.
-- Keep each write workflow separate from anonymous READONLY rules and give it its own authorization and safety boundaries.
+- Keep each write workflow separate and give it its own fixed helper, command allowlist, authorization boundary, and failure semantics.
 
 ## Graduated Authorization Model
 
@@ -223,24 +225,25 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 
 ## Human-Approved New Issue Creation
 
-- Keep Issue inspection anonymous and READONLY under [github-anonymous-readonly.md](github-anonymous-readonly.md).
+- Keep drafting and label discovery READONLY. The current creation helper uses anonymous label validation and its fixed `gh issue create` mutation; any future fixed READONLY `gh` additions require matching code, documentation, and tests.
 - Use [github-issue-rewrite-handoff.md](github-issue-rewrite-handoff.md) to create the local paste-ready draft.
 - Inspect the target repository's existing labels anonymously while drafting. When one or more labels clearly match the Issue evidence and repository semantics, actively propose them instead of omitting labels by default. Do not guess when classification is ambiguous, and never create or edit label definitions.
 - When the user explicitly requests registration, use [github-issue-create.md](github-issue-create.md) and the bundled `scripts/github-issue-create.mjs` preflight/apply workflow.
 - Require approval after displaying the exact repository, title, body, selected labels, draft digest, label-selection digest, and planned operation. The helper may invoke only `gh issue create` with the reviewed title, body file, and selected existing labels, and must not retry automatically.
 - Require the helper to verify every selected label against the repository's current public label list before creating the attempt record. Fix the ordered label selection with its own SHA-256 digest and verify requested labels anonymously after successful creation.
 - Require the helper to persist a `pending` attempt before the remote request, block repeated repository-plus-digest attempts, record the confirmed Issue URL, and archive the unchanged draft under `created-issues/`. A pending or malformed attempt record is a stop condition, not permission to retry.
-- Do not use `gh` for inspection, authentication, existing-Issue changes, lifecycle changes, or any non-Issue operation under this creation workflow.
+- The AI Agent must not use `gh` directly. The current creation helper's fixed allowlist excludes inspection, authentication, existing-Issue changes, lifecycle changes, and non-Issue operations.
 
-## Human-Approved Existing Issue Body Update
+## Human-Approved Existing Issue Content Update
 
-- Keep Issue inspection anonymous and READONLY under [github-anonymous-readonly.md](github-anonymous-readonly.md).
+- Keep drafting evidence READONLY. The content-update helper uses its documented fixed READONLY `gh` commands from preflight through verification.
 - Create the local paste-ready update under [github-issue-rewrite-handoff.md](github-issue-rewrite-handoff.md).
 - When the user explicitly requests application, use [github-issue-update.md](github-issue-update.md) and the bundled `scripts/github-issue-update.mjs` preflight/apply workflow.
-- Require approval after displaying the exact Issue, complete current and proposed bodies, body diff, draft digest, current body digest, current `updated_at`, and planned command.
-- Permit only one `gh issue edit <number> --repo <owner/repo> --body-file <temporary-file>` call. Do not change the title or any Issue metadata.
-- Immediately before `gh`, require the public Issue title, body digest, and `updated_at` to equal the reviewed values. Record `conflict` and stop without mutation when they differ.
-- Persist a `pending` attempt before mutation, verify the exact body anonymously afterward, and record `updated`, `conflict`, or `unresolved`. Never retry the same draft automatically.
+- Require approval after displaying the exact Issue; complete current and proposed titles and bodies; body diff; current, added, removed, and resulting labels; draft and update digests; current Issue snapshot digest; current `updated_at`; and planned command.
+- Permit only one `gh issue edit` call containing reviewed changes to the title, body, and existing-label membership. Do not create or edit label definitions or change other Issue metadata.
+- Immediately before `gh`, require the public Issue title/body/labels snapshot and `updated_at` to equal the reviewed values. Record `conflict` and stop without mutation when they differ.
+- Use fixed READONLY `gh issue view --json number,url,title,body,labels,updatedAt` and `gh label list --limit 1000 --json name` inside the helper from preflight through post-update verification.
+- Persist a `pending` attempt before mutation and verify the exact title, body, and complete label set afterward. Record a `gh issue view` failure before `gh issue edit` as `not-applied` with `gh_invoked: false`; preserve and archive that safe record when retrying the same reviewed operation. Record only post-mutation uncertainty as `unresolved`, and never retry it automatically.
 
 ## Human-Approved Issue Comment
 

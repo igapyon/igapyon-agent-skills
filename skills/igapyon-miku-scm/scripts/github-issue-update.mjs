@@ -19,34 +19,49 @@ import { pathToFileURL } from "node:url";
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const UPDATE_DRAFT_PATTERN = /^issue-(\d+)-update-\d{12}(?:-\d+)?\.md$/;
-const ATTEMPT_STATUSES = new Set(["pending", "updated", "conflict", "unresolved"]);
+const ATTEMPT_STATUSES = new Set([
+  "pending",
+  "not-applied",
+  "updated",
+  "conflict",
+  "unresolved",
+]);
 const POST_UPDATE_VERIFICATION_DELAYS_MS = [0, 250, 1_000];
+const MAX_LABEL_CHANGES = 20;
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \\
     --repo <owner/repo> --issue <number> --draft <path> \\
+    [--add-label <existing-label>]... [--remove-label <existing-label>]... \\
     [--root <repository-root>]
 
   node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \\
     --repo <owner/repo> --issue <number> --draft <path> \\
+    [--add-label <existing-label>]... [--remove-label <existing-label>]... \\
     --expected-draft-sha256 <reviewed-draft-sha256> \\
-    --expected-current-body-sha256 <reviewed-current-body-sha256> \\
+    --expected-update-sha256 <reviewed-update-sha256> \\
+    --expected-current-issue-sha256 <reviewed-current-issue-sha256> \\
     --expected-updated-at <reviewed-updated-at> --apply \\
     [--root <repository-root>]
 
-Default mode is a read-only preflight using the anonymous GitHub REST API.
-Apply mode fixes the reviewed draft and current Issue state, records the
-attempt, invokes exactly one gh issue edit --body-file command, and verifies
-the resulting body anonymously. It never retries automatically.`;
+Default mode is a read-only preflight using fixed gh issue view and gh label
+list commands.
+Apply mode fixes the reviewed title, body, existing-label changes, and current
+Issue state; records the attempt; invokes exactly one gh issue edit command;
+and verifies the complete resulting title, body, and labels anonymously. It
+never retries automatically.`;
 
 export function parseArgs(argv, cwd = process.cwd()) {
   const options = {
     repository: "",
     issueNumber: 0,
     draft: "",
+    addLabels: [],
+    removeLabels: [],
     root: cwd,
     expectedDraftSha256: "",
-    expectedCurrentBodySha256: "",
+    expectedUpdateSha256: "",
+    expectedCurrentIssueSha256: "",
     expectedUpdatedAt: "",
     apply: false,
     help: false,
@@ -62,12 +77,18 @@ export function parseArgs(argv, cwd = process.cwd()) {
       options.issueNumber = Number(argv[++index] ?? "");
     } else if (arg === "--draft") {
       options.draft = argv[++index] ?? "";
+    } else if (arg === "--add-label") {
+      options.addLabels.push(argv[++index] ?? "");
+    } else if (arg === "--remove-label") {
+      options.removeLabels.push(argv[++index] ?? "");
     } else if (arg === "--root") {
       options.root = argv[++index] ?? "";
     } else if (arg === "--expected-draft-sha256") {
       options.expectedDraftSha256 = argv[++index] ?? "";
-    } else if (arg === "--expected-current-body-sha256") {
-      options.expectedCurrentBodySha256 = argv[++index] ?? "";
+    } else if (arg === "--expected-update-sha256") {
+      options.expectedUpdateSha256 = argv[++index] ?? "";
+    } else if (arg === "--expected-current-issue-sha256") {
+      options.expectedCurrentIssueSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-updated-at") {
       options.expectedUpdatedAt = argv[++index] ?? "";
     } else if (arg === "--apply") {
@@ -86,10 +107,28 @@ export function parseArgs(argv, cwd = process.cwd()) {
   }
   if (!options.draft) throw new Error("--draft must not be empty");
   if (!options.root) throw new Error("--root must not be empty");
+  if (options.addLabels.length + options.removeLabels.length > MAX_LABEL_CHANGES) {
+    throw new Error(`At most ${MAX_LABEL_CHANGES} label changes are allowed`);
+  }
+  for (const [kind, labels] of [["add", options.addLabels], ["remove", options.removeLabels]]) {
+    const seen = new Set();
+    for (const label of labels) {
+      if (!label || label !== label.trim() || /[\r\n]/.test(label)) {
+        throw new Error(`--${kind}-label must be a non-empty single exact label name`);
+      }
+      if (seen.has(label)) throw new Error(`Duplicate --${kind}-label: ${label}`);
+      seen.add(label);
+    }
+  }
+  const overlap = options.addLabels.filter((label) => options.removeLabels.includes(label));
+  if (overlap.length > 0) {
+    throw new Error(`Labels cannot be both added and removed: ${overlap.join(", ")}`);
+  }
 
   for (const [name, value] of [
     ["--expected-draft-sha256", options.expectedDraftSha256],
-    ["--expected-current-body-sha256", options.expectedCurrentBodySha256],
+    ["--expected-update-sha256", options.expectedUpdateSha256],
+    ["--expected-current-issue-sha256", options.expectedCurrentIssueSha256],
   ]) {
     if (value && !SHA256_PATTERN.test(value)) {
       throw new Error(`${name} must be a 64-character hexadecimal SHA-256 digest`);
@@ -98,12 +137,13 @@ export function parseArgs(argv, cwd = process.cwd()) {
 
   const applyValues = [
     options.expectedDraftSha256,
-    options.expectedCurrentBodySha256,
+    options.expectedUpdateSha256,
+    options.expectedCurrentIssueSha256,
     options.expectedUpdatedAt,
   ];
   if (options.apply && applyValues.some((value) => !value)) {
     throw new Error(
-      "--apply requires --expected-draft-sha256, --expected-current-body-sha256, and --expected-updated-at from the reviewed preflight",
+      "--apply requires --expected-draft-sha256, --expected-update-sha256, --expected-current-issue-sha256, and --expected-updated-at from the reviewed preflight",
     );
   }
   if (!options.apply && applyValues.some(Boolean)) {
@@ -114,6 +154,50 @@ export function parseArgs(argv, cwd = process.cwd()) {
 
 function sha256(content) {
   return createHash("sha256").update(content).digest("hex");
+}
+
+function canonicalLabels(labels) {
+  return [...labels].sort((left, right) => left.localeCompare(right, "en"));
+}
+
+function labelsSha256(labels) {
+  return sha256(JSON.stringify(canonicalLabels(labels)));
+}
+
+function issueSnapshotSha256(issue) {
+  return sha256(JSON.stringify({
+    title: issue.title,
+    body: issue.body,
+    labels: canonicalLabels(issue.labels),
+  }));
+}
+
+function updateSha256(draft, options) {
+  return sha256(JSON.stringify({
+    draft_sha256: draft.digest,
+    add_labels: canonicalLabels(options.addLabels),
+    remove_labels: canonicalLabels(options.removeLabels),
+  }));
+}
+
+function targetLabels(currentLabels, options) {
+  const removed = new Set(options.removeLabels);
+  return [
+    ...currentLabels.filter((label) => !removed.has(label)),
+    ...options.addLabels,
+  ];
+}
+
+function validateCurrentLabels(currentLabels, options) {
+  const current = new Set(currentLabels);
+  const alreadyPresent = options.addLabels.filter((label) => current.has(label));
+  const absent = options.removeLabels.filter((label) => !current.has(label));
+  if (alreadyPresent.length > 0) {
+    throw new Error(`Labels already present cannot be added: ${alreadyPresent.join(", ")}`);
+  }
+  if (absent.length > 0) {
+    throw new Error(`Absent labels cannot be removed: ${absent.join(", ")}`);
+  }
 }
 
 export function parseDraft(content) {
@@ -159,7 +243,7 @@ async function resolveDraft(options) {
   };
 }
 
-function operationalPaths(draft, repository, issueNumber) {
+function operationalPaths(draft, repository, issueNumber, digest) {
   const [owner, repo] = repository.split("/");
   const directory = path.join(
     draft.root,
@@ -172,7 +256,7 @@ function operationalPaths(draft, repository, issueNumber) {
   );
   return {
     directory,
-    attempt: path.join(directory, `${draft.digest}.json`),
+    attempt: path.join(directory, `${digest}.json`),
   };
 }
 
@@ -200,6 +284,18 @@ function priorAttemptError(record) {
   return new Error(
     `This Issue update draft already has a ${record.status} attempt for ${record.repository}#${record.issue_number}. Do not retry it; create a new draft from the latest public Issue state.`,
   );
+}
+
+function isRetryableNotApplied(record) {
+  return record?.status === "not-applied"
+    || (record?.status === "unresolved" && record?.stage === "pre-update-read");
+}
+
+async function archiveRetryableAttempt(attemptPath, record) {
+  if (!isRetryableNotApplied(record)) throw priorAttemptError(record);
+  const archive = `${attemptPath}.not-applied-${Date.now()}-${randomUUID()}.json`;
+  await rename(attemptPath, archive);
+  return archive;
 }
 
 async function claimAttempt(attemptPath, record) {
@@ -233,49 +329,77 @@ async function replaceAttemptRecord(attemptPath, record) {
   }
 }
 
-export function createAnonymousIssueReader(request = globalThis.fetch) {
-  return async (repository, issueNumber, options = {}) => {
-    if (typeof request !== "function") throw new Error("fetch is unavailable");
-    const url = new URL(`https://api.github.com/repos/${repository}/issues/${issueNumber}`);
-    const headers = {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "igapyon-miku-scm",
-      "X-GitHub-Api-Version": "2022-11-28",
-    };
-    if (options.cacheBypass) {
-      url.searchParams.set("miku_scm_cache_bust", randomUUID());
-      headers["Cache-Control"] = "no-cache";
-      headers.Pragma = "no-cache";
+export function createGhIssueReader(gh = createGhRunner()) {
+  return async (repository, issueNumber) => {
+    const result = gh([
+      "issue", "view", String(issueNumber),
+      "--repo", repository,
+      "--json", "number,url,title,body,labels,updatedAt",
+    ]);
+    if (!result?.ok) {
+      throw new Error(`gh issue view failed: ${ghDetail(result)}`);
     }
-    const response = await request(url.href, {
-      method: "GET",
-      headers,
-      ...(options.cacheBypass ? { cache: "no-store" } : {}),
-    });
-    if (!response?.ok) {
-      throw new Error(`Anonymous GitHub Issue GET failed with HTTP ${response?.status ?? "unknown"}`);
+    let issue;
+    try {
+      issue = JSON.parse(result.stdout);
+    } catch {
+      throw new Error("gh issue view returned malformed JSON");
     }
-    const issue = await response.json();
-    if (issue?.pull_request) throw new Error("Target is a Pull Request, not an Issue");
     const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
     if (
       issue?.number !== issueNumber
-      || issue?.html_url !== expectedUrl
+      || issue?.url !== expectedUrl
       || typeof issue?.title !== "string"
-      || (typeof issue?.body !== "string" && issue?.body !== null)
-      || typeof issue?.updated_at !== "string"
-      || !issue.updated_at
+      || typeof issue?.body !== "string"
+      || !Array.isArray(issue?.labels)
+      || issue.labels.some((label) => typeof label?.name !== "string")
+      || typeof issue?.updatedAt !== "string"
+      || !issue.updatedAt
     ) {
-      throw new Error("Anonymous GitHub response does not exactly identify the requested Issue");
+      throw new Error("gh issue view does not exactly identify the requested Issue");
     }
     return {
       number: issue.number,
-      url: issue.html_url,
+      url: issue.url,
       title: issue.title,
-      body: issue.body ?? "",
-      updatedAt: issue.updated_at,
+      body: issue.body,
+      labels: issue.labels.map((label) => label.name),
+      updatedAt: issue.updatedAt,
     };
   };
+}
+
+export function createGhLabelReader(gh = createGhRunner()) {
+  return async (repository) => {
+    const result = gh([
+      "label", "list",
+      "--repo", repository,
+      "--limit", "1000",
+      "--json", "name",
+    ]);
+    if (!result?.ok) {
+      throw new Error(`gh label list failed: ${ghDetail(result)}`);
+    }
+    let labels;
+    try {
+      labels = JSON.parse(result.stdout);
+    } catch {
+      throw new Error("gh label list returned malformed JSON");
+    }
+    if (!Array.isArray(labels) || labels.some((label) => typeof label?.name !== "string")) {
+      throw new Error("gh label list response is malformed");
+    }
+    return labels.map((label) => label.name);
+  };
+}
+
+function validateExistingLabels(availableLabels, options) {
+  const available = new Set(availableLabels);
+  const missing = [...options.addLabels, ...options.removeLabels]
+    .filter((label) => !available.has(label));
+  if (missing.length > 0) {
+    throw new Error(`Requested labels do not exist exactly: ${missing.join(", ")}`);
+  }
 }
 
 export function createGhRunner() {
@@ -329,13 +453,16 @@ export function bodyDiff(currentBody, proposedBody) {
   return `${lines.join("\n")}\n`;
 }
 
-function applyArguments(options, draft, current) {
+function applyArguments(options, draft, current, digest) {
   const args = [
     "--repo", options.repository,
     "--issue", String(options.issueNumber),
     "--draft", draft.relativeDraft,
+    ...options.addLabels.flatMap((label) => ["--add-label", label]),
+    ...options.removeLabels.flatMap((label) => ["--remove-label", label]),
     "--expected-draft-sha256", draft.digest,
-    "--expected-current-body-sha256", sha256(current.body),
+    "--expected-update-sha256", digest,
+    "--expected-current-issue-sha256", issueSnapshotSha256(current),
     "--expected-updated-at", current.updatedAt,
     "--apply",
   ];
@@ -351,13 +478,29 @@ function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+function ghArguments(options, draft, current, bodyFile = "<generated-temporary-body-file>") {
+  const args = [
+    "issue", "edit", String(options.issueNumber),
+    "--repo", options.repository,
+  ];
+  if (draft.title !== current.title) args.push("--title", draft.title);
+  if (draft.body !== current.body) args.push("--body-file", bodyFile);
+  args.push(
+    ...options.addLabels.flatMap((label) => ["--add-label", label]),
+    ...options.removeLabels.flatMap((label) => ["--remove-label", label]),
+  );
+  return args;
+}
+
 async function verifyUpdatedIssue({
   readIssue,
   sleep,
   repository,
   issueNumber,
   expectedUrl,
+  expectedTitle,
   expectedBody,
+  expectedLabels,
 }) {
   let lastObserved;
   let lastError;
@@ -374,7 +517,9 @@ async function verifyUpdatedIssue({
       if (
         observed.url === expectedUrl
         && observed.number === issueNumber
+        && observed.title === expectedTitle
         && observed.body === expectedBody
+        && labelsSha256(observed.labels) === labelsSha256(expectedLabels)
       ) {
         return { status: "verified", issue: observed, attempts: index + 1 };
       }
@@ -397,46 +542,74 @@ async function verifyUpdatedIssue({
 }
 
 export async function runIssueUpdate(options, dependencies = {}) {
-  const readIssue = dependencies.readIssue ?? createAnonymousIssueReader(dependencies.request);
   const gh = dependencies.gh ?? createGhRunner();
+  const readIssue = dependencies.readIssue ?? createGhIssueReader(gh);
+  const readLabels = dependencies.readLabels ?? createGhLabelReader(gh);
+  const readIssueForApply = dependencies.readIssueWithGh ?? readIssue;
+  const applyReadSource = dependencies.readIssueWithGh || !dependencies.readIssue
+    ? "gh-issue-view"
+    : "injected-test-reader";
   const sleep = dependencies.sleep ?? wait;
   const draft = await resolveDraft(options);
-  const operational = operationalPaths(draft, options.repository, options.issueNumber);
+  const updateDigest = updateSha256(draft, options);
+  const operational = operationalPaths(
+    draft,
+    options.repository,
+    options.issueNumber,
+    updateDigest,
+  );
   const priorAttempt = await readAttemptRecord(operational.attempt);
-  if (priorAttempt) throw priorAttemptError(priorAttempt);
+  if (priorAttempt && !isRetryableNotApplied(priorAttempt)) {
+    throw priorAttemptError(priorAttempt);
+  }
 
-  const plannedGhArguments = [
-    "issue", "edit", String(options.issueNumber),
-    "--repo", options.repository,
-    "--body-file", "<generated-temporary-body-file>",
-  ];
+  if (options.addLabels.length + options.removeLabels.length > 0) {
+    validateExistingLabels(await readLabels(options.repository), options);
+  }
   const common = {
     repository: options.repository,
     issue_number: options.issueNumber,
     draft: draft.relativeDraft,
     draft_sha256: draft.digest,
+    update_sha256: updateDigest,
     proposed_title: draft.title,
     proposed_body: draft.body,
     proposed_body_sha256: sha256(draft.body),
+    add_labels: options.addLabels,
+    remove_labels: options.removeLabels,
     attempt_record: path.relative(draft.root, operational.attempt),
-    planned_gh_arguments: plannedGhArguments,
+    retrying_not_applied_attempt: Boolean(priorAttempt),
   };
 
   if (!options.apply) {
     const current = await readIssue(options.repository, options.issueNumber);
-    if (draft.title !== current.title) {
-      throw new Error("Issue title changes are outside this workflow; draft title must equal the current title");
+    validateCurrentLabels(current.labels, options);
+    const resultingLabels = targetLabels(current.labels, options);
+    if (
+      draft.title === current.title
+      && draft.body === current.body
+      && options.addLabels.length === 0
+      && options.removeLabels.length === 0
+    ) {
+      throw new Error("Issue update must change the title, body, or labels");
     }
     return {
       status: "preflight-ok",
       ...common,
       issue_url: current.url,
       current_title: current.title,
+      current_title_sha256: sha256(current.title),
       current_body: current.body,
       current_body_sha256: sha256(current.body),
+      current_labels: current.labels,
+      current_labels_sha256: labelsSha256(current.labels),
+      resulting_labels: resultingLabels,
+      resulting_labels_sha256: labelsSha256(resultingLabels),
+      current_issue_sha256: issueSnapshotSha256(current),
       current_updated_at: current.updatedAt,
       body_diff: bodyDiff(current.body, draft.body),
-      apply_arguments: applyArguments(options, draft, current),
+      planned_gh_arguments: ghArguments(options, draft, current),
+      apply_arguments: applyArguments(options, draft, current, updateDigest),
     };
   }
 
@@ -445,49 +618,80 @@ export async function runIssueUpdate(options, dependencies = {}) {
       `Reviewed draft changed: expected ${options.expectedDraftSha256.toLowerCase()}, actual ${draft.digest}`,
     );
   }
+  if (updateDigest !== options.expectedUpdateSha256.toLowerCase()) {
+    throw new Error(
+      `Reviewed update changed: expected ${options.expectedUpdateSha256.toLowerCase()}, actual ${updateDigest}`,
+    );
+  }
 
   const pendingRecord = {
-    schema_version: 1,
+    schema_version: 2,
     status: "pending",
     repository: options.repository,
     issue_number: options.issueNumber,
     source_draft: draft.relativeDraft,
     draft_sha256: draft.digest,
+    update_sha256: updateDigest,
     proposed_title: draft.title,
     proposed_body_sha256: sha256(draft.body),
-    reviewed_current_body_sha256: options.expectedCurrentBodySha256.toLowerCase(),
+    add_labels: options.addLabels,
+    remove_labels: options.removeLabels,
+    reviewed_current_issue_sha256: options.expectedCurrentIssueSha256.toLowerCase(),
     reviewed_updated_at: options.expectedUpdatedAt,
     attempt_started_at: new Date().toISOString(),
   };
+  let archivedNotAppliedAttempt;
+  if (priorAttempt) {
+    archivedNotAppliedAttempt = await archiveRetryableAttempt(
+      operational.attempt,
+      priorAttempt,
+    );
+    pendingRecord.recovered_from_attempt = path.relative(
+      draft.root,
+      archivedNotAppliedAttempt,
+    );
+  }
   await claimAttempt(operational.attempt, pendingRecord);
 
   let current;
+  let preUpdateReadSource;
   try {
-    current = await readIssue(options.repository, options.issueNumber);
+    current = await readIssueForApply(options.repository, options.issueNumber);
+    preUpdateReadSource = applyReadSource;
   } catch (error) {
     const record = {
       ...pendingRecord,
-      status: "unresolved",
+      status: "not-applied",
       stage: "pre-update-read",
+      gh_invoked: false,
       detail: error instanceof Error ? error.message : String(error),
       result_recorded_at: new Date().toISOString(),
     };
     await replaceAttemptRecord(operational.attempt, record);
-    return { status: "unresolved", ...common, stage: record.stage, detail: record.detail };
+    return {
+      status: "not-applied",
+      ...common,
+      stage: record.stage,
+      gh_invoked: false,
+      detail: record.detail,
+    };
   }
 
-  const observedBodySha256 = sha256(current.body);
+  const observedIssueSha256 = issueSnapshotSha256(current);
   if (
     current.updatedAt !== options.expectedUpdatedAt
-    || observedBodySha256 !== options.expectedCurrentBodySha256.toLowerCase()
-    || current.title !== draft.title
+    || observedIssueSha256 !== options.expectedCurrentIssueSha256.toLowerCase()
   ) {
     const record = {
       ...pendingRecord,
       status: "conflict",
       observed_title: current.title,
-      observed_body_sha256: observedBodySha256,
+      observed_body_sha256: sha256(current.body),
+      observed_labels: current.labels,
+      observed_labels_sha256: labelsSha256(current.labels),
+      observed_issue_sha256: observedIssueSha256,
       observed_updated_at: current.updatedAt,
+      pre_update_read_source: preUpdateReadSource,
       result_recorded_at: new Date().toISOString(),
     };
     await replaceAttemptRecord(operational.attempt, record);
@@ -496,22 +700,25 @@ export async function runIssueUpdate(options, dependencies = {}) {
       ...common,
       issue_url: current.url,
       observed_title: current.title,
-      observed_body_sha256: observedBodySha256,
+      observed_body_sha256: record.observed_body_sha256,
+      observed_labels: current.labels,
+      observed_labels_sha256: record.observed_labels_sha256,
+      observed_issue_sha256: observedIssueSha256,
       observed_updated_at: current.updatedAt,
+      pre_update_read_source: preUpdateReadSource,
     };
   }
 
+  validateCurrentLabels(current.labels, options);
+  const resultingLabels = targetLabels(current.labels, options);
+  const plannedGhArguments = ghArguments(options, draft, current);
   const temporary = await mkdtemp(path.join(os.tmpdir(), "miku-scm-issue-update-"));
   const bodyFile = path.join(temporary, "body.md");
   try {
     await writeFile(bodyFile, draft.body, { encoding: "utf8", mode: 0o600 });
     let result;
     try {
-      result = gh([
-        "issue", "edit", String(options.issueNumber),
-        "--repo", options.repository,
-        "--body-file", bodyFile,
-      ]);
+      result = gh(ghArguments(options, draft, current, bodyFile));
     } catch (error) {
       result = { ok: false, error };
     }
@@ -528,12 +735,14 @@ export async function runIssueUpdate(options, dependencies = {}) {
     }
 
     const verification = await verifyUpdatedIssue({
-      readIssue,
+      readIssue: readIssueForApply,
       sleep,
       repository: options.repository,
       issueNumber: options.issueNumber,
       expectedUrl: current.url,
+      expectedTitle: draft.title,
       expectedBody: draft.body,
+      expectedLabels: resultingLabels,
     });
     if (verification.status === "read-error") {
       const record = {
@@ -558,7 +767,10 @@ export async function runIssueUpdate(options, dependencies = {}) {
         stage: "post-update-verification",
         verification_attempts: verification.attempts,
         observed_url: verified.url,
+        observed_title: verified.title,
         observed_body_sha256: sha256(verified.body),
+        observed_labels: verified.labels,
+        observed_labels_sha256: labelsSha256(verified.labels),
         observed_updated_at: verified.updatedAt,
         result_recorded_at: new Date().toISOString(),
       };
@@ -568,7 +780,10 @@ export async function runIssueUpdate(options, dependencies = {}) {
         ...common,
         stage: record.stage,
         observed_url: record.observed_url,
+        observed_title: record.observed_title,
         observed_body_sha256: record.observed_body_sha256,
+        observed_labels: record.observed_labels,
+        observed_labels_sha256: record.observed_labels_sha256,
         observed_updated_at: record.observed_updated_at,
       };
     }
@@ -577,8 +792,12 @@ export async function runIssueUpdate(options, dependencies = {}) {
       ...pendingRecord,
       status: "updated",
       issue_url: verified.url,
+      verified_title: verified.title,
       verified_body_sha256: sha256(verified.body),
+      verified_labels: verified.labels,
+      verified_labels_sha256: labelsSha256(verified.labels),
       verified_updated_at: verified.updatedAt,
+      pre_update_read_source: preUpdateReadSource,
       verification_attempts: verification.attempts,
       result_recorded_at: new Date().toISOString(),
     };
@@ -587,8 +806,13 @@ export async function runIssueUpdate(options, dependencies = {}) {
       status: "updated",
       ...common,
       issue_url: verified.url,
+      planned_gh_arguments: plannedGhArguments,
+      verified_title: verified.title,
       verified_body_sha256: updatedRecord.verified_body_sha256,
+      verified_labels: verified.labels,
+      verified_labels_sha256: updatedRecord.verified_labels_sha256,
       verified_updated_at: verified.updatedAt,
+      pre_update_read_source: preUpdateReadSource,
       verification_attempts: verification.attempts,
     };
   } finally {
