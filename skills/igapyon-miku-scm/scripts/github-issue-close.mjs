@@ -113,7 +113,7 @@ function operationSha256(options) {
 }
 
 function expectedStateReason(reason) {
-  return reason === "not planned" ? "not_planned" : reason;
+  return reason.replaceAll(" ", "_").toUpperCase();
 }
 
 function issueSnapshotSha256(issue) {

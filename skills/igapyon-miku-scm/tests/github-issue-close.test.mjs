@@ -116,12 +116,12 @@ test("duplicate target changes after review are a conflict", async (t) => {
   assert.equal(calls, 0);
 });
 
-test("apply invokes one exact close and verifies state and reason", async (t) => {
+test("apply invokes one exact close and verifies GitHub's uppercase state reason", async (t) => {
   const state = await scenario(t);
   const preflight = await runIssueClose(optionsFor(state), {
     readIssue: async () => ISSUE,
   });
-  const reads = [ISSUE, { ...ISSUE, state: "CLOSED", stateReason: "completed" }];
+  const reads = [ISSUE, { ...ISSUE, state: "CLOSED", stateReason: "COMPLETED" }];
   const calls = [];
   const result = await runIssueClose(applyOptions(state, preflight), {
     readIssue: async () => reads.shift(),
@@ -135,7 +135,7 @@ test("apply invokes one exact close and verifies state and reason", async (t) =>
     "issue", "close", "42", "--repo", "igapyon/example", "--reason", "completed",
   ]);
   assert.equal(result.status, "closed");
-  assert.equal(result.verified_state_reason, "completed");
+  assert.equal(result.verified_state_reason, "COMPLETED");
   const record = JSON.parse(await readFile(path.join(state.root, result.attempt_record), "utf8"));
   assert.equal(record.status, "closed");
 });
@@ -144,7 +144,7 @@ test("already closed or changed Issue is rejected before gh", async (t) => {
   const state = await scenario(t);
   await assert.rejects(
     runIssueClose(optionsFor(state), {
-      readIssue: async () => ({ ...ISSUE, state: "CLOSED", stateReason: "completed" }),
+      readIssue: async () => ({ ...ISSUE, state: "CLOSED", stateReason: "COMPLETED" }),
     }),
     /Only an Open Issue/,
   );
@@ -168,7 +168,7 @@ test("post-close verification retries reads but never repeats close", async (t) 
   const reads = [
     ISSUE,
     ISSUE,
-    { ...ISSUE, state: "CLOSED", stateReason: "completed" },
+    { ...ISSUE, state: "CLOSED", stateReason: "COMPLETED" },
   ];
   const delays = [];
   let calls = 0;
