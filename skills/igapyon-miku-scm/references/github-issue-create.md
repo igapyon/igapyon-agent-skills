@@ -1,6 +1,6 @@
 # GitHub New Issue Creation
 
-Create a new public GitHub Issue only through the narrowly authorized `gh issue create` workflow. Keep all GitHub inspection on the anonymous REST API workflow. Existing-Issue body updates use the separate workflow in [github-issue-update.md](github-issue-update.md).
+Create a new public GitHub Issue only through the narrowly authorized static-helper workflow. Follow [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md). The AI Agent must not invoke `gh` directly. Existing-Issue title, body, and existing-label updates use the separate workflow in [github-issue-update.md](github-issue-update.md).
 
 ## Authorization Boundary
 
@@ -20,13 +20,13 @@ Preflight must stop when the same repository and draft SHA-256 already has a `pe
 
 ## Allowed Command Surface
 
-The only authorized `gh` invocation is:
+The current helper's only authorized `gh` invocation is:
 
 ```text
 gh issue create --repo <owner/repo> --title <reviewed-title> --body-file <generated-temporary-body-file> [--label <reviewed-existing-label>]...
 ```
 
-Use [scripts/github-issue-create.mjs](../scripts/github-issue-create.mjs); do not assemble or invoke the command independently. The helper separates the existing paste-ready draft into title and body, validates each requested label against the target repository's complete anonymous public label list, writes only the body to a temporary file, invokes `gh` without a shell, and removes the temporary file afterward.
+Use [scripts/github-issue-create.mjs](../scripts/github-issue-create.mjs); do not assemble or invoke the command independently. The helper separates the existing paste-ready draft into title and body, validates each requested label against the target repository's complete public label list, writes only the body to a temporary file, invokes `gh` without a shell, and removes the temporary file afterward.
 
 Before preflight, inspect the repository's labels under [github-anonymous-readonly.md](github-anonymous-readonly.md). Actively select each exact existing label clearly supported by the Issue and repository conventions. Do not omit an evident classification merely because the human did not name a label. Do not infer an unsupported label, substitute a near-match such as `enhance` for an existing `enhancement`, or create a missing label.
 

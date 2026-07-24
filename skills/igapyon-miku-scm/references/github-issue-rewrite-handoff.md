@@ -1,6 +1,8 @@
 # GitHub Issue Draft and Rewrite Handoff
 
-Draft a new public GitHub Issue or retrieve and rewrite an existing Issue, then return paste-ready text. Drafting remains READONLY against GitHub. A reviewed new-Issue draft may proceed separately through [github-issue-create.md](github-issue-create.md), and a reviewed existing-Issue body update may proceed through [github-issue-update.md](github-issue-update.md).
+Draft a new public GitHub Issue or retrieve and rewrite an existing Issue, then return paste-ready text. Drafting remains READONLY against GitHub. A reviewed new-Issue draft may proceed separately through [github-issue-create.md](github-issue-create.md), and a reviewed existing-Issue title/body/existing-label update may proceed through [github-issue-update.md](github-issue-update.md).
+
+The AI Agent must not invoke `gh` directly during drafting or handoff. When a later approved workflow uses `gh`, invoke only its documented static helper under [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
 
 ## Workflow
 
@@ -79,12 +81,12 @@ Keep the draft ready to paste and save it according to Local Draft Save Rules un
 
 ## Human Handoff and Registration Boundary
 
-End after returning the drafted text and saved path unless the user explicitly requests a documented remote Issue operation. For new-Issue registration, body update, comment, existing-label update, or closure, read and follow the matching dedicated workflow. Drafting alone never authorizes remote mutation.
+End after returning the drafted text and saved path unless the user explicitly requests a documented remote Issue operation. For new-Issue registration, content update, comment, standalone existing-label update, or closure, read and follow the matching dedicated workflow. Drafting alone never authorizes remote mutation.
 
 Do not:
 
 - create an Issue except through the separately approved `gh issue create` workflow
-- update an existing Issue except through the separately approved body-only workflow
+- update an existing Issue title or body except through the separately approved content-update workflow
 - request authentication or credentials
 - add comments except through [github-issue-comment.md](github-issue-comment.md)
 - change existing-Issue labels except through [github-issue-label-update.md](github-issue-label-update.md)

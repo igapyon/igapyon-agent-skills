@@ -1,6 +1,6 @@
 # GitHub Anonymous READONLY
 
-Use anonymous GitHub REST API access as the default way to inspect public miku-soft repositories.
+Use anonymous GitHub REST API access when the AI Agent must inspect public miku-soft repositories without a documented static helper. When a documented helper exists, follow [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md) and prefer its fixed internal `gh` reads.
 
 ## Scope
 
@@ -12,7 +12,7 @@ Use anonymous REST API requests for:
 - Releases and release assets
 - GitHub Actions runs, jobs, and step conclusions
 
-Do not use `gh`, request login, read a token, or send an `Authorization` header for these public READONLY operations. The only `gh` exceptions are the separately documented, human-approved Issue creation, body update, comment, existing-label update, and close workflows; none replaces anonymous inspection.
+The AI Agent must not invoke `gh` directly, even for READONLY inspection. Do not request login, read a token, or send an `Authorization` header from the anonymous workflow. A tracked deterministic helper may invoke its documented fixed `gh` commands; for example, the content-update helper uses fixed `gh` reads from preflight through verification. That is a separate execution path, not an exception that grants the Agent general GitHub CLI access.
 
 ## Endpoint Patterns
 
@@ -85,4 +85,4 @@ Ask the human to open the failed step in the GitHub Actions UI and copy and past
 
 ## Boundary
 
-Anonymous READONLY inspection does not authorize GitHub mutation. The narrow Issue mutation exceptions are documented separately in [github-issue-create.md](github-issue-create.md), [github-issue-update.md](github-issue-update.md), [github-issue-comment.md](github-issue-comment.md), [github-issue-label-update.md](github-issue-label-update.md), and [github-issue-close.md](github-issue-close.md). Other Issue changes and mutations of Pull Requests, Releases, tags, branches, or repository settings remain outside this rule and require a separately documented and explicitly requested workflow.
+Anonymous READONLY inspection does not authorize GitHub mutation. The narrow Issue helpers are documented separately in [github-issue-create.md](github-issue-create.md), [github-issue-update.md](github-issue-update.md), [github-issue-comment.md](github-issue-comment.md), [github-issue-label-update.md](github-issue-label-update.md), and [github-issue-close.md](github-issue-close.md). Their static internal `gh` permissions do not transfer to the AI Agent or to another helper. Other Issue changes and mutations of Pull Requests, Releases, tags, branches, or repository settings remain outside this rule and require a separately documented and explicitly requested workflow.

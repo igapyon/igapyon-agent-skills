@@ -1,7 +1,9 @@
 # GitHub Issue Close
 
 Close one existing public GitHub Issue only through the narrowly authorized,
-human-approved workflow in this document.
+human-approved static-helper workflow in this document. Follow
+[github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
+The AI Agent must not invoke `gh` directly.
 
 ## Scope
 
@@ -12,7 +14,8 @@ gh issue close <number> --repo <owner/repo> --reason <completed|not planned|dupl
 ```
 
 Use [scripts/github-issue-close.mjs](../scripts/github-issue-close.mjs).
-Do not add a closing comment in this command. Use the separately approved
+Do not assemble or invoke `gh` independently. Do not add a closing comment in
+this command. Use the separately approved
 Issue-comment workflow when a comment is needed. Reopen is outside this scope.
 
 ## Preflight

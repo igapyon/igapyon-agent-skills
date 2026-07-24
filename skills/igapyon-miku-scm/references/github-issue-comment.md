@@ -1,8 +1,10 @@
 # GitHub Issue Comment
 
 Add one comment to one existing public GitHub Issue only through the narrowly
-authorized, human-approved workflow in this document. Inspection remains
-anonymous and READONLY. Drafting or preflight never authorizes publication.
+authorized, human-approved static-helper workflow in this document. Follow
+[github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
+The AI Agent must not invoke `gh` directly. Drafting or preflight never
+authorizes publication.
 
 ## Scope
 
@@ -13,7 +15,7 @@ gh issue comment <number> --repo <owner/repo> --body-file <generated-temporary-b
 ```
 
 Use [scripts/github-issue-comment.mjs](../scripts/github-issue-comment.mjs).
-Do not invoke `gh` independently. Comment editing, deletion, interactive
+Do not assemble or invoke `gh` independently. Comment editing, deletion, interactive
 editing, browser mode, and comments combined with another Issue mutation are
 outside this workflow.
 

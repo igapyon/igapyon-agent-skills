@@ -1,7 +1,9 @@
 # GitHub Existing Issue Label Update
 
 Change labels on one existing public GitHub Issue only through the narrowly
-authorized, human-approved workflow in this document.
+authorized, human-approved static-helper workflow in this document. Follow
+[github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
+The AI Agent must not invoke `gh` directly.
 
 ## Scope
 
@@ -13,6 +15,7 @@ gh issue edit <number> --repo <owner/repo> [--add-label <name>]... [--remove-lab
 
 Use
 [scripts/github-issue-label-update.mjs](../scripts/github-issue-label-update.mjs).
+Do not assemble or invoke `gh` independently.
 The helper must not change the title, body, assignees, milestone, project,
 Issue type, relationships, state, or label definitions.
 
