@@ -1,6 +1,6 @@
 ---
 name: igapyon-miku-scm
-description: Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, or explicitly asks to perform Git, GitHub writing, GitHub Release, or version-management work under miku-soft SCM rules. Supports PR, Release, About, and public GitHub Issue drafting; human-approved Issue creation, title/body/existing-label updates, comments, standalone existing-label changes, and closure through narrowly documented `gh` workflows; PR soft-reset recommit; backup and branch-status workflows; date-based and Semantic Version increments; and READONLY version, tag, Release, and asset audits. Do not activate for generic Git or GitHub questions, ordinary repository inspection, or release-note writing outside an explicit miku-soft SCM request.
+description: Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, or explicitly asks to perform Git, GitHub writing, GitHub Release, or version-management work under miku-soft SCM rules. Supports PR, Release, About, and public GitHub Issue drafting; human-approved Issue and optional sub-Issue creation, title/body/existing-label updates, comments, standalone existing-label changes, and closure through narrowly documented `gh` workflows; PR soft-reset recommit; backup and branch-status workflows; date-based and Semantic Version increments; and READONLY version, tag, Release, and asset audits. Do not activate for generic Git or GitHub questions, ordinary repository inspection, or release-note writing outside an explicit miku-soft SCM request.
 ---
 
 # igapyon-miku-scm
@@ -16,7 +16,7 @@ Support documented workflows and read-only inspection for:
 - Git operations
 - GitHub operations
 - local repository GitHub URL resolution
-- public GitHub Issue drafting and human-approved creation, title/body/existing-label updates, comments, standalone existing-label changes, and closure
+- public GitHub Issue drafting and human-approved Issue or optional sub-Issue creation, title/body/existing-label updates, comments, standalone existing-label changes, and closure
 - GitHub PR, Release, and About drafting from repository evidence
 - PR soft-reset recommit, local backup branch, and branch-status workflows
 - GitHub Releases

@@ -39,13 +39,18 @@ function optionsWithLabels(state, labels, ...extra) {
 }
 
 function applyOptions(state, preflight, labels = preflight.labels) {
-  return optionsWithLabels(
-    state,
-    labels,
+  const extra = [
+    ...(preflight.parent_issue
+      ? ["--parent", String(preflight.parent_issue.number)]
+      : []),
     "--expected-draft-sha256", preflight.draft_sha256,
     "--expected-labels-sha256", preflight.labels_sha256,
+    ...(preflight.parent_sha256
+      ? ["--expected-parent-sha256", preflight.parent_sha256]
+      : []),
     "--apply",
-  );
+  ];
+  return optionsWithLabels(state, labels, ...extra);
 }
 
 test("preflight validates and separates the paste-ready draft without invoking gh", async (t) => {
@@ -174,6 +179,204 @@ test("helper rejects malformed drafts", () => {
     ]),
     /--expected-labels-sha256/,
   );
+  assert.throws(
+    () => parseArgs([
+      "--repo", "igapyon/example",
+      "--draft", "workplace/miku-scm/new-issues/issue-new-202607221230.md",
+      "--parent", "0",
+    ]),
+    /positive decimal Issue number/,
+  );
+  assert.throws(
+    () => parseArgs([
+      "--repo", "igapyon/example",
+      "--draft", "workplace/miku-scm/new-issues/issue-new-202607221230.md",
+      "--parent", "275",
+      "--expected-draft-sha256", "a".repeat(64),
+      "--expected-labels-sha256", "b".repeat(64),
+      "--apply",
+    ]),
+    /--expected-parent-sha256/,
+  );
+});
+
+test("preflight and apply create one reviewed sub-issue and verify its parent", async (t) => {
+  const state = await scenario(t);
+  const parent = {
+    number: 275,
+    url: "https://github.com/igapyon/example/issues/275",
+    title: "Parent work",
+    state: "OPEN",
+    updated_at: "2026-07-25T00:00:00Z",
+  };
+  const preflightCalls = [];
+  const preflight = await runIssueCreate(
+    optionsFor(state, "--parent", "275"),
+    {
+      gh: (args) => {
+        preflightCalls.push(args);
+        return {
+          ok: true,
+          status: 0,
+          stdout: JSON.stringify({
+            number: parent.number,
+            url: parent.url,
+            title: parent.title,
+            state: parent.state,
+            updatedAt: parent.updated_at,
+          }),
+          stderr: "",
+        };
+      },
+    },
+  );
+
+  assert.deepEqual(preflightCalls, [[
+    "issue", "view", "275",
+    "--repo", "igapyon/example",
+    "--json", "number,url,title,state,updatedAt",
+  ]]);
+  assert.deepEqual(preflight.parent_issue, parent);
+  assert.match(preflight.parent_sha256, /^[0-9a-f]{64}$/);
+  assert.deepEqual(preflight.planned_gh_arguments.slice(-2), ["--parent", "275"]);
+  assert.ok(preflight.apply_arguments.includes(preflight.parent_sha256));
+
+  const calls = [];
+  let submittedBody = "";
+  const result = await runIssueCreate(
+    applyOptions(state, preflight),
+    {
+      gh: (args) => {
+        calls.push(args);
+        if (args[1] === "view" && args[2] === "275") {
+          return {
+            ok: true,
+            status: 0,
+            stdout: JSON.stringify({
+              number: parent.number,
+              url: parent.url,
+              title: parent.title,
+              state: parent.state,
+              updatedAt: parent.updated_at,
+            }),
+            stderr: "",
+          };
+        }
+        if (args[1] === "create") {
+          const bodyIndex = args.indexOf("--body-file") + 1;
+          submittedBody = readFileSync(args[bodyIndex], "utf8");
+          return {
+            ok: true,
+            status: 0,
+            stdout: "https://github.com/igapyon/example/issues/300",
+            stderr: "",
+          };
+        }
+        return {
+          ok: true,
+          status: 0,
+          stdout: JSON.stringify({
+            number: 300,
+            url: "https://github.com/igapyon/example/issues/300",
+            parent: {
+              number: parent.number,
+              url: parent.url,
+            },
+          }),
+          stderr: "",
+        };
+      },
+    },
+  );
+
+  assert.equal(submittedBody, "The reviewed body.\n");
+  assert.equal(calls.filter((args) => args[1] === "create").length, 1);
+  assert.deepEqual(calls.find((args) => args[1] === "create").slice(-2), [
+    "--parent", "275",
+  ]);
+  assert.equal(result.status, "created");
+  assert.equal(result.parent_verification.status, "verified");
+  const receipt = JSON.parse(await readFile(path.join(state.root, result.attempt_record), "utf8"));
+  assert.equal(receipt.parent_issue.number, 275);
+  assert.equal(receipt.parent_verification.status, "verified");
+});
+
+test("apply rejects a changed reviewed parent before creating an Issue", async (t) => {
+  const state = await scenario(t);
+  const original = {
+    number: 275,
+    url: "https://github.com/igapyon/example/issues/275",
+    title: "Parent work",
+    state: "OPEN",
+    updated_at: "2026-07-25T00:00:00Z",
+  };
+  const preflight = await runIssueCreate(
+    optionsFor(state, "--parent", "275"),
+    { readParent: async () => original },
+  );
+  let mutationCalls = 0;
+
+  await assert.rejects(
+    runIssueCreate(
+      applyOptions(state, preflight),
+      {
+        readParent: async () => ({
+          ...original,
+          title: "Changed parent",
+          updated_at: "2026-07-25T00:01:00Z",
+        }),
+        gh: () => {
+          mutationCalls += 1;
+          return { ok: true, stdout: "https://github.com/igapyon/example/issues/300" };
+        },
+      },
+    ),
+    /Reviewed parent Issue changed/,
+  );
+  assert.equal(mutationCalls, 0);
+});
+
+test("a created Issue with an unconfirmed parent is recorded without retrying creation", async (t) => {
+  const state = await scenario(t);
+  const parent = {
+    number: 275,
+    url: "https://github.com/igapyon/example/issues/275",
+    title: "Parent work",
+    state: "OPEN",
+    updated_at: "2026-07-25T00:00:00Z",
+  };
+  const preflight = await runIssueCreate(
+    optionsFor(state, "--parent", "275"),
+    { readParent: async () => parent },
+  );
+  let mutationCalls = 0;
+  const result = await runIssueCreate(
+    applyOptions(state, preflight),
+    {
+      readParent: async () => parent,
+      readCreatedIssue: async () => ({
+        number: 300,
+        url: "https://github.com/igapyon/example/issues/300",
+        parent: null,
+      }),
+      gh: () => {
+        mutationCalls += 1;
+        return {
+          ok: true,
+          status: 0,
+          stdout: "https://github.com/igapyon/example/issues/300",
+          stderr: "",
+        };
+      },
+    },
+  );
+
+  assert.equal(mutationCalls, 1);
+  assert.equal(result.status, "created");
+  assert.equal(result.parent_verification.status, "mismatch");
+  const receipt = JSON.parse(await readFile(path.join(state.root, result.attempt_record), "utf8"));
+  assert.equal(receipt.status, "created");
+  assert.equal(receipt.parent_verification.status, "mismatch");
 });
 
 test("preflight validates requested labels and apply fixes them to the reviewed selection", async (t) => {
