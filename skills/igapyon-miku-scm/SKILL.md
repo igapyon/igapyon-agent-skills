@@ -65,7 +65,7 @@ This fast path only defers initialization until there is enough information to c
 - Keep the standalone `igapyon-github-writer` active and unchanged for requests that explicitly invoke that skill. Treat the two implementations as independent during coexistence; improve the miku-scm copy without silently synchronizing or overwriting the standalone skill.
 - Use `igapyon-repo-conventions` for repository layout and repository-side convention work when that skill is explicitly requested.
 - Keep SCM policy and SCM execution rules in this skill.
-- Never invoke `gh` directly as the AI Agent. Prefer fixed `gh` subcommands inside documented deterministic Node helpers; READONLY commands may run at the helper's documented inspection points, while mutations remain behind the workflow's approval boundary. Follow [references/github-cli-static-helper-policy.md](references/github-cli-static-helper-policy.md).
+- `gh` is prohibited as a direct AI Agent command in every workflow, including READONLY inspection. Do not use direct `gh` as a fallback when no helper exists. Invoke `gh` only indirectly through a documented deterministic Node helper with a fixed, validated command surface; otherwise use the documented anonymous REST route or stop and report that no authorized helper exists. Before using any GitHub CLI capability, read [references/github-cli-static-helper-policy.md](references/github-cli-static-helper-policy.md). READONLY commands may run only at the helper's documented inspection points, while mutations remain behind the workflow's approval boundary.
 - Keep tag recommendation separate from tag mutation. The normal handoff is for the human to create or select the recommended tag in GitHub's Release UI.
 
 ## Verification

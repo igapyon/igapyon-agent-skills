@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url";
 
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
-const ATTEMPT_STATUSES = new Set(["pending", "updated", "conflict", "unresolved"]);
+const ATTEMPT_STATUSES = new Set(["pending", "updated", "conflict", "not-applied", "unresolved"]);
 const VERIFICATION_DELAYS_MS = [0, 250, 1_000];
 const MAX_CHANGES = 20;
 
@@ -144,72 +144,74 @@ function validateCurrentLabels(current, options) {
   }
 }
 
-function requestHeaders(cacheBypass = false) {
-  const headers = {
-    Accept: "application/vnd.github+json",
-    "User-Agent": "igapyon-miku-scm",
-    "X-GitHub-Api-Version": "2022-11-28",
-  };
-  if (cacheBypass) {
-    headers["Cache-Control"] = "no-cache";
-    headers.Pragma = "no-cache";
-  }
-  return headers;
+function ghDetail(result) {
+  return result?.stderr || result?.stdout || result?.error?.message || `exit ${result?.status}`;
 }
 
-export function createAnonymousIssueReader(request = globalThis.fetch) {
-  return async (repository, issueNumber, options = {}) => {
-    const url = new URL(`https://api.github.com/repos/${repository}/issues/${issueNumber}`);
-    if (options.cacheBypass) url.searchParams.set("miku_scm_cache_bust", randomUUID());
-    const response = await request(url.href, {
-      method: "GET",
-      headers: requestHeaders(options.cacheBypass),
-      ...(options.cacheBypass ? { cache: "no-store" } : {}),
-    });
-    if (!response?.ok) throw new Error(`Anonymous Issue GET failed: HTTP ${response?.status}`);
-    const issue = await response.json();
+export function createGhIssueReader(gh = createGhRunner()) {
+  return async (repository, issueNumber) => {
+    const result = gh([
+      "issue", "view", String(issueNumber),
+      "--repo", repository,
+      "--json", "number,url,title,state,labels,updatedAt",
+    ]);
+    if (!result?.ok) throw new Error(`gh issue view failed: ${ghDetail(result)}`);
+    let issue;
+    try {
+      issue = JSON.parse(result.stdout);
+    } catch {
+      throw new Error("gh issue view returned malformed JSON");
+    }
     const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
     if (
-      issue?.pull_request
-      || issue?.number !== issueNumber
-      || issue?.html_url !== expectedUrl
+      issue?.number !== issueNumber
+      || issue?.url !== expectedUrl
       || typeof issue?.title !== "string"
-      || !["open", "closed"].includes(issue?.state)
-      || typeof issue?.updated_at !== "string"
+      || !["OPEN", "CLOSED"].includes(issue?.state)
+      || typeof issue?.updatedAt !== "string"
+      || !issue.updatedAt
       || !Array.isArray(issue?.labels)
-      || issue.labels.some((label) => typeof label?.name !== "string")
+      || issue.labels.some((label) => typeof label?.name !== "string" || !label.name)
     ) {
-      throw new Error("Anonymous response does not identify the requested Issue");
+      throw new Error("gh issue view does not exactly identify the requested Issue");
+    }
+    const labels = issue.labels.map((label) => label.name);
+    if (new Set(labels).size !== labels.length) {
+      throw new Error("gh issue view returned duplicate labels");
     }
     return {
       number: issue.number,
-      url: issue.html_url,
+      url: issue.url,
       title: issue.title,
       state: issue.state,
-      updatedAt: issue.updated_at,
-      labels: issue.labels.map((label) => label.name),
+      updatedAt: issue.updatedAt,
+      labels,
     };
   };
 }
 
-export function createAnonymousLabelReader(request = globalThis.fetch) {
+export function createGhLabelReader(gh = createGhRunner()) {
   return async (repository) => {
-    const labels = [];
-    let page = 1;
-    while (true) {
-      const response = await request(
-        `https://api.github.com/repos/${repository}/labels?per_page=100&page=${page}`,
-        { method: "GET", headers: requestHeaders() },
-      );
-      if (!response?.ok) throw new Error(`Anonymous labels GET failed: HTTP ${response?.status}`);
-      const entries = await response.json();
-      if (!Array.isArray(entries) || entries.some((entry) => typeof entry?.name !== "string")) {
-        throw new Error("Anonymous labels response is malformed");
-      }
-      labels.push(...entries.map((entry) => entry.name));
-      if (!/<[^>]+>;\s*rel="next"/.test(response.headers?.get?.("link") ?? "")) return labels;
-      page += 1;
+    const result = gh([
+      "label", "list",
+      "--repo", repository,
+      "--limit", "1000",
+      "--json", "name",
+    ]);
+    if (!result?.ok) throw new Error(`gh label list failed: ${ghDetail(result)}`);
+    let labels;
+    try {
+      labels = JSON.parse(result.stdout);
+    } catch {
+      throw new Error("gh label list returned malformed JSON");
     }
+    if (
+      !Array.isArray(labels)
+      || labels.some((label) => typeof label?.name !== "string" || !label.name)
+    ) throw new Error("gh label list response is malformed");
+    const names = labels.map((label) => label.name);
+    if (new Set(names).size !== names.length) throw new Error("gh label list returned duplicate labels");
+    return names;
   };
 }
 
@@ -341,9 +343,10 @@ function applyArguments(options, operationDigest, current) {
 
 export async function runIssueLabelUpdate(options, dependencies = {}) {
   const root = await realpath(path.resolve(options.root));
-  const readIssue = dependencies.readIssue ?? createAnonymousIssueReader(dependencies.request);
-  const readLabels = dependencies.readLabels ?? createAnonymousLabelReader(dependencies.request);
-  const gh = dependencies.gh ?? createGhRunner();
+  const ghRead = dependencies.ghRead ?? createGhRunner();
+  const ghMutation = dependencies.ghMutation ?? dependencies.gh ?? createGhRunner();
+  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead);
+  const readLabels = dependencies.readLabels ?? createGhLabelReader(ghRead);
   const sleep = dependencies.sleep ?? wait;
   const digest = operationSha256(options);
   const attempt = operationalPath(root, options.repository, options.issueNumber, digest);
@@ -401,13 +404,13 @@ export async function runIssueLabelUpdate(options, dependencies = {}) {
   } catch (error) {
     const record = {
       ...pending,
-      status: "unresolved",
+      status: "not-applied",
       stage: "pre-update-read",
       detail: error instanceof Error ? error.message : String(error),
       result_recorded_at: new Date().toISOString(),
     };
     await replaceAttempt(attempt, record);
-    return { status: "unresolved", ...common, ...record };
+    return { status: "not-applied", ...common, ...record };
   }
   if (
     current.updatedAt !== options.expectedUpdatedAt
@@ -428,7 +431,7 @@ export async function runIssueLabelUpdate(options, dependencies = {}) {
   const target = targetLabels(current.labels, options);
   let result;
   try {
-    result = gh(ghArguments(options));
+    result = ghMutation(ghArguments(options));
   } catch (error) {
     result = { ok: false, error };
   }

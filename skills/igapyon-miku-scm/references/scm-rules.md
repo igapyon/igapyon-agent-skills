@@ -225,13 +225,13 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 
 ## Human-Approved New Issue Creation
 
-- Keep drafting and label discovery READONLY. The current creation helper uses anonymous label validation and its fixed `gh issue create` mutation; any future fixed READONLY `gh` additions require matching code, documentation, and tests.
+- Keep drafting and label discovery READONLY. The creation helper uses fixed `gh label list` and `gh issue view` reads plus its fixed `gh issue create` mutation; any future command-surface additions require matching code, documentation, and tests.
 - Use [github-issue-rewrite-handoff.md](github-issue-rewrite-handoff.md) to create the local paste-ready draft.
 - Inspect the target repository's existing labels anonymously while drafting. When one or more labels clearly match the Issue evidence and repository semantics, actively propose them instead of omitting labels by default. Do not guess when classification is ambiguous, and never create or edit label definitions.
 - When the user explicitly requests registration, use [github-issue-create.md](github-issue-create.md) and the bundled `scripts/github-issue-create.mjs` preflight/apply workflow.
 - Require approval after displaying the exact repository, title, body, selected labels, optional parent Issue snapshot, every required digest, and planned operation. The helper may invoke only `gh issue create` with the reviewed title, body file, selected existing labels, and optional same-repository `--parent`, and must not retry automatically.
 - For sub-Issue creation, require one positive same-repository parent Issue number. Retrieve and fix the Open parent snapshot during preflight, revalidate it immediately before mutation, and verify the created Issue's exact parent afterward through documented fixed `gh issue view` commands.
-- Require the helper to verify every selected label against the repository's current public label list before creating the attempt record. Fix the ordered label selection with its own SHA-256 digest and verify requested labels anonymously after successful creation.
+- Require the helper to verify every selected label through fixed `gh label list` before creating the attempt record. Fix the ordered label selection with its own SHA-256 digest, then verify the exact created Issue, requested labels, and optional parent together through one fixed `gh issue view` after successful creation.
 - Require the helper to persist a `pending` attempt before the remote request, block repeated repository-plus-digest attempts, record the confirmed Issue URL plus label and parent verification, and archive the unchanged draft under `created-issues/`. A pending or malformed attempt record is a stop condition, not permission to retry.
 - The AI Agent must not use `gh` directly. The current creation helper's fixed allowlist excludes inspection, authentication, existing-Issue changes, lifecycle changes, and non-Issue operations.
 
@@ -251,7 +251,7 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 - Use [github-issue-comment.md](github-issue-comment.md) and the bundled `scripts/github-issue-comment.mjs`.
 - Permit only one `gh issue comment <number> --repo <owner/repo> --body-file <temporary-file>` call using the complete reviewed comment draft.
 - Require approval after displaying the exact Issue state, complete comment, draft digest, Issue snapshot digest, `updated_at`, and planned command.
-- Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body anonymously. Bounded READONLY verification retries must never repeat the mutation.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt` for the reviewed Issue snapshot and `gh api --method GET repos/<owner/repo>/issues/comments/<comment-id>` for post-comment verification. Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body. A pre-mutation READONLY failure is `not-applied`; bounded READONLY verification retries must never repeat the mutation.
 - Do not edit or delete comments, use interactive or browser modes, or combine a comment with another mutation.
 
 ## Human-Approved Existing Issue Label Update
@@ -260,15 +260,15 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 - Permit one `gh issue edit` containing only reviewed repeated `--add-label` and `--remove-label` arguments for one Issue.
 - Require every label to exist exactly in the repository. Reject overlap, no-op additions or removals, and label-definition changes.
 - Require approval after displaying current, added, removed, and complete resulting labels plus operation, current-label, and resulting-label digests.
-- Persist `pending`, detect an intervening Issue change as `conflict`, and verify the complete resulting label set anonymously. Never retry the mutation.
+- Use fixed READONLY `gh label list --limit 1000 --json name` and `gh issue view --json number,url,title,state,labels,updatedAt` from preflight through verification. Persist `pending`, detect an intervening Issue change as `conflict`, and verify the complete resulting label set. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
 
 ## Human-Approved Issue Close
 
 - Use [github-issue-close.md](github-issue-close.md) and the bundled `scripts/github-issue-close.mjs`.
 - Permit one `gh issue close` for an Open Issue with exact reason `completed`, `not planned`, or `duplicate`.
-- For `duplicate`, require and display one different, anonymously verified target Issue and fix its reviewed snapshot digest through apply. Reject a duplicate target for other reasons.
+- For `duplicate`, require and display one different, fixed-`gh issue view` verified target Issue and fix its reviewed snapshot digest through apply. Reject a duplicate target for other reasons.
 - Require approval after displaying the complete current Issue, reason, duplicate target when applicable, operation digest, body digest, `updated_at`, and planned command.
-- Persist `pending`, detect a non-Open or changed Issue as `conflict`, and verify the closed state and reason anonymously. Never retry the mutation.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,stateReason,updatedAt` from preflight through verification. Persist `pending`, detect a non-Open or changed Issue as `conflict`, and verify the closed state and reason. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
 - Do not add a closing comment in the close command and do not permit reopen under this workflow.
 
 ## Planned Rule Areas

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -73,62 +73,26 @@ async function readJson(file) {
 }
 
 function isFresh(metadata, maxAgeMinutes) {
-  if (metadata?.schema_version !== 2) return false;
+  if (metadata?.schema_version !== 3) return false;
   const fetchedAt = Date.parse(metadata?.fetched_at ?? "");
   if (!Number.isFinite(fetchedAt)) return false;
   return Date.now() - fetchedAt <= maxAgeMinutes * 60 * 1000;
 }
 
-function githubApiError(response, page) {
-  const parts = [`GitHub API returned ${response.status} for page ${page}`];
-  if (response.status === 403 || response.status === 429) {
-    const remaining = response.headers.get("x-ratelimit-remaining") ?? "unknown";
-    const reset = response.headers.get("x-ratelimit-reset") ?? "unknown";
-    const retryAfter = response.headers.get("retry-after") ?? "unknown";
-    parts.push(`rate-limit remaining=${remaining}`);
-    parts.push(`reset=${reset}`);
-    parts.push(`retry-after=${retryAfter}`);
+function fetchIssues(repo, state) {
+  const result = spawnSync("gh", ["issue", "list", "--repo", repo, "--state", state,
+    "--limit", "1000", "--json", "number,state,title,body,url,updatedAt"], { encoding: "utf8" });
+  if (result.status !== 0) throw new Error(`gh issue list failed: ${(result.stderr || result.stdout || "unknown failure").trim()}`);
+  let entries;
+  try { entries = JSON.parse(result.stdout); } catch { throw new Error("gh issue list returned malformed JSON"); }
+  if (!Array.isArray(entries)) throw new Error("gh issue list returned a non-array response");
+  const issues = entries.map((entry) => ({ number: entry.number, state: entry.state, title: entry.title,
+    body: entry.body ?? "", html_url: entry.url, updated_at: entry.updatedAt }));
+  if (issues.some((entry) => !Number.isSafeInteger(entry.number) || typeof entry.state !== "string"
+    || typeof entry.title !== "string" || typeof entry.html_url !== "string" || typeof entry.updated_at !== "string")) {
+    throw new Error("gh issue list returned malformed Issue metadata");
   }
-  return new Error(parts.join("; "));
-}
-
-async function fetchIssues(repo, state) {
-  const issues = [];
-  let page = 1;
-
-  while (true) {
-    const sourceUrl = `https://api.github.com/repos/${repo}/issues?state=${state}&per_page=100&page=${page}`;
-    const response = await fetch(sourceUrl, {
-      headers: {
-        Accept: "application/vnd.github+json",
-        "User-Agent": "igapyon-miku-scm-issue-cache",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    });
-    if (!response.ok) {
-      throw githubApiError(response, page);
-    }
-
-    const entries = await response.json();
-    if (!Array.isArray(entries)) {
-      throw new Error(`GitHub API returned a non-array response for page ${page}`);
-    }
-    for (const entry of entries) {
-      if (entry.pull_request) continue;
-      issues.push({
-        number: entry.number,
-        state: entry.state,
-        title: entry.title ?? "",
-        body: entry.body ?? "",
-        html_url: entry.html_url ?? "",
-        updated_at: entry.updated_at ?? "",
-      });
-    }
-
-    const hasNext = /<[^>]+>;\s*rel="next"/.test(response.headers.get("link") ?? "");
-    if (!hasNext) return { issues, pageCount: page };
-    page += 1;
-  }
+  return { issues, pageCount: 1 };
 }
 
 async function writeJsonAtomic(file, value) {
@@ -168,13 +132,13 @@ async function main() {
   }
 
   try {
-    const { issues, pageCount } = await fetchIssues(options.repo, options.state);
+    const { issues, pageCount } = fetchIssues(options.repo, options.state);
     const fetchedAt = new Date().toISOString();
     const metadata = {
-      schema_version: 2,
+      schema_version: 3,
       repository: options.repo,
       state: options.state,
-      source_url: `https://api.github.com/repos/${options.repo}/issues?state=${options.state}&per_page=100`,
+      source_url: `gh issue list --repo ${options.repo} --state ${options.state} --limit 1000 --json number,state,title,body,url,updatedAt`,
       fetched_at: fetchedAt,
       page_count: pageCount,
       issue_count: issues.length,

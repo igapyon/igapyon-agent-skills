@@ -130,7 +130,7 @@ the push target.
 
 ## Completion Report and Boundaries
 
-The helper returns stable JSON. A GitHub API lookup failure is nonfatal: return
+The helper returns stable JSON. A fixed `gh pr list --head <branch> --state open --limit 100 --json url` lookup failure is nonfatal: return
 the deterministic PR creation URL and mark the existing-PR lookup unconfirmed.
 A safely unresolved version or tag convention is also nonfatal and produces
 `recommended_tag: "unresolved"`.

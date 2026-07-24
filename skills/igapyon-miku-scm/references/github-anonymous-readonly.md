@@ -50,6 +50,8 @@ node skills/igapyon-miku-scm/scripts/github-issues-cache.mjs --repo <owner>/<rep
 
 The default cache is the open-Issue list with a ten-minute freshness window. The helper stores normalized public data under:
 
+The cache helper performs its refresh through fixed `gh issue list --limit 1000 --json number,state,title,body,url,updatedAt`; the AI Agent still invokes only the helper.
+
 ```text
 workplace/miku-scm/github-cache/<owner>/<repo>/
   issues-open.json

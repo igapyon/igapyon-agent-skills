@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url";
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const REASONS = new Set(["completed", "not planned", "duplicate"]);
-const ATTEMPT_STATUSES = new Set(["pending", "closed", "conflict", "unresolved"]);
+const ATTEMPT_STATUSES = new Set(["pending", "closed", "conflict", "not-applied", "unresolved"]);
 const VERIFICATION_DELAYS_MS = [0, 250, 1_000];
 
 export const usage = `Usage:
@@ -127,52 +127,29 @@ function issueSnapshotSha256(issue) {
   }));
 }
 
-function requestHeaders(cacheBypass = false) {
-  const headers = {
-    Accept: "application/vnd.github+json",
-    "User-Agent": "igapyon-miku-scm",
-    "X-GitHub-Api-Version": "2022-11-28",
-  };
-  if (cacheBypass) {
-    headers["Cache-Control"] = "no-cache";
-    headers.Pragma = "no-cache";
-  }
-  return headers;
-}
+function ghDetail(result) { return result?.stderr || result?.stdout || result?.error?.message || `exit ${result?.status}`; }
 
-export function createAnonymousIssueReader(request = globalThis.fetch) {
-  return async (repository, issueNumber, options = {}) => {
-    const url = new URL(`https://api.github.com/repos/${repository}/issues/${issueNumber}`);
-    if (options.cacheBypass) url.searchParams.set("miku_scm_cache_bust", randomUUID());
-    const response = await request(url.href, {
-      method: "GET",
-      headers: requestHeaders(options.cacheBypass),
-      ...(options.cacheBypass ? { cache: "no-store" } : {}),
-    });
-    if (!response?.ok) throw new Error(`Anonymous Issue GET failed: HTTP ${response?.status}`);
-    const issue = await response.json();
+export function createGhIssueReader(gh = createGhRunner()) {
+  return async (repository, issueNumber) => {
+    const result = gh(["issue", "view", String(issueNumber), "--repo", repository,
+      "--json", "number,url,title,body,state,stateReason,updatedAt"]);
+    if (!result?.ok) throw new Error(`gh issue view failed: ${ghDetail(result)}`);
+    let issue;
+    try { issue = JSON.parse(result.stdout); } catch { throw new Error("gh issue view returned malformed JSON"); }
     const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
     if (
-      issue?.pull_request
-      || issue?.number !== issueNumber
-      || issue?.html_url !== expectedUrl
+      issue?.number !== issueNumber || issue?.url !== expectedUrl
       || typeof issue?.title !== "string"
       || (typeof issue?.body !== "string" && issue?.body !== null)
-      || !["open", "closed"].includes(issue?.state)
-      || typeof issue?.updated_at !== "string"
-      || !issue.updated_at
-      || (typeof issue?.state_reason !== "string" && issue?.state_reason !== null)
+      || !["OPEN", "CLOSED"].includes(issue?.state)
+      || typeof issue?.updatedAt !== "string" || !issue.updatedAt
+      || (typeof issue?.stateReason !== "string" && issue?.stateReason !== null)
     ) {
-      throw new Error("Anonymous response does not identify the requested Issue");
+      throw new Error("gh issue view does not exactly identify the requested Issue");
     }
     return {
-      number: issue.number,
-      url: issue.html_url,
-      title: issue.title,
-      body: issue.body ?? "",
-      state: issue.state,
-      stateReason: issue.state_reason,
-      updatedAt: issue.updated_at,
+      number: issue.number, url: issue.url, title: issue.title, body: issue.body ?? "",
+      state: issue.state, stateReason: issue.stateReason, updatedAt: issue.updatedAt,
     };
   };
 }
@@ -289,7 +266,7 @@ async function verifyClosed(readIssue, sleep, repository, issueNumber, reason) {
         verificationAttempt: index + 1,
       });
       error = undefined;
-      if (last.state === "closed" && last.stateReason === expectedStateReason(reason)) {
+      if (last.state === "CLOSED" && last.stateReason === expectedStateReason(reason)) {
         return { status: "verified", issue: last, attempts: index + 1 };
       }
     } catch (caught) {
@@ -306,8 +283,9 @@ async function verifyClosed(readIssue, sleep, repository, issueNumber, reason) {
 
 export async function runIssueClose(options, dependencies = {}) {
   const root = await realpath(path.resolve(options.root));
-  const readIssue = dependencies.readIssue ?? createAnonymousIssueReader(dependencies.request);
-  const gh = dependencies.gh ?? createGhRunner();
+  const ghRead = dependencies.ghRead ?? createGhRunner();
+  const ghMutation = dependencies.ghMutation ?? dependencies.gh ?? createGhRunner();
+  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead);
   const sleep = dependencies.sleep ?? wait;
   const digest = operationSha256(options);
   const attempt = attemptPath(root, options.repository, options.issueNumber, digest);
@@ -325,7 +303,7 @@ export async function runIssueClose(options, dependencies = {}) {
 
   if (!options.apply) {
     const current = await readIssue(options.repository, options.issueNumber);
-    if (current.state !== "open") throw new Error("Only an Open Issue can be closed");
+    if (current.state !== "OPEN") throw new Error("Only an Open Issue can be closed");
     let duplicate;
     if (options.reason === "duplicate") {
       duplicate = await readIssue(options.repository, options.duplicateOf);
@@ -376,16 +354,16 @@ export async function runIssueClose(options, dependencies = {}) {
   } catch (error) {
     const record = {
       ...pending,
-      status: "unresolved",
+      status: "not-applied",
       stage: "pre-close-read",
       detail: error instanceof Error ? error.message : String(error),
       result_recorded_at: new Date().toISOString(),
     };
     await replaceAttempt(attempt, record);
-    return { status: "unresolved", ...common, ...record };
+    return { status: "not-applied", ...common, ...record };
   }
   if (
-    current.state !== "open"
+    current.state !== "OPEN"
     || current.updatedAt !== options.expectedUpdatedAt
     || sha256(current.body) !== options.expectedCurrentBodySha256.toLowerCase()
   ) {
@@ -407,13 +385,13 @@ export async function runIssueClose(options, dependencies = {}) {
     } catch (error) {
       const record = {
         ...pending,
-        status: "unresolved",
+        status: "not-applied",
         stage: "duplicate-target-read",
         detail: error instanceof Error ? error.message : String(error),
         result_recorded_at: new Date().toISOString(),
       };
       await replaceAttempt(attempt, record);
-      return { status: "unresolved", ...common, ...record };
+      return { status: "not-applied", ...common, ...record };
     }
     const observedDuplicateSha256 = issueSnapshotSha256(duplicate);
     if (observedDuplicateSha256 !== options.expectedDuplicateSha256.toLowerCase()) {
@@ -430,7 +408,7 @@ export async function runIssueClose(options, dependencies = {}) {
   }
   let result;
   try {
-    result = gh(ghArguments(options));
+    result = ghMutation(ghArguments(options));
   } catch (error) {
     result = { ok: false, error };
   }

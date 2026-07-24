@@ -19,9 +19,21 @@ Do not assemble or invoke `gh` independently.
 The helper must not change the title, body, assignees, milestone, project,
 Issue type, relationships, state, or label definitions.
 
+The helper's complete fixed `gh` command surface is:
+
+```text
+gh label list --repo <owner/repo> --limit 1000 --json name
+gh issue view <number> --repo <owner/repo> --json number,url,title,state,labels,updatedAt
+gh issue edit <number> --repo <owner/repo> [--add-label <name>]... [--remove-label <name>]...
+```
+
+The first two commands are READONLY and are distinct from the single mutation.
+Every variable is validated, and no arbitrary argument is accepted.
+
 ## Preflight
 
-Retrieve the Issue and complete repository label list anonymously. Reject:
+Retrieve the Issue and complete repository label list with the fixed READONLY
+commands above. Reject:
 
 - labels that do not exist exactly in the repository
 - a label requested for both addition and removal
@@ -38,11 +50,12 @@ Apply requires the reviewed operation digest, current-label digest, and
 `updated_at`. Persist `pending`, retrieve the Issue again, and record
 `conflict` without `gh` if the reviewed state changed.
 
-Invoke `gh` once. Then retrieve the Issue anonymously with cache bypass and
-bounded READONLY retries. Require the complete resulting label set to match.
-Never repeat the mutation.
+Invoke `gh` once. Then retrieve the Issue with fixed READONLY `gh issue view`
+and bounded verification retries. Require the complete resulting label set to
+match. A pre-mutation READONLY failure is `not-applied`; a post-mutation
+verification failure is `unresolved`. Never repeat the mutation.
 
-Attempt states are `pending`, `updated`, `conflict`, and `unresolved`.
+Attempt states are `pending`, `updated`, `conflict`, `not-applied`, and `unresolved`.
 
 ## Completion Report
 

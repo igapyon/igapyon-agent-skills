@@ -19,7 +19,7 @@ import { pathToFileURL } from "node:url";
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const DRAFT_PATTERN = /^issue-(\d+)-comment-\d{12}(?:-\d+)?\.md$/;
-const ATTEMPT_STATUSES = new Set(["pending", "commented", "conflict", "unresolved"]);
+const ATTEMPT_STATUSES = new Set(["pending", "commented", "conflict", "not-applied", "unresolved"]);
 const VERIFICATION_DELAYS_MS = [0, 250, 1_000];
 
 export const usage = `Usage:
@@ -98,7 +98,9 @@ function issueSha256(issue) {
   return sha256(JSON.stringify({
     url: issue.url,
     title: issue.title,
+    body: issue.body,
     state: issue.state,
+    labels: [...issue.labels].sort((left, right) => left.localeCompare(right, "en")),
     updated_at: issue.updatedAt,
   }));
 }
@@ -196,67 +198,72 @@ async function replaceAttempt(file, record) {
   }
 }
 
-function requestHeaders() {
-  return {
-    Accept: "application/vnd.github+json",
-    "User-Agent": "igapyon-miku-scm",
-    "X-GitHub-Api-Version": "2022-11-28",
-  };
+function ghDetail(result) {
+  return result?.stderr || result?.stdout || result?.error?.message || `exit ${result?.status}`;
 }
 
-export function createAnonymousIssueReader(request = globalThis.fetch) {
+export function createGhIssueReader(gh = createGhRunner()) {
   return async (repository, issueNumber) => {
-    const response = await request(
-      `https://api.github.com/repos/${repository}/issues/${issueNumber}`,
-      { method: "GET", headers: requestHeaders() },
-    );
-    if (!response?.ok) throw new Error(`Anonymous Issue GET failed: HTTP ${response?.status}`);
-    const issue = await response.json();
+    const result = gh([
+      "issue", "view", String(issueNumber),
+      "--repo", repository,
+      "--json", "number,url,title,body,state,labels,updatedAt",
+    ]);
+    if (!result?.ok) throw new Error(`gh issue view failed: ${ghDetail(result)}`);
+    let issue;
+    try {
+      issue = JSON.parse(result.stdout);
+    } catch {
+      throw new Error("gh issue view returned malformed JSON");
+    }
     const url = `https://github.com/${repository}/issues/${issueNumber}`;
     if (
-      issue?.pull_request
-      || issue?.number !== issueNumber
-      || issue?.html_url !== url
+      issue?.number !== issueNumber
+      || issue?.url !== url
       || typeof issue?.title !== "string"
-      || !["open", "closed"].includes(issue?.state)
-      || typeof issue?.updated_at !== "string"
-      || !issue.updated_at
+      || typeof issue?.body !== "string"
+      || !["OPEN", "CLOSED"].includes(issue?.state)
+      || !Array.isArray(issue?.labels)
+      || issue.labels.some((label) => typeof label?.name !== "string" || !label.name)
+      || typeof issue?.updatedAt !== "string"
+      || !issue.updatedAt
     ) {
-      throw new Error("Anonymous response does not identify the requested Issue");
+      throw new Error("gh issue view does not exactly identify the requested Issue");
     }
     return {
       number: issue.number,
-      url: issue.html_url,
+      url: issue.url,
       title: issue.title,
       state: issue.state,
-      updatedAt: issue.updated_at,
+      body: issue.body,
+      labels: issue.labels.map((label) => label.name),
+      updatedAt: issue.updatedAt,
     };
   };
 }
 
-export function createAnonymousCommentReader(request = globalThis.fetch) {
-  return async (repository, issueNumber, commentId, options = {}) => {
-    const url = new URL(`https://api.github.com/repos/${repository}/issues/comments/${commentId}`);
-    if (options.cacheBypass) url.searchParams.set("miku_scm_cache_bust", randomUUID());
-    const headers = requestHeaders();
-    if (options.cacheBypass) {
-      headers["Cache-Control"] = "no-cache";
-      headers.Pragma = "no-cache";
+export function createGhCommentReader(gh = createGhRunner()) {
+  return async (repository, issueNumber, commentId) => {
+    const result = gh([
+      "api", "--method", "GET",
+      `repos/${repository}/issues/comments/${commentId}`,
+    ]);
+    if (!result?.ok) throw new Error(`gh api Issue comment GET failed: ${ghDetail(result)}`);
+    let comment;
+    try {
+      comment = JSON.parse(result.stdout);
+    } catch {
+      throw new Error("gh api Issue comment GET returned malformed JSON");
     }
-    const response = await request(url.href, {
-      method: "GET",
-      headers,
-      ...(options.cacheBypass ? { cache: "no-store" } : {}),
-    });
-    if (!response?.ok) throw new Error(`Anonymous comment GET failed: HTTP ${response?.status}`);
-    const comment = await response.json();
     const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}#issuecomment-${commentId}`;
     if (
-      comment?.id !== commentId
+      !Number.isSafeInteger(comment?.id)
+      || comment.id <= 0
+      || comment.id !== commentId
       || comment?.html_url !== expectedUrl
       || typeof comment?.body !== "string"
     ) {
-      throw new Error("Anonymous response does not identify the requested Issue comment");
+      throw new Error("gh api response does not identify the requested Issue comment");
     }
     return { id: comment.id, url: comment.html_url, body: comment.body };
   };
@@ -320,9 +327,10 @@ function applyArguments(options, draft, issue) {
 }
 
 export async function runIssueComment(options, dependencies = {}) {
-  const readIssue = dependencies.readIssue ?? createAnonymousIssueReader(dependencies.request);
-  const readComment = dependencies.readComment ?? createAnonymousCommentReader(dependencies.request);
-  const gh = dependencies.gh ?? createGhRunner();
+  const ghRead = dependencies.ghRead ?? createGhRunner();
+  const ghMutation = dependencies.ghMutation ?? dependencies.gh ?? createGhRunner();
+  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead);
+  const readComment = dependencies.readComment ?? createGhCommentReader(ghRead);
   const sleep = dependencies.sleep ?? wait;
   const draft = await resolveDraft(options);
   const attempt = attemptPath(draft, options.repository, options.issueNumber);
@@ -377,13 +385,13 @@ export async function runIssueComment(options, dependencies = {}) {
   } catch (error) {
     const record = {
       ...pending,
-      status: "unresolved",
+      status: "not-applied",
       stage: "pre-comment-read",
       detail: error instanceof Error ? error.message : String(error),
       result_recorded_at: new Date().toISOString(),
     };
     await replaceAttempt(attempt, record);
-    return { status: "unresolved", ...common, stage: record.stage, detail: record.detail };
+    return { status: "not-applied", ...common, stage: record.stage, detail: record.detail };
   }
   if (
     issue.updatedAt !== options.expectedUpdatedAt
@@ -406,7 +414,7 @@ export async function runIssueComment(options, dependencies = {}) {
     await writeFile(bodyFile, draft.body, { encoding: "utf8", mode: 0o600 });
     let result;
     try {
-      result = gh([
+      result = ghMutation([
         "issue", "comment", String(options.issueNumber),
         "--repo", options.repository,
         "--body-file", bodyFile,
@@ -444,6 +452,17 @@ export async function runIssueComment(options, dependencies = {}) {
       return { status: "unresolved", ...common, stage: record.stage, detail: record.detail };
     }
     const commentId = Number(match[1]);
+    if (!Number.isSafeInteger(commentId) || commentId < 1) {
+      const record = {
+        ...pending,
+        status: "unresolved",
+        stage: "comment-url",
+        detail: "gh returned an unsafe Issue comment ID",
+        result_recorded_at: new Date().toISOString(),
+      };
+      await replaceAttempt(attempt, record);
+      return { status: "unresolved", ...common, stage: record.stage, detail: record.detail };
+    }
     const verification = await verifyComment(
       readComment,
       sleep,
