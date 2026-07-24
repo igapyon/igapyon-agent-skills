@@ -19,27 +19,34 @@ import { pathToFileURL } from "node:url";
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const NEW_DRAFT_PATTERN = /^issue-new-\d{12}(?:-\d+)?\.md$/;
+const MAX_LABELS = 20;
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/github-issue-create.mjs \\
-    --repo <owner/repo> --draft <path> [--root <repository-root>]
+    --repo <owner/repo> --draft <path> [--label <existing-label>]... \\
+    [--root <repository-root>]
 
   node skills/igapyon-miku-scm/scripts/github-issue-create.mjs \\
-    --repo <owner/repo> --draft <path> \\
-    --expected-draft-sha256 <reviewed-sha256> --apply \\
+    --repo <owner/repo> --draft <path> [--label <reviewed-label>]... \\
+    --expected-draft-sha256 <reviewed-sha256> \\
+    --expected-labels-sha256 <reviewed-labels-sha256> --apply \\
     [--root <repository-root>]
 
 Default mode is a read-only preflight. Apply mode requires the reviewed
-draft digest and invokes exactly one non-interactive gh issue create command.
-It persists a pending attempt before the request, archives confirmed drafts,
-and never authenticates, changes scopes, edits an Issue, or retries.`;
+draft and label-selection digests and invokes exactly one non-interactive
+gh issue create command. Requested labels must already exist in the target
+repository. The helper persists a pending attempt before the request, archives
+confirmed drafts, and never authenticates, changes scopes, edits an Issue, or
+retries.`;
 
 export function parseArgs(argv, cwd = process.cwd()) {
   const options = {
     repository: "",
     draft: "",
     root: cwd,
+    labels: [],
     expectedDraftSha256: "",
+    expectedLabelsSha256: "",
     apply: false,
     help: false,
   };
@@ -54,8 +61,12 @@ export function parseArgs(argv, cwd = process.cwd()) {
       options.draft = argv[++index] ?? "";
     } else if (arg === "--root") {
       options.root = argv[++index] ?? "";
+    } else if (arg === "--label") {
+      options.labels.push(argv[++index] ?? "");
     } else if (arg === "--expected-draft-sha256") {
       options.expectedDraftSha256 = argv[++index] ?? "";
+    } else if (arg === "--expected-labels-sha256") {
+      options.expectedLabelsSha256 = argv[++index] ?? "";
     } else if (arg === "--apply") {
       options.apply = true;
     } else {
@@ -69,20 +80,43 @@ export function parseArgs(argv, cwd = process.cwd()) {
   }
   if (!options.draft) throw new Error("--draft must not be empty");
   if (!options.root) throw new Error("--root must not be empty");
+  if (options.labels.length > MAX_LABELS) {
+    throw new Error(`At most ${MAX_LABELS} --label values are allowed`);
+  }
+  const seenLabels = new Set();
+  for (const label of options.labels) {
+    if (!label || label !== label.trim()) {
+      throw new Error("--label must be non-empty and have no surrounding whitespace");
+    }
+    if (label.includes("\n") || label.includes("\r")) {
+      throw new Error("--label must be exactly one line");
+    }
+    if (seenLabels.has(label)) throw new Error(`Duplicate --label value: ${label}`);
+    seenLabels.add(label);
+  }
   if (options.expectedDraftSha256 && !SHA256_PATTERN.test(options.expectedDraftSha256)) {
     throw new Error("--expected-draft-sha256 must be a 64-character hexadecimal SHA-256 digest");
   }
-  if (options.apply && !options.expectedDraftSha256) {
-    throw new Error("--apply requires --expected-draft-sha256 from the reviewed preflight");
+  if (options.expectedLabelsSha256 && !SHA256_PATTERN.test(options.expectedLabelsSha256)) {
+    throw new Error("--expected-labels-sha256 must be a 64-character hexadecimal SHA-256 digest");
   }
-  if (!options.apply && options.expectedDraftSha256) {
-    throw new Error("--expected-draft-sha256 is used only with --apply");
+  if (options.apply && (!options.expectedDraftSha256 || !options.expectedLabelsSha256)) {
+    throw new Error(
+      "--apply requires --expected-draft-sha256 and --expected-labels-sha256 from the reviewed preflight",
+    );
+  }
+  if (!options.apply && (options.expectedDraftSha256 || options.expectedLabelsSha256)) {
+    throw new Error("expected digests are used only with --apply");
   }
   return options;
 }
 
 function sha256(content) {
   return createHash("sha256").update(content).digest("hex");
+}
+
+function labelsSha256(labels) {
+  return sha256(JSON.stringify(labels));
 }
 
 export function parseDraft(content) {
@@ -242,11 +276,97 @@ export function createGhRunner() {
   };
 }
 
+export function createAnonymousLabelReader(request = globalThis.fetch) {
+  return async (repository) => {
+    if (typeof request !== "function") throw new Error("fetch is unavailable");
+    const labels = [];
+    let page = 1;
+    while (true) {
+      const url = `https://api.github.com/repos/${repository}/labels?per_page=100&page=${page}`;
+      const response = await request(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/vnd.github+json",
+          "User-Agent": "igapyon-miku-scm",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      });
+      if (!response?.ok) {
+        throw new Error(
+          `Anonymous GitHub labels GET failed with HTTP ${response?.status ?? "unknown"}`,
+        );
+      }
+      const entries = await response.json();
+      if (!Array.isArray(entries) || entries.some((entry) => typeof entry?.name !== "string")) {
+        throw new Error("Anonymous GitHub labels response is malformed");
+      }
+      labels.push(...entries.map((entry) => entry.name));
+      const hasNext = /<[^>]+>;\s*rel="next"/.test(response.headers?.get?.("link") ?? "");
+      if (!hasNext) return labels;
+      page += 1;
+    }
+  };
+}
+
+export function createAnonymousIssueReader(request = globalThis.fetch) {
+  return async (repository, issueNumber) => {
+    if (typeof request !== "function") throw new Error("fetch is unavailable");
+    const url = `https://api.github.com/repos/${repository}/issues/${issueNumber}`;
+    const response = await request(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/vnd.github+json",
+        "User-Agent": "igapyon-miku-scm",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
+    if (!response?.ok) {
+      throw new Error(
+        `Anonymous GitHub Issue GET failed with HTTP ${response?.status ?? "unknown"}`,
+      );
+    }
+    const issue = await response.json();
+    const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
+    if (
+      issue?.pull_request
+      || issue?.number !== issueNumber
+      || issue?.html_url !== expectedUrl
+      || !Array.isArray(issue?.labels)
+      || issue.labels.some((label) => typeof label?.name !== "string")
+    ) {
+      throw new Error("Anonymous GitHub response does not exactly identify the created Issue");
+    }
+    return {
+      number: issue.number,
+      url: issue.html_url,
+      labels: issue.labels.map((label) => label.name),
+    };
+  };
+}
+
+async function validateRequestedLabels(options, readLabels) {
+  if (options.labels.length === 0) return [];
+  const available = await readLabels(options.repository);
+  if (!Array.isArray(available) || available.some((label) => typeof label !== "string")) {
+    throw new Error("Anonymous label reader returned malformed data");
+  }
+  const availableSet = new Set(available);
+  const missing = options.labels.filter((label) => !availableSet.has(label));
+  if (missing.length > 0) {
+    throw new Error(
+      `Requested labels do not exist exactly in ${options.repository}: ${missing.join(", ")}`,
+    );
+  }
+  return options.labels;
+}
+
 function applyArguments(options, draft) {
   const args = [
     "--repo", options.repository,
     "--draft", draft.relativeDraft,
+    ...options.labels.flatMap((label) => ["--label", label]),
     "--expected-draft-sha256", draft.digest,
+    "--expected-labels-sha256", labelsSha256(options.labels),
     "--apply",
   ];
   if (path.resolve(options.root) !== process.cwd()) {
@@ -257,6 +377,8 @@ function applyArguments(options, draft) {
 
 export async function runIssueCreate(options, dependencies = {}) {
   const gh = dependencies.gh ?? createGhRunner();
+  const readLabels = dependencies.readLabels ?? createAnonymousLabelReader(dependencies.request);
+  const readIssue = dependencies.readIssue ?? createAnonymousIssueReader(dependencies.request);
   const draft = await resolveDraft(options);
   const operational = issueOperationalPaths(draft, options.repository);
   const priorAttempt = await readAttemptRecord(operational.attempt);
@@ -264,17 +386,21 @@ export async function runIssueCreate(options, dependencies = {}) {
   if (await pathExists(operational.createdDraft)) {
     throw new Error(`Created-Issue draft destination already exists: ${operational.createdDraft}`);
   }
+  await validateRequestedLabels(options, readLabels);
   const plannedGhArguments = [
     "issue", "create",
     "--repo", options.repository,
     "--title", draft.title,
     "--body-file", "<generated-temporary-body-file>",
+    ...options.labels.flatMap((label) => ["--label", label]),
   ];
 
   const common = {
     repository: options.repository,
     draft: draft.relativeDraft,
     draft_sha256: draft.digest,
+    labels: options.labels,
+    labels_sha256: labelsSha256(options.labels),
     title: draft.title,
     body: draft.body,
     attempt_record: path.relative(draft.root, operational.attempt),
@@ -295,14 +421,22 @@ export async function runIssueCreate(options, dependencies = {}) {
       `Reviewed draft changed: expected ${options.expectedDraftSha256.toLowerCase()}, actual ${draft.digest}`,
     );
   }
+  const actualLabelsSha256 = labelsSha256(options.labels);
+  if (actualLabelsSha256 !== options.expectedLabelsSha256.toLowerCase()) {
+    throw new Error(
+      `Reviewed label selection changed: expected ${options.expectedLabelsSha256.toLowerCase()}, actual ${actualLabelsSha256}`,
+    );
+  }
 
   const pendingRecord = {
-    schema_version: 1,
+    schema_version: 2,
     status: "pending",
     repository: options.repository,
     source_draft: draft.relativeDraft,
     planned_created_draft: path.relative(draft.root, operational.createdDraft),
     draft_sha256: draft.digest,
+    labels: options.labels,
+    labels_sha256: actualLabelsSha256,
     title: draft.title,
     attempt_started_at: new Date().toISOString(),
   };
@@ -317,6 +451,7 @@ export async function runIssueCreate(options, dependencies = {}) {
       "--repo", options.repository,
       "--title", draft.title,
       "--body-file", bodyFile,
+      ...options.labels.flatMap((label) => ["--label", label]),
     ];
     const result = gh(ghArguments);
     if (!result.ok) {
@@ -334,11 +469,35 @@ export async function runIssueCreate(options, dependencies = {}) {
       );
     }
     const issueNumber = Number(issueUrl.match(/\/issues\/(\d+)$/)?.[1]);
+    let labelVerification = {
+      status: options.labels.length === 0 ? "not-requested" : "unresolved",
+      requested_labels: options.labels,
+    };
+    if (options.labels.length > 0) {
+      try {
+        const observed = await readIssue(options.repository, issueNumber);
+        const observedSet = new Set(observed.labels);
+        const missing = options.labels.filter((label) => !observedSet.has(label));
+        labelVerification = {
+          status: missing.length === 0 ? "verified" : "mismatch",
+          requested_labels: options.labels,
+          observed_labels: observed.labels,
+          missing_labels: missing,
+        };
+      } catch (error) {
+        labelVerification = {
+          status: "unresolved",
+          requested_labels: options.labels,
+          detail: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }
     const createdRecord = {
       ...pendingRecord,
       status: "created",
       issue_number: issueNumber,
       issue_url: issueUrl,
+      label_verification: labelVerification,
       result_recorded_at: new Date().toISOString(),
     };
     try {
@@ -369,6 +528,7 @@ export async function runIssueCreate(options, dependencies = {}) {
       ...common,
       issue_url: issueUrl,
       issue_number: issueNumber,
+      label_verification: labelVerification,
       draft_archive: archive,
     };
   } finally {

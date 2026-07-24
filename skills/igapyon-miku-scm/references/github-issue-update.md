@@ -78,13 +78,15 @@ When the comparisons succeed, the helper writes only the proposed body to a priv
 
 ## Post-Update Verification
 
-After `gh` succeeds, retrieve the Issue once more through the anonymous API and require:
+After `gh` succeeds, retrieve the Issue through the anonymous API with cache bypass and require:
 
 - the exact requested Issue number and URL
 - a body exactly equal to the approved proposed body
 - a valid resulting `updated_at`
 
-Only then record and report `updated`. If `gh` fails, the post-update read fails, or the body cannot be confirmed exactly, record and report `unresolved`. Do not retry an `unresolved` attempt because GitHub may already have accepted the mutation.
+Because a shared anonymous API cache can briefly return the pre-update representation, the helper may repeat only this READONLY verification a bounded number of times with short delays and a unique cache-busting request. It must never repeat `gh issue edit`. Record the number of verification attempts.
+
+Only after exact verification record and report `updated`. If `gh` fails, every post-update read fails, or the body still cannot be confirmed exactly after bounded verification, record and report `unresolved`. Do not retry an `unresolved` mutation attempt because GitHub may already have accepted it.
 
 ## Attempt Records
 

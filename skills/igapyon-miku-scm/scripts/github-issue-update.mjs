@@ -20,6 +20,7 @@ const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const UPDATE_DRAFT_PATTERN = /^issue-(\d+)-update-\d{12}(?:-\d+)?\.md$/;
 const ATTEMPT_STATUSES = new Set(["pending", "updated", "conflict", "unresolved"]);
+const POST_UPDATE_VERIFICATION_DELAYS_MS = [0, 250, 1_000];
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \\
@@ -233,16 +234,23 @@ async function replaceAttemptRecord(attemptPath, record) {
 }
 
 export function createAnonymousIssueReader(request = globalThis.fetch) {
-  return async (repository, issueNumber) => {
+  return async (repository, issueNumber, options = {}) => {
     if (typeof request !== "function") throw new Error("fetch is unavailable");
-    const url = `https://api.github.com/repos/${repository}/issues/${issueNumber}`;
-    const response = await request(url, {
+    const url = new URL(`https://api.github.com/repos/${repository}/issues/${issueNumber}`);
+    const headers = {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "igapyon-miku-scm",
+      "X-GitHub-Api-Version": "2022-11-28",
+    };
+    if (options.cacheBypass) {
+      url.searchParams.set("miku_scm_cache_bust", randomUUID());
+      headers["Cache-Control"] = "no-cache";
+      headers.Pragma = "no-cache";
+    }
+    const response = await request(url.href, {
       method: "GET",
-      headers: {
-        Accept: "application/vnd.github+json",
-        "User-Agent": "igapyon-miku-scm",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
+      headers,
+      ...(options.cacheBypass ? { cache: "no-store" } : {}),
     });
     if (!response?.ok) {
       throw new Error(`Anonymous GitHub Issue GET failed with HTTP ${response?.status ?? "unknown"}`);
@@ -339,9 +347,59 @@ function ghDetail(result) {
   return result?.stderr || result?.stdout || result?.error?.message || `exit ${result?.status ?? "unknown"}`;
 }
 
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function verifyUpdatedIssue({
+  readIssue,
+  sleep,
+  repository,
+  issueNumber,
+  expectedUrl,
+  expectedBody,
+}) {
+  let lastObserved;
+  let lastError;
+  for (let index = 0; index < POST_UPDATE_VERIFICATION_DELAYS_MS.length; index += 1) {
+    const delay = POST_UPDATE_VERIFICATION_DELAYS_MS[index];
+    if (delay > 0) await sleep(delay);
+    try {
+      const observed = await readIssue(repository, issueNumber, {
+        cacheBypass: true,
+        verificationAttempt: index + 1,
+      });
+      lastObserved = observed;
+      lastError = undefined;
+      if (
+        observed.url === expectedUrl
+        && observed.number === issueNumber
+        && observed.body === expectedBody
+      ) {
+        return { status: "verified", issue: observed, attempts: index + 1 };
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (lastObserved) {
+    return {
+      status: "mismatch",
+      issue: lastObserved,
+      attempts: POST_UPDATE_VERIFICATION_DELAYS_MS.length,
+    };
+  }
+  return {
+    status: "read-error",
+    error: lastError,
+    attempts: POST_UPDATE_VERIFICATION_DELAYS_MS.length,
+  };
+}
+
 export async function runIssueUpdate(options, dependencies = {}) {
   const readIssue = dependencies.readIssue ?? createAnonymousIssueReader(dependencies.request);
   const gh = dependencies.gh ?? createGhRunner();
+  const sleep = dependencies.sleep ?? wait;
   const draft = await resolveDraft(options);
   const operational = operationalPaths(draft, options.repository, options.issueNumber);
   const priorAttempt = await readAttemptRecord(operational.attempt);
@@ -469,30 +527,36 @@ export async function runIssueUpdate(options, dependencies = {}) {
       return { status: "unresolved", ...common, stage: record.stage, detail: record.detail };
     }
 
-    let verified;
-    try {
-      verified = await readIssue(options.repository, options.issueNumber);
-    } catch (error) {
+    const verification = await verifyUpdatedIssue({
+      readIssue,
+      sleep,
+      repository: options.repository,
+      issueNumber: options.issueNumber,
+      expectedUrl: current.url,
+      expectedBody: draft.body,
+    });
+    if (verification.status === "read-error") {
       const record = {
         ...pendingRecord,
         status: "unresolved",
         stage: "post-update-read",
-        detail: error instanceof Error ? error.message : String(error),
+        verification_attempts: verification.attempts,
+        detail: verification.error instanceof Error
+          ? verification.error.message
+          : String(verification.error),
         result_recorded_at: new Date().toISOString(),
       };
       await replaceAttemptRecord(operational.attempt, record);
       return { status: "unresolved", ...common, stage: record.stage, detail: record.detail };
     }
 
-    if (
-      verified.url !== current.url
-      || verified.number !== options.issueNumber
-      || verified.body !== draft.body
-    ) {
+    const verified = verification.issue;
+    if (verification.status === "mismatch") {
       const record = {
         ...pendingRecord,
         status: "unresolved",
         stage: "post-update-verification",
+        verification_attempts: verification.attempts,
         observed_url: verified.url,
         observed_body_sha256: sha256(verified.body),
         observed_updated_at: verified.updatedAt,
@@ -515,6 +579,7 @@ export async function runIssueUpdate(options, dependencies = {}) {
       issue_url: verified.url,
       verified_body_sha256: sha256(verified.body),
       verified_updated_at: verified.updatedAt,
+      verification_attempts: verification.attempts,
       result_recorded_at: new Date().toISOString(),
     };
     await replaceAttemptRecord(operational.attempt, updatedRecord);
@@ -524,6 +589,7 @@ export async function runIssueUpdate(options, dependencies = {}) {
       issue_url: verified.url,
       verified_body_sha256: updatedRecord.verified_body_sha256,
       verified_updated_at: verified.updatedAt,
+      verification_attempts: verification.attempts,
     };
   } finally {
     await rm(temporary, { recursive: true, force: true });

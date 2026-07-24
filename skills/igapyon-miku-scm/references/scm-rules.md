@@ -6,7 +6,7 @@ This is the initial rule entry point for `igapyon-miku-scm`. Add detailed rules 
 
 - Keep public GitHub inspection READONLY by default.
 - Implement public GitHub inspection through the anonymous REST API workflow.
-- Defer general GitHub write operations, authentication, credential handling, and mutation workflows except for an explicitly documented human-approved workflow. Direct `gh` mutation is limited to reviewed new public Issue creation under [github-issue-create.md](github-issue-create.md) and reviewed existing public Issue body updates under [github-issue-update.md](github-issue-update.md).
+- Defer general GitHub write operations, authentication, credential handling, and mutation workflows except for an explicitly documented human-approved workflow. Direct `gh` mutation is limited to the dedicated reviewed Issue creation, body update, comment, existing-label update, and close workflows documented in this skill.
 - Do not add, infer, or execute write behavior beyond an explicitly documented workflow unless the user explicitly resumes its design in a future task.
 - Keep each write workflow separate from anonymous READONLY rules and give it its own authorization and safety boundaries.
 
@@ -225,8 +225,10 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 
 - Keep Issue inspection anonymous and READONLY under [github-anonymous-readonly.md](github-anonymous-readonly.md).
 - Use [github-issue-rewrite-handoff.md](github-issue-rewrite-handoff.md) to create the local paste-ready draft.
+- Inspect the target repository's existing labels anonymously while drafting. When one or more labels clearly match the Issue evidence and repository semantics, actively propose them instead of omitting labels by default. Do not guess when classification is ambiguous, and never create or edit label definitions.
 - When the user explicitly requests registration, use [github-issue-create.md](github-issue-create.md) and the bundled `scripts/github-issue-create.mjs` preflight/apply workflow.
-- Require approval after displaying the exact repository, title, body, draft digest, and planned operation. The helper may invoke only `gh issue create` and must not retry automatically.
+- Require approval after displaying the exact repository, title, body, selected labels, draft digest, label-selection digest, and planned operation. The helper may invoke only `gh issue create` with the reviewed title, body file, and selected existing labels, and must not retry automatically.
+- Require the helper to verify every selected label against the repository's current public label list before creating the attempt record. Fix the ordered label selection with its own SHA-256 digest and verify requested labels anonymously after successful creation.
 - Require the helper to persist a `pending` attempt before the remote request, block repeated repository-plus-digest attempts, record the confirmed Issue URL, and archive the unchanged draft under `created-issues/`. A pending or malformed attempt record is a stop condition, not permission to retry.
 - Do not use `gh` for inspection, authentication, existing-Issue changes, lifecycle changes, or any non-Issue operation under this creation workflow.
 
@@ -239,6 +241,31 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 - Permit only one `gh issue edit <number> --repo <owner/repo> --body-file <temporary-file>` call. Do not change the title or any Issue metadata.
 - Immediately before `gh`, require the public Issue title, body digest, and `updated_at` to equal the reviewed values. Record `conflict` and stop without mutation when they differ.
 - Persist a `pending` attempt before mutation, verify the exact body anonymously afterward, and record `updated`, `conflict`, or `unresolved`. Never retry the same draft automatically.
+
+## Human-Approved Issue Comment
+
+- Use [github-issue-comment.md](github-issue-comment.md) and the bundled `scripts/github-issue-comment.mjs`.
+- Permit only one `gh issue comment <number> --repo <owner/repo> --body-file <temporary-file>` call using the complete reviewed comment draft.
+- Require approval after displaying the exact Issue state, complete comment, draft digest, Issue snapshot digest, `updated_at`, and planned command.
+- Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body anonymously. Bounded READONLY verification retries must never repeat the mutation.
+- Do not edit or delete comments, use interactive or browser modes, or combine a comment with another mutation.
+
+## Human-Approved Existing Issue Label Update
+
+- Use [github-issue-label-update.md](github-issue-label-update.md) and the bundled `scripts/github-issue-label-update.mjs`.
+- Permit one `gh issue edit` containing only reviewed repeated `--add-label` and `--remove-label` arguments for one Issue.
+- Require every label to exist exactly in the repository. Reject overlap, no-op additions or removals, and label-definition changes.
+- Require approval after displaying current, added, removed, and complete resulting labels plus operation, current-label, and resulting-label digests.
+- Persist `pending`, detect an intervening Issue change as `conflict`, and verify the complete resulting label set anonymously. Never retry the mutation.
+
+## Human-Approved Issue Close
+
+- Use [github-issue-close.md](github-issue-close.md) and the bundled `scripts/github-issue-close.mjs`.
+- Permit one `gh issue close` for an Open Issue with exact reason `completed`, `not planned`, or `duplicate`.
+- For `duplicate`, require and display one different, anonymously verified target Issue and fix its reviewed snapshot digest through apply. Reject a duplicate target for other reasons.
+- Require approval after displaying the complete current Issue, reason, duplicate target when applicable, operation digest, body digest, `updated_at`, and planned command.
+- Persist `pending`, detect a non-Open or changed Issue as `conflict`, and verify the closed state and reason anonymously. Never retry the mutation.
+- Do not add a closing comment in the close command and do not permit reopen under this workflow.
 
 ## Planned Rule Areas
 
