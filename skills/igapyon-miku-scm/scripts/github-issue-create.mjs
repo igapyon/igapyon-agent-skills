@@ -20,24 +20,27 @@ const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const NEW_DRAFT_PATTERN = /^issue-new-\d{12}(?:-\d+)?\.md$/;
 const MAX_LABELS = 20;
+const MAX_ISSUE_NUMBER = Number.MAX_SAFE_INTEGER;
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/github-issue-create.mjs \\
-    --repo <owner/repo> --draft <path> [--label <existing-label>]... \\
+    --repo <owner/repo> --draft <path> [--label <existing-label>]... [--parent <number>] \\
     [--root <repository-root>]
 
   node skills/igapyon-miku-scm/scripts/github-issue-create.mjs \\
-    --repo <owner/repo> --draft <path> [--label <reviewed-label>]... \\
+    --repo <owner/repo> --draft <path> [--label <reviewed-label>]... [--parent <number>] \\
     --expected-draft-sha256 <reviewed-sha256> \\
-    --expected-labels-sha256 <reviewed-labels-sha256> --apply \\
+    --expected-labels-sha256 <reviewed-labels-sha256> \\
+    [--expected-parent-sha256 <reviewed-parent-sha256>] --apply \\
     [--root <repository-root>]
 
 Default mode is a read-only preflight. Apply mode requires the reviewed
-draft and label-selection digests and invokes exactly one non-interactive
-gh issue create command. Requested labels must already exist in the target
-repository. The helper persists a pending attempt before the request, archives
-confirmed drafts, and never authenticates, changes scopes, edits an Issue, or
-retries.`;
+draft and label-selection digests. When --parent is present, it also requires
+the reviewed parent snapshot digest. The helper invokes fixed non-interactive
+gh issue view reads and exactly one gh issue create mutation. Requested labels
+must already exist in the target repository. The helper persists a pending
+attempt before the mutation, archives confirmed drafts, and never authenticates,
+changes scopes, edits an existing Issue, or retries the mutation.`;
 
 export function parseArgs(argv, cwd = process.cwd()) {
   const options = {
@@ -45,8 +48,10 @@ export function parseArgs(argv, cwd = process.cwd()) {
     draft: "",
     root: cwd,
     labels: [],
+    parent: null,
     expectedDraftSha256: "",
     expectedLabelsSha256: "",
+    expectedParentSha256: "",
     apply: false,
     help: false,
   };
@@ -63,10 +68,22 @@ export function parseArgs(argv, cwd = process.cwd()) {
       options.root = argv[++index] ?? "";
     } else if (arg === "--label") {
       options.labels.push(argv[++index] ?? "");
+    } else if (arg === "--parent") {
+      const value = argv[++index] ?? "";
+      if (!/^[1-9]\d*$/.test(value)) {
+        throw new Error("--parent must be a positive decimal Issue number");
+      }
+      const parent = Number(value);
+      if (!Number.isSafeInteger(parent) || parent > MAX_ISSUE_NUMBER) {
+        throw new Error("--parent must be a safe positive Issue number");
+      }
+      options.parent = parent;
     } else if (arg === "--expected-draft-sha256") {
       options.expectedDraftSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-labels-sha256") {
       options.expectedLabelsSha256 = argv[++index] ?? "";
+    } else if (arg === "--expected-parent-sha256") {
+      options.expectedParentSha256 = argv[++index] ?? "";
     } else if (arg === "--apply") {
       options.apply = true;
     } else {
@@ -100,12 +117,24 @@ export function parseArgs(argv, cwd = process.cwd()) {
   if (options.expectedLabelsSha256 && !SHA256_PATTERN.test(options.expectedLabelsSha256)) {
     throw new Error("--expected-labels-sha256 must be a 64-character hexadecimal SHA-256 digest");
   }
+  if (options.expectedParentSha256 && !SHA256_PATTERN.test(options.expectedParentSha256)) {
+    throw new Error("--expected-parent-sha256 must be a 64-character hexadecimal SHA-256 digest");
+  }
   if (options.apply && (!options.expectedDraftSha256 || !options.expectedLabelsSha256)) {
     throw new Error(
       "--apply requires --expected-draft-sha256 and --expected-labels-sha256 from the reviewed preflight",
     );
   }
-  if (!options.apply && (options.expectedDraftSha256 || options.expectedLabelsSha256)) {
+  if (options.apply && options.parent && !options.expectedParentSha256) {
+    throw new Error("--apply with --parent requires --expected-parent-sha256 from preflight");
+  }
+  if (options.apply && !options.parent && options.expectedParentSha256) {
+    throw new Error("--expected-parent-sha256 requires --parent");
+  }
+  if (
+    !options.apply
+    && (options.expectedDraftSha256 || options.expectedLabelsSha256 || options.expectedParentSha256)
+  ) {
     throw new Error("expected digests are used only with --apply");
   }
   return options;
@@ -117,6 +146,10 @@ function sha256(content) {
 
 function labelsSha256(labels) {
   return sha256(JSON.stringify(labels));
+}
+
+function parentSha256(parent) {
+  return parent ? sha256(JSON.stringify(parent)) : null;
 }
 
 export function parseDraft(content) {
@@ -276,6 +309,83 @@ export function createGhRunner() {
   };
 }
 
+function parseGhJson(result, command) {
+  if (!result.ok) {
+    const detail = result.stderr || result.stdout || result.error?.message || `exit ${result.status}`;
+    throw new Error(`${command} failed: ${detail}`);
+  }
+  try {
+    return JSON.parse(result.stdout);
+  } catch {
+    throw new Error(`${command} returned malformed JSON`);
+  }
+}
+
+export function createGhParentReader(gh = createGhRunner()) {
+  return async (repository, issueNumber) => {
+    const result = gh([
+      "issue", "view", String(issueNumber),
+      "--repo", repository,
+      "--json", "number,url,title,state,updatedAt",
+    ]);
+    const issue = parseGhJson(result, "gh issue view parent");
+    const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
+    if (
+      issue?.number !== issueNumber
+      || issue?.url !== expectedUrl
+      || typeof issue?.title !== "string"
+      || !["OPEN", "CLOSED"].includes(issue?.state)
+      || typeof issue?.updatedAt !== "string"
+      || !issue.updatedAt
+    ) {
+      throw new Error("gh issue view does not exactly identify the requested parent Issue");
+    }
+    return {
+      number: issue.number,
+      url: issue.url,
+      title: issue.title,
+      state: issue.state,
+      updated_at: issue.updatedAt,
+    };
+  };
+}
+
+export function createGhCreatedIssueReader(gh = createGhRunner()) {
+  return async (repository, issueNumber) => {
+    const result = gh([
+      "issue", "view", String(issueNumber),
+      "--repo", repository,
+      "--json", "number,url,parent",
+    ]);
+    const issue = parseGhJson(result, "gh issue view created Issue");
+    const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
+    if (issue?.number !== issueNumber || issue?.url !== expectedUrl) {
+      throw new Error("gh issue view does not exactly identify the created Issue");
+    }
+    const parent = issue.parent == null
+      ? null
+      : {
+          number: issue.parent.number,
+          url: issue.parent.url,
+        };
+    if (
+      parent
+      && (
+        !Number.isSafeInteger(parent.number)
+        || parent.number <= 0
+        || typeof parent.url !== "string"
+      )
+    ) {
+      throw new Error("gh issue view returned malformed parent metadata");
+    }
+    return {
+      number: issue.number,
+      url: issue.url,
+      parent,
+    };
+  };
+}
+
 export function createAnonymousLabelReader(request = globalThis.fetch) {
   return async (repository) => {
     if (typeof request !== "function") throw new Error("fetch is unavailable");
@@ -360,13 +470,15 @@ async function validateRequestedLabels(options, readLabels) {
   return options.labels;
 }
 
-function applyArguments(options, draft) {
+function applyArguments(options, draft, parent) {
   const args = [
     "--repo", options.repository,
     "--draft", draft.relativeDraft,
     ...options.labels.flatMap((label) => ["--label", label]),
+    ...(options.parent ? ["--parent", String(options.parent)] : []),
     "--expected-draft-sha256", draft.digest,
     "--expected-labels-sha256", labelsSha256(options.labels),
+    ...(parent ? ["--expected-parent-sha256", parentSha256(parent)] : []),
     "--apply",
   ];
   if (path.resolve(options.root) !== process.cwd()) {
@@ -379,6 +491,8 @@ export async function runIssueCreate(options, dependencies = {}) {
   const gh = dependencies.gh ?? createGhRunner();
   const readLabels = dependencies.readLabels ?? createAnonymousLabelReader(dependencies.request);
   const readIssue = dependencies.readIssue ?? createAnonymousIssueReader(dependencies.request);
+  const readParent = dependencies.readParent ?? createGhParentReader(gh);
+  const readCreatedIssue = dependencies.readCreatedIssue ?? createGhCreatedIssueReader(gh);
   const draft = await resolveDraft(options);
   const operational = issueOperationalPaths(draft, options.repository);
   const priorAttempt = await readAttemptRecord(operational.attempt);
@@ -387,12 +501,17 @@ export async function runIssueCreate(options, dependencies = {}) {
     throw new Error(`Created-Issue draft destination already exists: ${operational.createdDraft}`);
   }
   await validateRequestedLabels(options, readLabels);
+  const parent = options.parent ? await readParent(options.repository, options.parent) : null;
+  if (parent && parent.state !== "OPEN") {
+    throw new Error(`Parent Issue must be OPEN: ${options.repository}#${options.parent}`);
+  }
   const plannedGhArguments = [
     "issue", "create",
     "--repo", options.repository,
     "--title", draft.title,
     "--body-file", "<generated-temporary-body-file>",
     ...options.labels.flatMap((label) => ["--label", label]),
+    ...(options.parent ? ["--parent", String(options.parent)] : []),
   ];
 
   const common = {
@@ -401,6 +520,8 @@ export async function runIssueCreate(options, dependencies = {}) {
     draft_sha256: draft.digest,
     labels: options.labels,
     labels_sha256: labelsSha256(options.labels),
+    parent_issue: parent,
+    parent_sha256: parentSha256(parent),
     title: draft.title,
     body: draft.body,
     attempt_record: path.relative(draft.root, operational.attempt),
@@ -412,7 +533,7 @@ export async function runIssueCreate(options, dependencies = {}) {
     return {
       status: "preflight-ok",
       ...common,
-      apply_arguments: applyArguments(options, draft),
+      apply_arguments: applyArguments(options, draft, parent),
     };
   }
 
@@ -427,9 +548,17 @@ export async function runIssueCreate(options, dependencies = {}) {
       `Reviewed label selection changed: expected ${options.expectedLabelsSha256.toLowerCase()}, actual ${actualLabelsSha256}`,
     );
   }
+  if (parent) {
+    const actualParentSha256 = parentSha256(parent);
+    if (actualParentSha256 !== options.expectedParentSha256.toLowerCase()) {
+      throw new Error(
+        `Reviewed parent Issue changed: expected ${options.expectedParentSha256.toLowerCase()}, actual ${actualParentSha256}`,
+      );
+    }
+  }
 
   const pendingRecord = {
-    schema_version: 2,
+    schema_version: 3,
     status: "pending",
     repository: options.repository,
     source_draft: draft.relativeDraft,
@@ -437,6 +566,8 @@ export async function runIssueCreate(options, dependencies = {}) {
     draft_sha256: draft.digest,
     labels: options.labels,
     labels_sha256: actualLabelsSha256,
+    parent_issue: parent,
+    parent_sha256: parentSha256(parent),
     title: draft.title,
     attempt_started_at: new Date().toISOString(),
   };
@@ -452,6 +583,7 @@ export async function runIssueCreate(options, dependencies = {}) {
       "--title", draft.title,
       "--body-file", bodyFile,
       ...options.labels.flatMap((label) => ["--label", label]),
+      ...(options.parent ? ["--parent", String(options.parent)] : []),
     ];
     const result = gh(ghArguments);
     if (!result.ok) {
@@ -492,12 +624,38 @@ export async function runIssueCreate(options, dependencies = {}) {
         };
       }
     }
+    let parentVerification = {
+      status: options.parent ? "unresolved" : "not-requested",
+      requested_parent: parent,
+    };
+    if (options.parent) {
+      try {
+        const observed = await readCreatedIssue(options.repository, issueNumber);
+        const expectedParentUrl = `https://github.com/${options.repository}/issues/${options.parent}`;
+        const matches = (
+          observed.parent?.number === options.parent
+          && observed.parent?.url === expectedParentUrl
+        );
+        parentVerification = {
+          status: matches ? "verified" : "mismatch",
+          requested_parent: parent,
+          observed_parent: observed.parent,
+        };
+      } catch (error) {
+        parentVerification = {
+          status: "unresolved",
+          requested_parent: parent,
+          detail: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }
     const createdRecord = {
       ...pendingRecord,
       status: "created",
       issue_number: issueNumber,
       issue_url: issueUrl,
       label_verification: labelVerification,
+      parent_verification: parentVerification,
       result_recorded_at: new Date().toISOString(),
     };
     try {
@@ -529,6 +687,7 @@ export async function runIssueCreate(options, dependencies = {}) {
       issue_url: issueUrl,
       issue_number: issueNumber,
       label_verification: labelVerification,
+      parent_verification: parentVerification,
       draft_archive: archive,
     };
   } finally {

@@ -8,7 +8,7 @@ This is the initial rule entry point for `igapyon-miku-scm`. Add detailed rules 
 - Outside a documented helper, implement public GitHub inspection through the anonymous REST API workflow.
 - Inside a dedicated deterministic helper, prefer fixed `gh` commands for READONLY checks and authorized mutations under [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
 - Never let the AI Agent invoke `gh` directly. Do not assemble free-form `gh` commands, use a shell, accept arbitrary pass-through arguments, or expand one helper's allowlist implicitly.
-- Defer general GitHub write operations, authentication, credential handling, and mutation workflows except for an explicitly documented human-approved workflow. Direct `gh` mutation is limited to the dedicated reviewed Issue creation, content update, comment, existing-label update, and close workflows documented in this skill.
+- Defer general GitHub write operations, authentication, credential handling, and mutation workflows except for an explicitly documented human-approved workflow. Direct `gh` mutation is limited to the dedicated reviewed Issue or optional sub-Issue creation, content update, comment, existing-label update, and close workflows documented in this skill.
 - Do not add, infer, or execute write behavior beyond an explicitly documented workflow unless the user explicitly resumes its design in a future task.
 - Keep each write workflow separate and give it its own fixed helper, command allowlist, authorization boundary, and failure semantics.
 
@@ -229,9 +229,10 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 - Use [github-issue-rewrite-handoff.md](github-issue-rewrite-handoff.md) to create the local paste-ready draft.
 - Inspect the target repository's existing labels anonymously while drafting. When one or more labels clearly match the Issue evidence and repository semantics, actively propose them instead of omitting labels by default. Do not guess when classification is ambiguous, and never create or edit label definitions.
 - When the user explicitly requests registration, use [github-issue-create.md](github-issue-create.md) and the bundled `scripts/github-issue-create.mjs` preflight/apply workflow.
-- Require approval after displaying the exact repository, title, body, selected labels, draft digest, label-selection digest, and planned operation. The helper may invoke only `gh issue create` with the reviewed title, body file, and selected existing labels, and must not retry automatically.
+- Require approval after displaying the exact repository, title, body, selected labels, optional parent Issue snapshot, every required digest, and planned operation. The helper may invoke only `gh issue create` with the reviewed title, body file, selected existing labels, and optional same-repository `--parent`, and must not retry automatically.
+- For sub-Issue creation, require one positive same-repository parent Issue number. Retrieve and fix the Open parent snapshot during preflight, revalidate it immediately before mutation, and verify the created Issue's exact parent afterward through documented fixed `gh issue view` commands.
 - Require the helper to verify every selected label against the repository's current public label list before creating the attempt record. Fix the ordered label selection with its own SHA-256 digest and verify requested labels anonymously after successful creation.
-- Require the helper to persist a `pending` attempt before the remote request, block repeated repository-plus-digest attempts, record the confirmed Issue URL, and archive the unchanged draft under `created-issues/`. A pending or malformed attempt record is a stop condition, not permission to retry.
+- Require the helper to persist a `pending` attempt before the remote request, block repeated repository-plus-digest attempts, record the confirmed Issue URL plus label and parent verification, and archive the unchanged draft under `created-issues/`. A pending or malformed attempt record is a stop condition, not permission to retry.
 - The AI Agent must not use `gh` directly. The current creation helper's fixed allowlist excludes inspection, authentication, existing-Issue changes, lifecycle changes, and non-Issue operations.
 
 ## Human-Approved Existing Issue Content Update
