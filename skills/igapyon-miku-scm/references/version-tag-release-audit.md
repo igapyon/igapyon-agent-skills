@@ -12,8 +12,9 @@ Do not stop after listing tags or comparing tag commit SHAs. Report the authorit
 
 1. Resolve the exact repository and target branch. For a public GitHub repository, use the repository's default branch unless the user names another branch.
 2. Find the authoritative version source from repository documentation and build files.
-3. Read the top-level `version` from `package.json` or the effective project version represented by `pom.xml`. Resolve a simple Maven version property when its value is present in the repository; otherwise report it as unresolved rather than guessing.
-4. When multiple authoritative manifests exist, compare them and report any mismatch.
+3. Read the top-level `version` from `package.json`, the effective project version represented by `pom.xml`, or the root `VERSION.md` when repository policy explicitly adopts it for a content repository. Resolve a simple Maven version property when its value is present in the repository; otherwise report it as unresolved rather than guessing.
+4. For an explicitly adopted content-repository `VERSION.md`, require exactly one `YYYYMMDD<suffix>` value, where the suffix is lowercase alphabetic. Confirm that its documented history resets the suffix to `a` on a new maintenance date; do not reinterpret it as the application form `1.YYYYMMDD.N`.
+5. When multiple authoritative version sources exist, compare them and report any mismatch.
 
 ## Determine the Tag Convention
 
@@ -27,9 +28,10 @@ Known miku-soft patterns include:
 
 - common version form: `0.4.3` becomes `v0.4.3`
 - date-identifier form: `1.20260719.3` becomes `v20260719c`, using `1=a`, `2=b`, `3=c`, and so on
+- content-repository `VERSION.md` form: `20260719c` becomes `v20260719c`; on a new date the version and tag use suffix `a`, such as `20260720a`
 - repository-specific direct date tags such as `20260719` or `20260719a`
 
-Use the date-identifier form for repositories whose versions primarily identify when a build was made rather than express a meaningful semantic version. Do not select it from the numeric shape alone; require repository rules or consistent history. Preserve the observed prefix. If the convention is ambiguous, report it as unresolved and do not label a tag incorrect. Do not extrapolate an alphabetic sequence beyond its documented or observed range.
+Use the date-identifier form for repositories whose versions primarily identify when a build was made rather than express a meaningful semantic version. The root-`VERSION.md` content convention is a separate explicitly adopted form: it uses `v<VERSION>`, advances its suffix only within a date, and resets it to `a` when the date changes. Do not select either form from the numeric shape alone; require repository rules or consistent history. Preserve the observed prefix. If the convention is ambiguous, report it as unresolved and do not label a tag incorrect. Do not extrapolate an alphabetic sequence beyond its documented or observed range.
 
 ## Run Two Independent Checks
 
