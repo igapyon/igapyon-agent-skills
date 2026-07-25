@@ -34,6 +34,35 @@ When the repository couples `1.YYYYMMDD.N` to `YYYYMMDDx`, keep the date equal a
 
 If the repository uses a different date form or suffix mapping, follow its documented rule instead of this example.
 
+## Content-Repository `VERSION.md` Date Versions
+
+For a repository that is neither an application nor an Agent Skill and whose primary deliverable is content, the repository may explicitly adopt a root `VERSION.md` as its authoritative version source. Do not infer this convention merely because a repository happens to contain a file named `VERSION.md`; repository documentation or established history must identify it as the version source.
+
+The value is one date identifier in this form:
+
+```text
+YYYYMMDD<suffix>
+```
+
+`YYYYMMDD` is the repository's documented local maintenance date. `<suffix>` is a lowercase alphabetic sequence where `a` is the first update of the date, followed by `b` through `z`, then `aa`, `ab`, and so on. The suffix resets when the maintenance date changes:
+
+```text
+20260721a
+  -> 20260721b   # next update on the same date
+  -> 20260721z
+  -> 20260721aa  # same date: continue past z
+  -> 20260722a   # first update on a new date: reset the suffix
+```
+
+When this convention is explicitly adopted, increment it as follows:
+
+1. Determine the maintenance date in the repository's documented timezone.
+2. If it differs from the date in the current `VERSION.md`, replace the date and set the suffix to `a`.
+3. If it is the same date, retain the date and advance the alphabetic suffix using `a` through `z`, then `aa`, `ab`, and so on.
+4. Keep `VERSION.md` as a single authoritative value unless the repository explicitly documents coupled version sources.
+
+The matching release-tag convention is `v<VERSION>`. For example, `VERSION.md` value `20260721a` corresponds to tag `v20260721a`, and `20260721z` corresponds to `v20260721z`. A new-day value `20260722a` corresponds to `v20260722a`; do not carry `z` into the next day's tag. Apply this tag derivation only where the repository has explicitly adopted this content-repository convention.
+
 ## Semantic Versions
 
 Treat `MAJOR.MINOR.PATCH` and a tag such as `vMAJOR.MINOR.PATCH` as Semantic Versioning only when repository policy or consistent history supports that interpretation.

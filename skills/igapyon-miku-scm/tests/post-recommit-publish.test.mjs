@@ -124,6 +124,39 @@ test("post-merge helper creates the next work branch from refreshed devel", asyn
   assert.equal(git(state.repo, "branch", "--show-current"), "devel-tiga0725ief");
 });
 
+test("content VERSION.md derives a v-prefixed tag and resets to a on a new date", async (t) => {
+  const state = await scenario(t);
+  await writeFile(path.join(state.repo, "VERSION.md"), "20260726a\n", "utf8");
+  git(state.repo, "add", "VERSION.md");
+  git(state.repo, "commit", "-m", "add content version");
+  state.expectedHead = git(state.repo, "rev-parse", "HEAD");
+
+  const result = await runPublish(
+    optionsFor(state, "--expect-new-remote-branch", "--apply"),
+    applyDependencies,
+  );
+
+  assert.equal(result.version, "20260726a");
+  assert.equal(result.recommended_tag, "v20260726a");
+});
+
+test("post-merge helper derives a content VERSION.md tag after same-day overflow", async (t) => {
+  const state = await scenario(t);
+  await writeFile(path.join(state.repo, "VERSION.md"), "20260725aa\n", "utf8");
+  git(state.repo, "add", "VERSION.md");
+  git(state.repo, "commit", "-m", "add content version");
+  git(state.repo, "push", "origin", "HEAD:devel");
+  git(state.repo, "branch", "-m", state.branch, `${state.branch}-done`);
+
+  const result = await runNextWork({ repo: state.repo, remote: "origin", base: "devel", confirmedMerged: true, apply: true }, {
+    now: () => new Date("2026-07-25T08:45:00+09:00"),
+  });
+
+  assert.equal(result.version_source, "VERSION.md");
+  assert.equal(result.version, "20260725aa");
+  assert.equal(result.recommended_tag, "v20260725aa");
+});
+
 test("apply rejects a changed reviewed local HEAD before push", async (t) => {
   const state = await scenario(t);
   const wrongHead = "0".repeat(40);

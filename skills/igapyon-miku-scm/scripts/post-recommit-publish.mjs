@@ -247,6 +247,12 @@ function chooseUniqueConvention(candidates) {
 async function resolveRecommendedTag(root, git) {
   let version = "";
   try {
+    const standalone = (await readFile(path.join(root, "VERSION.md"), "utf8")).trim();
+    if (/^\d{8}[a-z]+$/.test(standalone)) return { version: standalone, tag: `v${standalone}` };
+  } catch {
+    // VERSION.md is optional.
+  }
+  try {
     const packageJson = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
     if (typeof packageJson.version === "string") version = packageJson.version;
   } catch {

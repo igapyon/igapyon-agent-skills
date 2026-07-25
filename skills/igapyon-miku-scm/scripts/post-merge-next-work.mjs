@@ -37,7 +37,12 @@ function branchName(base, date = new Date()) {
   return `${base}-tiga${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}${abc(date.getHours())}${abc(Math.floor(date.getMinutes() / 10))}${abc(date.getMinutes() % 10)}`;
 }
 async function version(root, commit, git = runner) {
-  const pom = git(root, ["show", `${commit}:pom.xml`]).out;
+  const standalone = git(root, ["show", `${commit}:VERSION.md`], true);
+  const standaloneValue = standalone.ok ? standalone.out.trim() : "";
+  if (/^\d{8}[a-z]+$/.test(standaloneValue)) {
+    return { source: "VERSION.md", value: standaloneValue, tag: `v${standaloneValue}`, commit };
+  }
+  const pom = git(root, ["show", `${commit}:pom.xml`], true).out;
   const value = pom.match(/<project\b[\s\S]*?<version>([^<]+)<\/version>/)?.[1]?.trim() ?? "unresolved";
   const m = value.match(/^1\.(\d{8})\.([1-9]\d*)$/);
   return { source: "pom.xml", value, tag: m ? `v${m[1]}${String.fromCharCode(96 + Number(m[2]))}` : "unresolved", commit };
