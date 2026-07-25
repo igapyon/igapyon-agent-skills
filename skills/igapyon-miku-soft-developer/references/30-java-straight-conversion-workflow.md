@@ -290,6 +290,30 @@ or batch extensions when they are in scope.
 Java-side extensions are allowed when useful, but keep them separate from the
 upstream contract in README, CLI specs, mapping documents, and tests.
 
+### Node/Java `--help` Byte Parity
+
+When the same CLI contract is offered by Node.js and Java, treat `--help` as a
+byte-level compatibility artifact. Both commands must exit successfully,
+write the help text only to stdout, and emit identical UTF-8 bytes, including
+final newline and line-ending style. Do not normalize whitespace, decode and
+re-encode text, or compare only parsed option names in the parity assertion.
+
+Add an automated subprocess test that captures stdout, stderr, and exit code
+from both runtime artifacts. Require zero exit status, empty stderr unless the
+documented contract says otherwise, and an exact byte comparison of stdout.
+On mismatch, report a bounded useful diff (for example byte offset and nearby
+UTF-8-safe text) so maintainers can locate the contract drift. Run this test
+when either CLI parser, usage text, option defaults, or release artifact wiring
+changes. A deliberate incompatibility requires an explicit documented product
+decision; otherwise it is a parity defect.
+
+When the two runtimes intentionally expose different supported operations,
+platform prerequisites, or artifact-specific options, do not manufacture
+byte-level equality. Instead document the difference beside the shared CLI
+contract and add a similarity test: verify the shared command names, option
+names, required arguments, defaults, and usage examples remain aligned while
+the documented runtime-specific lines are allowed to differ.
+
 ## Regression Strategy
 
 Prefer focused regression commands that explain the changed area:
@@ -299,6 +323,7 @@ Prefer focused regression commands that explain the changed area:
 - path security, glob, regex, encoding, codec, or parser tests
 - core API tests
 - CLI stdout / stderr / exit-code tests
+- exact Node-vs-Java `--help` byte-parity test when both CLIs share a contract
 - documentation synchronization tests
 - Node-vs-Java parity scripts when practical
 - packaged jar smoke scripts after `mvn package`
