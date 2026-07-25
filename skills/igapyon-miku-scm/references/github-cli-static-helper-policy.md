@@ -23,6 +23,18 @@ Use anonymous REST directly only when:
 
 Do not add direct `gh` use merely because an anonymous request failed. Add or revise a static helper, document its exact command surface, and test it first.
 
+## Generic Issue READONLY Helper
+
+Use [../scripts/github-issue-read.mjs](../scripts/github-issue-read.mjs) for generic public Issue retrieval. The AI Agent invokes the helper, never `gh` directly. Its fixed READONLY command surface is:
+
+```text
+gh issue list --repo <owner>/<repo> --state <open|closed|all> --limit 1000 --json number,state,title,body,url,updatedAt
+gh issue view <positive-number> --repo <owner>/<repo> --comments --json number,state,title,body,url,updatedAt,labels,comments
+gh label list --repo <owner>/<repo> --limit 1000 --json name,description,color
+```
+
+Use `--list` for an uncached general Issue list, `--issue <number>` for one Issue and its comments, and `--labels` for repository labels. For PR Issue matching, retain the ten-minute cache workflow in `github-issues-cache.mjs`; it has its own fixed `gh issue list` surface. Do not substitute anonymous REST for a helper failure.
+
 ## Static Helper Requirements
 
 Require every helper that invokes `gh` to:

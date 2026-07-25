@@ -4,11 +4,10 @@ Use anonymous GitHub REST API access when the AI Agent must inspect public miku-
 
 ## Scope
 
-Use anonymous REST API requests for:
+Use anonymous REST API requests only for:
 
 - repository source code and directory contents
 - branches
-- Issues and Issue comments
 - Releases and release assets
 - GitHub Actions runs, jobs, and step conclusions
 
@@ -25,11 +24,6 @@ Use `https://api.github.com` with these `GET` endpoint patterns:
 /repos/{owner}/{repo}/branches/{branch}
 /repos/{owner}/{repo}/commits/{branch-or-tag}
 /repos/{owner}/{repo}/tags?per_page=100
-/repos/{owner}/{repo}/issues?state=all&per_page=100
-/repos/{owner}/{repo}/issues/{issue_number}
-/repos/{owner}/{repo}/issues/{issue_number}/comments
-/repos/{owner}/{repo}/issues/comments/{comment_id}
-/repos/{owner}/{repo}/labels?per_page=100
 /repos/{owner}/{repo}/releases?per_page=100
 /repos/{owner}/{repo}/releases/latest
 /repos/{owner}/{repo}/releases/{release_id}
@@ -40,7 +34,9 @@ Use `https://api.github.com` with these `GET` endpoint patterns:
 
 Use only `GET` or `HEAD`. Follow pagination when the response includes a next-page link.
 
-## Local Issue Cache
+## Issue Retrieval and Local Cache
+
+Do not use anonymous REST for Issue lists, individual Issues, Issue comments, or repository labels. Read [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md) and use `github-issue-read.mjs` for general Issue retrieval. Use the cache helper below only for PR Issue matching.
 
 Cache public Issue lists used for PR matching under the target repository instead of downloading the same list for every draft. Use the bundled helper:
 

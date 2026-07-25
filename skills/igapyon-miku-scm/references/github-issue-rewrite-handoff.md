@@ -2,13 +2,13 @@
 
 Draft a new public GitHub Issue or retrieve and rewrite an existing Issue, then return paste-ready text. Drafting remains READONLY against GitHub. A reviewed new-Issue draft may proceed separately through [github-issue-create.md](github-issue-create.md), and a reviewed existing-Issue title/body/existing-label update may proceed through [github-issue-update.md](github-issue-update.md).
 
-The AI Agent must not invoke `gh` directly during drafting or handoff. When a later approved workflow uses `gh`, invoke only its documented static helper under [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
+The AI Agent must not invoke `gh` directly during drafting or handoff. Invoke only documented static helpers under [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
 
 ## Workflow
 
 1. Resolve the exact target repository and whether the request is for a new Issue or an update to an existing Issue.
-2. For an existing Issue, resolve its number, retrieve the current Issue and comments with anonymous REST API `GET` requests, and reject an item containing a `pull_request` field.
-3. For a new Issue, use the user's direction and inspected repository evidence. Do not imply that an Issue number or GitHub URL already exists. Retrieve the target repository's existing labels anonymously and select each label clearly supported by the evidence and established repository semantics. When the user requests a sub-Issue, resolve exactly one same-repository parent Issue and treat its number as reviewed registration metadata outside the draft body.
+2. For an existing Issue, resolve its number, then use `node skills/igapyon-miku-scm/scripts/github-issue-read.mjs --repo <owner>/<repo> --issue <number>` to retrieve the current Issue and comments. If the helper reports that the Issue cannot be read, stop and report the READONLY failure; do not fall back to anonymous REST.
+3. For a new Issue, use the user's direction and inspected repository evidence. Do not imply that an Issue number or GitHub URL already exists. Retrieve the target repository's existing labels with `node skills/igapyon-miku-scm/scripts/github-issue-read.mjs --repo <owner>/<repo> --labels` and select each label clearly supported by the evidence and established repository semantics. When the user requests a sub-Issue, resolve exactly one same-repository parent Issue and treat its number as reviewed registration metadata outside the draft body.
 4. Preserve the Issue's intent, constraints, and established terminology. For an existing Issue, incorporate relevant clarification from comments.
 5. Draft or rewrite the title and body so the purpose, background, scope, and completion conditions are clear when those sections are supported by the evidence or the user's direction.
 6. Distinguish new proposals or inferences from confirmed facts. Do not invent decisions, dependencies, or acceptance criteria and present them as already agreed.

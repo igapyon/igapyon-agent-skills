@@ -45,7 +45,7 @@ Use [scripts/github-issue-create.mjs](../scripts/github-issue-create.mjs); do no
 
 When `--parent` is present, require the parent to be an exact Open Issue in the same repository. Fix its number, URL, title, state, and `updated_at` as one snapshot digest during preflight. Apply mode must retrieve that exact parent again and stop before mutation when the digest changes.
 
-During drafting, inspect the repository's public labels under [github-anonymous-readonly.md](github-anonymous-readonly.md) and actively select each exact existing label clearly supported by the Issue and repository conventions. During registration preflight and apply, the helper independently validates the reviewed labels with its fixed `gh label list`. Do not omit an evident classification merely because the human did not name a label. Do not infer an unsupported label, substitute a near-match such as `enhance` for an existing `enhancement`, or create a missing label.
+During drafting, inspect the repository's public labels with the fixed `github-issue-read.mjs --labels` helper documented in [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md) and actively select each exact existing label clearly supported by the Issue and repository conventions. During registration preflight and apply, the helper independently validates the reviewed labels with its fixed `gh label list`. Do not omit an evident classification merely because the human did not name a label. Do not infer an unsupported label, substitute a near-match such as `enhance` for an existing `enhancement`, or create a missing label.
 
 Do not use:
 
@@ -100,7 +100,7 @@ After the mutation returns the exact Issue URL, the helper uses one fixed `gh is
 workplace/miku-scm/created-issues/<owner>/<repo>/
 ```
 
-If `gh` fails, is interrupted, or returns no expected URL, keep the `pending` record and the draft under `new-issues/`. Treat the remote outcome as uncertain. Inspect the public repository anonymously for a matching Issue and report the evidence before designing a separately approved recovery; do not delete the record or retry automatically.
+If `gh` fails, is interrupted, or returns no expected URL, keep the `pending` record and the draft under `new-issues/`. Treat the remote outcome as uncertain. Inspect the public repository with the fixed Issue READONLY helper for a matching Issue and report the evidence before designing a separately approved recovery; do not delete the record or retry automatically.
 
 ## Completion Report
 
