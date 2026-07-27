@@ -6,7 +6,19 @@ This is not `git commit --amend`. It resets `HEAD` back to a confirmed base whil
 
 This mode changes local Git history. Do not run it automatically after drafting PR text. Do not run it for generic commit summaries or ordinary PR drafting.
 
-This workflow may automate the local-only history rewrite with the bundled Node helper when the user explicitly asks for PR Soft Reset Recommit. The human review gates are expected at push, PR creation, and PR merge. The helper must not push, create PRs, merge PRs, or change remotes.
+This workflow automates the local-only history rewrite through the
+deterministic runner when the user explicitly asks for PR Soft Reset
+Recommit. The human review gates are expected at push, PR creation, and PR
+merge. The runner delegates to the bundled fixed helper and must not push,
+create PRs, merge PRs, or change remotes.
+
+Use these fixed workflow IDs:
+
+- `pr.recommit.preflight` for READONLY evidence and draft resolution
+- `pr.recommit.apply` for the explicitly requested local history rewrite
+
+The legacy helper remains the authoritative implementation behind both IDs.
+Do not invoke a free-form Git sequence around the runner.
 
 ## Safety Rules
 
@@ -40,19 +52,28 @@ If there is no saved PR draft file, stop this workflow and first create or save 
 
 ## PR Draft Resolution
 
-When the user asks to reuse the PR draft created by PR mode but does not provide `PR_DRAFT`, prefer using the bundled Node helper in default read-only mode to resolve the candidate from the standard draft-save locations:
+When the user asks to reuse the PR draft created by PR mode but does not
+provide `PR_DRAFT`, use the runner's READONLY workflow to resolve the candidate
+from the standard draft-save locations:
 
 ```sh
-node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  pr.recommit.preflight
 ```
 
 If `PR_DRAFT` is already known, pass it explicitly:
 
 ```sh
-node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  pr.recommit.preflight \
+  --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md
 ```
 
-Without `--apply`, the helper is read-only. It may run local Git inspection commands, resolve the current-branch PR draft candidate, choose a backup branch candidate, and print the final command shape. It must not create branches, reset commits, commit changes, push, or modify files in default mode.
+Without `--apply`, the delegated Git operation is read-only. It may run local
+Git inspection commands, resolve the current-branch PR draft candidate, and
+choose a backup branch candidate. It must not create branches, reset commits,
+commit changes, push, or modify repository content. The runner still writes
+its ignored operational records under `workplace/miku-scm/runs/`.
 
 If Node is unavailable or the helper fails, resolve the candidate manually:
 
@@ -68,10 +89,14 @@ Before running `git reset --soft`, report the resolved `PR_DRAFT` path and treat
 
 ## Command Shape
 
-When the user explicitly asks to apply the saved PR draft as the commit message and both inputs are confirmed, first run the helper without `--apply` unless it was already run during PR draft resolution:
+When the user explicitly asks to apply the saved PR draft as the commit
+message and both inputs are confirmed, first run `pr.recommit.preflight`
+unless it was already run during PR draft resolution:
 
 ```sh
-node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  pr.recommit.preflight \
+  --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md
 ```
 
 Review the preflight output before any history rewrite:
@@ -87,17 +112,23 @@ Review the preflight output before any history rewrite:
 - compare the saved draft with the complete collapsed range and confirm every material change group is represented
 - confirm `git status -sb` does not show unrelated uncommitted changes
 
-After that, prefer applying the local-only rewrite with the Node helper:
+After that, apply the local-only rewrite with one fixed runner call:
 
 ```sh
-node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md --apply
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  pr.recommit.apply \
+  --base origin/devel \
+  --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md \
+  --apply
 ```
 
-The helper will:
+The runner and its helper delegate will:
 
+- collect the full preflight evidence
+- revalidate the branch, HEAD, base ancestry, worktree/index state, and PR draft SHA-256
 - create the backup branch at current `HEAD`
-- run `git reset --soft <base>`
-- run `git commit -F <PR_DRAFT>`
+- run `git reset --soft <verified-base-commit>`
+- commit with the revalidated PR draft bytes
 - report the new `HEAD` and final `git status -sb`
 
 The helper refuses `--apply` when there are existing uncommitted changes unless `--allow-dirty` is also passed. Use `--allow-dirty` only when the user has explicitly confirmed that those uncommitted changes are intentional and should participate in the recommit context.
@@ -122,7 +153,9 @@ git status -sb
 
 Replace the example `BASE` and `PR_DRAFT` values with the confirmed values before running.
 
-The Node helper replaces the manual local rewrite only when invoked with `--apply`. It still must not push, create a PR, merge a PR, or change remotes.
+The deterministic runner replaces the manual local rewrite only for
+`pr.recommit.apply`. It still must not push, create a PR, merge a PR, or
+change remotes.
 
 ## Output
 

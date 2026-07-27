@@ -21,6 +21,18 @@ import {
   saveMaintenancePlan,
 } from "./repository-maintenance.mjs";
 import {
+  parseArgs as parsePostMergeArgs,
+  run as runPostMergeNextWork,
+} from "./post-merge-next-work.mjs";
+import {
+  executePublish,
+  parseArgs as parsePublishArgs,
+} from "./post-recommit-publish.mjs";
+import {
+  parseArgs as parseRecommitArgs,
+  runRecommit,
+} from "./pr-soft-reset-recommit-preflight.mjs";
+import {
   WORKFLOW_MANIFEST,
   WORKFLOW_MANIFEST_VERSION,
   workflowManifestById,
@@ -29,6 +41,10 @@ import {
   collectLocalSnapshot,
   parseLocalSnapshotArgs,
 } from "./miku-scm-local-snapshot.mjs";
+import {
+  inspectVersion,
+  parseArgs as parseVersionArgs,
+} from "./miku-scm-version.mjs";
 import {
   parseGitHubBatchArgs,
   runGitHubBatch,
@@ -53,6 +69,13 @@ Workflow IDs:
   repository.maintenance.diagnose
   repository.maintenance.plan
   repository.maintenance.apply
+  repository.post-merge.next-work
+  pr.publish.preflight
+  pr.publish.apply
+  pr.recommit.preflight
+  pr.recommit.apply
+  version.status
+  version.increment.validate
 
 The runner accepts only options validated by the selected workflow's existing
 static helper. It never accepts a shell command, executable name, command
@@ -176,6 +199,110 @@ function maintenanceWorkflow(mode, dependencies) {
   };
 }
 
+function publishWorkflow(mode, dependencies) {
+  return {
+    version: 1,
+    mutationLevel: mode === "apply" ? "remote" : "readonly",
+    approvalGate: mode,
+    parse(argv, cwd) {
+      const options = parsePublishArgs(argv, cwd);
+      if (mode === "preflight" && !options.savePlan) {
+        throw new Error("pr.publish.preflight requires --save-plan");
+      }
+      if (mode === "apply" && !options.applyPlan) {
+        throw new Error("pr.publish.apply requires --apply-plan and its reviewed digest");
+      }
+      return options;
+    },
+    plan(options) {
+      return {
+        operation: mode === "apply" ? "pr-publish-apply" : "pr-publish-preflight",
+        repository: path.resolve(options.repo),
+        remote: options.remote,
+        reviewed_head: options.expectedHead || null,
+        reviewed_plan: options.applyPlan || null,
+        mutation_invocation_allowed: mode === "apply",
+      };
+    },
+    execute(options) {
+      const implementation = dependencies.publishExecute ?? executePublish;
+      return implementation(options, dependencies.publishDependencies);
+    },
+  };
+}
+
+function recommitWorkflow(mode, dependencies) {
+  return {
+    version: 1,
+    mutationLevel: mode === "apply" ? "local" : "readonly",
+    approvalGate: mode,
+    parse(argv, cwd) {
+      const options = parseRecommitArgs(argv, cwd);
+      if (mode === "preflight" && (options.apply || options.allowDirty)) {
+        throw new Error("pr.recommit.preflight rejects --apply and --allow-dirty");
+      }
+      if (mode === "apply" && !options.apply) {
+        throw new Error("pr.recommit.apply requires --apply");
+      }
+      if (mode === "apply" && (!options.base || !options.prDraft)) {
+        throw new Error("pr.recommit.apply requires explicit --base and --pr-draft");
+      }
+      return options;
+    },
+    plan(options) {
+      return {
+        operation: mode === "apply" ? "pr-recommit-apply" : "pr-recommit-preflight",
+        repository: path.resolve(options.repo),
+        base: options.base || null,
+        pr_draft: options.prDraft || null,
+        allow_dirty: Boolean(options.allowDirty),
+        mutation_invocation_allowed: mode === "apply",
+      };
+    },
+    execute(options) {
+      const implementation = dependencies.recommitExecute ?? runRecommit;
+      return implementation(options, dependencies.recommitDependencies);
+    },
+  };
+}
+
+function versionWorkflow(mode, dependencies) {
+  return {
+    version: 1,
+    mutationLevel: "readonly",
+    approvalGate: mode === "status" ? "none" : "preflight",
+    parse(argv, cwd) {
+      const options = parseVersionArgs(argv, cwd);
+      if (mode === "status" && options.validateIncrement) {
+        throw new Error("version.status rejects --validate-increment");
+      }
+      if (mode === "validate" && !options.validateIncrement) {
+        throw new Error("version.increment.validate requires --validate-increment");
+      }
+      if (mode === "validate" && options.policy === "auto") {
+        throw new Error("version.increment.validate requires explicit --policy");
+      }
+      return options;
+    },
+    plan(options) {
+      return {
+        operation: mode === "status" ? "version-status" : "version-increment-validation",
+        repository: path.resolve(options.repo),
+        version_files: options.versionFiles,
+        coupled_version_files: options.coupledVersionFiles,
+        policy: options.policy,
+        timezone: options.timezone || null,
+        level: options.level || null,
+        mutation_invocation_allowed: false,
+      };
+    },
+    execute(options) {
+      const implementation = dependencies.versionExecute ?? inspectVersion;
+      return implementation(options, dependencies.versionDependencies);
+    },
+  };
+}
+
 export function workflowRegistry(dependencies = {}) {
   const implementations = new Map([
     ["repository.status", {
@@ -228,6 +355,30 @@ export function workflowRegistry(dependencies = {}) {
     ["repository.maintenance.diagnose", maintenanceWorkflow("diagnose", dependencies)],
     ["repository.maintenance.plan", maintenanceWorkflow("plan", dependencies)],
     ["repository.maintenance.apply", maintenanceWorkflow("apply", dependencies)],
+    ["repository.post-merge.next-work", {
+      version: 1,
+      mutationLevel: "local",
+      approvalGate: "apply",
+      parse: parsePostMergeArgs,
+      plan: (options) => ({
+        operation: "post-merge-next-work",
+        repository: path.resolve(options.repo),
+        remote: options.remote,
+        base: options.base || null,
+        confirmed_merge: options.confirmedMerged,
+        mutation_invocation_allowed: true,
+      }),
+      execute: (options) => runPostMergeNextWork(
+        options,
+        dependencies.postMergeDependencies,
+      ),
+    }],
+    ["pr.publish.preflight", publishWorkflow("preflight", dependencies)],
+    ["pr.publish.apply", publishWorkflow("apply", dependencies)],
+    ["pr.recommit.preflight", recommitWorkflow("preflight", dependencies)],
+    ["pr.recommit.apply", recommitWorkflow("apply", dependencies)],
+    ["version.status", versionWorkflow("status", dependencies)],
+    ["version.increment.validate", versionWorkflow("validate", dependencies)],
   ]);
   const manifest = workflowManifestById();
   if (manifest.size !== implementations.size
@@ -335,9 +486,15 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
   } catch (error) {
     const finishedAt = (dependencies.now ? dependencies.now() : new Date()).toISOString();
     const message = error instanceof Error ? error.message : String(error);
-    const mutationInvoked = executeStarted && workflow.approvalGate === "apply"
-      ? null
-      : false;
+    const delegatedMutationState = error && typeof error === "object"
+      && Object.hasOwn(error, "mutationInvoked")
+      ? error.mutationInvoked
+      : undefined;
+    const mutationInvoked = delegatedMutationState !== undefined
+      ? delegatedMutationState
+      : executeStarted && workflow.approvalGate === "apply"
+        ? null
+        : false;
     const event = failureEvent({
       workflow: workflowId,
       phase,
@@ -353,9 +510,13 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       workflow_manifest_version: WORKFLOW_MANIFEST_VERSION,
       mutation_level: workflow.mutationLevel,
       approval_gate: workflow.approvalGate,
-      status: executeStarted
-        ? normalizedStatus(null, workflow.mutationLevel, true)
-        : "not-applied",
+      status: mutationInvoked === false
+        ? "not-applied"
+        : executeStarted && workflow.approvalGate === "apply"
+          ? "unresolved"
+          : executeStarted
+            ? normalizedStatus(null, workflow.mutationLevel, true)
+          : "not-applied",
       delegate_status: null,
       started_at: startedAt,
       finished_at: finishedAt,

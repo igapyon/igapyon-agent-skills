@@ -463,24 +463,22 @@ export async function runPublish(options, dependencies = {}) {
   };
 }
 
-export async function cli(argv = process.argv.slice(2), dependencies = {}) {
-  const options = parseArgs(argv);
-  if (options.help) {
-    process.stdout.write(`${usage}\n`);
-    return;
-  }
+export async function executePublish(options, dependencies = {}) {
+  if (options.help) return null;
   if (options.applyPlan) {
-    const loaded = await loadPlan(options);
-    const plan = loaded.plan;
-    const attempt = `${loaded.file}.attempt.json`;
-    const pending = { schema_version: 1, status: "pending", plan_sha256: options.expectedPlanSha256.toLowerCase(), started_at: new Date().toISOString() };
+    let attempt = "";
+    let pending = null;
     let attemptClaimed = false;
-    const ordinary = {
-      repo: loaded.root, remote: plan.remote, expectedHead: plan.reviewed_head,
-      expectedRemoteHead: plan.remote_branch.state === "existing" ? plan.remote_branch.head : "",
-      expectNewRemoteBranch: plan.remote_branch.state === "absent", apply: true, savePlan: false, applyPlan: "", expectedPlanSha256: "", help: false,
-    };
     try {
+      const loaded = await loadPlan(options);
+      const plan = loaded.plan;
+      attempt = `${loaded.file}.attempt.json`;
+      pending = { schema_version: 1, status: "pending", plan_sha256: options.expectedPlanSha256.toLowerCase(), started_at: new Date().toISOString() };
+      const ordinary = {
+        repo: loaded.root, remote: plan.remote, expectedHead: plan.reviewed_head,
+        expectedRemoteHead: plan.remote_branch.state === "existing" ? plan.remote_branch.head : "",
+        expectNewRemoteBranch: plan.remote_branch.state === "absent", apply: true, savePlan: false, applyPlan: "", expectedPlanSha256: "", help: false,
+      };
       const result = await runPublish(ordinary, {
         ...dependencies,
         beforeMutation: async (context) => {
@@ -502,17 +500,28 @@ export async function cli(argv = process.argv.slice(2), dependencies = {}) {
         },
       });
       await writeFile(attempt, `${JSON.stringify({ ...pending, status: "published", result_recorded_at: new Date().toISOString() }, null, 2)}\n`, "utf8");
-      process.stdout.write(`${JSON.stringify({ ...result, plan_path: options.applyPlan, plan_sha256: options.expectedPlanSha256.toLowerCase(), attempt_record: path.relative(loaded.root, attempt) }, null, 2)}\n`);
+      return { ...result, plan_path: options.applyPlan, plan_sha256: options.expectedPlanSha256.toLowerCase(), attempt_record: path.relative(ordinary.repo, attempt) };
     } catch (error) {
       if (attemptClaimed) {
         await writeFile(attempt, `${JSON.stringify({ ...pending, status: "unresolved", detail: error instanceof Error ? error.message : String(error), result_recorded_at: new Date().toISOString() }, null, 2)}\n`, "utf8");
       }
-      throw error;
+      const failure = error instanceof Error ? error : new Error(String(error));
+      failure.mutationInvoked = attemptClaimed ? null : false;
+      throw failure;
     }
-    return;
   }
   let result = await runPublish(options, dependencies);
   if (options.savePlan) result = await savePlan(await realpath(options.repo), result);
+  return result;
+}
+
+export async function cli(argv = process.argv.slice(2), dependencies = {}) {
+  const options = parseArgs(argv);
+  if (options.help) {
+    process.stdout.write(`${usage}\n`);
+    return;
+  }
+  const result = await executePublish(options, dependencies);
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 }
 

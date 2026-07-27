@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
-const usage = `Usage:
+export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs [--base <base>] [--pr-draft <path>] [--repo <path>] [--apply] [--allow-dirty]
 
 By default this is a read-only helper. It resolves PR draft candidates, backup
@@ -18,8 +19,8 @@ With --apply, it performs the local-only rewrite:
 
 It never pushes, creates PRs, merges PRs, or changes remotes.`;
 
-function parseArgs(argv) {
-  const args = { repo: process.cwd(), base: "", prDraft: "" };
+export function parseArgs(argv, cwd = process.cwd()) {
+  const args = { repo: cwd, base: "", prDraft: "" };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") {
@@ -45,6 +46,7 @@ function git(repo, args, options = {}) {
   const result = spawnSync("git", args, {
     cwd: repo,
     encoding: "utf8",
+    input: options.input,
     maxBuffer: 20 * 1024 * 1024,
   });
   if (result.status !== 0 && !options.allowFailure) {
@@ -70,12 +72,12 @@ function prescribedBaseCandidate(branch) {
   return match?.[1] ? `origin/${match[1]}` : "";
 }
 
-function refExists(root, ref) {
-  return git(root, ["rev-parse", "--verify", "--quiet", ref], { allowFailure: true }).ok;
+function refExists(root, ref, runGit = git) {
+  return runGit(root, ["rev-parse", "--verify", "--quiet", ref], { allowFailure: true }).ok;
 }
 
-function resolveDefaultBase(root, branch) {
-  const upstream = git(root, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], {
+function resolveDefaultBase(root, branch, runGit = git) {
+  const upstream = runGit(root, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], {
     allowFailure: true,
   });
   if (upstream.ok && upstream.stdout && !remoteBranchIsCurrentFeature(upstream.stdout, branch)) {
@@ -83,11 +85,11 @@ function resolveDefaultBase(root, branch) {
   }
 
   const prescribedBase = prescribedBaseCandidate(branch);
-  if (prescribedBase && refExists(root, prescribedBase)) {
+  if (prescribedBase && refExists(root, prescribedBase, runGit)) {
     return { base: prescribedBase, source: "base encoded by current work-branch name" };
   }
 
-  const remoteHead = git(root, ["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"], {
+  const remoteHead = runGit(root, ["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"], {
     allowFailure: true,
   });
   if (remoteHead.ok && remoteHead.stdout.startsWith("refs/remotes/")) {
@@ -97,7 +99,7 @@ function resolveDefaultBase(root, branch) {
     };
   }
 
-  if (refExists(root, "origin/devel")) {
+  if (refExists(root, "origin/devel", runGit)) {
     return { base: "origin/devel", source: "local origin/devel fallback" };
   }
 
@@ -173,8 +175,8 @@ export function findDrafts(root, branch) {
   return { slug, drafts };
 }
 
-function chooseBackup(existingBranches) {
-  const base = `backup/${ymdhm(new Date())}`;
+function chooseBackup(existingBranches, now = new Date()) {
+  const base = `backup/${ymdhm(now)}`;
   const existing = new Set(
     existingBranches
       .split("\n")
@@ -200,167 +202,248 @@ function listBlock(lines) {
   return lines.length > 0 ? lines.map((line) => `- ${line}`).join("\n") : "- なし";
 }
 
-export function main() {
-  const args = parseArgs(process.argv.slice(2));
-  if (args.help) {
-    console.log(usage);
-    return;
+function digest(content) {
+  return createHash("sha256").update(content).digest("hex");
+}
+
+function asFailure(error, mutationInvoked) {
+  const failure = error instanceof Error ? error : new Error(String(error));
+  failure.mutationInvoked = mutationInvoked;
+  return failure;
+}
+
+export function runRecommit(args, dependencies = {}) {
+  const runGit = dependencies.git ?? git;
+  const now = dependencies.now ? dependencies.now() : new Date();
+  let mutationInvoked = false;
+  try {
+    const root = runGit(args.repo, ["rev-parse", "--show-toplevel"]).stdout;
+    const resolvedRoot = path.resolve(root);
+    const rootPrefix = `${resolvedRoot}${path.sep}`;
+    const realRootPrefix = `${realpathSync(root)}${path.sep}`;
+    const explicitDraftAbs = args.prDraft ? path.resolve(root, args.prDraft) : "";
+    const explicitDraftSafe = !args.prDraft || explicitDraftAbs.startsWith(rootPrefix);
+    const explicitDraftExists = explicitDraftSafe && existsSync(explicitDraftAbs);
+    const explicitDraftRealSafe = !explicitDraftExists
+      || realpathSync(explicitDraftAbs).startsWith(realRootPrefix);
+    if (args.apply && args.prDraft && (!explicitDraftSafe || !explicitDraftRealSafe)) {
+      throw new Error("PR draft must stay inside the repository");
+    }
+    if (args.apply && args.prDraft && !explicitDraftExists) {
+      throw new Error(`PR draft is missing: ${args.prDraft}`);
+    }
+
+    const branch = runGit(root, ["branch", "--show-current"], { allowFailure: true }).stdout;
+    const resolvedBase = args.base
+      ? { base: args.base, source: "explicit --base" }
+      : resolveDefaultBase(root, branch, runGit);
+    if (!resolvedBase.base) {
+      throw new Error("Could not resolve base from --base, current branch upstream, local origin/HEAD, or origin/devel.");
+    }
+    const status = runGit(root, ["status", "-sb"]).stdout;
+    const headSummary = runGit(root, ["log", "--oneline", "--decorate", "-1"]).stdout;
+    const baseOk = runGit(root, ["rev-parse", "--verify", "--quiet", resolvedBase.base], { allowFailure: true }).ok;
+    const baseCommit = baseOk ? runGit(root, ["rev-parse", resolvedBase.base]).stdout : "";
+    const headCommit = runGit(root, ["rev-parse", "HEAD"]).stdout;
+    const baseIsAncestor = baseOk
+      ? runGit(root, ["merge-base", "--is-ancestor", resolvedBase.base, "HEAD"], { allowFailure: true }).ok
+      : false;
+    const collapsedLog = baseOk
+      ? runGit(root, ["log", "--oneline", "--decorate", `${resolvedBase.base}..HEAD`], { allowFailure: true }).stdout
+      : "";
+    const collapsedCount = collapsedLog ? collapsedLog.split("\n").filter(Boolean).length : 0;
+    const diffStat = baseOk
+      ? runGit(root, ["diff", "--stat", `${resolvedBase.base}...HEAD`], { allowFailure: true }).stdout
+      : "";
+    const existingBackups = runGit(root, ["branch", "--list", "backup/*"], { allowFailure: true }).stdout;
+    const backup = chooseBackup(existingBackups, now);
+
+    const { slug, drafts } = findDrafts(root, branch);
+    const explicitDraft = args.prDraft && explicitDraftSafe
+      ? path.relative(root, explicitDraftAbs)
+      : "";
+    const resolvedDraft = args.prDraft ? explicitDraft : drafts[0]?.rel || "";
+    const resolvedDraftAbs = resolvedDraft ? path.resolve(root, resolvedDraft) : "";
+    const draftExists = resolvedDraftAbs ? existsSync(resolvedDraftAbs) : false;
+    const realDraftSafe = !draftExists
+      || realpathSync(resolvedDraftAbs).startsWith(realRootPrefix);
+    const draftSafe = explicitDraftSafe && realDraftSafe;
+    const draftContent = draftExists && draftSafe ? readFileSync(resolvedDraftAbs) : null;
+    const draftSha256 = draftContent ? digest(draftContent) : "";
+    const draftStatus = explicitDraft
+      ? draftExists ? "明示指定された PR draft が存在します。" : "明示指定された PR draft が見つかりません。"
+      : resolvedDraft
+        ? "現在ブランチに一致する最新 PR draft 候補を解決しました。"
+        : "現在ブランチに一致する PR draft 候補が見つかりません。";
+    const dirty = hasDirtyStatus(status);
+    const frozen = branch.endsWith("-done");
+    const blockers = [];
+    if (!baseOk) blockers.push(`base was not found: ${resolvedBase.base}`);
+    if (!branch) blockers.push("current branch is detached or unresolved");
+    if (frozen) blockers.push(`current branch is frozen: ${branch}`);
+    if (!baseIsAncestor) blockers.push(`base is not an ancestor of HEAD: ${resolvedBase.base}`);
+    if (collapsedCount === 0) blockers.push(`no commits to collapse from ${resolvedBase.base} to HEAD`);
+    if (!draftSafe) blockers.push("PR draft must stay inside the repository");
+    if (!resolvedDraft || !draftExists) blockers.push("PR draft is unresolved or missing");
+    if (dirty && !args.allowDirty) blockers.push("working tree contains unconfirmed changes");
+
+    const common = {
+      status: blockers.length === 0 ? "preflight-ok" : "not-applied",
+      mode: args.apply ? "apply" : "preflight",
+      readonly: !args.apply,
+      repository: path.basename(root),
+      base: resolvedBase.base,
+      base_source: resolvedBase.source,
+      base_commit: baseCommit || null,
+      base_exists: baseOk,
+      base_is_ancestor: baseIsAncestor,
+      head: headCommit,
+      head_summary: headSummary,
+      commits_to_collapse: collapsedCount,
+      commits_log: collapsedLog,
+      diff_stat: diffStat,
+      branch: branch || null,
+      frozen,
+      branch_slug: slug || null,
+      pr_draft: resolvedDraft || null,
+      pr_draft_sha256: draftSha256 || null,
+      pr_draft_status: draftStatus,
+      pr_draft_safe: draftSafe,
+      backup_branch: backup,
+      dirty,
+      status_summary: status,
+      draft_candidates: drafts.slice(0, 10).map(({ rel, timestamp }) => ({ path: rel, timestamp })),
+      blockers,
+      apply_arguments: resolvedDraft && baseOk
+        ? ["--base", resolvedBase.base, "--pr-draft", resolvedDraft, "--apply"]
+        : [],
+      mutation_invoked: false,
+    };
+    if (!args.apply) return common;
+    if (blockers.length > 0) throw new Error(`Cannot apply: ${blockers.join("; ")}`);
+
+    const applyBranch = runGit(root, ["branch", "--show-current"], { allowFailure: true }).stdout;
+    const applyHead = runGit(root, ["rev-parse", "HEAD"]).stdout;
+    const applyBase = runGit(root, ["rev-parse", resolvedBase.base]).stdout;
+    const applyBaseIsAncestor = runGit(root, ["merge-base", "--is-ancestor", resolvedBase.base, "HEAD"], {
+      allowFailure: true,
+    }).ok;
+    const applyStatus = runGit(root, ["status", "-sb"]).stdout;
+    const applyDraftContent = readFileSync(resolvedDraftAbs);
+    const applyDraftSha256 = digest(applyDraftContent);
+    if (applyBranch !== branch || applyHead !== headCommit || applyBase !== baseCommit
+      || !applyBaseIsAncestor || applyStatus !== status || applyDraftSha256 !== draftSha256) {
+      throw new Error("Cannot apply because branch, HEAD, base, ancestry, worktree, index, or PR draft changed after preflight.");
+    }
+
+    runGit(root, ["branch", backup, "HEAD"]);
+    mutationInvoked = true;
+    runGit(root, ["reset", "--soft", baseCommit]);
+    runGit(root, ["commit", "-F", "-"], { input: applyDraftContent });
+
+    return {
+      ...common,
+      status: "recommitted",
+      readonly: false,
+      mutation_invoked: true,
+      new_head: runGit(root, ["rev-parse", "HEAD"]).stdout,
+      new_head_summary: runGit(root, ["log", "--oneline", "--decorate", "-1"]).stdout,
+      final_status: runGit(root, ["status", "-sb"]).stdout,
+    };
+  } catch (error) {
+    throw asFailure(error, mutationInvoked);
   }
+}
 
-  const root = git(args.repo, ["rev-parse", "--show-toplevel"]).stdout;
-  const branch = git(root, ["branch", "--show-current"], { allowFailure: true }).stdout;
-  const resolvedBase = args.base
-    ? { base: args.base, source: "explicit --base" }
-    : resolveDefaultBase(root, branch);
-  if (!resolvedBase.base) {
-    throw new Error("Could not resolve base from --base, current branch upstream, local origin/HEAD, or origin/devel.");
-  }
-  const status = git(root, ["status", "-sb"]).stdout;
-  const head = git(root, ["log", "--oneline", "--decorate", "-1"]).stdout;
-  const baseOk = git(root, ["rev-parse", "--verify", "--quiet", resolvedBase.base], { allowFailure: true }).ok;
-  const baseCommit = baseOk ? git(root, ["rev-parse", resolvedBase.base]).stdout : "";
-  const headCommit = git(root, ["rev-parse", "HEAD"]).stdout;
-  const baseIsAncestor = baseOk
-    ? git(root, ["merge-base", "--is-ancestor", resolvedBase.base, "HEAD"], { allowFailure: true }).ok
-    : false;
-  const collapsedLog = baseOk
-    ? git(root, ["log", "--oneline", "--decorate", `${resolvedBase.base}..HEAD`], { allowFailure: true }).stdout
-    : "";
-  const collapsedCount = collapsedLog ? collapsedLog.split("\n").filter(Boolean).length : 0;
-  const diffStat = baseOk
-    ? git(root, ["diff", "--stat", `${resolvedBase.base}...HEAD`], { allowFailure: true }).stdout
-    : "";
-  const existingBackups = git(root, ["branch", "--list", "backup/*"], { allowFailure: true }).stdout;
-  const backup = chooseBackup(existingBackups);
+function formatResult(result) {
+  const candidates = result.draft_candidates.map(
+    (draft) => `\`${draft.path}\` (${draft.timestamp})`,
+  );
+  const text = `# PR Soft Reset Recommit ${result.mode === "apply" ? "Apply" : "Preflight"}
 
-  const { slug, drafts } = findDrafts(root, branch);
-  const explicitDraft = args.prDraft ? path.relative(root, path.resolve(root, args.prDraft)) : "";
-  const resolvedDraft = explicitDraft || drafts[0]?.rel || "";
-  const resolvedDraftAbs = resolvedDraft ? path.resolve(root, resolvedDraft) : "";
-  const draftExists = resolvedDraftAbs ? existsSync(resolvedDraftAbs) : false;
-  const draftStatus = explicitDraft
-    ? draftExists ? "明示指定された PR draft が存在します。" : "明示指定された PR draft が見つかりません。"
-    : resolvedDraft
-      ? "現在ブランチに一致する最新 PR draft 候補を解決しました。"
-      : "現在ブランチに一致する PR draft 候補が見つかりません。";
-  const dirty = hasDirtyStatus(status);
-  const frozen = branch.endsWith("-done");
-
-  console.log(`# PR Soft Reset Recommit ${args.apply ? "Apply" : "Preflight"}
-
-${args.apply
+${result.mode === "apply"
   ? "Apply mode was requested. This helper may perform a local-only history rewrite after validation. It never pushes, creates a PR, merges a PR, or changes remotes."
   : "This helper is read-only. It did not create branches, reset commits, commit changes, push, or modify files."}
 
 ## Resolved Inputs
 
-- base: \`${resolvedBase.base}\` (${baseOk ? "exists" : "not found"})
-- base source: ${resolvedBase.source}
-- base commit: \`${baseCommit || "unresolved"}\`
-- HEAD commit: \`${headCommit}\`
-- base is ancestor of HEAD: ${baseIsAncestor ? "`yes`" : "`no`"}
-- commits to collapse: \`${collapsedCount}\`
-- current branch: \`${branch || "(detached or unknown)"}\`
-- frozen branch: ${frozen ? "`yes`" : "`no`"}
-- branch slug: \`${slug || "(none)"}\`
-- PR draft: ${resolvedDraft ? `\`${resolvedDraft}\`` : "`未解決`"}
-- PR draft status: ${draftStatus}
-- backup branch candidate: \`${backup}\`
-- dirty status: ${dirty ? "`yes`" : "`no`"}
+- base: \`${result.base}\` (${result.base_exists ? "exists" : "not found"})
+- base source: ${result.base_source}
+- base commit: \`${result.base_commit || "unresolved"}\`
+- HEAD commit: \`${result.head}\`
+- base is ancestor of HEAD: ${result.base_is_ancestor ? "`yes`" : "`no`"}
+- commits to collapse: \`${result.commits_to_collapse}\`
+- current branch: \`${result.branch || "(detached or unknown)"}\`
+- frozen branch: ${result.frozen ? "`yes`" : "`no`"}
+- branch slug: \`${result.branch_slug || "(none)"}\`
+- PR draft: ${result.pr_draft ? `\`${result.pr_draft}\`` : "`未解決`"}
+- PR draft SHA-256: \`${result.pr_draft_sha256 || "unresolved"}\`
+- PR draft status: ${result.pr_draft_status}
+- backup branch candidate: \`${result.backup_branch}\`
+- dirty status: ${result.dirty ? "`yes`" : "`no`"}
 
 ## Status
 
 \`\`\`text
-${status || "(empty)"}
+${result.status_summary || "(empty)"}
 \`\`\`
 
 ## HEAD
 
 \`\`\`text
-${head || "(empty)"}
+${result.head_summary || "(empty)"}
 \`\`\`
 
 ## Commits To Collapse
 
 \`\`\`text
-${baseOk ? collapsedLog || "(none)" : "base was not found; skipped"}
+${result.base_exists ? result.commits_log || "(none)" : "base was not found; skipped"}
 \`\`\`
 
 ## Diff Stat
 
 \`\`\`text
-${baseOk ? diffStat || "(empty)" : "base was not found; skipped"}
+${result.base_exists ? result.diff_stat || "(empty)" : "base was not found; skipped"}
 \`\`\`
 
 ## Branch-Matching PR Draft Candidates
 
-${listBlock(drafts.slice(0, 10).map((draft) => `\`${draft.rel}\` (${draft.timestamp})`))}
+${listBlock(candidates)}
 
 ## Command Shape After Explicit Approval
 
 \`\`\`sh
-git branch ${shellQuote(backup)} HEAD && git reset --soft ${shellQuote(resolvedBase.base)}
-git commit -F ${resolvedDraft ? shellQuote(resolvedDraft) : "<PR_DRAFT>"}
+git branch ${shellQuote(result.backup_branch)} HEAD && git reset --soft ${shellQuote(result.base)}
+git commit -F ${result.pr_draft ? shellQuote(result.pr_draft) : "<PR_DRAFT>"}
 \`\`\`
-`);
+`;
+  if (result.mode !== "apply" || result.status !== "recommitted") return text;
+  return `${text}
+## Apply Result
 
-  if (!args.apply) return;
-
-  if (!baseOk) {
-    throw new Error(`Cannot apply because base was not found: ${resolvedBase.base}`);
-  }
-  if (!branch) {
-    throw new Error("Cannot apply from a detached or unresolved branch.");
-  }
-  if (frozen) {
-    throw new Error(`Cannot apply from frozen branch: ${branch}`);
-  }
-  if (!baseIsAncestor) {
-    throw new Error(`Cannot apply because base is not an ancestor of HEAD: ${resolvedBase.base}`);
-  }
-  if (collapsedCount === 0) {
-    throw new Error(`Cannot apply because there are no commits to collapse from ${resolvedBase.base} to HEAD.`);
-  }
-  if (!resolvedDraft || !draftExists) {
-    throw new Error("Cannot apply because PR draft is unresolved or missing.");
-  }
-  if (dirty && !args.allowDirty) {
-    throw new Error("Cannot apply with existing uncommitted changes. Re-run with --allow-dirty only if those changes are intentional.");
-  }
-
-  const applyBranch = git(root, ["branch", "--show-current"], { allowFailure: true }).stdout;
-  const applyHead = git(root, ["rev-parse", "HEAD"]).stdout;
-  const applyBase = git(root, ["rev-parse", resolvedBase.base]).stdout;
-  const applyBaseIsAncestor = git(root, ["merge-base", "--is-ancestor", resolvedBase.base, "HEAD"], {
-    allowFailure: true,
-  }).ok;
-  if (applyBranch !== branch || applyHead !== headCommit || applyBase !== baseCommit || !applyBaseIsAncestor) {
-    throw new Error("Cannot apply because branch, HEAD, base, or ancestry changed after preflight.");
-  }
-
-  git(root, ["branch", backup, "HEAD"]);
-  git(root, ["reset", "--soft", resolvedBase.base]);
-  git(root, ["commit", "-F", resolvedDraft]);
-
-  const newHead = git(root, ["log", "--oneline", "--decorate", "-1"]).stdout;
-  const finalStatus = git(root, ["status", "-sb"]).stdout;
-
-  console.log(`## Apply Result
-
-- backup branch created: \`${backup}\`
-- committed with PR draft: \`${resolvedDraft}\`
+- backup branch created: \`${result.backup_branch}\`
+- committed with PR draft: \`${result.pr_draft}\`
 - new HEAD:
 
 \`\`\`text
-${newHead || "(empty)"}
+${result.new_head_summary || "(empty)"}
 \`\`\`
 
 - final status:
 
 \`\`\`text
-${finalStatus || "(empty)"}
+${result.final_status || "(empty)"}
 \`\`\`
-`);
+`;
+}
+
+export function main(argv = process.argv.slice(2), dependencies = {}) {
+  const args = parseArgs(argv);
+  if (args.help) {
+    console.log(usage);
+    return;
+  }
+  console.log(formatResult(runRecommit(args, dependencies)));
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {

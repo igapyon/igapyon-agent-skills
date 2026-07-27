@@ -9,6 +9,7 @@ import test from "node:test";
 import {
   createGitRunner,
   cli,
+  executePublish,
   parseArgs,
   runPublish,
 } from "../scripts/post-recommit-publish.mjs";
@@ -133,6 +134,45 @@ test("saved plan remains unconsumed when a pre-mutation environment check fails"
   );
   assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
   assert.equal(git(state.remote, "branch", "--list", state.branch), "");
+});
+
+test("programmatic publication marks a pre-mutation failure as not invoked", async (t) => {
+  const state = await scenario(t);
+  const saved = JSON.parse(execFileSync(process.execPath, [PUBLISH_SCRIPT,
+    "--repo", state.repo, "--expected-head", state.expectedHead, "--save-plan"], { encoding: "utf8" }));
+  const options = parseArgs([
+    "--repo", state.repo,
+    "--apply-plan", saved.plan_path,
+    "--expected-plan-sha256", saved.plan_sha256,
+  ]);
+  await assert.rejects(
+    executePublish(options, {
+      ...applyDependencies,
+      beforeMutation: async () => {
+        throw new Error("sandbox network denied before mutation");
+      },
+    }),
+    (error) => error?.mutationInvoked === false
+      && /sandbox network denied/.test(error.message),
+  );
+  await assert.rejects(
+    readFile(path.join(state.repo, `${saved.plan_path}.attempt.json`), "utf8"),
+    (error) => error?.code === "ENOENT",
+  );
+});
+
+test("programmatic publication marks plan-load failure as not invoked", async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "miku-scm-missing-plan-test-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const options = parseArgs([
+    "--repo", root,
+    "--apply-plan", "workplace/miku-scm/ok-push/missing.json",
+    "--expected-plan-sha256", "d".repeat(64),
+  ]);
+  await assert.rejects(
+    executePublish(options, applyDependencies),
+    (error) => error?.mutationInvoked === false,
+  );
 });
 
 test("post-merge helper creates the next work branch from refreshed devel", async (t) => {

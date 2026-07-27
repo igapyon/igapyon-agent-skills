@@ -7,7 +7,7 @@ Increment a project's version only when the user explicitly requests it. Resolve
 1. Inspect `git status -sb` and preserve unrelated staged and unstaged changes.
 2. Read repository documentation, build files, manifests, and recent version history to identify the authoritative version source, coupled version files, format, timezone, and validation command.
 3. Classify the version as repository-defined date-based versioning or Semantic Versioning. If the convention is ambiguous, stop and ask which convention applies.
-4. Derive the candidate version using the matching rule below and show the current and proposed values when human input is required.
+4. Use `version.increment.validate` under [version-workflow-runner.md](version-workflow-runner.md) to derive the candidate from the explicit policy. Review its source values, alignment, branch, HEAD, dirty state, and proposed values before editing.
 5. Update every repository-defined coupled version source in one batch. Do not update dependency or tool versions that merely appear in the same manifest.
 6. Run the repository's version-alignment check, build, or package command and confirm any versioned artifact name.
 7. Review the relevant diff and run `git status -sb`. Record the verified repository, branch, version-source paths and values, and successful validation in the current session so a later add or commit need not repeat the reminder. Leave the changes unstaged unless the user separately requests staging or committing.

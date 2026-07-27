@@ -35,7 +35,10 @@ Unrelated working-tree changes, staging, or an ordinary local commit do not inva
 When no reusable session record can be verified:
 
 1. Inspect the intended staging or commit scope and preserve unrelated changes.
-2. Read the repository's authoritative and coupled version sources. Derive the corresponding tag candidate only when the repository convention is already resolved; otherwise report it as `未解決` instead of guessing.
+2. Run `version.status` under [version-workflow-runner.md](version-workflow-runner.md)
+   with the documented authoritative and coupled version sources. Derive the
+   corresponding tag candidate only when the repository convention is already
+   resolved; otherwise report it as `未解決` instead of guessing.
 3. For a public GitHub repository, use the anonymous REST API workflow in [github-anonymous-readonly.md](github-anonymous-readonly.md) to list tags. Filter out tags that do not match the resolved version-tag convention, then identify the greatest version tag using the repository-defined ordering. For date-identifier tags, compare the date and decoded alphabetic sequence; for Semantic Versions, compare semantic version components. Do not use API response order, tagger date, or unrelated operational tags to decide which version tag is latest.
 4. If the GitHub repository or tag list cannot be resolved anonymously, show the latest GitHub version tag as `未確認`. A failed lookup does not by itself block the human confirmation gate.
 5. Before the first `git add` or `git commit` in that batch, show the current version information and ask the human explicitly. Use repository-defined labels when available; for the `igapyon-agent-skills` coupled versions, use this shape:
