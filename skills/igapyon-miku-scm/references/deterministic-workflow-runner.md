@@ -19,6 +19,10 @@ Repository resolution, validation, fixed command execution, digest checks,
 attempt records, and postcondition checks remain inside tracked and tested
 Node code.
 
+Normal execution does not require the Agent to read this document or the
+workflow's normative spec. The manifest's `runtime_references` is the complete
+additional Markdown set after routing; an empty list means none.
+
 ## Initial Workflow Registry
 
 The canonical machine-readable catalog is
@@ -47,6 +51,14 @@ The preflight and apply IDs are deliberately separate. Selecting a preflight
 workflow can never enable mutation by adding `--apply`. Selecting an apply
 workflow still requires all reviewed digests enforced by its delegate.
 
+Every request, plan, snapshot, attempt, success result, and failure result
+records `workflow_contract`, `contract_version`, and
+`contract_pair_sha256`. The generated contract lock supplies these values
+without loading detailed Markdown at runtime. The pair SHA-256 is calculated
+from the canonical workflow contract ID, contract version, runner SHA-256, and
+normative-spec SHA-256. It identifies a known runner/spec pair; contract tests,
+not hashes, prove behavior.
+
 `repository.post-merge.next-work` has no separate preflight artifact because
 the human's explicit merge report is its operation-specific approval. It still
 requires both `--confirmed-merged` and `--apply`; the delegate revalidates the
@@ -58,6 +70,9 @@ PR publication retains its two-part human boundary. Use
 `--save-plan`. After the human says `ok push`, pass the returned plan path and
 SHA-256 unchanged to `pr.publish.apply`. The apply workflow does not accept
 ordinary publication arguments and cannot rebuild or broaden the plan.
+Publication and repository-maintenance plans also record the apply workflow's
+contract identity. Apply stops before mutation when the reviewed plan names an
+older or different contract pair.
 
 PR recommit keeps a READONLY inspection ID and a separate local apply ID.
 `pr.recommit.apply` requires explicit `--base`, `--pr-draft`, and `--apply`

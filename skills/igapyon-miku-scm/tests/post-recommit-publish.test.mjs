@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -104,6 +105,9 @@ test("saved publication plan applies once and publishes the reviewed branch", as
     "--repo", state.repo, "--expected-head", state.expectedHead, "--save-plan"], { encoding: "utf8" }));
   assert.match(saved.plan_path, /^workplace\/miku-scm\/ok-push\/.*\.json$/);
   assert.match(saved.plan_sha256, /^[0-9a-f]{64}$/);
+  assert.equal(saved.publication_plan.workflow_contract, "pr.publish.apply");
+  assert.equal(saved.publication_plan.contract_version, 1);
+  assert.match(saved.publication_plan.contract_pair_sha256, /^[0-9a-f]{64}$/);
   const published = JSON.parse(execFileSync(process.execPath, [PUBLISH_SCRIPT,
     "--repo", state.repo, "--apply-plan", saved.plan_path,
     "--expected-plan-sha256", saved.plan_sha256], { encoding: "utf8" }));
@@ -112,6 +116,28 @@ test("saved publication plan applies once and publishes the reviewed branch", as
   assert.throws(() => execFileSync(process.execPath, [PUBLISH_SCRIPT,
     "--repo", state.repo, "--apply-plan", saved.plan_path,
     "--expected-plan-sha256", saved.plan_sha256], { encoding: "utf8", stdio: "pipe" }));
+});
+
+test("saved publication plan stops before mutation when its workflow contract changed", async (t) => {
+  const state = await scenario(t);
+  const saved = JSON.parse(execFileSync(process.execPath, [PUBLISH_SCRIPT,
+    "--repo", state.repo, "--expected-head", state.expectedHead, "--save-plan"], { encoding: "utf8" }));
+  const planFile = path.join(state.repo, saved.plan_path);
+  const plan = JSON.parse(await readFile(planFile, "utf8"));
+  plan.contract_pair_sha256 = "0".repeat(64);
+  const changed = `${JSON.stringify(plan, null, 2)}\n`;
+  await writeFile(planFile, changed, "utf8");
+  const changedDigest = createHash("sha256").update(changed).digest("hex");
+
+  await assert.rejects(
+    executePublish(parseArgs([
+      "--repo", state.repo,
+      "--apply-plan", saved.plan_path,
+      "--expected-plan-sha256", changedDigest,
+    ]), applyDependencies),
+    (error) => error?.mutationInvoked === false && /workflow contract changed/.test(error.message),
+  );
+  assert.equal(git(state.remote, "branch", "--list", state.branch), "");
 });
 
 test("saved plan remains unconsumed when a pre-mutation environment check fails", async (t) => {

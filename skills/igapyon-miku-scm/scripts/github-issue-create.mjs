@@ -16,6 +16,9 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+
+const ISSUE_CREATE_APPLY_CONTRACT = workflowContractById().get("github.issue.create.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const NEW_DRAFT_PATTERN = /^issue-new-\d{12}(?:-\d+)?\.md$/;
@@ -31,7 +34,8 @@ export const usage = `Usage:
     --repo <owner/repo> --draft <path> [--label <reviewed-label>]... [--parent <number>] \\
     --expected-draft-sha256 <reviewed-sha256> \\
     --expected-labels-sha256 <reviewed-labels-sha256> \\
-    [--expected-parent-sha256 <reviewed-parent-sha256>] --apply \\
+    [--expected-parent-sha256 <reviewed-parent-sha256>] \\
+    [--expected-contract-pair-sha256 <reviewed-contract-sha256>] --apply \\
     [--root <repository-root>]
 
 Default mode is a read-only preflight. Apply mode requires the reviewed
@@ -53,6 +57,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
     expectedDraftSha256: "",
     expectedLabelsSha256: "",
     expectedParentSha256: "",
+    expectedContractPairSha256: "",
     apply: false,
     help: false,
   };
@@ -85,6 +90,8 @@ export function parseArgs(argv, cwd = process.cwd()) {
       options.expectedLabelsSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-parent-sha256") {
       options.expectedParentSha256 = argv[++index] ?? "";
+    } else if (arg === "--expected-contract-pair-sha256") {
+      options.expectedContractPairSha256 = argv[++index] ?? "";
     } else if (arg === "--apply") {
       options.apply = true;
     } else {
@@ -121,6 +128,9 @@ export function parseArgs(argv, cwd = process.cwd()) {
   if (options.expectedParentSha256 && !SHA256_PATTERN.test(options.expectedParentSha256)) {
     throw new Error("--expected-parent-sha256 must be a 64-character hexadecimal SHA-256 digest");
   }
+  if (options.expectedContractPairSha256 && !SHA256_PATTERN.test(options.expectedContractPairSha256)) {
+    throw new Error("--expected-contract-pair-sha256 must be a 64-character hexadecimal SHA-256 digest");
+  }
   if (options.apply && (!options.expectedDraftSha256 || !options.expectedLabelsSha256)) {
     throw new Error(
       "--apply requires --expected-draft-sha256 and --expected-labels-sha256 from the reviewed preflight",
@@ -134,7 +144,8 @@ export function parseArgs(argv, cwd = process.cwd()) {
   }
   if (
     !options.apply
-    && (options.expectedDraftSha256 || options.expectedLabelsSha256 || options.expectedParentSha256)
+    && (options.expectedDraftSha256 || options.expectedLabelsSha256 || options.expectedParentSha256
+      || options.expectedContractPairSha256)
   ) {
     throw new Error("expected digests are used only with --apply");
   }
@@ -446,6 +457,7 @@ function applyArguments(options, draft, parent) {
     "--expected-draft-sha256", draft.digest,
     "--expected-labels-sha256", labelsSha256(options.labels),
     ...(parent ? ["--expected-parent-sha256", parentSha256(parent)] : []),
+    "--expected-contract-pair-sha256", ISSUE_CREATE_APPLY_CONTRACT.pair_sha256,
     "--apply",
   ];
   if (path.resolve(options.root) !== process.cwd()) {
@@ -503,6 +515,10 @@ export async function runIssueCreate(options, dependencies = {}) {
     };
   }
 
+  if (options.expectedContractPairSha256
+    && options.expectedContractPairSha256.toLowerCase() !== ISSUE_CREATE_APPLY_CONTRACT.pair_sha256) {
+    throw new Error("Issue create workflow contract changed; run preflight again");
+  }
   if (draft.digest !== options.expectedDraftSha256.toLowerCase()) {
     throw new Error(
       `Reviewed draft changed: expected ${options.expectedDraftSha256.toLowerCase()}, actual ${draft.digest}`,

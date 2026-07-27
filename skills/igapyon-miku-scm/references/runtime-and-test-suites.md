@@ -33,3 +33,14 @@ mock queue, or mutable process state.
 
 Both suites retain contract assertions for exact command arrays, approval
 boundaries, digest conflicts, attempt records, and mutation non-retry.
+
+After changing a migrated runner, normative spec, manifest contract mapping, or
+contract test, regenerate and verify the tracked contract artifacts:
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs
+node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs --check
+```
+
+The generated lock is the runtime source for contract identity. The generated
+Markdown table is human-facing. Do not edit either by hand.

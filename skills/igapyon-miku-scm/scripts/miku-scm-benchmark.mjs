@@ -9,8 +9,12 @@ import { performance } from "node:perf_hooks";
 import { pathToFileURL } from "node:url";
 
 import { runWorkflow } from "./miku-scm-run.mjs";
+import { workflowManifestById } from "./miku-scm-workflow-manifest.mjs";
 
 const SCENARIOS = new Set(["github-issue-read"]);
+const SCENARIO_WORKFLOW = Object.freeze({
+  "github-issue-read": "github.issue.read",
+});
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
@@ -124,11 +128,14 @@ async function runFixture(artifactRoot, runId, counter = { gh: 0 }) {
   return result;
 }
 
-async function contextMetrics(root) {
+async function contextMetrics(root, scenario) {
+  const workflow = workflowManifestById().get(SCENARIO_WORKFLOW[scenario]);
+  if (!workflow) throw new Error(`Benchmark workflow is not in the manifest: ${scenario}`);
   const files = [
     "skills/igapyon-miku-scm/SKILL.md",
-    "skills/igapyon-miku-scm/references/github-cli-static-helper-policy.md",
-    "skills/igapyon-miku-scm/references/deterministic-workflow-runner.md",
+    ...workflow.runtime_references.map(
+      (reference) => `skills/igapyon-miku-scm/references/${reference}`,
+    ),
   ];
   let bytes = 0;
   for (const file of files) bytes += (await stat(path.join(root, file))).size;
@@ -206,7 +213,7 @@ export async function benchmark(options, dependencies = {}) {
         input_tokens: null,
         output_tokens: null,
       },
-      context: await contextMetrics(root),
+      context: await contextMetrics(root, options.scenario),
       cold: {
         ...statistics(cold),
         process_spawns_per_sample: 1,

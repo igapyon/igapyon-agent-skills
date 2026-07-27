@@ -9,16 +9,24 @@ The canonical migrated-workflow catalog is
 - mutation level
 - approval gate
 - static runner entry
-- references needed for that workflow
+- normative contract spec and contract test
+- runtime references, separately from design references
 
 The Agent routes intent to one manifest ID and fixed options. It must not
 derive a command sequence from the trigger text. The runner checks that every
 manifest entry has exactly one implementation and that its mutation level and
 approval gate match.
 
-Read only the references named by the selected manifest entry plus the small
-common SCM safety entry point. Do not load unrelated Issue, PR, Release,
-maintenance, or version references after routing.
+Normal migrated execution reads the small safety kernel in `SKILL.md` and only
+the selected entry's `runtime_references`. An empty list means that no detailed
+Markdown is loaded. `design_references` are for implementation, maintenance,
+legacy behavior, recovery, and exceptions; they are not runtime prerequisites.
+
+Each workflow has the same unique workflow and contract ID. The generated lock
+binds its contract version, runner, normative spec, contract test, and SHA-256
+pair. `scripts/miku-scm-workflow-contracts.mjs --check` fails on missing files,
+duplicate IDs, digest drift, or stale generated output.
 
 Adding a workflow requires updating the manifest, runner registry,
-documentation, and routing/command-surface tests together.
+documentation, contract test, generated lock/table, and routing/command-surface
+tests together.

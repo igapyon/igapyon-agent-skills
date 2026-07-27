@@ -72,6 +72,9 @@ test("READONLY Issue workflow completes in one runner call with stable artifacts
   assert.equal(result.schema_version, RESULT_SCHEMA_VERSION);
   assert.equal(result.status, "success");
   assert.equal(result.delegate_status, null);
+  assert.equal(result.workflow_contract, "github.issue.read");
+  assert.equal(result.contract_version, 1);
+  assert.match(result.contract_pair_sha256, /^[0-9a-f]{64}$/);
   assert.deepEqual(calls, [[
     "issue", "view", "7", "--repo", "a/b", "--comments",
     "--json", "number,state,title,body,url,updatedAt,labels,comments",
@@ -80,7 +83,10 @@ test("READONLY Issue workflow completes in one runner call with stable artifacts
   const plan = JSON.parse(await readFile(path.join(root, "runs", "readonly-1", "plan.json"), "utf8"));
   const snapshot = JSON.parse(await readFile(path.join(root, "runs", "readonly-1", "snapshot.json"), "utf8"));
   assert.equal(request.schema_version, RUNNER_SCHEMA_VERSION);
+  assert.equal(request.contract_pair_sha256, result.contract_pair_sha256);
+  assert.equal(plan.contract_pair_sha256, result.contract_pair_sha256);
   assert.equal(plan.mutation_invocation_allowed, false);
+  assert.equal(snapshot.contract_pair_sha256, result.contract_pair_sha256);
   assert.equal(snapshot.delegate_result.issue.number, 7);
 });
 
@@ -151,6 +157,9 @@ test("Issue preflight delegates label and parent checks and returns reviewed app
   assert.equal(result.delegate_status, "preflight-ok");
   assert.equal(result.result.parent_issue.number, 2);
   assert.ok(result.result.apply_arguments.includes("--apply"));
+  const contractOption = result.result.apply_arguments.indexOf("--expected-contract-pair-sha256");
+  assert.ok(contractOption >= 0);
+  assert.match(result.result.apply_arguments[contractOption + 1], /^[0-9a-f]{64}$/);
   const plan = JSON.parse(await readFile(path.join(root, "runs", "preflight-ok", "plan.json"), "utf8"));
   assert.equal(plan.approval_gate, "preflight");
   assert.equal(plan.mutation_invocation_allowed, false);

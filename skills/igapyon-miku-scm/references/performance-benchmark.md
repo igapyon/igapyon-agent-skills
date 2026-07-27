@@ -21,6 +21,11 @@ The result keeps these dimensions separate:
 - instruction/reference file count and bytes
 - configured warm p50 budget
 
+Instruction/reference bytes are derived from `SKILL.md` plus the selected
+workflow's manifest-declared `runtime_references`; they are not a hard-coded
+approximation. Design and normative contract documents are intentionally
+excluded from normal migrated runtime context.
+
 Input and output token counts are `null` when the execution environment does
 not expose them. Do not estimate token counts and present them as measured.
 
