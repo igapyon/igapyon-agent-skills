@@ -50,8 +50,8 @@ Wait for explicit approval after displaying this evidence.
 
 ## Apply and Verification
 
-Apply requires the exact draft digest, Issue snapshot digest, and reviewed
-Issue `updated_at`. Before
+Apply requires the exact draft digest, Issue snapshot digest, reviewed Issue
+`updated_at`, and reviewed apply workflow contract pair digest. Before
 `gh`, the helper records a `pending` attempt and retrieves the Issue again. A
 changed `updated_at`, URL, title, body, state, or complete label set is a
 conflict and prevents mutation.

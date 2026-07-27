@@ -24,6 +24,14 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
     "github.read.batch",
     "github.issue.create.preflight",
     "github.issue.create.apply",
+    "github.issue.update.preflight",
+    "github.issue.update.apply",
+    "github.issue.comment.preflight",
+    "github.issue.comment.apply",
+    "github.issue.label.preflight",
+    "github.issue.label.apply",
+    "github.issue.close.preflight",
+    "github.issue.close.apply",
     "repository.maintenance.diagnose",
     "repository.maintenance.plan",
     "repository.maintenance.apply",
@@ -163,6 +171,94 @@ test("Issue preflight delegates label and parent checks and returns reviewed app
   const plan = JSON.parse(await readFile(path.join(root, "runs", "preflight-ok", "plan.json"), "utf8"));
   assert.equal(plan.approval_gate, "preflight");
   assert.equal(plan.mutation_invocation_allowed, false);
+});
+
+test("migrated Issue mutations return contract-fixed apply arguments", async (t) => {
+  const root = await workspace(t);
+  const updateDirectory = path.join(root, "workplace", "miku-scm", "issue-updates");
+  const commentDirectory = path.join(root, "workplace", "miku-scm", "issue-comments");
+  await mkdir(updateDirectory, { recursive: true });
+  await mkdir(commentDirectory, { recursive: true });
+  const updateDraft = "workplace/miku-scm/issue-updates/issue-7-update-202607271402.md";
+  const commentDraft = "workplace/miku-scm/issue-comments/issue-7-comment-202607271403.md";
+  await writeFile(path.join(root, updateDraft), "Updated title\n\nUpdated body\n", "utf8");
+  await writeFile(path.join(root, commentDraft), "Reviewed comment\n", "utf8");
+
+  const updateIssue = {
+    number: 7,
+    url: "https://github.com/a/b/issues/7",
+    title: "Current title",
+    body: "Current body",
+    labels: ["enhancement"],
+    updatedAt: "2026-07-27T13:00:00Z",
+  };
+  const commentIssue = {
+    ...updateIssue,
+    state: "OPEN",
+  };
+  const labelIssue = {
+    number: 7,
+    url: updateIssue.url,
+    title: updateIssue.title,
+    state: "OPEN",
+    labels: ["enhancement"],
+    updatedAt: updateIssue.updatedAt,
+  };
+  const closeIssue = {
+    number: 7,
+    url: updateIssue.url,
+    title: updateIssue.title,
+    body: updateIssue.body,
+    state: "OPEN",
+    stateReason: null,
+    updatedAt: updateIssue.updatedAt,
+  };
+
+  const cases = [
+    {
+      id: "github.issue.update.preflight",
+      args: ["--repo", "a/b", "--issue", "7", "--draft", updateDraft],
+      dependencies: { issueUpdateDependencies: { readIssue: async () => updateIssue } },
+    },
+    {
+      id: "github.issue.comment.preflight",
+      args: ["--repo", "a/b", "--issue", "7", "--draft", commentDraft],
+      dependencies: { issueCommentDependencies: { readIssue: async () => commentIssue } },
+    },
+    {
+      id: "github.issue.label.preflight",
+      args: ["--repo", "a/b", "--issue", "7", "--add-label", "documentation"],
+      dependencies: {
+        issueLabelDependencies: {
+          readIssue: async () => labelIssue,
+          readLabels: async () => ["enhancement", "documentation"],
+        },
+      },
+    },
+    {
+      id: "github.issue.close.preflight",
+      args: ["--repo", "a/b", "--issue", "7", "--reason", "completed"],
+      dependencies: { issueCloseDependencies: { readIssue: async () => closeIssue } },
+    },
+  ];
+
+  for (const [index, entry] of cases.entries()) {
+    const result = await runWorkflow(entry.id, entry.args, {
+      cwd: root,
+      artifactRoot: path.join(root, "runs"),
+      runId: `issue-mutation-${index}`,
+      now: () => new Date("2026-07-27T14:00:00Z"),
+      ...entry.dependencies,
+    });
+    assert.equal(result.status, "success");
+    assert.equal(result.delegate_status, "preflight-ok");
+    const contractOption = result.result.apply_arguments.indexOf(
+      "--expected-contract-pair-sha256",
+    );
+    assert.ok(contractOption >= 0, entry.id);
+    assert.match(result.result.apply_arguments[contractOption + 1], /^[0-9a-f]{64}$/);
+    assert.equal(result.mutation_invoked, false);
+  }
 });
 
 test("unknown workflow and arbitrary helper options are rejected without execution", async (t) => {

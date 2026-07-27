@@ -43,11 +43,13 @@ function optionsFor(state, ...extra) {
 }
 
 function applyOptions(state, preflight) {
+  const contractIndex = preflight.apply_arguments.indexOf("--expected-contract-pair-sha256");
   return optionsFor(
     state,
     "--expected-draft-sha256", preflight.draft_sha256,
     "--expected-issue-sha256", preflight.current_issue_sha256,
     "--expected-updated-at", preflight.current_updated_at,
+    "--expected-contract-pair-sha256", preflight.apply_arguments[contractIndex + 1],
     "--apply",
   );
 }
@@ -63,6 +65,7 @@ test("preflight returns complete comment review evidence without gh", async (t) 
   assert.equal(result.comment_body, "A reviewed comment.\n");
   assert.equal(result.issue_state, "OPEN");
   assert.match(result.draft_sha256, /^[0-9a-f]{64}$/);
+  assert.ok(result.apply_arguments.includes("--expected-contract-pair-sha256"));
   assert.equal(calls, 0);
   await assert.rejects(access(path.join(state.root, result.attempt_record)), /ENOENT/);
 });

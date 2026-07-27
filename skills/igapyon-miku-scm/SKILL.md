@@ -60,8 +60,10 @@ Read detailed references only for work that is not a migrated runner execution:
 - **PR, Release, About, URL, tag, or public inspection writing**:
   `github-writing-rules.md` plus the exact topic reference. PR Issue matching
   also uses `github-anonymous-readonly.md` and `github-issues-cache.mjs`.
-- **Issue drafting or legacy mutation**: `github-issue-rewrite-handoff.md` and
-  the exact create/update/comment/label/close reference-helper pair.
+- **Issue drafting or migrated mutation**: `github-issue-rewrite-handoff.md`
+  for writing judgment; route create/update/comment/label/close preflight and
+  apply through their fixed runner IDs. Read the exact reference only for
+  drafting, design, recovery, or an exceptional legacy invocation.
 - **Version/tag/Release audit, increment, add, or commit**: the exact
   `version-*`, `github-release-tag-handoff.md`, and
   `repository-precommit-checks.md` references required by that operation.

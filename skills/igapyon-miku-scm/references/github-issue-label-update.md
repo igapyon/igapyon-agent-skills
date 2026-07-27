@@ -46,8 +46,9 @@ command. Wait for explicit human approval.
 
 ## Apply and Verification
 
-Apply requires the reviewed operation digest, current-label digest, and
-`updated_at`. Persist `pending`, retrieve the Issue again, and record
+Apply requires the reviewed operation digest, current-label digest,
+`updated_at`, and reviewed apply workflow contract pair digest. Persist
+`pending`, retrieve the Issue again, and record
 `conflict` without `gh` if the reviewed state changed.
 
 Invoke `gh` once. Then retrieve the Issue with fixed READONLY `gh issue view`

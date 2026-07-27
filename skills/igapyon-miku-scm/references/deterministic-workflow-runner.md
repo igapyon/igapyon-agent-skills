@@ -36,6 +36,14 @@ The canonical machine-readable catalog is
 | `github.read.batch` | READONLY | none | `miku-scm-github-readonly.mjs` |
 | `github.issue.create.preflight` | READONLY | preflight | `github-issue-create.mjs` |
 | `github.issue.create.apply` | remote | apply | `github-issue-create.mjs` |
+| `github.issue.update.preflight` | READONLY | preflight | `github-issue-update.mjs` |
+| `github.issue.update.apply` | remote | apply | `github-issue-update.mjs` |
+| `github.issue.comment.preflight` | READONLY | preflight | `github-issue-comment.mjs` |
+| `github.issue.comment.apply` | remote | apply | `github-issue-comment.mjs` |
+| `github.issue.label.preflight` | READONLY | preflight | `github-issue-label-update.mjs` |
+| `github.issue.label.apply` | remote | apply | `github-issue-label-update.mjs` |
+| `github.issue.close.preflight` | READONLY | preflight | `github-issue-close.mjs` |
+| `github.issue.close.apply` | remote | apply | `github-issue-close.mjs` |
 | `repository.maintenance.diagnose` | READONLY | none | `repository-maintenance.mjs` |
 | `repository.maintenance.plan` | READONLY plus operational artifact | preflight | `repository-maintenance.mjs` |
 | `repository.maintenance.apply` | local | apply | `repository-maintenance.mjs` |
@@ -157,6 +165,14 @@ node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
 After human approval, use `github.issue.create.apply` with the exact
 `apply_arguments` returned by the preflight. The runner does not construct,
 repair, or broaden those arguments.
+
+Issue update, comment, label, and close use the same boundary: run the matching
+`.preflight` ID, show its complete reviewed evidence, and after explicit human
+approval pass the returned `apply_arguments` unchanged to the matching
+`.apply` ID. Their helpers remain authoritative for exact GitHub snapshots,
+conflict detection, attempt records, bounded READONLY verification, and
+mutation non-retry. Every apply argument set also fixes the reviewed apply
+workflow contract pair SHA-256.
 
 ## Run Artifacts
 

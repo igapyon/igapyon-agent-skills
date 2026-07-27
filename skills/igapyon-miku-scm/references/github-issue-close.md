@@ -35,8 +35,9 @@ Wait for explicit human approval after displaying all evidence.
 
 ## Apply and Verification
 
-Apply requires the reviewed operation digest, target body digest, and
-`updated_at`. Persist `pending`, retrieve the target again, and record
+Apply requires the reviewed operation digest, target body digest, `updated_at`,
+and reviewed apply workflow contract pair digest. Persist `pending`, retrieve
+the target again, and record
 `conflict` without `gh` if it is no longer Open or the reviewed state changed.
 
 Invoke `gh issue close` once. Then retrieve the target with fixed READONLY `gh issue view` and bounded retries. Require `closed` plus the selected state reason. A pre-mutation read failure is `not-applied`; never retry the mutation.
