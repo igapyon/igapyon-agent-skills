@@ -57,6 +57,94 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "pair_sha256": "3eed208c778ab008cb46dab1517955244877aa69d2c22842e801ee0c886d9d5a"
   },
   {
+    "workflow": "github.issue.update.preflight",
+    "contract_id": "github.issue.update.preflight",
+    "contract_version": 1,
+    "runner_entry": "github-issue-update.mjs",
+    "contract_spec": "github-issue-update.md",
+    "contract_test": "github-issue-update.test.mjs",
+    "runner_sha256": "4e47eca8fbe9e52567d6080211bde00fb0953adf2941605ea3c880f62968f60d",
+    "spec_sha256": "a2dbfce39cc2e208d6eb8171e089acc25a53b352e4a60823aa0578b33b4a6f6c",
+    "pair_sha256": "431060294e678adb4aeb0899e65c6d89abef7f03e61cc84b6674ccdcea1ac58d"
+  },
+  {
+    "workflow": "github.issue.update.apply",
+    "contract_id": "github.issue.update.apply",
+    "contract_version": 1,
+    "runner_entry": "github-issue-update.mjs",
+    "contract_spec": "github-issue-update.md",
+    "contract_test": "github-issue-update.test.mjs",
+    "runner_sha256": "4e47eca8fbe9e52567d6080211bde00fb0953adf2941605ea3c880f62968f60d",
+    "spec_sha256": "a2dbfce39cc2e208d6eb8171e089acc25a53b352e4a60823aa0578b33b4a6f6c",
+    "pair_sha256": "abd76b09a6510b6d04cd3b63823a8cf0210851605315d696c92f4a4569433fc6"
+  },
+  {
+    "workflow": "github.issue.comment.preflight",
+    "contract_id": "github.issue.comment.preflight",
+    "contract_version": 1,
+    "runner_entry": "github-issue-comment.mjs",
+    "contract_spec": "github-issue-comment.md",
+    "contract_test": "github-issue-comment.test.mjs",
+    "runner_sha256": "39ad437e3f323cd8341d6a96dc787562fa3e24ca02e84623e06a62cb024d4b48",
+    "spec_sha256": "7cd1a47a0913a18900c9235a47c004c9c20bf843f52ad8d6335f827cbdbc78af",
+    "pair_sha256": "b274025bab9be237f2b243bb0960c99a0c03cee2a77ccefc06e57c8c79242394"
+  },
+  {
+    "workflow": "github.issue.comment.apply",
+    "contract_id": "github.issue.comment.apply",
+    "contract_version": 1,
+    "runner_entry": "github-issue-comment.mjs",
+    "contract_spec": "github-issue-comment.md",
+    "contract_test": "github-issue-comment.test.mjs",
+    "runner_sha256": "39ad437e3f323cd8341d6a96dc787562fa3e24ca02e84623e06a62cb024d4b48",
+    "spec_sha256": "7cd1a47a0913a18900c9235a47c004c9c20bf843f52ad8d6335f827cbdbc78af",
+    "pair_sha256": "210f2b657c7600213d781b9d0953729eb02daddd0d12060f84ffd6a339738f4e"
+  },
+  {
+    "workflow": "github.issue.label.preflight",
+    "contract_id": "github.issue.label.preflight",
+    "contract_version": 1,
+    "runner_entry": "github-issue-label-update.mjs",
+    "contract_spec": "github-issue-label-update.md",
+    "contract_test": "github-issue-label-update.test.mjs",
+    "runner_sha256": "15e5c3fe78d664d5e240e71efa9238ed5a69f24a0adc9583eb26e9c40c4a4bdb",
+    "spec_sha256": "df2f63b262604ea976002c001c56a7a38917a62fb62a12548e8ae22252591b4f",
+    "pair_sha256": "2e34400f7bf0c5d3ffb1cd0df91f1023f5abcd8bdf8579b349e96ee95c294ed1"
+  },
+  {
+    "workflow": "github.issue.label.apply",
+    "contract_id": "github.issue.label.apply",
+    "contract_version": 1,
+    "runner_entry": "github-issue-label-update.mjs",
+    "contract_spec": "github-issue-label-update.md",
+    "contract_test": "github-issue-label-update.test.mjs",
+    "runner_sha256": "15e5c3fe78d664d5e240e71efa9238ed5a69f24a0adc9583eb26e9c40c4a4bdb",
+    "spec_sha256": "df2f63b262604ea976002c001c56a7a38917a62fb62a12548e8ae22252591b4f",
+    "pair_sha256": "ba2eed28512e068b2f957a0be1d4a3101ab0f48648f52e8a5cf20820b21eb91a"
+  },
+  {
+    "workflow": "github.issue.close.preflight",
+    "contract_id": "github.issue.close.preflight",
+    "contract_version": 1,
+    "runner_entry": "github-issue-close.mjs",
+    "contract_spec": "github-issue-close.md",
+    "contract_test": "github-issue-close.test.mjs",
+    "runner_sha256": "b1dfa8384b882a8544960480ae7aefaa77d7ebbe2e43ef4f2d611d47d0a163b7",
+    "spec_sha256": "939441e04e4cd7116b45f7f4e5a86b5c3c9c5ddcca76c8535c894be8a49e3638",
+    "pair_sha256": "d6fdc42dd39d24894cc96641478ff01488f28ab2271e82b7c904ca7c762782ee"
+  },
+  {
+    "workflow": "github.issue.close.apply",
+    "contract_id": "github.issue.close.apply",
+    "contract_version": 1,
+    "runner_entry": "github-issue-close.mjs",
+    "contract_spec": "github-issue-close.md",
+    "contract_test": "github-issue-close.test.mjs",
+    "runner_sha256": "b1dfa8384b882a8544960480ae7aefaa77d7ebbe2e43ef4f2d611d47d0a163b7",
+    "spec_sha256": "939441e04e4cd7116b45f7f4e5a86b5c3c9c5ddcca76c8535c894be8a49e3638",
+    "pair_sha256": "7eff247d6895e407c29377c29daa9c98b5383d21fbe6036c38bcf7db6e7c2952"
+  },
+  {
     "workflow": "repository.maintenance.diagnose",
     "contract_id": "repository.maintenance.diagnose",
     "contract_version": 1,

@@ -15,6 +15,22 @@ import {
   runIssueRead,
 } from "./github-issue-read.mjs";
 import {
+  parseArgs as parseIssueUpdateArgs,
+  runIssueUpdate,
+} from "./github-issue-update.mjs";
+import {
+  parseArgs as parseIssueCommentArgs,
+  runIssueComment,
+} from "./github-issue-comment.mjs";
+import {
+  parseArgs as parseIssueLabelArgs,
+  runIssueLabelUpdate,
+} from "./github-issue-label-update.mjs";
+import {
+  parseArgs as parseIssueCloseArgs,
+  runIssueClose,
+} from "./github-issue-close.mjs";
+import {
   applyMaintenancePlan,
   diagnose as diagnoseMaintenance,
   parseArgs as parseMaintenanceArgs,
@@ -70,6 +86,14 @@ Workflow IDs:
   github.read.batch
   github.issue.create.preflight
   github.issue.create.apply
+  github.issue.update.preflight
+  github.issue.update.apply
+  github.issue.comment.preflight
+  github.issue.comment.apply
+  github.issue.label.preflight
+  github.issue.label.apply
+  github.issue.close.preflight
+  github.issue.close.apply
   repository.maintenance.diagnose
   repository.maintenance.plan
   repository.maintenance.apply
@@ -166,6 +190,73 @@ function issueCreateWorkflow(mode, dependencies) {
     },
     execute(options) {
       return runIssueCreate(options, dependencies.issueCreateDependencies);
+    },
+  };
+}
+
+const ISSUE_MUTATION_DELEGATES = Object.freeze({
+  update: {
+    parse: parseIssueUpdateArgs,
+    run: runIssueUpdate,
+    dependency: "issueUpdateExecute",
+    runDependencies: "issueUpdateDependencies",
+  },
+  comment: {
+    parse: parseIssueCommentArgs,
+    run: runIssueComment,
+    dependency: "issueCommentExecute",
+    runDependencies: "issueCommentDependencies",
+  },
+  label: {
+    parse: parseIssueLabelArgs,
+    run: runIssueLabelUpdate,
+    dependency: "issueLabelExecute",
+    runDependencies: "issueLabelDependencies",
+  },
+  close: {
+    parse: parseIssueCloseArgs,
+    run: runIssueClose,
+    dependency: "issueCloseExecute",
+    runDependencies: "issueCloseDependencies",
+  },
+});
+
+function issueMutationWorkflow(kind, mode, dependencies) {
+  const delegate = ISSUE_MUTATION_DELEGATES[kind];
+  return {
+    version: 1,
+    mutationLevel: mode === "apply" ? "remote" : "readonly",
+    approvalGate: mode,
+    parse(argv, cwd) {
+      const options = delegate.parse(argv, cwd);
+      if (mode === "preflight" && options.apply) {
+        throw new Error(`github.issue.${kind}.preflight rejects --apply`);
+      }
+      if (mode === "apply" && !options.apply) {
+        throw new Error(`github.issue.${kind}.apply requires --apply and reviewed digests`);
+      }
+      if (mode === "apply" && !options.expectedContractPairSha256) {
+        throw new Error(`github.issue.${kind}.apply requires the reviewed workflow contract digest`);
+      }
+      return options;
+    },
+    plan(options) {
+      return {
+        operation: `github-issue-${kind}-${mode}`,
+        repository: options.repository,
+        issue: options.issueNumber,
+        draft: options.draft || null,
+        labels: kind === "label" || kind === "update"
+          ? { add: options.addLabels, remove: options.removeLabels }
+          : null,
+        reason: options.reason || null,
+        duplicate_of: options.duplicateOf || null,
+        mutation_invocation_allowed: mode === "apply",
+      };
+    },
+    execute(options) {
+      const implementation = dependencies[delegate.dependency] ?? delegate.run;
+      return implementation(options, dependencies[delegate.runDependencies]);
     },
   };
 }
@@ -359,6 +450,14 @@ export function workflowRegistry(dependencies = {}) {
     }],
     ["github.issue.create.preflight", issueCreateWorkflow("preflight", dependencies)],
     ["github.issue.create.apply", issueCreateWorkflow("apply", dependencies)],
+    ["github.issue.update.preflight", issueMutationWorkflow("update", "preflight", dependencies)],
+    ["github.issue.update.apply", issueMutationWorkflow("update", "apply", dependencies)],
+    ["github.issue.comment.preflight", issueMutationWorkflow("comment", "preflight", dependencies)],
+    ["github.issue.comment.apply", issueMutationWorkflow("comment", "apply", dependencies)],
+    ["github.issue.label.preflight", issueMutationWorkflow("label", "preflight", dependencies)],
+    ["github.issue.label.apply", issueMutationWorkflow("label", "apply", dependencies)],
+    ["github.issue.close.preflight", issueMutationWorkflow("close", "preflight", dependencies)],
+    ["github.issue.close.apply", issueMutationWorkflow("close", "apply", dependencies)],
     ["repository.maintenance.diagnose", maintenanceWorkflow("diagnose", dependencies)],
     ["repository.maintenance.plan", maintenanceWorkflow("plan", dependencies)],
     ["repository.maintenance.apply", maintenanceWorkflow("apply", dependencies)],

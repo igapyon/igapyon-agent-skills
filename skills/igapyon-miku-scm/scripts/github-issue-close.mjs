@@ -6,6 +6,9 @@ import { mkdir, open, readFile, realpath, rename, rm, writeFile } from "node:fs/
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+
+const ISSUE_CLOSE_APPLY_CONTRACT = workflowContractById().get("github.issue.close.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const REASONS = new Set(["completed", "not planned", "duplicate"]);
@@ -31,6 +34,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
     expectedCurrentBodySha256: "",
     expectedDuplicateSha256: "",
     expectedUpdatedAt: "",
+    expectedContractPairSha256: "",
     apply: false,
     help: false,
   };
@@ -50,6 +54,8 @@ export function parseArgs(argv, cwd = process.cwd()) {
       options.expectedDuplicateSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-updated-at") {
       options.expectedUpdatedAt = argv[++index] ?? "";
+    } else if (arg === "--expected-contract-pair-sha256") {
+      options.expectedContractPairSha256 = argv[++index] ?? "";
     } else if (arg === "--apply") options.apply = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -78,6 +84,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
     ["--expected-operation-sha256", options.expectedOperationSha256],
     ["--expected-current-body-sha256", options.expectedCurrentBodySha256],
     ["--expected-duplicate-sha256", options.expectedDuplicateSha256],
+    ["--expected-contract-pair-sha256", options.expectedContractPairSha256],
   ]) {
     if (value && !SHA256_PATTERN.test(value)) throw new Error(`${name} must be a SHA-256 digest`);
   }
@@ -95,7 +102,9 @@ export function parseArgs(argv, cwd = process.cwd()) {
   if (options.reason !== "duplicate" && options.expectedDuplicateSha256) {
     throw new Error("--expected-duplicate-sha256 is used only for duplicate");
   }
-  if (!options.apply && (expected.some(Boolean) || options.expectedDuplicateSha256)) {
+  if (!options.apply
+    && (expected.some(Boolean) || options.expectedDuplicateSha256
+      || options.expectedContractPairSha256)) {
     throw new Error("expected values are used only with --apply");
   }
   return options;
@@ -245,6 +254,7 @@ function applyArguments(options, digest, current, duplicate) {
     "--expected-current-body-sha256", sha256(current.body),
     ...(duplicate ? ["--expected-duplicate-sha256", issueSnapshotSha256(duplicate)] : []),
     "--expected-updated-at", current.updatedAt,
+    "--expected-contract-pair-sha256", ISSUE_CLOSE_APPLY_CONTRACT.pair_sha256,
     "--apply",
   ];
   if (path.resolve(options.root) !== process.cwd()) args.push("--root", path.resolve(options.root));
@@ -328,6 +338,10 @@ export async function runIssueClose(options, dependencies = {}) {
         : null,
       apply_arguments: applyArguments(options, digest, current, duplicate),
     };
+  }
+  if (options.expectedContractPairSha256
+    && options.expectedContractPairSha256.toLowerCase() !== ISSUE_CLOSE_APPLY_CONTRACT.pair_sha256) {
+    throw new Error("Issue close workflow contract changed; run preflight again");
   }
   if (digest !== options.expectedOperationSha256.toLowerCase()) {
     throw new Error("Reviewed close operation changed");

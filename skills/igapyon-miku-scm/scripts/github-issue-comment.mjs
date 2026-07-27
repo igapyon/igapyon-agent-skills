@@ -16,6 +16,9 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+
+const ISSUE_COMMENT_APPLY_CONTRACT = workflowContractById().get("github.issue.comment.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const DRAFT_PATTERN = /^issue-(\d+)-comment-\d{12}(?:-\d+)?\.md$/;
@@ -41,6 +44,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
     expectedDraftSha256: "",
     expectedIssueSha256: "",
     expectedUpdatedAt: "",
+    expectedContractPairSha256: "",
     apply: false,
     help: false,
   };
@@ -57,6 +61,8 @@ export function parseArgs(argv, cwd = process.cwd()) {
       options.expectedIssueSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-updated-at") {
       options.expectedUpdatedAt = argv[++index] ?? "";
+    } else if (arg === "--expected-contract-pair-sha256") {
+      options.expectedContractPairSha256 = argv[++index] ?? "";
     } else if (arg === "--apply") options.apply = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -75,6 +81,10 @@ export function parseArgs(argv, cwd = process.cwd()) {
   if (options.expectedIssueSha256 && !SHA256_PATTERN.test(options.expectedIssueSha256)) {
     throw new Error("--expected-issue-sha256 must be a SHA-256 digest");
   }
+  if (options.expectedContractPairSha256
+    && !SHA256_PATTERN.test(options.expectedContractPairSha256)) {
+    throw new Error("--expected-contract-pair-sha256 must be a SHA-256 digest");
+  }
   if (
     options.apply
     && (!options.expectedDraftSha256 || !options.expectedIssueSha256 || !options.expectedUpdatedAt)
@@ -83,7 +93,8 @@ export function parseArgs(argv, cwd = process.cwd()) {
   }
   if (
     !options.apply
-    && (options.expectedDraftSha256 || options.expectedIssueSha256 || options.expectedUpdatedAt)
+    && (options.expectedDraftSha256 || options.expectedIssueSha256 || options.expectedUpdatedAt
+      || options.expectedContractPairSha256)
   ) {
     throw new Error("expected values are used only with --apply");
   }
@@ -320,6 +331,7 @@ function applyArguments(options, draft, issue) {
     "--expected-draft-sha256", draft.digest,
     "--expected-issue-sha256", issueSha256(issue),
     "--expected-updated-at", issue.updatedAt,
+    "--expected-contract-pair-sha256", ISSUE_COMMENT_APPLY_CONTRACT.pair_sha256,
     "--apply",
   ];
   if (path.resolve(options.root) !== process.cwd()) args.push("--root", draft.root);
@@ -362,6 +374,10 @@ export async function runIssueComment(options, dependencies = {}) {
       current_updated_at: issue.updatedAt,
       apply_arguments: applyArguments(options, draft, issue),
     };
+  }
+  if (options.expectedContractPairSha256
+    && options.expectedContractPairSha256.toLowerCase() !== ISSUE_COMMENT_APPLY_CONTRACT.pair_sha256) {
+    throw new Error("Issue comment workflow contract changed; run preflight again");
   }
   if (draft.digest !== options.expectedDraftSha256.toLowerCase()) {
     throw new Error("Reviewed comment draft changed");

@@ -33,11 +33,13 @@ function optionsFor(state, ...extra) {
 }
 
 function applyOptions(state, preflight) {
+  const contractIndex = preflight.apply_arguments.indexOf("--expected-contract-pair-sha256");
   return optionsFor(
     state,
     "--expected-operation-sha256", preflight.operation_sha256,
     "--expected-current-body-sha256", preflight.current_body_sha256,
     "--expected-updated-at", preflight.current_updated_at,
+    "--expected-contract-pair-sha256", preflight.apply_arguments[contractIndex + 1],
     "--apply",
   );
 }
@@ -52,6 +54,7 @@ test("preflight exposes the complete Open Issue and close operation", async (t) 
   assert.equal(result.status, "preflight-ok");
   assert.equal(result.current_body, "Body.\n");
   assert.equal(result.reason, "completed");
+  assert.ok(result.apply_arguments.includes("--expected-contract-pair-sha256"));
   assert.equal(calls, 0);
   await assert.rejects(access(path.join(state.root, result.attempt_record)), /ENOENT/);
 });

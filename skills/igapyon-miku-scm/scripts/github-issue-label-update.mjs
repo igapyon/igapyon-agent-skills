@@ -6,6 +6,9 @@ import { mkdir, open, readFile, realpath, rename, rm, writeFile } from "node:fs/
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+
+const ISSUE_LABEL_APPLY_CONTRACT = workflowContractById().get("github.issue.label.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const ATTEMPT_STATUSES = new Set(["pending", "updated", "conflict", "not-applied", "unresolved"]);
@@ -30,6 +33,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
     expectedOperationSha256: "",
     expectedCurrentLabelsSha256: "",
     expectedUpdatedAt: "",
+    expectedContractPairSha256: "",
     apply: false,
     help: false,
   };
@@ -47,6 +51,8 @@ export function parseArgs(argv, cwd = process.cwd()) {
       options.expectedCurrentLabelsSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-updated-at") {
       options.expectedUpdatedAt = argv[++index] ?? "";
+    } else if (arg === "--expected-contract-pair-sha256") {
+      options.expectedContractPairSha256 = argv[++index] ?? "";
     } else if (arg === "--apply") options.apply = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -79,6 +85,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
   for (const [name, value] of [
     ["--expected-operation-sha256", options.expectedOperationSha256],
     ["--expected-current-labels-sha256", options.expectedCurrentLabelsSha256],
+    ["--expected-contract-pair-sha256", options.expectedContractPairSha256],
   ]) {
     if (value && !SHA256_PATTERN.test(value)) throw new Error(`${name} must be a SHA-256 digest`);
   }
@@ -90,7 +97,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
   if (options.apply && expected.some((value) => !value)) {
     throw new Error("--apply requires all reviewed expected values");
   }
-  if (!options.apply && expected.some(Boolean)) {
+  if (!options.apply && (expected.some(Boolean) || options.expectedContractPairSha256)) {
     throw new Error("expected values are used only with --apply");
   }
   return options;
@@ -335,6 +342,7 @@ function applyArguments(options, operationDigest, current) {
     "--expected-operation-sha256", operationDigest,
     "--expected-current-labels-sha256", labelsSha256(current.labels),
     "--expected-updated-at", current.updatedAt,
+    "--expected-contract-pair-sha256", ISSUE_LABEL_APPLY_CONTRACT.pair_sha256,
     "--apply",
   ];
   if (path.resolve(options.root) !== process.cwd()) args.push("--root", path.resolve(options.root));
@@ -381,6 +389,10 @@ export async function runIssueLabelUpdate(options, dependencies = {}) {
       current_updated_at: current.updatedAt,
       apply_arguments: applyArguments(options, digest, current),
     };
+  }
+  if (options.expectedContractPairSha256
+    && options.expectedContractPairSha256.toLowerCase() !== ISSUE_LABEL_APPLY_CONTRACT.pair_sha256) {
+    throw new Error("Issue label workflow contract changed; run preflight again");
   }
   if (digest !== options.expectedOperationSha256.toLowerCase()) {
     throw new Error("Reviewed label operation changed");

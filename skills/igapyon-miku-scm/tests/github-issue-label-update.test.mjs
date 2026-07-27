@@ -39,11 +39,13 @@ function optionsFor(state, ...extra) {
 }
 
 function applyOptions(state, preflight) {
+  const contractIndex = preflight.apply_arguments.indexOf("--expected-contract-pair-sha256");
   return optionsFor(
     state,
     "--expected-operation-sha256", preflight.operation_sha256,
     "--expected-current-labels-sha256", preflight.current_labels_sha256,
     "--expected-updated-at", preflight.current_updated_at,
+    "--expected-contract-pair-sha256", preflight.apply_arguments[contractIndex + 1],
     "--apply",
   );
 }
@@ -59,6 +61,7 @@ test("preflight returns exact current and resulting labels without gh", async (t
   assert.equal(result.status, "preflight-ok");
   assert.deepEqual(result.current_labels, ["bug"]);
   assert.deepEqual(result.resulting_labels, ["enhancement"]);
+  assert.ok(result.apply_arguments.includes("--expected-contract-pair-sha256"));
   assert.equal(calls, 0);
   await assert.rejects(access(path.join(state.root, result.attempt_record)), /ENOENT/);
 });

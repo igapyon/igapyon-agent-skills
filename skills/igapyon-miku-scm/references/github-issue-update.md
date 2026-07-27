@@ -59,7 +59,7 @@ Preflight is READONLY and uses only the fixed `gh issue view` and, when label ch
 - current `updated_at`
 - the single exact planned `gh issue edit` operation
 
-Wait for explicit human approval after displaying all of this evidence. Approval authorizes one attempt for only the displayed repository, Issue, draft digest, current body digest, and `updated_at`. Editing the draft or observing a changed Issue invalidates that approval.
+Wait for explicit human approval after displaying all of this evidence. Approval authorizes one attempt for only the displayed repository, Issue, draft digest, current body digest, `updated_at`, and apply workflow contract pair. Editing the draft, changing the workflow contract, or observing a changed Issue invalidates that approval.
 
 ## Apply and Conflict Detection
 
@@ -76,6 +76,7 @@ node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \
   --expected-update-sha256 <reviewed-update-sha256> \
   --expected-current-issue-sha256 <reviewed-current-issue-sha256> \
   --expected-updated-at <reviewed-updated-at> \
+  --expected-contract-pair-sha256 <reviewed-contract-sha256> \
   --apply
 ```
 

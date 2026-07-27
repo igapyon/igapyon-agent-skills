@@ -51,6 +51,7 @@ function optionsFor(state, ...extra) {
 }
 
 function applyOptions(state, preflight, ...operationArgs) {
+  const contractIndex = preflight.apply_arguments.indexOf("--expected-contract-pair-sha256");
   return optionsFor(
     state,
     ...operationArgs,
@@ -58,6 +59,7 @@ function applyOptions(state, preflight, ...operationArgs) {
     "--expected-update-sha256", preflight.update_sha256,
     "--expected-current-issue-sha256", preflight.current_issue_sha256,
     "--expected-updated-at", preflight.current_updated_at,
+    "--expected-contract-pair-sha256", preflight.apply_arguments[contractIndex + 1],
     "--apply",
   );
 }
@@ -90,6 +92,7 @@ test("preflight retrieves the Issue through the fixed reader and exposes complet
   assert.ok(result.apply_arguments.includes(result.current_issue_sha256));
   assert.ok(result.apply_arguments.includes(result.update_sha256));
   assert.ok(result.apply_arguments.includes(result.current_updated_at));
+  assert.ok(result.apply_arguments.includes("--expected-contract-pair-sha256"));
   await assert.rejects(access(path.join(state.root, result.attempt_record)), /ENOENT/);
 });
 
