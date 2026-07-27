@@ -361,9 +361,9 @@ release staging に全 skill をそろえた後、同梱した index generator �
 - `miku-repo-bundle-skills` `v0.5.0.1` (experimental): `skills/igapyon-miku-repo-bundle/`
 - `miku-grep-skills` `v0.10.1.1` (experimental): `skills/igapyon-miku-grep/`
 - `miku-prompt-lint-skills` `v0.5.0`: `skills/igapyon-miku-prompt-lint/`
-- `miku-ai-assistant-builder-skills` `v0.10.0`: `skills/igapyon-miku-ai-assistant-builder/`
-- `miku-ms-office-skills` `v0.6.2`: `skills/igapyon-miku-ms-office/`
-- `miku-json2xlsx-skills` `v0.3.0`: `skills/igapyon-miku-json2xlsx/`
+- `miku-ai-assistant-builder-skills` `v0.11.1`: `skills/igapyon-miku-ai-assistant-builder/`
+- `miku-ms-office-skills` `v0.7.1`: `skills/igapyon-miku-ms-office/`
+- `miku-json2xlsx-skills` `v0.4.2`: `skills/igapyon-miku-json2xlsx/`
 - `miku-readfile-skills` `v0.5.0.2`: `skills/miku-readfile/`
 - `mikuproject-skills` `v0.8.1.1`: `skills/mikuproject/`
 - `mikuscore-skills` `v0.1.0`: `skills/mikuscore/`
