@@ -1,6 +1,7 @@
 export const WORKFLOW_MANIFEST_VERSION = "miku-scm.workflow-manifest/v1";
+export const WORKFLOW_CONTRACT_VERSION = 1;
 
-export const WORKFLOW_MANIFEST = Object.freeze([
+const WORKFLOW_DEFINITIONS = [
   {
     id: "repository.status",
     triggers: ["リポジトリ状態", "branch status", "repository state"],
@@ -136,7 +137,31 @@ export const WORKFLOW_MANIFEST = Object.freeze([
     runner_entry: "miku-scm-version.mjs",
     references: ["version-workflow-runner.md", "version-increment.md", "deterministic-workflow-runner.md"],
   },
-]);
+];
+
+const CONTRACT_TEST_BY_RUNNER = Object.freeze({
+  "miku-scm-local-snapshot.mjs": "miku-scm-local-snapshot.test.mjs",
+  "github-issue-read.mjs": "github-issue-read.test.mjs",
+  "miku-scm-github-readonly.mjs": "miku-scm-github-readonly.test.mjs",
+  "github-issue-create.mjs": "github-issue-create.test.mjs",
+  "repository-maintenance.mjs": "repository-maintenance.test.mjs",
+  "post-merge-next-work.mjs": "post-recommit-publish.test.mjs",
+  "post-recommit-publish.mjs": "post-recommit-publish.test.mjs",
+  "pr-soft-reset-recommit-preflight.mjs": "miku-scm-recommit.test.mjs",
+  "miku-scm-version.mjs": "miku-scm-version.test.mjs",
+});
+
+export const WORKFLOW_MANIFEST = Object.freeze(WORKFLOW_DEFINITIONS.map((entry) => Object.freeze({
+  ...entry,
+  contract_id: entry.id,
+  contract_version: WORKFLOW_CONTRACT_VERSION,
+  contract_spec: entry.references.find((reference) => reference !== "deterministic-workflow-runner.md"),
+  contract_test: CONTRACT_TEST_BY_RUNNER[entry.runner_entry],
+  // Runtime routing intentionally needs no detailed Markdown. The references
+  // above remain the design, maintenance, and exception documentation.
+  runtime_references: Object.freeze([]),
+  design_references: Object.freeze([...entry.references]),
+})));
 
 export function workflowManifestById() {
   return new Map(WORKFLOW_MANIFEST.map((entry) => [entry.id, entry]));

@@ -38,6 +38,10 @@ import {
   workflowManifestById,
 } from "./miku-scm-workflow-manifest.mjs";
 import {
+  WORKFLOW_CONTRACT_LOCK_VERSION,
+  workflowContractById,
+} from "./miku-scm-workflow-contract-lock.mjs";
+import {
   collectLocalSnapshot,
   parseLocalSnapshotArgs,
 } from "./miku-scm-local-snapshot.mjs";
@@ -144,6 +148,9 @@ function issueCreateWorkflow(mode, dependencies) {
       }
       if (mode === "apply" && !options.apply) {
         throw new Error("github.issue.create.apply requires --apply and reviewed digests");
+      }
+      if (mode === "apply" && !options.expectedContractPairSha256) {
+        throw new Error("github.issue.create.apply requires the reviewed workflow contract digest");
       }
       return options;
     },
@@ -381,17 +388,25 @@ export function workflowRegistry(dependencies = {}) {
     ["version.increment.validate", versionWorkflow("validate", dependencies)],
   ]);
   const manifest = workflowManifestById();
+  const contracts = workflowContractById();
   if (manifest.size !== implementations.size
-    || [...implementations.keys()].some((id) => !manifest.has(id))) {
+    || contracts.size !== implementations.size
+    || [...implementations.keys()].some((id) => !manifest.has(id) || !contracts.has(id))) {
     throw new Error("Workflow manifest and runner implementation registry are inconsistent");
   }
   return new Map([...implementations].map(([id, implementation]) => {
     const metadata = manifest.get(id);
+    const contract = contracts.get(id);
     if (metadata.mutation_level !== implementation.mutationLevel
-      || metadata.approval_gate !== implementation.approvalGate) {
+      || metadata.approval_gate !== implementation.approvalGate
+      || metadata.contract_id !== contract.contract_id
+      || metadata.contract_version !== contract.contract_version
+      || metadata.runner_entry !== contract.runner_entry
+      || metadata.contract_spec !== contract.contract_spec
+      || metadata.contract_test !== contract.contract_test) {
       throw new Error(`Workflow manifest safety metadata mismatch: ${id}`);
     }
-    return [id, { ...implementation, manifest: metadata }];
+    return [id, { ...implementation, manifest: metadata, contract }];
   }));
 }
 
@@ -414,6 +429,12 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
 
   const startedAt = now.toISOString();
   const performanceStarted = performance.now();
+  const contractFields = {
+    workflow_contract: workflow.contract.contract_id,
+    contract_version: workflow.contract.contract_version,
+    contract_pair_sha256: workflow.contract.pair_sha256,
+    workflow_contract_lock_version: WORKFLOW_CONTRACT_LOCK_VERSION,
+  };
   const request = {
     schema_version: RUNNER_SCHEMA_VERSION,
     run_id: runId,
@@ -422,6 +443,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
     workflow_manifest_version: WORKFLOW_MANIFEST_VERSION,
     mutation_level: workflow.mutationLevel,
     approval_gate: workflow.approvalGate,
+    ...contractFields,
     arguments: publicArguments(argv),
     started_at: startedAt,
   };
@@ -441,6 +463,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       workflow_manifest_version: WORKFLOW_MANIFEST_VERSION,
       mutation_level: workflow.mutationLevel,
       approval_gate: workflow.approvalGate,
+      ...contractFields,
       ...workflow.plan(options),
     };
     await writeJsonAtomic(path.join(runDirectory, "plan.json"), plan);
@@ -456,6 +479,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       workflow_manifest_version: WORKFLOW_MANIFEST_VERSION,
       mutation_level: workflow.mutationLevel,
       approval_gate: workflow.approvalGate,
+      ...contractFields,
       status: normalizedStatus(delegateResult?.status, workflow.mutationLevel),
       delegate_status: delegateResult?.status ?? null,
       started_at: startedAt,
@@ -469,6 +493,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       schema_version: RUNNER_SCHEMA_VERSION,
       run_id: runId,
       workflow: workflowId,
+      ...contractFields,
       delegate_result: delegateResult,
     });
     if (workflow.approvalGate === "apply") {
@@ -476,6 +501,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
         schema_version: RUNNER_SCHEMA_VERSION,
         run_id: runId,
         workflow: workflowId,
+        ...contractFields,
         status: result.status,
         delegate_status: result.delegate_status,
         delegate_attempt_record: delegateResult?.attempt_record ?? null,
@@ -510,6 +536,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       workflow_manifest_version: WORKFLOW_MANIFEST_VERSION,
       mutation_level: workflow.mutationLevel,
       approval_gate: workflow.approvalGate,
+      ...contractFields,
       status: mutationInvoked === false
         ? "not-applied"
         : executeStarted && workflow.approvalGate === "apply"
@@ -534,6 +561,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
         schema_version: RUNNER_SCHEMA_VERSION,
         run_id: runId,
         workflow: workflowId,
+        ...contractFields,
         status: result.status,
         delegate_status: null,
       });
@@ -542,11 +570,13 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       schema_version: RUNNER_SCHEMA_VERSION,
       run_id: runId,
       workflow: workflowId,
+      ...contractFields,
       error: result.error,
     });
     await writeJsonAtomic(path.join(runDirectory, "error-event.json"), {
       schema_version: RUNNER_SCHEMA_VERSION,
       run_id: runId,
+      ...contractFields,
       ...event,
       message,
       recorded_at: finishedAt,

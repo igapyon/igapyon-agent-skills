@@ -6,6 +6,9 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
+import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+
+const MAINTENANCE_APPLY_CONTRACT = workflowContractById().get("repository.maintenance.apply");
 const SHA = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i;
 const REMOTE = /^[A-Za-z0-9._-]+$/;
 const PLAN_PATH = /^workplace\/miku-scm\/maintenance\/plans\/[A-Za-z0-9._-]+\.json$/;
@@ -424,6 +427,9 @@ export async function saveMaintenancePlan(diagnosis, dependencies = {}) {
   const now = dependencies.now ? dependencies.now() : new Date();
   const plan = {
     schema_version: 1,
+    workflow_contract: MAINTENANCE_APPLY_CONTRACT.contract_id,
+    contract_version: MAINTENANCE_APPLY_CONTRACT.contract_version,
+    contract_pair_sha256: MAINTENANCE_APPLY_CONTRACT.pair_sha256,
     repository: diagnosis.repository,
     remote: diagnosis.remote,
     created_at: now.toISOString(),
@@ -464,6 +470,11 @@ async function loadPlan(options) {
         || !Number.isSafeInteger(candidate.pull_request?.number) || candidate.pull_request.number <= 0))
       || (candidate.kind === "backup" && !candidate.branch.startsWith("backup/")))) {
     throw new Error("Malformed maintenance plan");
+  }
+  if (plan.workflow_contract !== MAINTENANCE_APPLY_CONTRACT.contract_id
+    || plan.contract_version !== MAINTENANCE_APPLY_CONTRACT.contract_version
+    || plan.contract_pair_sha256 !== MAINTENANCE_APPLY_CONTRACT.pair_sha256) {
+    throw new Error("Maintenance plan workflow contract changed; run planning again");
   }
   return { root, file, plan };
 }

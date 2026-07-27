@@ -291,6 +291,10 @@ test("saved plan applies once after revalidation and records recovery data", asy
   const saved = await saveMaintenancePlan(diagnosis, dependencies);
   assert.match(saved.plan_path, /^workplace\/miku-scm\/maintenance\/plans\/maintenance-/);
   assert.match(saved.plan_sha256, /^[0-9a-f]{64}$/);
+  const savedPlan = JSON.parse(await readFile(path.join(state.root, saved.plan_path), "utf8"));
+  assert.equal(savedPlan.workflow_contract, "repository.maintenance.apply");
+  assert.equal(savedPlan.contract_version, 1);
+  assert.match(savedPlan.contract_pair_sha256, /^[0-9a-f]{64}$/);
 
   const applied = await applyMaintenancePlan(options(state.root,
     "--apply-plan", saved.plan_path,

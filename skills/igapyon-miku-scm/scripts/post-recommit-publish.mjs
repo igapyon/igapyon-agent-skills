@@ -6,7 +6,10 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
+import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+
 const SHA_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i;
+const PUBLISH_APPLY_CONTRACT = workflowContractById().get("pr.publish.apply");
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/post-recommit-publish.mjs \\
@@ -111,7 +114,10 @@ async function savePlan(root, result) {
   const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 12);
   const plan = { schema_version: 1, repository: result.repository, branch: result.branch, remote: result.remote,
     reviewed_head: result.head, remote_branch: result.remote_branch, done_branch: `${result.branch}-done`,
-    preflight_at: new Date().toISOString(), push_mode: result.remote_branch.state === "absent" ? "new-branch" : "force-with-explicit-lease" };
+    preflight_at: new Date().toISOString(), push_mode: result.remote_branch.state === "absent" ? "new-branch" : "force-with-explicit-lease",
+    workflow_contract: PUBLISH_APPLY_CONTRACT.contract_id,
+    contract_version: PUBLISH_APPLY_CONTRACT.contract_version,
+    contract_pair_sha256: PUBLISH_APPLY_CONTRACT.pair_sha256 };
   const content = `${JSON.stringify(plan, null, 2)}\n`;
   const digest = sha256(content);
   const filename = `ok-push-${result.branch}-${result.head.slice(0, 12)}-${timestamp}.json`;
@@ -132,6 +138,11 @@ async function loadPlan(options) {
   const plan = JSON.parse(content);
   if (plan?.schema_version !== 1 || !SHA_PATTERN.test(plan.reviewed_head) || !/^[A-Za-z0-9._-]+$/.test(plan.remote)
     || typeof plan.branch !== "string" || !["absent", "existing"].includes(plan?.remote_branch?.state)) throw new Error("Malformed publication plan");
+  if (plan.workflow_contract !== PUBLISH_APPLY_CONTRACT.contract_id
+    || plan.contract_version !== PUBLISH_APPLY_CONTRACT.contract_version
+    || plan.contract_pair_sha256 !== PUBLISH_APPLY_CONTRACT.pair_sha256) {
+    throw new Error("Publication plan workflow contract changed; run preflight again");
+  }
   return { root, file, plan };
 }
 
