@@ -35,10 +35,46 @@ The canonical machine-readable catalog is
 | `repository.maintenance.diagnose` | READONLY | none | `repository-maintenance.mjs` |
 | `repository.maintenance.plan` | READONLY plus operational artifact | preflight | `repository-maintenance.mjs` |
 | `repository.maintenance.apply` | local | apply | `repository-maintenance.mjs` |
+| `repository.post-merge.next-work` | local | apply | `post-merge-next-work.mjs` |
+| `pr.publish.preflight` | READONLY plus operational artifact | preflight | `post-recommit-publish.mjs` |
+| `pr.publish.apply` | remote | apply | `post-recommit-publish.mjs` |
+| `pr.recommit.preflight` | READONLY | preflight | `pr-soft-reset-recommit-preflight.mjs` |
+| `pr.recommit.apply` | local | apply | `pr-soft-reset-recommit-preflight.mjs` |
+| `version.status` | READONLY | none | `miku-scm-version.mjs` |
+| `version.increment.validate` | READONLY | preflight | `miku-scm-version.mjs` |
 
 The preflight and apply IDs are deliberately separate. Selecting a preflight
 workflow can never enable mutation by adding `--apply`. Selecting an apply
 workflow still requires all reviewed digests enforced by its delegate.
+
+`repository.post-merge.next-work` has no separate preflight artifact because
+the human's explicit merge report is its operation-specific approval. It still
+requires both `--confirmed-merged` and `--apply`; the delegate revalidates the
+clean frozen branch, refreshes the base, checks the recommended tag, creates
+the next branch, and verifies exact `0 0` alignment in one invocation.
+
+PR publication retains its two-part human boundary. Use
+`pr.publish.preflight` with the reviewed full local commit SHA and
+`--save-plan`. After the human says `ok push`, pass the returned plan path and
+SHA-256 unchanged to `pr.publish.apply`. The apply workflow does not accept
+ordinary publication arguments and cannot rebuild or broaden the plan.
+
+PR recommit keeps a READONLY inspection ID and a separate local apply ID.
+`pr.recommit.apply` requires explicit `--base`, `--pr-draft`, and `--apply`
+options so the runner cannot silently select a different reviewed range or
+draft. In one delegate call it collects the evidence, revalidates branch,
+HEAD, base ancestry, worktree/index state, and PR draft SHA-256, creates the
+backup branch, performs the soft reset against the verified base commit,
+recommits with the verified draft bytes, and reports the new HEAD. A
+backup-creation failure leaves `mutation_invoked: false`; a later local
+mutation failure is reported as unresolved and must be inspected rather than
+retried blindly.
+
+Version inspection and increment validation remain READONLY. Status may report
+format candidates, but it never resolves repository policy from numeric shape
+alone. Increment validation requires an explicit policy plus the required
+timezone or Semantic Version level and returns proposed values without editing
+them.
 
 ## Invocation
 
@@ -56,6 +92,51 @@ node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   --draft workplace/miku-scm/new-issues/issue-new-202607272148.md \
   --label enhancement \
   --parent 292
+```
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  repository.post-merge.next-work \
+  --confirmed-merged \
+  --apply
+```
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  pr.publish.preflight \
+  --expected-head <reviewed-full-sha> \
+  --save-plan
+```
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  pr.publish.apply \
+  --apply-plan workplace/miku-scm/ok-push/<plan>.json \
+  --expected-plan-sha256 <reviewed-sha256>
+```
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  pr.recommit.preflight \
+  --pr-draft workplace/miku-scm/pr-drafts/<draft>.md
+```
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  pr.recommit.apply \
+  --base origin/devel \
+  --pr-draft workplace/miku-scm/pr-drafts/<draft>.md \
+  --apply
+```
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  version.increment.validate \
+  --version-file pom.xml \
+  --coupled-version-file skills/igapyon-mikuku-agent/references/VERSION.md \
+  --policy miku-date-coupled \
+  --timezone Asia/Tokyo \
+  --validate-increment
 ```
 
 After human approval, use `github.issue.create.apply` with the exact

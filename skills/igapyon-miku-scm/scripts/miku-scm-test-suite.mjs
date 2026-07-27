@@ -8,16 +8,19 @@ import { pathToFileURL } from "node:url";
 
 const SLOW_SHARDS = new Map([
   ["post-recommit-publish.test.mjs", [
-    "^(?:preflight|plan CLI|post-merge|content VERSION)",
+    "^(?:preflight|plan CLI|content VERSION)",
+    "^post-merge",
     "^(?:saved publication|apply rejects a changed|apply rejects a dirty)",
-    "^(?:saved plan remains|apply publishes)",
-    "^(?:apply uses|apply stops when the remote SHA)",
-    "^(?:apply stops before push|fetch failure|push failure|post-push)",
+    "^(?:saved plan remains|programmatic publication)",
+    "^(?:apply publishes|apply uses)",
+    "^(?:apply stops when|apply stops before push|fetch failure)",
+    "^(?:push failure|post-push)",
   ]],
   ["repository-maintenance.test.mjs", [
-    "^(?:argument parser|backup name|diagnosis keeps|backup reachability|diagnosis classifies)",
-    "^(?:diagnosis queries|publication provenance|one hundred|gh failure|gh timeout)",
-    "^(?:open or mismatched|saved plan|apply rejects|apply rechecks|apply stops|current done)",
+    "^(?:argument parser|backup name|diagnosis keeps|backup reachability)",
+    "^(?:diagnosis classifies|diagnosis queries|publication provenance|one hundred)",
+    "^(?:gh failure|gh timeout|open or mismatched|current done)",
+    "^(?:saved plan|apply rejects|apply rechecks|apply stops)",
   ]],
 ]);
 
