@@ -44,8 +44,10 @@ node skills/igapyon-miku-scm/scripts/post-recommit-publish.mjs \
 
 Plan application rechecks the branch, HEAD, clean state, local `-done`
 collision, and remote expectation before pushing. It rejects path escape,
-digest changes, and a plan that already has an attempt record; it never retries
-the push automatically.
+digest changes, and a plan that already has an attempt record. It claims the
+attempt record only after every pre-mutation check succeeds and immediately
+before push. A failure before that claim leaves the reviewed plan unconsumed;
+after the claim, it never retries the push automatically.
 
 The JSON result contains `apply_arguments`. Show the preflight result together
 with the reviewed commit log. Treat the local `HEAD`, pushed branch, remote,
@@ -109,12 +111,13 @@ Apply mode performs these operations in order:
    `--expect-new-remote-branch`.
 7. Run `git fetch <remote>`.
 8. Repeat the local `HEAD`, clean status, and exact remote expectation checks.
-9. Push with the exact destination and selected safe mode.
-10. Run `git fetch <remote>` after push.
-11. Require `git rev-list --left-right --count
+9. For a saved plan, atomically claim its attempt record.
+10. Push with the exact destination and selected safe mode.
+11. Run `git fetch <remote>` after push.
+12. Require `git rev-list --left-right --count
     HEAD...refs/remotes/<remote>/<pushed-branch>` to be `0 0`.
-12. Only after equality, rename the local branch to `<branch>-done`.
-13. Report final status, canonical GitHub repository URL, existing PR or PR
+13. Only after equality, rename the local branch to `<branch>-done`.
+14. Report final status, canonical GitHub repository URL, existing PR or PR
     creation URL, and recommended tag.
 
 The pushed branch name is captured before local rename and remains the source

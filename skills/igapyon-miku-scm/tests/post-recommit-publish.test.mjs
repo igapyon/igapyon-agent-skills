@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +8,7 @@ import test from "node:test";
 
 import {
   createGitRunner,
+  cli,
   parseArgs,
   runPublish,
 } from "../scripts/post-recommit-publish.mjs";
@@ -110,6 +111,28 @@ test("saved publication plan applies once and publishes the reviewed branch", as
   assert.throws(() => execFileSync(process.execPath, [PUBLISH_SCRIPT,
     "--repo", state.repo, "--apply-plan", saved.plan_path,
     "--expected-plan-sha256", saved.plan_sha256], { encoding: "utf8", stdio: "pipe" }));
+});
+
+test("saved plan remains unconsumed when a pre-mutation environment check fails", async (t) => {
+  const state = await scenario(t);
+  const saved = JSON.parse(execFileSync(process.execPath, [PUBLISH_SCRIPT,
+    "--repo", state.repo, "--expected-head", state.expectedHead, "--save-plan"], { encoding: "utf8" }));
+  await assert.rejects(cli([
+    "--repo", state.repo,
+    "--apply-plan", saved.plan_path,
+    "--expected-plan-sha256", saved.plan_sha256,
+  ], {
+    ...applyDependencies,
+    beforeMutation: async () => {
+      throw new Error("sandbox network denied before mutation");
+    },
+  }), /sandbox network denied/);
+  await assert.rejects(
+    readFile(path.join(state.repo, `${saved.plan_path}.attempt.json`), "utf8"),
+    (error) => error?.code === "ENOENT",
+  );
+  assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
+  assert.equal(git(state.remote, "branch", "--list", state.branch), "");
 });
 
 test("post-merge helper creates the next work branch from refreshed devel", async (t) => {
