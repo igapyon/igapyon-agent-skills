@@ -25,6 +25,8 @@ Support documented workflows and read-only inspection for:
 - GitHub UI-first Release tag handoff for human publication
 - version, tag, Release, and distribution-asset consistency audits
 - date-based and semantic version increment workflows
+- deterministic one-shot workflow routing for migrated READONLY, preflight,
+  and apply operations
 
 Do not perform remote mutations, history rewrites, tag changes, release publication, or version changes until the relevant workflow is explicitly documented under `references/` and the user explicitly requests the operation.
 
@@ -54,19 +56,39 @@ This fast path only defers initialization until there is enough information to c
    then use [scripts/repository-maintenance.mjs](scripts/repository-maintenance.mjs).
    Never treat diagnosis, plan creation, `すすめて`, or `整理して` as deletion
    approval.
-10. For the integrated GitHub writing modes, read [references/github-writing-rules.md](references/github-writing-rules.md), then the requested mode: [references/github-pr-writing.md](references/github-pr-writing.md), [references/github-release-writing.md](references/github-release-writing.md), or [references/github-about-writing.md](references/github-about-writing.md). For Issue retrieval, read [references/github-cli-static-helper-policy.md](references/github-cli-static-helper-policy.md) and use its documented fixed helper. For PR Issue matching, also read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and use [scripts/github-issues-cache.mjs](scripts/github-issues-cache.mjs).
-11. For PR soft-reset recommit, read [references/github-pr-soft-reset-recommit.md](references/github-pr-soft-reset-recommit.md) and [references/github-backup-branch.md](references/github-backup-branch.md), then use [scripts/pr-soft-reset-recommit-preflight.mjs](scripts/pr-soft-reset-recommit-preflight.mjs). After the reviewed recommit, read [references/github-post-recommit-publish.md](references/github-post-recommit-publish.md) and use [scripts/post-recommit-publish.mjs](scripts/post-recommit-publish.mjs) for the separately approved publication. Prefer its saved publication-plan handoff: preflight with `--save-plan`, then apply the human-reviewed plan once after `ok push`. For standalone backup or branch-status work, read [references/github-backup-branch.md](references/github-backup-branch.md) or [references/github-branch-status.md](references/github-branch-status.md).
-12. After a human explicitly reports a PR merge, use [scripts/post-merge-next-work.mjs](scripts/post-merge-next-work.mjs) with `--confirmed-merged --apply` for the fixed local fetch, advisory tag check, and next-work-branch workflow. Do not construct a separate `git switch -c` command.
-13. For a local repository GitHub URL query, read [references/github-repository-url.md](references/github-repository-url.md). For a post-push PR URL report, also read [references/github-post-push-pr-url.md](references/github-post-push-pr-url.md).
-14. For generic Issue retrieval, read [references/github-cli-static-helper-policy.md](references/github-cli-static-helper-policy.md) and use its documented fixed helper. For a new public GitHub Issue draft or an existing Issue rewrite, also read [references/github-issue-rewrite-handoff.md](references/github-issue-rewrite-handoff.md). For a requested remote Issue mutation, read and use only its dedicated workflow and helper: [references/github-issue-create.md](references/github-issue-create.md) with [scripts/github-issue-create.mjs](scripts/github-issue-create.mjs), [references/github-issue-update.md](references/github-issue-update.md) with [scripts/github-issue-update.mjs](scripts/github-issue-update.mjs), [references/github-issue-comment.md](references/github-issue-comment.md) with [scripts/github-issue-comment.mjs](scripts/github-issue-comment.mjs), [references/github-issue-label-update.md](references/github-issue-label-update.md) with [scripts/github-issue-label-update.mjs](scripts/github-issue-label-update.mjs), or [references/github-issue-close.md](references/github-issue-close.md) with [scripts/github-issue-close.mjs](scripts/github-issue-close.mjs).
-15. Treat a request about GitHub tag status, including short phrases such as `タグ状況` or `tag status`, as a version, tag, Release, and distribution-asset consistency audit unless the user explicitly narrows the scope. Read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/version-tag-release-audit.md](references/version-tag-release-audit.md).
-16. For recommended-tag guidance after push or merge, read [references/github-release-tag-handoff.md](references/github-release-tag-handoff.md). Treat GitHub Release UI creation by the human as the normal miku-soft handoff; do not present local `git tag` and tag push as the default next operation.
-17. For a requested version increment, read [references/version-increment.md](references/version-increment.md).
-18. For other public GitHub source, branch, or Release inspection, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md). For Issue inspection, use the documented fixed helper in [references/github-cli-static-helper-policy.md](references/github-cli-static-helper-policy.md).
-19. Before any requested `git add` or `git commit`, read and follow [references/version-increment-confirmation.md](references/version-increment-confirmation.md) and [references/repository-precommit-checks.md](references/repository-precommit-checks.md). Read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) when resolving the latest public GitHub version tag for the confirmation display.
-20. Preserve unrelated user changes.
-21. Separate local preparation from remote GitHub operations.
-22. Report what was inspected, changed, and left pending.
+10. For workflows migrated to the deterministic runner, read
+   [references/workflow-routing.md](references/workflow-routing.md) and
+   [references/deterministic-workflow-runner.md](references/deterministic-workflow-runner.md)
+   and invoke [scripts/miku-scm-run.mjs](scripts/miku-scm-run.mjs) with one
+   documented workflow ID and its fixed options. Keep legacy helpers
+   authoritative during migration. A preflight workflow ID never authorizes
+   its corresponding apply workflow.
+   For `repository.status`, also read
+   [references/local-git-snapshot.md](references/local-git-snapshot.md).
+   For `github.read.batch`, also read
+   [references/github-readonly-cache.md](references/github-readonly-cache.md).
+11. For runner performance measurement, read
+   [references/performance-benchmark.md](references/performance-benchmark.md)
+   and use [scripts/miku-scm-benchmark.mjs](scripts/miku-scm-benchmark.mjs).
+   Keep benchmark scenarios remote-free and distinguish cold from warm runs.
+12. For runner or helper implementation changes, read
+   [references/runtime-and-test-suites.md](references/runtime-and-test-suites.md).
+   Use the fast suite for iteration and the full safety suite before handoff.
+   For command-cost or failure-path changes, also read
+   [references/safety-cost-and-errors.md](references/safety-cost-and-errors.md).
+13. For the integrated GitHub writing modes, read [references/github-writing-rules.md](references/github-writing-rules.md), then the requested mode: [references/github-pr-writing.md](references/github-pr-writing.md), [references/github-release-writing.md](references/github-release-writing.md), or [references/github-about-writing.md](references/github-about-writing.md). For Issue retrieval, read [references/github-cli-static-helper-policy.md](references/github-cli-static-helper-policy.md) and use its documented fixed helper. For PR Issue matching, also read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and use [scripts/github-issues-cache.mjs](scripts/github-issues-cache.mjs).
+14. For PR soft-reset recommit, read [references/github-pr-soft-reset-recommit.md](references/github-pr-soft-reset-recommit.md) and [references/github-backup-branch.md](references/github-backup-branch.md), then use [scripts/pr-soft-reset-recommit-preflight.mjs](scripts/pr-soft-reset-recommit-preflight.mjs). After the reviewed recommit, read [references/github-post-recommit-publish.md](references/github-post-recommit-publish.md) and use [scripts/post-recommit-publish.mjs](scripts/post-recommit-publish.mjs) for the separately approved publication. Prefer its saved publication-plan handoff: preflight with `--save-plan`, then apply the human-reviewed plan once after `ok push`. For standalone backup or branch-status work, read [references/github-backup-branch.md](references/github-backup-branch.md) or [references/github-branch-status.md](references/github-branch-status.md).
+15. After a human explicitly reports a PR merge, use [scripts/post-merge-next-work.mjs](scripts/post-merge-next-work.mjs) with `--confirmed-merged --apply` for the fixed local fetch, advisory tag check, and next-work-branch workflow. Do not construct a separate `git switch -c` command.
+16. For a local repository GitHub URL query, read [references/github-repository-url.md](references/github-repository-url.md). For a post-push PR URL report, also read [references/github-post-push-pr-url.md](references/github-post-push-pr-url.md).
+17. For generic Issue retrieval, read [references/github-cli-static-helper-policy.md](references/github-cli-static-helper-policy.md) and use its documented fixed helper. For a new public GitHub Issue draft or an existing Issue rewrite, also read [references/github-issue-rewrite-handoff.md](references/github-issue-rewrite-handoff.md). For a requested remote Issue mutation, read and use only its dedicated workflow and helper: [references/github-issue-create.md](references/github-issue-create.md) with [scripts/github-issue-create.mjs](scripts/github-issue-create.mjs), [references/github-issue-update.md](references/github-issue-update.md) with [scripts/github-issue-update.mjs](scripts/github-issue-update.mjs), [references/github-issue-comment.md](references/github-issue-comment.md) with [scripts/github-issue-comment.mjs](scripts/github-issue-comment.mjs), [references/github-issue-label-update.md](references/github-issue-label-update.md) with [scripts/github-issue-label-update.mjs](scripts/github-issue-label-update.mjs), or [references/github-issue-close.md](references/github-issue-close.md) with [scripts/github-issue-close.mjs](scripts/github-issue-close.mjs).
+18. Treat a request about GitHub tag status, including short phrases such as `タグ状況` or `tag status`, as a version, tag, Release, and distribution-asset consistency audit unless the user explicitly narrows the scope. Read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) and [references/version-tag-release-audit.md](references/version-tag-release-audit.md).
+19. For recommended-tag guidance after push or merge, read [references/github-release-tag-handoff.md](references/github-release-tag-handoff.md). Treat GitHub Release UI creation by the human as the normal miku-soft handoff; do not present local `git tag` and tag push as the default next operation.
+20. For a requested version increment, read [references/version-increment.md](references/version-increment.md).
+21. For other public GitHub source, branch, or Release inspection, read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md). For Issue inspection, use the documented fixed helper in [references/github-cli-static-helper-policy.md](references/github-cli-static-helper-policy.md).
+22. Before any requested `git add` or `git commit`, read and follow [references/version-increment-confirmation.md](references/version-increment-confirmation.md) and [references/repository-precommit-checks.md](references/repository-precommit-checks.md). Read [references/github-anonymous-readonly.md](references/github-anonymous-readonly.md) when resolving the latest public GitHub version tag for the confirmation display.
+23. Preserve unrelated user changes.
+24. Separate local preparation from remote GitHub operations.
+25. Report what was inspected, changed, and left pending.
 
 ## Boundaries
 

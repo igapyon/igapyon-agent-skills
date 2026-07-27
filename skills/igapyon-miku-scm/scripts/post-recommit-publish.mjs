@@ -406,6 +406,14 @@ export async function runPublish(options, dependencies = {}) {
   }
 
   const destination = `refs/heads/${branch}`;
+  await dependencies.beforeMutation?.({
+    repository: root,
+    branch,
+    head,
+    remote: options.remote,
+    destination,
+    expected_remote_head: options.expectedRemoteHead || null,
+  });
   let pushMode;
   if (options.expectedRemoteHead) {
     pushMode = "force-with-explicit-lease";
@@ -466,26 +474,39 @@ export async function cli(argv = process.argv.slice(2), dependencies = {}) {
     const plan = loaded.plan;
     const attempt = `${loaded.file}.attempt.json`;
     const pending = { schema_version: 1, status: "pending", plan_sha256: options.expectedPlanSha256.toLowerCase(), started_at: new Date().toISOString() };
-    let handle;
-    try {
-      handle = await open(attempt, "wx", 0o600);
-      await handle.writeFile(`${JSON.stringify(pending, null, 2)}\n`, "utf8");
-      await handle.sync();
-    } catch (error) {
-      if (error?.code === "EEXIST") throw new Error("This publication plan already has an attempt. Do not retry it.");
-      throw error;
-    } finally { await handle?.close(); }
+    let attemptClaimed = false;
     const ordinary = {
       repo: loaded.root, remote: plan.remote, expectedHead: plan.reviewed_head,
       expectedRemoteHead: plan.remote_branch.state === "existing" ? plan.remote_branch.head : "",
       expectNewRemoteBranch: plan.remote_branch.state === "absent", apply: true, savePlan: false, applyPlan: "", expectedPlanSha256: "", help: false,
     };
     try {
-      const result = await runPublish(ordinary, dependencies);
+      const result = await runPublish(ordinary, {
+        ...dependencies,
+        beforeMutation: async (context) => {
+          await dependencies.beforeMutation?.(context);
+          let handle;
+          try {
+            handle = await open(attempt, "wx", 0o600);
+            await handle.writeFile(`${JSON.stringify(pending, null, 2)}\n`, "utf8");
+            await handle.sync();
+            attemptClaimed = true;
+          } catch (error) {
+            if (error?.code === "EEXIST") {
+              throw new Error("This publication plan already has an attempt. Do not retry it.");
+            }
+            throw error;
+          } finally {
+            await handle?.close();
+          }
+        },
+      });
       await writeFile(attempt, `${JSON.stringify({ ...pending, status: "published", result_recorded_at: new Date().toISOString() }, null, 2)}\n`, "utf8");
       process.stdout.write(`${JSON.stringify({ ...result, plan_path: options.applyPlan, plan_sha256: options.expectedPlanSha256.toLowerCase(), attempt_record: path.relative(loaded.root, attempt) }, null, 2)}\n`);
     } catch (error) {
-      await writeFile(attempt, `${JSON.stringify({ ...pending, status: "unresolved", detail: error instanceof Error ? error.message : String(error), result_recorded_at: new Date().toISOString() }, null, 2)}\n`, "utf8");
+      if (attemptClaimed) {
+        await writeFile(attempt, `${JSON.stringify({ ...pending, status: "unresolved", detail: error instanceof Error ? error.message : String(error), result_recorded_at: new Date().toISOString() }, null, 2)}\n`, "utf8");
+      }
       throw error;
     }
     return;
