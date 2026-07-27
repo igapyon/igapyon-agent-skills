@@ -59,3 +59,9 @@ If the user explicitly asks for local-only status, do not fetch. Clearly label a
 ## Boundary
 
 Status inspection authorizes `git fetch --prune` only when remote freshness is in scope under this workflow. It does not authorize staging, committing, branch changes, restoration, cleanup, pull, push, or any other repository mutation.
+
+When useful, a general status report may show only lightweight maintenance
+signals such as counts of local `*-done` and `backup/*` branches. Do not perform
+PR merge resolution or classify deletion candidates unless the user requests
+the repository-maintenance diagnosis in
+[repository-maintenance.md](repository-maintenance.md).

@@ -19,6 +19,11 @@ By default, first inspect the current branch state with `git status -sb`, resolv
 
 Also report the newest three `tag*` tags and newest three `v*` tags. These tag groups are checked separately because repositories may use both local operation tags such as `tagYYYYMMDD` and release-style version tags such as `vX.Y.Z`.
 
+Optionally report the counts of local `*-done` and `backup/*` branches as
+maintenance signals. Do not call them deletion candidates or query their PR
+merge state in this status workflow. Direct the user to the dedicated
+repository-maintenance diagnosis when cleanup assessment is wanted.
+
 If a tag group has no matches, report that clearly instead of omitting it.
 
 ## Evidence Commands
