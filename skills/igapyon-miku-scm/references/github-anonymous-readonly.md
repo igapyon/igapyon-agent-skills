@@ -8,6 +8,7 @@ Use anonymous REST API requests only for:
 
 - repository source code and directory contents
 - branches
+- Pull Request lookup for the documented post-push URL workflow
 - Releases and release assets
 - GitHub Actions runs, jobs, and step conclusions
 
@@ -22,6 +23,7 @@ Use `https://api.github.com` with these `GET` endpoint patterns:
 /repos/{owner}/{repo}/contents/{path}?ref={branch-or-commit}
 /repos/{owner}/{repo}/branches
 /repos/{owner}/{repo}/branches/{branch}
+/repos/{owner}/{repo}/pulls?state={open|all}[&head={owner}:{branch}]
 /repos/{owner}/{repo}/commits/{branch-or-tag}
 /repos/{owner}/{repo}/tags?per_page=100
 /repos/{owner}/{repo}/releases?per_page=100

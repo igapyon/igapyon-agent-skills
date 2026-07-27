@@ -52,6 +52,21 @@ Require every helper that invokes `gh` to:
 
 Adding or changing an allowed `gh` command requires a tracked helper change, matching workflow documentation, and tests that assert the exact argument array.
 
+## Repository Maintenance READONLY Commands
+
+The repository-maintenance helper may invoke only these fixed commands:
+
+```text
+gh api --method GET repos/<owner>/<repo>/pulls -f state=all -f head=<owner>:<branch> -f per_page=100
+gh api --method GET repos/<owner>/<repo>/pulls/<positive-number>
+```
+
+Use the first command only for a local `-done` diagnosis and the second only
+to revalidate a PR number fixed in a reviewed maintenance plan. Validate every
+owner, repository, branch, and number. Do not pass `--paginate`, arbitrary
+fields, headers, hostnames, or user-provided command fragments. Apply a
+15-second process timeout and stop further PR reads after the first failure.
+
 ## Failure Semantics
 
 - A READONLY `gh` failure before mutation is `not-applied`; report that no mutation command ran.

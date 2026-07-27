@@ -23,6 +23,12 @@ Do not treat SCM safety as a single READONLY-versus-write boundary. Classify eac
 
 Use the least-authorized level sufficient for the request. A lower level never implies authorization for a higher one. Preserve stricter workflow-specific prohibitions and confirmation gates when they apply.
 
+Repository maintenance uses levels 1 and 3: diagnosis is implicit inspection,
+plan saving writes only ignored operational data, and local branch deletion
+requires an explicitly reviewed saved plan under
+[repository-maintenance.md](repository-maintenance.md). General status,
+diagnosis, plan creation, `すすめて`, and `整理して` never authorize deletion.
+
 ## Startup Work Branch Checkout
 
 After the user identifies a concrete SCM task for a local repository, inspect the current branch before beginning that workflow:
