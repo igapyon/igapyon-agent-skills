@@ -12,9 +12,13 @@ import {
   cli,
   executePublish,
   parseArgs,
+  resolvePrHandoff,
   runPublish,
 } from "../scripts/post-recommit-publish.mjs";
-import { run as runNextWork } from "../scripts/post-merge-next-work.mjs";
+import {
+  classifyTagLookup,
+  run as runNextWork,
+} from "../scripts/post-merge-next-work.mjs";
 
 const PUBLISH_SCRIPT = fileURLToPath(new URL("../scripts/post-recommit-publish.mjs", import.meta.url));
 
@@ -75,6 +79,107 @@ function optionsFor(state, ...extra) {
 }
 
 const applyDependencies = { platform: "darwin", fetchImpl: null };
+
+test("post-merge tag lookup keeps all advisory states distinct", () => {
+  const base = "a".repeat(40);
+  const other = "b".repeat(40);
+  assert.deepEqual(classifyTagLookup("unresolved", null, base), {
+    tag_target: null,
+    tag_status: "unresolved",
+  });
+  assert.deepEqual(classifyTagLookup("v20260728f", { ok: true, out: "" }, base), {
+    tag_target: null,
+    tag_status: "absent",
+  });
+  assert.deepEqual(classifyTagLookup("v20260728f", {
+    ok: false,
+    out: "",
+    err: "remote unavailable",
+  }, base), {
+    tag_target: null,
+    tag_status: "lookup-failed",
+    tag_lookup_warning: "remote unavailable",
+  });
+  assert.deepEqual(classifyTagLookup("v20260728f", {
+    ok: true,
+    out: `${base}\trefs/tags/v20260728f`,
+  }, base), {
+    tag_target: base,
+    tag_status: "confirmed",
+  });
+  assert.deepEqual(classifyTagLookup("v20260728f", {
+    ok: true,
+    out: `${other}\trefs/tags/v20260728f`,
+  }, base), {
+    tag_target: other,
+    tag_status: "mismatch",
+  });
+});
+
+test("PR handoff resolves GitHub URL results and deterministic fallbacks", () => {
+  const repository = {
+    owner: "igapyon",
+    repository: "example",
+    url: "https://github.com/igapyon/example",
+  };
+  const branch = "devel-test";
+  const creationUrl = "https://github.com/igapyon/example/pull/new/devel-test";
+  const expectedArgs = [
+    "pr", "list", "--repo", "igapyon/example",
+    "--head", branch, "--state", "open", "--limit", "100", "--json", "url",
+  ];
+  const gh = (payload) => {
+    assert.deepEqual(payload, expectedArgs);
+    return {
+      ok: true,
+      stdout: JSON.stringify([{ url: "https://github.com/igapyon/example/pull/7" }]),
+    };
+  };
+
+  assert.deepEqual(resolvePrHandoff(repository, branch, gh), {
+    repository_url: repository.url,
+    pr_url: "https://github.com/igapyon/example/pull/7",
+    pr_lookup: "confirmed",
+  });
+  assert.deepEqual(resolvePrHandoff(repository, branch, () => ({ ok: true, stdout: "[]" })), {
+    repository_url: repository.url,
+    pr_creation_url: creationUrl,
+    pr_lookup: "confirmed-none",
+  });
+  assert.deepEqual(resolvePrHandoff(repository, branch, () => ({
+    ok: true,
+    stdout: JSON.stringify([
+      { url: "https://github.com/igapyon/example/pull/7" },
+      { url: "https://github.com/igapyon/example/pull/8" },
+    ]),
+  })), {
+    repository_url: repository.url,
+    pr_urls: [
+      "https://github.com/igapyon/example/pull/7",
+      "https://github.com/igapyon/example/pull/8",
+    ],
+    pr_lookup: "ambiguous",
+  });
+
+  const failed = resolvePrHandoff(repository, branch, () => ({ ok: false, stderr: "offline" }));
+  assert.equal(failed.pr_lookup, "unconfirmed");
+  assert.equal(failed.pr_creation_url, creationUrl);
+  assert.equal(failed.pr_lookup_warning, "offline");
+
+  const malformed = resolvePrHandoff(repository, branch, () => ({
+    ok: true,
+    stdout: JSON.stringify([{}]),
+  }));
+  assert.equal(malformed.pr_lookup, "unconfirmed");
+  assert.equal(malformed.pr_creation_url, creationUrl);
+  assert.match(malformed.pr_lookup_warning, /malformed PR URL metadata/);
+
+  assert.deepEqual(resolvePrHandoff(null, branch, gh), {
+    repository_url: "unresolved",
+    pr_url: "unresolved",
+    pr_lookup: "unresolved",
+  });
+});
 
 test("preflight is read-only and fixes the new-branch expectation", async (t) => {
   const state = await scenario(t);
@@ -210,6 +315,8 @@ test("post-merge helper creates the next work branch from refreshed devel", asyn
   assert.equal(result.status, "created");
   assert.equal(result.final_branch, "devel-tiga0725ief");
   assert.equal(result.comparison, "0 0");
+  assert.equal(result.tag_status, "absent");
+  assert.equal(result.human_handoff, "Next work branch is ready: devel-tiga0725ief");
   assert.equal(git(state.repo, "branch", "--show-current"), "devel-tiga0725ief");
 });
 

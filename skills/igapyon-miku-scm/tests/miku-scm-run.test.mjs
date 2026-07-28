@@ -382,6 +382,7 @@ test("post-merge workflow keeps merge confirmation and apply inside one fixed ru
   let branch = "devel-tiga0727vda-done";
   let head = "a".repeat(40);
   const baseHead = "b".repeat(40);
+  let tagLookupResult = { ok: true, out: `${baseHead}\trefs/tags/v20260727c` };
   const calls = [];
   const git = (_cwd, args, allowFailure = false) => {
     calls.push(args);
@@ -400,7 +401,7 @@ test("post-merge workflow keeps merge confirmation and apply inside one fixed ru
       return { ok: true, out: "<project><version>1.20260727.3</version></project>" };
     }
     if (command.startsWith("ls-remote --tags origin refs/tags/v20260727c")) {
-      return { ok: true, out: `${baseHead}\trefs/tags/v20260727c` };
+      return tagLookupResult;
     }
     if (command === "switch -c devel-tiga0727weg origin/devel") {
       branch = "devel-tiga0727weg";
@@ -447,12 +448,41 @@ test("post-merge workflow keeps merge confirmation and apply inside one fixed ru
   assert.equal(result.result.final_branch, "devel-tiga0727weg");
   assert.equal(result.result.comparison, "0 0");
   assert.equal(result.mutation_invoked, true);
+  assert.match(result.human_output, /^Previous branch: devel-tiga0727vda-done$/m);
+  assert.match(result.human_output, new RegExp(`^Base commit: ${baseHead}$`, "m"));
+  assert.match(result.human_output, /^Tag status: confirmed$/m);
+  assert.match(result.human_output, /^Next work branch: devel-tiga0727weg$/m);
+  assert.match(result.human_output, /\n\nNext work branch is ready: devel-tiga0727weg\n$/);
   assert.ok(calls.some((args) => args.join(" ") === "fetch origin"));
   const attempt = JSON.parse(await readFile(
     path.join(root, "runs", "post-merge-ok", "attempt.json"),
     "utf8",
   ));
   assert.equal(attempt.status, "success");
+
+  branch = "devel-tiga0727vda-done";
+  head = "a".repeat(40);
+  tagLookupResult = { ok: false, out: "", err: "remote tag lookup failed" };
+  const lookupFailed = await runWorkflow("repository.post-merge.next-work", [
+    "--repo", root,
+    "--confirmed-merged",
+    "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "post-merge-tag-lookup-failed",
+    now: () => new Date("2026-07-27T22:46:00+09:00"),
+    postMergeDependencies: {
+      git,
+      now: () => new Date("2026-07-27T22:46:00+09:00"),
+    },
+  });
+  assert.equal(lookupFailed.status, "success");
+  assert.equal(lookupFailed.result.final_branch, "devel-tiga0727weg");
+  assert.equal(lookupFailed.result.tag_status, "lookup-failed");
+  assert.equal(lookupFailed.result.tag_target, null);
+  assert.match(lookupFailed.human_output, /^Tag status: lookup-failed$/m);
+  assert.match(lookupFailed.human_output, /^Final branch: devel-tiga0727weg$/m);
 });
 
 test("publication runner keeps saved preflight and reviewed-plan apply separate", async (t) => {
@@ -474,7 +504,21 @@ test("publication runner keeps saved preflight and reviewed-plan apply separate"
     return {
       status: "published",
       attempt_record: `${planPath}.attempt.json`,
+      repository: "igapyon-agent-skills",
+      pushed_branch: "devel-test",
+      final_branch: "devel-test-done",
+      final_status: "## devel-test-done...origin/devel-test",
       comparison: "0 0",
+      repository_url: "https://github.com/igapyon/igapyon-agent-skills",
+      pr_lookup: "confirmed",
+      pr_url: "https://github.com/igapyon/igapyon-agent-skills/pull/316",
+      version: "1.20260728.6",
+      recommended_tag: "v20260728f",
+      pull_request_mutation: false,
+      tag_mutation: false,
+      plan_path: planPath,
+      plan_sha256: digest,
+      human_handoff: "Create the PR and tag through GitHub.",
     };
   };
 
@@ -505,6 +549,10 @@ test("publication runner keeps saved preflight and reviewed-plan apply separate"
   assert.equal(apply.status, "success");
   assert.equal(apply.result.status, "published");
   assert.equal(apply.mutation_invoked, true);
+  assert.match(apply.human_output, /^PR URL: https:\/\/github\.com\/igapyon\/igapyon-agent-skills\/pull\/316$/m);
+  assert.match(apply.human_output, /^Recommended tag: v20260728f$/m);
+  assert.match(apply.human_output, /^Final status: ## devel-test-done\.\.\.origin\/devel-test$/m);
+  assert.match(apply.human_output, /\n\nCreate the PR and tag through GitHub\.\n$/);
   assert.equal(calls.length, 2);
 
   const rejected = await runWorkflow("pr.publish.preflight", [

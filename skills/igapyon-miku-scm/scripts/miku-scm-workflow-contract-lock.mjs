@@ -195,9 +195,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "post-merge-next-work.mjs",
     "contract_spec": "scm-rules.md",
     "contract_test": "post-recommit-publish.test.mjs",
-    "runner_sha256": "bf64417d0f9764795b09bfd67907305fe68804f52d7906b4ab56779d801cd1c6",
-    "spec_sha256": "4e6e6ae72560490f1fe70b015e3f29bf944884d7d8166e0c964a70642d091cad",
-    "pair_sha256": "b1a8ddd4bfdc3663b346dd6e74de73aee59e8ebde3da57712f7476f987576384"
+    "runner_sha256": "120b4f1a0922d93e9eb7218362e2fc56e52c58e2cba181cf8fcdd6bbaddb7b12",
+    "spec_sha256": "43b978b07df77736b0954092e893490cf7867d5af4460b66837884ce21445979",
+    "pair_sha256": "7652f38387834d2ef62349b33eca53455565dc9f1a1ad1691bd42ffdcd0bc0ba"
   },
   {
     "workflow": "pr.publish.preflight",
@@ -206,9 +206,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "post-recommit-publish.mjs",
     "contract_spec": "github-post-recommit-publish.md",
     "contract_test": "post-recommit-publish.test.mjs",
-    "runner_sha256": "37c3ad0b12e2f82fde32ce135640fa7ccd40e22fa5a0dde48395051bd0650064",
-    "spec_sha256": "aa85fe0144ae5452f25aec330d9eece77b678734fdd353f30491431a450e67af",
-    "pair_sha256": "27b38cd0f007f9c9b21d42ca9864cf45e6113bb94d8c43eb0263a2a43f31d681"
+    "runner_sha256": "dc8be675d241e066ed4cba712b7cb3c7e864d044ded8ea38be2ac3493ba72ca1",
+    "spec_sha256": "6acc25d6b8943a233444ee784afad6ba4a20c5b4872f694b05ae8c50e530088f",
+    "pair_sha256": "f071fbf0ac0e15afd540ef661a1df2749ca89d4bd3a0a5f1010464414ef0f7ac"
   },
   {
     "workflow": "pr.publish.apply",
@@ -217,9 +217,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "post-recommit-publish.mjs",
     "contract_spec": "github-post-recommit-publish.md",
     "contract_test": "post-recommit-publish.test.mjs",
-    "runner_sha256": "37c3ad0b12e2f82fde32ce135640fa7ccd40e22fa5a0dde48395051bd0650064",
-    "spec_sha256": "aa85fe0144ae5452f25aec330d9eece77b678734fdd353f30491431a450e67af",
-    "pair_sha256": "8b9d3a10f09901c603fa92469a17e8f63e10136ac32c3ea79fa506a9fe1802b9"
+    "runner_sha256": "dc8be675d241e066ed4cba712b7cb3c7e864d044ded8ea38be2ac3493ba72ca1",
+    "spec_sha256": "6acc25d6b8943a233444ee784afad6ba4a20c5b4872f694b05ae8c50e530088f",
+    "pair_sha256": "76bfa7a37882227e607fc6d5f108260c78d2cbe78c5fa422c771ccc6228820be"
   },
   {
     "workflow": "pr.recommit.preflight",

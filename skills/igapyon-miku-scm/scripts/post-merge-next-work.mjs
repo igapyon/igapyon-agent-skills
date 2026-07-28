@@ -28,7 +28,11 @@ export function parseArgs(argv, cwd = process.cwd()) {
 function runner(cwd, args, allowFailure = false) {
   const r = spawnSync("git", args, { cwd, encoding: "utf8" });
   if (r.status !== 0 && !allowFailure) throw new Error(`git ${args.join(" ")} failed: ${(r.stderr || r.stdout).trim()}`);
-  return { ok: r.status === 0, out: (r.stdout || "").trim() };
+  return {
+    ok: r.status === 0,
+    out: (r.stdout || "").trim(),
+    err: (r.stderr || "").trim(),
+  };
 }
 function text(root, args) { return runner(root, args).out; }
 function clean(root) { if (text(root, ["status", "--porcelain"])) throw new Error("Working tree or index is dirty"); }
@@ -48,6 +52,25 @@ async function version(root, commit, git = runner) {
   return { source: "pom.xml", value, tag: m ? `v${m[1]}${String.fromCharCode(96 + Number(m[2]))}` : "unresolved", commit };
 }
 
+export function classifyTagLookup(recommendedTag, lookup, baseCommit) {
+  if (recommendedTag === "unresolved") {
+    return { tag_target: null, tag_status: "unresolved" };
+  }
+  if (!lookup?.ok) {
+    return {
+      tag_target: null,
+      tag_status: "lookup-failed",
+      ...(lookup?.err ? { tag_lookup_warning: lookup.err } : {}),
+    };
+  }
+  const target = lookup.out.split("\n").filter(Boolean).pop()?.split(/\s+/)[0] ?? "";
+  if (!target) return { tag_target: null, tag_status: "absent" };
+  return {
+    tag_target: target,
+    tag_status: target === baseCommit ? "confirmed" : "mismatch",
+  };
+}
+
 export async function run(options, dependencies = {}) {
   const git = dependencies.git ?? runner;
   const root = git(options.repo, ["rev-parse", "--show-toplevel"]).out;
@@ -64,12 +87,30 @@ export async function run(options, dependencies = {}) {
   const next = branchName(base, dependencies.now ? dependencies.now() : new Date());
   if (git(root, ["show-ref", "--verify", "--quiet", `refs/heads/${next}`], true).ok) throw new Error(`Next work branch already exists: ${next}`);
   const info = await version(root, baseCommit, git);
-  const tagOut = info.tag === "unresolved" ? "" : git(root, ["ls-remote", "--tags", options.remote, `refs/tags/${info.tag}`, `refs/tags/${info.tag}^{}`], true).out;
-  const tagTarget = tagOut.split("\n").filter(Boolean).pop()?.split(/\s+/)[0] ?? "";
+  const tagLookup = info.tag === "unresolved"
+    ? null
+    : git(root, ["ls-remote", "--tags", options.remote, `refs/tags/${info.tag}`, `refs/tags/${info.tag}^{}`], true);
+  const tagResult = classifyTagLookup(info.tag, tagLookup, baseCommit);
   git(root, ["switch", "-c", next, remoteBase]);
   const comparison = git(root, ["rev-list", "--left-right", "--count", `HEAD...${remoteBase}`]).out.replace(/\s+/g, " ");
   if (git(root, ["branch", "--show-current"]).out !== next || git(root, ["rev-parse", "HEAD"]).out !== baseCommit || comparison !== "0 0" || git(root, ["status", "--porcelain"]).out) throw new Error("Post-create verification failed");
-  return { status: "created", previous_branch: before, remote: options.remote, base, base_commit: baseCommit, version: info.value, version_source: info.source, recommended_tag: info.tag, tag_target: tagTarget || null, tag_status: tagTarget === baseCommit ? "confirmed" : tagTarget ? "mismatch" : "absent", next_branch: next, final_branch: next, comparison, tag_mutation: false, release_mutation: false };
+  return {
+    status: "created",
+    previous_branch: before,
+    remote: options.remote,
+    base,
+    base_commit: baseCommit,
+    version: info.value,
+    version_source: info.source,
+    recommended_tag: info.tag,
+    ...tagResult,
+    next_branch: next,
+    final_branch: next,
+    comparison,
+    tag_mutation: false,
+    release_mutation: false,
+    human_handoff: `Next work branch is ready: ${next}`,
+  };
 }
 export async function cli(argv = process.argv.slice(2)) { const o = parseArgs(argv); if (o.help) return; process.stdout.write(`${JSON.stringify(await run(o), null, 2)}\n`); }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) cli().catch((e) => { process.stderr.write(`${JSON.stringify({ status: "error", message: e.message })}\n`); process.exitCode = 1; });
