@@ -199,7 +199,7 @@ function hasDirtyStatus(status) {
 }
 
 function listBlock(lines) {
-  return lines.length > 0 ? lines.map((line) => `- ${line}`).join("\n") : "- なし";
+  return lines.length > 0 ? lines.map((line) => `- ${line}`).join("\n") : "- none";
 }
 
 function digest(content) {
@@ -271,10 +271,10 @@ export function runRecommit(args, dependencies = {}) {
     const draftContent = draftExists && draftSafe ? readFileSync(resolvedDraftAbs) : null;
     const draftSha256 = draftContent ? digest(draftContent) : "";
     const draftStatus = explicitDraft
-      ? draftExists ? "明示指定された PR draft が存在します。" : "明示指定された PR draft が見つかりません。"
+      ? draftExists ? "The explicitly selected PR draft exists." : "The explicitly selected PR draft was not found."
       : resolvedDraft
-        ? "現在ブランチに一致する最新 PR draft 候補を解決しました。"
-        : "現在ブランチに一致する PR draft 候補が見つかりません。";
+        ? "Resolved the latest PR draft candidate matching the current branch."
+        : "No PR draft candidate matching the current branch was found.";
     const dirty = hasDirtyStatus(status);
     const frozen = branch.endsWith("-done");
     const blockers = [];
@@ -376,7 +376,7 @@ ${result.mode === "apply"
 - current branch: \`${result.branch || "(detached or unknown)"}\`
 - frozen branch: ${result.frozen ? "`yes`" : "`no`"}
 - branch slug: \`${result.branch_slug || "(none)"}\`
-- PR draft: ${result.pr_draft ? `\`${result.pr_draft}\`` : "`未解決`"}
+- PR draft: ${result.pr_draft ? `\`${result.pr_draft}\`` : "`unresolved`"}
 - PR draft SHA-256: \`${result.pr_draft_sha256 || "unresolved"}\`
 - PR draft status: ${result.pr_draft_status}
 - backup branch candidate: \`${result.backup_branch}\`

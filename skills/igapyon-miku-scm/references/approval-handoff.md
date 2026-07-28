@@ -6,7 +6,7 @@ workflow IDs, reviewed apply arguments, workflow contract digest, reviewed
 summary, and relevant Issue or draft digests.
 
 After the human reviews the complete preflight and explicitly replies
-`miku-scm 承認`, invoke:
+`miku-scm approve` (or the legacy `miku-scm 承認` input), invoke:
 
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \

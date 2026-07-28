@@ -5,9 +5,24 @@ import {
   HUMAN_OUTPUT_SCHEMA_VERSION,
   renderHumanOutput,
 } from "../scripts/miku-scm-human-output.mjs";
+import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v1");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v2");
+});
+
+test("every workflow uses English fixed output wording", () => {
+  for (const workflow of WORKFLOW_MANIFEST) {
+    const output = renderHumanOutput({
+      workflow: workflow.id,
+      status: "success",
+      approvalGate: workflow.approval_gate,
+      delegateStatus: "fixture",
+      mutationInvoked: false,
+      result: {},
+    });
+    assert.doesNotMatch(output, /[ぁ-んァ-ヶ一-龠]/, workflow.id);
+  }
 });
 
 test("repository status output is deterministic and omits the absolute root", () => {
@@ -33,16 +48,16 @@ test("repository status output is deterministic and omits the absolute root", ()
     },
   });
 
-  assert.equal(output, `[SUCCESS] リポジトリ状態
+  assert.equal(output, `[SUCCESS] Repository status
 
-ブランチ: devel-test
+Branch: devel-test
 HEAD: ${"a".repeat(40)}
 upstream: origin/devel
 ahead / behind: 1 / 2
-作業ツリー: 変更あり
+Working tree: dirty
 staged / unstaged / untracked / conflicted: 1 / 2 / 3 / 0
-バージョン: pom.xml=1.20260728.2
-mutation実行: なし
+Versions: pom.xml=1.20260728.2
+Mutation invoked: no
 `);
   assert.doesNotMatch(output, /Users\/example/);
 });
@@ -67,13 +82,13 @@ test("Issue create preflight output contains complete review identifiers", () =>
     },
   });
 
-  assert.match(output, /^\[READY FOR APPROVAL\] GitHub Issue作成/);
-  assert.match(output, /対象: a\/b/);
-  assert.match(output, /ラベル: enhancement/);
-  assert.match(output, /親Issue: #2 \(OPEN\) Parent/);
+  assert.match(output, /^\[READY FOR APPROVAL\] GitHub Issue create/);
+  assert.match(output, /Repository: a\/b/);
+  assert.match(output, /Labels: enhancement/);
+  assert.match(output, /Parent Issue: #2 \(OPEN\) Parent/);
   assert.match(output, new RegExp(`Draft SHA-256: ${"a".repeat(64)}`));
-  assert.match(output, /リモート変更: 未実行/);
-  assert.match(output, /miku-scm 承認/);
+  assert.match(output, /Remote mutation: not invoked/);
+  assert.match(output, /miku-scm approve/);
 });
 
 test("Issue create apply output reports verification without rewording the body", () => {
@@ -96,10 +111,10 @@ test("Issue create apply output reports verification without rewording the body"
     },
   });
 
-  assert.match(output, /^\[SUCCESS\] GitHub Issue作成/);
+  assert.match(output, /^\[SUCCESS\] GitHub Issue create/);
   assert.match(output, /Issue: #8/);
-  assert.match(output, /Issue検証: verified/);
-  assert.match(output, /mutation実行: あり/);
+  assert.match(output, /Issue verification: verified/);
+  assert.match(output, /Mutation invoked: yes/);
   assert.doesNotMatch(output, /This body must not be repeated/);
 });
 
@@ -117,12 +132,78 @@ test("failure output uses stable classification and retryability", () => {
     },
   });
 
-  assert.equal(output, `[UNRESOLVED] GitHub Issue作成
+  assert.equal(output, `[UNRESOLVED] GitHub Issue create
 
 workflow: github.issue.create.apply
-分類: network
-内容: remote result is uncertain
-mutation実行: 不明
-再試行: do-not-retry
+Classification: network
+Message: remote result is uncertain
+Mutation invoked: unknown
+Retryability: do-not-retry
+`);
+});
+
+test("Japanese user data is preserved without translating it", () => {
+  const output = renderHumanOutput({
+    workflow: "github.issue.read",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "read",
+    mutationInvoked: false,
+    result: {
+      repository: "a/b",
+      mode: "issue",
+      issue: {
+        number: 9,
+        title: "日本語のIssueタイトル",
+        state: "OPEN",
+        labels: [{ name: "改善" }],
+        html_url: "https://github.com/a/b/issues/9",
+        comments: [],
+      },
+    },
+  });
+
+  assert.match(output, /Title: 日本語のIssueタイトル/);
+  assert.match(output, /Labels: 改善/);
+  assert.match(output, /URL: https:\/\/github\.com\/a\/b\/issues\/9/);
+});
+
+test("PR recommit apply output is complete without structured-result supplementation", () => {
+  const output = renderHumanOutput({
+    workflow: "pr.recommit.apply",
+    status: "success",
+    approvalGate: "apply",
+    delegateStatus: "recommitted",
+    mutationInvoked: true,
+    result: {
+      repository: "igapyon-agent-skills",
+      mode: "apply",
+      status: "recommitted",
+      branch: "devel-test",
+      base: "origin/devel",
+      base_commit: "a".repeat(40),
+      backup_branch: "backup/2026-07-28-2200",
+      pr_draft: "workplace/miku-scm/pr-drafts/pr-devel-test.md",
+      pr_draft_sha256: "b".repeat(64),
+      commits_to_collapse: 4,
+      new_head: "c".repeat(40),
+      final_status: "## devel-test...origin/devel [ahead 1]",
+    },
+  });
+
+  assert.equal(output, `[SUCCESS] PR recommit
+
+Repository: igapyon-agent-skills
+Branch: devel-test
+Delegate status: recommitted
+Base: origin/devel
+Base commit: ${"a".repeat(40)}
+Backup branch: backup/2026-07-28-2200
+PR draft: workplace/miku-scm/pr-drafts/pr-devel-test.md
+PR draft SHA-256: ${"b".repeat(64)}
+Commits to collapse: 4
+New HEAD: ${"c".repeat(40)}
+Final status: ## devel-test...origin/devel [ahead 1]
+Mutation invoked: yes
 `);
 });

@@ -202,20 +202,20 @@ function writingContract(mode) {
   const shared = {
     language: "Japanese unless the user requests otherwise",
     source_rule: "Use only the supplied evidence and current user direction",
-    unsupported_claims: "Omit or mark 未確認; do not invent intent, effects, versions, dates, tests, or URLs",
+    unsupported_claims: "Omit or mark unverified; do not invent intent, effects, versions, dates, tests, or URLs",
     generation_passes: 1,
   };
   if (mode === "pr") {
     return {
       ...shared,
-      output: "First line is the PR title; body uses 概要 and 変更内容 sections",
+      output: "First line is the PR title; body uses Overview and Changes sections",
       audience: "reviewers",
     };
   }
   if (mode === "release") {
     return {
       ...shared,
-      output: "Release title and body with 概要 and 主な変更 sections",
+      output: "Release title and body with Overview and Main changes sections",
       audience: "users",
     };
   }

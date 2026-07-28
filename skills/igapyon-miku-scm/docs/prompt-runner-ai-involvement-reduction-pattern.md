@@ -133,6 +133,12 @@ structured resultを正本とし、同じresultから安定した`human_output`�
 これにより、実行後の生成AI関与、表現の揺れ、事実の付加、次操作の
 推測を減らせる。
 
+この契約は「意味を保った要約」ではなく、runnerが返した
+`human_output`の逐語的な返却を要求する。表示に必要な項目が不足した
+場合、Agentが`result.json`を読んで補完せず、runnerとsnapshot testを
+修正する。固定表現は英語とし、Issue titleなど入力由来の日本語データ
+は翻訳せず保持する。
+
 ### 5. 承認後のapply引数を生成AIに再構成させない
 
 preflightはapplyに必要な完全な引数と確認済みdigestをimmutableな
@@ -212,6 +218,8 @@ pre-mutation failureはmutation未実行として扱う。mutation後の成否�
 - pair digestとcontract versionがresultまたはplanへ保存される
 - structured resultにmutation実行有無とretryabilityがある
 - `human_output`がsnapshot testで固定されている
+- `human_output`だけで利用者への報告が完結し、Agent補完を必要としない
+- 固定出力は英語で、入力由来の日本語データは変更されない
 - preflightとapplyが分離されている
 - applyが確認済みartifactとdigestをそのまま消費する
 - 承認後に生成AIがapply引数を組み直さない
@@ -219,6 +227,7 @@ pre-mutation failureはmutation未実行として扱う。mutation後の成否�
 - post-mutation unresolvedを自動再試行しない
 - writing evidence収集と公開文面の作文が分離されている
 - AI tool call、runner invocation、context bytes、result bytesを計測できる
+- mechanical、writing、approvalを同じ指標で比較できる
 
 ## 避けるべき実装
 

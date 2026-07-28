@@ -11,14 +11,31 @@ import { pathToFileURL } from "node:url";
 import { runWorkflow } from "./miku-scm-run.mjs";
 import { workflowManifestById } from "./miku-scm-workflow-manifest.mjs";
 
-const SCENARIOS = new Set(["github-issue-read"]);
+const SCENARIOS = new Set([
+  "github-issue-read",
+  "writing-issue-prepare",
+  "github-issue-create-preflight",
+]);
 const SCENARIO_WORKFLOW = Object.freeze({
   "github-issue-read": "github.issue.read",
+  "writing-issue-prepare": "writing.issue.prepare",
+  "github-issue-create-preflight": "github.issue.create.preflight",
+});
+const SCENARIO_CLASS = Object.freeze({
+  "github-issue-read": "mechanical",
+  "writing-issue-prepare": "writing",
+  "github-issue-create-preflight": "approval",
+});
+const EXPECTED_MODEL_INVOCATIONS_AFTER_RUNNER = Object.freeze({
+  "github-issue-read": 0,
+  "writing-issue-prepare": 1,
+  "github-issue-create-preflight": 0,
 });
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
-    [--scenario github-issue-read] [--iterations <1..100>] [--warmup <0..20>] \
+    [--scenario github-issue-read|writing-issue-prepare|github-issue-create-preflight] \
+    [--iterations <1..100>] [--warmup <0..20>] \
     [--max-warm-p50-ms <milliseconds>] [--save]
 
 The benchmark is remote-free and never invokes a GitHub mutation. It reports
@@ -93,9 +110,20 @@ function statistics(samples) {
   };
 }
 
-function fakeIssueGh(counter) {
+function fakeGh(counter, mode) {
   return (args) => {
     counter.gh += 1;
+    if (mode === "labels") {
+      return {
+        ok: true,
+        status: 0,
+        stderr: "",
+        stdout: JSON.stringify([
+          { name: "enhancement", description: "New feature", color: "a2eeef" },
+        ]),
+        args,
+      };
+    }
     return {
       ok: true,
       status: 0,
@@ -115,15 +143,72 @@ function fakeIssueGh(counter) {
   };
 }
 
-async function runFixture(artifactRoot, runId, counter = { gh: 0 }) {
-  const result = await runWorkflow("github.issue.read", [
-    "--repo", "igapyon/igapyon-agent-skills", "--issue", "293",
-  ], {
-    cwd: process.cwd(),
-    artifactRoot,
+function fakeWritingGit(root) {
+  return (_cwd, args) => {
+    const command = args.join(" ");
+    const values = new Map([
+      ["rev-parse --show-toplevel", root],
+      ["branch --show-current", "devel-benchmark"],
+      ["rev-parse HEAD", "a".repeat(40)],
+    ]);
+    if (!values.has(command)) throw new Error(`Unexpected benchmark git command: ${command}`);
+    return { ok: true, out: values.get(command), err: "" };
+  };
+}
+
+async function missingDocument() {
+  const error = new Error("missing");
+  error.code = "ENOENT";
+  throw error;
+}
+
+async function runFixture(scenario, fixtureRoot, runId, counter = { gh: 0 }) {
+  await mkdir(fixtureRoot, { recursive: true });
+  const common = {
+    cwd: fixtureRoot,
+    artifactRoot: path.join(fixtureRoot, "runs"),
     runId,
-    gh: fakeIssueGh(counter),
-  });
+  };
+  let result;
+  if (scenario === "github-issue-read") {
+    result = await runWorkflow("github.issue.read", [
+      "--repo", "igapyon/igapyon-agent-skills", "--issue", "293",
+    ], {
+      ...common,
+      gh: fakeGh(counter, "issue"),
+    });
+  } else if (scenario === "writing-issue-prepare") {
+    result = await runWorkflow("writing.issue.prepare", [
+      "--repo", fixtureRoot,
+      "--github-repo", "igapyon/igapyon-agent-skills",
+    ], {
+      ...common,
+      writingGit: fakeWritingGit(fixtureRoot),
+      writingReadFile: missingDocument,
+      gh: fakeGh(counter, "labels"),
+    });
+  } else {
+    const draft = path.join(
+      fixtureRoot,
+      "workplace/miku-scm/new-issues/issue-new-202607282200.md",
+    );
+    await mkdir(path.dirname(draft), { recursive: true });
+    await writeFile(draft, "Benchmark approval\n\nRemote-free fixture.\n", "utf8");
+    result = await runWorkflow("github.issue.create.preflight", [
+      "--repo", "igapyon/igapyon-agent-skills",
+      "--draft", draft,
+      "--label", "enhancement",
+      "--root", fixtureRoot,
+    ], {
+      ...common,
+      issueCreateDependencies: {
+        readLabels: async () => {
+          counter.gh += 1;
+          return ["enhancement"];
+        },
+      },
+    });
+  }
   if (result.status !== "success") throw new Error(`Benchmark fixture failed: ${result.status}`);
   return result;
 }
@@ -158,7 +243,7 @@ async function saveResult(root, result) {
 }
 
 async function internalWorker(options) {
-  await runFixture(options.artifactRoot, `cold-${randomUUID()}`);
+  await runFixture(options.scenario, options.artifactRoot, `cold-${randomUUID()}`);
   process.stdout.write('{"status":"ok"}\n');
 }
 
@@ -171,13 +256,19 @@ export async function benchmark(options, dependencies = {}) {
     const warmCounter = { gh: 0 };
     let lastWarmResult = null;
     for (let index = 0; index < options.warmup; index += 1) {
-      await runFixture(path.join(temporary, "warmup"), `warmup-${index}`, warmCounter);
+      await runFixture(
+        options.scenario,
+        path.join(temporary, "warm-fixture"),
+        `warmup-${index}`,
+        warmCounter,
+      );
     }
     const warm = [];
     for (let index = 0; index < options.iterations; index += 1) {
       const started = performance.now();
       lastWarmResult = await runFixture(
-        path.join(temporary, "warm"),
+        options.scenario,
+        path.join(temporary, "warm-fixture"),
         `warm-${index}`,
         warmCounter,
       );
@@ -204,16 +295,25 @@ export async function benchmark(options, dependencies = {}) {
 
     const warmStats = statistics(warm);
     const result = {
-      schema_version: "miku-scm.benchmark/v1",
+      schema_version: "miku-scm.benchmark/v2",
       scenario: options.scenario,
+      workflow_class: SCENARIO_CLASS[options.scenario],
       measured_at: (dependencies.now ? dependencies.now() : new Date()).toISOString(),
       iterations: options.iterations,
       warmup_iterations: options.warmup,
       remote_mutation_invoked: false,
+      comparison_dimensions: [
+        "expected_model_invocations_after_runner",
+        "expected_agent_tool_calls_per_sample",
+        "elapsed_time_ms",
+        "observed_failure_rate",
+      ],
       fixture: {
         runner_invocations_per_sample: 1,
         expected_agent_tool_calls_per_sample: 1,
         expected_ai_tool_calls_per_sample: 1,
+        expected_model_invocations_after_runner:
+          EXPECTED_MODEL_INVOCATIONS_AFTER_RUNNER[options.scenario],
         fixed_gh_reads_per_warm_sample: 1,
         actual_network_requests_per_sample: 0,
         input_tokens: null,
@@ -222,6 +322,8 @@ export async function benchmark(options, dependencies = {}) {
         structured_result_bytes: Buffer.byteLength(JSON.stringify(lastWarmResult), "utf8"),
         human_output_bytes: Buffer.byteLength(lastWarmResult.human_output, "utf8"),
         human_output_schema_version: lastWarmResult.human_output_schema_version,
+        observed_failures: 0,
+        observed_failure_rate: 0,
       },
       context: await contextMetrics(root, options.scenario),
       cold: {

@@ -121,7 +121,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "github.issue.handoff.apply",
-    triggers: ["miku-scm 承認", "承認済みIssue handoff適用"],
+    triggers: ["miku-scm approve", "miku-scm 承認", "承認済みIssue handoff適用"],
     required_parameters: ["repository", "explicit_apply_request"],
     mutation_level: "remote",
     approval_gate: "apply",
