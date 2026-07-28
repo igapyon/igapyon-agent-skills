@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20260728.4</version>
+  <version>1.20260728.5</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -78,7 +78,7 @@
               <executable>java</executable>
               <arguments>
                 <argument>-jar</argument>
-                <argument>${project.basedir}/lib/miku-indexgen-1.5.1.jar</argument>
+                <argument>${project.basedir}/lib/miku-indexgen-1.6.2.jar</argument>
                 <argument>--input-parent-directory</argument>
                 <argument>${project.basedir}/skills</argument>
               </arguments>

@@ -45,8 +45,9 @@ Do not inspect the repository or load detailed references yet.
    its workflow defines one. Never retry an unresolved mutation automatically.
 7. Report inspected, changed, and pending work. Keep tag recommendation
    separate from tag mutation; normal tag handoff is GitHub's Release UI.
-8. After a reviewed Issue preflight, an exact `miku-scm 承認` request routes
-   directly to `github.issue.handoff.apply --apply`. The fixed workflow must
+8. After a reviewed Issue preflight, an exact `miku-scm approve` request
+   routes directly to `github.issue.handoff.apply --apply`. The legacy
+   `miku-scm 承認` input remains accepted. The fixed workflow must
    find exactly one pending handoff. Do not reconstruct its apply arguments or
    load detailed references during this approval fast path.
 

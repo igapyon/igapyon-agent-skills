@@ -1,8 +1,8 @@
 # Performance Benchmark
 
 Use `scripts/miku-scm-benchmark.mjs` to measure migrated runner workflows.
-The initial scenario is remote-free and uses a deterministic GitHub Issue
-fixture, so it never mutates GitHub and does not depend on network latency.
+All scenarios are remote-free and use deterministic fixtures, so they never
+mutate GitHub and do not depend on network latency.
 
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
@@ -12,6 +12,23 @@ node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
   --save
 ```
 
+Run all three workflow classes to compare the AI boundary:
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
+  --scenario github-issue-read --iterations 10 --warmup 2
+node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
+  --scenario writing-issue-prepare --iterations 10 --warmup 2
+node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
+  --scenario github-issue-create-preflight --iterations 10 --warmup 2
+```
+
+These represent `mechanical`, `writing`, and `approval` respectively. Each
+result exposes the same comparison dimensions: expected model invocations
+after the runner, expected Agent tool calls, elapsed-time statistics, and
+observed failure rate. Writing retains one expected model invocation for the
+prose draft; mechanical and approval output require none after the runner.
+
 The result keeps these dimensions separate:
 
 - cold process execution and warm same-process execution
@@ -19,6 +36,7 @@ The result keeps these dimensions separate:
 - runner invocations and expected Agent tool calls
 - structured result bytes and deterministic `human_output` bytes
 - fixed `gh` read count and actual network request count
+- expected model invocations after the runner and observed failure rate
 - instruction/reference file count and bytes
 - configured warm p50 budget
 

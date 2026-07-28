@@ -111,8 +111,9 @@ test("READONLY Issue workflow completes in one runner call with stable artifacts
   assert.equal(result.contract_version, 1);
   assert.match(result.contract_pair_sha256, /^[0-9a-f]{64}$/);
   assert.equal(result.human_output_schema_version, HUMAN_OUTPUT_SCHEMA_VERSION);
-  assert.match(result.human_output, /^\[SUCCESS\] GitHub Issue取得/);
+  assert.match(result.human_output, /^\[SUCCESS\] GitHub Issue read/);
   assert.match(result.human_output, /Issue: #7/);
+  assert.match(result.human_output, /URL: https:\/\/github\.com\/a\/b\/issues\/7/);
   assert.deepEqual(calls, [[
     "issue", "view", "7", "--repo", "a/b", "--comments",
     "--json", "number,state,title,body,url,updatedAt,labels,comments",
@@ -193,8 +194,8 @@ test("Issue preflight delegates label and parent checks and returns reviewed app
 
   assert.equal(result.status, "success");
   assert.equal(result.delegate_status, "preflight-ok");
-  assert.match(result.human_output, /^\[READY FOR APPROVAL\] GitHub Issue作成/);
-  assert.match(result.human_output, /承認: チャットで「miku-scm 承認」と返信/);
+  assert.match(result.human_output, /^\[READY FOR APPROVAL\] GitHub Issue create/);
+  assert.match(result.human_output, /Approval command: reply with exactly `miku-scm approve` in chat/);
   assert.equal(result.result.handoff.status, "pending");
   assert.match(result.result.handoff.immutable_sha256, /^[0-9a-f]{64}$/);
   assert.equal(result.result.parent_issue.number, 2);
@@ -239,7 +240,7 @@ test("Issue handoff apply forwards the single reviewed argument set", async (t) 
         status: "success",
         run_id: "nested-apply",
         mutation_invoked: true,
-        human_output: "[SUCCESS] GitHub Issue作成\n",
+        human_output: "[SUCCESS] GitHub Issue create\n",
       };
     },
   });
@@ -250,7 +251,7 @@ test("Issue handoff apply forwards the single reviewed argument set", async (t) 
   assert.deepEqual(calls[0].args, preflight.result.apply_arguments);
   assert.equal(applied.status, "success");
   assert.equal(applied.delegate_status, "applied");
-  assert.match(applied.human_output, /承認handoff: handoff-preflight \(applied\)/);
+  assert.match(applied.human_output, /Approval handoff: handoff-preflight \(applied\)/);
 });
 
 test("migrated Issue mutations return contract-fixed apply arguments", async (t) => {
@@ -549,8 +550,31 @@ test("recommit runner separates inspection from the explicit one-shot local rewr
   const recommitExecute = (options) => {
     calls.push(options);
     return options.apply
-      ? { status: "recommitted", mutation_invoked: true, new_head: "b".repeat(40) }
-      : { status: "preflight-ok", mutation_invoked: false, head: "a".repeat(40) };
+      ? {
+        status: "recommitted",
+        mode: "apply",
+        mutation_invoked: true,
+        repository: "test-repository",
+        branch: "devel-test",
+        base: "origin/devel",
+        backup_branch: "backup/2026-07-28-2200",
+        pr_draft: draft,
+        new_head: "b".repeat(40),
+        final_status: "## devel-test...origin/devel [ahead 1]",
+      }
+      : {
+        status: "preflight-ok",
+        mode: "preflight",
+        mutation_invoked: false,
+        repository: "test-repository",
+        branch: "devel-test",
+        base: "origin/devel",
+        backup_branch: "backup/2026-07-28-2200",
+        pr_draft: draft,
+        head: "a".repeat(40),
+        blockers: [],
+        dirty: false,
+      };
   };
 
   const preflight = await runWorkflow("pr.recommit.preflight", [
@@ -579,6 +603,11 @@ test("recommit runner separates inspection from the explicit one-shot local rewr
   assert.equal(apply.status, "success");
   assert.equal(apply.result.status, "recommitted");
   assert.equal(apply.mutation_invoked, true);
+  assert.match(apply.human_output, /Base: origin\/devel/);
+  assert.match(apply.human_output, /Backup branch: backup\/2026-07-28-2200/);
+  assert.match(apply.human_output, /PR draft: workplace\/miku-scm\/pr-drafts\/pr-test\.md/);
+  assert.match(apply.human_output, new RegExp(`New HEAD: ${"b".repeat(40)}`));
+  assert.match(apply.human_output, /Final status: ## devel-test\.\.\.origin\/devel \[ahead 1\]/);
   assert.equal(calls.length, 2);
 
   const rejected = await runWorkflow("pr.recommit.apply", [

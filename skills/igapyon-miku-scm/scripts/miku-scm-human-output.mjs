@@ -1,29 +1,29 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v1";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v2";
 
 const WORKFLOW_TITLES = Object.freeze({
-  "repository.status": "リポジトリ状態",
-  "github.issue.read": "GitHub Issue取得",
-  "github.read.batch": "GitHub READONLY一括取得",
-  "github.issue.create.preflight": "GitHub Issue作成",
-  "github.issue.create.apply": "GitHub Issue作成",
-  "github.issue.update.preflight": "GitHub Issue更新",
-  "github.issue.update.apply": "GitHub Issue更新",
-  "github.issue.comment.preflight": "GitHub Issueコメント",
-  "github.issue.comment.apply": "GitHub Issueコメント",
-  "github.issue.label.preflight": "GitHub Issueラベル更新",
-  "github.issue.label.apply": "GitHub Issueラベル更新",
-  "github.issue.close.preflight": "GitHub Issueクローズ",
-  "github.issue.close.apply": "GitHub Issueクローズ",
-  "repository.maintenance.diagnose": "リポジトリメンテナンス診断",
-  "repository.maintenance.plan": "リポジトリメンテナンス計画",
-  "repository.maintenance.apply": "リポジトリメンテナンス",
-  "repository.post-merge.next-work": "マージ後の次作業準備",
+  "repository.status": "Repository status",
+  "github.issue.read": "GitHub Issue read",
+  "github.read.batch": "GitHub READONLY batch read",
+  "github.issue.create.preflight": "GitHub Issue create",
+  "github.issue.create.apply": "GitHub Issue create",
+  "github.issue.update.preflight": "GitHub Issue update",
+  "github.issue.update.apply": "GitHub Issue update",
+  "github.issue.comment.preflight": "GitHub Issue comment",
+  "github.issue.comment.apply": "GitHub Issue comment",
+  "github.issue.label.preflight": "GitHub Issue label update",
+  "github.issue.label.apply": "GitHub Issue label update",
+  "github.issue.close.preflight": "GitHub Issue close",
+  "github.issue.close.apply": "GitHub Issue close",
+  "repository.maintenance.diagnose": "Repository maintenance diagnosis",
+  "repository.maintenance.plan": "Repository maintenance plan",
+  "repository.maintenance.apply": "Repository maintenance",
+  "repository.post-merge.next-work": "Post-merge next-work preparation",
   "pr.publish.preflight": "PR publication",
   "pr.publish.apply": "PR publication",
   "pr.recommit.preflight": "PR recommit",
   "pr.recommit.apply": "PR recommit",
-  "version.status": "バージョン状態",
-  "version.increment.validate": "バージョン候補検証",
+  "version.status": "Version status",
+  "version.increment.validate": "Version increment validation",
   "writing.issue.prepare": "Issue writing evidence",
   "writing.pr.prepare": "PR writing evidence",
   "writing.release.prepare": "Release writing evidence",
@@ -34,15 +34,19 @@ function oneLine(value) {
   return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
-function displayValue(value, fallback = "なし") {
+function displayValue(value, fallback = "none") {
   if (value === null || value === undefined || value === "") return fallback;
   return oneLine(value);
 }
 
 function labelsValue(labels) {
   return Array.isArray(labels) && labels.length > 0
-    ? labels.map(oneLine).join(", ")
-    : "なし";
+    ? labels.map((label) => (
+      label && typeof label === "object" && typeof label.name === "string"
+        ? oneLine(label.name)
+        : oneLine(label)
+    )).join(", ")
+    : "none";
 }
 
 function resultHeader({ status, approvalGate, delegateStatus }) {
@@ -56,11 +60,11 @@ function resultHeader({ status, approvalGate, delegateStatus }) {
 }
 
 function appendRepositoryStatus(lines, result) {
-  lines.push(`ブランチ: ${displayValue(result.branch)}`);
+  lines.push(`Branch: ${displayValue(result.branch)}`);
   lines.push(`HEAD: ${displayValue(result.head)}`);
   lines.push(`upstream: ${displayValue(result.upstream)}`);
   lines.push(`ahead / behind: ${result.ahead ?? 0} / ${result.behind ?? 0}`);
-  lines.push(`作業ツリー: ${result.dirty ? "変更あり" : "clean"}`);
+  lines.push(`Working tree: ${result.dirty ? "dirty" : "clean"}`);
   lines.push(
     `staged / unstaged / untracked / conflicted: ${result.staged ?? 0}`
     + ` / ${result.unstaged ?? 0} / ${result.untracked ?? 0} / ${result.conflicted ?? 0}`,
@@ -69,59 +73,59 @@ function appendRepositoryStatus(lines, result) {
     const versions = result.versions
       .filter((entry) => entry.present)
       .map((entry) => `${oneLine(entry.path)}=${oneLine(entry.value)}`);
-    if (versions.length > 0) lines.push(`バージョン: ${versions.join(", ")}`);
+    if (versions.length > 0) lines.push(`Versions: ${versions.join(", ")}`);
   }
 }
 
 function appendIssueRead(lines, result) {
-  lines.push(`対象: ${displayValue(result.repository)}`);
-  lines.push(`取得モード: ${displayValue(result.mode)}`);
+  lines.push(`Repository: ${displayValue(result.repository)}`);
+  lines.push(`Read mode: ${displayValue(result.mode)}`);
   if (result.mode === "issue" && result.issue) {
     lines.push(`Issue: #${result.issue.number}`);
-    lines.push(`タイトル: ${displayValue(result.issue.title)}`);
-    lines.push(`状態: ${displayValue(result.issue.state)}`);
-    lines.push(`ラベル: ${labelsValue(result.issue.labels)}`);
-    lines.push(`URL: ${displayValue(result.issue.url)}`);
-    lines.push(`コメント数: ${result.issue.comments?.length ?? 0}`);
+    lines.push(`Title: ${displayValue(result.issue.title)}`);
+    lines.push(`State: ${displayValue(result.issue.state)}`);
+    lines.push(`Labels: ${labelsValue(result.issue.labels)}`);
+    lines.push(`URL: ${displayValue(result.issue.html_url ?? result.issue.url)}`);
+    lines.push(`Comment count: ${result.issue.comments?.length ?? 0}`);
   } else if (result.mode === "list") {
-    lines.push(`状態フィルター: ${displayValue(result.state)}`);
-    lines.push(`取得件数: ${result.issues?.length ?? 0}`);
+    lines.push(`State filter: ${displayValue(result.state)}`);
+    lines.push(`Issue count: ${result.issues?.length ?? 0}`);
   } else if (result.mode === "labels") {
-    lines.push(`ラベル件数: ${result.labels?.length ?? 0}`);
+    lines.push(`Label count: ${result.labels?.length ?? 0}`);
   }
 }
 
 function appendIssueOperation(lines, workflow, result) {
-  lines.push(`対象: ${displayValue(result.repository)}`);
+  lines.push(`Repository: ${displayValue(result.repository)}`);
   if (result.issue_number || result.issue) {
     lines.push(`Issue: #${result.issue_number ?? result.issue}`);
   }
-  if (result.title) lines.push(`タイトル: ${oneLine(result.title)}`);
-  if (Object.hasOwn(result, "labels")) lines.push(`ラベル: ${labelsValue(result.labels)}`);
+  if (result.title) lines.push(`Title: ${oneLine(result.title)}`);
+  if (Object.hasOwn(result, "labels")) lines.push(`Labels: ${labelsValue(result.labels)}`);
   if (result.parent_issue) {
     lines.push(
-      `親Issue: #${result.parent_issue.number} (${displayValue(result.parent_issue.state)})`
+      `Parent Issue: #${result.parent_issue.number} (${displayValue(result.parent_issue.state)})`
       + ` ${displayValue(result.parent_issue.title)}`,
     );
   }
   if (result.draft) lines.push(`Draft: ${displayValue(result.draft)}`);
   if (result.draft_sha256) lines.push(`Draft SHA-256: ${result.draft_sha256}`);
-  if (result.labels_sha256) lines.push(`ラベル選択 SHA-256: ${result.labels_sha256}`);
-  if (result.parent_sha256) lines.push(`親Issue snapshot SHA-256: ${result.parent_sha256}`);
+  if (result.labels_sha256) lines.push(`Label selection SHA-256: ${result.labels_sha256}`);
+  if (result.parent_sha256) lines.push(`Parent Issue snapshot SHA-256: ${result.parent_sha256}`);
   if (result.issue_url) lines.push(`URL: ${result.issue_url}`);
   if (result.issue_verification?.status) {
-    lines.push(`Issue検証: ${result.issue_verification.status}`);
+    lines.push(`Issue verification: ${result.issue_verification.status}`);
   }
   if (result.label_verification?.status) {
-    lines.push(`ラベル検証: ${result.label_verification.status}`);
+    lines.push(`Label verification: ${result.label_verification.status}`);
   }
   if (result.parent_verification?.status) {
-    lines.push(`親Issue検証: ${result.parent_verification.status}`);
+    lines.push(`Parent Issue verification: ${result.parent_verification.status}`);
   }
   if (workflow.endsWith(".preflight") && result.apply_arguments) {
-    lines.push("リモート変更: 未実行");
-    if (result.handoff) lines.push(`承認ID: ${result.handoff.id}`);
-    lines.push("承認: チャットで「miku-scm 承認」と返信");
+    lines.push("Remote mutation: not invoked");
+    if (result.handoff) lines.push(`Approval ID: ${result.handoff.id}`);
+    lines.push("Approval command: reply with exactly `miku-scm approve` in chat");
   }
 }
 
@@ -129,13 +133,41 @@ function appendGeneric(lines, result) {
   const repository = result.repository ?? result.repo;
   if (repository) {
     const displayedRepository = pathLikeAbsolute(repository) ? "local repository" : repository;
-    lines.push(`対象: ${displayValue(displayedRepository)}`);
+    lines.push(`Repository: ${displayValue(displayedRepository)}`);
   }
-  if (result.branch) lines.push(`ブランチ: ${displayValue(result.branch)}`);
-  if (result.status) lines.push(`delegate状態: ${displayValue(result.status)}`);
+  if (result.branch) lines.push(`Branch: ${displayValue(result.branch)}`);
+  if (result.status) lines.push(`Delegate status: ${displayValue(result.status)}`);
   if (result.plan_path) lines.push(`Plan: ${displayValue(result.plan_path)}`);
   if (result.plan_sha256) lines.push(`Plan SHA-256: ${result.plan_sha256}`);
   if (result.issue_url) lines.push(`URL: ${result.issue_url}`);
+}
+
+function appendRecommit(lines, result) {
+  const repository = result.repository ?? result.repo;
+  if (repository) {
+    const displayedRepository = pathLikeAbsolute(repository) ? "local repository" : repository;
+    lines.push(`Repository: ${displayValue(displayedRepository)}`);
+  }
+  lines.push(`Branch: ${displayValue(result.branch)}`);
+  lines.push(`Delegate status: ${displayValue(result.status)}`);
+  lines.push(`Base: ${displayValue(result.base)}`);
+  if (result.base_commit) lines.push(`Base commit: ${result.base_commit}`);
+  lines.push(
+    `${result.mode === "apply" ? "Backup branch" : "Backup branch candidate"}: `
+    + `${displayValue(result.backup_branch)}`,
+  );
+  lines.push(`PR draft: ${displayValue(result.pr_draft)}`);
+  if (result.pr_draft_sha256) lines.push(`PR draft SHA-256: ${result.pr_draft_sha256}`);
+  if (Number.isSafeInteger(result.commits_to_collapse)) {
+    lines.push(`Commits to collapse: ${result.commits_to_collapse}`);
+  }
+  if (result.mode === "apply") {
+    lines.push(`New HEAD: ${displayValue(result.new_head)}`);
+    lines.push(`Final status: ${displayValue(result.final_status)}`);
+  } else {
+    lines.push(`Working tree: ${result.dirty ? "dirty" : "clean"}`);
+    lines.push(`Blockers: ${labelsValue(result.blockers)}`);
+  }
 }
 
 function pathLikeAbsolute(value) {
@@ -145,11 +177,11 @@ function pathLikeAbsolute(value) {
 
 function appendVersion(lines, result) {
   appendGeneric(lines, result);
-  lines.push(`policy: ${displayValue(result.policy, "未指定")}`);
-  lines.push(`policy解決: ${result.policy_resolved ? "済み" : "未解決"}`);
+  lines.push(`Policy: ${displayValue(result.policy, "unspecified")}`);
+  lines.push(`Policy resolved: ${result.policy_resolved ? "yes" : "no"}`);
   if (Array.isArray(result.authoritative)) {
     for (const entry of result.authoritative) {
-      lines.push(`現在値 (${displayValue(entry.path)}): ${displayValue(entry.value)}`);
+      lines.push(`Current value (${displayValue(entry.path)}): ${displayValue(entry.value)}`);
     }
   }
   if (result.proposed) {
@@ -157,7 +189,7 @@ function appendVersion(lines, result) {
     for (const entry of proposed) {
       if (entry && typeof entry === "object") {
         lines.push(
-          `候補 (${displayValue(entry.path, "version")}): `
+          `Candidate (${displayValue(entry.path, "version")}): `
           + `${displayValue(entry.value ?? entry.proposed ?? entry.next)}`,
         );
       }
@@ -166,28 +198,28 @@ function appendVersion(lines, result) {
 }
 
 function appendWriting(lines, result) {
-  lines.push(`対象: ${displayValue(result.github_repository ?? result.repository)}`);
-  if (result.branch) lines.push(`ブランチ: ${displayValue(result.branch)}`);
+  lines.push(`Repository: ${displayValue(result.github_repository ?? result.repository)}`);
+  if (result.branch) lines.push(`Branch: ${displayValue(result.branch)}`);
   if (result.target) {
-    lines.push(`Git対象: ${displayValue(result.target.resolved_log_target)}`);
-    lines.push(`対象解決: ${displayValue(result.target.resolution)}`);
+    lines.push(`Git target: ${displayValue(result.target.resolved_log_target)}`);
+    lines.push(`Target resolution: ${displayValue(result.target.resolution)}`);
   }
   if (Number.isSafeInteger(result.commit_count)) {
-    lines.push(`commit数: ${result.commit_count}`);
+    lines.push(`Commit count: ${result.commit_count}`);
   }
   if (Array.isArray(result.changed_files)) {
-    lines.push(`変更ファイル数: ${result.changed_files.length}`);
+    lines.push(`Changed file count: ${result.changed_files.length}`);
   }
   if (Array.isArray(result.documents)) {
-    lines.push(`証拠文書数: ${result.documents.length}`);
+    lines.push(`Evidence document count: ${result.documents.length}`);
   }
   lines.push(`evidence SHA-256: ${displayValue(result.evidence_sha256)}`);
-  lines.push(`Draft候補: ${displayValue(result.suggested_draft_path)}`);
+  lines.push(`Suggested draft: ${displayValue(result.suggested_draft_path)}`);
   const truncated = Boolean(
     result.commits_truncated || result.patch_truncated || result.documents_truncated,
   );
-  lines.push(`証拠切り詰め: ${truncated ? "あり" : "なし"}`);
-  lines.push("作文: 未実行");
+  lines.push(`Evidence truncated: ${truncated ? "yes" : "no"}`);
+  lines.push("Writing: not invoked");
 }
 
 export function renderHumanOutput({
@@ -201,17 +233,17 @@ export function renderHumanOutput({
 }) {
   if (workflow === "github.issue.handoff.apply" && result?.apply_result?.human_output) {
     return `${result.apply_result.human_output.trimEnd()}\n`
-      + `承認handoff: ${result.handoff.id} (${result.handoff.status})\n`;
+      + `Approval handoff: ${result.handoff.id} (${result.handoff.status})\n`;
   }
   const title = WORKFLOW_TITLES[workflow] ?? workflow;
   const lines = [`[${resultHeader({ status, approvalGate, delegateStatus })}] ${title}`, ""];
 
   if (error) {
     lines.push(`workflow: ${workflow}`);
-    lines.push(`分類: ${displayValue(error.classification, "unknown")}`);
-    lines.push(`内容: ${displayValue(error.message, "不明なエラー")}`);
-    lines.push(`mutation実行: ${mutationInvoked === null ? "不明" : mutationInvoked ? "あり" : "なし"}`);
-    lines.push(`再試行: ${displayValue(error.retryability, "要確認")}`);
+    lines.push(`Classification: ${displayValue(error.classification, "unknown")}`);
+    lines.push(`Message: ${displayValue(error.message, "unknown error")}`);
+    lines.push(`Mutation invoked: ${mutationInvoked === null ? "unknown" : mutationInvoked ? "yes" : "no"}`);
+    lines.push(`Retryability: ${displayValue(error.retryability, "review-required")}`);
     return `${lines.join("\n")}\n`;
   }
 
@@ -225,9 +257,11 @@ export function renderHumanOutput({
     appendVersion(lines, result ?? {});
   } else if (workflow.startsWith("writing.")) {
     appendWriting(lines, result ?? {});
+  } else if (workflow.startsWith("pr.recommit.")) {
+    appendRecommit(lines, result ?? {});
   } else {
     appendGeneric(lines, result ?? {});
   }
-  lines.push(`mutation実行: ${mutationInvoked === null ? "不明" : mutationInvoked ? "あり" : "なし"}`);
+  lines.push(`Mutation invoked: ${mutationInvoked === null ? "unknown" : mutationInvoked ? "yes" : "no"}`);
   return `${lines.join("\n")}\n`;
 }

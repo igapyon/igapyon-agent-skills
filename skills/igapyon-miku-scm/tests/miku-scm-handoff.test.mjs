@@ -43,7 +43,7 @@ async function createPending(root, id = "handoff-1") {
       labels: [],
       labels_sha256: "b".repeat(64),
     },
-    humanSummary: "[READY FOR APPROVAL] GitHub Issue作成\n",
+    humanSummary: "[READY FOR APPROVAL] GitHub Issue create\n",
     createdAt: "2026-07-28T12:00:00.000Z",
   });
 }
@@ -102,7 +102,7 @@ test("apply requires exactly one pending handoff and forwards unchanged argument
           status: "success",
           run_id: "apply-run",
           mutation_invoked: true,
-          human_output: "[SUCCESS] GitHub Issue作成\n",
+          human_output: "[SUCCESS] GitHub Issue create\n",
         };
       },
     },

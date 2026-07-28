@@ -59,7 +59,7 @@ while [ "$#" -gt 0 ]; do
   printf '%s\n' "$LOCK_ENTRY" >> "$STAGING_EXTERNAL_LOCK"
 done
 
-java -jar "$STAGING_DIR/lib/miku-indexgen-1.5.1.jar" \
+java -jar "$STAGING_DIR/lib/miku-indexgen-1.6.2.jar" \
   --input-parent-directory "$STAGING_DIR/skills"
 
 find "$STAGING_DIR" -name .DS_Store -type f -delete

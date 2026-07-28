@@ -106,7 +106,7 @@ timezone or Semantic Version level and returns proposed values without editing
 them.
 
 Issue mutation preflights also save an approval handoff. After the human
-reviews the complete preflight and replies `miku-scm 承認`, invoke
+reviews the complete preflight and replies `miku-scm approve`, invoke
 `github.issue.handoff.apply --apply`. It accepts no workflow ID, handoff ID, or
 apply arguments from the Agent and stops unless exactly one pending Issue
 handoff exists. See [approval-handoff.md](approval-handoff.md).
