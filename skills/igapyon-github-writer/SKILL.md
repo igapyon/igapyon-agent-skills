@@ -28,23 +28,25 @@ Examples:
 
 If the mode is clear but required evidence is missing, do not draft yet. Ask for the missing target, except for PR mode's default target rule:
 
-- PR mode: if the user asks for PR text without specifying a commit ID, Git range, branch comparison, or working-tree target, first run `git log --oneline --decorate -1` to resolve the current latest commit, then use that single commit as the PR target. Do not include uncommitted working-tree changes.
+- PR mode: if the user asks for PR text without specifying a commit ID, Git range, branch comparison, or working-tree target, use the runner's default latest-single-commit target. Do not include uncommitted working-tree changes.
 - Release mode: ask for the start commit ID, explicit Git range, or tag/range target.
-- About mode: ask whether to use `README.md` and project metadata, or ask for the source text when repository evidence is not obvious.
+- About mode: use `README.md` and available `package.json` or `pom.xml` by default. Ask for source text only when repository evidence is not obvious.
 
 ## Core Workflow
 
 1. Identify whether the request is for PR, Release, About text, PR Soft Reset Recommit, Backup Branch, or Branch Status.
-2. Read [references/github-writing-rules.md](references/github-writing-rules.md) before drafting.
+2. Read [references/deterministic-runner.md](references/deterministic-runner.md) and [references/github-writing-rules.md](references/github-writing-rules.md) before acting.
 3. Read the mode-specific reference: [references/pr-writing.md](references/pr-writing.md), [references/release-writing.md](references/release-writing.md), [references/about-writing.md](references/about-writing.md), [references/pr-soft-reset-recommit.md](references/pr-soft-reset-recommit.md), [references/backup-branch.md](references/backup-branch.md), or [references/branch-status.md](references/branch-status.md).
-4. Inspect only the repository evidence needed for the requested mode.
-5. Draft or report from evidence without inventing unsupported facts.
-6. For PR, Release, and About modes, save the drafted Markdown using the shared draft-save rules unless the user says not to save.
+4. Invoke the fixed runner workflow. Use its structured result as the normal evidence source; do not reconstruct the same Git evidence with ad hoc shell commands.
+5. For PR, Release, and About, make one AI writing pass from the bounded evidence. Do not repeatedly reread the repository unless evidence is missing or invalid.
+6. Validate and save the completed inner Markdown with `draft.validate-and-save` unless the user says not to save.
 7. Return the final answer using the format required by the selected reference.
 
 ## Reference Use
 
 Use [references/github-writing-rules.md](references/github-writing-rules.md) for shared evidence collection and hallucination-prevention rules.
+
+Use [references/deterministic-runner.md](references/deterministic-runner.md) for the workflow manifest, CLI, result schema, approval gates, and macOS/Windows 11 portability contract.
 
 Use these mode-specific references:
 
@@ -65,4 +67,5 @@ Before finishing:
 
 - ensure the final answer contains no absolute paths, home directories, or working directories
 - ensure unsupported items are marked `未確認`, `要確認`, or omitted
+- ensure runner failures are reported according to `mutation_invoked` and `retryability`; never retry an apply plan automatically
 - for PR, Release, and About modes, ensure the drafted Markdown is wrapped with `~~~~markdown` and `~~~~`; if a file was saved, mention only the relative saved path outside the wrapped block
