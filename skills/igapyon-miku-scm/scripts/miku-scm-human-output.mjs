@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v2";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v4";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -170,6 +170,46 @@ function appendRecommit(lines, result) {
   }
 }
 
+function appendPublication(lines, result) {
+  lines.push(`Repository: ${displayValue(result.repository)}`);
+  lines.push(`Pushed branch: ${displayValue(result.pushed_branch)}`);
+  lines.push(`Final branch: ${displayValue(result.final_branch)}`);
+  lines.push(`Final status: ${displayValue(result.final_status)}`);
+  lines.push(`Post-push comparison: ${displayValue(result.comparison)}`);
+  lines.push(`Repository URL: ${displayValue(result.repository_url, "unresolved")}`);
+  lines.push(`PR lookup: ${displayValue(result.pr_lookup, "unresolved")}`);
+  if (result.pr_url) {
+    lines.push(`PR URL: ${displayValue(result.pr_url, "unresolved")}`);
+  } else if (Array.isArray(result.pr_urls) && result.pr_urls.length > 0) {
+    lines.push(`PR URLs: ${result.pr_urls.map((url) => displayValue(url, "unresolved")).join(", ")}`);
+  } else {
+    lines.push(`PR creation URL: ${displayValue(result.pr_creation_url, "unresolved")}`);
+  }
+  lines.push(`Version: ${displayValue(result.version, "unresolved")}`);
+  lines.push(`Recommended tag: ${displayValue(result.recommended_tag, "unresolved")}`);
+  lines.push(`PR mutation: ${result.pull_request_mutation ? "yes" : "no"}`);
+  lines.push(`Tag mutation: ${result.tag_mutation ? "yes" : "no"}`);
+  if (result.plan_path) lines.push(`Plan: ${displayValue(result.plan_path)}`);
+  if (result.plan_sha256) lines.push(`Plan SHA-256: ${displayValue(result.plan_sha256)}`);
+}
+
+function appendPostMergeNextWork(lines, result) {
+  lines.push(`Previous branch: ${displayValue(result.previous_branch)}`);
+  lines.push(`Remote: ${displayValue(result.remote)}`);
+  lines.push(`Base branch: ${displayValue(result.base)}`);
+  lines.push(`Base commit: ${displayValue(result.base_commit)}`);
+  lines.push(`Version: ${displayValue(result.version, "unresolved")}`);
+  lines.push(`Version source: ${displayValue(result.version_source, "unresolved")}`);
+  lines.push(`Recommended tag: ${displayValue(result.recommended_tag, "unresolved")}`);
+  lines.push(`Tag status: ${displayValue(result.tag_status, "unresolved")}`);
+  if (result.tag_target) lines.push(`Tag target: ${displayValue(result.tag_target)}`);
+  lines.push(`Next work branch: ${displayValue(result.next_branch)}`);
+  lines.push(`Final branch: ${displayValue(result.final_branch)}`);
+  lines.push(`Post-create comparison: ${displayValue(result.comparison)}`);
+  lines.push(`Tag mutation: ${result.tag_mutation ? "yes" : "no"}`);
+  lines.push(`Release mutation: ${result.release_mutation ? "yes" : "no"}`);
+}
+
 function pathLikeAbsolute(value) {
   return typeof value === "string"
     && (value.startsWith("/") || /^[A-Za-z]:[\\/]/.test(value));
@@ -249,6 +289,8 @@ export function renderHumanOutput({
 
   if (workflow === "repository.status") {
     appendRepositoryStatus(lines, result ?? {});
+  } else if (workflow === "repository.post-merge.next-work") {
+    appendPostMergeNextWork(lines, result ?? {});
   } else if (workflow === "github.issue.read") {
     appendIssueRead(lines, result ?? {});
   } else if (workflow.startsWith("github.issue.")) {
@@ -257,11 +299,18 @@ export function renderHumanOutput({
     appendVersion(lines, result ?? {});
   } else if (workflow.startsWith("writing.")) {
     appendWriting(lines, result ?? {});
+  } else if (workflow === "pr.publish.apply") {
+    appendPublication(lines, result ?? {});
   } else if (workflow.startsWith("pr.recommit.")) {
     appendRecommit(lines, result ?? {});
   } else {
     appendGeneric(lines, result ?? {});
   }
   lines.push(`Mutation invoked: ${mutationInvoked === null ? "unknown" : mutationInvoked ? "yes" : "no"}`);
+  if ((workflow === "pr.publish.apply" || workflow === "repository.post-merge.next-work")
+    && result?.human_handoff) {
+    lines.push("");
+    lines.push(displayValue(result.human_handoff));
+  }
   return `${lines.join("\n")}\n`;
 }

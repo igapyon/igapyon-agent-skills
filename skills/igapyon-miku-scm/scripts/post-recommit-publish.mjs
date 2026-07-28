@@ -309,7 +309,7 @@ function createGhRunner() {
   };
 }
 
-function resolvePrHandoff(repository, branch, gh) {
+export function resolvePrHandoff(repository, branch, gh) {
   if (!repository) {
     return { repository_url: "unresolved", pr_url: "unresolved", pr_lookup: "unresolved" };
   }
@@ -323,7 +323,10 @@ function resolvePrHandoff(repository, branch, gh) {
     if (!result?.ok) throw new Error(result?.stderr || result?.stdout || result?.error?.message || "gh pr list failed");
     const pulls = JSON.parse(result.stdout);
     if (!Array.isArray(pulls)) throw new Error("GitHub API returned a non-array response");
-    const urls = pulls.map((entry) => entry?.html_url).filter((url) => typeof url === "string" && url);
+    const urls = pulls.map((entry) => entry?.url);
+    if (urls.some((url) => typeof url !== "string" || url.length === 0)) {
+      throw new Error("GitHub API returned malformed PR URL metadata");
+    }
     if (urls.length === 1) {
       return { repository_url: repository.url, pr_url: urls[0], pr_lookup: "confirmed" };
     }

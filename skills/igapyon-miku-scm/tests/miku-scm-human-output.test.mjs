@@ -8,7 +8,7 @@ import {
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v2");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v4");
 });
 
 test("every workflow uses English fixed output wording", () => {
@@ -206,4 +206,167 @@ New HEAD: ${"c".repeat(40)}
 Final status: ## devel-test...origin/devel [ahead 1]
 Mutation invoked: yes
 `);
+});
+
+test("post-merge next-work output is complete and ends with the fixed handoff", () => {
+  const output = renderHumanOutput({
+    workflow: "repository.post-merge.next-work",
+    status: "success",
+    approvalGate: "apply",
+    delegateStatus: "created",
+    mutationInvoked: true,
+    result: {
+      status: "created",
+      previous_branch: "devel-tiga0728vej-done",
+      remote: "origin",
+      base: "devel",
+      base_commit: "a".repeat(40),
+      version: "1.20260728.6",
+      version_source: "pom.xml",
+      recommended_tag: "v20260728f",
+      tag_status: "confirmed",
+      tag_target: "a".repeat(40),
+      next_branch: "devel-tiga0728wcg",
+      final_branch: "devel-tiga0728wcg",
+      comparison: "0 0",
+      tag_mutation: false,
+      release_mutation: false,
+      human_handoff: "Next work branch is ready: devel-tiga0728wcg",
+    },
+  });
+
+  assert.equal(output, `[SUCCESS] Post-merge next-work preparation
+
+Previous branch: devel-tiga0728vej-done
+Remote: origin
+Base branch: devel
+Base commit: ${"a".repeat(40)}
+Version: 1.20260728.6
+Version source: pom.xml
+Recommended tag: v20260728f
+Tag status: confirmed
+Tag target: ${"a".repeat(40)}
+Next work branch: devel-tiga0728wcg
+Final branch: devel-tiga0728wcg
+Post-create comparison: 0 0
+Tag mutation: no
+Release mutation: no
+Mutation invoked: yes
+
+Next work branch is ready: devel-tiga0728wcg
+`);
+  assert.doesNotMatch(output, /[ぁ-んァ-ヶ一-龠]/);
+});
+
+test("PR publication apply output contains the complete human handoff", () => {
+  const output = renderHumanOutput({
+    workflow: "pr.publish.apply",
+    status: "success",
+    approvalGate: "apply",
+    delegateStatus: "published",
+    mutationInvoked: true,
+    result: {
+      repository: "igapyon-agent-skills",
+      pushed_branch: "devel-test",
+      final_branch: "devel-test-done",
+      final_status: "## devel-test-done...origin/devel-test",
+      comparison: "0 0",
+      repository_url: "https://github.com/igapyon/igapyon-agent-skills",
+      pr_lookup: "confirmed-none",
+      pr_creation_url: "https://github.com/igapyon/igapyon-agent-skills/pull/new/devel-test",
+      version: "1.20260728.6",
+      recommended_tag: "v20260728f",
+      pull_request_mutation: false,
+      tag_mutation: false,
+      plan_path: "workplace/miku-scm/publish-plans/publish-develop-test.json",
+      plan_sha256: "d".repeat(64),
+      human_handoff: "Create the PR and tag through GitHub.",
+    },
+  });
+
+  assert.equal(output, `[SUCCESS] PR publication
+
+Repository: igapyon-agent-skills
+Pushed branch: devel-test
+Final branch: devel-test-done
+Final status: ## devel-test-done...origin/devel-test
+Post-push comparison: 0 0
+Repository URL: https://github.com/igapyon/igapyon-agent-skills
+PR lookup: confirmed-none
+PR creation URL: https://github.com/igapyon/igapyon-agent-skills/pull/new/devel-test
+Version: 1.20260728.6
+Recommended tag: v20260728f
+PR mutation: no
+Tag mutation: no
+Plan: workplace/miku-scm/publish-plans/publish-develop-test.json
+Plan SHA-256: ${"d".repeat(64)}
+Mutation invoked: yes
+
+Create the PR and tag through GitHub.
+`);
+  assert.doesNotMatch(output, /[ぁ-んァ-ヶ一-龠]/);
+});
+
+test("PR publication reports unresolved values without guessing", () => {
+  const output = renderHumanOutput({
+    workflow: "pr.publish.apply",
+    status: "success",
+    approvalGate: "apply",
+    delegateStatus: "published",
+    mutationInvoked: true,
+    result: {
+      repository: "local-repository",
+      pushed_branch: "devel-test",
+      final_branch: "devel-test-done",
+      final_status: "## devel-test-done",
+      comparison: "0 0",
+      repository_url: "unresolved",
+      pr_lookup: "unresolved",
+      pr_url: "unresolved",
+      version: "unresolved",
+      recommended_tag: "unresolved",
+      pull_request_mutation: false,
+      tag_mutation: false,
+      human_handoff: "Create the PR and tag through GitHub.",
+    },
+  });
+
+  assert.match(output, /^PR URL: unresolved$/m);
+  assert.match(output, /^Recommended tag: unresolved$/m);
+  assert.match(output, /^PR mutation: no$/m);
+  assert.match(output, /^Tag mutation: no$/m);
+});
+
+test("PR publication reports ambiguous PR URLs on one line", () => {
+  const output = renderHumanOutput({
+    workflow: "pr.publish.apply",
+    status: "success",
+    approvalGate: "apply",
+    delegateStatus: "published",
+    mutationInvoked: true,
+    result: {
+      repository: "igapyon-agent-skills",
+      pushed_branch: "devel-test",
+      final_branch: "devel-test-done",
+      final_status: "## devel-test-done",
+      comparison: "0 0",
+      repository_url: "https://github.com/igapyon/igapyon-agent-skills",
+      pr_lookup: "ambiguous",
+      pr_urls: [
+        "https://github.com/igapyon/igapyon-agent-skills/pull/315",
+        "https://github.com/igapyon/igapyon-agent-skills/pull/316",
+      ],
+      version: "1.20260728.6",
+      recommended_tag: "v20260728f",
+      pull_request_mutation: false,
+      tag_mutation: false,
+      human_handoff: "Create the PR and tag through GitHub.",
+    },
+  });
+
+  assert.match(
+    output,
+    /^PR URLs: https:\/\/github\.com\/igapyon\/igapyon-agent-skills\/pull\/315, https:\/\/github\.com\/igapyon\/igapyon-agent-skills\/pull\/316$/m,
+  );
+  assert.equal(output.split("\n").filter((line) => line.startsWith("PR URLs:")).length, 1);
 });

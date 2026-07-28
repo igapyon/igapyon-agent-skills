@@ -183,6 +183,23 @@ git ls-remote --tags origin "refs/tags/<recommended-tag>" "refs/tags/<recommende
 6. When the tag exists, resolve its effective target commit, peeling an annotated tag when necessary, and compare it with the refreshed base commit. Report the tag as confirmed when they match. When they do not match, report both commit IDs as a warning and continue.
 7. When the remote tag query fails, report `注意: 推奨タグ <recommended-tag> のリモート確認に失敗しました。` and continue. Do not silently treat a failed query as an absent tag.
 
+Classify the structured `tag_status` as `confirmed`, `absent`, `mismatch`,
+`lookup-failed`, or `unresolved`. These states are advisory and do not block
+creation of the next work branch.
+
+After successful branch creation and `0 0` verification, the fixed English
+human output must report the previous branch, remote, base branch and commit,
+version and source, recommended tag and its classified status, resolved tag
+target when present, next and final branches, comparison, and tag and Release
+mutation boundaries. End with the exact structured handoff:
+
+```text
+Next work branch is ready: <next-branch>
+```
+
+The renderer uses the structured result values and does not re-resolve branch,
+version, tag, or commit information.
+
 This check is advisory. A missing, mismatched, unresolved, or temporarily unqueryable recommended tag must never block creation of the next work branch. It does not authorize creating, moving, or pushing a tag, and it does not replace the fuller Release and distribution-asset audit.
 
 Build the new branch name as:

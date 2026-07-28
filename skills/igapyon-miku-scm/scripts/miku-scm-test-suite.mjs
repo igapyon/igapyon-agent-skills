@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url";
 
 const SLOW_SHARDS = new Map([
   ["post-recommit-publish.test.mjs", [
-    "^(?:preflight|plan CLI|content VERSION)",
+    "^(?:PR handoff|preflight|plan CLI|content VERSION)",
     "^post-merge",
     "^(?:saved publication|apply rejects a changed|apply rejects a dirty)",
     "^(?:saved plan remains|programmatic publication)",
