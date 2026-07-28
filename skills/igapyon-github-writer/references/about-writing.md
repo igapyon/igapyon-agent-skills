@@ -10,6 +10,10 @@ After `igapyon-github-writer` is active, enter About mode for similar wording su
 
 ## Evidence
 
+Use `about.evidence` to gather bounded structured documents. By default it reads
+the available `README.md`, `package.json`, and `pom.xml`; use repeated
+`--document` options for explicit repository-relative sources.
+
 Base the text on repository evidence such as:
 
 - `README.md`

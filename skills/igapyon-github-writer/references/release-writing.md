@@ -10,6 +10,7 @@ After `igapyon-github-writer` is active, enter Release mode for similar wording 
 
 ## Target Rules
 
+- Gather the resolved target through `release.evidence --target <start-or-range>`.
 - A start commit ID, commit range, or explicit tag/range target is required input for Release drafting.
 - If the user asks for Release text without a start commit, commit range, tag range, or other explicit Git target, ask for the target before drafting.
 - In that case, ask briefly in Japanese, for example: `開始コミットID、Git範囲、またはタグ範囲を教えてください。`

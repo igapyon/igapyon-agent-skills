@@ -1,310 +1,106 @@
 #!/usr/bin/env node
 
-import { existsSync, readdirSync, statSync } from "node:fs";
+// Compatibility entry point. New workflows should call scripts/github-writer-run.mjs.
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+
+import {
+  branchStatus,
+  recommitApply,
+  recommitPreflight,
+} from "../../scripts/github-writer-kernel.mjs";
 
 const usage = `Usage:
-  node skills/igapyon-github-writer/references/scripts/pr-soft-reset-recommit-preflight.mjs [--base <base>] [--pr-draft <path>] [--repo <path>] [--apply] [--allow-dirty]
+  node skills/igapyon-github-writer/references/scripts/pr-soft-reset-recommit-preflight.mjs [--base <ref>] [--pr-draft <path>] [--repo <path>] [--apply]
 
-By default this is a read-only helper. It resolves PR draft candidates, backup
-branch names, and Git evidence for PR Soft Reset Recommit mode.
+Compatibility adapter for the deterministic runner. Without --apply it creates
+a sealed preflight plan. With --apply it creates that plan and consumes it once.
+It never performs a remote mutation.`;
 
-With --apply, it performs the local-only rewrite:
-  git branch <backup> HEAD
-  git reset --soft <base>
-  git commit -F <pr-draft>
-
-It never pushes, creates PRs, merges PRs, or changes remotes.`;
-
-function parseArgs(argv) {
-  const args = { repo: process.cwd(), base: "", prDraft: "" };
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (arg === "--help" || arg === "-h") {
-      args.help = true;
-    } else if (arg === "--base") {
-      args.base = argv[++i] ?? "";
-    } else if (arg === "--pr-draft") {
-      args.prDraft = argv[++i] ?? "";
-    } else if (arg === "--repo") {
-      args.repo = argv[++i] ?? "";
-    } else if (arg === "--apply") {
-      args.apply = true;
-    } else if (arg === "--allow-dirty") {
-      args.allowDirty = true;
+function parse(argv) {
+  const options = { repo: process.cwd(), base: "", prDraft: "", apply: false };
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
+    if (argument === "--help" || argument === "-h") options.help = true;
+    else if (argument === "--apply") options.apply = true;
+    else if (argument === "--allow-dirty") {
+      throw new Error("--allow-dirty is no longer supported; recommit requires a clean working tree");
+    } else if (["--repo", "--base", "--pr-draft"].includes(argument)) {
+      const value = argv[index + 1];
+      if (!value || value.startsWith("--")) throw new Error(`${argument} requires a value`);
+      index += 1;
+      if (argument === "--repo") options.repo = value;
+      if (argument === "--base") options.base = value;
+      if (argument === "--pr-draft") options.prDraft = value;
     } else {
-      throw new Error(`Unknown argument: ${arg}`);
+      throw new Error(`Unknown argument: ${argument}`);
     }
   }
-  return args;
+  return options;
 }
 
-function git(repo, args, options = {}) {
-  const result = spawnSync("git", args, {
-    cwd: repo,
-    encoding: "utf8",
-    maxBuffer: 20 * 1024 * 1024,
-  });
-  if (result.status !== 0 && !options.allowFailure) {
-    const message = (result.stderr || result.stdout || "").trim();
-    throw new Error(`git ${args.join(" ")} failed${message ? `: ${message}` : ""}`);
-  }
-  return {
-    ok: result.status === 0,
-    stdout: (result.stdout || "").trimEnd(),
-    stderr: (result.stderr || "").trimEnd(),
-  };
+function branchSlug(branch) {
+  return String(branch).toLowerCase().replace(/[^a-z0-9._-]/g, "-");
 }
 
-function resolveDefaultBase(root) {
-  const upstream = git(root, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], {
-    allowFailure: true,
-  });
-  if (upstream.ok && upstream.stdout) {
-    return { base: upstream.stdout, source: "current branch upstream" };
-  }
-
-  const remoteHead = git(root, ["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"], {
-    allowFailure: true,
-  });
-  if (remoteHead.ok && remoteHead.stdout.startsWith("refs/remotes/")) {
-    return {
-      base: remoteHead.stdout.replace(/^refs\/remotes\//, ""),
-      source: "local origin/HEAD",
-    };
-  }
-
-  const originDevel = git(root, ["rev-parse", "--verify", "--quiet", "origin/devel"], {
-    allowFailure: true,
-  });
-  if (originDevel.ok) {
-    return { base: "origin/devel", source: "local origin/devel fallback" };
-  }
-
-  return { base: "", source: "unresolved" };
-}
-
-function shellQuote(value) {
-  return `'${String(value).replaceAll("'", "'\\''")}'`;
-}
-
-function slugBranch(branch) {
-  return branch.toLowerCase().replaceAll(/[^a-z0-9._-]/g, "-");
-}
-
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function ymdhm(date) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return [
-    date.getFullYear(),
-    "-",
-    pad(date.getMonth() + 1),
-    "-",
-    pad(date.getDate()),
-    "-",
-    pad(date.getHours()),
-    pad(date.getMinutes()),
-  ].join("");
-}
-
-function findDrafts(root, branch) {
-  const slug = slugBranch(branch);
-  if (!slug) return { slug, drafts: [] };
-
-  const dirs = ["workplace/github-writer", "temp/github-writer"];
-  const drafts = [];
-  const pattern = new RegExp(`^pr-${escapeRegExp(slug)}-(\\d{12})(?:-[a-z0-9._-]+)?\\.md$`);
-
-  for (const dir of dirs) {
-    const fullDir = path.join(root, dir);
-    if (!existsSync(fullDir)) continue;
-    for (const name of readdirSync(fullDir)) {
-      const match = name.match(pattern);
-      if (!match) continue;
-      const absolute = path.join(fullDir, name);
-      const st = statSync(absolute);
-      drafts.push({
-        rel: path.relative(root, absolute),
-        timestamp: match[1],
-        mtimeMs: st.mtimeMs,
-      });
+function resolveDraft(repo) {
+  const status = branchStatus({ repo });
+  const prefix = `pr-${branchSlug(status.branch)}-`;
+  const candidates = [];
+  for (const base of ["workplace/github-writer", "temp/github-writer"]) {
+    const directory = path.resolve(repo, base);
+    if (!existsSync(directory)) continue;
+    for (const name of readdirSync(directory)) {
+      if (name.startsWith(prefix) && name.endsWith(".md")) {
+        candidates.push(`${base}/${name}`);
+      }
     }
   }
-
-  drafts.sort((a, b) => {
-    const byTimestamp = b.timestamp.localeCompare(a.timestamp);
-    if (byTimestamp !== 0) return byTimestamp;
-    return b.mtimeMs - a.mtimeMs;
-  });
-
-  return { slug, drafts };
+  candidates.sort().reverse();
+  if (candidates.length === 0) {
+    throw new Error("No current-branch PR draft was found; pass --pr-draft");
+  }
+  return candidates[0];
 }
 
-function chooseBackup(existingBranches) {
-  const base = `backup/${ymdhm(new Date())}`;
-  const existing = new Set(
-    existingBranches
-      .split("\n")
-      .map((line) => line.replace(/^\*?\s*/, "").trim())
-      .filter(Boolean),
-  );
-  if (!existing.has(base)) return base;
-  for (let i = 2; i < 100; i += 1) {
-    const candidate = `${base}-${i}`;
-    if (!existing.has(candidate)) return candidate;
+export function run(argv = process.argv.slice(2)) {
+  try {
+    const options = parse(argv);
+    if (options.help) {
+      process.stdout.write(`${usage}\n`);
+      return 0;
+    }
+    const preflight = recommitPreflight({
+      repo: options.repo,
+      base: options.base,
+      prDraft: options.prDraft || resolveDraft(options.repo),
+    });
+    const result = options.apply
+      ? recommitApply({
+        repo: options.repo,
+        plan: preflight.plan_path,
+        expectedPlanSha256: preflight.plan_sha256,
+      })
+      : preflight;
+    process.stdout.write(`${JSON.stringify({
+      compatibility_adapter: true,
+      workflow: options.apply ? "pr.recommit.apply" : "pr.recommit.preflight",
+      status: "success",
+      result,
+    }, null, 2)}\n`);
+    return 0;
+  } catch (error) {
+    process.stdout.write(`${JSON.stringify({
+      compatibility_adapter: true,
+      status: "failure",
+      message: error instanceof Error ? error.message : String(error),
+      retryability: "do-not-retry-without-new-preflight",
+    }, null, 2)}\n`);
+    return 1;
   }
-  throw new Error(`Could not find an available backup branch name for ${base}`);
 }
 
-function hasDirtyStatus(status) {
-  return status
-    .split("\n")
-    .slice(1)
-    .some((line) => line.trim() !== "");
-}
-
-function listBlock(lines) {
-  return lines.length > 0 ? lines.map((line) => `- ${line}`).join("\n") : "- なし";
-}
-
-function main() {
-  const args = parseArgs(process.argv.slice(2));
-  if (args.help) {
-    console.log(usage);
-    return;
-  }
-
-  const root = git(args.repo, ["rev-parse", "--show-toplevel"]).stdout;
-  const resolvedBase = args.base
-    ? { base: args.base, source: "explicit --base" }
-    : resolveDefaultBase(root);
-  if (!resolvedBase.base) {
-    throw new Error("Could not resolve base from --base, current branch upstream, local origin/HEAD, or origin/devel.");
-  }
-  const branch = git(root, ["branch", "--show-current"], { allowFailure: true }).stdout;
-  const status = git(root, ["status", "-sb"]).stdout;
-  const head = git(root, ["log", "--oneline", "--decorate", "-1"]).stdout;
-  const baseOk = git(root, ["rev-parse", "--verify", "--quiet", resolvedBase.base], { allowFailure: true }).ok;
-  const collapsedLog = baseOk
-    ? git(root, ["log", "--oneline", "--decorate", `${resolvedBase.base}..HEAD`], { allowFailure: true }).stdout
-    : "";
-  const diffStat = baseOk
-    ? git(root, ["diff", "--stat", `${resolvedBase.base}...HEAD`], { allowFailure: true }).stdout
-    : "";
-  const existingBackups = git(root, ["branch", "--list", "backup/*"], { allowFailure: true }).stdout;
-  const backup = chooseBackup(existingBackups);
-
-  const { slug, drafts } = findDrafts(root, branch);
-  const explicitDraft = args.prDraft ? path.relative(root, path.resolve(root, args.prDraft)) : "";
-  const resolvedDraft = explicitDraft || drafts[0]?.rel || "";
-  const resolvedDraftAbs = resolvedDraft ? path.resolve(root, resolvedDraft) : "";
-  const draftExists = resolvedDraftAbs ? existsSync(resolvedDraftAbs) : false;
-  const draftStatus = explicitDraft
-    ? draftExists ? "明示指定された PR draft が存在します。" : "明示指定された PR draft が見つかりません。"
-    : resolvedDraft
-      ? "現在ブランチに一致する最新 PR draft 候補を解決しました。"
-      : "現在ブランチに一致する PR draft 候補が見つかりません。";
-  const dirty = hasDirtyStatus(status);
-
-  console.log(`# PR Soft Reset Recommit ${args.apply ? "Apply" : "Preflight"}
-
-${args.apply
-  ? "Apply mode was requested. This helper may perform a local-only history rewrite after validation. It never pushes, creates a PR, merges a PR, or changes remotes."
-  : "This helper is read-only. It did not create branches, reset commits, commit changes, push, or modify files."}
-
-## Resolved Inputs
-
-- base: \`${resolvedBase.base}\` (${baseOk ? "exists" : "not found"})
-- base source: ${resolvedBase.source}
-- current branch: \`${branch || "(detached or unknown)"}\`
-- branch slug: \`${slug || "(none)"}\`
-- PR draft: ${resolvedDraft ? `\`${resolvedDraft}\`` : "`未解決`"}
-- PR draft status: ${draftStatus}
-- backup branch candidate: \`${backup}\`
-- dirty status: ${dirty ? "`yes`" : "`no`"}
-
-## Status
-
-\`\`\`text
-${status || "(empty)"}
-\`\`\`
-
-## HEAD
-
-\`\`\`text
-${head || "(empty)"}
-\`\`\`
-
-## Commits To Collapse
-
-\`\`\`text
-${baseOk ? collapsedLog || "(none)" : "base was not found; skipped"}
-\`\`\`
-
-## Diff Stat
-
-\`\`\`text
-${baseOk ? diffStat || "(empty)" : "base was not found; skipped"}
-\`\`\`
-
-## Branch-Matching PR Draft Candidates
-
-${listBlock(drafts.slice(0, 10).map((draft) => `\`${draft.rel}\` (${draft.timestamp})`))}
-
-## Command Shape After Explicit Approval
-
-\`\`\`sh
-git branch ${shellQuote(backup)} HEAD && git reset --soft ${shellQuote(resolvedBase.base)}
-git commit -F ${resolvedDraft ? shellQuote(resolvedDraft) : "<PR_DRAFT>"}
-\`\`\`
-`);
-
-  if (!args.apply) return;
-
-  if (!baseOk) {
-    throw new Error(`Cannot apply because base was not found: ${resolvedBase.base}`);
-  }
-  if (!resolvedDraft || !draftExists) {
-    throw new Error("Cannot apply because PR draft is unresolved or missing.");
-  }
-  if (dirty && !args.allowDirty) {
-    throw new Error("Cannot apply with existing uncommitted changes. Re-run with --allow-dirty only if those changes are intentional.");
-  }
-
-  git(root, ["branch", backup, "HEAD"]);
-  git(root, ["reset", "--soft", resolvedBase.base]);
-  git(root, ["commit", "-F", resolvedDraft]);
-
-  const newHead = git(root, ["log", "--oneline", "--decorate", "-1"]).stdout;
-  const finalStatus = git(root, ["status", "-sb"]).stdout;
-
-  console.log(`## Apply Result
-
-- backup branch created: \`${backup}\`
-- committed with PR draft: \`${resolvedDraft}\`
-- new HEAD:
-
-\`\`\`text
-${newHead || "(empty)"}
-\`\`\`
-
-- final status:
-
-\`\`\`text
-${finalStatus || "(empty)"}
-\`\`\`
-`);
-}
-
-try {
-  main();
-} catch (error) {
-  console.error(error instanceof Error ? error.message : String(error));
-  console.error("");
-  console.error(usage);
-  process.exitCode = 1;
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  process.exitCode = run();
 }

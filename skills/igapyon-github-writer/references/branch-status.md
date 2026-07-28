@@ -20,23 +20,17 @@ Also report the newest three `tag*` tags and newest three `v*` tags. These tag g
 
 If a tag group has no matches, report that clearly instead of omitting it.
 
-## Evidence Commands
+## Evidence Runner
 
-Inspect the smallest useful local evidence:
+Use:
 
-```sh
-git status -sb
-git branch --show-current
-git rev-parse --abbrev-ref --symbolic-full-name @{u}
-git rev-list --left-right --count @{u}...HEAD
-git log --oneline --decorate --max-count=20
-git diff --stat
-git diff --cached --stat
-git tag --list 'tag*' --sort=-creatordate --format='%(creatordate:iso8601-strict) %(refname:short)'
-git tag --list 'v*' --sort=-creatordate --format='%(creatordate:iso8601-strict) %(refname:short)'
+```text
+node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json branch.status
 ```
 
-If an upstream command fails because no upstream is configured, continue without treating it as a fatal error.
+The fixed workflow gathers local status, branch, `HEAD`, upstream ahead/behind,
+20 recent commits, and the newest three tags in each tag group. Missing upstream
+is a successful result with null counts.
 
 For tag output, show only the newest three `tag*` tags and newest three `v*` tags in the report. If either pattern has no matches, report that clearly.
 

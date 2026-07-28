@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "benchmark:github-writer": "node skills/igapyon-github-writer/scripts/github-writer-benchmark.mjs",
+    "test:github-writer": "node --test skills/igapyon-github-writer/tests/*.test.mjs",
     "test:miku-scm": "node skills/igapyon-miku-scm/scripts/miku-scm-test-suite.mjs --full",
     "test:miku-scm:fast": "node --test skills/igapyon-miku-scm/tests/miku-scm-*.test.mjs skills/igapyon-miku-scm/tests/github-issue-read.test.mjs skills/igapyon-miku-scm/tests/pr-draft-location.test.mjs",
     "test:miku-scm:full": "node skills/igapyon-miku-scm/scripts/miku-scm-test-suite.mjs --full"

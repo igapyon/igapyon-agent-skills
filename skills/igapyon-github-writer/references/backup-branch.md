@@ -25,26 +25,26 @@ backup/<YYYY-MM-DD-HHMM>
 
 Use local time for the timestamp. If the user provides a branch name, use it only when it is under `backup/` and is a valid Git branch name.
 
-## Evidence Commands
+## Runner Contract
 
-Inspect the smallest useful local evidence:
+Create a sealed plan:
 
-```sh
-git status -sb
-git branch --show-current
-git rev-parse --short HEAD
-git log --oneline --decorate -1
-git branch --list 'backup/*'
+```text
+node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json backup.preflight
 ```
 
-## Command Shape
+An explicit name can be supplied with `--backup-name backup/<name>`. Review the
+returned branch, `HEAD`, dirty flag, `plan_path`, and `plan_sha256`.
 
-When the backup name is resolved and does not already exist:
+After the user-approved apply step, consume the plan exactly once:
 
-```sh
-git branch backup/<YYYY-MM-DD-HHMM> HEAD
-git rev-parse --short backup/<YYYY-MM-DD-HHMM>
+```text
+node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json backup.apply --plan <plan_path> --expected-plan-sha256 <plan_sha256>
 ```
+
+The runner verifies that the repository state and plan digest are unchanged,
+creates the branch with argument-array Git execution, verifies the target, and
+records the attempt. Never retry the same plan.
 
 If the generated name already exists, choose the next available suffix:
 
