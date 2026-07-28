@@ -13,7 +13,8 @@ The Agent's responsibility is limited to:
 
 1. selecting a documented workflow ID
 2. supplying that workflow's fixed minimal options
-3. explaining the stable JSON result
+3. returning the stable `human_output` unchanged, or using structured JSON
+   fields only when a subsequent fixed step requires them
 
 Repository resolution, validation, fixed command execution, digest checks,
 attempt records, and postcondition checks remain inside tracked and tested
@@ -44,6 +45,7 @@ The canonical machine-readable catalog is
 | `github.issue.label.apply` | remote | apply | `github-issue-label-update.mjs` |
 | `github.issue.close.preflight` | READONLY | preflight | `github-issue-close.mjs` |
 | `github.issue.close.apply` | remote | apply | `github-issue-close.mjs` |
+| `github.issue.handoff.apply` | remote | apply | `miku-scm-handoff.mjs` |
 | `repository.maintenance.diagnose` | READONLY | none | `repository-maintenance.mjs` |
 | `repository.maintenance.plan` | READONLY plus operational artifact | preflight | `repository-maintenance.mjs` |
 | `repository.maintenance.apply` | local | apply | `repository-maintenance.mjs` |
@@ -54,6 +56,10 @@ The canonical machine-readable catalog is
 | `pr.recommit.apply` | local | apply | `pr-soft-reset-recommit-preflight.mjs` |
 | `version.status` | READONLY | none | `miku-scm-version.mjs` |
 | `version.increment.validate` | READONLY | preflight | `miku-scm-version.mjs` |
+| `writing.issue.prepare` | READONLY | none | `miku-scm-writing-prepare.mjs` |
+| `writing.pr.prepare` | READONLY | none | `miku-scm-writing-prepare.mjs` |
+| `writing.release.prepare` | READONLY | none | `miku-scm-writing-prepare.mjs` |
+| `writing.about.prepare` | READONLY | none | `miku-scm-writing-prepare.mjs` |
 
 The preflight and apply IDs are deliberately separate. Selecting a preflight
 workflow can never enable mutation by adding `--apply`. Selecting an apply
@@ -99,6 +105,16 @@ alone. Increment validation requires an explicit policy plus the required
 timezone or Semantic Version level and returns proposed values without editing
 them.
 
+Issue mutation preflights also save an approval handoff. After the human
+reviews the complete preflight and replies `miku-scm 承認`, invoke
+`github.issue.handoff.apply --apply`. It accepts no workflow ID, handoff ID, or
+apply arguments from the Agent and stops unless exactly one pending Issue
+handoff exists. See [approval-handoff.md](approval-handoff.md).
+
+Writing prepare workflows collect bounded, versioned evidence and a fixed
+writing contract in one READONLY runner call. They do not draft prose or
+authorize mutation. See [writing-mode.md](writing-mode.md).
+
 ## Invocation
 
 ```sh
@@ -106,6 +122,14 @@ node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   github.issue.read \
   --repo igapyon/igapyon-agent-skills \
   --issue 293
+```
+
+Use `--format human` before the workflow ID to print only the deterministic
+human summary while retaining the complete JSON under the run directory:
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  --format human repository.status
 ```
 
 ```sh

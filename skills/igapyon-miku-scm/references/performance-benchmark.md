@@ -17,6 +17,7 @@ The result keeps these dimensions separate:
 - cold process execution and warm same-process execution
 - p50, p95, minimum, maximum, and individual samples
 - runner invocations and expected Agent tool calls
+- structured result bytes and deterministic `human_output` bytes
 - fixed `gh` read count and actual network request count
 - instruction/reference file count and bytes
 - configured warm p50 budget
@@ -28,6 +29,9 @@ excluded from normal migrated runtime context.
 
 Input and output token counts are `null` when the execution environment does
 not expose them. Do not estimate token counts and present them as measured.
+Model invocation count is likewise `null` when the environment does not expose
+it. `expected_agent_tool_calls_per_sample` describes the fixed Agent-to-runner
+boundary; it is not a measured model invocation count.
 
 Saved operational results live under:
 

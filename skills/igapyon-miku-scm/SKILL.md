@@ -27,6 +27,9 @@ Do not inspect the repository or load detailed references yet.
 2. For an ID in that manifest, invoke
    [scripts/miku-scm-run.mjs](scripts/miku-scm-run.mjs) directly with that ID
    and fixed options. Do not read its detailed Markdown during normal execution.
+   Prefer `--format human` for a mechanical workflow when no structured field
+   is needed for a subsequent step. Return the runner's `human_output`
+   unchanged instead of paraphrasing it.
 3. Never issue `gh` directly. GitHub CLI access is allowed only inside the
    fixed bundled helpers. If no fixed helper or anonymous REST route exists,
    stop instead of inventing a command.
@@ -42,6 +45,18 @@ Do not inspect the repository or load detailed references yet.
    its workflow defines one. Never retry an unresolved mutation automatically.
 7. Report inspected, changed, and pending work. Keep tag recommendation
    separate from tag mutation; normal tag handoff is GitHub's Release UI.
+8. After a reviewed Issue preflight, an exact `miku-scm 承認` request routes
+   directly to `github.issue.handoff.apply --apply`. The fixed workflow must
+   find exactly one pending handoff. Do not reconstruct its apply arguments or
+   load detailed references during this approval fast path.
+
+Mechanical workflows retrieve, validate, mutate, and render stable results.
+Writing mode is limited to evidence-based Issue, PR, Release, About, and
+comment prose. Route normal writing evidence collection through
+`writing.issue.prepare`, `writing.pr.prepare`, `writing.release.prepare`, or
+`writing.about.prepare`. Draft once from that structured evidence and the
+user's direction. After writing, return to a mechanical preflight; writing
+never authorizes mutation.
 
 The generated lock
 [scripts/miku-scm-workflow-contract-lock.mjs](scripts/miku-scm-workflow-contract-lock.mjs)

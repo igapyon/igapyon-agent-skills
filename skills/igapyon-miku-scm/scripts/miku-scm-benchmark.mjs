@@ -169,13 +169,18 @@ export async function benchmark(options, dependencies = {}) {
   const spawn = dependencies.spawn ?? spawnSync;
   try {
     const warmCounter = { gh: 0 };
+    let lastWarmResult = null;
     for (let index = 0; index < options.warmup; index += 1) {
       await runFixture(path.join(temporary, "warmup"), `warmup-${index}`, warmCounter);
     }
     const warm = [];
     for (let index = 0; index < options.iterations; index += 1) {
       const started = performance.now();
-      await runFixture(path.join(temporary, "warm"), `warm-${index}`, warmCounter);
+      lastWarmResult = await runFixture(
+        path.join(temporary, "warm"),
+        `warm-${index}`,
+        warmCounter,
+      );
       warm.push(performance.now() - started);
     }
 
@@ -207,11 +212,16 @@ export async function benchmark(options, dependencies = {}) {
       remote_mutation_invoked: false,
       fixture: {
         runner_invocations_per_sample: 1,
+        expected_agent_tool_calls_per_sample: 1,
         expected_ai_tool_calls_per_sample: 1,
         fixed_gh_reads_per_warm_sample: 1,
         actual_network_requests_per_sample: 0,
         input_tokens: null,
         output_tokens: null,
+        model_invocations: null,
+        structured_result_bytes: Buffer.byteLength(JSON.stringify(lastWarmResult), "utf8"),
+        human_output_bytes: Buffer.byteLength(lastWarmResult.human_output, "utf8"),
+        human_output_schema_version: lastWarmResult.human_output_schema_version,
       },
       context: await contextMetrics(root, options.scenario),
       cold: {

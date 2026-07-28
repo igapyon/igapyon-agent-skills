@@ -17,6 +17,11 @@ derive a command sequence from the trigger text. The runner checks that every
 manifest entry has exactly one implementation and that its mutation level and
 approval gate match.
 
+Mechanical requests route to status, preflight, apply, or handoff IDs. Public
+prose requests route first to the matching `writing.*.prepare` ID; generative
+drafting consumes its bounded evidence, and any later mutation returns to a
+mechanical preflight.
+
 Normal migrated execution reads the small safety kernel in `SKILL.md` and only
 the selected entry's `runtime_references`. An empty list means that no detailed
 Markdown is loaded. `design_references` are for implementation, maintenance,

@@ -66,9 +66,22 @@ import {
   parseArgs as parseVersionArgs,
 } from "./miku-scm-version.mjs";
 import {
+  parseWritingPrepareArgs,
+  prepareWritingEvidence,
+} from "./miku-scm-writing-prepare.mjs";
+import {
   parseGitHubBatchArgs,
   runGitHubBatch,
 } from "./miku-scm-github-readonly.mjs";
+import {
+  HUMAN_OUTPUT_SCHEMA_VERSION,
+  renderHumanOutput,
+} from "./miku-scm-human-output.mjs";
+import {
+  applyPendingIssueHandoff,
+  createIssueApprovalHandoff,
+  parseHandoffApplyArgs,
+} from "./miku-scm-handoff.mjs";
 import { failureEvent } from "./miku-scm-observability.mjs";
 
 export const RUNNER_SCHEMA_VERSION = "miku-scm.runner/v1";
@@ -78,7 +91,8 @@ const RUN_ID = /^[A-Za-z0-9._-]+$/;
 const SECRET_OPTION = /(?:token|password|secret|authorization|credential)/i;
 
 export const usage = `Usage:
-  node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs <workflow-id> [fixed workflow options]
+  node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+    [--format json|human] <workflow-id> [fixed workflow options]
 
 Workflow IDs:
   repository.status
@@ -94,6 +108,7 @@ Workflow IDs:
   github.issue.label.apply
   github.issue.close.preflight
   github.issue.close.apply
+  github.issue.handoff.apply
   repository.maintenance.diagnose
   repository.maintenance.plan
   repository.maintenance.apply
@@ -104,10 +119,28 @@ Workflow IDs:
   pr.recommit.apply
   version.status
   version.increment.validate
+  writing.issue.prepare
+  writing.pr.prepare
+  writing.release.prepare
+  writing.about.prepare
 
 The runner accepts only options validated by the selected workflow's existing
 static helper. It never accepts a shell command, executable name, command
 fragment, or arbitrary pass-through option.`;
+
+export function parseRunnerCliArgs(argv) {
+  const args = [...argv];
+  let format = "json";
+  if (args[0] === "--format") {
+    format = args[1] ?? "";
+    args.splice(0, 2);
+  }
+  if (format !== "json" && format !== "human") {
+    throw new Error("--format must be exactly json or human");
+  }
+  const [workflowId, ...workflowArguments] = args;
+  return { format, workflowId, workflowArguments };
+}
 
 function publicArguments(argv) {
   const output = [];
@@ -401,6 +434,29 @@ function versionWorkflow(mode, dependencies) {
   };
 }
 
+function writingWorkflow(mode, dependencies) {
+  return {
+    version: 1,
+    mutationLevel: "readonly",
+    approvalGate: "none",
+    parse: (argv, cwd) => parseWritingPrepareArgs(mode, argv, cwd),
+    plan: (options) => ({
+      operation: `writing-${mode}-prepare`,
+      repository: path.resolve(options.repo),
+      target: options.target || null,
+      github_repository: options.githubRepository || null,
+      issue: options.issue,
+      mutation_invocation_allowed: false,
+    }),
+    execute: (options) => prepareWritingEvidence(options, {
+      git: dependencies.writingGit,
+      gh: dependencies.gh,
+      readFile: dependencies.writingReadFile,
+      now: dependencies.now,
+    }),
+  };
+}
+
 export function workflowRegistry(dependencies = {}) {
   const implementations = new Map([
     ["repository.status", {
@@ -458,6 +514,25 @@ export function workflowRegistry(dependencies = {}) {
     ["github.issue.label.apply", issueMutationWorkflow("label", "apply", dependencies)],
     ["github.issue.close.preflight", issueMutationWorkflow("close", "preflight", dependencies)],
     ["github.issue.close.apply", issueMutationWorkflow("close", "apply", dependencies)],
+    ["github.issue.handoff.apply", {
+      version: 1,
+      mutationLevel: "remote",
+      approvalGate: "apply",
+      parse: parseHandoffApplyArgs,
+      plan: (options) => ({
+        operation: "github-issue-approval-handoff-apply",
+        repository: path.resolve(options.root),
+        mutation_invocation_allowed: true,
+      }),
+      execute: (options) => applyPendingIssueHandoff(options, {
+        now: dependencies.now,
+        runApply: dependencies.handoffRunApply ?? ((applyWorkflow, applyArguments) => runWorkflow(
+          applyWorkflow,
+          applyArguments,
+          { cwd: options.root },
+        )),
+      }),
+    }],
     ["repository.maintenance.diagnose", maintenanceWorkflow("diagnose", dependencies)],
     ["repository.maintenance.plan", maintenanceWorkflow("plan", dependencies)],
     ["repository.maintenance.apply", maintenanceWorkflow("apply", dependencies)],
@@ -485,6 +560,10 @@ export function workflowRegistry(dependencies = {}) {
     ["pr.recommit.apply", recommitWorkflow("apply", dependencies)],
     ["version.status", versionWorkflow("status", dependencies)],
     ["version.increment.validate", versionWorkflow("validate", dependencies)],
+    ["writing.issue.prepare", writingWorkflow("issue", dependencies)],
+    ["writing.pr.prepare", writingWorkflow("pr", dependencies)],
+    ["writing.release.prepare", writingWorkflow("release", dependencies)],
+    ["writing.about.prepare", writingWorkflow("about", dependencies)],
   ]);
   const manifest = workflowManifestById();
   const contracts = workflowContractById();
@@ -568,8 +647,32 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
     await writeJsonAtomic(path.join(runDirectory, "plan.json"), plan);
     phase = "delegate";
     executeStarted = true;
-    const delegateResult = await workflow.execute(options);
+    let delegateResult = await workflow.execute(options);
     const finishedAt = (dependencies.now ? dependencies.now() : new Date()).toISOString();
+    if (workflowId.startsWith("github.issue.")
+      && workflowId.endsWith(".preflight")
+      && delegateResult?.status === "preflight-ok"
+      && Array.isArray(delegateResult.apply_arguments)) {
+      const summary = renderHumanOutput({
+        workflow: workflowId,
+        status: "success",
+        approvalGate: workflow.approvalGate,
+        delegateStatus: delegateResult.status,
+        mutationInvoked: false,
+        result: delegateResult,
+      });
+      const handoff = await createIssueApprovalHandoff({
+        root: cwd,
+        runId,
+        preflightWorkflow: workflowId,
+        applyWorkflow: workflowId.replace(/\.preflight$/, ".apply"),
+        applyArguments: [...delegateResult.apply_arguments],
+        reviewedResult: delegateResult,
+        humanSummary: summary,
+        createdAt: finishedAt,
+      });
+      delegateResult = { ...delegateResult, handoff };
+    }
     const result = {
       schema_version: RESULT_SCHEMA_VERSION,
       run_id: runId,
@@ -588,6 +691,15 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       run_directory: path.relative(cwd, runDirectory),
       result: delegateResult,
     };
+    result.human_output_schema_version = HUMAN_OUTPUT_SCHEMA_VERSION;
+    result.human_output = renderHumanOutput({
+      workflow: workflowId,
+      status: result.status,
+      approvalGate: workflow.approvalGate,
+      delegateStatus: result.delegate_status,
+      mutationInvoked: result.mutation_invoked,
+      result: delegateResult,
+    });
     await writeJsonAtomic(path.join(runDirectory, "snapshot.json"), {
       schema_version: RUNNER_SCHEMA_VERSION,
       run_id: runId,
@@ -655,6 +767,15 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
         ...event,
       },
     };
+    result.human_output_schema_version = HUMAN_OUTPUT_SCHEMA_VERSION;
+    result.human_output = renderHumanOutput({
+      workflow: workflowId,
+      status: result.status,
+      approvalGate: workflow.approvalGate,
+      delegateStatus: result.delegate_status,
+      mutationInvoked: result.mutation_invoked,
+      error: result.error,
+    });
     if (workflow.approvalGate === "apply") {
       await writeJsonAtomic(path.join(runDirectory, "attempt.json"), {
         schema_version: RUNNER_SCHEMA_VERSION,
@@ -686,13 +807,15 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
 }
 
 async function main() {
-  const [workflowId, ...argv] = process.argv.slice(2);
+  const { format, workflowId, workflowArguments } = parseRunnerCliArgs(process.argv.slice(2));
   if (!workflowId || workflowId === "--help" || workflowId === "-h") {
     process.stdout.write(`${usage}\n`);
     return;
   }
-  const result = await runWorkflow(workflowId, argv);
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  const result = await runWorkflow(workflowId, workflowArguments);
+  process.stdout.write(format === "human"
+    ? result.human_output
+    : `${JSON.stringify(result, null, 2)}\n`);
   if (result.status !== "success") process.exitCode = 1;
 }
 

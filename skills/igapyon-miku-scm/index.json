@@ -3,8 +3,9 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":5318,"description":"Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, or explicitly asks to perform Git, GitHub writing, GitHub Release, repository-maintenance, or version-management work under miku-soft SCM rules. ...","summary":"igapyon-miku-scm"},
-  {"name":"deterministic-workflow-runner.md","path":"references/deterministic-workflow-runner.md","ext":"md","dir":"references","size":9114,"summary":"Deterministic Workflow Runner"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":6270,"description":"Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, or explicitly asks to perform Git, GitHub writing, GitHub Release, repository-maintenance, or version-management work under miku-soft SCM rules. ...","summary":"igapyon-miku-scm"},
+  {"name":"approval-handoff.md","path":"references/approval-handoff.md","ext":"md","dir":"references","size":1364,"summary":"Approval Handoff"},
+  {"name":"deterministic-workflow-runner.md","path":"references/deterministic-workflow-runner.md","ext":"md","dir":"references","size":10421,"summary":"Deterministic Workflow Runner"},
   {"name":"github-about-writing.md","path":"references/github-about-writing.md","ext":"md","dir":"references","size":1131,"summary":"GitHub About Writing"},
   {"name":"github-anonymous-readonly.md","path":"references/github-anonymous-readonly.md","ext":"md","dir":"references","size":6380,"summary":"GitHub Anonymous READONLY"},
   {"name":"github-backup-branch.md","path":"references/github-backup-branch.md","ext":"md","dir":"references","size":2430,"summary":"Backup Branch"},
@@ -27,17 +28,18 @@
   {"name":"github-writing-rules.md","path":"references/github-writing-rules.md","ext":"md","dir":"references","size":6550,"summary":"GitHub Writing Rules"},
   {"name":"local-git-readonly.md","path":"references/local-git-readonly.md","ext":"md","dir":"references","size":3200,"summary":"Local Git READONLY"},
   {"name":"local-git-snapshot.md","path":"references/local-git-snapshot.md","ext":"md","dir":"references","size":1080,"summary":"Local Git Snapshot"},
-  {"name":"performance-benchmark.md","path":"references/performance-benchmark.md","ext":"md","dir":"references","size":1631,"summary":"Performance Benchmark"},
+  {"name":"performance-benchmark.md","path":"references/performance-benchmark.md","ext":"md","dir":"references","size":1909,"summary":"Performance Benchmark"},
   {"name":"repository-maintenance.md","path":"references/repository-maintenance.md","ext":"md","dir":"references","size":7216,"summary":"Repository Maintenance"},
   {"name":"repository-precommit-checks.md","path":"references/repository-precommit-checks.md","ext":"md","dir":"references","size":3171,"summary":"Repository-Declared Pre-Commit Checks"},
-  {"name":"runtime-and-test-suites.md","path":"references/runtime-and-test-suites.md","ext":"md","dir":"references","size":1677,"summary":"Runtime and Test Suites"},
+  {"name":"runtime-and-test-suites.md","path":"references/runtime-and-test-suites.md","ext":"md","dir":"references","size":1723,"summary":"Runtime and Test Suites"},
   {"name":"safety-cost-and-errors.md","path":"references/safety-cost-and-errors.md","ext":"md","dir":"references","size":1977,"summary":"Safety Cost and Error Paths"},
   {"name":"scm-rules.md","path":"references/scm-rules.md","ext":"md","dir":"references","size":28626,"summary":"SCM Rules"},
   {"name":"version-increment-confirmation.md","path":"references/version-increment-confirmation.md","ext":"md","dir":"references","size":5937,"summary":"Version Increment Check Before Add or Commit"},
   {"name":"version-increment.md","path":"references/version-increment.md","ext":"md","dir":"references","size":6005,"summary":"Version Increment"},
   {"name":"version-tag-release-audit.md","path":"references/version-tag-release-audit.md","ext":"md","dir":"references","size":6289,"summary":"Version, Tag, Release, and Asset Audit"},
   {"name":"version-workflow-runner.md","path":"references/version-workflow-runner.md","ext":"md","dir":"references","size":3394,"summary":"Version Status and Increment Validation Runner"},
-  {"name":"workflow-contracts.md","path":"references/workflow-contracts.md","ext":"md","dir":"references","size":8166,"summary":"Workflow Contracts"},
-  {"name":"workflow-routing.md","path":"references/workflow-routing.md","ext":"md","dir":"references","size":1383,"summary":"Workflow Routing"}
+  {"name":"workflow-contracts.md","path":"references/workflow-contracts.md","ext":"md","dir":"references","size":9808,"summary":"Workflow Contracts"},
+  {"name":"workflow-routing.md","path":"references/workflow-routing.md","ext":"md","dir":"references","size":1638,"summary":"Workflow Routing"},
+  {"name":"writing-mode.md","path":"references/writing-mode.md","ext":"md","dir":"references","size":1407,"summary":"Writing Mode"}
  ]
 }

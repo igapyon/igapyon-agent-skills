@@ -3,7 +3,7 @@
 The deterministic runner reuses the exported parsers and implementations of
 existing static helpers. Shared runner concerns live in the `miku-scm-*`
 modules for workflow metadata, local snapshots, GitHub READONLY cache, run
-artifacts, and benchmark statistics. Workflow-specific mutation contracts
+artifacts, approval handoff, deterministic human output, and benchmark statistics. Workflow-specific mutation contracts
 remain in their dedicated helpers.
 
 Use:
