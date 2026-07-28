@@ -43,6 +43,14 @@ test("benchmark separates cold and warm metrics without remote mutation", async 
   assert.equal(result.warm.observed_fixed_gh_reads, 2);
   assert.equal(result.budget.status, "passed");
   assert.equal(result.fixture.expected_ai_tool_calls_per_sample, 1);
+  assert.equal(result.fixture.expected_agent_tool_calls_per_sample, 1);
+  assert.equal(result.fixture.model_invocations, null);
+  assert.ok(result.fixture.structured_result_bytes > result.fixture.human_output_bytes);
+  assert.ok(result.fixture.human_output_bytes > 0);
+  assert.equal(
+    result.fixture.human_output_schema_version,
+    "miku-scm.human-output/v1",
+  );
   assert.equal(result.context.file_count, 1);
   assert.deepEqual(result.context.files, ["skills/igapyon-miku-scm/SKILL.md"]);
   assert.ok(result.context.bytes > 0);

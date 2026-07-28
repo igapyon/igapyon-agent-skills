@@ -7,15 +7,37 @@ import test from "node:test";
 import {
   RESULT_SCHEMA_VERSION,
   RUNNER_SCHEMA_VERSION,
+  parseRunnerCliArgs,
   runWorkflow,
   workflowRegistry,
 } from "../scripts/miku-scm-run.mjs";
+import { HUMAN_OUTPUT_SCHEMA_VERSION } from "../scripts/miku-scm-human-output.mjs";
 
 async function workspace(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), "miku-scm-runner-test-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   return root;
 }
+
+test("runner CLI format is fixed and cannot become a workflow option", () => {
+  assert.deepEqual(
+    parseRunnerCliArgs(["--format", "human", "repository.status", "--repo", "."]),
+    {
+      format: "human",
+      workflowId: "repository.status",
+      workflowArguments: ["--repo", "."],
+    },
+  );
+  assert.deepEqual(parseRunnerCliArgs(["repository.status"]), {
+    format: "json",
+    workflowId: "repository.status",
+    workflowArguments: [],
+  });
+  assert.throws(
+    () => parseRunnerCliArgs(["--format", "shell", "repository.status"]),
+    /exactly json or human/,
+  );
+});
 
 test("registry exposes fixed workflow IDs and no free-form command workflow", () => {
   assert.deepEqual([...workflowRegistry().keys()], [
@@ -32,6 +54,7 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
     "github.issue.label.apply",
     "github.issue.close.preflight",
     "github.issue.close.apply",
+    "github.issue.handoff.apply",
     "repository.maintenance.diagnose",
     "repository.maintenance.plan",
     "repository.maintenance.apply",
@@ -42,6 +65,10 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
     "pr.recommit.apply",
     "version.status",
     "version.increment.validate",
+    "writing.issue.prepare",
+    "writing.pr.prepare",
+    "writing.release.prepare",
+    "writing.about.prepare",
   ]);
   assert.equal(workflowRegistry().has("shell"), false);
   assert.equal(workflowRegistry().has("exec"), false);
@@ -83,6 +110,9 @@ test("READONLY Issue workflow completes in one runner call with stable artifacts
   assert.equal(result.workflow_contract, "github.issue.read");
   assert.equal(result.contract_version, 1);
   assert.match(result.contract_pair_sha256, /^[0-9a-f]{64}$/);
+  assert.equal(result.human_output_schema_version, HUMAN_OUTPUT_SCHEMA_VERSION);
+  assert.match(result.human_output, /^\[SUCCESS\] GitHub Issue取得/);
+  assert.match(result.human_output, /Issue: #7/);
   assert.deepEqual(calls, [[
     "issue", "view", "7", "--repo", "a/b", "--comments",
     "--json", "number,state,title,body,url,updatedAt,labels,comments",
@@ -163,6 +193,10 @@ test("Issue preflight delegates label and parent checks and returns reviewed app
 
   assert.equal(result.status, "success");
   assert.equal(result.delegate_status, "preflight-ok");
+  assert.match(result.human_output, /^\[READY FOR APPROVAL\] GitHub Issue作成/);
+  assert.match(result.human_output, /承認: チャットで「miku-scm 承認」と返信/);
+  assert.equal(result.result.handoff.status, "pending");
+  assert.match(result.result.handoff.immutable_sha256, /^[0-9a-f]{64}$/);
   assert.equal(result.result.parent_issue.number, 2);
   assert.ok(result.result.apply_arguments.includes("--apply"));
   const contractOption = result.result.apply_arguments.indexOf("--expected-contract-pair-sha256");
@@ -171,6 +205,52 @@ test("Issue preflight delegates label and parent checks and returns reviewed app
   const plan = JSON.parse(await readFile(path.join(root, "runs", "preflight-ok", "plan.json"), "utf8"));
   assert.equal(plan.approval_gate, "preflight");
   assert.equal(plan.mutation_invocation_allowed, false);
+});
+
+test("Issue handoff apply forwards the single reviewed argument set", async (t) => {
+  const root = await workspace(t);
+  const draftDirectory = path.join(root, "workplace", "miku-scm", "new-issues");
+  await mkdir(draftDirectory, { recursive: true });
+  const draft = "workplace/miku-scm/new-issues/issue-new-202607271404.md";
+  await writeFile(path.join(root, draft), "Runner handoff\n\nBody\n", "utf8");
+
+  const preflight = await runWorkflow("github.issue.create.preflight", [
+    "--repo", "a/b", "--draft", draft,
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "handoff-preflight",
+    now: () => new Date("2026-07-27T14:00:00Z"),
+    issueCreateDependencies: {
+      readLabels: async () => [],
+    },
+  });
+  const calls = [];
+  const applied = await runWorkflow("github.issue.handoff.apply", [
+    "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "handoff-apply",
+    now: () => new Date("2026-07-27T14:01:00Z"),
+    handoffRunApply: async (workflow, args) => {
+      calls.push({ workflow, args });
+      return {
+        status: "success",
+        run_id: "nested-apply",
+        mutation_invoked: true,
+        human_output: "[SUCCESS] GitHub Issue作成\n",
+      };
+    },
+  });
+
+  assert.equal(preflight.result.handoff.status, "pending");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].workflow, "github.issue.create.apply");
+  assert.deepEqual(calls[0].args, preflight.result.apply_arguments);
+  assert.equal(applied.status, "success");
+  assert.equal(applied.delegate_status, "applied");
+  assert.match(applied.human_output, /承認handoff: handoff-preflight \(applied\)/);
 });
 
 test("migrated Issue mutations return contract-fixed apply arguments", async (t) => {

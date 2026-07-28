@@ -120,6 +120,15 @@ const WORKFLOW_DEFINITIONS = [
     references: ["github-issue-close.md", "deterministic-workflow-runner.md"],
   },
   {
+    id: "github.issue.handoff.apply",
+    triggers: ["miku-scm 承認", "承認済みIssue handoff適用"],
+    required_parameters: ["repository", "explicit_apply_request"],
+    mutation_level: "remote",
+    approval_gate: "apply",
+    runner_entry: "miku-scm-handoff.mjs",
+    references: ["approval-handoff.md", "deterministic-workflow-runner.md"],
+  },
+  {
     id: "repository.maintenance.diagnose",
     triggers: ["リポジトリメンテナンス診断", "不要branch確認"],
     required_parameters: ["repository"],
@@ -209,6 +218,42 @@ const WORKFLOW_DEFINITIONS = [
     runner_entry: "miku-scm-version.mjs",
     references: ["version-workflow-runner.md", "version-increment.md", "deterministic-workflow-runner.md"],
   },
+  {
+    id: "writing.issue.prepare",
+    triggers: ["Issue文面準備", "Issue writing evidence"],
+    required_parameters: ["repository", "github_repository"],
+    mutation_level: "readonly",
+    approval_gate: "none",
+    runner_entry: "miku-scm-writing-prepare.mjs",
+    references: ["writing-mode.md", "github-issue-rewrite-handoff.md", "deterministic-workflow-runner.md"],
+  },
+  {
+    id: "writing.pr.prepare",
+    triggers: ["PR文面準備", "PR writing evidence"],
+    required_parameters: ["repository", "git_target"],
+    mutation_level: "readonly",
+    approval_gate: "none",
+    runner_entry: "miku-scm-writing-prepare.mjs",
+    references: ["writing-mode.md", "github-pr-writing.md", "deterministic-workflow-runner.md"],
+  },
+  {
+    id: "writing.release.prepare",
+    triggers: ["Release文面準備", "Release writing evidence"],
+    required_parameters: ["repository", "git_target"],
+    mutation_level: "readonly",
+    approval_gate: "none",
+    runner_entry: "miku-scm-writing-prepare.mjs",
+    references: ["writing-mode.md", "github-release-writing.md", "deterministic-workflow-runner.md"],
+  },
+  {
+    id: "writing.about.prepare",
+    triggers: ["About文面準備", "About writing evidence"],
+    required_parameters: ["repository"],
+    mutation_level: "readonly",
+    approval_gate: "none",
+    runner_entry: "miku-scm-writing-prepare.mjs",
+    references: ["writing-mode.md", "github-about-writing.md", "deterministic-workflow-runner.md"],
+  },
 ];
 
 const CONTRACT_TEST_BY_RUNNER = Object.freeze({
@@ -220,11 +265,13 @@ const CONTRACT_TEST_BY_RUNNER = Object.freeze({
   "github-issue-comment.mjs": "github-issue-comment.test.mjs",
   "github-issue-label-update.mjs": "github-issue-label-update.test.mjs",
   "github-issue-close.mjs": "github-issue-close.test.mjs",
+  "miku-scm-handoff.mjs": "miku-scm-handoff.test.mjs",
   "repository-maintenance.mjs": "repository-maintenance.test.mjs",
   "post-merge-next-work.mjs": "post-recommit-publish.test.mjs",
   "post-recommit-publish.mjs": "post-recommit-publish.test.mjs",
   "pr-soft-reset-recommit-preflight.mjs": "miku-scm-recommit.test.mjs",
   "miku-scm-version.mjs": "miku-scm-version.test.mjs",
+  "miku-scm-writing-prepare.mjs": "miku-scm-writing-prepare.test.mjs",
 });
 
 export const WORKFLOW_MANIFEST = Object.freeze(WORKFLOW_DEFINITIONS.map((entry) => Object.freeze({
