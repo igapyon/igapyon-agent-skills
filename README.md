@@ -359,7 +359,7 @@ release staging に全 skill をそろえた後、同梱した index generator �
 - `miku-indexgen-skills` `v1.6.2`: `skills/igapyon-miku-indexgen/`
 - `miku-text-bundle-skills` `v1.6.0`: `skills/igapyon-miku-text-bundle/`
 - `miku-repo-bundle-skills` `v0.5.0.1` (experimental): `skills/igapyon-miku-repo-bundle/`
-- `miku-text-file-ops-skills` `v0.3.5`: `skills/miku-text-file-ops/`
+- `miku-text-file-ops-skills` `v0.4.1`: `skills/miku-text-file-ops/`
 - `miku-prompt-lint-skills` `v0.5.0`: `skills/igapyon-miku-prompt-lint/`
 - `miku-ai-assistant-builder-skills` `v0.13.0`: `skills/igapyon-miku-ai-assistant-builder/`
 - `miku-ms-office-skills` `v0.7.1`: `skills/igapyon-miku-ms-office/`
