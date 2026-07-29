@@ -626,8 +626,10 @@ prompt test が成功しても実動作が保証されたとは扱わず、肥�
 - [x] `miku-grep-skills` は `v0.10.1.1` で同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリを `igapyon-miku-grep` にする方針へ移行済み
   - status: experimental
   - 互換 trigger として `miku-grep` は維持する
-- [ ] `miku-readfile-skills` もいずれ外部管理 miku-soft 系 skill として release archive に同梱する
-  - 同梱時は GitHub latest release と skill directory 名を確認し、`pom.xml` の `external.*` properties と `README.md` の同梱一覧を更新する
+  - `miku-text-file-ops-skills`への同梱先変更に伴い、release archiveの外部skill同梱対象からは除外する
+- [x] `miku-readfile-skills` は`miku-text-file-ops-skills`への同梱先変更に伴い、release archiveの外部skill同梱対象から除外する
+- [x] `miku-text-file-ops-skills` `v0.3.5` をrelease archiveに同梱する
+  - 同梱先: `skills/miku-text-file-ops/`
 - [ ] `mikuproject-skills` も同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリに `igapyon-` prefix を付ける方針へ移行する
   - 現状の同梱先: `skills/mikuproject/`
   - 移行候補: `skills/igapyon-mikuproject/`
