@@ -117,6 +117,56 @@ authorize mutation. See [writing-mode.md](writing-mode.md).
 
 ## Invocation
 
+### Product version
+
+Print the runner's product name and version without repository input, network
+access, subprocesses, or artifact writes:
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs --version
+```
+
+The output is one plain-text line containing only `<version>`, regardless of
+the workflow output format default. The repository's root `pom.xml` is the
+authoritative version source. The bundled runner carries the same value so an
+installed Skill remains self-contained, and the test suite rejects drift
+between the two.
+
+### Help and machine-readable discovery
+
+Help is a metadata-only path. The runner resolves it before creating a run
+directory, parsing workflow options, calling a delegate, starting a subprocess,
+or accessing the network. Both forms below are equivalent:
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  help repository.status
+
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  repository.status --help
+```
+
+List every workflow with its purpose, required flags, mutation level, approval
+gate, network access, and detailed-help command:
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  --list-workflows
+```
+
+Place an explicit format before the help or workflow selector. JSON help is a
+versioned contract intended for Agent discovery:
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  --format json help repository.status
+```
+
+Help and list output default to human text. Workflow execution defaults to
+JSON. Workflow-scoped help must remain exit-zero and side-effect-free for every
+manifest entry. It must not create the normal
+`workplace/miku-scm/runs/<run-id>` audit directory.
+
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   github.issue.read \
