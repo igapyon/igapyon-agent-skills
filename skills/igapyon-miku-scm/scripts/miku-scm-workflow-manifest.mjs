@@ -1,3 +1,5 @@
+import { workflowCliContractById } from "./miku-scm-cli-contracts.mjs";
+
 export const WORKFLOW_MANIFEST_VERSION = "miku-scm.workflow-manifest/v1";
 export const WORKFLOW_CONTRACT_VERSION = 1;
 
@@ -274,8 +276,15 @@ const CONTRACT_TEST_BY_RUNNER = Object.freeze({
   "miku-scm-writing-prepare.mjs": "miku-scm-writing-prepare.test.mjs",
 });
 
+const cliContracts = workflowCliContractById();
+if (cliContracts.size !== WORKFLOW_DEFINITIONS.length
+  || WORKFLOW_DEFINITIONS.some((entry) => !cliContracts.has(entry.id))) {
+  throw new Error("Workflow manifest and CLI help contracts are inconsistent");
+}
+
 export const WORKFLOW_MANIFEST = Object.freeze(WORKFLOW_DEFINITIONS.map((entry) => Object.freeze({
   ...entry,
+  cli: cliContracts.get(entry.id),
   contract_id: entry.id,
   contract_version: WORKFLOW_CONTRACT_VERSION,
   contract_spec: entry.references.find((reference) => reference !== "deterministic-workflow-runner.md"),

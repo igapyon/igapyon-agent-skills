@@ -24,6 +24,9 @@ Every runner error records:
 - workflow
 - phase
 - command ID
+- stable error code for invalid input
+- bad argument when it can be identified
+- exact workflow help command for recovery
 - classification
 - mutation invocation state (`false` or `null` when unknown)
 - retryability
@@ -32,6 +35,13 @@ Every runner error records:
 Errors before delegate execution have `mutation_invoked: false`. Uncertainty
 inside an apply delegate remains `null` and `do-not-retry`; it is never guessed
 safe.
+
+Errors raised before a workflow is selected use
+`miku-scm.cli-error/v1`. Unknown workflow errors include the rejected ID,
+bounded suggestions, the complete valid-ID set, and the machine-readable
+catalog command. Invalid `--format` errors include the rejected value and the
+valid values. Help and catalog requests never create an error-event or run
+artifact because they are resolved before workflow execution.
 
 Run:
 

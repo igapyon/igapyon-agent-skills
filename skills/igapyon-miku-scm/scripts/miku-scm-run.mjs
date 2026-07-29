@@ -78,6 +78,15 @@ import {
   renderHumanOutput,
 } from "./miku-scm-human-output.mjs";
 import {
+  MikuScmCliError,
+  PORTABLE_RUNNER,
+  cliErrorPayload,
+  inputErrorGuidance,
+  renderHelp,
+  resolveHelpRequest,
+  unknownWorkflowError,
+} from "./miku-scm-help.mjs";
+import {
   applyPendingIssueHandoff,
   createIssueApprovalHandoff,
   parseHandoffApplyArgs,
@@ -86,47 +95,12 @@ import { failureEvent } from "./miku-scm-observability.mjs";
 
 export const RUNNER_SCHEMA_VERSION = "miku-scm.runner/v1";
 export const RESULT_SCHEMA_VERSION = "miku-scm.runner-result/v1";
+export const PRODUCT_VERSION = "1.20260729.2";
 
 const RUN_ID = /^[A-Za-z0-9._-]+$/;
 const SECRET_OPTION = /(?:token|password|secret|authorization|credential)/i;
 
-export const usage = `Usage:
-  node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
-    [--format json|human] <workflow-id> [fixed workflow options]
-
-Workflow IDs:
-  repository.status
-  github.issue.read
-  github.read.batch
-  github.issue.create.preflight
-  github.issue.create.apply
-  github.issue.update.preflight
-  github.issue.update.apply
-  github.issue.comment.preflight
-  github.issue.comment.apply
-  github.issue.label.preflight
-  github.issue.label.apply
-  github.issue.close.preflight
-  github.issue.close.apply
-  github.issue.handoff.apply
-  repository.maintenance.diagnose
-  repository.maintenance.plan
-  repository.maintenance.apply
-  repository.post-merge.next-work
-  pr.publish.preflight
-  pr.publish.apply
-  pr.recommit.preflight
-  pr.recommit.apply
-  version.status
-  version.increment.validate
-  writing.issue.prepare
-  writing.pr.prepare
-  writing.release.prepare
-  writing.about.prepare
-
-The runner accepts only options validated by the selected workflow's existing
-static helper. It never accepts a shell command, executable name, command
-fragment, or arbitrary pass-through option.`;
+export const usage = renderHelp(resolveHelpRequest(undefined, []), "human").trimEnd();
 
 export function parseRunnerCliArgs(argv) {
   const args = [...argv];
@@ -136,7 +110,15 @@ export function parseRunnerCliArgs(argv) {
     args.splice(0, 2);
   }
   if (format !== "json" && format !== "human") {
-    throw new Error("--format must be exactly json or human");
+    throw new MikuScmCliError(
+      "INVALID_FORMAT",
+      "--format must be exactly json or human",
+      {
+        bad_argument: format,
+        valid_values: ["json", "human"],
+        help_command: "node <skill-root>/scripts/miku-scm-run.mjs --help",
+      },
+    );
   }
   const [workflowId, ...workflowArguments] = args;
   return { format, workflowId, workflowArguments };
@@ -595,6 +577,15 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
   if (!Array.isArray(argv) || argv.some((value) => typeof value !== "string")) {
     throw new Error("Workflow arguments must be a string array");
   }
+  if (argv.includes("--help") || argv.includes("-h")) {
+    throw new MikuScmCliError(
+      "HELP_REQUEST_REQUIRES_CLI",
+      `Workflow help must be resolved before execution: ${workflowId}`,
+      { workflow: workflowId, help_command: `node <skill-root>/scripts/miku-scm-run.mjs help ${workflowId}` },
+    );
+  }
+  const requiresApplyFlag = workflow.manifest.approval_gate === "apply"
+    && workflow.manifest.cli.options.some((entry) => entry.flag === "--apply" && entry.required);
 
   const cwd = path.resolve(dependencies.cwd ?? process.cwd());
   const now = dependencies.now ? dependencies.now() : new Date();
@@ -631,6 +622,16 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
   let phase = "parse";
   let executeStarted = false;
   try {
+    if (requiresApplyFlag && !argv.includes("--apply")) {
+      throw new MikuScmCliError(
+        "EXPLICIT_APPLY_REQUIRED",
+        `${workflowId} requires --apply before execution`,
+        {
+          workflow: workflowId,
+          help_command: `node <skill-root>/scripts/miku-scm-run.mjs help ${workflowId}`,
+        },
+      );
+    }
     const options = workflow.parse(argv, cwd);
     phase = "plan";
     plan = {
@@ -739,6 +740,16 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       message,
       mutationInvoked,
     });
+    let guidance = event.classification === "invalid-input"
+      ? inputErrorGuidance(message, workflowId)
+      : {};
+    if (error instanceof MikuScmCliError) {
+      guidance = {
+        ...guidance,
+        code: error.code,
+        ...(error.help_command ? { help_command: error.help_command } : {}),
+      };
+    }
     const result = {
       schema_version: RESULT_SCHEMA_VERSION,
       run_id: runId,
@@ -765,6 +776,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
         name: error instanceof Error ? error.name : "Error",
         message,
         ...event,
+        ...guidance,
       },
     };
     result.human_output_schema_version = HUMAN_OUTPUT_SCHEMA_VERSION;
@@ -798,6 +810,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       run_id: runId,
       ...contractFields,
       ...event,
+      ...guidance,
       message,
       recorded_at: finishedAt,
     });
@@ -807,10 +820,30 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
 }
 
 async function main() {
-  const { format, workflowId, workflowArguments } = parseRunnerCliArgs(process.argv.slice(2));
-  if (!workflowId || workflowId === "--help" || workflowId === "-h") {
-    process.stdout.write(`${usage}\n`);
+  const rawArguments = process.argv.slice(2);
+  const { format, workflowId, workflowArguments } = parseRunnerCliArgs(rawArguments);
+  if (workflowId === "--version") {
+    if (workflowArguments.length > 0) {
+      throw new MikuScmCliError(
+        "UNEXPECTED_ARGUMENT",
+        "--version does not accept workflow arguments",
+        {
+          bad_arguments: [...workflowArguments],
+          help_command: `${PORTABLE_RUNNER} --version`,
+        },
+      );
+    }
+    process.stdout.write(`${PRODUCT_VERSION}\n`);
     return;
+  }
+  const help = resolveHelpRequest(workflowId, workflowArguments);
+  if (help) {
+    const helpFormat = rawArguments[0] === "--format" ? format : "human";
+    process.stdout.write(renderHelp(help, helpFormat));
+    return;
+  }
+  if (!WORKFLOW_MANIFEST.some((entry) => entry.id === workflowId)) {
+    throw unknownWorkflowError(workflowId);
   }
   const result = await runWorkflow(workflowId, workflowArguments);
   process.stdout.write(format === "human"
@@ -821,11 +854,7 @@ async function main() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   main().catch((error) => {
-    process.stderr.write(`${JSON.stringify({
-      schema_version: RESULT_SCHEMA_VERSION,
-      status: "not-applied",
-      error: { name: error.name, message: error.message },
-    }, null, 2)}\n`);
+    process.stderr.write(`${JSON.stringify(cliErrorPayload(error), null, 2)}\n`);
     process.exitCode = 1;
   });
 }

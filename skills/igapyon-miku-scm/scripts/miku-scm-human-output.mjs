@@ -281,9 +281,12 @@ export function renderHumanOutput({
   if (error) {
     lines.push(`workflow: ${workflow}`);
     lines.push(`Classification: ${displayValue(error.classification, "unknown")}`);
+    if (error.code) lines.push(`Code: ${error.code}`);
     lines.push(`Message: ${displayValue(error.message, "unknown error")}`);
+    if (error.bad_argument) lines.push(`Bad argument: ${error.bad_argument}`);
     lines.push(`Mutation invoked: ${mutationInvoked === null ? "unknown" : mutationInvoked ? "yes" : "no"}`);
     lines.push(`Retryability: ${displayValue(error.retryability, "review-required")}`);
+    if (error.help_command) lines.push(`Help: ${error.help_command}`);
     return `${lines.join("\n")}\n`;
   }
 

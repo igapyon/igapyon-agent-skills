@@ -1,17 +1,30 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import {
+  PRODUCT_VERSION,
   RESULT_SCHEMA_VERSION,
   RUNNER_SCHEMA_VERSION,
   parseRunnerCliArgs,
   runWorkflow,
   workflowRegistry,
 } from "../scripts/miku-scm-run.mjs";
+import {
+  HELP_SCHEMA_VERSION,
+  WORKFLOW_LIST_SCHEMA_VERSION,
+  resolveHelpRequest,
+} from "../scripts/miku-scm-help.mjs";
 import { HUMAN_OUTPUT_SCHEMA_VERSION } from "../scripts/miku-scm-human-output.mjs";
+import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
+
+const RUNNER_PATH = fileURLToPath(new URL("../scripts/miku-scm-run.mjs", import.meta.url));
+const REPOSITORY_ROOT = path.resolve(path.dirname(RUNNER_PATH), "../../..");
 
 async function workspace(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), "miku-scm-runner-test-"));
@@ -37,6 +50,43 @@ test("runner CLI format is fixed and cannot become a workflow option", () => {
     () => parseRunnerCliArgs(["--format", "shell", "repository.status"]),
     /exactly json or human/,
   );
+});
+
+test("--version is plain, side-effect-free, and aligned with the repository version", async (t) => {
+  const root = await workspace(t);
+  const result = spawnSync(process.execPath, [RUNNER_PATH, "--version"], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, `${PRODUCT_VERSION}\n`);
+  assert.equal(result.stderr, "");
+  assert.equal(existsSync(path.join(root, "workplace")), false);
+
+  const explicitlyFormatted = spawnSync(process.execPath, [
+    RUNNER_PATH,
+    "--format", "json",
+    "--version",
+  ], { cwd: root, encoding: "utf8" });
+  assert.equal(explicitlyFormatted.status, 0, explicitlyFormatted.stderr);
+  assert.equal(explicitlyFormatted.stdout, `${PRODUCT_VERSION}\n`);
+
+  const pom = await readFile(path.join(REPOSITORY_ROOT, "pom.xml"), "utf8");
+  const projectVersion = pom.match(/<artifactId>igapyon-agent-skills<\/artifactId>\s*<version>([^<]+)<\/version>/);
+  assert.ok(projectVersion, "root pom.xml must declare the repository version");
+  assert.equal(PRODUCT_VERSION, projectVersion[1]);
+});
+
+test("--version rejects extra arguments without creating artifacts", async (t) => {
+  const root = await workspace(t);
+  const result = spawnSync(process.execPath, [RUNNER_PATH, "--version", "unexpected"], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.equal(JSON.parse(result.stderr).error.code, "UNEXPECTED_ARGUMENT");
+  assert.equal(existsSync(path.join(root, "workplace")), false);
 });
 
 test("registry exposes fixed workflow IDs and no free-form command workflow", () => {
@@ -72,6 +122,155 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
   ]);
   assert.equal(workflowRegistry().has("shell"), false);
   assert.equal(workflowRegistry().has("exec"), false);
+});
+
+test("manifest exposes complete AI-readable CLI help contracts", () => {
+  assert.equal(WORKFLOW_MANIFEST.length, 28);
+  for (const workflow of WORKFLOW_MANIFEST) {
+    assert.equal(typeof workflow.cli.summary, "string", workflow.id);
+    assert.ok(workflow.cli.summary.length > 0, workflow.id);
+    assert.ok(Array.isArray(workflow.cli.options), workflow.id);
+    assert.ok(Array.isArray(workflow.cli.example_arguments), workflow.id);
+    assert.equal(typeof workflow.cli.network_access, "string", workflow.id);
+    assert.equal(typeof workflow.cli.authentication, "string", workflow.id);
+    assert.ok(Array.isArray(workflow.cli.operational_artifacts), workflow.id);
+    const flags = workflow.cli.options.map((entry) => entry.flag);
+    assert.equal(new Set(flags).size, flags.length, `${workflow.id} has duplicate option flags`);
+    for (const option of workflow.cli.options) {
+      assert.match(option.flag, /^--[a-z0-9-]+$/, `${workflow.id} ${option.flag}`);
+      assert.equal(typeof option.description, "string", `${workflow.id} ${option.flag}`);
+    }
+  }
+});
+
+test("workflow help never advertises an option absent from its fixed parser", async () => {
+  const scripts = path.dirname(RUNNER_PATH);
+  for (const workflow of WORKFLOW_MANIFEST) {
+    const source = await readFile(path.join(scripts, workflow.runner_entry), "utf8");
+    const parserFlags = new Set(
+      [...source.matchAll(/(?:arg|argument|a) === "(--[a-z0-9-]+)"/g)]
+        .map((match) => match[1]),
+    );
+    for (const option of workflow.cli.options) {
+      assert.ok(
+        parserFlags.has(option.flag),
+        `${workflow.id} help advertises unsupported ${option.flag}`,
+      );
+    }
+  }
+});
+
+test("top-level and machine-readable workflow help are metadata-only", async (t) => {
+  const root = await workspace(t);
+  const list = spawnSync(process.execPath, [
+    RUNNER_PATH,
+    "--format", "json",
+    "--list-workflows",
+  ], { cwd: root, encoding: "utf8" });
+  assert.equal(list.status, 0, list.stderr);
+  const catalog = JSON.parse(list.stdout);
+  assert.equal(catalog.schema_version, WORKFLOW_LIST_SCHEMA_VERSION);
+  assert.equal(catalog.workflows.length, WORKFLOW_MANIFEST.length);
+  assert.equal(catalog.help_contract.side_effect_free, true);
+  assert.equal(existsSync(path.join(root, "workplace")), false);
+
+  const workflow = spawnSync(process.execPath, [
+    RUNNER_PATH,
+    "--format", "json",
+    "help", "repository.status",
+  ], { cwd: root, encoding: "utf8" });
+  assert.equal(workflow.status, 0, workflow.stderr);
+  const document = JSON.parse(workflow.stdout);
+  assert.equal(document.schema_version, HELP_SCHEMA_VERSION);
+  assert.equal(document.workflow, "repository.status");
+  assert.equal(document.help_contract.artifact_writes, false);
+  assert.equal(existsSync(path.join(root, "workplace")), false);
+});
+
+test("every workflow-scoped --help exits zero without artifacts or execution", async (t) => {
+  const root = await workspace(t);
+  for (const workflow of WORKFLOW_MANIFEST) {
+    const result = spawnSync(process.execPath, [
+      RUNNER_PATH,
+      "--format", "json",
+      workflow.id,
+      "--help",
+    ], { cwd: root, encoding: "utf8" });
+    assert.equal(result.status, 0, `${workflow.id}: ${result.stderr}`);
+    const document = JSON.parse(result.stdout);
+    assert.equal(document.kind, "workflow", workflow.id);
+    assert.equal(document.workflow, workflow.id);
+    assert.equal(document.help_contract.delegate_invoked, false, workflow.id);
+    assert.equal(document.help_contract.subprocess_invoked, false, workflow.id);
+    assert.equal(document.help_contract.network_access, false, workflow.id);
+    assert.equal(document.help_contract.artifact_writes, false, workflow.id);
+    assert.equal(existsSync(path.join(root, "workplace")), false, workflow.id);
+  }
+});
+
+test("post-merge help cannot bypass apply validation or reach runWorkflow", async (t) => {
+  const root = await workspace(t);
+  const cli = spawnSync(process.execPath, [
+    RUNNER_PATH,
+    "--format", "json",
+    "repository.post-merge.next-work",
+    "--confirmed-merged",
+    "--apply",
+    "--help",
+  ], { cwd: root, encoding: "utf8" });
+  assert.equal(cli.status, 0, cli.stderr);
+  assert.equal(JSON.parse(cli.stdout).kind, "workflow");
+  assert.equal(existsSync(path.join(root, "workplace")), false);
+
+  await assert.rejects(
+    () => runWorkflow("repository.post-merge.next-work", ["--help"], {
+      cwd: root,
+      artifactRoot: path.join(root, "runs"),
+    }),
+    (error) => error?.code === "HELP_REQUEST_REQUIRES_CLI",
+  );
+  assert.equal(existsSync(path.join(root, "runs")), false);
+});
+
+test("CLI discovery errors provide structured recovery guidance", async (t) => {
+  const root = await workspace(t);
+  const unknown = spawnSync(process.execPath, [
+    RUNNER_PATH,
+    "repository.stats",
+  ], { cwd: root, encoding: "utf8" });
+  assert.equal(unknown.status, 1);
+  const error = JSON.parse(unknown.stderr);
+  assert.equal(error.schema_version, "miku-scm.cli-error/v1");
+  assert.equal(error.error.code, "UNKNOWN_WORKFLOW");
+  assert.ok(error.error.suggestions.includes("repository.status"));
+  assert.match(error.error.help_command, /--format json --list-workflows$/);
+  assert.equal(existsSync(path.join(root, "workplace")), false);
+});
+
+test("workflow input errors identify the bad option and exact help command", async (t) => {
+  const root = await workspace(t);
+  const invalid = spawnSync(process.execPath, [
+    RUNNER_PATH,
+    "repository.status",
+    "--not-an-option",
+  ], { cwd: root, encoding: "utf8" });
+  assert.equal(invalid.status, 1);
+  const result = JSON.parse(invalid.stdout);
+  assert.equal(result.status, "not-applied");
+  assert.equal(result.error.code, "UNKNOWN_ARGUMENT");
+  assert.equal(result.error.bad_argument, "--not-an-option");
+  assert.match(result.error.help_command, /help repository\.status$/);
+
+  const human = spawnSync(process.execPath, [
+    RUNNER_PATH,
+    "--format", "human",
+    "repository.status",
+    "--not-an-option",
+  ], { cwd: root, encoding: "utf8" });
+  assert.equal(human.status, 1);
+  assert.match(human.stdout, /Code: UNKNOWN_ARGUMENT/);
+  assert.match(human.stdout, /Bad argument: --not-an-option/);
+  assert.match(human.stdout, /Help: .*help repository\.status/);
 });
 
 test("READONLY Issue workflow completes in one runner call with stable artifacts", async (t) => {
@@ -163,6 +362,8 @@ test("preflight and apply workflow IDs cannot cross the approval boundary", asyn
   });
   assert.equal(applyReject.status, "not-applied");
   assert.match(applyReject.error.message, /requires --apply/);
+  assert.equal(applyReject.error.code, "EXPLICIT_APPLY_REQUIRED");
+  assert.match(applyReject.error.help_command, /help github\.issue\.create\.apply$/);
   assert.equal(applyReject.error.retryability, "new-preflight-required");
 });
 
