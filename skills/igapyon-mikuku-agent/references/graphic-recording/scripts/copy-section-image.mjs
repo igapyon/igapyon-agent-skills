@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
-import { copyFile, readFile, stat, writeFile } from "node:fs/promises";
+import { copyFile, open, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+
+const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 const usage = `Usage:
   node copy-section-image.mjs --run-dir <run-output-dir> --section <NNN> --src <image-path> [--overwrite]
@@ -9,7 +11,8 @@ const usage = `Usage:
 Copies:
   <image-path> -> <run-output-dir>/sections/<NNN>/graphic-recording.png
 
-Also updates TODO.md for the section to image-generated.
+Validates that the source is a non-empty PNG before copying.
+Also updates TODO.md for the section to image-generated after validation and copying have succeeded.
 `;
 
 function parseArgs(argv) {
@@ -51,11 +54,30 @@ async function assertExists(filePath, label) {
   }
 }
 
+async function assertNonEmptyPng(filePath, fileStat) {
+  if (fileStat.size === 0) {
+    throw new Error(`Source image is empty: ${filePath}`);
+  }
+
+  const header = Buffer.alloc(pngSignature.length);
+  const file = await open(filePath, "r");
+  let bytesRead;
+  try {
+    ({ bytesRead } = await file.read(header, 0, header.length, 0));
+  } finally {
+    await file.close();
+  }
+
+  if (bytesRead !== pngSignature.length || !header.equals(pngSignature)) {
+    throw new Error(`Source image does not have a valid PNG signature: ${filePath}`);
+  }
+}
+
 function updateTodo(todo, section) {
   const lines = todo.split("\n");
   let updated = false;
   const next = lines.map((line) => {
-    const match = line.match(new RegExp(`^- \\[[ xX]\\] ${section}: (.+?) - ([a-z0-9-]+)\\s*$`));
+    const match = line.match(new RegExp(`^- \\[[ xX]\\] ${section}: (.+) - (image-\\S.*)\\s*$`));
     if (!match) {
       return line;
     }
@@ -95,6 +117,7 @@ async function main() {
   if (!srcStat.isFile()) {
     throw new Error(`Source image path is not a file: ${src}`);
   }
+  await assertNonEmptyPng(src, srcStat);
   try {
     await stat(dest);
     if (!args.overwrite) {
@@ -112,6 +135,7 @@ async function main() {
   await copyFile(src, dest);
   await writeFile(todoPath, nextTodo, "utf8");
 
+  process.stdout.write(`Validated PNG ${src} (${srcStat.size} bytes)\n`);
   process.stdout.write(`Copied ${src} -> ${dest}\nUpdated ${todoPath}\n`);
 }
 

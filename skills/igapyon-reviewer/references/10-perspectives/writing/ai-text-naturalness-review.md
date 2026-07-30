@@ -108,31 +108,14 @@ rough scale. If a scale is needed, use plain labels first.
 
 ## Review Output
 
-Use this format when the user asks specifically about AI-like writing:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `AI Text Naturalness Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-AI Text Naturalness Review
-
 Overall: Low / Medium / High
-
-Why it may feel AI-like:
-- ...
-
-What feels natural:
-- ...
-
-Most effective fixes:
-- ...
-```
-
-For shorter text, compress the output:
-
-```text
-AI Text Naturalness Review
-
-Overall: Medium
-- AI-like signal: ...
-- Safer fix: ...
 ```
 
 If the text does not feel notably AI-like, say so directly and mention the few

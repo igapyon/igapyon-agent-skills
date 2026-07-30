@@ -1,0 +1,4 @@
+interface:
+  display_name: "igapyon miku SCM"
+  short_description: "Run safe miku-soft SCM and GitHub writing workflows."
+  default_prompt: "Use $igapyon-miku-scm to manage miku-soft Git, GitHub writing, and release workflows safely."

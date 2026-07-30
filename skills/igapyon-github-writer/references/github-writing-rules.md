@@ -17,6 +17,12 @@ Shared writing rules for `igapyon-github-writer`.
 
 Before drafting, first resolve the exact Git evidence target from the user's wording. Do not draft from an assumed range when the target is ambiguous.
 
+Use the fixed workflows in [deterministic-runner.md](deterministic-runner.md).
+`pr.evidence`, `release.evidence`, and `about.evidence` return bounded, redacted,
+structured evidence plus an evidence SHA-256. The normal writing path is one AI
+pass over that result. Do not duplicate the runner's inspection with ad hoc Git
+commands unless the runner is unavailable or its result proves insufficient.
+
 ## Target Resolution
 
 Use these interpretations unless the user explicitly says otherwise:
@@ -25,7 +31,7 @@ Use these interpretations unless the user explicitly says otherwise:
 - `<commit> の変更内容`: use exactly that single commit.
 - `<base>..<head>`: use Git's normal exclusive-left range; changes reachable from `<head>` but not from `<base>`.
 - `<base>...<head>`: use Git's normal merge-base comparison semantics.
-- PR request without a commit ID, explicit Git range, branch comparison, or working-tree target: first run `git log --oneline --decorate -1` to resolve the current latest commit ID, then use that single commit as the PR target. Inspect it as `<resolved-commit>` / `<resolved-commit>^..<resolved-commit>` and do not include uncommitted working-tree changes.
+- PR request without a commit ID, explicit Git range, branch comparison, or working-tree target: invoke `pr.evidence` without `--target`. The runner resolves the current latest commit as a single-commit target and excludes uncommitted changes.
 - Release request with only a start commit ID: implicitly treat it as `<start>` through `HEAD`, including the change introduced by `<start>`; use `<start>^..HEAD`.
 - `<start> から HEAD まで` with wording that says `<start>` itself is included: use `<start>^..HEAD`.
 - `<start> から HEAD まで` in Release mode: treat `<start>` itself as included by default; use `<start>^..HEAD` unless the user explicitly says to exclude `<start>`.
@@ -38,33 +44,8 @@ For PR text, a request that says `対象コミット <commit> における変更
 
 For Release text, a start commit ID implies `from <start> through HEAD, including <start>`. Inspect `<start>^..HEAD` unless the user explicitly provides another range.
 
-After resolving the target, inspect the requested evidence.
-
-For a PR request without an explicit target:
-
-```sh
-git log --oneline --decorate -1
-```
-
-Use the commit ID shown by that command as the single commit target for the following inspection commands. Do not silently use an older commit ID from the conversation when the user's latest request omits the target.
-
-For a single commit:
-
-```sh
-git show --stat --oneline --no-renames <commit>
-git show --no-ext-diff --no-renames --format=fuller --name-only <commit>
-git show --no-ext-diff --no-renames <commit>
-```
-
-For a commit range:
-
-```sh
-git log --oneline --no-decorate <range>
-git diff --stat --no-renames <range>
-git diff --no-ext-diff --no-renames <range>
-```
-
-When the resolved range uses `START^..HEAD` and `START^` is unavailable, inspect the root case explicitly and mark uncertainties as `要確認`.
+After resolving the target, pass it through the corresponding runner workflow.
+The runner handles single-commit, range, and root-commit evidence consistently.
 
 Prefer concise summaries over copying large diffs. Mention only files, modules, behavior, and documents that are visible in the inspected evidence.
 
@@ -75,24 +56,8 @@ For PR, Release, and About modes, save the final drafted Markdown to a local fil
 Do not save Branch Status output by default. Branch Status is a report, not GitHub paste-ready drafted text.
 
 Save only the inner Markdown draft, without the outer `~~~~markdown` wrapper.
-
-Resolve the save base in this order:
-
-1. Determine the repository root with `git rev-parse --show-toplevel`. If that fails, use the current working directory as the project-equivalent root.
-2. If `<root>/workplace/` exists, save under `<root>/workplace/github-writer/`.
-3. If `<root>/temp/` exists, save under `<root>/temp/github-writer/`.
-4. If neither exists, create `<root>/workplace/github-writer/` and save there.
-
-Do not save outside the project-equivalent root unless the user explicitly provides an output path.
-
-Use safe, lowercase filenames based on local time. Include a 12-digit year-month-day-hour-minute timestamp (`YYYYMMDDHHMM`) in PR draft filenames so repeated drafts on the same branch remain sortable and easy to resolve:
-
-- PR mode: `pr-<branch-slug>-<YYYYMMDDHHMM>.md` when the current branch name is available; otherwise `pr-<YYYYMMDDHHMM>.md`
-- Release mode: `release-<YYYYMMDDHHMM>.md`
-- About mode: `about-<YYYYMMDDHHMM>.md`
-
-For `<branch-slug>`, use the current branch from `git branch --show-current`. Sanitize it by lowercasing it and replacing characters outside `[a-z0-9._-]` with `-`. If the sanitized branch is empty, omit it.
-
-Do not overwrite an existing draft file. If a generated path already exists, add another short suffix such as `-2`.
+Use `draft.validate-and-save` with a repository-relative input path. The runner
+chooses `workplace/github-writer/`, then `temp/github-writer/`, creates a
+timestamped safe filename, normalizes line endings, and refuses overwrite.
 
 After saving, report the saved path relative to the repository root or current working directory. Never report a home directory or absolute path.

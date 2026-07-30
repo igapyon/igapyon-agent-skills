@@ -105,25 +105,9 @@ Useful directions:
 
 ## Review Output
 
-When style findings exist, keep them concrete:
-
-```text
-Writing Style Review
-
-- Finding: The main body mixes `です・ます調` and `だ・である調`.
-  Why it matters: igapyon writing normally reads more naturally in polite style.
-  Suggested direction: Keep explanatory paragraphs in `です・ます調`; leave
-  headings and bullet fragments as-is where they scan better.
-```
-
-When no issue is found:
-
-```text
-Writing Style Review
-
-The main body is broadly aligned with `です・ます調`. No major style mismatch
-found.
-```
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Writing Style Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
 
 Do not rewrite the whole text unless the user asks for revision. In review
 mode, point to style drift and suggest the smallest useful correction.

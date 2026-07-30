@@ -1,0 +1,17 @@
+{
+  "mode": "conservative",
+  "allowedLossByMode": {
+    "conservative": ["adjacent generic explanation"],
+    "structural": ["adjacent generic explanation", "connective prose"],
+    "summary": ["adjacent generic explanation", "secondary rationale"]
+  },
+  "requiredSubstrings": [
+    "designated release owner",
+    "Do not infer approval from attendance",
+    "approver ID",
+    "approval timestamp",
+    "quote the approval statement",
+    "source message ID",
+    "separate contracts"
+  ]
+}

@@ -10,8 +10,8 @@ After `igapyon-github-writer` is active, enter PR mode for similar wording such 
 
 ## Target Rules
 
-- If the user asks for PR text without a commit ID, commit range, branch comparison, or explicit working-tree target, first run `git log --oneline --decorate -1` to resolve the current latest commit ID.
-- Use the commit ID shown by that command as the single commit PR target.
+- If the user asks for PR text without a commit ID, commit range, branch comparison, or explicit working-tree target, run `pr.evidence` without `--target`.
+- Use the runner-resolved latest commit as the single commit PR target.
 - Interpret that default as `<resolved-commit>^..<resolved-commit>` for the change content, and inspect the single commit `<resolved-commit>`.
 - This default means committed history only. Do not include uncommitted working-tree changes unless the user explicitly asks for them.
 - If the user says `対象コミット <commit> における変更内容`, draft from exactly that commit.

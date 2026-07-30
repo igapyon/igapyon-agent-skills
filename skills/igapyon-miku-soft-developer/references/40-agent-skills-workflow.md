@@ -38,6 +38,8 @@ Bundled starter templates are available under `assets/agent-skills/`:
   - Starter npm metadata for build, test, and bundle orchestration.
   - Keep `private: true` unless the repository explicitly chooses npm
     publication.
+  - The starter declares `engines.node` as `>=20`; keep that lower bound only
+    while Node.js 20 remains covered by repository tests.
   - Replace `__REPO_NAME__` and `__VERSION__`.
 - `scripts/build-skill-bundle.mjs`
   - Builds `bundle/<repo-name>/skills/<skill-name>/...` from
@@ -66,14 +68,24 @@ Bundled starter templates are available under `assets/agent-skills/`:
     verification and zip naming to the target skill.
   - Omit only when the repository intentionally does not use GitHub Release
     assets, and record that reason.
-- `skills/__SKILL_NAME__/`
-  - Minimal skill skeleton with `SKILL.md`, optional `agents/openai.yaml`,
-    `references/INDEX.md`, `lib/`, and `runtime/`.
+- `.github/workflows/ci.yml`
+  - Tests the declared minimum Node.js 20 runtime and the Node.js 24 release
+    baseline independently.
+  - Keep the matrix synchronized with `package.json` compatibility claims.
+- `templates/skill/`
+  - Minimal skill skeleton to copy to `skills/<skill-name>/`, with
+    `SKILL.md.template`, optional `agents/openai.yaml`, `references/INDEX.md`,
+    `lib/`, and `runtime/`.
+  - Rename `SKILL.md.template` to `SKILL.md` after copying it into the target
+    skill directory. The template does not use the literal `SKILL.md` filename
+    inside this repository so Codex skill discovery will not load it as a real
+    installed skill.
   - After copying the skeleton, generate `skills/<skill-name>/index.json`
     with `miku-indexgen`; do not maintain a fixed handwritten template for
     this generated file.
 
-After copying these templates, replace `__REPO_NAME__`, `__SKILL_NAME__`,
+After copying these templates, place `templates/skill/` at
+`skills/<skill-name>/`, then replace `__REPO_NAME__`, `__SKILL_NAME__`,
 `__SKILL_TITLE__`, `__PRODUCT_NAME__`, and `__VERSION__`.
 
 For newer miku-soft Agent Skills naming, distinguish repository naming from
@@ -103,6 +115,13 @@ The agent may create or edit the local workflow file. Creating GitHub releases,
 pushing tags or branches, publishing packages, and uploading release assets
 remain human GitHub or registry operations as described in
 [repo-operations.md](repo-operations.md).
+
+Keep the product runtime contract separate from the GitHub Actions runtime.
+The starter package supports Node.js `>=20`, CI verifies Node.js 20 and 24, and
+the release workflow builds with Node.js 24. The Action majors themselves must
+be Node 24-aware. Do not use `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` or
+`FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` as the maintained solution when supported
+Action majors are available.
 
 ## First Reads
 
@@ -137,4 +156,86 @@ remain human GitHub or registry operations as described in
 19. Treat the sister-reference summary as required implementation context for new creation work.
 20. Use sister projects as shape references only; do not copy `workplace/` contents into the target repository wholesale.
 21. Add the local GitHub Actions release asset workflow from the starter template by default, or record the explicit reason for omitting it.
-22. After adding or changing `SKILL.md`, references, assets, or other bundled skill files, regenerate `skills/<skill-name>/index.json` with `miku-indexgen --refresh-index skills/<skill-name>/index.json` or the repository's documented equivalent, then update validation output.
+22. Keep `engines.node`, the Node.js 20/24 CI matrix, the Node.js 24 release build, and Node 24-aware Action majors as separate but synchronized contracts.
+23. After adding or changing `SKILL.md`, references, assets, or other bundled skill files, regenerate `skills/<skill-name>/index.json` with `miku-indexgen --refresh-index skills/<skill-name>/index.json` or the repository's documented equivalent, then update validation output.
+
+## Skill-only Product Convention
+
+Use this convention when the product's sole user-facing deliverable is one or
+more Agent Skills. It does not provide a standalone Node/Java CLI, library,
+MCP server, or bundled runtime artifact. A Skill-only product is still a
+versioned product repository; it is not merely an unmanaged local
+`~/.codex/skills/` copy.
+
+The product may depend on, document, or orchestrate separate foundation
+libraries and other miku-soft tools. Those dependencies do not make the Skill
+package itself a CLI or library product. Classify the product by its own
+user-facing deliverable and release contract; for example,
+`miku-ms-office-skills` remains Skill-only even when it uses Office conversion
+libraries and individual conversion tools.
+
+This classification describes the current delivered surfaces, not a permanent
+product prohibition. If a separate user-facing surface such as
+`miku-ms-office-web` is introduced later, reassess the product as a
+multi-surface miku-soft product and apply the relevant Web workflow alongside
+the Skill-only rules. Do not retroactively claim that the existing Skill
+package already provides that future surface.
+
+### Repository and Bundle Shape
+
+- Keep the product source of truth in `skills/<skill-name>/`, including
+  `SKILL.md`, references, deterministic helpers when required, and generated
+  `index.json`.
+- Keep `workplace/` and local Codex deployment copies out of Git. Provide a
+  documented, named synchronization command for the user deployment target.
+- Use `package.json` only when it contributes reproducible test, index, or
+  bundle commands. Do not add an npm publication contract solely because the
+  product is JavaScript-authored.
+- Do not create a `runtime/` directory, runtime smoke test, or release runtime
+  asset when no runtime exists. State `Skill-only` explicitly in the README or
+  product documentation so this omission is intentional.
+- A release ZIP is optional. When distributed, it must contain the installable
+  `skills/<skill-name>/` tree and its generated `index.json`, not a user-local
+  `.codex` directory or development `workplace/` data.
+
+### Versioning, Verification, and Maintenance
+
+- Define the authoritative product version, matching Git tag convention, and
+  any coupled Skill version source. Keep those sources aligned before commit.
+- Test deterministic helper behavior and the structural bundle shape. A
+  runtime smoke test is not required for a Skill-only product.
+- Regenerate every affected `index.json` after changing bundled content, then
+  run the repository's documented index and version-alignment checks.
+- Preserve the same Issue, PR, Release, and human-approval boundaries as
+  other miku-soft products. A local user synchronization is deployment support,
+  not GitHub publication, tag creation, or Release publication.
+
+### Bundled Runtime `--help` Compatibility
+
+When an Agent Skill bundles or selects both Node.js and Java CLI artifacts,
+check their `--help` contracts as part of runtime smoke and backend-selection
+testing. Use exact UTF-8 byte equality when the Skill presents them as
+interchangeable implementations of one CLI contract. Capture exit status,
+stdout, stderr, final newline, and the complete byte sequence.
+
+When backend-specific capabilities are intentional, use a documented
+similarity check instead: shared commands, options, arguments, defaults, and
+usage vocabulary must remain compatible, while explicitly listed
+backend-specific lines may differ. The test output must make an unexpected
+difference visible. Do not silently accept drift merely because the Skill can
+fall back to another runtime.
+
+### Creation and Maintenance Checklist
+
+1. Declare the product as Skill-only and identify the installed skill name.
+2. Create or verify `SKILL.md`, detailed references, and generated `index.json`.
+3. Document the supported Codex deployment/synchronization command and keep
+   that destination outside repository tracking.
+4. Add focused tests for bundled helpers and structural checks for required
+   Skill files; omit runtime checks only because no runtime is part of the
+   product contract.
+5. For dual Node/Java runtime Skills, add `--help` exact-parity or documented
+   similarity checks according to the backend contract.
+6. Define the version, tag, optional ZIP, and GitHub Release expectations.
+7. On maintenance, update documentation, regenerate indexes, run checks, and
+   use the normal reviewed PR and human-release workflow.

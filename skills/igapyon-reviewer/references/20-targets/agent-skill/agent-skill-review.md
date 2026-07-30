@@ -422,40 +422,41 @@ present at all.
 
 ## Prompt Language Checks
 
-For prompts that are close to the edge of model-following reliability, English
-instructions may be slightly more stable than Japanese instructions.
+Treat prompt-language reliability as model-, reasoning-, and runtime-dependent.
+Do not assume that English instructions are more stable than Japanese
+instructions without evaluation evidence for the target profile.
 
-This is not a hard rule. Japanese is appropriate when the skill's main content,
-examples, audience, or output style is Japanese. However, when a prompt has
-become stable and its behavior matters, review whether core operational
-instructions should be translated to English while keeping Japanese examples,
-output text, or domain terms where they are needed.
+When language choice is in scope, record:
 
-Check whether:
+- model and version
+- reasoning mode and runtime or integration surface
+- compared prompt variants
+- evaluation cases, method, and acceptance threshold
+- evaluation date and observed result
 
-- mature, stable prompt rules are still written only in Japanese even though
-  they control fragile behavior
-- operational rules, activation boundaries, review order, and safety checks
-  would be clearer or more robust in English
-- Japanese examples and English instructions are kept consistent
-- bilingual content creates duplication or drift
-- user-facing Japanese style rules remain in Japanese when that preserves nuance
-- translation does not change the intended behavior
+Use measured evidence to recommend a language change only when the comparison
+shows a material reliability difference for the target profile. Without that
+evidence, do not report Japanese-only or English-only instructions as a defect;
+recommend a scoped comparison test when language may plausibly affect fragile
+behavior.
 
-Prefer:
+Independently of language choice, check whether:
 
-- English for core agent instructions, activation rules, review flow,
-  verification, and failure handling when stability matters
-- Japanese for Japanese writing examples, tone samples, publication text,
-  glossary nuance, and user-facing output examples
-- a single source of truth when bilingual text would drift
+- bilingual rules duplicate the same source of truth and can drift
+- translated instructions change activation, safety, verification, or failure
+  behavior
+- examples and operational rules disagree across languages
+- the chosen language fits the user-facing audience and preserves necessary
+  domain nuance
 
-Flag issues when:
+No-evidence forward-test case:
 
-- a stable and fragile prompt remains Japanese-only without a reason
-- English and Japanese versions of the same rule diverge
-- translation was done mechanically and changed the intended nuance
-- Japanese examples no longer match English operational rules
+```text
+Target: a Japanese-only Agent Skill
+Known profile: model/runtime evaluation not supplied
+Expected result: no finding based only on the instruction language
+Allowed note: compare language variants if measured reliability is required
+```
 
 ## Packaging Checks
 
@@ -499,28 +500,24 @@ Use these severity levels:
 - Medium: bundle includes local-only or development-only files.
 - Low: prompt wording leans on broad identity assignment where context,
   examples, constraints, or templates would make the behavior more stable.
-- Low: mature operational prompt rules that control fragile behavior remain
-  Japanese-only where English instructions would likely improve stability.
+- Low: target-profile comparison evidence shows a material language-related
+  reliability gap, but the skill still uses the weaker evaluated variant.
 - Low: minor naming, reference organization, or navigation issue makes the
   skill harder to maintain.
 
 ## Review Output
 
-Use this format when Agent Skills are in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Agent Skill Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Agent Skill Review
-
 Activation policy: explicit / broad / unclear
 SKILL.md shape: lean / too large / unclear
 index.json: current / stale / missing / not checked
 Bundle readiness: ready / partial / risky / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
 
 Do not edit skill files during review mode unless the user explicitly asks to

@@ -131,9 +131,9 @@ Check whether the implemented behavior appears finished:
 - structured data generation/parsing code uses library APIs for escaping,
   encoding, namespaces, JSON syntax, and streaming when appropriate, rather than
   unsafe ad hoc string construction
-- miku-soft or nearby igapyon project source files include the expected
-  `Copyright 2026 Toshiki Iga` and `SPDX-License-Identifier: Apache-2.0`
-  header when that convention applies
+- miku-soft or nearby igapyon project source files follow the confirmed
+  repository convention for copyright year or year range, copyright holder,
+  and `SPDX-License-Identifier: Apache-2.0` when that convention applies
 - non-miku-soft source files are not treated as missing headers unless the
   repository has its own visible header or SPDX convention
 - copied or redistributed OSS libraries under `lib/`, `vendor/`, `runtime/`, or
@@ -331,24 +331,17 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when judging completion:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Software Completion Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Software Completion Review
-
 Completion judgment: complete / mostly complete / not complete / unclear
 Public readiness: ready / not ready / internal-only / unclear
 Release readiness: ready / partial / missing / not applicable
 Test confidence: sufficient / partial / weak / not checked
-
-Blocking findings:
-- Severity: ...
-  Issue: ...
-  Why it blocks completion: ...
-  Suggested direction: ...
-
-Non-blocking follow-ups:
-- ...
 ```
 
 If the result is mostly complete, say what remains before a public release or

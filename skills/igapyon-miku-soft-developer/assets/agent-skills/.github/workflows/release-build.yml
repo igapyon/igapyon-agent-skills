@@ -21,20 +21,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref }}
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Verify runtime artifacts
         shell: bash
@@ -92,7 +92,7 @@ jobs:
           echo "zip_path=${target_zip}" >> "$GITHUB_OUTPUT"
 
       - name: Upload zip to GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event.inputs.tag_name || github.event.release.tag_name || github.ref_name }}
           files: ${{ steps.prepare_zip.outputs.zip_path }}

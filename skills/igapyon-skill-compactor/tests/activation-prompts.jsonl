@@ -1,7 +1,7 @@
-{"id":"activate-001","prompt":"igapyon-skill-compactorを使って、この肥大化したAgent Skillを整理して。","expected":"activate","checks":["explicit skill name","Agent Skill compaction request"]}
-{"id":"activate-002","prompt":"このSKILL.mdのtoken bloatを減らしたい。挙動は変えずにcompactして。","expected":"activate","checks":["specific SKILL.md target","preserve behavior"]}
-{"id":"activate-003","prompt":"このAgent Skillの長い説明をreferencesやdistilledに分けて軽くしたい。","expected":"activate","checks":["Agent Skill target","move oversized instructions"]}
-{"id":"mention-only-001","prompt":"igapyon-skill-compactorってある？","expected":"mention-only","checks":["existence question only","do not apply workflow"]}
-{"id":"nonactivate-001","prompt":"このMarkdownを読みやすく直して。","expected":"do-not-activate","checks":["generic documentation editing","no Agent Skill compaction request"]}
-{"id":"nonactivate-002","prompt":"このリポジトリのトークン消費を減らす方法を相談したい。","expected":"do-not-activate","checks":["broad token-efficiency discussion","no specific Agent Skill compaction request"]}
-{"id":"nonactivate-003","prompt":"新しいAgent Skillを作りたい。","expected":"do-not-activate","checks":["ordinary skill creation","not compaction"]}
+{"id":"activate-001","kind":"activation","sandbox":"read-only","fixture":"fixtures/deploy-helper","target":"SKILL.md","prompt":"Use igapyon-skill-compactor to conservatively compact the Agent Skill at {{TARGET_SKILL}} while preserving behavior. Do not edit files; return a proposed result.","expectedActivation":"activate"}
+{"id":"activate-002","kind":"activation","sandbox":"read-only","fixture":"fixtures/deploy-helper","target":"SKILL.md","prompt":"Conservatively compact the Agent Skill at {{TARGET_SKILL}} while preserving its activation, safety, commands, and output contract. Do not edit files; return a proposed result.","expectedActivation":"activate"}
+{"id":"mention-only-001","kind":"activation","sandbox":"read-only","prompt":"igapyon-skill-compactor という名前の Skill はありますか？","expectedActivation":"mention-only"}
+{"id":"mention-only-002","kind":"activation","sandbox":"read-only","prompt":"igapyon-skill-compactor は何をするものですか？","expectedActivation":"mention-only"}
+{"id":"meta-001","kind":"activation","sandbox":"read-only","prompt":"igapyon-skill-compactor 自体のreviewや不具合診断を依頼した場合、それはcompaction workflowの適用依頼になりますか。実際のSkillやファイルは読まず、発火境界だけ答えてください。","expectedActivation":"meta-work"}
+{"id":"nonactivate-001","kind":"activation","sandbox":"read-only","prompt":"この Markdown を読みやすく直す一般的な方法を教えてください。","expectedActivation":"do-not-activate"}
+{"id":"nonactivate-002","kind":"activation","sandbox":"read-only","prompt":"新しい Agent Skill を作るときの基本構成を教えてください。","expectedActivation":"do-not-activate"}

@@ -122,20 +122,16 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when content format choice is in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Read-Only Skill Content Format Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Read-Only Skill Content Format Review
-
 Skill type: read-only / reference-only / mixed / unclear
 Primary content format: Markdown / JSON / JSONL / XML / mixed / unclear
 Format choice: appropriate / questionable / risky / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
 
 Do not convert or reformat content during review mode unless the user explicitly

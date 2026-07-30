@@ -1,7 +1,9 @@
 # Compaction Workflow Details
 
-Use this reference before substantial edits, split decisions, toolization/MCP
-decisions, or any case where removing detail may change behavior.
+Use this reference before substantial edits, architectural placement decisions,
+splitting, toolization/MCP decisions, or behavior-risking removals. Do not read
+it for a small local conservative edit when the core contract in `SKILL.md` is
+sufficient.
 
 ## 1. Frame The System
 

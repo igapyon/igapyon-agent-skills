@@ -78,18 +78,14 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when secrets are in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Secrets and Credentials Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Secrets and Credentials Review
-
 Visible risk: low / medium / high / critical / unclear
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
 
 If a real secret may have been committed or exposed, recommend removal and

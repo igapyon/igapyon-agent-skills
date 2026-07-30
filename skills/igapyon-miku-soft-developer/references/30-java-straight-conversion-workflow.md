@@ -146,17 +146,26 @@ Bundled starter templates are available under
   - Maven JVM settings that prefer IPv4 for environments where dependency
     resolution is affected by IPv6 behavior.
 - `.github/workflows/release-cli-runtime.yml`
-  - GitHub Release asset workflow for a single CLI runtime jar and source jar.
-  - Trigger from `push` tags matching `v*` and manual dispatch with an
-    explicit `tag_name`.
-  - Keep the `push` tag trigger when migrating an existing sister project that
-    already releases by running `git push origin vX.Y.Z`.
-  - Do not trigger this shared template from GitHub Release `published` events
-    by default. When `softprops/action-gh-release` creates or updates the
-    GitHub Release from a tag-push workflow, a separate release-published
-    trigger can cause a second run for the same tag.
-  - Use `workflow_dispatch` with an explicit `tag_name` when release assets need
-    to be recreated or attached to an existing GitHub Release manually.
+  - GitHub Release asset workflow for a single executable CLI runtime jar and
+    source jar.
+  - Trigger from GitHub Release `published` by default. This is the standard
+    release asset operation for miku-soft Java straight-conversion repositories
+    when the release and `v*` tag are created or selected from the GitHub UI.
+  - When a GitHub Release with a `v*` tag is published, build the executable
+    module and source bundle from that checked-out tag, stage
+    `<artifact>-<version>.jar` and `<artifact>-sources-<version>.jar`, and
+    attach only those prepared release assets to the GitHub Release.
+  - Do not use tag-push-only release workflows as the shared template default.
+    Use them only when the repository has a documented repository-specific
+    reason.
+  - Do not include merge-time, pull-request, or branch-push test automation in
+    this release asset workflow. CI baseline workflows are separate and should
+    be added only when the user asks for CI baseline work or the repository
+    already has a documented CI baseline policy.
+  - Treat manual dispatch as a repository-specific exception. If a repository
+    needs a manual rerun path for recreating or attaching release assets, add
+    `workflow_dispatch` with an explicit `tag_name`, check out that tag, and
+    keep a `v*` guard on the job.
   - The workflow checks the release tag version against `pom.xml`, builds from
     the release tag, stages `<artifact>-<version>.jar` and
     `<artifact>-sources-<version>.jar`, verifies the runtime jar with Java 8
@@ -177,8 +186,8 @@ Bundled starter templates are available under
   - Set up the build JDK explicitly, normally Temurin Java 21 with Maven cache,
     before `mvn -B package`; set up Java 8 separately for the packaged runtime
     smoke test.
-  - The template uses `softprops/action-gh-release` so tag-push releases can
-    create or update the GitHub Release assets for that tag. Keep
+  - The template uses `softprops/action-gh-release` so GitHub Release
+    `published` runs can update the GitHub Release assets for that tag. Keep
     `permissions: contents: write` and explicit asset overwrite behavior.
   - Adjust `RUNTIME_TARGET_DIR` for multi-module runtime repositories so the
     runtime module's `target/` directory, such as `miku-xlsx2md/target`, is used
@@ -281,6 +290,30 @@ or batch extensions when they are in scope.
 Java-side extensions are allowed when useful, but keep them separate from the
 upstream contract in README, CLI specs, mapping documents, and tests.
 
+### Node/Java `--help` Byte Parity
+
+When the same CLI contract is offered by Node.js and Java, treat `--help` as a
+byte-level compatibility artifact. Both commands must exit successfully,
+write the help text only to stdout, and emit identical UTF-8 bytes, including
+final newline and line-ending style. Do not normalize whitespace, decode and
+re-encode text, or compare only parsed option names in the parity assertion.
+
+Add an automated subprocess test that captures stdout, stderr, and exit code
+from both runtime artifacts. Require zero exit status, empty stderr unless the
+documented contract says otherwise, and an exact byte comparison of stdout.
+On mismatch, report a bounded useful diff (for example byte offset and nearby
+UTF-8-safe text) so maintainers can locate the contract drift. Run this test
+when either CLI parser, usage text, option defaults, or release artifact wiring
+changes. A deliberate incompatibility requires an explicit documented product
+decision; otherwise it is a parity defect.
+
+When the two runtimes intentionally expose different supported operations,
+platform prerequisites, or artifact-specific options, do not manufacture
+byte-level equality. Instead document the difference beside the shared CLI
+contract and add a similarity test: verify the shared command names, option
+names, required arguments, defaults, and usage examples remain aligned while
+the documented runtime-specific lines are allowed to differ.
+
 ## Regression Strategy
 
 Prefer focused regression commands that explain the changed area:
@@ -290,6 +323,7 @@ Prefer focused regression commands that explain the changed area:
 - path security, glob, regex, encoding, codec, or parser tests
 - core API tests
 - CLI stdout / stderr / exit-code tests
+- exact Node-vs-Java `--help` byte-parity test when both CLIs share a contract
 - documentation synchronization tests
 - Node-vs-Java parity scripts when practical
 - packaged jar smoke scripts after `mvn package`

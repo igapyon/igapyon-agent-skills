@@ -6,6 +6,13 @@
 
 生成済みのグラレコ画像を `mikuku-articles` の公開記事ディレクトリへ反映する依頼では、生成ワークフローではなく [graphic-recording/publish-generated-images-to-article.md](graphic-recording/publish-generated-images-to-article.md) を読んでください。
 
+この文書では、次のパス変数を使います。
+
+- `{{SKILL_DIR}}`: 選択された `igapyon-mikuku-agent` の `SKILL.md` があるディレクトリ。処理開始時のカレントフォルダではなく、実際に読み込んだ Skill の場所から解決します。
+- `{{MIKUKU_PROMPT_PATH}}`: 既定では `{{SKILL_DIR}}/assets/mikuku/mikuku-portrait-short-prompt.md`
+
+`{{SKILL_DIR}}` はインストール先に応じた実パスへ展開してください。リポジトリ名やユーザーのホームディレクトリを仮定してはいけません。
+
 ## 基本方針
 
 記事本文を直接貼り付けるのではなく、記事 Markdown ファイルのパスを入力として扱います。
@@ -27,6 +34,26 @@
 9. みくく描画プロンプト本文を含む画像生成AI用プロンプトで画像生成を実行する、または未実行理由を記録する
 10. 生成物をカレントフォルダ配下の作業場所へ保存する
 
+画像生成結果は、現在の画像生成ツール呼び出しが返した正確な画像パスを使って保存してください。
+`$CODEX_HOME/generated_images` 全体を更新日時で並べて「最新の PNG」を選んではいけません。別ターンや別セクションの画像を取り違えるためです。
+画像パスが返らずセッション JSONL から復元する場合は、画像生成の直前に現在の最終行番号を記録し、その行番号より後の `image_generation_end` イベントだけを候補にしてください。
+行番号は画像生成後に測定してはいけません。
+
+## 画像種別の既定
+
+ユーザーが記事 Markdown に対して「グラレコ画像を作成してください」と依頼し、記事全体 1 枚、`##` 見出しごと、代表画像のみ、章ごとの画像のみなどの画像種別を明示していない場合は、既定で `whole-article` として扱ってください。
+
+この既定では、記事全体の代表グラレコ画像を 1 枚だけ作成します。
+
+`sections` は章ごとの画像だけを作るよう明示された場合に選びます。
+`whole-article-then-sections` は記事全体の代表画像と章ごとの画像の両方を作るよう明示された場合にだけ選びます。
+画像種別が曖昧な依頼を、セクション一括生成へ自動的に広げてはいけません。
+
+ユーザーが「代表画像だけ」「記事全体 1 枚だけ」「章ごとだけ」「`##` 見出しごとだけ」など、作成する画像種別を明示した場合は、その指定を優先してください。
+
+明示的な `whole-article-then-sections` で、記事内に対象となる `##` 見出しが存在しない場合、または対象候補が末尾補足セクションだけの場合は、記事全体の代表グラレコ画像だけを作成し、章ごとの画像を作らなかった理由を報告してください。
+明示的な `sections` で対象セクションがない場合は、未指定の全体画像へ置き換えず、生成対象がないことを報告してください。
+
 ## 使用するプロンプト
 
 記事全体を 1 枚のグラレコ画像にする場合は、次の 3 つのプロンプトを順番に使います。
@@ -35,7 +62,7 @@
 - [graphic-recording/20-graphic-recording-explainer-image-prompt.md](graphic-recording/20-graphic-recording-explainer-image-prompt.md)
 - [graphic-recording/30-generate-graphic-recording-image-prompt.md](graphic-recording/30-generate-graphic-recording-image-prompt.md)
 
-記事全体の代表画像を作ってから章ごとの画像生成へ進む場合は、30番で全体画像を採用したあと、追加の全体画像バリエーション生成を続けず、次の 40番、50番、60番へ進んでください。
+ユーザーが記事全体と章ごとの両方を明示した場合は、30番で全体画像を採用したあと、追加の全体画像バリエーション生成を続けず、次の 40番、50番、60番へ進んでください。
 
 記事内の `##` 見出しごとに複数のグラレコ画像を作る場合は、次のプロンプトを順番に使います。
 
@@ -93,12 +120,6 @@
 <処理開始時のカレントフォルダ>/workplace/<YYYYMMDDHHmmss>-graphic-recording/
 ```
 
-例:
-
-```text
-/Users/igapyon/Documents/git/igapyon-agent-skills/workplace/20260524095030-graphic-recording/
-```
-
 主な生成物は次の 4 つです。
 
 - `graphic-recording-text.md`: グラレコ制作用整理テキスト
@@ -121,12 +142,12 @@
 
 ## 記事全体画像のバリエーション上限
 
-記事全体 1 枚のグラレコ画像は、章ごと画像生成へ進む前の代表画像フェーズとして扱います。
+記事全体 1 枚のグラレコ画像は、`whole-article` では最終成果物、明示的な `whole-article-then-sections` では章ごと画像生成へ進む前の代表画像フェーズとして扱います。
 
-記事全体画像のバリエーション生成は、ユーザーが明示的に追加再生成を依頼しない限り、最大 3 枚までにしてください。
-1-3 枚の候補を生成したら、その時点で最も適した 1 枚を代表画像として採用し、追加の全体画像バリエーション生成を続けず、次に `##` 見出しごとのセクション画像生成へ進んでください。
+既定の候補数は 1 枚です。ユーザーが追加候補またはバリエーションを明示的に求めた場合だけ増やし、合計 3 枚を上限にしてください。
+候補を生成したら、その時点で最も適した 1 枚を代表画像として採用します。`whole-article` ではそこで完了し、明示的な `whole-article-then-sections` の場合だけ `##` 見出しごとのセクション画像生成へ進んでください。
 
-同一性崩れ、重大な破綻、保存失敗などで候補として使えない画像は失敗として記録してよいですが、その場合も無制限に再生成せず、最大 3 回を目安に一度停止し、未解決点を報告してください。
+同一性崩れ、重大な破綻、保存失敗などで候補として使えない画像は失敗として記録してよいですが、その場合も無制限に再生成せず、初回を含む最大 3 回で一度停止し、未解決点を報告してください。
 
 ## 実行ゲート
 
@@ -136,7 +157,7 @@
 
 - 現在のターンで、この `graphic-recording.md` を読んだ
 - 対象記事 Markdown を読んだ
-- 記事全体 1 枚か、`##` 見出しごとの複数枚かを決めた
+- mode を `whole-article`、`sections`、`whole-article-then-sections` のいずれかに決めた
 - 使用する個別プロンプトを読んだ
 - `{{RUN_OUTPUT_DIR}}` を決めた
 - `{{RUN_OUTPUT_DIR}}` がカレントフォルダ配下であることを確認した
@@ -150,41 +171,7 @@
 {{RUN_OUTPUT_DIR}}/run-state.md
 ```
 
-`run-state.md` には、少なくとも次を記録してください。
-
-```markdown
-# Graphic Recording Run State
-
-- workflow-read: yes
-- article-read: yes
-- mode: whole-article | sections | whole-article-then-sections
-- run-output-dir:
-- workplace-gitignored: yes | no | not-a-git-repo
-- prompts-read:
-  - 10-article-to-graphic-recording-text-prompt.md
-  - 20-graphic-recording-explainer-image-prompt.md
-  - 30-generate-graphic-recording-image-prompt.md
-  - 40-article-section-graphic-recording-batch-prompt.md
-  - 50-generate-section-graphic-recording-images-prompt.md
-  - 60-inspect-section-graphic-recording-images-prompt.md
-- article-path:
-- mikuku-prompt:
-- mikuku-prompt-exists: yes | no
-- mikuku-prompt-read: yes | no
-- article-source-read-only: yes
-- article-modified: no
-- image-tool:
-- text-prompt-generation: available | unavailable
-- character-prompt-embedded: yes | no
-- copy-instruction-created: yes | no
-- whole-article-variation-limit: 3
-- whole-article-variations-generated:
-- whole-article-selected:
-- generated-source-path:
-- workspace-output-path:
-- next-step: section-batch | section-image-generation | report
-- current-status:
-```
+実行状態の項目は [../templates/graphic-recording-run-state.md](../templates/graphic-recording-run-state.md) を使ってください。テンプレートを `{{RUN_OUTPUT_DIR}}/run-state.md` へ複製し、現在の実行に合わせて値と `prompts-read` を埋めます。テンプレート自体は変更しません。
 
 以降の各段階が終わるたびに、`current-status` と関連項目を更新してください。
 
@@ -194,7 +181,7 @@
 
 グラレコ説明画像のキャラクター描画には、次のテキストプロンプトを使います。
 
-- `/Users/igapyon/Documents/git/igapyon-agent-skills/skills/igapyon-mikuku-agent/assets/mikuku/mikuku-portrait-short-prompt.md`
+- `{{SKILL_DIR}}/assets/mikuku/mikuku-portrait-short-prompt.md`
 
 このファイルを `{{MIKUKU_PROMPT_PATH}}` として扱います。
 
@@ -283,6 +270,9 @@
 - [graphic-recording/40-article-section-graphic-recording-batch-prompt.md](graphic-recording/40-article-section-graphic-recording-batch-prompt.md)
 - [graphic-recording/50-generate-section-graphic-recording-images-prompt.md](graphic-recording/50-generate-section-graphic-recording-images-prompt.md)
 - [graphic-recording/60-inspect-section-graphic-recording-images-prompt.md](graphic-recording/60-inspect-section-graphic-recording-images-prompt.md)
+
+画像種別の指定がない場合は、既定の `whole-article` として記事全体用の 10番、20番、30番だけを読んでください。
+ユーザーが記事全体と章ごとの両方を明示した `whole-article-then-sections` の場合だけ、10番から60番までをすべて読んでください。
 
 ### 1. 記事を読む
 
@@ -412,7 +402,7 @@ workplace/<YYYYMMDDHHmmss>-graphic-recording/
 
 ### 6A. セクション別素材を一括初期化する
 
-`##` 見出しごとの複数枚で作る場合、または記事全体の代表画像を採用した後に章ごとの画像生成へ進む場合は、[graphic-recording/40-article-section-graphic-recording-batch-prompt.md](graphic-recording/40-article-section-graphic-recording-batch-prompt.md) を使います。
+`##` 見出しごとの複数枚が明示された場合、または明示的な `whole-article-then-sections` で記事全体の代表画像を採用した場合は、[graphic-recording/40-article-section-graphic-recording-batch-prompt.md](graphic-recording/40-article-section-graphic-recording-batch-prompt.md) を使います。
 
 40番では、最初に次を全対象セクション分まとめて完了してください。
 
@@ -425,7 +415,7 @@ workplace/<YYYYMMDDHHmmss>-graphic-recording/
 可能であれば、初期化フェーズでは次のスクリプトを使ってください。
 
 ```bash
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/split-article-sections.mjs --article "{{ARTICLE_PATH}}" --out "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.mjs" --article "{{ARTICLE_PATH}}" --out "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
 ```
 
 このスクリプトは、元記事を変更せず、全対象セクション分の `sections/<NNN>/section-source.md` と `TODO.md` を一括作成します。
@@ -435,7 +425,7 @@ node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/split-arti
 `section-text.md` 作成後の `image-prompt.md` 合成では、可能であれば次のスクリプトを使ってください。
 
 ```bash
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-section-image-prompts.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/compose-section-image-prompts.mjs" --run-dir "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
 ```
 
 ### 7A. セクション別画像を生成する
@@ -445,25 +435,44 @@ node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/compose-se
 50番では、セクションディレクトリや `section-source.md` を新規作成しないでください。
 不足がある場合は50番で補完せず、40番へ戻って初期化または素材作成を完了してください。
 
-画像生成後のコピーと `TODO.md` 更新では、可能であれば次のスクリプトを使ってください。
+画像生成後のコピーと `TODO.md` 更新では、現在の画像生成ツール呼び出しが返した正確なパスを `--src` に渡し、次のスクリプトを使ってください。
+生成画像ディレクトリ全体から最新ファイルを探索して `--src` に渡してはいけません。
+このスクリプトは、コピー前にファイルが 0 バイトでなく PNG シグネチャを持つことを自動検証し、検証とコピーの両方に成功した場合だけ `TODO.md` を更新します。
 
 ```bash
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/copy-section-image.mjs --run-dir "{{RUN_OUTPUT_DIR}}" --section "<NNN>" --src "<GENERATED_IMAGE_PATH>"
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/copy-section-image.mjs" --run-dir "{{RUN_OUTPUT_DIR}}" --section "<NNN>" --src "<GENERATED_IMAGE_PATH>"
 ```
 
-`$CODEX_HOME/generated_images` に生成 PNG が見つからず、Codex セッション JSONL の `image_generation_end.payload.result` から復元する場合は、復元専用スクリプトを使ってください。
-このスクリプトは画像ファイルの復元だけを行い、`TODO.md` は更新しません。
+画像生成ツールから今回の生成画像パスが返らず、Codex セッション JSONL の `image_generation_end.payload.result` から復元する場合は、画像生成直前にセッション JSONL の最終行番号を記録してください。
+復元専用スクリプトには、その生成前行番号を必須の `--after-line` として渡します。このスクリプトは指定行より後のイベントだけを検索し、画像ファイルの復元だけを行います。
+
+画像生成前の行番号記録例:
 
 ```bash
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/restore-generated-image-from-session.mjs --session-jsonl "$SESSION_JSONL" --out "{{RUN_OUTPUT_DIR}}/sections/<NNN>/graphic-recording.png"
+SESSION_AFTER_LINE=$(awk 'END { print NR }' "$SESSION_JSONL")
+# この行番号を記録した直後に、現在のセクション用 imagegen を 1 回実行する
 ```
 
-復元後に PNG として正常に保存できたことを確認してから、対象セクションの `TODO.md` を `image-generated` に更新してください。
+復元と保存の例:
+
+```bash
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/restore-generated-image-from-session.mjs" \
+  --session-jsonl "$SESSION_JSONL" \
+  --after-line "$SESSION_AFTER_LINE" \
+  --out "{{RUN_OUTPUT_DIR}}/sections/<NNN>/generated-from-session.png"
+
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/copy-section-image.mjs" \
+  --run-dir "{{RUN_OUTPUT_DIR}}" \
+  --section "<NNN>" \
+  --src "{{RUN_OUTPUT_DIR}}/sections/<NNN>/generated-from-session.png"
+```
+
+復元結果も `copy-section-image.mjs` の自動検証を通してください。検証に成功した場合だけ同スクリプトが対象セクションの `TODO.md` を `image-generated` に更新します。
 
 作業ディレクトリの状態確認では、必要に応じて次のスクリプトを使ってください。
 
 ```bash
-node skills/igapyon-mikuku-agent/references/graphic-recording/scripts/validate-run-dir.mjs --run-dir "{{RUN_OUTPUT_DIR}}"
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/validate-run-dir.mjs" --run-dir "{{RUN_OUTPUT_DIR}}"
 ```
 
 ### 8A. セクション別画像を検品する

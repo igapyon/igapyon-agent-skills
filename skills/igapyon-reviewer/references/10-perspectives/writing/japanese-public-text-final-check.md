@@ -56,26 +56,9 @@ Keep this review small:
 
 ## Review Output
 
-Use this format when a final Japanese text check is requested:
-
-```text
-Japanese Public Text Final Check
-
-Findings:
-- ...
-
-Small fixes:
-- ...
-```
-
-When no material issue is found:
-
-```text
-Japanese Public Text Final Check
-
-No major typo, notation, comma, sentence-ending, or publication-polish issue
-found.
-```
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Japanese Public Text Final Check` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
 
 If the text needs deeper work than a final check, say so and name the review
 that should take priority, such as safety and respect, AI text naturalness, or

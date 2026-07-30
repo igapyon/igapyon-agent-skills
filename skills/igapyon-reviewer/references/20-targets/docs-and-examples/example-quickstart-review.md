@@ -80,19 +80,15 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when examples or quickstart are in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Example and Quickstart Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Example and Quickstart Review
-
 Copy-paste readiness: ready / partial / broken / not checked
 Prerequisites: clear / partial / missing / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
 
 Do not rewrite examples during review mode unless the user asks for revision.

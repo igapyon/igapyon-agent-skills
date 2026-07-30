@@ -209,28 +209,16 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when handoff or stop-readiness is in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Repository Work Handoff Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Repository Work Handoff Review
-
 Resume readiness: ready / partial / weak / not checked
 Git state: clean / dirty-intentional / dirty-risky / not checked
 Commit readiness: ready / partial / not ready / not requested
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
-```
-
-When no material issue is found:
-
-```text
-Repository Work Handoff Review
-
-No major handoff, TODO continuity, git state, or commit-leakage issue found.
 ```
 
 Do not stage, commit, clean, delete, or ignore files during review mode unless

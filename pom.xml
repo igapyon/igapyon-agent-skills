@@ -5,30 +5,36 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20260623.1</version>
+  <version>1.20260731.1</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
 
   <properties>
     <external.miku-indexgen-skills.repo>https://github.com/igapyon/miku-indexgen-skills.git</external.miku-indexgen-skills.repo>
-    <external.miku-indexgen-skills.ref>v1.6.1</external.miku-indexgen-skills.ref>
+    <external.miku-indexgen-skills.ref>v1.6.2</external.miku-indexgen-skills.ref>
     <external.miku-indexgen-skills.skillName>igapyon-miku-indexgen</external.miku-indexgen-skills.skillName>
     <external.miku-text-bundle-skills.repo>https://github.com/igapyon/miku-text-bundle-skills.git</external.miku-text-bundle-skills.repo>
-    <external.miku-text-bundle-skills.ref>v1.1.1.2</external.miku-text-bundle-skills.ref>
+    <external.miku-text-bundle-skills.ref>v1.6.0</external.miku-text-bundle-skills.ref>
     <external.miku-text-bundle-skills.skillName>igapyon-miku-text-bundle</external.miku-text-bundle-skills.skillName>
     <external.miku-repo-bundle-skills.repo>https://github.com/igapyon/miku-repo-bundle-skills.git</external.miku-repo-bundle-skills.repo>
     <external.miku-repo-bundle-skills.ref>v0.5.0.1</external.miku-repo-bundle-skills.ref>
     <external.miku-repo-bundle-skills.skillName>igapyon-miku-repo-bundle</external.miku-repo-bundle-skills.skillName>
-    <external.miku-grep-skills.repo>https://github.com/igapyon/miku-grep-skills.git</external.miku-grep-skills.repo>
-    <external.miku-grep-skills.ref>v0.10.1.1</external.miku-grep-skills.ref>
-    <external.miku-grep-skills.skillName>igapyon-miku-grep</external.miku-grep-skills.skillName>
+    <external.miku-text-file-ops-skills.repo>https://github.com/igapyon/miku-text-file-ops-skills.git</external.miku-text-file-ops-skills.repo>
+    <external.miku-text-file-ops-skills.ref>v0.4.2</external.miku-text-file-ops-skills.ref>
+    <external.miku-text-file-ops-skills.skillName>igapyon-miku-text-file-ops</external.miku-text-file-ops-skills.skillName>
     <external.miku-prompt-lint-skills.repo>https://github.com/igapyon/miku-prompt-lint-skills.git</external.miku-prompt-lint-skills.repo>
-    <external.miku-prompt-lint-skills.ref>v0.4.1</external.miku-prompt-lint-skills.ref>
+    <external.miku-prompt-lint-skills.ref>v0.5.0</external.miku-prompt-lint-skills.ref>
     <external.miku-prompt-lint-skills.skillName>igapyon-miku-prompt-lint</external.miku-prompt-lint-skills.skillName>
-    <external.miku-readfile-skills.repo>https://github.com/igapyon/miku-readfile-skills.git</external.miku-readfile-skills.repo>
-    <external.miku-readfile-skills.ref>v0.5.0.2</external.miku-readfile-skills.ref>
-    <external.miku-readfile-skills.skillName>miku-readfile</external.miku-readfile-skills.skillName>
+    <external.miku-ai-assistant-builder-skills.repo>https://github.com/igapyon/miku-ai-assistant-builder-skills.git</external.miku-ai-assistant-builder-skills.repo>
+    <external.miku-ai-assistant-builder-skills.ref>v0.13.0</external.miku-ai-assistant-builder-skills.ref>
+    <external.miku-ai-assistant-builder-skills.skillName>igapyon-miku-ai-assistant-builder</external.miku-ai-assistant-builder-skills.skillName>
+    <external.miku-ms-office-skills.repo>https://github.com/igapyon/miku-ms-office-skills.git</external.miku-ms-office-skills.repo>
+    <external.miku-ms-office-skills.ref>v0.7.1</external.miku-ms-office-skills.ref>
+    <external.miku-ms-office-skills.skillName>igapyon-miku-ms-office</external.miku-ms-office-skills.skillName>
+    <external.miku-json2xlsx-skills.repo>https://github.com/igapyon/miku-json2xlsx-skills.git</external.miku-json2xlsx-skills.repo>
+    <external.miku-json2xlsx-skills.ref>v0.5.0</external.miku-json2xlsx-skills.ref>
+    <external.miku-json2xlsx-skills.skillName>igapyon-miku-json2xlsx</external.miku-json2xlsx-skills.skillName>
     <external.mikuproject-skills.repo>https://github.com/igapyon/mikuproject-skills.git</external.mikuproject-skills.repo>
     <external.mikuproject-skills.ref>v0.8.1.1</external.mikuproject-skills.ref>
     <external.mikuproject-skills.skillName>mikuproject</external.mikuproject-skills.skillName>
@@ -69,7 +75,7 @@
               <executable>java</executable>
               <arguments>
                 <argument>-jar</argument>
-                <argument>${project.basedir}/lib/miku-indexgen-1.5.1.jar</argument>
+                <argument>${project.basedir}/lib/miku-indexgen-1.6.2.jar</argument>
                 <argument>--input-parent-directory</argument>
                 <argument>${project.basedir}/skills</argument>
               </arguments>
@@ -96,15 +102,21 @@
                 <argument>${external.miku-repo-bundle-skills.repo}</argument>
                 <argument>${external.miku-repo-bundle-skills.ref}</argument>
                 <argument>${external.miku-repo-bundle-skills.skillName}</argument>
-                <argument>${external.miku-grep-skills.repo}</argument>
-                <argument>${external.miku-grep-skills.ref}</argument>
-                <argument>${external.miku-grep-skills.skillName}</argument>
+                <argument>${external.miku-text-file-ops-skills.repo}</argument>
+                <argument>${external.miku-text-file-ops-skills.ref}</argument>
+                <argument>${external.miku-text-file-ops-skills.skillName}</argument>
                 <argument>${external.miku-prompt-lint-skills.repo}</argument>
                 <argument>${external.miku-prompt-lint-skills.ref}</argument>
                 <argument>${external.miku-prompt-lint-skills.skillName}</argument>
-                <argument>${external.miku-readfile-skills.repo}</argument>
-                <argument>${external.miku-readfile-skills.ref}</argument>
-                <argument>${external.miku-readfile-skills.skillName}</argument>
+                <argument>${external.miku-ai-assistant-builder-skills.repo}</argument>
+                <argument>${external.miku-ai-assistant-builder-skills.ref}</argument>
+                <argument>${external.miku-ai-assistant-builder-skills.skillName}</argument>
+                <argument>${external.miku-ms-office-skills.repo}</argument>
+                <argument>${external.miku-ms-office-skills.ref}</argument>
+                <argument>${external.miku-ms-office-skills.skillName}</argument>
+                <argument>${external.miku-json2xlsx-skills.repo}</argument>
+                <argument>${external.miku-json2xlsx-skills.ref}</argument>
+                <argument>${external.miku-json2xlsx-skills.skillName}</argument>
                 <argument>${external.mikuproject-skills.repo}</argument>
                 <argument>${external.mikuproject-skills.ref}</argument>
                 <argument>${external.mikuproject-skills.skillName}</argument>

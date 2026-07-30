@@ -216,14 +216,20 @@ igapyon repository convention. This reviewer may also review non-miku-soft
 source code and non-OSS private/proprietary source code, so do not require the
 miku-soft header merely because source files exist.
 
-For miku-soft and nearby igapyon source files, the standard header is:
+For miku-soft and nearby igapyon source files, the standard header shape is:
 
 ```text
 /*
- * Copyright 2026 Toshiki Iga
+ * Copyright <YEAR> Toshiki Iga
  * SPDX-License-Identifier: Apache-2.0
  */
 ```
+
+`<YEAR>` may be a single original year or a documented year range. Do not
+substitute the current year from memory. Confirm the year or range, copyright
+holder, and SPDX identifier from the target repository's documented convention
+or authoritative existing headers. If no convention is visible, do not treat a
+different year or year range as a defect by itself.
 
 When the repository is miku-soft or explicitly follows the nearby igapyon
 convention, actively apply this check to source files such as:
@@ -243,8 +249,8 @@ Flag issues when:
 - generated committed source drops the header from its source counterpart
 - copied or vendored files replace upstream license headers with the miku-soft
   header incorrectly
-- year, copyright holder, or SPDX identifier differs without a documented
-  reason
+- year, year range, copyright holder, or SPDX identifier differs from the
+  confirmed repository convention without a documented reason
 
 For non-miku-soft repositories, only check for the repository's own documented
 license-header convention if one is visible. If no such convention is visible,
@@ -376,28 +382,14 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when rights or originality are in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Rights and Originality Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Rights and Originality Review
-
 Visible risk: low / medium / high / critical / unclear
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Verification needed: ...
-  Safer direction: ...
-```
-
-If no visible issue is found, say so carefully:
-
-```text
-Rights and Originality Review
-
-No obvious rights, license, attribution, or extreme-similarity issue is visible
-from the reviewed material. This is not a legal clearance.
 ```
 
 Do not rewrite, remove, or replace material during review mode unless the user

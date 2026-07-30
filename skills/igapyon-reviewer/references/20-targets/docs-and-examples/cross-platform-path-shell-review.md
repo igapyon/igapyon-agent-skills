@@ -90,18 +90,14 @@ Use these severity levels:
 
 ## Review Output
 
-Use this format when path or shell portability is in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Cross-Platform Path and Shell Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Cross-Platform Path and Shell Review
-
 Platform readiness: broad / documented-specific / risky / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
 ```
 
 Do not change scripts or commands during review mode unless the user asks for

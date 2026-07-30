@@ -1,11 +1,11 @@
 ---
 name: igapyon-repo-conventions
-description: Use only when the user explicitly asks to apply or review igapyon's repository conventions for a local Git or GitHub repository, or explicitly mentions igapyon-repo-conventions. Covers repo-side .gitignore rules, .DS_Store exclusion, workplace/.gitkeep setup, .codex/skills exclusion, Java/Maven .mvn/jvm.config handling, and README documentation of repository operation rules.
+description: Use only when the user explicitly asks to apply or review igapyon's repository conventions for a local Git or GitHub repository, or explicitly mentions igapyon-repo-conventions. Covers repo-side .gitignore rules, .DS_Store exclusion, workplace/.gitkeep setup, .codex/skills exclusion, Java/Maven .mvn/jvm.config handling, README documentation of repository operation rules, and parent-directory checks for uncommitted materials across direct child Git repositories.
 ---
 
 # igapyon-repo-conventions
 
-This skill helps Codex apply igapyon's standard repository conventions to a local Git repository.
+This skill helps Codex apply or inspect igapyon's standard repository conventions in a local Git repository or a parent directory that contains multiple repositories.
 
 Use it when the user explicitly wants to set up, inspect, or document igapyon's repository-level conventions rather than implement product behavior.
 
@@ -17,15 +17,20 @@ If the user asks whether there is a skill for repository conventions, mention th
 
 1. Inspect the repository before editing.
 2. Preserve unrelated user changes.
-3. Read [references/repository-rules.md](references/repository-rules.md) before applying concrete conventions.
-4. Document repository operation rules in `README.md` when appropriate.
-5. Verify the final diff and report any pre-existing unrelated changes.
+3. Select the relevant rule or subfeature from the Reference Use section.
+4. Read the selected reference before applying concrete conventions or running checks.
+5. Document repository operation rules in `README.md` when appropriate.
+6. Verify the final diff and report any pre-existing unrelated changes.
 
 Prefer existing repository patterns over introducing a new structure.
 
 ## Reference Use
 
 Use [references/repository-rules.md](references/repository-rules.md) for the concrete rules covering `.gitignore`, `.DS_Store`, `workplace/`, `.codex/skills/`, Java / Maven `.mvn/jvm.config`, and README documentation.
+
+## Subfeatures
+
+Use [references/direct-child-repo-uncommitted-repositories.md](references/direct-child-repo-uncommitted-repositories.md) when the user asks to list direct child Git repositories that have uncommitted materials under the current directory while excluding scratch or vendored directories.
 
 Use files under [references/template/](references/template/) when creating or updating root convention documents such as `CONTRIBUTING.md`, `CONTRIBUTORS.md`, or `THIRD_PARTY_NOTICES.md`.
 Do not leave template placeholders such as `PROJECT_NAME`, `NAME_OR_HANDLE`, or `DEPENDENCY_NAME` in committed files. If required information is unknown, either defer creating the file or create a minimal accurate document without placeholder text.

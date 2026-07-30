@@ -215,29 +215,17 @@ about public readiness.
 
 ## Review Output
 
-Use this format when the repository entrypoint is in scope:
+Contribute findings to the [Consolidated Review Report](../../templates/consolidated-review-report.md). Do not emit a standalone `Repository Entrypoint Review` section
+unless the user explicitly asks for per-lens reports. Use the canonical fields for
+every finding.
+
+When material, add only these lens-specific assessment notes:
 
 ```text
-Repository Entrypoint Review
-
 Audience fit: general-user-first / developer-first / unclear
 README: present / missing / insufficient
 TODO: maintained / missing / stale / not applicable
 Markdown freshness: current / stale / mixed / not checked
-
-Findings:
-- Severity: ...
-  Issue: ...
-  Why it matters: ...
-  Suggested direction: ...
-```
-
-When no material issue is found, say so briefly and mention any residual risk:
-
-```text
-Repository Entrypoint Review
-
-No major README or public entrypoint issues found. Remaining risk: ...
 ```
 
 Do not rewrite the README unless the user asks for revision. In review mode,

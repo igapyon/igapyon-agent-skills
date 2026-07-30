@@ -38,6 +38,7 @@ Use or adapt this prompt when the user asks to initialize the convention:
 新規作成するファイルには、AI エージェントが後から読んだときに用途が分かるよう、front matter と短い運用ヒントを入れてください。
 すでに同名ファイルが存在する場合は、上書きせず、内容を確認してから差分提案にしてください。
 既存 `TODO.md` に `## AI Agent Current Tasks` セクションを追加する場合は、既存ファイルの形式を尊重し、無理に front matter を追加しないでください。
+root の `README.md` が存在する場合は、AI agent 向け情報として `GOAL.md`、`TODO.md`、`DECISIONS.md`、`HANDOFF.md` を確認するよう促す短いセクションまたは箇条書きを追加してください。既存 README の構成を尊重し、README が存在しない場合はこの目的だけで新規作成しないでください。
 `((TBD: ...))` はプレースホルダーです。実際の作業内容が分かる場合は、作成時に具体的な内容へ置き換えてください。分からない場合は、TBD のまま残し、作業開始時に確認してください。
 ````
 
@@ -92,6 +93,131 @@ If the same failure appears 3 times, stop and ask the user.
 - If the same failure appears three times for the same underlying cause, stop and ask the user.
 - Prefer updating existing compatible sections over adding duplicate sections.
 - If a tool-specific entry file exists, such as `AGENTS.md` or `CLAUDE.md`, optionally add a short pointer such as: `Before working, check GOAL.md, TODO.md, DECISIONS.md, and HANDOFF.md.`
+
+## Root README.md Agent Note
+
+When setting up this workflow in a repository that already has a root
+`README.md`, add or propose a concise AI-agent note that tells future agents to
+check the state files before starting work.
+
+Do not create a new `README.md` solely for this purpose. Respect the existing
+README structure and keep the note short.
+
+Example:
+
+```markdown
+## AI Agent Notes
+
+Before working in this repository, check `GOAL.md`, `TODO.md`,
+`DECISIONS.md`, and `HANDOFF.md` when they exist. These files record the current
+objective, active tasks, decisions, and handoff notes for AI agent work.
+```
+
+## DECISIONS.md Update Trigger
+
+Do not write to `DECISIONS.md` merely because an AI agent attempt failed.
+
+Write or propose a `DECISIONS.md` entry only when the failure reveals a
+reusable repository policy, constraint, or preferred workflow. The decision
+should help prevent repeated work for a future human or agent.
+
+Use this rule of thumb:
+
+- If it is only a one-off failed attempt, do not record it in `DECISIONS.md`.
+- If it is useful current-state context, record it in `TODO.md` or `HANDOFF.md`.
+- If it becomes a reusable prevention rule, propose a `DECISIONS.md` entry.
+- If the policy update is small and obvious, the agent may add it directly.
+- If the policy change is strong or ambiguous, confirm it with the human first.
+
+## Harness Operations Decisions
+
+Use this repository-local `DECISIONS.md` section when an active igapyon state-management workflow needs to preserve reusable decisions about build, test, package, comparison, roundtrip, or similar verification harness execution:
+
+```markdown
+## Harness Operations Decisions
+```
+
+Record decisions that should guide the next agent or human in this repository. Do not use this section as a raw failure log.
+
+Record:
+
+- failed execution patterns that are likely to repeat
+- known or suspected harness-operation causes
+- successful retry methods that should become the next standard approach
+- recommended execution order for future verification
+- harness design choices to avoid in this repository
+
+Do not record:
+
+- one-off shell input mistakes
+- full failure logs
+- temporary environment trouble with no reusable lesson
+- implementation bug details
+- long work logs that are too specific to reuse
+
+Use this entry shape:
+
+```markdown
+### YYYY-MM-DD: Short decision title
+
+- Context: What failed or what operational risk was found.
+- Decision: The reusable execution decision for this repository.
+- Reason: Why this decision reduces false failures or repeated work.
+- Next time: The recommended command order or harness precaution.
+```
+
+File-role split:
+
+- `TODO.md`: active verification tasks, blockers, repeated failures, and next attempts.
+- `DECISIONS.md`: reusable harness-operation decisions that should survive the current task.
+- `HANDOFF.md`: the latest safe stopping point and current verification status.
+
+Before treating a harness failure as a model reasoning problem or implementation bug, check whether:
+
+- multiple commands are reading or writing the same artifact directory at the same time
+- versioned jar, zip, bundle, or generated artifact names are hard-coded
+- a harness reads build artifacts before they have been generated
+- the `clean`, `package`, `test`, `comparison`, and `roundtrip` order is wrong for this repository
+- a successful retry should be turned into the next standard procedure
+
+## Interrupting on User Decisions
+
+Stop work and report the state as interrupted when all of these are true:
+
+- All work the agent can safely perform autonomously is complete.
+- Every remaining item requires explicit user judgment.
+- Repeating the work would only restate the same waiting condition.
+- The goal is not complete.
+
+Common examples:
+
+- The user must decide whether to commit or discard a version rollback.
+- The user must decide whether to keep or discard binary artifact changes.
+- The user explicitly says to pause, stop, or `中断`, and the remaining work already requires user input.
+
+Before reporting the interruption, update existing state files with the current stopping point:
+
+- `TODO.md`: unresolved decisions under `Tasks` or `Blockers`.
+- `HANDOFF.md`: safe stopping point, next valid user actions, and last verification status.
+- `DECISIONS.md`: only decisions already made, not undecided options.
+
+Use this reporting shape:
+
+```text
+Status: interrupted
+Reason: user decision required
+
+Remaining decisions:
+- ((exact user decision needed))
+
+Safe stopping point:
+- ((what is complete and safe now))
+
+Next user actions:
+- ((valid instruction the user can give next))
+```
+
+Do not keep responding with repeated waiting summaries after this condition is reached. Report the interruption once and wait for a new user instruction.
 
 ## Creation Templates
 

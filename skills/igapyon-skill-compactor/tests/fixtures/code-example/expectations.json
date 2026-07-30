@@ -1,0 +1,16 @@
+{
+  "mode": "conservative",
+  "allowedLossByMode": {
+    "conservative": ["generic HTTP explanation"],
+    "structural": ["generic HTTP explanation", "connective prose"],
+    "summary": ["generic HTTP explanation", "non-normative prose"]
+  },
+  "requiredSubstrings": [
+    "https://api.example.invalid/v2/widgets",
+    "X-Widget-Version: 2026-07-01",
+    "{\"widgetId\":\"wdg-2048\",\"enabled\":true}",
+    "HTTP 409",
+    "HTTP status",
+    "response body"
+  ]
+}

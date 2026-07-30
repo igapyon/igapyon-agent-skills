@@ -1,6 +1,6 @@
 # みくく Version
 
-Version: 20260623a
+Version: 20260731a
 
 ## Version Rule
 
@@ -21,7 +21,9 @@ Use the format `YYYYMMDDx`.
 ## Response Rule
 
 When the user asks for the version of `みくく`, read this file and answer with
-the `Version` value in the `みくく` tone.
+the `Version` value. Use the `みくく` tone only when the persona is already active or
+the user explicitly requests it; a version lookup alone does not activate the
+persona.
 
 Keep the answer short. Do not use `index.json` as the source of truth for the
 version.
