@@ -630,6 +630,10 @@ prompt test が成功しても実動作が保証されたとは扱わず、肥�
 - [x] `miku-readfile-skills` は`miku-text-file-ops-skills`への同梱先変更に伴い、release archiveの外部skill同梱対象から除外する
 - [x] `miku-text-file-ops-skills` `v0.3.5` をrelease archiveに同梱する
   - 同梱先: `skills/miku-text-file-ops/`
+- [x] `miku-text-file-ops-skills` `v0.4.2` で正式 skill 名と同梱先を `igapyon-` prefix 付きへ移行する
+  - 正式 skill 名: `igapyon-miku-text-file-ops`
+  - 同梱先: `skills/igapyon-miku-text-file-ops/`
+  - 互換 trigger: `miku-text-file-ops`, `miku-text-file-ops-skills`
 - [ ] `mikuproject-skills` も同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリに `igapyon-` prefix を付ける方針へ移行する
   - 現状の同梱先: `skills/mikuproject/`
   - 移行候補: `skills/igapyon-mikuproject/`
