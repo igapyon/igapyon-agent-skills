@@ -26,7 +26,10 @@ Do not inspect the repository or load detailed references yet.
    [scripts/miku-scm-workflow-manifest.mjs](scripts/miku-scm-workflow-manifest.mjs).
 2. For an ID in that manifest, invoke
    [scripts/miku-scm-run.mjs](scripts/miku-scm-run.mjs) directly with that ID
-   and fixed options. Do not read its detailed Markdown during normal execution.
+   and fixed options. Resolve that runner path relative to the directory
+   containing this `SKILL.md`; never derive it from the target repository name
+   or `--repo`, which identifies only the workflow target. Do not read its
+   detailed Markdown during normal execution.
    Prefer `--format human` for a mechanical workflow when no structured field
    is needed for a subsequent step. Return the runner's `human_output`
    unchanged instead of paraphrasing it.

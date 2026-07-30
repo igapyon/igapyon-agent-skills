@@ -3,7 +3,7 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":6327,"description":"Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, or explicitly asks to perform Git, GitHub writing, GitHub Release, repository-maintenance, or version-management work under miku-soft SCM rules. ...","summary":"igapyon-miku-scm"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":6519,"description":"Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, or explicitly asks to perform Git, GitHub writing, GitHub Release, repository-maintenance, or version-management work under miku-soft SCM rules. ...","summary":"igapyon-miku-scm"},
   {"name":"prompt-runner-ai-involvement-reduction-pattern.md","path":"docs/prompt-runner-ai-involvement-reduction-pattern.md","ext":"md","dir":"docs","size":9878,"summary":"Prompt–Runner Pairingによる生成AI関与削減パターン"},
   {"name":"approval-handoff.md","path":"references/approval-handoff.md","ext":"md","dir":"references","size":1405,"summary":"Approval Handoff"},
   {"name":"deterministic-workflow-runner.md","path":"references/deterministic-workflow-runner.md","ext":"md","dir":"references","size":12095,"summary":"Deterministic Workflow Runner"},
