@@ -16,6 +16,7 @@ import {
   backupPreflight,
   recommitApply,
   recommitPreflight,
+  sha256,
 } from "../scripts/github-writer-kernel.mjs";
 
 function git(root, args) {
@@ -69,6 +70,24 @@ test("backup requires a sealed preflight plan and refuses a retry", (t) => {
     plan: plan.plan_path,
     expectedPlanSha256: plan.plan_sha256,
   }), /already has an attempt/);
+});
+
+test("apply rejects a plan sealed to another workflow contract", (t) => {
+  const { root } = fixture(t);
+  const plan = backupPreflight({ repo: root, backupName: "" }, {
+    now: () => new Date("2026-07-29T01:02:00.000Z"),
+  });
+  const planFile = path.join(root, plan.plan_path);
+  const changed = JSON.parse(readFileSync(planFile, "utf8"));
+  changed.contract_pair_sha256 = "0".repeat(64);
+  const changedText = `${JSON.stringify(changed, null, 2)}\n`;
+  writeFileSync(planFile, changedText, "utf8");
+
+  assert.throws(() => backupApply({
+    repo: root,
+    plan: plan.plan_path,
+    expectedPlanSha256: sha256(changedText),
+  }), /workflow contract changed/);
 });
 
 test("recommit verifies draft digest, creates backup, and collapses commits", (t) => {

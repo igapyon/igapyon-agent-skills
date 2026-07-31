@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   canonicalText,
+  defaultGit,
   isPathInside,
   normalizeResultPath,
   sha256,
@@ -14,7 +15,7 @@ import {
 } from "../scripts/github-writer-workflow-manifest.mjs";
 
 test("fixed workflow manifest exposes the supported contract", () => {
-  assert.equal(WORKFLOW_MANIFEST_VERSION, "github-writer.workflow-manifest/v1");
+  assert.equal(WORKFLOW_MANIFEST_VERSION, "github-writer.workflow-manifest/v2");
   assert.deepEqual(
     WORKFLOW_DEFINITIONS.map((workflow) => workflow.id),
     [
@@ -29,6 +30,17 @@ test("fixed workflow manifest exposes the supported contract", () => {
       "pr.recommit.apply",
     ],
   );
+  for (const workflow of WORKFLOW_DEFINITIONS) {
+    assert.equal(workflow.network_access, "none");
+    assert.equal(workflow.remote_mutation, false);
+    assert.deepEqual(workflow.allowed_executables, ["git"]);
+    assert.ok(workflow.allowed_options.length > 0);
+    assert.ok(workflow.references.includes("github-cli-prohibition.md"));
+    assert.ok(workflow.references.includes("runtime-and-observability.md"));
+    assert.ok(workflow.contract_sources.includes("scripts/github-writer-core.mjs"));
+    assert.ok(workflow.contract_sources.includes("scripts/github-writer-output.mjs"));
+    assert.ok(workflow.contract_sources.includes("scripts/github-writer-observability.mjs"));
+  }
 });
 
 test("Windows path containment handles drive letters, Japanese paths, and UNC shares", () => {
@@ -54,17 +66,26 @@ test("line endings and result paths are platform-neutral", () => {
 });
 
 test("runner process execution avoids command shells", () => {
-  const kernel = readFileSync(
-    new URL("../scripts/github-writer-kernel.mjs", import.meta.url),
+  const core = readFileSync(
+    new URL("../scripts/github-writer-core.mjs", import.meta.url),
     "utf8",
   );
+  const kernel = readFileSync(new URL("../scripts/github-writer-kernel.mjs", import.meta.url), "utf8");
   const runner = readFileSync(
     new URL("../scripts/github-writer-run.mjs", import.meta.url),
     "utf8",
   );
-  assert.match(kernel, /spawnSync\("git", args,/);
-  assert.match(kernel, /shell: false/);
-  assert.doesNotMatch(`${kernel}\n${runner}`, /\bexec(?:File)?Sync\s*\(/);
-  assert.doesNotMatch(`${kernel}\n${runner}`, /spawnSync\("(?:sh|bash|cmd|powershell|pwsh)"/);
+  assert.match(core, /spawnSync\("git", args,/);
+  assert.match(core, /shell: false/);
+  assert.doesNotMatch(`${core}\n${kernel}\n${runner}`, /\bexec(?:File)?Sync\s*\(/);
+  assert.doesNotMatch(`${core}\n${kernel}\n${runner}`, /spawnSync\("(?:sh|bash|cmd|powershell|pwsh)"/);
+  assert.ok(kernel.split("\n").length < 80, "compatibility facade should stay small");
+  assert.match(kernel, /github-writer-evidence\.mjs/);
+  assert.match(kernel, /github-writer-operations\.mjs/);
+  assert.match(kernel, /github-writer-output\.mjs/);
   assert.match(runner, /pathToFileURL\(process\.argv\[1\]\)/);
+  assert.throws(
+    () => defaultGit(process.cwd(), ["push", "origin", "HEAD"]),
+    /outside the local allowlist/,
+  );
 });

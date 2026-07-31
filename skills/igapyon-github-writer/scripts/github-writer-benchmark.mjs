@@ -38,6 +38,7 @@ if (!process.exitCode) {
     node: process.version,
     samples_ms: samples,
     median_ms: sorted[Math.floor(sorted.length / 2)],
+    run_records: true,
     threshold: "informational-os-specific-baseline",
   }, null, 2)}\n`);
 }

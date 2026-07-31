@@ -7,8 +7,17 @@ node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json <w
 ```
 
 It imports no `igapyon-miku-scm` runtime. It accepts only fixed workflow IDs and
-fixed options, invokes Git with argument arrays and `shell:false`, and never
-pushes, creates or merges a PR, publishes a release, or changes a remote.
+the options declared in the workflow manifest, invokes local Git with argument
+arrays and `shell:false`, never invokes `gh`, and performs no network access or
+remote mutation.
+
+Inspect the machine-readable workflow catalog and exact workflow help without
+executing Git or writing artifacts:
+
+```text
+node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json --list-workflows
+node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json help <workflow>
+```
 
 ## Fixed Workflows
 
@@ -68,6 +77,42 @@ Result envelopes use `github-writer.runner-result/v1`. Check `status`,
 `UNCONFIRMED` result means a local Git command was invoked and the repository
 must be inspected before any next action.
 
+Every result also records the workflow contract ID, version, and pair SHA-256.
+Apply plans seal the apply workflow's current pair SHA-256 and are rejected when
+the runner, normative specification, or contract test has changed. Regenerate
+and verify the tracked lock and table with:
+
+```text
+node skills/igapyon-github-writer/scripts/github-writer-workflow-contracts.mjs
+node skills/igapyon-github-writer/scripts/github-writer-workflow-contracts.mjs --check
+```
+
+## Run Records And Errors
+
+Workflow execution returns relative `run_artifacts` paths and writes the
+following operational records after the workflow finishes:
+
+```text
+workplace/github-writer/runs/<run-id>/
+  request.json
+  result.json
+  error-event.json
+```
+
+`error-event.json` is present only for a failed workflow that reached execution
+context creation. Help, workflow listing, and parse failures remain
+metadata-only and write no records. Deferring the write until after execution
+prevents the audit record itself from changing local Git evidence. Apply
+workflows retain their separate pre-mutation attempt records.
+
+Group recorded failures by stable signature with:
+
+```text
+node skills/igapyon-github-writer/scripts/github-writer-error-report.mjs --format json --repo <path>
+```
+
+See [runtime-and-observability.md](runtime-and-observability.md).
+
 ## macOS and Windows 11
 
 - Node.js and Git must be available on `PATH`.
@@ -90,4 +135,5 @@ npm run test:github-writer
 
 The CI matrix also runs `npm run benchmark:github-writer`. It records the same
 warm-process `branch.status` benchmark separately on macOS and Windows without a
-shared hard threshold. Compare a platform only with its own prior baseline.
+shared hard threshold. The benchmark includes normal run-record writes. Compare
+a platform only with its own prior baseline.

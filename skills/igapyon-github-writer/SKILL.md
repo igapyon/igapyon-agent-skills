@@ -7,7 +7,15 @@ description: Use only when the user explicitly asks to draft GitHub PR text, Git
 
 This skill drafts Markdown text for GitHub surfaces from local repository evidence. It can also save drafted GitHub text to a local Markdown file, rebuild local commits with soft reset and a drafted PR text as the commit message, create a local backup branch at the current `HEAD`, and report the current branch status as preparation for GitHub writing work.
 
-Use it only for GitHub writing text, local draft-file saving for that text, explicit PR soft-reset recommit work, explicit local backup-branch creation, and the local branch-status checks that prepare that writing. Do not create PRs, tags, releases, issues, non-backup branches, commits, or remote changes unless the user separately asks for that operation.
+Use it only for GitHub writing text, local draft-file saving for that text, explicit PR soft-reset recommit work, explicit local backup-branch creation, and the local branch-status checks that prepare that writing. Do not create PRs, tags, releases, issues, non-backup branches, or remote changes. Local commits are allowed only inside the explicit PR Soft Reset Recommit workflow.
+
+## GitHub CLI And Network Boundary
+
+Never invoke `gh`, either directly or through a bundled helper. This skill has
+no network workflow and no remote-mutation workflow. A user request for remote
+GitHub inspection or mutation does not relax this boundary; stop this skill's
+workflow and report that the operation is unsupported here. Read and apply
+[references/github-cli-prohibition.md](references/github-cli-prohibition.md).
 
 Do not use this skill for generic commit summaries, changelogs, branch inspection, backup operations, or repository cleanup unless the user explicitly asks for GitHub PR, GitHub Release, GitHub About text, PR soft-reset recommit from drafted PR text, local backup-branch creation through this skill, branch status through this skill, or names this skill.
 
@@ -35,7 +43,7 @@ If the mode is clear but required evidence is missing, do not draft yet. Ask for
 ## Core Workflow
 
 1. Identify whether the request is for PR, Release, About text, PR Soft Reset Recommit, Backup Branch, or Branch Status.
-2. Read [references/deterministic-runner.md](references/deterministic-runner.md) and [references/github-writing-rules.md](references/github-writing-rules.md) before acting.
+2. Read [references/deterministic-runner.md](references/deterministic-runner.md), [references/github-cli-prohibition.md](references/github-cli-prohibition.md), and [references/github-writing-rules.md](references/github-writing-rules.md) before acting.
 3. Read the mode-specific reference: [references/pr-writing.md](references/pr-writing.md), [references/release-writing.md](references/release-writing.md), [references/about-writing.md](references/about-writing.md), [references/pr-soft-reset-recommit.md](references/pr-soft-reset-recommit.md), [references/backup-branch.md](references/backup-branch.md), or [references/branch-status.md](references/branch-status.md).
 4. Invoke the fixed runner workflow. Use its structured result as the normal evidence source; do not reconstruct the same Git evidence with ad hoc shell commands.
 5. For PR, Release, and About, make one AI writing pass from the bounded evidence. Do not repeatedly reread the repository unless evidence is missing or invalid.
@@ -47,6 +55,10 @@ If the mode is clear but required evidence is missing, do not draft yet. Ask for
 Use [references/github-writing-rules.md](references/github-writing-rules.md) for shared evidence collection and hallucination-prevention rules.
 
 Use [references/deterministic-runner.md](references/deterministic-runner.md) for the workflow manifest, CLI, result schema, approval gates, and macOS/Windows 11 portability contract.
+
+Use [references/runtime-and-observability.md](references/runtime-and-observability.md)
+for the Node module boundaries, per-run audit records, structured error events,
+and error-report command.
 
 Use these mode-specific references:
 
@@ -68,4 +80,7 @@ Before finishing:
 - ensure the final answer contains no absolute paths, home directories, or working directories
 - ensure unsupported items are marked `未確認`, `要確認`, or omitted
 - ensure runner failures are reported according to `mutation_invoked` and `retryability`; never retry an apply plan automatically
+- verify workflow contract drift with `node scripts/github-writer-workflow-contracts.mjs --check`
+- ensure the static policy test proves that no runtime path invokes `gh`
+- ensure successful and failed execution paths write the documented run records without changing Git evidence
 - for PR, Release, and About modes, ensure the drafted Markdown is wrapped with `~~~~markdown` and `~~~~`; if a file was saved, mention only the relative saved path outside the wrapped block
