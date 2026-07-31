@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20260731.2</version>
+  <version>1.20260731.3</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -21,7 +21,7 @@
     <external.miku-repo-bundle-skills.ref>v0.5.0.1</external.miku-repo-bundle-skills.ref>
     <external.miku-repo-bundle-skills.skillName>igapyon-miku-repo-bundle</external.miku-repo-bundle-skills.skillName>
     <external.miku-text-file-ops-skills.repo>https://github.com/igapyon/miku-text-file-ops-skills.git</external.miku-text-file-ops-skills.repo>
-    <external.miku-text-file-ops-skills.ref>v0.4.2</external.miku-text-file-ops-skills.ref>
+    <external.miku-text-file-ops-skills.ref>v0.5.0</external.miku-text-file-ops-skills.ref>
     <external.miku-text-file-ops-skills.skillName>igapyon-miku-text-file-ops</external.miku-text-file-ops-skills.skillName>
     <external.miku-prompt-lint-skills.repo>https://github.com/igapyon/miku-prompt-lint-skills.git</external.miku-prompt-lint-skills.repo>
     <external.miku-prompt-lint-skills.ref>v0.5.0</external.miku-prompt-lint-skills.ref>
