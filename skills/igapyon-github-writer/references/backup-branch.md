@@ -9,7 +9,7 @@ This workflow creates a local branch that points at the current `HEAD`. It does 
 - Require an explicit user request before creating a standalone backup branch.
 - In PR Soft Reset Recommit mode, create the backup branch immediately before `git reset --soft`.
 - Inspect `git status -sb` and the current `HEAD` before creating the backup branch.
-- Do not run `git fetch`, `git pull`, `git push`, `gh pr create`, or any remote-changing command in this workflow.
+- Never run `gh`, `git fetch`, `git pull`, `git push`, or any network or remote-changing command in this skill.
 - Do not create tags, releases, issues, pull requests, commits, or non-backup branches.
 - If the working tree or index has changes, report that the backup branch preserves only committed history at `HEAD`.
 - Do not overwrite an existing backup branch. If the generated name exists, add a numeric suffix such as `-2`.

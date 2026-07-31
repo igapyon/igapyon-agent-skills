@@ -36,6 +36,11 @@ Prerequisite: use `igapyon-repo-conventions` as the repository-conventions basel
 
 Use `index.json` when you need to discover the available bundled reference files, but treat `SKILL.md` and files under `references/` as the source of truth.
 
+When maintaining this shared skill's own reference taxonomy, starter policy,
+or cross-repository GitHub Actions guidance, read
+[docs/maintenance/README.md](docs/maintenance/README.md). Maintainer documents
+preserve audit and migration reasoning; they are not normative product rules.
+
 Keep this `SKILL.md` lean. Put detailed policy, architecture rules, and operational steps in `references/`.
 
 ## Verification

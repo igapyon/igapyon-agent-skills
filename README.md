@@ -230,6 +230,7 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 │  │  └─ templates/
 │  ├─ igapyon-miku-soft-developer/
 │  │  ├─ SKILL.md
+│  │  ├─ docs/
 │  │  └─ references/
 │  ├─ igapyon-mikuku-agent/
 │  │  ├─ SKILL.md

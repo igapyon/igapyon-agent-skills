@@ -16,24 +16,18 @@ import {
   WORKFLOW_DEFINITIONS,
   workflowById,
 } from "./github-writer-workflow-manifest.mjs";
+import {
+  renderHelp,
+  resolveHelpRequest,
+} from "./github-writer-help.mjs";
+import {
+  attachRunArtifacts,
+  createRunContext,
+  recordRunResult,
+} from "./github-writer-observability.mjs";
 import { pathToFileURL } from "node:url";
 
-const usage = `Usage:
-  node skills/igapyon-github-writer/scripts/github-writer-run.mjs [--format json|human] <workflow> [options]
-
-Workflows:
-  pr.evidence [--repo <path>] [--target <commit-or-range>]
-  release.evidence --target <commit-or-range> [--repo <path>]
-  about.evidence [--repo <path>] [--document <relative-path>]...
-  draft.validate-and-save --mode pr|release|about --input <path> [--repo <path>]
-  branch.status [--repo <path>]
-  backup.preflight [--repo <path>] [--backup-name <backup/name>]
-  backup.apply --plan <relative-plan> --expected-plan-sha256 <sha256> [--repo <path>]
-  pr.recommit.preflight --pr-draft <path> [--base <ref>] [--repo <path>]
-  pr.recommit.apply --plan <relative-plan> --expected-plan-sha256 <sha256> [--repo <path>]
-
-The runner invokes Git with argument arrays and shell:false. It never pushes or
-performs another remote mutation.`;
+export const usage = renderHelp(resolveHelpRequest(undefined, []), "human").trimEnd();
 
 function readOption(argv, index, name) {
   const value = argv[index + 1];
@@ -42,17 +36,8 @@ function readOption(argv, index, name) {
 }
 
 function parseOptions(workflow, argv, cwd = process.cwd()) {
-  const allowed = new Set({
-    "pr.evidence": ["--repo", "--target"],
-    "release.evidence": ["--repo", "--target"],
-    "about.evidence": ["--repo", "--document"],
-    "draft.validate-and-save": ["--repo", "--mode", "--input"],
-    "branch.status": ["--repo"],
-    "backup.preflight": ["--repo", "--backup-name"],
-    "backup.apply": ["--repo", "--plan", "--expected-plan-sha256"],
-    "pr.recommit.preflight": ["--repo", "--base", "--pr-draft"],
-    "pr.recommit.apply": ["--repo", "--plan", "--expected-plan-sha256"],
-  }[workflow]);
+  const definition = workflowById(workflow);
+  const allowed = new Set(definition.allowed_options.map((entry) => entry.flag));
   const options = {
     repo: cwd,
     target: "",
@@ -121,18 +106,19 @@ function execute(workflow, options) {
   throw new Error(`Unsupported workflow: ${workflow}`);
 }
 
-function parseInvocation(argv) {
+export function parseInvocation(argv) {
   const remaining = [...argv];
   let format = "json";
+  let explicitFormat = false;
   if (remaining[0] === "--format") {
     format = remaining[1] ?? "";
     remaining.splice(0, 2);
-  }
-  if (remaining[0] === "--help" || remaining[0] === "-h" || remaining.length === 0) {
-    return { help: true, format };
+    explicitFormat = true;
   }
   if (!["json", "human"].includes(format)) throw new Error("--format must be json or human");
   const workflow = remaining.shift();
+  const help = resolveHelpRequest(workflow, remaining);
+  if (help) return { help: true, format: explicitFormat ? format : "human", document: help };
   if (!workflowById(workflow)) throw new Error(`Unknown workflow: ${workflow}`);
   return { help: false, format, workflow, options: parseOptions(workflow, remaining) };
 }
@@ -140,17 +126,40 @@ function parseInvocation(argv) {
 export function runCli(argv = process.argv.slice(2)) {
   const startedAt = new Date().toISOString();
   let invocation;
+  let runContext;
+  let phase = "parse";
   try {
     invocation = parseInvocation(argv);
     if (invocation.help) {
-      process.stdout.write(`${usage}\n`);
+      process.stdout.write(renderHelp(invocation.document, invocation.format));
       return 0;
     }
-    const envelope = successEnvelope(
+    phase = "audit-init";
+    runContext = createRunContext({
+      workflow: invocation.workflow,
+      options: invocation.options,
+      argv,
+      startedAt,
+    });
+    phase = "execute";
+    let envelope = successEnvelope(
       invocation.workflow,
       execute(invocation.workflow, invocation.options),
       startedAt,
     );
+    envelope = attachRunArtifacts(envelope, runContext);
+    phase = "audit-result";
+    try {
+      recordRunResult(runContext, envelope);
+    } catch (error) {
+      envelope = {
+        ...envelope,
+        audit_warning: {
+          code: "RUN_RESULT_RECORD_FAILED",
+          message: error instanceof Error ? error.message : String(error),
+        },
+      };
+    }
     process.stdout.write(invocation.format === "human"
       ? `${envelope.human_output}\n`
       : `${JSON.stringify(envelope, null, 2)}\n`);
@@ -159,7 +168,27 @@ export function runCli(argv = process.argv.slice(2)) {
     const workflow = invocation?.workflow
       ?? argv.find((argument) => WORKFLOW_DEFINITIONS.some((item) => item.id === argument))
       ?? "unknown";
-    const envelope = failureEnvelope(workflow, error, startedAt);
+    let envelope = failureEnvelope(workflow, error, startedAt, {
+      phase,
+      repository_root: runContext?.root,
+      help_command: workflow === "unknown"
+        ? "node <skill-root>/scripts/github-writer-run.mjs --help"
+        : `node <skill-root>/scripts/github-writer-run.mjs help ${workflow}`,
+    });
+    if (runContext) {
+      envelope = attachRunArtifacts(envelope, runContext);
+      try {
+        recordRunResult(runContext, envelope);
+      } catch (recordError) {
+        envelope = {
+          ...envelope,
+          audit_warning: {
+            code: "ERROR_EVENT_RECORD_FAILED",
+            message: recordError instanceof Error ? recordError.message : String(recordError),
+          },
+        };
+      }
+    }
     const format = invocation?.format ?? "json";
     process.stdout.write(format === "human"
       ? `${envelope.human_output}\n`

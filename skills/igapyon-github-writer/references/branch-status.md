@@ -6,7 +6,7 @@ This mode reports repository evidence. It does not draft PR text, release notes,
 
 ## Safety Rules
 
-- Do not run `git fetch`, `git pull`, `git push`, `gh pr create`, or any remote-changing command unless the user explicitly asks.
+- Never run `gh`, `git fetch`, `git pull`, `git push`, or any network or remote-changing command in this skill.
 - Do not create branches, commits, tags, releases, issues, or pull requests.
 - Do not modify files.
 - Use local Git evidence only.

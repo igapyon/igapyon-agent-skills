@@ -138,6 +138,337 @@ Update this section while working. Do not rewrite unrelated TODO items.
 
 ### Tasks
 
+- [ ] Validate and improve the miku-soft type-specific reference system.
+  - Scope:
+    - `skills/igapyon-miku-soft-developer/references/[0-9][0-9]-*.md`
+    - `skills/igapyon-miku-soft-developer/references/miku-soft-basic/`
+    - `skills/igapyon-miku-soft-developer/references/review/`
+    - local sibling miku-soft repositories used as read-only implementation evidence
+  - [x] Inventory the current numbered workflow and basic-design files.
+  - [x] Establish that the current numbering mixes product layers with methods
+    and migrations: `10/11/20/21/40/50` are product layers, `30` is a
+    conversion method, and `31/32` are separation workflows.
+  - [x] Select the preferred target direction: retain stable product-layer
+    numbers and separate `layers/`, `workflows/`, `methods/`, `migrations/`,
+    `review/`, `profiles/`, `catalog/`, and `baselines/` as document roles.
+    - Use typed IDs such as `L10`, `W-L10`, method `M-L10-L20`, and migration
+      `G-L10-L10+L11`; do not allocate layer numbers to ordinary documents.
+    - Treat `00` as ecosystem overview/concept work, not as a product layer.
+  - [x] Decide not to rename files before the content-validity audit; preserve
+    old paths with small compatibility stubs when migration is eventually approved.
+  - [x] Define the claim-evidence matrix contract.
+    - Identity: `claim_id`, audit date, source Git revision, source path,
+      section heading, and line anchor at the audited revision.
+    - Classification: document role (`layer`, `workflow`, `method`,
+      `migration`, or `review`), target layer or transition, claim summary,
+      normative strength (`must`, `should`, `may`, current-state statement, or
+      example), and temporal stability (`stable` or `time-sensitive`).
+    - Evidence: required evidence scope, inspected repository revisions,
+      implementation observations, counterexamples or exceptions, applicable
+      primary-source observations, and verification commands or tests.
+    - Result: verdict, confidence, rationale, proposed document action, and any
+      product-owner decision still required.
+    - Verdict vocabulary: valid, conditionally valid, target-state guidance,
+      stale, conflicting, or evidence-insufficient.
+    - A `must` needs a safety, interoperability, compatibility, or operational
+      invariant and a testable check or explicit manual gate. Otherwise consider
+      downgrading it to `should` or documenting its condition.
+    - A statement about the normal or prevalent repository shape needs observed
+      implementation evidence. A desired future shape that is not prevalent
+      must be labeled target-state guidance instead of current practice.
+  - [ ] Extract auditable claims from the numbered basic-design, workflow,
+    migration, and review documents without treating every recommendation as a
+    statement of current implementation prevalence.
+    - Expanded matrix created at
+      `workplace/miku-soft-reference-audit/claim-matrix.md` with 23 claims
+      covering numbering/routing consequences, release policy, Node runtime
+      and Actions baselines, Java/Maven layout and compiler compatibility,
+      straight-conversion traceability, Agent Skills maturity, MCP authority,
+      starter assets, discovery-index scope, and path compatibility.
+    - Confirmed high-confidence conflicts: layer 10 and Java release-trigger
+      defaults, release review guidance, straight-conversion multi-module Maven
+      allowance, and Java 8 compatibility versus source/target-only compilation.
+    - Confirmed initial high-confidence stale statements: current
+      `miku-xlsx2md-java` multi-module shape and the dated layer 10 repository
+      scope list. Node.js 20 is also stale as the maintained starter minimum
+      because the official lifecycle lists it EOL since 2026-03-24.
+    - Continue extraction before treating the pilot set as complete.
+  - [x] Refresh the local-only sibling repository inventory and classify the
+    first-pass candidates by naming layer.
+    - Checked 2026-07-31 without fetch or sibling-repository mutation.
+    - 56 direct sibling candidates: 21 suffixless/support candidates, 3 Web,
+      14 Java, 3 Java Maven, 14 Agent Skills, and 1 MCP.
+    - The suffix-based count is discovery input, not final product
+      classification; `miku-soft-catalog`, `mikuku-articles`, and similar
+      support/content repositories must not be silently treated as layer 10.
+    - All 56 candidates are local Git repositories. One candidate,
+      `miku-readfile-skills`, had two pre-existing worktree entries and is not a
+      primary pilot target; preserve those unrelated changes.
+  - [x] Select representative, recent, historical-combined, and exceptional
+    repositories for the pilot and contrast sets.
+    - End-to-end CLI family: `miku-indexgen` (`10/20/21/40`).
+    - Web and Maven separation family: `miku-xlsx2md` (`10/11/20/21`).
+    - Recent main/Web/Java family: `miku-md2docx` (`10/11/20`).
+    - Layer 11 coverage: inspect all three separated Web repositories
+      (`miku-docx2md-web`, `miku-md2docx-web`, `miku-xlsx2md-web`).
+    - Layer 21 and migration 31 coverage: inspect all three Java Maven
+      repositories because the population is only three.
+    - Java exception: `miku-javaclass2json-java` has no suffixless layer 10
+      companion and tests whether upstream-main assumptions are too absolute.
+    - Agent Skills contrasts: `miku-indexgen-skills` for runtime-backed shape,
+      `miku-text-file-ops-skills` for a recent shape,
+      `miku-ms-office-skills` for aggregate Skill-only shape, and
+      `miku-media-proc-skills` for a minimal/reference-oriented shape.
+    - Historical combined and MCP evidence: `mikuproject` and its Java, Skills,
+      and sole local MCP companions; use `mikuscore` and `miku-abc-player` as
+      additional combined/Web-centered contrasts where needed.
+    - Layer 50 remains evidence-limited because only `mikuproject-mcp` is
+      locally available; do not generalize prevalence from one implementation.
+  - [x] Complete the full-read pilot for `00`, `10`, `11`, `20`, `21`, and
+    `30`, then perform the first scaling pass for `40` and `50`.
+    - Full-read completed for all eight basic design documents and all current
+      top-level numbered workflows.
+    - Initial implementation evidence gathered for the selected main, Web,
+      Java, Java Maven, Agent Skills, and MCP repositories without fetch or
+      mutation.
+    - The sole local MCP implementation supports feasibility evidence but not
+      ecosystem-prevalence claims.
+  - [ ] Check document-to-document consistency: architecture router, basic
+    design, execution workflow, migration workflow, review note, templates,
+    and generated discovery index.
+  - [ ] Check implementation fit against sibling repositories without changing
+    or fetching them during the initial local-only pass.
+  - [x] Audit GitHub Actions across sibling repositories before proposing
+    cross-repository normalization.
+    - The completed local read-only scope covers 57 direct workflows in 47
+      sibling repositories. It now has a profile map, W01–W57 machine-readable
+      inventory, exception/control register, producer/consumer evidence, and
+      proposed serial backlog. Policy approval and implementation are separate
+      remaining tasks.
+    - Detailed plan:
+      `workplace/miku-soft-reference-audit/github-actions-audit-plan.md`.
+    - [x] Complete the first read-only static inventory.
+      - 47 of 56 direct sibling candidates have direct workflows: 57 files,
+        consisting of 10 CI and 47 release-oriented workflows.
+      - The files use 11 workflow filenames and have 54 distinct exact
+        contents; only two exact-copy groups cover five files.
+      - Initial differences include release events, checkout/ref rules, Action
+        generations and pinning, Node/Java roles, permissions, version checks,
+        smoke gates, timeout/concurrency controls, and artifact staging.
+      - Treat these counts as observations, not findings; repository naming is
+        only a discovery hint and workflow absence is not automatically a defect.
+    - [ ] Complete the Node.js 20-to-22/24 baseline decision and migration
+      inventory as a dedicated part of the workflow audit.
+      - The first literal scan found Node 20 on a `node-version` line in 29
+        direct sibling workflow files, Node 22 in 3, and Node 24 in 14; counts
+        overlap where a matrix names more than one version.
+      - Thirteen inspected top-level sibling `package.json` files declare an
+        `engines.node` range: 3 use `>=18.19.1`, 5 use `>=20`, 3 use `>=22`,
+        and 2 use `>=24 <25`. Confirm applicability before calling older ranges
+        defects.
+      - The developer references still express Node 20 assumptions in the
+        layer 10 and layer 40 workflows, layer 40 basic design, Agent Skills
+        and Web `package.json` starters, and the Agent Skills CI starter.
+      - Evaluate the preferred maintained default: product minimum `>=22`, CI
+        build/test on 22 and 24, release artifact build on 24, and smoke the
+        released runtime on 22 as well when `>=22` compatibility is claimed.
+      - Evaluate Node 24-only as an explicit product profile or exception, not
+        as an accidental consequence of using Node 24 for release builds.
+      - Keep product runtime, dependency-install/build runtime, release-build
+        runtime, released-artifact runtime, and the internal runtime of
+        JavaScript Actions as separate inventory fields and decisions.
+      - Decide the migration treatment for existing Node 20 claims: remove
+        them from maintained verification, retain only an explicitly
+        unsupported compatibility note where useful, or document a bounded
+        repository-specific exception with an end condition.
+      - Wave C completed the 15-item reference/starter change register. The
+        candidate policy is now reviewable as separate product, CI, release
+        host, final-artifact smoke, compiler target, and Action-runtime fields;
+        the actual public-support decision remains pending.
+    - [ ] Audit and design a canonical release-artifact contract by product
+      profile, taking the strongest existing patterns from sibling workflows.
+      - Initial workflow signals: 13 files stage/copy `.mjs`, 14 stage/copy
+        `.jar`, 15 refer to `sources*.tgz`, 10 refer to Skill bundle `.zip`, 3
+        use Web asset staging, and 2 use `npm pack`. These categories can
+        overlap and do not yet prove that the artifacts have the same role.
+      - Only 3 release workflows currently upload `.zip.sha256` sidecars. Audit
+        whether every user-downloadable custom asset should receive a SHA-256
+        sidecar or whether a multi-file `SHA256SUMS` manifest is preferable.
+      - Define distinct roles and required/optional sets for CLI module,
+        standalone runtime module, curated source archive, executable Java jar,
+        Java sources jar, library bundle, npm package tarball, Agent Skill zip,
+        and Web assets. Do not confuse GitHub-generated source archives with a
+        custom build-ready `*-sources.tgz`.
+      - Define one staged-artifact lifecycle: build with repository scripts,
+        verify contents and behavior, copy into a clean `release-assets/`
+        directory using final release names, calculate and verify checksums
+        from those final bytes, then upload only the declared files.
+      - Decide filename grammar and the relationship among package/POM version,
+        release tag version including accepted dot suffixes, artifact role,
+        extension, and checksum filename.
+      - Treat the Release page as a user-facing distribution surface and add a
+        filename-UX review, not just a filesystem validity check.
+        - Evaluate the preferred miku custom-asset grammar
+          `<release-family>[-<role>][-<platform>-<arch>]-<release-version>.<ext>`.
+          The release version omits the tag's leading `v` and normally appears
+          immediately before the meaningful extension.
+        - Keep lowercase kebab-case, one canonical public artifact identity,
+          and a controlled role vocabulary such as `runtime`, `sources`,
+          `index`, and `manifest`; prohibit accidental synonyms and internal
+          directory terms such as `target`, `dist`, or `bundle` in public names.
+        - Preserve full parent filenames for companions, for example
+          `<asset>.sha256` and `<asset>.mjs.map`, unless one approved aggregate
+          `SHA256SUMS` policy is selected.
+        - Produce sorted sample Release asset lists for Node, Java, Web, Agent
+          Skill, MCP/npm, and library profiles and review their readability as
+          a set before adopting the grammar.
+        - Compare custom miku naming with ecosystem-owned names from `npm pack`
+          and Maven classifiers. Record narrow exceptions rather than making an
+          npm or Maven artifact misleading merely for textual uniformity.
+        - Scan producer scripts, Web runtime downloaders, Agent Skill runtime
+          resolvers, documentation, published articles, and direct Release URLs
+          before renaming. Existing `*-runtime-<version>.mjs` and
+          `*-sources-<version>.*` patterns already have consumers.
+        - Treat published historical asset names as immutable. Decide whether
+          future-name migration requires consumer-first updates, a bounded dual
+          publication release, or retention of the established grammar.
+      - Evaluate a machine-readable release manifest recording source tag and
+        commit, product/base/release versions, artifact role, filename, size,
+        and SHA-256; avoid inventing it if sidecars and profile metadata already
+        provide a simpler sufficient contract.
+      - Require deterministic archive inputs, ordering, timestamps, metadata,
+        and a repeated-build digest check for profiles claiming reproducible
+        archives. Record that SHA-256 proves byte integrity, not publisher
+        authenticity.
+      - Compare broad `release-assets/*` upload globs with explicit paths or a
+        verified manifest. A clean staged directory plus an exact expected-file
+        check is required before a wildcard can be considered safe.
+      - Use current implementations as focused exemplars: reproducible Skill
+        zip/checksum/content tests, explicit Node CLI/runtime/source staging,
+        Java build plus minimum-runtime smoke, npm pack surface verification,
+        and Web staging. Extract the useful controls rather than copying one
+        whole workflow into every repository.
+      - Produce an artifact-role matrix, naming/checksum decision, exemplar
+        map, sorted Release-page fixtures, consumer compatibility map,
+        exceptions, and per-repository migration items before changing release
+        assets.
+      - Wave C confirmed producer/consumer constraints. In particular,
+        miku-ms-office-core versioned .mjs/.map has at least seven direct
+        vendor/import consumers, while its current verifier lists only three;
+        no producer-only filename migration is safe.
+    - [x] Run the read-only GitHub Actions audit in parallel subagent waves.
+      - With four total execution slots, use one coordinator and up to three
+        independent audit workers at a time.
+      - Wave A: Node 20-to-22/24 role inventory; release-artifact and filename
+        producer/consumer inventory; workflow event/ref/authority structure
+        inventory.
+      - Wave B: normalized structural and contract clustering; artifact
+        profile/checksum/reproducibility proposal; Node profile and migration
+        proposal.
+      - Each worker reads sibling repositories only and writes a uniquely named
+        report under `workplace/miku-soft-reference-audit/`; no two workers edit
+        a central plan, state file, or product workflow concurrently.
+      - The coordinator validates evidence, resolves cross-report conflicts,
+        updates the shared audit matrix and state files, and decides whether a
+        proposed finding is ready for user review.
+      - After approval, pilot actual workflow changes one representative
+        repository/profile at a time. Do not parallelize mutations that share
+        templates, consumer contracts, release names, or external GitHub state.
+      - [x] Wave A completed on 2026-07-31 with separate reports for Node
+        baseline, artifact/name consumers, and workflow contracts:
+        `wave-a-node-baseline.md`, `wave-a-artifact-naming.md`, and
+        `wave-a-workflow-contracts.md` under
+        `workplace/miku-soft-reference-audit/`.
+      - [x] Wave B completed on 2026-07-31: normalized all 57 direct
+        workflows into 11 Release and 4 CI profile proposals, prepared the
+        Node 22/24 and artifact-contract proposals, and drafted the P0-P3
+        backlog. The coordinator integration is
+        `wave-b-integration.md`; the supporting reports are
+        `wave-b-workflow-profiles.md`, `wave-b-node-migration.md`, and
+        `wave-b-artifact-contract.md`.
+      - [x] Wave C completed on 2026-07-31: W01–W57 workflow inventory,
+        producer/consumer register, exception/control register, and the
+        15-item developer reference/starter Node register are integrated in
+        wave-c-integration.md. This was read-only evidence work.
+      - [x] Promote the durable audit result into the shipped skill under
+        `skills/igapyon-miku-soft-developer/docs/maintenance/`. Keep raw
+        worker reports in ignored `workplace/`, while the tracked copy owns
+        the decision packet, numbering plan, Actions profile plan, and backlog.
+      - [x] Define routine maintenance adoption and the urgent/narrow skip
+        path in `docs/maintenance/adoption-workflow.md`, then route the
+        normative maintenance checklist and durable backlog to it.
+      - [x] Add the no-specific-change maintenance branch: for a known target
+        repository, select and complete a bounded slice of one or more
+        compatible, approved, locally verifiable improvements instead of
+        stopping because no defect was named.
+    - [x] Produce a machine-readable row per workflow with repository revision,
+      pre-existing worktree state, product/profile confidence, event and ref
+      contract, permissions, toolchains, install/build/test commands, version
+      checks, artifact roles, upload behavior, and verification gaps.
+      - wave-c-workflow-inventory.md contains the 13-column W01–W57 TSV; the
+        inventory's direct workflow list and row count were cross-checked.
+    - [x] Cluster the inventory by exact content, normalized structure, and
+      contract fingerprint so product literals do not masquerade as design
+      differences and visually similar YAML does not hide semantic conflicts.
+      - Wave B maps every direct workflow to one of 11 Release or 4 CI
+        profile candidates and records contract conflicts, parameters,
+        exceptions, and evidence gaps in
+        `canonical-workflow-profiles.md` and
+        `wave-b-workflow-profiles.md`.
+    - [ ] Classify every material difference as intended profile, repository
+      parameter, supported policy option, historical drift, contract conflict,
+      missing control, explicit exception, or evidence-insufficient.
+    - [ ] Validate a small canonical profile set for Node CI/CLI release, Web
+      assets, Java runtime, Java Maven plugin, Agent Skill, MCP, and library
+      workflows; keep product runtime, Action-internal runtime, and build
+      runtime as separate concepts.
+    - [ ] Define shared invariants for least authority, trigger/ref/version/tag
+      alignment, reproducible dependency installation, staged and verified
+      artifacts, smoke gates, rerun behavior, and release concurrency.
+    - [ ] Compare copied templates, versioned reusable workflows, thin local
+      wrappers, and generated local workflows only after structural clusters
+      are known; record the chosen ownership and versioning model.
+    - [ ] Create an exception registry and a P0-P3 per-repository migration
+      backlog, then pilot one representative repository per approved profile
+      before any family-wide rollout.
+      - [x] The evidence-backed registry and proposed backlog are recorded in
+        wave-c-exception-control-register.md and migration-backlog.md.
+      - [ ] Obtain policy decisions and run only the first explicitly approved
+        serial pilot; do not treat the backlog as a bulk-edit instruction.
+    - Keep all sibling repositories read-only in this phase. Fetch, workflow
+      dispatch, release, push, and sibling edits require separate authorization.
+  - [x] Complete the first dated primary-source pass for supported Node.js
+    versions, GitHub Actions majors, Maven/Java compiler assumptions, and MCP
+    protocol guidance.
+    - Checked 2026-07-31 against official Node.js lifecycle pages, official
+      GitHub Action repositories, Apache Maven Compiler Plugin documentation,
+      JUnit documentation, and MCP specification revision 2025-11-25.
+    - Keep future rechecks in dated baseline documents rather than copying
+      current versions into every layer document.
+  - [ ] Classify each finding as valid, conditionally valid, target-state
+    guidance, stale, conflicting, or evidence-insufficient.
+    - Evaluate four axes independently before assigning the final verdict:
+      internal consistency, implementation fit, design rationale/testability,
+      and temporal currency.
+    - Record sample coverage and counterevidence; absence of a layer is not a
+      defect until the reference states that the layer is required for that
+      product shape.
+  - [x] Prepare a content revision proposal and a separate path-migration map;
+    do not mix semantic edits and bulk moves into one unreviewable change.
+    - Structure and typed identifier design:
+      `workplace/miku-soft-reference-audit/target-structure.md`.
+    - Decision gates, phased change sets, and verification matrix:
+      `workplace/miku-soft-reference-audit/revision-plan.md`.
+    - A read-only scan found 38 files across 25 sibling repositories naming
+      current paths, so additive canonical paths and compatibility stubs are
+      required; sibling link changes remain a separate authorized SCM phase.
+  - [ ] Obtain product-owner decisions for release defaults, Node minimum,
+    artifact roles/naming/checksums, Java compatibility mechanics, and the
+    typed taxonomy before semantic edits.
+  - [ ] Obtain user approval before broad document moves or compatibility-stub removal.
+  - [ ] Apply approved changes, regenerate affected `index.json` files, run
+    focused checks and the relevant Maven verification, then review Git status
+    and the final diff for unrelated changes.
 - [x] Initialize lightweight AI agent state files for this repository.
 - [x] Fix installed Codex skill visibility issues found on 2026-06-23.
   - Affected source skills in this repository:
@@ -595,6 +926,11 @@ prompt test が成功しても実動作が保証されたとは扱わず、肥�
   - `actions/checkout@v6`、`actions/setup-node@v6`、
     `actions/setup-java@v5`、`softprops/action-gh-release@v3` は
     Node.js 24対応世代として現行方針と整合している
+  - この項目の棚卸し、役割分離、判断基準、移行順序は
+    `## AI Agent Current Tasks` の GitHub Actions 監査と
+    `workplace/miku-soft-reference-audit/github-actions-audit-plan.md` を正本とする
+  - ReleaseをNode.js 24で一度だけ構築し、対応下限を`>=22`とする成果物は
+    Node.js 22でもsmokeする案を検証する
 - [x] `skills/igapyon-miku-soft-developer/references/review/node-cli.md` に、他の review note と同じ `Severity Guidance` と `Review Output` を追加するか検討する
 - [x] `skills/igapyon-miku-soft-developer/references/review/` の入口として、各 review note の使い分けを説明する `README.md` または index 的な案内を追加するか検討する
 - [x] `skills/igapyon-miku-soft-developer/references/review/` 以下の review note 全体を整理し、ファイル粒度、見出し構成、分類条件、`Severity Guidance`、`Review Output` の揃い方を確認する
