@@ -133,6 +133,15 @@ The runner and its helper delegate will:
 
 The helper refuses `--apply` when there are existing uncommitted changes unless `--allow-dirty` is also passed. Use `--allow-dirty` only when the user has explicitly confirmed that those uncommitted changes are intentional and should participate in the recommit context.
 
+## Verification Boundary
+
+The runner's preflight, immediate revalidation, new `HEAD`, and final Git
+status are the workflow verification for a target-repository recommit. Do not
+run miku-scm's source test suite or contract drift check merely because this
+workflow completed. Run only relevant target-project tests that the user
+requested or the target repository documents, and keep their results separate
+from miku-scm source-maintenance verification.
+
 If Node is unavailable or the helper fails before changing history, use this manual shape:
 
 The example is POSIX-shell style for clarity. When running on Windows PowerShell, cmd.exe, or another shell, translate variable assignment, quoting, and path syntax to the active shell while preserving the same Git steps.

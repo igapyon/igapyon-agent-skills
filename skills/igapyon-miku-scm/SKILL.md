@@ -101,6 +101,21 @@ silently synchronize or overwrite `igapyon-github-writer`. Apply
 
 ## Verification
 
-Use fast tests while iterating and the full miku-scm suite before handoff.
-Run the contract drift check, `git status -sb`, and review the relevant diff.
-Do not revert unrelated changes.
+Separate target-repository verification from miku-scm source verification.
+
+For ordinary SCM work against a target repository, do not run miku-scm's own
+fast or full suite, or its workflow-contract drift check, merely because this
+skill is active. Do not probe the target repository or an installed skill
+location for a way to run those self-tests. Keep the fixed runner's own
+preflight, revalidation, postcondition, digest, approval, and attempt-record
+checks; those are workflow safety checks, not miku-scm source tests. Run only
+target-project tests that are relevant and explicitly requested or documented
+by that target repository, and report them as target-project checks.
+
+When changing miku-scm itself, including its `SKILL.md`, references, scripts,
+contracts, or tests under `skills/igapyon-miku-scm/`, use fast tests while
+iterating and the full miku-scm suite before handoff. After changing a migrated
+runner, normative spec, manifest contract mapping, or contract test,
+regenerate the contract artifacts and run the contract drift check. For every
+tracked change, run `git status -sb` and review the relevant diff. Do not
+revert unrelated changes.

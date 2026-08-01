@@ -207,8 +207,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-post-recommit-publish.md",
     "contract_test": "post-recommit-publish.test.mjs",
     "runner_sha256": "dc8be675d241e066ed4cba712b7cb3c7e864d044ded8ea38be2ac3493ba72ca1",
-    "spec_sha256": "6acc25d6b8943a233444ee784afad6ba4a20c5b4872f694b05ae8c50e530088f",
-    "pair_sha256": "f071fbf0ac0e15afd540ef661a1df2749ca89d4bd3a0a5f1010464414ef0f7ac"
+    "spec_sha256": "614580c59e9e73ce165737868faa90d40400f1a49308d437087394c20d617c43",
+    "pair_sha256": "6cc094311ce3820820f0b8d2950ca75beaaa03c6e5b539ed9a99abee09caedf3"
   },
   {
     "workflow": "pr.publish.apply",
@@ -218,8 +218,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-post-recommit-publish.md",
     "contract_test": "post-recommit-publish.test.mjs",
     "runner_sha256": "dc8be675d241e066ed4cba712b7cb3c7e864d044ded8ea38be2ac3493ba72ca1",
-    "spec_sha256": "6acc25d6b8943a233444ee784afad6ba4a20c5b4872f694b05ae8c50e530088f",
-    "pair_sha256": "76bfa7a37882227e607fc6d5f108260c78d2cbe78c5fa422c771ccc6228820be"
+    "spec_sha256": "614580c59e9e73ce165737868faa90d40400f1a49308d437087394c20d617c43",
+    "pair_sha256": "0f67c3a7b219dd2b73500ede0e1d83eea9f597112897d37af6205c4f9cfbc14d"
   },
   {
     "workflow": "pr.recommit.preflight",
@@ -229,8 +229,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-pr-soft-reset-recommit.md",
     "contract_test": "miku-scm-recommit.test.mjs",
     "runner_sha256": "a5cefd2c56ae0379cf0bd2dbd8abbb3a341fcdcd36716d082e4d29297ed64ddb",
-    "spec_sha256": "6106702a08101f6183c08699968c47daaa2007031a02fa76d391604b0e811541",
-    "pair_sha256": "e6ca8a94250bd48e4c47c819da8e258aeb89646d3a616875fe67c19a230d1787"
+    "spec_sha256": "6624e4f4efc2c42bac823c4cb1586f81e44502816b28bff36edfddbba72e99d0",
+    "pair_sha256": "fffd54bbe942d5e50d2f7767334cd2a04dca1a88caae8acaa4c10faa90f060ff"
   },
   {
     "workflow": "pr.recommit.apply",
@@ -240,8 +240,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-pr-soft-reset-recommit.md",
     "contract_test": "miku-scm-recommit.test.mjs",
     "runner_sha256": "a5cefd2c56ae0379cf0bd2dbd8abbb3a341fcdcd36716d082e4d29297ed64ddb",
-    "spec_sha256": "6106702a08101f6183c08699968c47daaa2007031a02fa76d391604b0e811541",
-    "pair_sha256": "12230edfe35dfd86b88cebb4c6c5857a73a18d79f420b90f8f150c5af92c5e63"
+    "spec_sha256": "6624e4f4efc2c42bac823c4cb1586f81e44502816b28bff36edfddbba72e99d0",
+    "pair_sha256": "2d4c3628d4ffa7a20482d3f332c85bde7db277fe20180a57d4b3d414dba76041"
   },
   {
     "workflow": "version.status",

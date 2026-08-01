@@ -192,7 +192,12 @@ This workflow does not create, edit, or merge a Pull Request. It does not
 create, move, delete, or push a tag. It does not create or publish a GitHub
 Release, run `git pull`, stash or discard dirty changes, or open a browser.
 
-## Tests
+## Tests for miku-scm Source Maintenance
+
+This suite validates changes to the miku-scm publication helper and its source
+repository. It is not a post-recommit or post-publication completion step for
+a target repository. Do not run it merely because this publication workflow
+completed.
 
 Run the isolated test suite with:
 
