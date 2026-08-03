@@ -33,26 +33,56 @@ Do not inspect the repository or load detailed references yet.
    Prefer `--format human` for a mechanical workflow when no structured field
    is needed for a subsequent step. Return the runner's `human_output`
    unchanged instead of paraphrasing it.
-3. Never issue `gh` directly. GitHub CLI access is allowed only inside the
+3. For a current Issue status, backlog, or progress request, invoke
+   `github.issue.read --list` once with its default Open state. Do not add a
+   second `--state all` read merely to calculate an Open/Closed breakdown.
+   Use `--state closed` or `--state all` only when the user explicitly needs
+   closed or historical Issues, completion metrics, or comparison with a
+   closed Issue.
+4. Never issue `gh` directly. GitHub CLI access is allowed only inside the
    fixed bundled helpers. If no fixed helper or anonymous REST route exists,
    stop instead of inventing a command.
-4. A READONLY result or preflight does not authorize mutation. Local rewrite,
+5. A READONLY result or preflight does not authorize mutation. Local rewrite,
    tracked-content change, remote mutation, deletion, tag change, Release
    publication, and version change each require the matching explicit request
    and workflow gate. Approval never transfers between workflows.
-5. Before tracked-content mutation or an ordinary commit, inspect the current
+6. Before tracked-content mutation or an ordinary commit, inspect the current
    branch and worktree. Do not mutate a `-done` branch. Preserve unrelated
    changes. Operational drafts and workflows with their own branch checks keep
    those documented rules.
-6. Apply must consume the unchanged reviewed artifact and expected digest when
-   its workflow defines one. Never retry an unresolved mutation automatically.
-7. Report inspected, changed, and pending work. Keep tag recommendation
+7. A standalone apply must consume the unchanged reviewed artifact and
+   expected digest when its workflow defines one. In an exact ordered batch,
+   a later mutation for the same Issue may use the fixed preflight helper to
+   refresh only the snapshot expectations allowlisted by the batch contract
+   after an earlier approved step succeeds. Its repository, Issue, operation,
+   draft and digest, requested labels, close reason, duplicate target, and
+   workflow contract must remain byte-for-byte equivalent. Never retry an
+   unresolved mutation automatically.
+8. Report inspected, changed, and pending work. Keep tag recommendation
    separate from tag mutation; normal tag handoff is GitHub's Release UI.
-8. After a reviewed Issue preflight, an exact `miku-scm approve` request
-   routes directly to `github.issue.handoff.apply --apply`. The legacy
-   `miku-scm 承認` input remains accepted. The fixed workflow must
-   find exactly one pending handoff. Do not reconstruct its apply arguments or
-   load detailed references during this approval fast path.
+9. Route an exact `miku-scm pending` request to
+   `github.issue.handoff.list`. After a reviewed Issue preflight, an exact
+   `miku-scm approve` request routes to `github.issue.handoff.apply --apply`
+   and still requires exactly one pending handoff. The legacy `miku-scm 承認`
+   input remains accepted.
+10. When the human supplies an exact handoff ID from the preflight or pending
+    list, route `miku-scm approve <id>` to
+    `github.issue.handoff.apply --handoff <id> --apply`, or route
+    `miku-scm dismiss <id>` to
+    `github.issue.handoff.dismiss --handoff <id> --apply`. Never choose,
+    abbreviate, or reconstruct the ID or reviewed apply arguments. These exact
+    commands are fast paths and do not require loading detailed references.
+11. Route an exact `miku-scm approve batch <id> <id> [...]` request to
+    `github.issue.handoff.batch.apply`, repeating `--handoff <id>` in the exact
+    human-supplied order and ending with `--apply`. Require two to twenty
+    unique pending IDs. Never infer membership or order from `all`, recency,
+    Issue numbers, or prior prose. The fixed workflow validates the complete
+    batch before the first mutation. For later mutations to the same Issue,
+    the fixed workflow runs a handoff-free dependency preflight after each
+    preceding success and accepts only allowlisted snapshot-expectation
+    changes caused by the ordered sequence. Any semantic change, failed
+    refresh, `not-applied`, `conflict`, or `unresolved` result stops every
+    later handoff. Preserve a delegate `conflict` as a distinct terminal state.
 
 Mechanical workflows retrieve, validate, mutate, and render stable results.
 Writing mode is limited to evidence-based Issue, PR, Release, About, and

@@ -8,7 +8,7 @@ import {
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v4");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v8");
 });
 
 test("every workflow uses English fixed output wording", () => {
@@ -89,6 +89,108 @@ test("Issue create preflight output contains complete review identifiers", () =>
   assert.match(output, new RegExp(`Draft SHA-256: ${"a".repeat(64)}`));
   assert.match(output, /Remote mutation: not invoked/);
   assert.match(output, /miku-scm approve/);
+});
+
+test("handoff recovery output exposes exact commands and dismissal state", () => {
+  const listed = renderHumanOutput({
+    workflow: "github.issue.handoff.list",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "listed",
+    mutationInvoked: false,
+    result: {
+      status: "listed",
+      pending_count: 1,
+      handoffs: [{
+        id: "handoff-7",
+        apply_workflow: "github.issue.update.apply",
+        repository: "a/b",
+        issue: 7,
+        title: "Update title",
+        created_at: "2026-08-02T00:00:00Z",
+      }],
+    },
+  });
+  assert.match(listed, /Pending handoff count: 1/);
+  assert.match(listed, /Approve command: miku-scm approve handoff-7/);
+  assert.match(listed, /Dismiss command: miku-scm dismiss handoff-7/);
+  assert.match(listed, /Mutation invoked: no/);
+
+  const dismissed = renderHumanOutput({
+    workflow: "github.issue.handoff.dismiss",
+    status: "success",
+    approvalGate: "apply",
+    delegateStatus: "dismissed",
+    mutationInvoked: true,
+    result: {
+      status: "dismissed",
+      handoff: {
+        id: "handoff-7",
+        status: "not-applied",
+        path: "workplace/miku-scm/handoffs/handoff-7.json",
+      },
+    },
+  });
+  assert.match(dismissed, /^\[SUCCESS\] GitHub Issue approval handoff dismissal/);
+  assert.match(dismissed, /Handoff status: not-applied/);
+  assert.match(dismissed, /Mutation invoked: yes/);
+});
+
+test("handoff batch output preserves conflict diagnostics for a partial stop", () => {
+  const output = renderHumanOutput({
+    workflow: "github.issue.handoff.batch.apply",
+    status: "partial",
+    approvalGate: "apply",
+    delegateStatus: "partial",
+    mutationInvoked: true,
+    result: {
+      status: "partial",
+      batch_status: "partial-conflict",
+      requested_count: 3,
+      processed_count: 2,
+      applied_count: 1,
+      stopped_handoff: "handoff-2",
+      stopped_status: "conflict",
+      remaining_handoffs: ["handoff-3"],
+      results: [
+        {
+          status: "applied",
+          handoff: { id: "handoff-1" },
+          apply_workflow: "github.issue.comment.apply",
+        },
+        {
+          status: "conflict",
+          handoff: { id: "handoff-2" },
+          apply_workflow: "github.issue.close.apply",
+          apply_result: {
+            status: "conflict",
+            delegate_result: {
+              stage: "target-conflict",
+              reviewed_updated_at: "2026-08-01T00:00:00Z",
+              observed_updated_at: "2026-08-02T00:00:00Z",
+            },
+          },
+          dependency_refresh: {
+            status: "refreshed",
+            refreshed_options: ["--expected-updated-at"],
+          },
+        },
+      ],
+    },
+  });
+
+  assert.match(output, /^\[PARTIAL\] GitHub Issue approval handoff batch apply/);
+  assert.match(output, /Step 1: handoff-1 \| github.issue.comment.apply \| applied/);
+  assert.match(output, /Step 2: handoff-2 \| github.issue.close.apply \| conflict/);
+  assert.match(output, /Step 2 dependency refresh: refreshed/);
+  assert.match(output, /Step 2 refreshed options: --expected-updated-at/);
+  assert.match(output, /Stopped handoff: handoff-2/);
+  assert.match(output, /Stopped apply status: conflict/);
+  assert.match(output, /Stopped stage: target-conflict/);
+  assert.match(output, /Reviewed updated at: 2026-08-01T00:00:00Z/);
+  assert.match(output, /Observed updated at: 2026-08-02T00:00:00Z/);
+  assert.match(output, /Remaining handoff: handoff-3/);
+  assert.match(output, /Mutation invoked: yes/);
 });
 
 test("Issue create apply output reports verification without rewording the body", () => {

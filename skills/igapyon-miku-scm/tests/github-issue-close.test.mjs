@@ -160,7 +160,66 @@ test("already closed or changed Issue is rejected before gh", async (t) => {
     gh: () => { calls += 1; },
   });
   assert.equal(result.status, "conflict");
+  assert.equal(result.stage, "target-conflict");
   assert.equal(calls, 0);
+});
+
+test("a safe conflict can be superseded by a fresh preflight from the latest Issue state", async (t) => {
+  const state = await scenario(t);
+  const initial = await runIssueClose(optionsFor(state), {
+    readIssue: async () => ISSUE,
+  });
+  const changed = { ...ISSUE, updatedAt: "2026-07-24T02:00:00Z" };
+  const conflict = await runIssueClose(applyOptions(state, initial), {
+    readIssue: async () => changed,
+  });
+  assert.equal(conflict.status, "conflict");
+
+  const refreshed = await runIssueClose(optionsFor(state), {
+    readIssue: async () => changed,
+  });
+  assert.equal(refreshed.status, "preflight-ok");
+  assert.equal(refreshed.recovering_safe_attempt, true);
+  assert.equal(refreshed.current_updated_at, changed.updatedAt);
+
+  const reads = [
+    changed,
+    { ...changed, state: "CLOSED", stateReason: "COMPLETED" },
+  ];
+  const recovered = await runIssueClose(applyOptions(state, refreshed), {
+    readIssue: async () => reads.shift(),
+    gh: () => ({ ok: true, stdout: "closed", stderr: "" }),
+  });
+  assert.equal(recovered.status, "closed");
+  assert.equal(recovered.recovering_safe_attempt, true);
+
+  const record = JSON.parse(await readFile(
+    path.join(state.root, recovered.attempt_record),
+    "utf8",
+  ));
+  assert.equal(record.status, "closed");
+  assert.match(record.recovered_from_attempt, /\.conflict-[^.]+-[^.]+\.json$/);
+  const archived = JSON.parse(await readFile(
+    path.join(state.root, record.recovered_from_attempt),
+    "utf8",
+  ));
+  assert.equal(archived.status, "conflict");
+});
+
+test("an unresolved close attempt still blocks every retry and preflight", async (t) => {
+  const state = await scenario(t);
+  const preflight = await runIssueClose(optionsFor(state), {
+    readIssue: async () => ISSUE,
+  });
+  const unresolved = await runIssueClose(applyOptions(state, preflight), {
+    readIssue: async () => ISSUE,
+    gh: () => ({ ok: false, stderr: "transport failed" }),
+  });
+  assert.equal(unresolved.status, "unresolved");
+  await assert.rejects(
+    runIssueClose(optionsFor(state), { readIssue: async () => ISSUE }),
+    /unresolved attempt.*Do not retry/,
+  );
 });
 
 test("post-close verification retries reads but never repeats close", async (t) => {

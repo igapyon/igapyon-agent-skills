@@ -277,7 +277,7 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 - Permit only one `gh issue comment <number> --repo <owner/repo> --body-file <temporary-file>` call using the complete reviewed comment draft.
 - Require approval after displaying the exact Issue state, complete comment, draft digest, Issue snapshot digest, `updated_at`, and planned command.
 - Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt` for the reviewed Issue snapshot and `gh api --method GET repos/<owner/repo>/issues/comments/<comment-id>` for post-comment verification. Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body. A pre-mutation READONLY failure is `not-applied`; bounded READONLY verification retries must never repeat the mutation.
-- Do not edit or delete comments, use interactive or browser modes, or combine a comment with another mutation.
+- Do not edit or delete comments, use interactive or browser modes, or combine a comment with another mutation in one helper or `gh` command. The exact ordered handoff batch may orchestrate separately reviewed helpers and dependency-refresh only the allowlisted snapshot expectations in [approval-handoff.md](approval-handoff.md).
 
 ## Human-Approved Existing Issue Label Update
 
@@ -294,6 +294,7 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 - For `duplicate`, require and display one different, fixed-`gh issue view` verified target Issue and fix its reviewed snapshot digest through apply. Reject a duplicate target for other reasons.
 - Require approval after displaying the complete current Issue, reason, duplicate target when applicable, operation digest, body digest, `updated_at`, and planned command.
 - Use fixed READONLY `gh issue view --json number,url,title,body,state,stateReason,updatedAt` from preflight through verification. Persist `pending`, detect a non-Open or changed Issue as `conflict`, and verify the closed state and reason. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
+- Permit a fresh close preflight after a recorded `conflict` or pre-mutation `not-applied`. A newly approved apply archives that safe no-mutation record before claiming a new attempt. Never archive, replace, or retry a `pending`, `closed`, or `unresolved` attempt.
 - Do not add a closing comment in the close command and do not permit reopen under this workflow.
 
 ## Planned Rule Areas

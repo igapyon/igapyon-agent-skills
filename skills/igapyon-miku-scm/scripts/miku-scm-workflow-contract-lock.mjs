@@ -64,8 +64,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-issue-update.md",
     "contract_test": "github-issue-update.test.mjs",
     "runner_sha256": "4e47eca8fbe9e52567d6080211bde00fb0953adf2941605ea3c880f62968f60d",
-    "spec_sha256": "a2dbfce39cc2e208d6eb8171e089acc25a53b352e4a60823aa0578b33b4a6f6c",
-    "pair_sha256": "431060294e678adb4aeb0899e65c6d89abef7f03e61cc84b6674ccdcea1ac58d"
+    "spec_sha256": "e72ba014991a0b1f8de4520a932feb5fc4c726e5a65fc38ea2619d1e84133a87",
+    "pair_sha256": "f1e36d1be08276c1f3bc7f876509bdc17aa5ca08abddd0bed192d2d042e75cad"
   },
   {
     "workflow": "github.issue.update.apply",
@@ -75,8 +75,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-issue-update.md",
     "contract_test": "github-issue-update.test.mjs",
     "runner_sha256": "4e47eca8fbe9e52567d6080211bde00fb0953adf2941605ea3c880f62968f60d",
-    "spec_sha256": "a2dbfce39cc2e208d6eb8171e089acc25a53b352e4a60823aa0578b33b4a6f6c",
-    "pair_sha256": "abd76b09a6510b6d04cd3b63823a8cf0210851605315d696c92f4a4569433fc6"
+    "spec_sha256": "e72ba014991a0b1f8de4520a932feb5fc4c726e5a65fc38ea2619d1e84133a87",
+    "pair_sha256": "7887886650e9850c60ffeb7157e7bb8ac18d91569b44c0c1805d48fd724dbc01"
   },
   {
     "workflow": "github.issue.comment.preflight",
@@ -86,8 +86,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-issue-comment.md",
     "contract_test": "github-issue-comment.test.mjs",
     "runner_sha256": "39ad437e3f323cd8341d6a96dc787562fa3e24ca02e84623e06a62cb024d4b48",
-    "spec_sha256": "7cd1a47a0913a18900c9235a47c004c9c20bf843f52ad8d6335f827cbdbc78af",
-    "pair_sha256": "b274025bab9be237f2b243bb0960c99a0c03cee2a77ccefc06e57c8c79242394"
+    "spec_sha256": "bdab9c3248f14fdc0e98690f26b81133c2bf3593f8a347b4ad0aa90222dc1099",
+    "pair_sha256": "45d3d9bcbcee9eb94a8d61ecbee7729274073969b90a2745515279c50fc49382"
   },
   {
     "workflow": "github.issue.comment.apply",
@@ -97,8 +97,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-issue-comment.md",
     "contract_test": "github-issue-comment.test.mjs",
     "runner_sha256": "39ad437e3f323cd8341d6a96dc787562fa3e24ca02e84623e06a62cb024d4b48",
-    "spec_sha256": "7cd1a47a0913a18900c9235a47c004c9c20bf843f52ad8d6335f827cbdbc78af",
-    "pair_sha256": "210f2b657c7600213d781b9d0953729eb02daddd0d12060f84ffd6a339738f4e"
+    "spec_sha256": "bdab9c3248f14fdc0e98690f26b81133c2bf3593f8a347b4ad0aa90222dc1099",
+    "pair_sha256": "e84bb6961f5216631409de6f9f6e4e291bae2084c7e42c16bf4b0c41baa40614"
   },
   {
     "workflow": "github.issue.label.preflight",
@@ -108,8 +108,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-issue-label-update.md",
     "contract_test": "github-issue-label-update.test.mjs",
     "runner_sha256": "15e5c3fe78d664d5e240e71efa9238ed5a69f24a0adc9583eb26e9c40c4a4bdb",
-    "spec_sha256": "df2f63b262604ea976002c001c56a7a38917a62fb62a12548e8ae22252591b4f",
-    "pair_sha256": "2e34400f7bf0c5d3ffb1cd0df91f1023f5abcd8bdf8579b349e96ee95c294ed1"
+    "spec_sha256": "f494a992b1d13f7aa8974dc48921bc4999c126f42c6b2315a1e188696be0b693",
+    "pair_sha256": "05963b90790d4e075ff5c519b8e3885262fa5e67d7b667276d1a044d455d82ab"
   },
   {
     "workflow": "github.issue.label.apply",
@@ -119,8 +119,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-issue-label-update.md",
     "contract_test": "github-issue-label-update.test.mjs",
     "runner_sha256": "15e5c3fe78d664d5e240e71efa9238ed5a69f24a0adc9583eb26e9c40c4a4bdb",
-    "spec_sha256": "df2f63b262604ea976002c001c56a7a38917a62fb62a12548e8ae22252591b4f",
-    "pair_sha256": "ba2eed28512e068b2f957a0be1d4a3101ab0f48648f52e8a5cf20820b21eb91a"
+    "spec_sha256": "f494a992b1d13f7aa8974dc48921bc4999c126f42c6b2315a1e188696be0b693",
+    "pair_sha256": "89dbcc16638ba7ffdccc4b40d492e69a0ebdcab6a3ebafd8f02dc232e56b05e9"
   },
   {
     "workflow": "github.issue.close.preflight",
@@ -129,9 +129,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "github-issue-close.mjs",
     "contract_spec": "github-issue-close.md",
     "contract_test": "github-issue-close.test.mjs",
-    "runner_sha256": "b1dfa8384b882a8544960480ae7aefaa77d7ebbe2e43ef4f2d611d47d0a163b7",
-    "spec_sha256": "939441e04e4cd7116b45f7f4e5a86b5c3c9c5ddcca76c8535c894be8a49e3638",
-    "pair_sha256": "d6fdc42dd39d24894cc96641478ff01488f28ab2271e82b7c904ca7c762782ee"
+    "runner_sha256": "9f87bdcc16c895b000b7ccb2a1a4df0214f1e7279de03c48c686d6e214130870",
+    "spec_sha256": "5b6950325fe1b6e9f80eb1471c14b48847b5c7817b5dbe0775c29448c84e439c",
+    "pair_sha256": "8834bb73e0e4f947ec3ee9fdee67474a99c59c943b161bfdf91ce47d35f0f7b6"
   },
   {
     "workflow": "github.issue.close.apply",
@@ -140,9 +140,20 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "github-issue-close.mjs",
     "contract_spec": "github-issue-close.md",
     "contract_test": "github-issue-close.test.mjs",
-    "runner_sha256": "b1dfa8384b882a8544960480ae7aefaa77d7ebbe2e43ef4f2d611d47d0a163b7",
-    "spec_sha256": "939441e04e4cd7116b45f7f4e5a86b5c3c9c5ddcca76c8535c894be8a49e3638",
-    "pair_sha256": "7eff247d6895e407c29377c29daa9c98b5383d21fbe6036c38bcf7db6e7c2952"
+    "runner_sha256": "9f87bdcc16c895b000b7ccb2a1a4df0214f1e7279de03c48c686d6e214130870",
+    "spec_sha256": "5b6950325fe1b6e9f80eb1471c14b48847b5c7817b5dbe0775c29448c84e439c",
+    "pair_sha256": "135468d533019c7d50746683d33c653506948ce17d21aa30c91449b686c99adb"
+  },
+  {
+    "workflow": "github.issue.handoff.list",
+    "contract_id": "github.issue.handoff.list",
+    "contract_version": 1,
+    "runner_entry": "miku-scm-handoff.mjs",
+    "contract_spec": "approval-handoff.md",
+    "contract_test": "miku-scm-handoff.test.mjs",
+    "runner_sha256": "2f26488cb0b0d655139c02d89bf312a849190241044450ce9759b66aafa39631",
+    "spec_sha256": "c920a1e2f0b7b5ca12c26735bbe2c6bc278ac14c2b9dd681b1da7d65e44b516f",
+    "pair_sha256": "1df8731c9826ca9e7c042743f606052120e3e50aa16e93c855f5b8a149e0727e"
   },
   {
     "workflow": "github.issue.handoff.apply",
@@ -151,9 +162,31 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "miku-scm-handoff.mjs",
     "contract_spec": "approval-handoff.md",
     "contract_test": "miku-scm-handoff.test.mjs",
-    "runner_sha256": "8cebb52585c30b08879723907454b09ffd11d0029f8e1bdf822a1d6da0ed43fd",
-    "spec_sha256": "ee24b47fd40d8a42b6bd5e9383e856ac71646cf07080ce8f11347282e007758e",
-    "pair_sha256": "cf019328ea1c53c975ce523480043e3423bf380279a61675a04b5b9ec3762408"
+    "runner_sha256": "2f26488cb0b0d655139c02d89bf312a849190241044450ce9759b66aafa39631",
+    "spec_sha256": "c920a1e2f0b7b5ca12c26735bbe2c6bc278ac14c2b9dd681b1da7d65e44b516f",
+    "pair_sha256": "e270d0086d6a089cc76db769c4e472e9161dc8ab8b1dff65b99150cacd7652e4"
+  },
+  {
+    "workflow": "github.issue.handoff.batch.apply",
+    "contract_id": "github.issue.handoff.batch.apply",
+    "contract_version": 1,
+    "runner_entry": "miku-scm-handoff.mjs",
+    "contract_spec": "approval-handoff.md",
+    "contract_test": "miku-scm-handoff.test.mjs",
+    "runner_sha256": "2f26488cb0b0d655139c02d89bf312a849190241044450ce9759b66aafa39631",
+    "spec_sha256": "c920a1e2f0b7b5ca12c26735bbe2c6bc278ac14c2b9dd681b1da7d65e44b516f",
+    "pair_sha256": "6055101a0c9b9e65e3353d750dad1913c633e30c0dca796cd5f1d2fba81e9c37"
+  },
+  {
+    "workflow": "github.issue.handoff.dismiss",
+    "contract_id": "github.issue.handoff.dismiss",
+    "contract_version": 1,
+    "runner_entry": "miku-scm-handoff.mjs",
+    "contract_spec": "approval-handoff.md",
+    "contract_test": "miku-scm-handoff.test.mjs",
+    "runner_sha256": "2f26488cb0b0d655139c02d89bf312a849190241044450ce9759b66aafa39631",
+    "spec_sha256": "c920a1e2f0b7b5ca12c26735bbe2c6bc278ac14c2b9dd681b1da7d65e44b516f",
+    "pair_sha256": "c767a17003f6504faacd69010affe750b05b01842c120aa801a6a85151110649"
   },
   {
     "workflow": "repository.maintenance.diagnose",
@@ -196,8 +229,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "scm-rules.md",
     "contract_test": "post-recommit-publish.test.mjs",
     "runner_sha256": "120b4f1a0922d93e9eb7218362e2fc56e52c58e2cba181cf8fcdd6bbaddb7b12",
-    "spec_sha256": "43b978b07df77736b0954092e893490cf7867d5af4460b66837884ce21445979",
-    "pair_sha256": "7652f38387834d2ef62349b33eca53455565dc9f1a1ad1691bd42ffdcd0bc0ba"
+    "spec_sha256": "389ce7f62eb48c1b3e14c6495c455a80f6ea4a2ecb255391daf230501209a84e",
+    "pair_sha256": "ed891e048aee439264f6735545830848538dcc8fbac478b9b3af94a512785451"
   },
   {
     "workflow": "pr.publish.preflight",

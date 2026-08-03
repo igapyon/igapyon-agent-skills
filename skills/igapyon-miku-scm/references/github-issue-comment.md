@@ -15,9 +15,11 @@ gh issue comment <number> --repo <owner/repo> --body-file <generated-temporary-b
 ```
 
 Use [scripts/github-issue-comment.mjs](../scripts/github-issue-comment.mjs).
-Do not assemble or invoke `gh` independently. Comment editing, deletion, interactive
-editing, browser mode, and comments combined with another Issue mutation are
-outside this workflow.
+Do not assemble or invoke `gh` independently. Comment editing, deletion,
+interactive editing, browser mode, and combining mutations in one `gh` command
+are outside this workflow. The ordered approval-handoff batch may orchestrate
+this unchanged one-comment helper before another separately reviewed Issue
+mutation under [approval-handoff.md](approval-handoff.md).
 
 The helper's complete fixed `gh` command surface is:
 

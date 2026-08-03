@@ -466,12 +466,26 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       operational_artifacts: ["workplace/miku-scm/issue-close-attempts"],
     },
   ),
+  "github.issue.handoff.list": contract(
+    "List pending reviewed Issue handoffs without exposing apply arguments.",
+    [
+      option("--root", "<path>", "Repository root containing approval handoffs.", {
+        default: "current directory",
+      }),
+    ],
+    [],
+    {
+      operational_artifacts: ["workplace/miku-scm/handoffs"],
+      notes: ["Returns stable IDs and review summaries for pending handoffs only."],
+    },
+  ),
   "github.issue.handoff.apply": contract(
-    "Apply the only pending reviewed Issue handoff without reconstructing its arguments.",
+    "Apply one pending reviewed Issue handoff without reconstructing its arguments.",
     [
       option("--root", "<path>", "Repository root containing the pending handoff.", {
         default: "current directory",
       }),
+      option("--handoff", "<handoff-id>", "Exact pending handoff selected by the human."),
       apply,
     ],
     ["--apply"],
@@ -479,7 +493,50 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "Depends on the reviewed Issue apply workflow",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Exactly one pending handoff must exist."],
+      notes: ["Without --handoff, exactly one pending handoff must exist."],
+    },
+  ),
+  "github.issue.handoff.batch.apply": contract(
+    "Apply an explicit ordered batch of pending reviewed Issue handoffs.",
+    [
+      option("--root", "<path>", "Repository root containing pending handoffs.", {
+        default: "current directory",
+      }),
+      option("--handoff", "<handoff-id>", "Exact pending handoff in human-approved order.", {
+        required: true,
+        repeatable: true,
+        minimum_occurrences: 2,
+        maximum_occurrences: 20,
+      }),
+      apply,
+    ],
+    ["--handoff", "<first-id>", "--handoff", "<second-id>", "--apply"],
+    {
+      network_access: "Depends on each reviewed Issue apply workflow",
+      authentication: "existing gh authentication",
+      operational_artifacts: ["workplace/miku-scm/handoffs"],
+      notes: [
+        "Validates every unique pending ID before the first apply.",
+        "Preserves the supplied order and stops before later handoffs after any non-applied result.",
+      ],
+    },
+  ),
+  "github.issue.handoff.dismiss": contract(
+    "Mark one explicitly selected pending Issue handoff as not-applied.",
+    [
+      option("--root", "<path>", "Repository root containing the pending handoff.", {
+        default: "current directory",
+      }),
+      option("--handoff", "<handoff-id>", "Exact pending handoff selected by the human.", {
+        required: true,
+      }),
+      apply,
+    ],
+    ["--handoff", "<handoff-id>", "--apply"],
+    {
+      network_access: "none",
+      operational_artifacts: ["workplace/miku-scm/handoffs"],
+      notes: ["Changes only the selected pending handoff to not-applied."],
     },
   ),
   "repository.maintenance.diagnose": contract(

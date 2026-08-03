@@ -45,7 +45,10 @@ The canonical machine-readable catalog is
 | `github.issue.label.apply` | remote | apply | `github-issue-label-update.mjs` |
 | `github.issue.close.preflight` | READONLY | preflight | `github-issue-close.mjs` |
 | `github.issue.close.apply` | remote | apply | `github-issue-close.mjs` |
+| `github.issue.handoff.list` | READONLY | none | `miku-scm-handoff.mjs` |
 | `github.issue.handoff.apply` | remote | apply | `miku-scm-handoff.mjs` |
+| `github.issue.handoff.batch.apply` | remote | apply | `miku-scm-handoff.mjs` |
+| `github.issue.handoff.dismiss` | local | apply | `miku-scm-handoff.mjs` |
 | `repository.maintenance.diagnose` | READONLY | none | `repository-maintenance.mjs` |
 | `repository.maintenance.plan` | READONLY plus operational artifact | preflight | `repository-maintenance.mjs` |
 | `repository.maintenance.apply` | local | apply | `repository-maintenance.mjs` |
@@ -105,11 +108,24 @@ alone. Increment validation requires an explicit policy plus the required
 timezone or Semantic Version level and returns proposed values without editing
 them.
 
-Issue mutation preflights also save an approval handoff. After the human
-reviews the complete preflight and replies `miku-scm approve`, invoke
-`github.issue.handoff.apply --apply`. It accepts no workflow ID, handoff ID, or
-apply arguments from the Agent and stops unless exactly one pending Issue
-handoff exists. See [approval-handoff.md](approval-handoff.md).
+Issue mutation preflights also save an approval handoff. `miku-scm pending`
+routes to the READONLY `github.issue.handoff.list`. After the human reviews the
+complete preflight, `miku-scm approve` invokes
+`github.issue.handoff.apply --apply` and stops unless exactly one pending Issue
+handoff exists. An exact `miku-scm approve <handoff-id>` may select one listed
+pending handoff, while `miku-scm dismiss <handoff-id>` marks only that record
+`not-applied`. An exact
+`miku-scm approve batch <handoff-id> <handoff-id> [...]` applies two to twenty
+unique pending handoffs in the exact human-supplied order and stops before
+later entries after any non-applied outcome. For later mutations to the same
+Issue, it invokes the corresponding fixed preflight without saving another
+handoff and refreshes only the snapshot expectation fields allowlisted in the
+batch contract. All semantic arguments, artifact digests, operation digests,
+and the apply contract digest remain fixed. A dependency refresh or delegate
+conflict remains `conflict` in the handoff and batch report. The Agent must
+pass the exact human-supplied IDs and never choose membership or order
+implicitly. See
+[approval-handoff.md](approval-handoff.md).
 
 Writing prepare workflows collect bounded, versioned evidence and a fixed
 writing contract in one READONLY runner call. They do not draft prose or
@@ -193,6 +209,23 @@ node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
 
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.list
+
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.apply --handoff <handoff-id> --apply
+
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.batch.apply \
+  --handoff <first-handoff-id> \
+  --handoff <second-handoff-id> \
+  --apply
+
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.dismiss --handoff <handoff-id> --apply
+```
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   repository.post-merge.next-work \
   --confirmed-merged \
   --apply
@@ -247,6 +280,13 @@ approval pass the returned `apply_arguments` unchanged to the matching
 conflict detection, attempt records, bounded READONLY verification, and
 mutation non-retry. Every apply argument set also fixes the reviewed apply
 workflow contract pair SHA-256.
+
+The exact ordered handoff batch is the sole exception for state expectations
+made stale by an earlier successful operation in that same approved sequence.
+It reruns only the fixed later preflight, suppresses creation of a redundant
+handoff, and compares the refreshed argument vector against the original under
+the narrow allowlist in [approval-handoff.md](approval-handoff.md). This
+internal option is not part of the CLI and never authorizes semantic changes.
 
 ## Run Artifacts
 
