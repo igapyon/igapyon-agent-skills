@@ -91,9 +91,9 @@ After the human confirms that the Pull Request was merged, treat that confirmati
 
 ## PR Soft Reset Recommit Delegation
 
-- Treat `pr soft reset recommit` and `pr reset recommit` as explicit requests to run the PR Soft Reset Recommit workflow built into `igapyon-miku-scm`.
+- Treat bare `recommit`, `pr recommit`, `pr soft reset recommit`, and `pr reset recommit` as explicit requests to run the PR Soft Reset Recommit workflow built into `igapyon-miku-scm`. Bare `recommit` implicitly includes PR writing; do not require a separate PR request.
 - Use [github-writing-rules.md](github-writing-rules.md), [github-pr-writing.md](github-pr-writing.md), [github-pr-soft-reset-recommit.md](github-pr-soft-reset-recommit.md), and [github-backup-branch.md](github-backup-branch.md) for PR draft composition, backup-branch creation, soft reset, and recommit behavior. Use the bundled `scripts/pr-soft-reset-recommit-preflight.mjs`; do not invoke `igapyon-github-writer`.
-- Resolve the reset base before drafting. In this mode, override the generic latest-single-commit PR default and draft from the exact `<base>..HEAD` commit range that the helper will collapse. Inspect every commit and the complete diff for that range.
+- Resolve the reset base before drafting and use the exact `<base>..HEAD` commit range that the helper will collapse. Inspect every commit and the complete diff for that range. For ordinary PR writing without an explicit target, use the same range by default when it contains two or more commits; keep an exactly one-commit branch as a single-commit PR.
 - Before apply mode, compare the saved draft with `Commits To Collapse` and `Diff Stat`; require the title and body to cover every material change group in the collapsed range. If the draft covers a different scope, regenerate it before rewriting history.
 - Do not invalidate a verified same-session version check merely because this workflow starts. This includes a completed increment and an explicit no-increment confirmation for the same content. Re-read the version sources, rerun their alignment check, and confirm that the recommit content has not changed; when they still match the session record, continue without the version reminder.
 - Before delegating, require a clean working tree and run `git fetch origin` so the reset base is not resolved from stale remote-tracking information.

@@ -1,6 +1,6 @@
 ---
 name: igapyon-miku-scm
-description: Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, or explicitly asks to perform Git, GitHub writing, GitHub Release, repository-maintenance, or version-management work under miku-soft SCM rules. Supports PR, Release, About, and public GitHub Issue drafting; human-approved Issue and optional sub-Issue creation, title/body/existing-label updates, comments, standalone existing-label changes, and closure through narrowly documented `gh` workflows; PR soft-reset recommit; backup, branch-status, and three-stage local repository-maintenance workflows; date-based and Semantic Version increments; and READONLY version, tag, Release, and asset audits. Do not activate for generic Git or GitHub questions, ordinary repository inspection, or release-note writing outside an explicit miku-soft SCM request.
+description: Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, explicitly says `recommit` to invoke the miku-soft PR soft-reset recommit flow with implicit PR drafting, or explicitly asks to perform Git, GitHub writing, GitHub Release, repository-maintenance, or version-management work under miku-soft SCM rules. Supports PR, Release, About, and public GitHub Issue drafting; human-approved Issue and optional sub-Issue creation, title/body/existing-label updates, comments, standalone existing-label changes, and closure through narrowly documented `gh` workflows; PR soft-reset recommit; backup, branch-status, and three-stage local repository-maintenance workflows; date-based and Semantic Version increments; and READONLY version, tag, Release, and asset audits. Do not activate for generic Git or GitHub questions, ordinary repository inspection, or release-note writing outside an explicit miku-soft SCM request.
 ---
 
 # igapyon-miku-scm
@@ -33,24 +33,34 @@ Do not inspect the repository or load detailed references yet.
    Prefer `--format human` for a mechanical workflow when no structured field
    is needed for a subsequent step. Return the runner's `human_output`
    unchanged instead of paraphrasing it.
-3. For a current Issue status, backlog, or progress request, invoke
+3. Treat a bare `recommit` request as the PR Soft Reset Recommit workflow with
+   an implicit PR-writing request. The user does not need to say `PR`
+   separately. Resolve the base first and draft from exactly `<base>..HEAD`.
+   If no matching saved PR draft exists, collect `writing.pr.prepare` evidence,
+   draft and save the PR text, then continue to `pr.recommit.preflight`. For an
+   ordinary PR request without an explicit target, prefer the complete branch
+   range when the branch is two or more commits ahead of its resolved base;
+   keep a one-commit branch as a single-commit PR. Explicit commits and ranges
+   always win. This routing authorizes preparation only; preserve the explicit
+   approval gate before the local history rewrite.
+4. For a current Issue status, backlog, or progress request, invoke
    `github.issue.read --list` once with its default Open state. Do not add a
    second `--state all` read merely to calculate an Open/Closed breakdown.
    Use `--state closed` or `--state all` only when the user explicitly needs
    closed or historical Issues, completion metrics, or comparison with a
    closed Issue.
-4. Never issue `gh` directly. GitHub CLI access is allowed only inside the
+5. Never issue `gh` directly. GitHub CLI access is allowed only inside the
    fixed bundled helpers. If no fixed helper or anonymous REST route exists,
    stop instead of inventing a command.
-5. A READONLY result or preflight does not authorize mutation. Local rewrite,
+6. A READONLY result or preflight does not authorize mutation. Local rewrite,
    tracked-content change, remote mutation, deletion, tag change, Release
    publication, and version change each require the matching explicit request
    and workflow gate. Approval never transfers between workflows.
-6. Before tracked-content mutation or an ordinary commit, inspect the current
+7. Before tracked-content mutation or an ordinary commit, inspect the current
    branch and worktree. Do not mutate a `-done` branch. Preserve unrelated
    changes. Operational drafts and workflows with their own branch checks keep
    those documented rules.
-7. A standalone apply must consume the unchanged reviewed artifact and
+8. A standalone apply must consume the unchanged reviewed artifact and
    expected digest when its workflow defines one. In an exact ordered batch,
    a later mutation for the same Issue may use the fixed preflight helper to
    refresh only the snapshot expectations allowlisted by the batch contract
@@ -58,21 +68,21 @@ Do not inspect the repository or load detailed references yet.
    draft and digest, requested labels, close reason, duplicate target, and
    workflow contract must remain byte-for-byte equivalent. Never retry an
    unresolved mutation automatically.
-8. Report inspected, changed, and pending work. Keep tag recommendation
+9. Report inspected, changed, and pending work. Keep tag recommendation
    separate from tag mutation; normal tag handoff is GitHub's Release UI.
-9. Route an exact `miku-scm pending` request to
+10. Route an exact `miku-scm pending` request to
    `github.issue.handoff.list`. After a reviewed Issue preflight, an exact
    `miku-scm approve` request routes to `github.issue.handoff.apply --apply`
    and still requires exactly one pending handoff. The legacy `miku-scm 承認`
    input remains accepted.
-10. When the human supplies an exact handoff ID from the preflight or pending
+11. When the human supplies an exact handoff ID from the preflight or pending
     list, route `miku-scm approve <id>` to
     `github.issue.handoff.apply --handoff <id> --apply`, or route
     `miku-scm dismiss <id>` to
     `github.issue.handoff.dismiss --handoff <id> --apply`. Never choose,
     abbreviate, or reconstruct the ID or reviewed apply arguments. These exact
     commands are fast paths and do not require loading detailed references.
-11. Route an exact `miku-scm approve batch <id> <id> [...]` request to
+12. Route an exact `miku-scm approve batch <id> <id> [...]` request to
     `github.issue.handoff.batch.apply`, repeating `--handoff <id>` in the exact
     human-supplied order and ending with `--apply`. Require two to twenty
     unique pending IDs. Never infer membership or order from `all`, recency,

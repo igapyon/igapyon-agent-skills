@@ -21,12 +21,12 @@ Before drafting, first resolve the exact Git evidence target from the user's wor
 
 Use these interpretations unless the user explicitly says otherwise:
 
-- PR Soft Reset Recommit: resolve the reset base first and use exactly `<base>..HEAD`, covering every commit that will be collapsed. This mode overrides the generic PR latest-single-commit default.
+- A bare `recommit` request implicitly selects PR Soft Reset Recommit and PR writing together. Resolve the reset base first and use exactly `<base>..HEAD`, covering every commit that will be collapsed. Do not require the user to say `PR` separately.
 - `対象コミット <commit> における変更内容`: use exactly that single commit.
 - `<commit> の変更内容`: use exactly that single commit.
 - `<base>..<head>`: use Git's normal exclusive-left range; changes reachable from `<head>` but not from `<base>`.
 - `<base>...<head>`: use Git's normal merge-base comparison semantics.
-- PR request without a commit ID, explicit Git range, branch comparison, or working-tree target: first run `git log --oneline --decorate -1` to resolve the current latest commit ID, then use that single commit as the PR target. Inspect it as `<resolved-commit>` / `<resolved-commit>^..<resolved-commit>` and do not include uncommitted working-tree changes.
+- PR request without a commit ID, explicit Git range, branch comparison, or working-tree target: resolve the current branch base using the PR Soft Reset Recommit base rules. When `<base>..HEAD` contains two or more commits, use the complete range and guide the workflow toward recommit after drafting. When it contains exactly one commit, use that commit as the single-commit PR target. When the base is unresolved, use the bounded latest-single-commit fallback and disclose that limitation. Do not include uncommitted working-tree changes.
 - Release request with only a start commit ID: implicitly treat it as `<start>` through `HEAD`, including the change introduced by `<start>`; use `<start>^..HEAD`.
 - `<start> から HEAD まで` with wording that says `<start>` itself is included: use `<start>^..HEAD`.
 - `<start> から HEAD まで` in Release mode: treat `<start>` itself as included by default; use `<start>^..HEAD` unless the user explicitly says to exclude `<start>`.
@@ -41,13 +41,19 @@ For Release text, a start commit ID implies `from <start> through HEAD, includin
 
 After resolving the target, inspect the requested evidence.
 
-For a PR request without an explicit target:
+For a PR request without an explicit target, first resolve and inspect the
+branch range:
 
 ```sh
-git log --oneline --decorate -1
+git log --oneline --decorate <base>..HEAD
+git diff --stat --no-renames <base>...HEAD
 ```
 
-Use the commit ID shown by that command as the single commit target for the following inspection commands. Do not silently use an older commit ID from the conversation when the user's latest request omits the target.
+Use the complete range when it contains two or more commits. Use the latest
+commit as a single-commit target only when the branch is exactly one commit
+ahead, or when base resolution is unavailable and that limitation is reported.
+Do not silently use an older commit ID from the conversation when the user's
+latest request omits the target.
 
 For a single commit:
 

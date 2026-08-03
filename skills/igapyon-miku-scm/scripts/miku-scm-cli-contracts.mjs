@@ -722,12 +722,12 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     },
   ),
   "writing.pr.prepare": contract(
-    "Collect bounded repository evidence for drafting Pull Request prose.",
+    "Collect bounded repository evidence for drafting Pull Request prose; without --target, prefer the complete branch range when two or more commits are ahead of the resolved base.",
     [
       repoPath,
       option("--target", "<git-ref-or-range>", "Optional reviewed comparison target."),
     ],
-    ["--target", "origin/devel...HEAD"],
+    ["--repo", "."],
   ),
   "writing.release.prepare": contract(
     "Collect bounded repository evidence for drafting Release prose.",
