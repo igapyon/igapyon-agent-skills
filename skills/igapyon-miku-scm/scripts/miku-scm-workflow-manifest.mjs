@@ -213,7 +213,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "pr.recommit.preflight",
-    triggers: ["PR recommit事前確認", "PR soft reset確認"],
+    triggers: ["recommit", "PR recommit", "PR recommit事前確認", "PR soft reset確認"],
     required_parameters: ["repository"],
     mutation_level: "readonly",
     approval_gate: "preflight",
@@ -258,8 +258,8 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "writing.pr.prepare",
-    triggers: ["PR文面準備", "PR writing evidence"],
-    required_parameters: ["repository", "git_target"],
+    triggers: ["PR文面準備", "PR writing evidence", "recommit向けPR文面準備"],
+    required_parameters: ["repository"],
     mutation_level: "readonly",
     approval_gate: "none",
     runner_entry: "miku-scm-writing-prepare.mjs",

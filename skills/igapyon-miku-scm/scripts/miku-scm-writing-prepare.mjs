@@ -152,7 +152,126 @@ function resolveSingleCommit(root, target, git) {
   };
 }
 
-function resolveGitTarget(mode, root, requested, head, git) {
+function remoteBranchIsCurrentFeature(upstream, branch) {
+  if (!upstream || !branch) return false;
+  const normalized = upstream.replace(/^refs\/remotes\//, "");
+  const slash = normalized.indexOf("/");
+  return slash >= 0 && normalized.slice(slash + 1) === branch;
+}
+
+function prescribedBaseCandidate(branch) {
+  const match = branch.match(/^(.*)-tiga\d{4}[a-x][a-j][a-j]$/);
+  return match?.[1] ? `origin/${match[1]}` : "";
+}
+
+function resolveDefaultPrBase(root, branch, git) {
+  const upstream = git(root, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], {
+    allowFailure: true,
+  });
+  if (upstream.ok && upstream.out && !remoteBranchIsCurrentFeature(upstream.out, branch)) {
+    return { base: upstream.out, source: "current branch upstream" };
+  }
+
+  const prescribedBase = prescribedBaseCandidate(branch);
+  if (prescribedBase) {
+    const prescribed = git(root, ["rev-parse", "--verify", `${prescribedBase}^{commit}`], {
+      allowFailure: true,
+    });
+    if (prescribed.ok) {
+      return { base: prescribedBase, source: "base encoded by current work-branch name" };
+    }
+  }
+
+  const remoteHead = git(root, ["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"], {
+    allowFailure: true,
+  });
+  if (remoteHead.ok && remoteHead.out.startsWith("refs/remotes/")) {
+    return {
+      base: remoteHead.out.replace(/^refs\/remotes\//, ""),
+      source: "local origin/HEAD",
+    };
+  }
+
+  const fallback = git(root, ["rev-parse", "--verify", "origin/devel^{commit}"], {
+    allowFailure: true,
+  });
+  if (fallback.ok) return { base: "origin/devel", source: "local origin/devel fallback" };
+  return { base: "", source: "unresolved" };
+}
+
+function resolveDefaultPrTarget(root, branch, head, git) {
+  const base = resolveDefaultPrBase(root, branch, git);
+  if (!base.base) {
+    const resolved = resolveSingleCommit(root, head, git);
+    return {
+      requested: null,
+      resolved_log_target: resolved.logTarget,
+      resolved_diff_target: resolved.diffTarget,
+      resolution: "default-latest-single-commit-base-unresolved",
+      root_commit: resolved.rootCommit,
+      single_commit: true,
+      base: null,
+      base_source: base.source,
+      base_commit: null,
+      ahead_commit_count: null,
+      recommit_recommended: false,
+    };
+  }
+
+  const baseCommitResult = git(root, ["rev-parse", "--verify", `${base.base}^{commit}`], {
+    allowFailure: true,
+  });
+  if (!baseCommitResult.ok) {
+    throw new Error(`Default PR base could not be resolved: ${base.base}`);
+  }
+  const baseCommit = baseCommitResult.out;
+  const ancestor = git(root, ["merge-base", "--is-ancestor", baseCommit, head], {
+    allowFailure: true,
+  });
+  if (!ancestor.ok) {
+    throw new Error(`Default PR base is not an ancestor of HEAD: ${base.base}`);
+  }
+  const range = `${baseCommit}..${head}`;
+  const count = Number(git(root, ["rev-list", "--count", range]).out);
+  if (!Number.isSafeInteger(count) || count < 0) {
+    throw new Error(`Could not count commits in default PR range: ${base.base}..HEAD`);
+  }
+  if (count === 0) {
+    throw new Error(`No commits are available for a PR from ${base.base} to HEAD`);
+  }
+  if (count >= 2) {
+    return {
+      requested: null,
+      resolved_log_target: range,
+      resolved_diff_target: range,
+      resolution: "default-branch-multi-commit-range",
+      root_commit: false,
+      single_commit: false,
+      base: base.base,
+      base_source: base.source,
+      base_commit: baseCommit,
+      ahead_commit_count: count,
+      recommit_recommended: true,
+    };
+  }
+
+  const resolved = resolveSingleCommit(root, head, git);
+  return {
+    requested: null,
+    resolved_log_target: resolved.logTarget,
+    resolved_diff_target: resolved.diffTarget,
+    resolution: "default-branch-single-commit",
+    root_commit: resolved.rootCommit,
+    single_commit: true,
+    base: base.base,
+    base_source: base.source,
+    base_commit: baseCommit,
+    ahead_commit_count: count,
+    recommit_recommended: false,
+  };
+}
+
+function resolveGitTarget(mode, root, branch, requested, head, git) {
   if (requested.includes("..")) {
     git(root, ["rev-list", "--count", requested]);
     return {
@@ -187,12 +306,15 @@ function resolveGitTarget(mode, root, requested, head, git) {
       single_commit: false,
     };
   }
-  const resolved = resolveSingleCommit(root, requested || head, git);
+  if (mode === "pr" && !requested) {
+    return resolveDefaultPrTarget(root, branch, head, git);
+  }
+  const resolved = resolveSingleCommit(root, requested, git);
   return {
-    requested: requested || null,
+    requested,
     resolved_log_target: resolved.logTarget,
     resolved_diff_target: resolved.diffTarget,
-    resolution: requested ? "explicit-single-commit" : "default-latest-single-commit",
+    resolution: "explicit-single-commit",
     root_commit: resolved.rootCommit,
     single_commit: true,
   };
@@ -240,6 +362,7 @@ async function prepareGitWriting(options, dependencies) {
   const target = resolveGitTarget(
     options.mode,
     identity.root,
+    identity.branch,
     options.target,
     identity.head,
     git,
