@@ -88,14 +88,20 @@ import {
 } from "./miku-scm-help.mjs";
 import {
   applyPendingIssueHandoff,
+  applyPendingIssueHandoffBatch,
   createIssueApprovalHandoff,
+  dismissPendingIssueHandoff,
+  listPendingIssueHandoffs,
   parseHandoffApplyArgs,
+  parseHandoffBatchApplyArgs,
+  parseHandoffDismissArgs,
+  parseHandoffListArgs,
 } from "./miku-scm-handoff.mjs";
 import { failureEvent } from "./miku-scm-observability.mjs";
 
 export const RUNNER_SCHEMA_VERSION = "miku-scm.runner/v1";
 export const RESULT_SCHEMA_VERSION = "miku-scm.runner-result/v1";
-export const PRODUCT_VERSION = "1.20260802.1";
+export const PRODUCT_VERSION = "1.20260803.1";
 
 const RUN_ID = /^[A-Za-z0-9._-]+$/;
 const SECRET_OPTION = /(?:token|password|secret|authorization|credential)/i;
@@ -150,7 +156,7 @@ function publicArguments(argv) {
 
 function normalizedStatus(delegateStatus, mutationLevel, error = false) {
   if (delegateStatus === "not-applied" || delegateStatus === "conflict"
-    || delegateStatus === "unresolved") return delegateStatus;
+    || delegateStatus === "unresolved" || delegateStatus === "partial") return delegateStatus;
   if (!error) return "success";
   return mutationLevel === "remote" ? "unresolved" : "not-applied";
 }
@@ -159,6 +165,7 @@ function mutationState(workflow, delegateStatus) {
   if (workflow.approvalGate !== "apply" || workflow.mutationLevel === "readonly") return false;
   if (delegateStatus === "not-applied" || delegateStatus === "conflict") return false;
   if (delegateStatus === "unresolved") return null;
+  if (delegateStatus === "partial") return true;
   return true;
 }
 
@@ -496,6 +503,18 @@ export function workflowRegistry(dependencies = {}) {
     ["github.issue.label.apply", issueMutationWorkflow("label", "apply", dependencies)],
     ["github.issue.close.preflight", issueMutationWorkflow("close", "preflight", dependencies)],
     ["github.issue.close.apply", issueMutationWorkflow("close", "apply", dependencies)],
+    ["github.issue.handoff.list", {
+      version: 1,
+      mutationLevel: "readonly",
+      approvalGate: "none",
+      parse: parseHandoffListArgs,
+      plan: (options) => ({
+        operation: "github-issue-approval-handoff-list",
+        repository: path.resolve(options.root),
+        mutation_invocation_allowed: false,
+      }),
+      execute: (options) => listPendingIssueHandoffs(options),
+    }],
     ["github.issue.handoff.apply", {
       version: 1,
       mutationLevel: "remote",
@@ -504,6 +523,7 @@ export function workflowRegistry(dependencies = {}) {
       plan: (options) => ({
         operation: "github-issue-approval-handoff-apply",
         repository: path.resolve(options.root),
+        handoff: options.handoff,
         mutation_invocation_allowed: true,
       }),
       execute: (options) => applyPendingIssueHandoff(options, {
@@ -513,6 +533,47 @@ export function workflowRegistry(dependencies = {}) {
           applyArguments,
           { cwd: options.root },
         )),
+      }),
+    }],
+    ["github.issue.handoff.batch.apply", {
+      version: 1,
+      mutationLevel: "remote",
+      approvalGate: "apply",
+      parse: parseHandoffBatchApplyArgs,
+      plan: (options) => ({
+        operation: "github-issue-approval-handoff-batch-apply",
+        repository: path.resolve(options.root),
+        ordered_handoffs: [...options.handoffs],
+        mutation_invocation_allowed: true,
+      }),
+      execute: (options) => applyPendingIssueHandoffBatch(options, {
+        now: dependencies.now,
+        runApply: dependencies.handoffRunApply ?? ((applyWorkflow, applyArguments) => runWorkflow(
+          applyWorkflow,
+          applyArguments,
+          { cwd: options.root },
+        )),
+        runPreflight: dependencies.handoffRunPreflight
+          ?? ((preflightWorkflow, preflightArguments) => runWorkflow(
+            preflightWorkflow,
+            preflightArguments,
+            { cwd: options.root, saveIssueApprovalHandoff: false },
+          )),
+      }),
+    }],
+    ["github.issue.handoff.dismiss", {
+      version: 1,
+      mutationLevel: "local",
+      approvalGate: "apply",
+      parse: parseHandoffDismissArgs,
+      plan: (options) => ({
+        operation: "github-issue-approval-handoff-dismiss",
+        repository: path.resolve(options.root),
+        handoff: options.handoff,
+        mutation_invocation_allowed: true,
+      }),
+      execute: (options) => dismissPendingIssueHandoff(options, {
+        now: dependencies.now,
       }),
     }],
     ["repository.maintenance.diagnose", maintenanceWorkflow("diagnose", dependencies)],
@@ -650,7 +711,8 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
     executeStarted = true;
     let delegateResult = await workflow.execute(options);
     const finishedAt = (dependencies.now ? dependencies.now() : new Date()).toISOString();
-    if (workflowId.startsWith("github.issue.")
+    if (dependencies.saveIssueApprovalHandoff !== false
+      && workflowId.startsWith("github.issue.")
       && workflowId.endsWith(".preflight")
       && delegateResult?.status === "preflight-ok"
       && Array.isArray(delegateResult.apply_arguments)) {

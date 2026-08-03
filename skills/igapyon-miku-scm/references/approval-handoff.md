@@ -5,6 +5,17 @@ Issue mutation preflights save one immutable approval handoff under
 workflow IDs, reviewed apply arguments, workflow contract digest, reviewed
 summary, and relevant Issue or draft digests.
 
+List pending handoffs after an exact `miku-scm pending` request with:
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.list
+```
+
+The READONLY list returns stable handoff IDs and bounded review summaries. It
+does not return reviewed apply arguments. The Agent must not choose or
+abbreviate an ID for the human.
+
 After the human reviews the complete preflight and explicitly replies
 `miku-scm approve` (or the legacy `miku-scm 承認` input), invoke:
 
@@ -13,10 +24,84 @@ node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   github.issue.handoff.apply --apply
 ```
 
-The fixed workflow accepts no workflow ID, command fragment, handoff ID, or
-apply argument from the Agent. It requires exactly one pending Issue handoff
-in the current repository. Zero pending handoffs stop safely. Multiple pending
-handoffs also stop so the Agent cannot choose one implicitly.
+This compatibility form accepts no handoff ID or apply argument from the Agent.
+It requires exactly one pending Issue handoff in the current repository. Zero
+or multiple pending handoffs stop safely.
+
+When multiple handoffs are pending, the human may copy one exact ID from the
+preflight or pending list and reply `miku-scm approve <handoff-id>`. Invoke:
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.apply --handoff <handoff-id> --apply
+```
+
+The fixed workflow matches that complete ID against pending handoffs and
+applies only the matching record. The Agent must never infer the ID from Issue
+content, order, recency, or intent.
+
+For a reviewed batch, the human must supply two to twenty unique exact IDs in
+the intended execution order with
+`miku-scm approve batch <handoff-id> <handoff-id> [...]`. Invoke one fixed
+batch workflow, repeating `--handoff` in that same order:
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.batch.apply \
+  --handoff <first-handoff-id> \
+  --handoff <second-handoff-id> \
+  --apply
+```
+
+Before the first remote mutation, the helper validates that every supplied ID
+is unique, pending, digest-valid, and unchanged. It applies one handoff at a
+time in the supplied order and revalidates each record immediately before use.
+The first mutation for each repository Issue consumes the unchanged reviewed
+apply arguments.
+
+When a later selected handoff mutates the same existing Issue, an earlier
+approved step can invalidate its reviewed snapshot. After the earlier step is
+successfully verified, the batch invokes the later handoff's fixed preflight
+workflow with exactly its reviewed semantic options and without creating
+another approval handoff. It compares the returned apply arguments with the
+reviewed arguments and permits changes only to these state expectations:
+
+| Later operation | Dependency-refreshed expectations |
+| --- | --- |
+| comment | Issue snapshot SHA-256 and `updated_at` after any earlier same-Issue mutation |
+| content update | `updated_at`; current Issue SHA-256 only after an earlier content or label update |
+| label update | `updated_at`; current-label SHA-256 only after an earlier content or label update |
+| close | `updated_at`; current-body SHA-256 only after an earlier content update |
+
+Repository, Issue number, draft and draft digest, update or operation digest,
+requested labels, close reason, duplicate target and snapshot, workflow
+contract digest, and all other options must remain equivalent. A changed
+non-allowlisted value records the later handoff as `conflict` and stops the
+batch before its mutation. Every dependency preflight has its own run artifact,
+does not create another pending handoff, and its original/refreshed argument
+digests and changed option names are recorded on the applied handoff.
+
+A dependency preflight READONLY failure records the later handoff as
+`not-applied`, not `conflict`. The earlier successful mutation remains applied,
+and a new preflight is required for the stopped operation.
+
+Any `not-applied`, `conflict`, `unresolved`, changed, or missing result stops
+the batch before all later handoffs. Earlier successful mutations remain
+applied and are reported as a partial result; the workflow never rolls them
+back or retries them. A vague approval such as `all` does not authorize the
+Agent to select or order handoffs.
+
+After an exact `miku-scm dismiss <handoff-id>` request, mark only that pending
+handoff as `not-applied` with:
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.dismiss --handoff <handoff-id> --apply
+```
+
+Dismissal changes only the local approval handoff record and performs no
+GitHub or Git mutation. A missing, non-pending, malformed, or ambiguous ID
+stops without changing another record.
 
 The helper validates the record digest, immutable-content digest, workflow
 pair, apply workflow allowlist, `--apply` gate, and reviewed workflow contract
@@ -24,6 +109,9 @@ digest before passing the unchanged argument array to the registered apply
 workflow. The apply workflow remains authoritative for conflict detection,
 attempt records, mutation non-retry, and postcondition verification.
 
-Successful apply changes the handoff state to `applied`. A known safe stop
-changes it to `not-applied`; an uncertain mutation changes it to `unresolved`.
-The workflow never automatically retries either state.
+Successful apply changes the handoff state to `applied`. A reviewed-snapshot
+change reported by the delegate changes it to `conflict`; another known safe
+apply stop or explicit dismissal changes it to `not-applied`; an uncertain
+mutation changes it to `unresolved`. Batch human output preserves the stopped
+delegate status and available reviewed-versus-observed timestamps. The
+workflow never automatically retries any non-pending state.

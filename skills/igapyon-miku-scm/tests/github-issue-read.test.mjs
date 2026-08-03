@@ -14,6 +14,16 @@ test("list uses a fixed gh issue list command and normalizes Issue fields", () =
   assert.deepEqual(result.issues, [{ number: 7, state: "OPEN", title: "Title", body: "Body", html_url: issue.url, updated_at: issue.updatedAt }]);
 });
 
+test("list defaults to Open Issues", () => {
+  const calls = [];
+  const result = runIssueRead(parseArgs(["--repo", "a/b", "--list"]), { gh: (args) => {
+    calls.push(args); return { ok: true, status: 0, stdout: "[]", stderr: "" };
+  } });
+
+  assert.equal(result.state, "open");
+  assert.deepEqual(calls, [["issue", "list", "--repo", "a/b", "--state", "open", "--limit", "1000", "--json", "number,state,title,body,url,updatedAt"]]);
+});
+
 test("single-Issue reading uses fixed gh issue view with comments", () => {
   const calls = [];
   const result = runIssueRead(parseArgs(["--repo", "a/b", "--issue", "7"]), { gh: (args) => {

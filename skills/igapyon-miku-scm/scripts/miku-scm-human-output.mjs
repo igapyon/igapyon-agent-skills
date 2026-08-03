@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v4";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v8";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -14,6 +14,10 @@ const WORKFLOW_TITLES = Object.freeze({
   "github.issue.label.apply": "GitHub Issue label update",
   "github.issue.close.preflight": "GitHub Issue close",
   "github.issue.close.apply": "GitHub Issue close",
+  "github.issue.handoff.list": "GitHub Issue approval handoff list",
+  "github.issue.handoff.apply": "GitHub Issue approval handoff apply",
+  "github.issue.handoff.batch.apply": "GitHub Issue approval handoff batch apply",
+  "github.issue.handoff.dismiss": "GitHub Issue approval handoff dismissal",
   "repository.maintenance.diagnose": "Repository maintenance diagnosis",
   "repository.maintenance.plan": "Repository maintenance plan",
   "repository.maintenance.apply": "Repository maintenance",
@@ -50,6 +54,7 @@ function labelsValue(labels) {
 }
 
 function resultHeader({ status, approvalGate, delegateStatus }) {
+  if (status === "partial") return "PARTIAL";
   if (status === "conflict") return "CONFLICT";
   if (status === "unresolved") return "UNRESOLVED";
   if (status === "not-applied") return "NOT APPLIED";
@@ -125,8 +130,84 @@ function appendIssueOperation(lines, workflow, result) {
   if (workflow.endsWith(".preflight") && result.apply_arguments) {
     lines.push("Remote mutation: not invoked");
     if (result.handoff) lines.push(`Approval ID: ${result.handoff.id}`);
-    lines.push("Approval command: reply with exactly `miku-scm approve` in chat");
+    const approval = result.handoff
+      ? `miku-scm approve ${result.handoff.id}`
+      : "miku-scm approve";
+    lines.push(`Approval command: reply with exactly \`${approval}\` in chat`);
   }
+}
+
+function appendHandoffList(lines, result) {
+  const handoffs = Array.isArray(result.handoffs) ? result.handoffs : [];
+  lines.push(`Pending handoff count: ${result.pending_count ?? handoffs.length}`);
+  for (const handoff of handoffs) {
+    lines.push(`Handoff ID: ${displayValue(handoff.id)}`);
+    lines.push(`Apply workflow: ${displayValue(handoff.apply_workflow)}`);
+    lines.push(`Repository: ${displayValue(handoff.repository)}`);
+    if (handoff.issue) lines.push(`Issue: #${handoff.issue}`);
+    if (handoff.title) lines.push(`Title: ${displayValue(handoff.title)}`);
+    if (handoff.draft) lines.push(`Draft: ${displayValue(handoff.draft)}`);
+    lines.push(`Created at: ${displayValue(handoff.created_at)}`);
+    lines.push(`Approve command: miku-scm approve ${displayValue(handoff.id)}`);
+    lines.push(`Dismiss command: miku-scm dismiss ${displayValue(handoff.id)}`);
+  }
+  if (handoffs.length > 1) {
+    lines.push("Batch approval format: miku-scm approve batch <handoff-id> <handoff-id> [...]");
+  }
+}
+
+function appendHandoffBatch(lines, result) {
+  const results = Array.isArray(result.results) ? result.results : [];
+  lines.push(`Batch status: ${displayValue(result.batch_status ?? result.status)}`);
+  lines.push(`Requested handoff count: ${result.requested_count ?? 0}`);
+  lines.push(`Processed handoff count: ${result.processed_count ?? results.length}`);
+  lines.push(`Applied handoff count: ${result.applied_count ?? 0}`);
+  for (let index = 0; index < results.length; index += 1) {
+    const entry = results[index];
+    lines.push(
+      `Step ${index + 1}: ${displayValue(entry.handoff?.id)}`
+      + ` | ${displayValue(entry.apply_workflow)}`
+      + ` | ${displayValue(entry.status)}`,
+    );
+    if (entry.dependency_refresh) {
+      lines.push(
+        `Step ${index + 1} dependency refresh: `
+        + `${displayValue(entry.dependency_refresh.status)}`,
+      );
+      const options = Array.isArray(entry.dependency_refresh.refreshed_options)
+        ? entry.dependency_refresh.refreshed_options
+        : [];
+      if (options.length > 0) {
+        lines.push(`Step ${index + 1} refreshed options: ${options.map(oneLine).join(", ")}`);
+      }
+    }
+  }
+  if (result.stopped_handoff) {
+    lines.push(`Stopped handoff: ${displayValue(result.stopped_handoff)}`);
+    lines.push(`Stopped status: ${displayValue(result.stopped_status)}`);
+    const stopped = results.find((entry) => entry.handoff?.id === result.stopped_handoff);
+    const delegate = stopped?.apply_result?.delegate_result;
+    if (stopped?.apply_result?.status) {
+      lines.push(`Stopped apply status: ${displayValue(stopped.apply_result.status)}`);
+    }
+    if (delegate?.stage) lines.push(`Stopped stage: ${displayValue(delegate.stage)}`);
+    if (delegate?.reviewed_updated_at) {
+      lines.push(`Reviewed updated at: ${displayValue(delegate.reviewed_updated_at)}`);
+    }
+    if (delegate?.observed_updated_at) {
+      lines.push(`Observed updated at: ${displayValue(delegate.observed_updated_at)}`);
+    }
+  }
+  if (result.stop_reason) lines.push(`Stop reason: ${displayValue(result.stop_reason)}`);
+  const remaining = Array.isArray(result.remaining_handoffs) ? result.remaining_handoffs : [];
+  lines.push(`Remaining handoff count: ${remaining.length}`);
+  for (const handoff of remaining) lines.push(`Remaining handoff: ${displayValue(handoff)}`);
+}
+
+function appendHandoffDismiss(lines, result) {
+  lines.push(`Handoff ID: ${displayValue(result.handoff?.id)}`);
+  lines.push(`Handoff status: ${displayValue(result.handoff?.status)}`);
+  lines.push(`Handoff path: ${displayValue(result.handoff?.path)}`);
 }
 
 function appendGeneric(lines, result) {
@@ -296,6 +377,12 @@ export function renderHumanOutput({
     appendPostMergeNextWork(lines, result ?? {});
   } else if (workflow === "github.issue.read") {
     appendIssueRead(lines, result ?? {});
+  } else if (workflow === "github.issue.handoff.list") {
+    appendHandoffList(lines, result ?? {});
+  } else if (workflow === "github.issue.handoff.batch.apply") {
+    appendHandoffBatch(lines, result ?? {});
+  } else if (workflow === "github.issue.handoff.dismiss") {
+    appendHandoffDismiss(lines, result ?? {});
   } else if (workflow.startsWith("github.issue.")) {
     appendIssueOperation(lines, workflow, result ?? {});
   } else if (workflow.startsWith("version.")) {

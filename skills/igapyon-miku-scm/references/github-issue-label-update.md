@@ -44,6 +44,12 @@ Show the exact Issue, current labels, additions, removals, complete resulting
 labels, operation digest, current-label digest, `updated_at`, and planned
 command. Wait for explicit human approval.
 
+When this handoff is a later step in one explicitly ordered approval batch for
+the same Issue, the batch runner may perform the dependency preflight defined
+in [approval-handoff.md](approval-handoff.md). It may refresh only the state
+expectations permitted there; the reviewed repository, Issue, label operations,
+operation digest, and contract pair remain fixed.
+
 ## Apply and Verification
 
 Apply requires the reviewed operation digest, current-label digest,
