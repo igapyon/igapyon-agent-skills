@@ -34,6 +34,21 @@ lo-res:
   -c:a pcm_s16le
 ```
 
+### Source-Preserving 32-bit Float Master
+
+When the input is PCM 32-bit float and the user explicitly asks to retain that
+format, make a separately named master at the source sample rate with
+`-sample_fmt flt -c:a pcm_f32le`. For example, a 96 kHz source remains 96 kHz:
+
+```text
+-ar 96000 -sample_fmt flt -c:a pcm_f32le
+```
+
+Do not substitute the 192 kHz / 24-bit hi-res setting for an explicit
+32-bit-float-preservation request. See
+[delivery-variants.md](delivery-variants.md) when the user also needs smaller
+or mobile-friendly copies.
+
 If the user does not choose, use hi-res and mention that the intermediate WAV
 file will be larger. For the default YouTube MP4 video creation step, the
 prepared WAV audio is converted to AAC. If the user explicitly asks for the
