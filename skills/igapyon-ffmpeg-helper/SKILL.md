@@ -64,6 +64,7 @@ Use these process files as reusable command building blocks:
 - [references/process/audio-trim.md](references/process/audio-trim.md)
 - [references/process/peak-gain-normalize.md](references/process/peak-gain-normalize.md)
 - [references/process/audio-concat.md](references/process/audio-concat.md)
+- [references/process/delivery-variants.md](references/process/delivery-variants.md)
 - [references/process/still-image-youtube-video.md](references/process/still-image-youtube-video.md)
 - [references/process/youtube-manual-upload.md](references/process/youtube-manual-upload.md)
 
@@ -105,6 +106,11 @@ Unless the user explicitly changes the first-cut workflow:
 - Tell the user that hi-res intermediate WAV files will be larger.
 - For multiple WAVs, trim and gain-adjust each selected WAV first, then
   concatenate.
+- Retain the selected adjusted WAV as a separately named master; do not replace
+  it with a delivery format.
+- When the user asks for mobile playback, lightweight sharing, or a
+  Drive-friendly file, create a requested delivery variant after preserving the
+  master.
 - End at a YouTube-uploadable video file.
 - Upload manually through the YouTube Studio Web UI.
 - Do not introduce YouTube API upload, OAuth, scheduled publishing, or metadata

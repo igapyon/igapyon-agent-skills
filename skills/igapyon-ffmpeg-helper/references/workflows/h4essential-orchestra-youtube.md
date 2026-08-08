@@ -9,7 +9,9 @@ H4essential orchestra recording folders
   -> measurement phase with loudnorm JSON
   -> finishing phase with volume-only gain to target peak -0.5 dBTP
   -> optionally concatenate adjusted files
+  -> retain adjusted WAV as master
   -> combine still image + audio into a YouTube-uploadable video
+  -> optionally create a mobile/Drive share copy
   -> manual upload in YouTube Studio
 ```
 
@@ -20,6 +22,8 @@ This workflow is intentionally personal and narrow:
 - Source: ZOOM H4essential recording folders copied to local storage.
 - Main use case: orchestra or ensemble rehearsal recording.
 - Final target: YouTube-uploadable video file.
+- Optional additional target: a small audio-only share copy for mobile playback
+  or Drive sharing.
 - Upload method: manual upload through YouTube Studio.
 - Cut points and file boundaries: human judgment in the first cut. Strongly
   recommend checking the recording in VLC before deciding start/end times or
@@ -88,6 +92,10 @@ Classify the request into one mode:
 - YouTube upload format: prefer MP4/H.264/AAC by default for official
   recommendation alignment. Offer the local-html-tools-style MKV route only
   when the user explicitly wants to preserve WAV audio with `-c:a copy`.
+- Delivery variants: retain the adjusted WAV as master, then create only the
+  requested variants. Use MP4 for YouTube and AAC/M4A for Android, iPhone, or
+  lightweight Drive sharing. Follow
+  [../process/delivery-variants.md](../process/delivery-variants.md).
 
 ## Process Order
 
@@ -100,7 +108,8 @@ Use these process runbooks in order:
 5. [../process/audio-concat.md](../process/audio-concat.md), only when multiple
    adjusted WAV files must be joined
 6. [../process/still-image-youtube-video.md](../process/still-image-youtube-video.md)
-7. [../process/youtube-manual-upload.md](../process/youtube-manual-upload.md)
+7. [../process/delivery-variants.md](../process/delivery-variants.md), only when requested
+8. [../process/youtube-manual-upload.md](../process/youtube-manual-upload.md)
 
 ## Output Naming
 
@@ -131,6 +140,7 @@ workplace/ffmpeg-helper-260114_160901/
   01_gain-meta.json
   01_gain-lores-tp0p5-plain.wav
   260114_160901-youtube.mp4
+  260114_160901_share-aac384.m4a
 ```
 
 Do not overwrite source recordings. Generated commands should write to
@@ -155,6 +165,9 @@ For this workflow:
   - hi-res: 192 kHz / 24-bit WAV.
   - lo-res: 44.1 kHz / 16-bit WAV.
 - Tell the user that hi-res intermediate WAV files will be larger.
+- When the user explicitly asks to retain a 32-bit float source, preserve the
+  source sample rate and PCM 32-bit float in a separately named master.
+- Create a lossy M4A only as an additional requested delivery variant.
 - For multiple WAV files, normalize each trimmed file before concatenation.
 
 This is a practical workflow choice to preserve the natural sound of the
