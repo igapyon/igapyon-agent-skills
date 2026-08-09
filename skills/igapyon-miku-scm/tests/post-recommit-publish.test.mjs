@@ -320,6 +320,34 @@ test("post-merge helper creates the next work branch from refreshed devel", asyn
   assert.equal(git(state.repo, "branch", "--show-current"), "devel-tiga0725ief");
 });
 
+test("post-merge helper uses remote HEAD for a legacy done branch with a feature upstream", async (t) => {
+  const state = await scenario(t);
+  const legacy = "tiga0501xea";
+  git(state.repo, "branch", "-m", state.branch, legacy);
+  git(state.repo, "push", "-u", "origin", `HEAD:refs/heads/${legacy}`);
+  git(state.repo, "push", "origin", "HEAD:refs/heads/devel");
+  git(state.repo, "remote", "set-head", "origin", "devel");
+  git(state.repo, "branch", "-m", legacy, `${legacy}-done`);
+  assert.equal(git(state.repo, "rev-parse", "--abbrev-ref", "@{upstream}"), `origin/${legacy}`);
+
+  const result = await runNextWork({
+    repo: state.repo,
+    remote: "origin",
+    base: "",
+    confirmedMerged: true,
+    apply: true,
+  }, {
+    now: () => new Date("2026-08-09T13:18:00+09:00"),
+  });
+
+  assert.equal(result.status, "created");
+  assert.equal(result.previous_branch, `${legacy}-done`);
+  assert.equal(result.base, "devel");
+  assert.equal(result.final_branch, "devel-tiga0809nbi");
+  assert.equal(result.comparison, "0 0");
+  assert.equal(git(state.repo, "branch", "--show-current"), "devel-tiga0809nbi");
+});
+
 test("content VERSION.md derives a v-prefixed tag and resets to a on a new date", async (t) => {
   const state = await scenario(t);
   await writeFile(path.join(state.repo, "VERSION.md"), "20260726a\n", "utf8");

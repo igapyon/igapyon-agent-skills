@@ -595,7 +595,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     [
       repoPath,
       option("--remote", "<name>", "Git remote name.", { default: "origin" }),
-      option("--base", "<branch>", "Base branch; inferred from the current done branch when omitted."),
+      option("--base", "<branch>", "Base branch; inferred from the current done branch or remote HEAD when omitted."),
       option("--confirmed-merged", "", "Confirm that the PR was merged.", { required: true }),
       apply,
     ],

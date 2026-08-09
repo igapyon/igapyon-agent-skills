@@ -166,6 +166,16 @@ Interpret a local branch name ending in `-done` only as an operational marker th
 
 Treat a `-done` branch as frozen: do not add new work, stage changes, create commits, or run PR Soft Reset Recommit on it. After receiving the human's merge report, refresh the base, run the non-blocking recommended-tag check below, and create the next work branch before continuing. If the prior PR was not merged but a correction is required, stop and require an explicitly designed recovery path instead of silently continuing on `-done`.
 
+When `--base` is omitted, first infer the base from a current branch that
+matches the prescribed `<base>-tiga<MMDD><hour-code><minute-codes>-done`
+shape. For a legacy or otherwise non-prescribed `-done` branch such as
+`tiga0501xea-done`, fetch the selected remote and resolve its remote-tracking
+`HEAD`, such as `origin/HEAD -> origin/devel`, as the base. Never treat the
+feature branch's upstream (for example `origin/tiga0501xea`) or the full local
+`-done` name as the next-work base. If neither the prescribed name nor the
+selected remote's `HEAD` resolves a valid base, stop and require an explicit
+`--base` without creating a branch.
+
 ### Non-Blocking Recommended Tag Check
 
 After `git fetch origin` succeeds and before creating the next work branch:

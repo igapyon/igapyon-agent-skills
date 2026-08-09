@@ -40,6 +40,16 @@ function branchName(base, date = new Date()) {
   const abc = (n) => String.fromCharCode(97 + n);
   return `${base}-tiga${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}${abc(date.getHours())}${abc(Math.floor(date.getMinutes() / 10))}${abc(date.getMinutes() % 10)}`;
 }
+function baseFromDoneBranch(branch) {
+  return branch.match(/^(.+)-tiga\d{4}[a-x][a-j][a-j]-done$/)?.[1] ?? "";
+}
+function baseFromRemoteHead(root, remote, git = runner) {
+  const symbolic = git(root, ["symbolic-ref", "--quiet", "--short", `refs/remotes/${remote}/HEAD`], true);
+  const prefix = `${remote}/`;
+  if (!symbolic.ok || !symbolic.out.startsWith(prefix)) return "";
+  const base = symbolic.out.slice(prefix.length);
+  return NAME.test(base) ? base : "";
+}
 async function version(root, commit, git = runner) {
   const standalone = git(root, ["show", `${commit}:VERSION.md`], true);
   const standaloneValue = standalone.ok ? standalone.out.trim() : "";
@@ -77,11 +87,12 @@ export async function run(options, dependencies = {}) {
   const before = git(root, ["branch", "--show-current"]).out;
   if (!before.endsWith("-done")) throw new Error("Current branch must end in -done");
   if (git(root, ["status", "--porcelain"]).out) throw new Error("Working tree or index is dirty");
-  const base = options.base || before.replace(/-tiga\d{4}[a-x][a-j][a-j]-done$/, "");
-  if (!base || !NAME.test(base)) throw new Error("Base branch is unresolved; pass --base");
+  const nameBase = baseFromDoneBranch(before);
   const head = git(root, ["rev-parse", "HEAD"]).out;
   git(root, ["fetch", options.remote]);
   if (git(root, ["branch", "--show-current"]).out !== before || git(root, ["rev-parse", "HEAD"]).out !== head || git(root, ["status", "--porcelain"]).out) throw new Error("Local state changed during fetch");
+  const base = options.base || nameBase || baseFromRemoteHead(root, options.remote, git);
+  if (!base || !NAME.test(base)) throw new Error("Base branch is unresolved; pass --base");
   const remoteBase = `${options.remote}/${base}`;
   const baseCommit = git(root, ["rev-parse", remoteBase]).out;
   const next = branchName(base, dependencies.now ? dependencies.now() : new Date());
