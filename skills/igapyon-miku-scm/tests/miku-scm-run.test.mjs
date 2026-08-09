@@ -788,6 +788,9 @@ test("post-merge workflow keeps merge confirmation and apply inside one fixed ru
     if (command === "status --porcelain") return { ok: true, out: "" };
     if (command === "rev-parse HEAD") return { ok: true, out: head };
     if (command === "fetch origin") return { ok: true, out: "" };
+    if (command === "symbolic-ref --quiet --short refs/remotes/origin/HEAD") {
+      return { ok: true, out: "origin/devel" };
+    }
     if (command === "rev-parse origin/devel") return { ok: true, out: baseHead };
     if (command === "show-ref --verify --quiet refs/heads/devel-tiga0727weg") {
       return { ok: false, out: "" };
@@ -879,6 +882,29 @@ test("post-merge workflow keeps merge confirmation and apply inside one fixed ru
   assert.equal(lookupFailed.result.tag_target, null);
   assert.match(lookupFailed.human_output, /^Tag status: lookup-failed$/m);
   assert.match(lookupFailed.human_output, /^Final branch: devel-tiga0727weg$/m);
+
+  branch = "tiga0501xea-done";
+  head = "a".repeat(40);
+  tagLookupResult = { ok: true, out: `${baseHead}\trefs/tags/v20260727c` };
+  const legacyDoneBranch = await runWorkflow("repository.post-merge.next-work", [
+    "--repo", root,
+    "--confirmed-merged",
+    "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "post-merge-legacy-done-branch",
+    now: () => new Date("2026-07-27T22:46:00+09:00"),
+    postMergeDependencies: {
+      git,
+      now: () => new Date("2026-07-27T22:46:00+09:00"),
+    },
+  });
+  assert.equal(legacyDoneBranch.status, "success");
+  assert.equal(legacyDoneBranch.result.base, "devel");
+  assert.equal(legacyDoneBranch.result.final_branch, "devel-tiga0727weg");
+  assert.match(legacyDoneBranch.human_output, /^Previous branch: tiga0501xea-done$/m);
+  assert.ok(calls.some((args) => args.join(" ") === "symbolic-ref --quiet --short refs/remotes/origin/HEAD"));
 });
 
 test("publication runner keeps saved preflight and reviewed-plan apply separate", async (t) => {

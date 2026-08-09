@@ -228,9 +228,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "post-merge-next-work.mjs",
     "contract_spec": "scm-rules.md",
     "contract_test": "post-recommit-publish.test.mjs",
-    "runner_sha256": "120b4f1a0922d93e9eb7218362e2fc56e52c58e2cba181cf8fcdd6bbaddb7b12",
-    "spec_sha256": "e519885fc5ef24ee375f48819786996e668f2b383d40b25ac67db89448af93db",
-    "pair_sha256": "4378e2584a37c47f19d9ffcbcd66d0f5584d12ccf75e4d468fc30edfc6971763"
+    "runner_sha256": "488680115f322b7b1ac627641fee948f78de5149b14b3eabfae1cd4f985494b3",
+    "spec_sha256": "678192d439f27e3b5d53f4b6ec393022eafe1c2cdc3bb9d30c324b052ea5fbe5",
+    "pair_sha256": "6d83d8e74b24c51eb1dd193e93cac92356446748f8bbba96b62e762079a3a7de"
   },
   {
     "workflow": "pr.publish.preflight",
