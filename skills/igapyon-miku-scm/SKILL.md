@@ -30,9 +30,12 @@ Do not inspect the repository or load detailed references yet.
    containing this `SKILL.md`; never derive it from the target repository name
    or `--repo`, which identifies only the workflow target. Do not read its
    detailed Markdown during normal execution.
-   Prefer `--format human` for a mechanical workflow when no structured field
-   is needed for a subsequent step. Return the runner's `human_output`
-   unchanged instead of paraphrasing it.
+   Prefer human output for a mechanical workflow when no structured field is
+   needed for a subsequent step. Because `--format` is a runner-global option,
+   always place it before the workflow ID:
+   `node <skill-root>/scripts/miku-scm-run.mjs --format human <workflow-id>
+   [workflow options]`. Never place `--format` after the workflow ID. Return
+   the runner's `human_output` unchanged instead of paraphrasing it.
 3. Treat a bare `recommit` request as the PR Soft Reset Recommit workflow with
    an implicit PR-writing request. The user does not need to say `PR`
    separately. Resolve the base first and draft from exactly `<base>..HEAD`.
