@@ -138,6 +138,261 @@ Update this section while working. Do not rewrite unrelated TODO items.
 
 ### Tasks
 
+- [ ] [Current priority: miku-scm 高速化の自己レビュー対応] 以下のStep 0から
+  Step 8までを番号順に実行する。後続Stepを先行実装しない。各Stepのfocused testが
+  成功してから次へ進み、失敗時はそのStep内で修正する。
+  - 作業規則:
+    - この項目の実装中は、ユーザーが明示するまで`git commit`、`git push`、PR作成、
+      merge、tag、Release作成を実行しない。
+    - 既存の未コミット差分を保持する。対象外fileをrestore、削除、formatしない。
+    - runnerはGit/GitHubの機械的処理だけを担当する。PR本文生成のようなAI判断を
+      Node.js runnerへ移さない。
+    - 失敗時に自動でunstage、restore、retryしない。HEADと作業treeをそのまま残し、
+      `stage`、`blockers`、`next_action`を構造化結果へ返す。
+  - 現在の基準状態（2026-08-10）:
+    - branchは`devel-tiga0810vdc`、`origin/devel`より2コミット先行。
+    - `work.commit`のone-shot化は実装済み。base・draft自動解決のsource修正は
+      未コミットで、ユーザー用`~/.codex/skills/igapyon-miku-scm`へ同期済み。
+    - fast suite 128件、full suite 226件、workflow contract drift check、
+      `mvn generate-resources`、Skill validationは成功済み。
+    - 現在branchのread-only recommit preflightはbaseを`origin/devel`へ解決するが、
+      branch-matching PR draftは存在しない。
+
+  - [x] [Step 0: 作業開始時の再確認] 既存差分とテスト基準を記録する。
+    - `git status -sb`と`git diff --stat`を実行し、上記基準状態との差をこの項目へ追記する。
+    - `npm run test:miku-scm:fast`を一度実行する。失敗した場合は新規実装へ進まず、
+      失敗test名と既存差分との関係を記録する。
+    - 完了条件: 作業開始時のbranch、ahead/behind、変更file、fast suite件数と結果が
+      この項目から再現できる。
+    - 2026-08-10: `devel-tiga0810vdc`、`origin/devel`より2コミット先行、既存の
+      miku-scm source変更と`TODO.md`変更を確認した。`npm run test:miku-scm:fast`は
+      128件成功、0件失敗（約4.5秒）。
+
+  - [x] [Step 1 / P0: commit直前のtree不変性] checkがworktreeを変更したら
+    commit前に停止する。
+    - 変更対象:
+      - `skills/igapyon-miku-scm/scripts/work-commit.mjs`
+      - `skills/igapyon-miku-scm/tests/work-commit.test.mjs`
+      - 結果schemaを変更した場合のみ、CLI contract、manifest、human outputも更新する。
+    - 実装仕様:
+      - 現在の「staged path一覧」と「staged diff digest」のcheck前後比較を維持する。
+      - 全check成功後、`git commit`の直前に次の二条件を追加確認する。
+        1. `git diff --name-only -z --no-renames --`の結果が空である。
+        2. `git ls-files --others --exclude-standard -z`の結果が空である。
+      - どちらかが空でなければcommitを実行せず、`status: partial`、
+        `stage: post-check-verify`、変更path、`next_action`を返す。
+      - check失敗時と同様に自動unstage、restore、retryを行わない。
+    - 必須test:
+      - injected checkがstage済みtracked fileをさらに変更するfixture。
+      - injected checkが非ignoreのuntracked fileを生成するfixture。
+      - 両fixtureでHEADが開始時と同じ、commit件数が不変、元のstage内容が残り、
+        結果が`partial/post-check-verify`であることをassertする。
+      - 正常fixtureでは従来どおり一回だけcommitされることをassertする。
+    - 完了条件:
+      - `node --test skills/igapyon-miku-scm/tests/work-commit.test.mjs`が成功する。
+      - checkが作った差分を黙ってcommitしたり、commit後に`partial`報告したりしない。
+    - 2026-08-10: staged path/digest再照合後にunstaged tracked pathsとnon-ignored
+      untracked pathsを検査する処理を実装した。tracked変更・untracked生成の2 fixtureで
+      HEAD不変、stage保持、`partial/post-check-verify`を確認。focused test 10件、
+      fast suite 130件、contract regeneration/drift checkはすべて成功。
+
+  - [x] [Step 2 / P0: exact `miku-scm pr recommit push`] PR draftが無い通常経路も、
+    一つのユーザーturnで完走させる。
+    - 変更対象:
+      - `skills/igapyon-miku-scm/SKILL.md`
+      - `skills/igapyon-miku-scm/references/github-pr-recommit-push.md`
+      - `skills/igapyon-miku-scm/tests/miku-scm-pr-routing.test.mjs`
+      - `skills/igapyon-miku-scm/tests/pr-recommit-push.test.mjs`
+      - AI文章生成はSkill routingに残し、AIを呼ぶ新規Node.js runnerは作らない。
+    - exact phraseの処理順を次で固定する:
+      1. `pr.recommit.preflight --repo <repo>`をREADONLYで一回実行する。
+      2. `PR draft is unresolved or missing`以外のblockerが一つでもあれば停止し、
+         draft生成、backup、reset、commit、pushを実行しない。
+      3. matching draftがあり他のblockerが無ければ、preflightが返したbaseとdraftを渡して
+         `pr.recommit.push --apply`を直ちに一回実行する。
+      4. matching draftが無く、唯一のblockerがdraft不在なら、
+         `writing.pr.prepare --repo <repo> --target <resolved-base>..HEAD`を一回実行する。
+      5. Agentはprepare結果だけを根拠にPR本文を一度生成し、返却された
+         `suggested_draft_path`へ保存する。別pathを発明しない。
+      6. 保存直後、同じturnでresolved baseと保存pathを渡した
+         `pr.recommit.push --apply`を一回実行する。追加承認を求めない。
+    - 承認境界:
+      - ユーザーのexact phraseに含まれる`push`を、backup branch作成、recommit、
+        conditional pushの承認とみなす。
+      - runner内部はbackup成功後、recommit、push、remote comparison `0 0`、draftの
+        `-done` renameまでAI Agentへ戻さず進める。
+      - `-done`は廃止しない。rename失敗はsuccessにせず`partial`で返す。
+    - 必須test:
+      - routing testで上記1〜6の順序、追加承認なし、AI生成がSkill層であることをassertする。
+      - temp repositoryで「既存draftあり → backup → recommit → push → `0 0` →
+        `-done`」を実行する。
+      - draft不在でrunnerを直接呼んだtestはGitを変更せず`not-applied`を返す。
+        exact phraseのSkill routingだけがprepareとdraft生成を補う。
+      - 最新branch-matching draftが既存候補から決定的に選ばれること、他blockerあり、
+        prepare失敗の各caseでmutation前に停止する。
+    - 完了条件:
+      - `node --test skills/igapyon-miku-scm/tests/miku-scm-pr-routing.test.mjs`
+        および`node --test skills/igapyon-miku-scm/tests/pr-recommit-push.test.mjs`が成功する。
+      - exact phraseを一度指示すれば、唯一の不足がdraftである通常caseは追加の
+        ユーザー入力なしにpushと`-done`まで到達する。
+    - 2026-08-10: exact phraseのroutingをREADONLY preflight起点へ変更した。
+      missing draftだけがblockerなら、`writing.pr.prepare`で`<base>..HEAD`のevidenceを
+      一度取得し、返却pathへdraftを保存して同一turnのfixed pushへ戻る。runner直接呼出しの
+      draft不足は従来どおりnon-mutating `not-applied`。focused test 10件、fast suite
+      132件、contract regeneration/drift checkは成功。
+
+  - [x] [Step 3 / P1: remoteとbaseの一貫性] `--remote`で選ばれたremoteだけを
+    base解決とpushに使用する。
+    - 変更対象:
+      - `skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs`
+      - `skills/igapyon-miku-scm/scripts/pr-recommit-push.mjs`
+      - `skills/igapyon-miku-scm/scripts/miku-scm-cli-contracts.mjs`
+      - 関連するrecommit/push test、manifest、normative reference。
+    - 実装仕様:
+      - standalone `pr.recommit.preflight`と`pr.recommit.apply`へoptional
+        `--remote <name>`を追加し、defaultを`origin`とする。
+      - base resolverは順に`<remote>/HEAD`、`<remote>/devel`、既存branch規約候補を
+        同じ`<remote>/` namespaceだけで評価する。内部で`origin`をhard-codeしない。
+      - `pr.recommit.push`は同じremote値をpreflight、apply、push、post-push comparisonへ
+        必ず渡す。
+      - base未解決、remote不存在、remote名不正はbackup作成前に`not-applied`で停止する。
+    - 必須test:
+      - `origin/HEAD`と`upstream/HEAD`が異なるtemp fixtureを作る。
+      - `--remote upstream`でreset base、lease確認、push先、comparisonがすべて
+        `upstream`となり、`origin`が一度も採用されないことをassertする。
+      - `--remote`省略時は従来どおり`origin`となることをassertする。
+    - 完了条件: focused recommit/push testsと`npm run test:miku-scm:fast`が成功する。
+    - 2026-08-10: recommit preflight/applyへ`--remote`（default `origin`）を追加し、
+      upstream解決、branch名規約、`<remote>/HEAD`、`<remote>/devel`を選択remote内だけで
+      評価するよう修正した。origin/upstreamのHEADが異なる実Git fixtureで、`--remote
+      upstream`のbase/reset/push/comparisonがupstreamへ揃いoriginへbranchを作らないことを
+      確認。focused tests 44件、fast suite 134件、contract regeneration/drift checkは成功。
+
+  - [x] [Step 4 / P1: version increment notice] version increment忘れを通知するが、
+    commitの必須条件にはしない。
+    - 変更対象:
+      - `skills/igapyon-miku-scm/scripts/work-commit.mjs`
+      - `skills/igapyon-miku-scm/scripts/miku-scm-human-output.mjs`
+      - `skills/igapyon-miku-scm/tests/work-commit.test.mjs`
+      - `skills/igapyon-miku-scm/tests/miku-scm-human-output.test.mjs`
+      - `skills/igapyon-miku-scm/references/work-commit.md`
+    - 判定sourceを`pom.xml`と
+      `skills/igapyon-mikuku-agent/references/VERSION.md`の二つに固定する。
+    - 構造化結果へ`version_notice`を追加し、値を次で固定する。
+      - どちらかのsourceがchanged pathsにある: `increment_observed`。
+      - versionは解決できたが両sourceともchanged pathsにない: `increment_not_observed`。
+      - versionを解決できないrepository: `not_applicable`。
+    - `increment_not_observed`はwarningだけを表示してcommitを続行する。
+      二sourceのversion不一致だけは従来どおりblocking errorとする。
+    - 必須testはversion-only、version更新を含む通常変更、version更新を含まない通常変更、
+      version source無し、二source不一致の5caseとする。
+    - 完了条件: JSONとhuman outputの両方で状態を区別でき、increment忘れだけでは
+      exit code非0にもcommit中止にもならない。
+    - 2026-08-10: `version_notice.increment_status`へ`increment_observed`、
+      `increment_not_observed`、`not_applicable`を実装し、human outputで非blocking reminderを
+      明示した。version-only、通常変更+version、通常変更のみ、version source無し、coupled
+      mismatchの5caseを追加。focused tests 30件、fast suite 138件、contract regeneration/
+      drift checkは成功。
+
+  - [x] [Step 5 / P1: commit message] 既知の作業内容がある場合はgeneric messageを
+    使用しない。
+    - 変更対象:
+      - `skills/igapyon-miku-scm/SKILL.md`
+      - `skills/igapyon-miku-scm/scripts/work-commit.mjs`
+      - `skills/igapyon-miku-scm/tests/miku-scm-pr-routing.test.mjs`または専用routing test
+      - `skills/igapyon-miku-scm/tests/work-commit.test.mjs`
+    - Skill routing規則:
+      - 直前の作業依頼または現在のTODO見出しから、一行で具体化できる場合は
+        `work.commit --message <具体的な一行>`を必ず渡す。
+      - version sourceだけの変更では`バージョンを<version>へ更新`を使用する。
+      - 作業内容を特定できず`--message`も無い場合だけ`作業内容を更新`を許可する。
+    - runner結果へ`message_source`を追加し、値を`supplied`、`version_fallback`、
+      `generic_fallback`の三つに固定する。runnerに曖昧なtask context推定を実装しない。
+    - 必須test:
+      - `--message`指定、version-only、省略時genericの各source値をassertする。
+      - Skill routing testで既知の作業名が`--message`へ渡されることをassertする。
+    - 完了条件: 既知の作業内容がある通常経路で`作業内容を更新`が選ばれない。
+    - 2026-08-10: `message_source`を`supplied`、`version_fallback`、
+      `generic_fallback`へ固定し、human outputにも表示した。Skill routingは現在request/
+      TODO見出しから具体的タイトルが得られる場合に`--message`を必須化。focused tests 32件、
+      fast suite 140件、contract regeneration/drift checkは成功。
+
+  - [x] [Step 6 / P2: sensitive path guard] `git add --all`の前に固定denylistで停止する。
+    - 変更対象は`work-commit.mjs`、`work-commit.test.mjs`、`work-commit.md`とする。
+    - path basenameに対するdenylistを次で固定する。
+      - exact: `.env`、`.npmrc`、`.netrc`、`.pypirc`、`id_rsa`、`id_dsa`、
+        `id_ecdsa`、`id_ed25519`。
+      - prefix: `.env.`。
+      - regex: `^(secret|secrets|credential|credentials|token|tokens)([._-].*)?$`
+        （大文字小文字を無視）。
+      - extension: `.pem`、`.p12`、`.pfx`、`.key`（大文字小文字を無視）。
+    - 検出はstage前に行い、該当pathだけを返す。file内容は読まず、stdout/stderrへ
+      secret内容を出さない。private-key headerの内容scanはこの実装範囲に含めない。
+    - 必須test:
+      - 各denylist categoryを最低一件ずつ検出する。
+      - `tokenizer.mjs`、`secretary.md`、`monkey.txt`をfalse positiveにしない。
+      - 検出時にindexとHEADが不変であることをassertする。
+    - 完了条件: denylist判定がmacOS、Linux、Windows path separatorで同じ結果になる。
+    - 2026-08-10: exact `.env`/`.npmrc`/`.netrc`/`.pypirc`/private-key basename、`.env.`
+      prefix、secret/credential/token regex、key extensionのfixed denylistを実装した。各categoryの
+      9 caseでstage/HEAD不変を確認し、`tokenizer.mjs`、`secretary.md`、`monkey.txt`のfalse
+      positiveを防止。focused test 26件、fast suite 151件、contract regeneration/drift checkは成功。
+
+  - [ ] [Step 7 / P1: native Windows 11] `work.commit`の実process起動をWindowsで検証する。
+    - platform adapterは`work-commit.mjs`から分離したmoduleへ置き、任意command文字列を
+      受け取るAPIを作らない。
+    - Windowsでは内部allowlistにある`npm.cmd`と`mvn.cmd`だけを
+      `process.env.ComSpec || "cmd.exe"`経由で起動する。macOS/Linuxは実行fileとargvを
+      shellなしで直接起動する。
+    - adapter testでexit code、stdout、stderr、missing executableを確認する。
+      command名の文字列変換だけのtestで完了扱いにしない。
+    - GitHub Actionsへ`windows-latest` jobを追加し、temp Git repositoryでstage/commit、
+      固定npm check、固定Maven checkを実行する。Nodeは24、Javaは17を使用する。
+    - `pr.recommit.push`のpublicationはこのStepに含めず、既存macOS-only guardを維持する。
+    - 完了条件: local focused tests、macOS job、Windows jobがすべて成功する。
+    - 2026-08-10: common platform adapterと`miku-scm-contract.yml` matrix jobを追加した。
+      Windowsではallowlist固定の`npm.cmd run check:index`または`mvn.cmd validate`だけを
+      `ComSpec /d /s /c`で起動し、任意command文字列を拒否する。exit/stdout/stderr/ENOENTを
+      adapter testで、actual Git stage/commit + npm + Maven checkをmacOS local testで確認した。
+      local focused tests 29件、fast suite 154件、contract regeneration/drift checkは成功。
+      macOS/Windows hosted CI jobの初回成功は、PRまたはdevel push後にこの項目を`[x]`へ更新する。
+    - 2026-08-10: hosted CIの初回実行で、UTC hostがbackup名とnext-work branch名を
+      JST期待値と異なる時刻で生成する4件の失敗を検出した。未マージの`-done` branchは
+      `backup/2026-08-10-2330`へ退避し、`origin/devel`から
+      `devel-tiga0810xda`を作成して既存PR内容を引き継いだ。共通JST時刻module、
+      regression test、macOS/Windows再検証をこのStep内で実施する。
+    - 2026-08-10: Windows hosted CIで`test:github-writer`のworkflow contract driftを
+      検出した。Windows checkoutのCRLFをsource digestとgenerated lock比較へそのまま
+      入れていたためであり、LF正規化とCRLF注入testを追加して回復branchで再検証する。
+
+  - [x] [Step 8 / P2: contract、全文書、配備の最終同期] 実装完了後に一度だけ行う。
+    - 変更に合わせて`SKILL.md`、normative references、CLI contracts、workflow manifest、
+      testsを更新する。生成物
+      `scripts/miku-scm-workflow-contract-lock.mjs`と
+      `references/workflow-contracts.md`は手編集しない。
+    - 次のcommandを記載順に実行し、一つでも失敗したら同期へ進まない。
+      1. 各Stepに記載したfocused tests。
+      2. `npm run test:miku-scm:fast`。
+      3. `node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs`。
+      4. `node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs --check`。
+      5. `npm run test:miku-scm:full`。
+      6. `mvn generate-resources`。
+      7. `python3 /Users/igapyon/.codex/skills/.system/skill-creator/scripts/quick_validate.py
+         skills/igapyon-miku-scm`。
+      8. `git diff --check`、`git status -sb`、対象fileの`git diff`。
+    - 全確認成功後だけ、
+      `sh scripts/sync-codex-skill.sh igapyon-miku-scm`でユーザー用Skillへ同期し、
+      `sh scripts/sync-codex-skill.sh --check igapyon-miku-scm`がexit code 0となることを確認する。
+    - 最終報告へbranch、ahead/behind、変更file、test件数、同期結果、未commitであること、
+      次に実行可能なexact commandを記載する。
+    - 完了条件: sourceとinstalled Skillが一致し、全test/validationが成功し、
+      ユーザーが明示しない限りcommit/pushは行われていない。
+    - 2026-08-10: workflow contractsを再生成してdrift無しを確認。fast suite 154件、
+      full suite 252件、`mvn generate-resources`、`quick_validate.py`、`git diff --check`が
+      成功した。`sh scripts/sync-codex-skill.sh igapyon-miku-scm`と`--check`でinstalled
+      Skillとの一致を確認。branchは`devel-tiga0810vdc`、`origin/devel`より2 commits先行。
+      この実装によるcommit/pushは未実行。Step 7のhosted Windows CI初回成功だけは外部実行待ち。
+
 - [ ] [Current priority: miku-scm Work Cycle] Decide whether version commit
   `27a2ed7` is published as a standalone PR or kept as the first commit of the
   miku-scm implementation PR.

@@ -25,6 +25,23 @@ test("bare recommit implicitly enters PR writing before the rewrite approval gat
   assert.match(prWriting, /bare `recommit` request implicitly requests PR writing/);
 });
 
+test("exact recommit push writes only for the sole missing-draft blocker then applies once", async () => {
+  const [skill, recommitPush, writingMode] = await Promise.all([
+    skillText("SKILL.md"),
+    skillText("references/github-pr-recommit-push.md"),
+    skillText("references/writing-mode.md"),
+  ]);
+
+  assert.match(skill, /one READONLY `pr\.recommit\.preflight`/);
+  assert.match(skill, /any blocker other than\n   `PR draft is unresolved or missing`/);
+  assert.match(skill, /`writing\.pr\.prepare --target <resolved-base>\.\.HEAD` once/);
+  assert.match(skill, /returned `suggested_draft_path`/);
+  assert.match(skill, /same user turn/);
+  assert.match(skill, /Do not route bare `recommit` or\n   `pr recommit` to it/);
+  assert.match(recommitPush, /Any other preflight\n+blocker stops the entire route before writing, backup, reset, or push/);
+  assert.match(writingMode, /exact `miku-scm pr recommit push` request/);
+});
+
 test("untargeted PRs prefer the complete branch range at two or more commits", async () => {
   const [writingMode, writingRules, prWriting] = await Promise.all([
     skillText("references/writing-mode.md"),

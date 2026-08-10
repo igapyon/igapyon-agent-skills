@@ -22,6 +22,7 @@ const WORKFLOW_TITLES = Object.freeze({
   "repository.maintenance.plan": "Repository maintenance plan",
   "repository.maintenance.apply": "Repository maintenance",
   "repository.post-merge.next-work": "Post-merge next-work preparation",
+  "work.commit": "Work commit",
   "pr.publish.preflight": "PR publication",
   "pr.publish.apply": "PR publication",
   "pr.recommit.preflight": "PR recommit",
@@ -322,6 +323,31 @@ function appendPostMergeNextWork(lines, result) {
   lines.push(`Release mutation: ${result.release_mutation ? "yes" : "no"}`);
 }
 
+function appendWorkCommit(lines, result) {
+  lines.push(`Repository: ${displayValue(result.repository)}`);
+  lines.push(`Branch: ${displayValue(result.branch)}`);
+  lines.push(`Delegate status: ${displayValue(result.status)}`);
+  if (result.head_before) lines.push(`Previous HEAD: ${displayValue(result.head_before)}`);
+  if (result.head) lines.push(`New HEAD: ${displayValue(result.head)}`);
+  if (result.commit_message) lines.push(`Commit message: ${oneLine(result.commit_message)}`);
+  if (result.message_source) lines.push(`Commit message source: ${displayValue(result.message_source)}`);
+  if (Array.isArray(result.paths)) lines.push(`Committed path count: ${result.paths.length}`);
+  if (Array.isArray(result.checks)) lines.push(`Pre-commit checks: ${result.checks.length ? result.checks.join(", ") : "none"}`);
+  if (result.version_notice) {
+    lines.push(`Version notice: ${displayValue(result.version_notice.version, "unresolved")}`);
+    lines.push(`Coupled version: ${displayValue(result.version_notice.coupled_version, "not-applicable")}`);
+    lines.push(`Recommended tag: ${displayValue(result.version_notice.recommended_tag, "unresolved")}`);
+    lines.push(`Version increment: ${displayValue(result.version_notice.increment_status, "not_applicable")}`);
+    if (result.version_notice.increment_status === "increment_not_observed") {
+      lines.push("Version increment reminder: not observed; this is non-blocking.");
+    }
+  }
+  if (Object.hasOwn(result, "working_tree_clean")) lines.push(`Working tree: ${result.working_tree_clean ? "clean" : "dirty"}`);
+  if (result.stage) lines.push(`Stopped stage: ${displayValue(result.stage)}`);
+  if (result.reason) lines.push(`Reason: ${displayValue(result.reason)}`);
+  if (result.message) lines.push(`Detail: ${displayValue(result.message)}`);
+}
+
 function pathLikeAbsolute(value) {
   return typeof value === "string"
     && (value.startsWith("/") || /^[A-Za-z]:[\\/]/.test(value));
@@ -406,6 +432,8 @@ export function renderHumanOutput({
     appendRepositoryStatus(lines, result ?? {});
   } else if (workflow === "repository.post-merge.next-work") {
     appendPostMergeNextWork(lines, result ?? {});
+  } else if (workflow === "work.commit") {
+    appendWorkCommit(lines, result ?? {});
   } else if (workflow === "github.issue.read") {
     appendIssueRead(lines, result ?? {});
   } else if (workflow === "github.issue.handoff.list") {

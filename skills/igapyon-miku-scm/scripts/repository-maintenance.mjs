@@ -6,6 +6,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
+import { dateFromJstParts } from "./miku-scm-jst-time.mjs";
+
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 
 const MAINTENANCE_APPLY_CONTRACT = workflowContractById().get("repository.maintenance.apply");
@@ -170,9 +172,8 @@ export function parseBackupName(name) {
   const minute = Number(minuteText);
   const sequence = sequenceText ? Number(sequenceText) : 1;
   if (sequence < 1 || (sequenceText && sequence === 1)) return null;
-  const created = new Date(year, month - 1, day, hour, minute, 0, 0);
-  if (created.getFullYear() !== year || created.getMonth() !== month - 1
-    || created.getDate() !== day || created.getHours() !== hour || created.getMinutes() !== minute) return null;
+  const created = dateFromJstParts({ year, month, day, hour, minute });
+  if (!created) return null;
   return { created, created_at: created.toISOString(), sequence };
 }
 

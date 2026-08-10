@@ -81,8 +81,10 @@ test("argument parser keeps apply behind a fixed plan path and digest", () => {
     "--expected-plan-sha256", digest]), /cannot be combined/);
 });
 
-test("backup name parser validates local calendar values and collision suffixes", () => {
-  assert.equal(parseBackupName("backup/2026-07-27-1230").sequence, 1);
+test("backup name parser validates JST calendar values and collision suffixes", () => {
+  const parsed = parseBackupName("backup/2026-07-27-1230");
+  assert.equal(parsed.sequence, 1);
+  assert.equal(parsed.created_at, "2026-07-27T03:30:00.000Z");
   assert.equal(parseBackupName("backup/2026-07-27-1230-3").sequence, 3);
   assert.equal(parseBackupName("backup/2026-02-30-1230"), null);
   assert.equal(parseBackupName("backup/custom"), null);
@@ -100,7 +102,7 @@ test("diagnosis keeps newest three backups and selects only older remaining back
   ]) git(state.root, "branch", name, state.head);
 
   const result = await diagnose(options(state.root), {
-    now: () => new Date(2026, 6, 27, 12, 1),
+    now: () => new Date("2026-07-27T03:01:00Z"),
   });
 
   assert.deepEqual(result.backups.retained.map((value) => value.branch), [
@@ -129,7 +131,7 @@ test("backup reachability runs only for deletion candidates", async (t) => {
   const realGit = createGitRunner();
   let containsCalls = 0;
   const result = await diagnose(options(state.root), {
-    now: () => new Date(2026, 6, 27, 12, 1),
+    now: () => new Date("2026-07-27T03:01:00Z"),
     git: (cwd, args, runOptions) => {
       if (args.some((arg) => arg.startsWith("--contains="))) containsCalls += 1;
       return realGit(cwd, args, runOptions);
@@ -285,7 +287,7 @@ test("saved plan applies once after revalidation and records recovery data", asy
     "backup/2026-07-09-1200",
   ]) git(state.root, "branch", name, state.head);
   const dependencies = {
-    now: () => new Date(2026, 6, 27, 12, 1),
+    now: () => new Date("2026-07-27T03:01:00Z"),
   };
   const diagnosis = await diagnose(options(state.root), dependencies);
   const saved = await saveMaintenancePlan(diagnosis, dependencies);
@@ -321,7 +323,7 @@ test("apply rejects changed plan bytes before diagnosis or deletion", async (t) 
     "backup/2026-07-10-1200",
   ]) git(state.root, "branch", name, state.head);
   const dependencies = {
-    now: () => new Date(2026, 6, 27, 12, 1),
+    now: () => new Date("2026-07-27T03:01:00Z"),
   };
   const saved = await saveMaintenancePlan(await diagnose(options(state.root), dependencies), dependencies);
   const planFile = path.join(state.root, saved.plan_path);
@@ -375,7 +377,7 @@ test("apply stops before an attempt when a reviewed branch object changed", asyn
     "backup/2026-07-10-1200",
   ]) git(state.root, "branch", name, state.head);
   const dependencies = {
-    now: () => new Date(2026, 6, 27, 12, 1),
+    now: () => new Date("2026-07-27T03:01:00Z"),
   };
   const saved = await saveMaintenancePlan(await diagnose(options(state.root), dependencies), dependencies);
 

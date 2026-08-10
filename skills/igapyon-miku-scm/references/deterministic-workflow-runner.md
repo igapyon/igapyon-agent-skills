@@ -53,6 +53,7 @@ The canonical machine-readable catalog is
 | `repository.maintenance.plan` | READONLY plus operational artifact | preflight | `repository-maintenance.mjs` |
 | `repository.maintenance.apply` | local | apply | `repository-maintenance.mjs` |
 | `repository.post-merge.next-work` | local | apply | `post-merge-next-work.mjs` |
+| `work.commit` | local | apply | `work-commit.mjs` |
 | `pr.publish.preflight` | READONLY plus operational artifact | preflight | `post-recommit-publish.mjs` |
 | `pr.publish.apply` | remote | apply | `post-recommit-publish.mjs` |
 | `pr.recommit.preflight` | READONLY | preflight | `pr-soft-reset-recommit-preflight.mjs` |
@@ -82,6 +83,14 @@ the human's explicit merge report is its operation-specific approval. It still
 requires both `--confirmed-merged` and `--apply`; the delegate revalidates the
 clean frozen branch, refreshes the base, checks the recommended tag, creates
 the next branch, and verifies exact `0 0` alignment in one invocation.
+
+`work.commit` is likewise one local apply invocation. The exact
+`miku-scm git add commit` request authorizes its fixed speed-first scope:
+every non-ignored current change is staged, checked, revalidated by digest,
+and committed without an Agent round trip. It stops before staging conflicts,
+frozen branches, sensitive-path candidates, and coupled-version mismatches;
+after staging it reports a known `partial` state rather than guessing a retry.
+See [work-commit.md](work-commit.md).
 
 PR publication retains its two-part human boundary. Use
 `pr.publish.preflight` with the reviewed full local commit SHA and

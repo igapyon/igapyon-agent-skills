@@ -94,7 +94,10 @@ For PR mode, create `pr-drafts/` under the resolved operational base and save th
 
 Do not save outside the project-equivalent root unless the user explicitly provides an output path.
 
-Use safe, lowercase filenames based on local time. Include a 12-digit year-month-day-hour-minute timestamp (`YYYYMMDDHHMM`) in PR draft filenames so repeated drafts on the same branch remain sortable and easy to resolve:
+Use safe, lowercase filenames based on `Asia/Tokyo` (JST), independent of the
+host operating system timezone. Include a 12-digit year-month-day-hour-minute
+timestamp (`YYYYMMDDHHMM`) in PR draft filenames so repeated drafts on the same
+branch remain sortable and easy to resolve:
 
 - PR mode: `pr-drafts/pr-<branch-slug>-<YYYYMMDDHHMM>.md` when the current branch name is available; otherwise `pr-drafts/pr-<YYYYMMDDHHMM>.md`
 - Release mode: `release-<YYYYMMDDHHMM>.md`

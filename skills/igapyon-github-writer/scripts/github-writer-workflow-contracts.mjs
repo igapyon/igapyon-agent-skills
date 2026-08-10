@@ -21,21 +21,25 @@ function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-function sourceSetDigest(relativePaths) {
+export function canonicalText(value) {
+  return String(value).replace(/\r\n?/g, "\n");
+}
+
+function sourceSetDigest(relativePaths, readText = readFileSync) {
   return sha256(relativePaths.map((relativePath) => (
-    `${relativePath}\u0000${readFileSync(path.join(skillRoot, relativePath))}`
+    `${relativePath}\u0000${canonicalText(readText(path.join(skillRoot, relativePath), "utf8"))}`
   )).join("\u0000"));
 }
 
-export function buildContracts() {
+export function buildContracts({ readText = readFileSync } = {}) {
   return WORKFLOW_DEFINITIONS.map((workflow) => {
     const runner = `scripts/${workflow.runner_entry}`;
     const runnerSources = [...workflow.contract_sources];
     const normativeSpec = `references/${workflow.references[0]}`;
     const contractTest = workflow.contract_test;
-    const runnerSha256 = sourceSetDigest(runnerSources);
-    const normativeSpecSha256 = sourceSetDigest([normativeSpec]);
-    const contractTestSha256 = sourceSetDigest([contractTest]);
+    const runnerSha256 = sourceSetDigest(runnerSources, readText);
+    const normativeSpecSha256 = sourceSetDigest([normativeSpec], readText);
+    const contractTestSha256 = sourceSetDigest([contractTest], readText);
     const pair = [
       workflow.id,
       String(WORKFLOW_CONTRACT_VERSION),
@@ -83,8 +87,8 @@ function renderMarkdown(contracts) {
   return lines.join("\n");
 }
 
-export function generate({ check = false } = {}) {
-  const contracts = buildContracts();
+export function generate({ check = false, readText = readFileSync, writeText = writeFileSync } = {}) {
+  const contracts = buildContracts({ readText });
   const outputs = [
     [lockFile, renderLock(contracts)],
     [markdownFile, renderMarkdown(contracts)],
@@ -92,7 +96,7 @@ export function generate({ check = false } = {}) {
   if (check) {
     const drift = outputs.filter(([file, expected]) => {
       try {
-        return readFileSync(file, "utf8") !== expected;
+        return canonicalText(readText(file, "utf8")) !== expected;
       } catch {
         return true;
       }
@@ -102,7 +106,7 @@ export function generate({ check = false } = {}) {
     }
     return contracts;
   }
-  for (const [file, content] of outputs) writeFileSync(file, content, "utf8");
+  for (const [file, content] of outputs) writeText(file, content, "utf8");
   return contracts;
 }
 
