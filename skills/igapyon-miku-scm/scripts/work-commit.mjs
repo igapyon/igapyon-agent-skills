@@ -31,20 +31,41 @@ function sensitivePath(value) {
   return [".pem", ".p12", ".pfx", ".key"].some((suffix) => name.endsWith(suffix));
 }
 
-function createGitRunner() {
+function boundedDiagnostic(value, maximum = 2000) {
+  const text = String(value ?? "").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  return text.length <= maximum ? text : `${text.slice(0, maximum)}…[truncated]`;
+}
+
+function gitFailureMessage(args, result, stdout, stderr) {
+  const details = [
+    `exit_code=${result.status ?? "null"}`,
+    `signal=${result.signal ?? "none"}`,
+    `spawn_error=${result.error?.code ?? "none"}`,
+    `stdout_bytes=${Buffer.byteLength(stdout, "utf8")}`,
+    `stdout_sha256=${sha256(stdout)}`,
+  ];
+  const diagnostic = boundedDiagnostic(stderr || result.error?.message);
+  if (diagnostic) details.push(`stderr=${diagnostic}`);
+  return `git ${args.join(" ")} failed: ${details.join("; ")}`;
+}
+
+export function createGitRunner(spawn = spawnSync) {
   return (cwd, args, options = {}) => {
-    const result = spawnSync("git", args, {
+    const result = spawn("git", args, {
       cwd,
       encoding: "utf8",
       input: options.input,
     });
+    const stdout = result.stdout ? String(result.stdout) : "";
+    const stderr = result.stderr ? String(result.stderr) : "";
     if (result.status !== 0 && !options.allowFailure) {
-      throw new Error(`git ${args.join(" ")} failed: ${(result.stderr || result.stdout || "").trim()}`);
+      throw new Error(gitFailureMessage(args, result, stdout, stderr));
     }
     return {
       ok: result.status === 0,
-      stdout: result.stdout || "",
-      stderr: result.stderr || "",
+      stdout,
+      stderr,
     };
   };
 }
@@ -209,7 +230,7 @@ export async function runWorkCommit(options, dependencies = {}) {
     staged = true;
     const stagedPaths = stablePaths(zeroPaths(output(git, root, ["diff", "--cached", "--name-only", "-z", "--no-renames"])));
     if (JSON.stringify(stagedPaths) !== JSON.stringify(paths)) throw new Error("Staged paths differ from the reviewed non-ignored worktree paths");
-    const stagedDiff = output(git, root, ["diff", "--cached", "--binary", "--full-index", "--no-ext-diff"]);
+    const stagedDiff = output(git, root, ["diff", "--cached", "--binary", "--full-index", "--no-ext-diff", "--no-textconv"]);
     const stagedDigest = sha256(stagedDiff);
 
     stage = "pre-commit-check";
@@ -220,7 +241,7 @@ export async function runWorkCommit(options, dependencies = {}) {
 
     stage = "post-check-verify";
     const verifiedPaths = stablePaths(zeroPaths(output(git, root, ["diff", "--cached", "--name-only", "-z", "--no-renames"])));
-    const verifiedDigest = sha256(output(git, root, ["diff", "--cached", "--binary", "--full-index", "--no-ext-diff"]));
+    const verifiedDigest = sha256(output(git, root, ["diff", "--cached", "--binary", "--full-index", "--no-ext-diff", "--no-textconv"]));
     if (JSON.stringify(verifiedPaths) !== JSON.stringify(paths) || verifiedDigest !== stagedDigest) {
       throw new Error("Pre-commit checks changed the staged content; rerun work.commit with the refreshed worktree");
     }

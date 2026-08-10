@@ -138,6 +138,94 @@ Update this section while working. Do not rewrite unrelated TODO items.
 
 ### Tasks
 
+- [ ] [Current priority: miku-scm `work.commit` staged diff failure]
+  stage済みの正当な変更を固定runnerがcommit前に`partial`として停止し、巨大な
+  `git diff --cached` stdoutを結果へ含める不具合を再現して修正する。以下のStep 0から
+  Step 4までを順番に実行し、focused testが成功してから次へ進む。
+  - 作業境界:
+    - この項目の記録だけでは`git commit`、`git push`、Skill配備先への同期、失敗した
+      target repositoryでのcommit再実行を許可しない。
+    - `git diff`の終了コード1を全Git commandで正常扱いしない。Git公式仕様上、差分を
+      1で表すのは`--exit-code`または`--quiet`を指定した場合である。
+    - 現行のstaged path一覧とstaged content fingerprintのcheck前後比較、および
+      checkがworktreeを変更した場合の停止規則を維持する。
+    - 既存の未コミット差分と対象外fileを保持し、自動unstage、restore、retryを行わない。
+  - 2026-08-11の確認済み状態:
+    - sourceとinstalled Skillの`work-commit.mjs`は一致している。
+    - source repositoryは`devel-tiga0811abi`、`origin/devel`との差分なし、worktree clean。
+    - staged fingerprint取得は`git diff --cached --binary --full-index --no-ext-diff`を
+      check前後に実行するが、`--no-textconv`を指定していない。
+    - 提供された失敗記録ではstage後に停止し、HEADは不変、変更はstage済み、
+      `git diff --cached --check`は成功していた。runner出力には大量のdiff本文が混入した。
+    - Git公式仕様では`git diff`はtextconvを既定で有効にするため、repository固有の
+      textconv driverが第一候補である。ただし再現test成功前は確定原因としない。
+
+  - [x] [Step 0 / P0: 再現を固定] 現行runnerの失敗条件をtestで再現する。
+    - 変更対象: `skills/igapyon-miku-scm/tests/work-commit.test.mjs`。
+    - temp Git repositoryへ、事前stage済みのmodified、added、renamed、binary pathを用意する。
+    - repository-local `.gitattributes`とdiff/textconv fixture、または同等の決定的な
+      injected Git runnerを使い、`--no-textconv`が無いstaged fingerprint取得だけが
+      diff本文をstdoutへ出して非0終了する条件を作る。
+    - 修正前は`status: partial`、`stage: stage`、HEAD不変、index保持となることを確認する。
+    - 再現できない場合は推測で終了コード1を許容せず、run artifactから実command、
+      exit code、signal、spawn error code、stderr、stdout byte数を取得できる診断testを先に作る。
+    - 完了条件: 失敗を一つのfocused testで安定再現し、原因となるcommandを一意に示せる。
+    - 2026-08-11: 事前stage済みのmodified、added、renamed、binary pathを作るfixtureで、
+      textconv相当のstaged fingerprint失敗を注入した。修正前は`partial/stage`、HEAD不変、
+      index保持となることをfocused testで確認した。
+
+  - [x] [Step 1 / P0: staged fingerprintを内部diffへ固定] textconvを実行せずcommitまで進める。
+    - 変更対象: `skills/igapyon-miku-scm/scripts/work-commit.mjs`とfocused test。
+    - check前後の二つの
+      `git diff --cached --binary --full-index --no-ext-diff`へ`--no-textconv`を追加する。
+    - staged path取得、digestのSHA-256、check前後のpath/digest一致条件、commit後のclean確認は
+      変更しない。
+    - status 1はglobalに許容しない。`--no-textconv`適用後も非0ならGit失敗として安全停止する。
+    - 必須test:
+      - Step 0のfixtureが一回の`work.commit`でcommitされ、HEADが一回だけ進み、treeがcleanになる。
+      - 通常のtext、rename、binary変更でstaged digestがcheck前後一致する。
+      - 本当のGit失敗はcommitせず`partial`を返し、indexを保持する。
+    - 完了条件: 正当なstage済み変更ではAI Agentへ戻らずcommitまで完走する。
+    - 2026-08-11: check前後のbinary staged diffへ`--no-textconv`を追加した。
+      injected textconv fixtureはcommitへ到達し、mixed changesを含むtreeがcleanとなることを確認した。
+
+  - [x] [Step 2 / P1: 失敗診断をboundedにする] diff本文をrunner結果へ埋め込まない。
+    - Git subprocess失敗へexit code、signal、spawn error code、bounded stderr、stdout byte数、
+      stdout SHA-256を記録する。raw stdoutはエラーmessageへ連結しない。
+    - secret候補やstaged file内容を診断へ出さない既存境界を維持する。
+    - testでは大きなstdoutを返す失敗を注入し、結果サイズが入力diffサイズに比例せず、
+      exit codeとdigestだけで識別できることをassertする。
+    - public result schemaを変更する場合だけhuman outputとcontract versionを更新する。
+    - 2026-08-11: Git失敗messageへexit code、signal、spawn error code、stdout byte数、
+      stdout SHA-256、bounded stderrを追加した。110,000 byteのdiff stdoutを注入するtestで、
+      raw staged diffがmessageへ含まれないことを確認した。public result schemaは変更していない。
+
+  - [x] [Step 3 / P1: normative contract更新] 実装と文書を一致させる。
+    - `skills/igapyon-miku-scm/references/work-commit.md`へ、staged fingerprintが
+      `--no-ext-diff --no-textconv`でrepository固有rendererを無効化することを記載する。
+    - `node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs`で生成物を更新し、
+      同commandの`--check`でdriftが無いことを確認する。生成物は手編集しない。
+    - 2026-08-11: `work-commit.md`へ`--no-ext-diff --no-textconv`とbounded failure diagnosticを
+      記録し、workflow contract生成とdrift checkの両方が成功した。
+
+  - [ ] [Step 4 / P0: 全体検証と配備判断] macOSとWindows 11の回帰を確認する。
+    - 次の順で実行する:
+      1. `node --test skills/igapyon-miku-scm/tests/work-commit.test.mjs`
+      2. `npm run test:miku-scm:fast`
+      3. workflow contract regenerationと`--check`
+      4. `npm run test:miku-scm:full`
+      5. `mvn generate-resources`
+      6. Skill `quick_validate.py`
+      7. `git diff --check`、`git status -sb`、対象diff確認
+    - GitHub ActionsのmacOS/Windows matrixで、Step 0の回帰testと既存fixed npm/Maven checkを
+      成功させる。hosted CI未実施ならローカル成功と明確に区別して残す。
+    - source検証後も、ユーザーの明示指示なしに`~/.codex/skills`へ同期しない。
+    - 最終報告へ変更file、再現原因、focused/fast/full件数、contract/Skill検証、
+      macOS/Windows CI状態、未commit・未同期状態を記載する。
+    - 2026-08-11: focused 30件、fast 160件、full 258件、Maven generate-resources、
+      Skill validationはすべて成功した。hosted macOS/Windows CIと`~/.codex/skills`同期は
+      この作業では未実施のまま残す。
+
 - [ ] [Current priority: miku-scm 高速化の自己レビュー対応] 以下のStep 0から
   Step 8までを番号順に実行する。後続Stepを先行実装しない。各Stepのfocused testが
   成功してから次へ進み、失敗時はそのStep内で修正する。

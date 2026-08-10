@@ -43,7 +43,9 @@ silently committing a candidate.
    tracked `package.json` declares `mikuIndex.required` and that exact script,
    and `mvn validate` when the POM declares `validate-version-alignment`.
 3. Stage all current non-ignored changes with `git add --all`.
-4. Fix the exact staged path list and binary staged-diff SHA-256.
+4. Fix the exact staged path list and binary staged-diff SHA-256. Obtain that
+   diff with `--no-ext-diff --no-textconv` so repository-configured renderers
+   cannot alter the fingerprint or return a presentation-specific status.
 5. Run the resolved checks without an Agent or conversational pause.
 6. Re-read the staged path list and digest, then require both the unstaged
    tracked-path list and non-ignored untracked-path list to be empty. Any
@@ -83,4 +85,6 @@ platforms.
 The runner result and apply attempt are written under
 `workplace/miku-scm/runs/<run-id>`. They record the exact paths, staged-diff
 digest, commit-message digest, recognised checks, version notice, and final
-HEAD.
+HEAD. On a Git failure, the diagnostic records the exit code, signal, spawn
+error code, bounded stderr, and stdout size and SHA-256; it never embeds raw
+staged-diff stdout.
