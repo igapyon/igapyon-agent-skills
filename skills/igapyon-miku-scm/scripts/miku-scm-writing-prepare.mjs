@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { runIssueRead } from "./github-issue-read.mjs";
+import { jstTimestamp } from "./miku-scm-jst-time.mjs";
 
 export const WRITING_EVIDENCE_SCHEMA_VERSION = "miku-scm.writing-evidence/v1";
 
@@ -76,20 +77,6 @@ export function parseWritingPrepareArgs(mode, argv, cwd = process.cwd()) {
     throw new Error(`writing.${mode}.prepare does not accept --target`);
   }
   return options;
-}
-
-function jstTimestamp(now) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Tokyo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(now);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${values.year}${values.month}${values.day}${values.hour}${values.minute}`;
 }
 
 function branchSlug(branch) {

@@ -243,14 +243,16 @@ Use these naming rules:
 
 - `<base>` is the base branch name, such as `devel`.
 - `tiga` identifies the user.
-- `<MMDD>` is the local month and day, such as `0718` for July 18.
+- `<MMDD>` is the `Asia/Tokyo` (JST) month and day, such as `0718` for July 18.
 - Encode hour `0` through `23` with one zero-origin alphabet character: `a=0`, `b=1`, through `x=23`.
 - Encode the two decimal minute digits separately with zero-origin alphabet characters: `a=0`, `b=1`, through `j=9`.
 - Therefore minute `00` is `aa`, minute `45` is `ef`, and minute `59` is `fj`.
 
 For example, `devel-tiga0718tef` means base `devel`, user `tiga`, July 18, 19:45.
 
-After resolving a unique branch name from the current local date and time, fetch the base, perform the non-blocking recommended-tag check, then run:
+After resolving a unique branch name from the current `Asia/Tokyo` (JST) date
+and time, fetch the base, perform the non-blocking recommended-tag check, then
+run:
 
 ```sh
 git switch -c devel-tiga0718tef origin/devel
@@ -267,10 +269,19 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 4. Verify the resulting diff against the base before publication.
 5. Publish the new remote branch with `git push -u origin HEAD`; do not force-push it.
 
+For a hosted-CI correction before the prior PR is merged, use the same recovery
+shape after explicit human authorization. Preserve the frozen `-done` HEAD with
+a local backup, create the new work branch from the refreshed base, carry
+forward the reviewed unmerged PR content, then add only the CI correction.
+Never edit, recommit, or force-push the frozen branch or its already-published
+remote branch. Re-run the platform-independent regression tests before the new
+branch is published.
+
 ## Initial Safety Rules
 
 - Inspect before changing.
-- Before `git add` or `git commit`, apply the mandatory human confirmation gate in [version-increment-confirmation.md](version-increment-confirmation.md).
+- Route exact `miku-scm git add commit` to the fixed [work-commit.md](work-commit.md) runner. Its version notice is non-blocking; do not recreate a human confirmation gate or a sequence of ordinary Git commands around it.
+- The legacy ordinary `git add` or `git commit` path retains [version-increment-confirmation.md](version-increment-confirmation.md) until it is replaced by `work.commit`.
 - After staging and immediately before `git commit`, run the repository-declared consistency gates in [repository-precommit-checks.md](repository-precommit-checks.md). Do not commit after a failed or invalidated check.
 - Resolve the exact repository, branch, remote, commit, tag, release, and version target needed for the request.
 - Preserve unrelated working-tree changes.

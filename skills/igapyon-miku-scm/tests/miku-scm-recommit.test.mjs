@@ -137,3 +137,8 @@ test("recommit workflow preserves preflight and mutation safety", async (t) => {
     assert.equal(git(state.root, "rev-parse", "HEAD"), before);
   });
 });
+
+test("recommit parser fixes a safe remote namespace for base resolution", () => {
+  assert.equal(parseArgs(["--remote", "upstream"]).remote, "upstream");
+  assert.throws(() => parseArgs(["--remote", "bad/name"]), /Git remote name/);
+});

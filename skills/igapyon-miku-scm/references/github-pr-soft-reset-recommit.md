@@ -34,7 +34,7 @@ Do not invoke a free-form Git sequence around the runner.
 - `git fetch origin` is allowed only to refresh local remote-tracking information.
 - Do not ask the version-increment reminder again merely because this workflow will replace an already confirmed commit. Reuse a valid same-session version check under [version-increment-confirmation.md](version-increment-confirmation.md) after re-reading the version sources and rerunning their alignment check. Ask again if the content to recommit changed after the confirmation.
 - `git reset --soft <base>` rewrites `HEAD` while preserving index and working tree changes. Treat it as a history-rewrite operation and mention that clearly before running it.
-- Resolve the base from local Git before asking the user. Accept the current branch upstream only when it is not the remote counterpart of the current feature branch. Otherwise prefer the base encoded by a prescribed `<base>-tiga...` branch name, then local `origin/HEAD`, then local `origin/devel`. Ask for `--base` when the result is ambiguous.
+- Resolve the base from local Git before asking the user. The optional `--remote` value defaults to `origin` and fixes one remote namespace for the entire resolution. Accept the current branch upstream only when it belongs to that selected remote and is not the remote counterpart of the current feature branch. Otherwise prefer the base encoded by a prescribed `<base>-tiga...` branch name under that remote, then local `<remote>/HEAD`, then local `<remote>/devel`. Ask for `--base` when the result is ambiguous.
 - Require the resolved base to be an ancestor of `HEAD`, require at least one commit in `<base>..HEAD`, and refuse a branch ending in `-done`. Enforce these checks both in the documented workflow and inside the helper immediately before apply mode.
 
 ## Inputs
@@ -66,6 +66,7 @@ If `PR_DRAFT` is already known, pass it explicitly:
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   pr.recommit.preflight \
+  --remote origin \
   --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md
 ```
 
@@ -117,6 +118,7 @@ After that, apply the local-only rewrite with one fixed runner call:
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   pr.recommit.apply \
+  --remote origin \
   --base origin/devel \
   --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md \
   --apply

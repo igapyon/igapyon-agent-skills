@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 
-import { generate } from "../scripts/github-writer-workflow-contracts.mjs";
+import {
+  buildContracts,
+  canonicalText,
+  generate,
+} from "../scripts/github-writer-workflow-contracts.mjs";
 
 const skillDirectory = new URL("../", import.meta.url);
 
@@ -32,4 +36,12 @@ test("runtime command surface prohibits gh, shells, network clients, and remote 
 
 test("generated workflow contract lock has no drift", () => {
   assert.equal(generate({ check: true }).length, 9);
+});
+
+test("workflow contracts are stable for CRLF checkouts", () => {
+  const readAsCrLf = (file, encoding) => readFileSync(file, encoding).replace(/\r?\n/g, "\r\n");
+
+  assert.equal(canonicalText("first\r\nsecond\rthird"), "first\nsecond\nthird");
+  assert.deepEqual(buildContracts({ readText: readAsCrLf }), buildContracts());
+  assert.equal(generate({ check: true, readText: readAsCrLf }).length, 9);
 });
