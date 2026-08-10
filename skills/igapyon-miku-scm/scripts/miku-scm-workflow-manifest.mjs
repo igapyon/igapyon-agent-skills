@@ -230,6 +230,15 @@ const WORKFLOW_DEFINITIONS = [
     references: ["github-pr-soft-reset-recommit.md", "github-backup-branch.md", "deterministic-workflow-runner.md"],
   },
   {
+    id: "pr.recommit.push",
+    triggers: ["miku-scm pr recommit push", "PR recommit push"],
+    required_parameters: ["repository", "base", "pr_draft", "remote", "explicit_recommit_and_push_request"],
+    mutation_level: "remote",
+    approval_gate: "apply",
+    runner_entry: "pr-recommit-push.mjs",
+    references: ["github-pr-recommit-push.md", "deterministic-workflow-runner.md"],
+  },
+  {
     id: "version.status",
     triggers: ["version status", "現在のバージョン", "バージョン状態"],
     required_parameters: ["repository"],
@@ -299,6 +308,7 @@ const CONTRACT_TEST_BY_RUNNER = Object.freeze({
   "post-merge-next-work.mjs": "post-recommit-publish.test.mjs",
   "post-recommit-publish.mjs": "post-recommit-publish.test.mjs",
   "pr-soft-reset-recommit-preflight.mjs": "miku-scm-recommit.test.mjs",
+  "pr-recommit-push.mjs": "pr-recommit-push.test.mjs",
   "miku-scm-version.mjs": "miku-scm-version.test.mjs",
   "miku-scm-writing-prepare.mjs": "miku-scm-writing-prepare.test.mjs",
 });

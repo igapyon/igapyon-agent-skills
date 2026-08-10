@@ -338,6 +338,10 @@ export function runRecommit(args, dependencies = {}) {
 
     runGit(root, ["branch", backup, "HEAD"]);
     mutationInvoked = true;
+    const backupHead = runGit(root, ["rev-parse", backup]).stdout;
+    if (backupHead !== applyHead) {
+      throw new Error("Backup branch does not point to the reviewed pre-reset HEAD");
+    }
     runGit(root, ["reset", "--soft", baseCommit]);
     runGit(root, ["commit", "-F", "-"], { input: applyDraftContent });
 

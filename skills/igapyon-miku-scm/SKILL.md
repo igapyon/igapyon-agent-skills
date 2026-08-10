@@ -43,6 +43,10 @@ Do not inspect the repository or load detailed references yet.
    keep a one-commit branch as a single-commit PR. Explicit commits and ranges
    always win. This routing authorizes preparation only; preserve the explicit
    approval gate before the local history rewrite.
+   Treat exact `pr recommit push` as the separate remote workflow after the
+   reviewed PR draft exists. Its exact `push` token authorizes only the fixed
+   recommit-and-publication transition; do not route bare `recommit` or
+   `pr recommit` to it.
 4. For a current Issue status, backlog, or progress request, invoke
    `github.issue.read --list` once with its default Open state. Do not add a
    second `--state all` read merely to calculate an Open/Closed breakdown.

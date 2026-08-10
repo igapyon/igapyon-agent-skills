@@ -310,6 +310,42 @@ Mutation invoked: yes
 `);
 });
 
+test("PR recommit push output combines local rewrite and publication handoff", () => {
+  const output = renderHumanOutput({
+    workflow: "pr.recommit.push",
+    status: "success",
+    approvalGate: "apply",
+    delegateStatus: "published",
+    mutationInvoked: true,
+    result: {
+      status: "published",
+      repository: "igapyon-agent-skills",
+      branch: "devel-test",
+      base: "origin/devel",
+      backup_branch: "backup/2026-08-10-2100",
+      pr_draft: "workplace/miku-scm/pr-drafts/pr-devel-test.md",
+      new_head: "a".repeat(40),
+      pushed_branch: "devel-test",
+      final_branch: "devel-test-done",
+      comparison: "0 0",
+      repository_url: "https://github.com/igapyon/igapyon-agent-skills",
+      pr_lookup: "confirmed-none",
+      pr_creation_url: "https://github.com/igapyon/igapyon-agent-skills/pull/new/devel-test",
+      version: "1.20260810.1",
+      recommended_tag: "v20260810a",
+      human_handoff: "Create the PR and tag through GitHub.",
+    },
+  });
+
+  assert.match(output, /^\[SUCCESS\] PR recommit push$/m);
+  assert.match(output, /^Backup branch: backup\/2026-08-10-2100$/m);
+  assert.match(output, new RegExp(`^New HEAD: ${"a".repeat(40)}$`, "m"));
+  assert.match(output, /^Pushed branch: devel-test$/m);
+  assert.match(output, /^Final branch: devel-test-done$/m);
+  assert.match(output, /^Recommended tag: v20260810a$/m);
+  assert.match(output.trimEnd(), /Create the PR and tag through GitHub\.$/);
+});
+
 test("post-merge next-work output is complete and ends with the fixed handoff", () => {
   const output = renderHumanOutput({
     workflow: "repository.post-merge.next-work",

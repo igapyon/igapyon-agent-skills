@@ -138,6 +138,28 @@ Update this section while working. Do not rewrite unrelated TODO items.
 
 ### Tasks
 
+- [ ] [Current priority: miku-scm Work Cycle] Decide whether version commit
+  `27a2ed7` is published as a standalone PR or kept as the first commit of the
+  miku-scm implementation PR.
+- [ ] [Current priority: miku-scm Work Cycle] Implement the approved redesign
+  in small slices from
+  `skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md`.
+  - [x] Add the explicit `pr recommit push` transition and its fixed runner
+    contract, retaining exact remote expectations, `force-with-lease`,
+    post-push comparison, and the `-done` rename guard.
+    - 2026-08-10: macOS fixed runner and success, remote-conflict,
+      backup-integrity, and unsupported-platform tests are complete. Windows
+      publication remains a safe pre-backup stop until the shared adapter
+      migration is implemented. Fast suite: 117; full suite: 215.
+  - Move expected fixed checks into the runner while retaining a human pause
+    for actual safety boundaries and failed validation.
+  - Keep version reminders non-blocking and isolate macOS/Windows differences
+    behind adapters; do not require `rg`.
+  - Run the miku-scm fast suite while iterating. Before handoff, run its full
+    suite and regenerate/check contracts whenever their inputs change.
+
+### Deferred / existing task record
+
 - [ ] Validate and improve the miku-soft type-specific reference system.
   - Scope:
     - `skills/igapyon-miku-soft-developer/references/[0-9][0-9]-*.md`

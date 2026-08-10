@@ -57,6 +57,7 @@ The canonical machine-readable catalog is
 | `pr.publish.apply` | remote | apply | `post-recommit-publish.mjs` |
 | `pr.recommit.preflight` | READONLY | preflight | `pr-soft-reset-recommit-preflight.mjs` |
 | `pr.recommit.apply` | local | apply | `pr-soft-reset-recommit-preflight.mjs` |
+| `pr.recommit.push` | remote | apply | `pr-recommit-push.mjs` |
 | `version.status` | READONLY | none | `miku-scm-version.mjs` |
 | `version.increment.validate` | READONLY | preflight | `miku-scm-version.mjs` |
 | `writing.issue.prepare` | READONLY | none | `miku-scm-writing-prepare.mjs` |
@@ -101,6 +102,13 @@ recommits with the verified draft bytes, and reports the new HEAD. A
 backup-creation failure leaves `mutation_invoked: false`; a later local
 mutation failure is reported as unresolved and must be inspected rather than
 retried blindly.
+
+`pr.recommit.push` is a distinct remote apply workflow, not a `--push` option
+on `pr.recommit.apply`. It internally fixes the remote destination state before
+backup, reruns that expectation after recommit, saves the exact publication
+plan, and invokes its checked publication apply path in the same runner call.
+It reports `partial` when recommit succeeded but publication stopped before a
+remote mutation. See [github-pr-recommit-push.md](github-pr-recommit-push.md).
 
 Version inspection and increment validation remain READONLY. Status may report
 format candidates, but it never resolves repository policy from numeric shape

@@ -15,13 +15,47 @@ update_when:
 This file summarizes the current working state for the next human or AI agent.
 Keep it concise. Do not use this as a full work log or a replacement for `TODO.md` and `DECISIONS.md`.
 
-## Current State
+## Priority Resume Context — miku-scm Work Cycle (2026-08-10)
+
+This is the active user-directed work; the older miku-soft reference-audit
+context below is preserved but deferred.
+
+- Objective: implement the responsive Work Cycle direction in
+  `skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md` without
+  weakening `-done`, backup, remote-expectation, or publication safeguards.
+- Completed: the design was merged by PR #343 (`origin/devel` = `af623c4a`).
+  The first implementation slice, `pr.recommit.push`, is now present but
+  uncommitted: it runs the macOS backup/recommit/publication sequence in one
+  fixed invocation. It verifies that the backup still points to the reviewed
+  HEAD before reset, and has success, remote-conflict, backup-integrity, and
+  platform-stop tests.
+- Current branch: `devel-tiga0810udh`. Local commit `27a2ed7` increments the coupled versions to
+  `1.20260810.1` / `20260810a`; it is one commit ahead of `origin/devel`, with
+  no push or PR. The worktree contains the `pr.recommit.push` implementation,
+  generated contracts/index, and this state update; inspect and commit them
+  deliberately before publication.
+- First decision: publish `27a2ed7` as its own PR or include it in the
+  implementation PR. Do not increment the version again on resume.
+- Next implementation slice: move the remaining expected fixed checks into
+  runners while keeping genuine human authorization boundaries. The completed
+  `pr recommit push` slice retains exact remote checks, `force-with-lease`,
+  post-push comparison, and the `-done` rename guard.
+- Platform rule: one Node.js core with OS adapters; `rg` is optional so Windows
+  11 is supported without a full script split.
+- Verification: this implementation passed `npm run test:miku-scm:fast`
+  (117 tests), `npm run test:miku-scm:full` (215 tests),
+  `mvn generate-resources`, contract drift check, and `git diff --check`.
+- Release note: `v20260809a` currently targets `42e557b`, not merged base
+  `af623c4a`. Do not move or create tags automatically; GitHub tag/Release
+  actions remain human work.
+
+## Historical State — miku-soft reference audit (deferred)
 
 - AI agent state management has been initialized for this repository.
 - Root `TODO.md` remains the repository's existing task memo.
 - `GOAL.md`, `DECISIONS.md`, and `HANDOFF.md` provide agent-oriented state, decisions, and resume context.
-- The active objective is now the validity audit and structural improvement of
-  `skills/igapyon-miku-soft-developer/references/`.
+- The then-active objective was the validity audit and structural improvement
+  of `skills/igapyon-miku-soft-developer/references/`.
 - The numbered references have been classified: product-layer codes are
   `10/11/20/21/40/50`; `30` is a conversion method; `31/32` are separation
   workflows; `00` is overview/concept work rather than a product layer.
@@ -130,7 +164,7 @@ Keep it concise. Do not use this as a full work log or a replacement for `TODO.m
   Only `miku-ms-office-skills` needed an update; `pom.xml` and README now pin
   it at `v0.4.2`.
 
-## Next Action
+## Historical Next Action — miku-soft reference audit (deferred)
 
 - Wave C is complete. Review the integrated decision packet in
   `workplace/miku-soft-reference-audit/wave-c-integration.md`: Node roles,

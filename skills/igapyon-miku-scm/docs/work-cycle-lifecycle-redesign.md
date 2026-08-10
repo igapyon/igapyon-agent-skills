@@ -10,6 +10,17 @@ Cycleとして整理し直すための設計ドラフトである。
 までは、`references/`、workflow manifest、contract lock、各固定helperを
 現行仕様の正本とする。
 
+## 実装状況（2026-08-10）
+
+Phase 3の最初のsliceとして、exact `pr recommit push`に対応する
+`pr.recommit.push` fixed workflowを実装した。これはmacOS上で、remote stateを
+backup前に固定し、backup、recommit、publication plan、conditional push、remote
+equality確認、`-done` renameを一つのrunner invocationで実行する。remote stateが
+変わった場合はpushせず`partial`で止まる。
+
+Windows 11のpublication、cycle artifact、通常commitのone-shot化、PR evidenceの
+完全統合は未実装であり、この文書の残りの段階的移行案に従う。
+
 主な目的は次のとおりである。
 
 - 作業開始からRelease handoffまでの状態と責務を一続きにする

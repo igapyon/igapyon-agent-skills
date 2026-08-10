@@ -229,8 +229,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "scm-rules.md",
     "contract_test": "post-recommit-publish.test.mjs",
     "runner_sha256": "488680115f322b7b1ac627641fee948f78de5149b14b3eabfae1cd4f985494b3",
-    "spec_sha256": "678192d439f27e3b5d53f4b6ec393022eafe1c2cdc3bb9d30c324b052ea5fbe5",
-    "pair_sha256": "6d83d8e74b24c51eb1dd193e93cac92356446748f8bbba96b62e762079a3a7de"
+    "spec_sha256": "e6b367bb8a06ec79da6e5b0529912bebb438965a4457e072f76927be5aad3926",
+    "pair_sha256": "eaa619b8ee89e8bac50f0456e6593492e30659fe97e5cf5f4dc93574c572768c"
   },
   {
     "workflow": "pr.publish.preflight",
@@ -239,9 +239,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "post-recommit-publish.mjs",
     "contract_spec": "github-post-recommit-publish.md",
     "contract_test": "post-recommit-publish.test.mjs",
-    "runner_sha256": "dc8be675d241e066ed4cba712b7cb3c7e864d044ded8ea38be2ac3493ba72ca1",
+    "runner_sha256": "a55a0fe8dddfe7ccd132a35ef47dee3f195c4dacc1415f4fdaeb348f3f5bda84",
     "spec_sha256": "614580c59e9e73ce165737868faa90d40400f1a49308d437087394c20d617c43",
-    "pair_sha256": "6cc094311ce3820820f0b8d2950ca75beaaa03c6e5b539ed9a99abee09caedf3"
+    "pair_sha256": "1d93def873c861998b2da8e4593b468e92843fe242383f0806936942ab81b071"
   },
   {
     "workflow": "pr.publish.apply",
@@ -250,9 +250,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "post-recommit-publish.mjs",
     "contract_spec": "github-post-recommit-publish.md",
     "contract_test": "post-recommit-publish.test.mjs",
-    "runner_sha256": "dc8be675d241e066ed4cba712b7cb3c7e864d044ded8ea38be2ac3493ba72ca1",
+    "runner_sha256": "a55a0fe8dddfe7ccd132a35ef47dee3f195c4dacc1415f4fdaeb348f3f5bda84",
     "spec_sha256": "614580c59e9e73ce165737868faa90d40400f1a49308d437087394c20d617c43",
-    "pair_sha256": "0f67c3a7b219dd2b73500ede0e1d83eea9f597112897d37af6205c4f9cfbc14d"
+    "pair_sha256": "caa6309321e915e82b55d4588352838c36694d2b12d18201a550c84807c8b955"
   },
   {
     "workflow": "pr.recommit.preflight",
@@ -261,9 +261,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "pr-soft-reset-recommit-preflight.mjs",
     "contract_spec": "github-pr-soft-reset-recommit.md",
     "contract_test": "miku-scm-recommit.test.mjs",
-    "runner_sha256": "a5cefd2c56ae0379cf0bd2dbd8abbb3a341fcdcd36716d082e4d29297ed64ddb",
+    "runner_sha256": "452734bfaeba600be706bb0e0a9c9a561801649f635bf2b1f9479a7e8d35920f",
     "spec_sha256": "7c75686063d7559122188b3cb16d6ba746f434f4209930063138ee5e8222bae5",
-    "pair_sha256": "8ed60c93f060806564ee565b74e6605a2f85eca4ffcf89ee26ede014a2845f8a"
+    "pair_sha256": "08ef90159f45cb253367caf3e5f51f75eb1eb511b4040a5748475e25783a66d4"
   },
   {
     "workflow": "pr.recommit.apply",
@@ -272,9 +272,20 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "pr-soft-reset-recommit-preflight.mjs",
     "contract_spec": "github-pr-soft-reset-recommit.md",
     "contract_test": "miku-scm-recommit.test.mjs",
-    "runner_sha256": "a5cefd2c56ae0379cf0bd2dbd8abbb3a341fcdcd36716d082e4d29297ed64ddb",
+    "runner_sha256": "452734bfaeba600be706bb0e0a9c9a561801649f635bf2b1f9479a7e8d35920f",
     "spec_sha256": "7c75686063d7559122188b3cb16d6ba746f434f4209930063138ee5e8222bae5",
-    "pair_sha256": "936452586054484916dfb63873be91eefc3bfc1eb1e38a41d379e487edd42947"
+    "pair_sha256": "5b4c158e27dfc9b2a821f0aeae066fa968afbaba9d70065e6e9600603bee63b1"
+  },
+  {
+    "workflow": "pr.recommit.push",
+    "contract_id": "pr.recommit.push",
+    "contract_version": 1,
+    "runner_entry": "pr-recommit-push.mjs",
+    "contract_spec": "github-pr-recommit-push.md",
+    "contract_test": "pr-recommit-push.test.mjs",
+    "runner_sha256": "9ddf1100389e62c7dcd9eec7e324c5f70549b1c6a8e449b57407db084e95dda3",
+    "spec_sha256": "f53e89acdffb80725eca1ecf89a3b5c7c9113e50f54cf2b27835d32812980d4d",
+    "pair_sha256": "c2ae17b1738e1ccf01afd5f894ea432d3b7ea0406b1166524284cbb3f2ef6aca"
   },
   {
     "workflow": "version.status",

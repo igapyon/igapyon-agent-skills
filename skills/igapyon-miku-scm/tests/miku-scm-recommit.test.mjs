@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -103,5 +103,37 @@ test("recommit workflow preserves preflight and mutation safety", async (t) => {
     assert.equal(git(state.root, "rev-parse", "backup/2026-07-27-2300"), state.oldHead);
     assert.equal(git(state.root, "log", "-1", "--format=%s"), "Runner-based recommit");
     assert.equal(git(state.root, "status", "--porcelain"), "");
+  });
+
+  await t.test("backup verification stops before reset when the backup no longer resolves to old HEAD", () => {
+    const runGit = (cwd, argumentsValue, options = {}) => {
+      const result = spawnSync("git", argumentsValue, {
+        cwd,
+        encoding: "utf8",
+        input: options.input,
+      });
+      if (argumentsValue[0] === "rev-parse" && argumentsValue[1] === "backup/2026-07-27-2300-2") {
+        return { ok: true, stdout: "0".repeat(40), stderr: "" };
+      }
+      if (result.status !== 0 && !options.allowFailure) {
+        throw new Error((result.stderr || result.stdout || "").trim());
+      }
+      return {
+        ok: result.status === 0,
+        stdout: (result.stdout || "").trimEnd(),
+        stderr: (result.stderr || "").trimEnd(),
+      };
+    };
+    const before = git(state.root, "rev-parse", "HEAD");
+    assert.throws(
+      () => runRecommit(parseArgs([
+        "--repo", state.root,
+        "--base", "devel",
+        "--pr-draft", state.draft,
+        "--apply",
+      ]), { ...dependencies, git: runGit }),
+      (error) => error?.mutationInvoked === true && /Backup branch does not point/.test(error.message),
+    );
+    assert.equal(git(state.root, "rev-parse", "HEAD"), before);
   });
 });

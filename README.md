@@ -15,6 +15,7 @@
 - skill を新規作成・更新した後は、`SKILL.md` が必要な `references/` を案内していること、必要に応じて `index.json` を参照することを確認する
 - repo 全体の運用ルールはこの `README.md` に書く
 - 作業メモは repo 直下の `TODO.md` に集約する
+- AI agent 作業を再開する前は、`GOAL.md`、`TODO.md`、`DECISIONS.md`、`HANDOFF.md` を確認する
 - skill ごとの `index.json` は `miku-indexgen` で生成する
 - ローカル作業用に `workplace/` を置き、`workplace/.gitkeep` だけを Git 管理下に入れる
 - Java / Maven 開発では `.mvn/jvm.config` を repo に含める
