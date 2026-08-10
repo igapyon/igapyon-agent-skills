@@ -5,6 +5,7 @@
  "files": [
   {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":10374,"description":"Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, explicitly says `recommit` to invoke the miku-soft PR soft-reset recommit flow with implicit PR drafting, or explicitly asks to perform Git, GitH...","summary":"igapyon-miku-scm"},
   {"name":"prompt-runner-ai-involvement-reduction-pattern.md","path":"docs/prompt-runner-ai-involvement-reduction-pattern.md","ext":"md","dir":"docs","size":9878,"summary":"Prompt–Runner Pairingによる生成AI関与削減パターン"},
+  {"name":"work-cycle-lifecycle-redesign.md","path":"docs/work-cycle-lifecycle-redesign.md","ext":"md","dir":"docs","size":46951,"summary":"miku-scm Work Cycleライフサイクル再設計案"},
   {"name":"approval-handoff.md","path":"references/approval-handoff.md","ext":"md","dir":"references","size":5521,"summary":"Approval Handoff"},
   {"name":"deterministic-workflow-runner.md","path":"references/deterministic-workflow-runner.md","ext":"md","dir":"references","size":14140,"summary":"Deterministic Workflow Runner"},
   {"name":"github-about-writing.md","path":"references/github-about-writing.md","ext":"md","dir":"references","size":1131,"summary":"GitHub About Writing"},
