@@ -606,6 +606,22 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       notes: ["Creates and switches to one local branch. This is an apply workflow despite its ID."],
     },
   ),
+  "work.commit": contract(
+    "Stage every non-ignored current change, run fixed consistency checks, and create one local commit.",
+    [
+      repoPath,
+      option("--message", "<commit-message>", "Optional reviewed commit message; a deterministic fallback is used when omitted."),
+      apply,
+    ],
+    ["--message", "Update work", "--apply"],
+    {
+      operational_artifacts: ["workplace/miku-scm/runs"],
+      notes: [
+        "Stages all current non-ignored changes; it never pushes, tags, or creates a Release.",
+        "Stops before staging conflicts, frozen -done branches, sensitive-path candidates, and coupled-version mismatches.",
+      ],
+    },
+  ),
   "pr.publish.preflight": contract(
     "Resolve an exact reviewed push plan for the current branch.",
     [
@@ -652,6 +668,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     "Collect PR draft, branch, base, backup, and commit evidence without rewriting commits.",
     [
       repoPath,
+      option("--remote", "<name>", "Git remote namespace used for automatic base resolution.", { default: "origin" }),
       option("--base", "<git-ref>", "Explicit base ref; otherwise resolve a safe candidate."),
       option("--pr-draft", "<repository-relative-path>", "Reviewed PR draft file."),
     ],
@@ -661,6 +678,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     "Create a backup branch, soft-reset to the reviewed base, and recommit the reviewed draft.",
     [
       repoPath,
+      option("--remote", "<name>", "Git remote namespace used for automatic base resolution.", { default: "origin" }),
       option("--base", "<git-ref>", "Reviewed base ref.", { required: true }),
       option("--pr-draft", "<repository-relative-path>", "Reviewed PR draft file.", {
         required: true,
@@ -669,6 +687,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       apply,
     ],
     [
+      "--remote", "origin",
       "--base", "origin/devel",
       "--pr-draft", "workplace/miku-scm/pr-drafts/<draft>.md",
       "--apply",
@@ -679,27 +698,22 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     },
   ),
   "pr.recommit.push": contract(
-    "Create a backup, recommit a reviewed PR draft, and conditionally publish it in one fixed transition.",
+    "Resolve the base and reviewed PR draft, then create a backup, recommit, and conditionally publish in one fixed transition.",
     [
       repoPath,
       option("--remote", "<name>", "Git remote name.", { default: "origin" }),
-      option("--base", "<git-ref>", "Reviewed base ref.", { required: true }),
-      option("--pr-draft", "<repository-relative-path>", "Reviewed PR draft file.", {
-        required: true,
-      }),
+      option("--base", "<git-ref>", "Optional base override; otherwise resolve the safe current-branch candidate."),
+      option("--pr-draft", "<repository-relative-path>", "Optional reviewed PR draft override; otherwise resolve the latest branch-matching candidate."),
       apply,
     ],
-    [
-      "--base", "origin/devel",
-      "--pr-draft", "workplace/miku-scm/pr-drafts/<draft>.md",
-      "--apply",
-    ],
+    ["--apply"],
     {
       network_access: "Git remote read and one exact-lease or new-branch push",
       authentication: "existing Git authentication",
       operational_artifacts: ["local backup branch", "workplace/miku-scm/ok-push"],
       notes: [
         "The explicit push request authorizes only this exact branch publication; it never creates a PR, tag, or Release.",
+        "No matching reviewed PR draft stops before backup creation; the runner never invents PR prose.",
         "Current apply support is macOS only; other platforms stop before backup creation.",
       ],
     },

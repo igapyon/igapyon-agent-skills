@@ -445,6 +445,45 @@ Create the PR and tag through GitHub.
   assert.doesNotMatch(output, /[ぁ-んァ-ヶ一-龠]/);
 });
 
+test("work commit output reports the one-shot local result and non-blocking version notice", () => {
+  const output = renderHumanOutput({
+    workflow: "work.commit",
+    status: "success",
+    approvalGate: "apply",
+    delegateStatus: "committed",
+    mutationInvoked: true,
+    result: {
+      status: "committed",
+      repository: "igapyon-agent-skills",
+      branch: "devel-test",
+      head_before: "a".repeat(40),
+      head: "b".repeat(40),
+      commit_message: "Update work",
+      message_source: "supplied",
+      paths: ["README.md", "feature.txt"],
+      checks: ["mvn validate"],
+      version_notice: {
+        version: "1.20260810.2",
+        coupled_version: "20260810b",
+        recommended_tag: "v20260810b",
+        increment_status: "increment_not_observed",
+      },
+      working_tree_clean: true,
+    },
+  });
+
+  assert.match(output, /^\[SUCCESS\] Work commit$/m);
+  assert.match(output, /^Commit message: Update work$/m);
+  assert.match(output, /^Commit message source: supplied$/m);
+  assert.match(output, /^Committed path count: 2$/m);
+  assert.match(output, /^Pre-commit checks: mvn validate$/m);
+  assert.match(output, /^Version notice: 1\.20260810\.2$/m);
+  assert.match(output, /^Version increment: increment_not_observed$/m);
+  assert.match(output, /^Version increment reminder: not observed; this is non-blocking\.$/m);
+  assert.match(output, /^Working tree: clean$/m);
+  assert.match(output, /Mutation invoked: yes/);
+});
+
 test("PR publication reports unresolved values without guessing", () => {
   const output = renderHumanOutput({
     workflow: "pr.publish.apply",

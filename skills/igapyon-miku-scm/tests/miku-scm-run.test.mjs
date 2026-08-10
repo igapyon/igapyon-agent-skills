@@ -112,6 +112,7 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
     "repository.maintenance.plan",
     "repository.maintenance.apply",
     "repository.post-merge.next-work",
+    "work.commit",
     "pr.publish.preflight",
     "pr.publish.apply",
     "pr.recommit.preflight",
@@ -129,7 +130,7 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
 });
 
 test("manifest exposes complete AI-readable CLI help contracts", () => {
-  assert.equal(WORKFLOW_MANIFEST.length, 32);
+  assert.equal(WORKFLOW_MANIFEST.length, 33);
   for (const workflow of WORKFLOW_MANIFEST) {
     assert.equal(typeof workflow.cli.summary, "string", workflow.id);
     assert.ok(workflow.cli.summary.length > 0, workflow.id);
@@ -1122,8 +1123,6 @@ test("recommit push runner requires one explicit apply request and returns one c
   const calls = [];
   const result = await runWorkflow("pr.recommit.push", [
     "--repo", root,
-    "--base", "origin/devel",
-    "--pr-draft", "workplace/miku-scm/pr-drafts/pr-test.md",
     "--apply",
   ], {
     cwd: root,
@@ -1156,18 +1155,70 @@ test("recommit push runner requires one explicit apply request and returns one c
   assert.equal(result.delegate_status, "published");
   assert.equal(result.mutation_invoked, true);
   assert.equal(calls.length, 1);
+  assert.equal(calls[0].base, "");
+  assert.equal(calls[0].prDraft, "");
   assert.match(result.human_output, /^\[SUCCESS\] PR recommit push$/m);
   assert.match(result.human_output, /^Final branch: devel-test-done$/m);
 
   const rejected = await runWorkflow("pr.recommit.push", [
     "--repo", root,
-    "--base", "origin/devel",
-    "--pr-draft", "workplace/miku-scm/pr-drafts/pr-test.md",
   ], {
     cwd: root,
     artifactRoot: path.join(root, "runs"),
     runId: "recommit-push-rejected",
     recommitPushExecute: () => {
+      throw new Error("must not execute");
+    },
+  });
+  assert.equal(rejected.status, "not-applied");
+  assert.match(rejected.error.message, /requires --apply/);
+  assert.equal(rejected.mutation_invoked, false);
+});
+
+test("work commit runner keeps one explicit apply boundary and returns the fixed result", async (t) => {
+  const root = await workspace(t);
+  const calls = [];
+  const result = await runWorkflow("work.commit", [
+    "--repo", root,
+    "--message", "Commit current work",
+    "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "work-commit",
+    workCommitExecute: async (options) => {
+      calls.push(options);
+      return {
+        status: "committed",
+        repository: "test-repository",
+        branch: "devel-test",
+        head_before: "a".repeat(40),
+        head: "b".repeat(40),
+        commit_message: options.message,
+        paths: ["README.md"],
+        checks: ["mvn validate"],
+        version_notice: {
+          version: "1.20260728.1",
+          coupled_version: "20260728a",
+          recommended_tag: "v20260728a",
+          alignment: "aligned",
+        },
+        working_tree_clean: true,
+      };
+    },
+  });
+  assert.equal(result.status, "success");
+  assert.equal(result.delegate_status, "committed");
+  assert.equal(result.mutation_invoked, true);
+  assert.equal(calls.length, 1);
+  assert.match(result.human_output, /^\[SUCCESS\] Work commit$/m);
+  assert.match(result.human_output, /^Working tree: clean$/m);
+
+  const rejected = await runWorkflow("work.commit", ["--repo", root], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "work-commit-rejected",
+    workCommitExecute: () => {
       throw new Error("must not execute");
     },
   });

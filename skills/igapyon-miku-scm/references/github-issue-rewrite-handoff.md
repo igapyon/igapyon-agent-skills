@@ -38,7 +38,8 @@ Save new-Issue drafts under `new-issues/`, existing-Issue update drafts under `i
 
 Resolve the repository root with `git rev-parse --show-toplevel`. If that fails, use the current project-equivalent directory. Create the draft directory when needed.
 
-Use local time and these lowercase paths:
+Use `Asia/Tokyo` (JST), independent of the host operating system timezone, and
+these lowercase paths:
 
 - new Issue: `workplace/miku-scm/new-issues/issue-new-<YYYYMMDDHHMM>.md`
 - existing Issue update: `workplace/miku-scm/issue-updates/issue-<number>-update-<YYYYMMDDHHMM>.md`

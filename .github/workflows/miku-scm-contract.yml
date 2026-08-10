@@ -1,0 +1,43 @@
+name: Miku SCM Contract
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/miku-scm-contract.yml"
+      - "package.json"
+      - "pom.xml"
+      - "skills/igapyon-miku-scm/**"
+  push:
+    branches:
+      - devel
+    paths:
+      - ".github/workflows/miku-scm-contract.yml"
+      - "package.json"
+      - "pom.xml"
+      - "skills/igapyon-miku-scm/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: mvn --version
+      - run: npm run test:miku-scm:fast

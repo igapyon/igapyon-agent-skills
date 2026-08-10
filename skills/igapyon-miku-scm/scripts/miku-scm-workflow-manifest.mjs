@@ -194,6 +194,15 @@ const WORKFLOW_DEFINITIONS = [
     references: ["scm-rules.md", "github-release-tag-handoff.md", "deterministic-workflow-runner.md"],
   },
   {
+    id: "work.commit",
+    triggers: ["miku-scm git add commit", "git add commit", "通常commit"],
+    required_parameters: ["repository", "explicit_commit_request"],
+    mutation_level: "local",
+    approval_gate: "apply",
+    runner_entry: "work-commit.mjs",
+    references: ["work-commit.md", "repository-precommit-checks.md", "deterministic-workflow-runner.md"],
+  },
+  {
     id: "pr.publish.preflight",
     triggers: ["push事前確認", "publication plan作成"],
     required_parameters: ["repository", "reviewed_head"],
@@ -232,7 +241,7 @@ const WORKFLOW_DEFINITIONS = [
   {
     id: "pr.recommit.push",
     triggers: ["miku-scm pr recommit push", "PR recommit push"],
-    required_parameters: ["repository", "base", "pr_draft", "remote", "explicit_recommit_and_push_request"],
+    required_parameters: ["repository", "explicit_recommit_and_push_request"],
     mutation_level: "remote",
     approval_gate: "apply",
     runner_entry: "pr-recommit-push.mjs",
@@ -306,6 +315,7 @@ const CONTRACT_TEST_BY_RUNNER = Object.freeze({
   "miku-scm-handoff.mjs": "miku-scm-handoff.test.mjs",
   "repository-maintenance.mjs": "repository-maintenance.test.mjs",
   "post-merge-next-work.mjs": "post-recommit-publish.test.mjs",
+  "work-commit.mjs": "work-commit.test.mjs",
   "post-recommit-publish.mjs": "post-recommit-publish.test.mjs",
   "pr-soft-reset-recommit-preflight.mjs": "miku-scm-recommit.test.mjs",
   "pr-recommit-push.mjs": "pr-recommit-push.test.mjs",

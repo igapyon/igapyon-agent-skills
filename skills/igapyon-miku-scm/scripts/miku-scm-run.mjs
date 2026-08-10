@@ -53,6 +53,10 @@ import {
   runRecommitPush,
 } from "./pr-recommit-push.mjs";
 import {
+  parseArgs as parseWorkCommitArgs,
+  runWorkCommit,
+} from "./work-commit.mjs";
+import {
   WORKFLOW_MANIFEST,
   WORKFLOW_MANIFEST_VERSION,
   workflowManifestById,
@@ -105,7 +109,7 @@ import { failureEvent } from "./miku-scm-observability.mjs";
 
 export const RUNNER_SCHEMA_VERSION = "miku-scm.runner/v1";
 export const RESULT_SCHEMA_VERSION = "miku-scm.runner-result/v1";
-export const PRODUCT_VERSION = "1.20260810.1";
+export const PRODUCT_VERSION = "1.20260810.2";
 
 const RUN_ID = /^[A-Za-z0-9._-]+$/;
 const SECRET_OPTION = /(?:token|password|secret|authorization|credential)/i;
@@ -377,6 +381,7 @@ function recommitWorkflow(mode, dependencies) {
       return {
         operation: mode === "apply" ? "pr-recommit-apply" : "pr-recommit-preflight",
         repository: path.resolve(options.repo),
+        remote: options.remote,
         base: options.base || null,
         pr_draft: options.prDraft || null,
         allow_dirty: Boolean(options.allowDirty),
@@ -405,14 +410,40 @@ function recommitPushWorkflow(dependencies) {
         operation: "pr-recommit-push",
         repository: path.resolve(options.repo),
         remote: options.remote,
-        base: options.base,
-        pr_draft: options.prDraft,
+        base: options.base || null,
+        pr_draft: options.prDraft || null,
+        base_and_pr_draft_resolution: options.base || options.prDraft ? "explicit-or-mixed" : "automatic",
         mutation_invocation_allowed: true,
       };
     },
     execute(options) {
       const implementation = dependencies.recommitPushExecute ?? runRecommitPush;
       return implementation(options, dependencies.recommitPushDependencies);
+    },
+  };
+}
+
+function workCommitWorkflow(dependencies) {
+  return {
+    version: 1,
+    mutationLevel: "local",
+    approvalGate: "apply",
+    parse(argv, cwd) {
+      const options = parseWorkCommitArgs(argv, cwd);
+      if (!options.apply) throw new Error("work.commit requires --apply");
+      return options;
+    },
+    plan(options) {
+      return {
+        operation: "work-commit",
+        repository: path.resolve(options.repo),
+        commit_message_supplied: Boolean(options.message.trim()),
+        mutation_invocation_allowed: true,
+      };
+    },
+    execute(options) {
+      const implementation = dependencies.workCommitExecute ?? runWorkCommit;
+      return implementation(options, dependencies.workCommitDependencies);
     },
   };
 }
@@ -628,6 +659,7 @@ export function workflowRegistry(dependencies = {}) {
         dependencies.postMergeDependencies,
       ),
     }],
+    ["work.commit", workCommitWorkflow(dependencies)],
     ["pr.publish.preflight", publishWorkflow("preflight", dependencies)],
     ["pr.publish.apply", publishWorkflow("apply", dependencies)],
     ["pr.recommit.preflight", recommitWorkflow("preflight", dependencies)],

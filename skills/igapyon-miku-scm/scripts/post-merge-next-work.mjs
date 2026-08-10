@@ -5,6 +5,8 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { jstDateParts } from "./miku-scm-jst-time.mjs";
+
 const NAME = /^[A-Za-z0-9._-]+$/;
 
 export function parseArgs(argv, cwd = process.cwd()) {
@@ -36,9 +38,10 @@ function runner(cwd, args, allowFailure = false) {
 }
 function text(root, args) { return runner(root, args).out; }
 function clean(root) { if (text(root, ["status", "--porcelain"])) throw new Error("Working tree or index is dirty"); }
-function branchName(base, date = new Date()) {
+export function workBranchName(base, date = new Date()) {
+  const parts = jstDateParts(date);
   const abc = (n) => String.fromCharCode(97 + n);
-  return `${base}-tiga${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}${abc(date.getHours())}${abc(Math.floor(date.getMinutes() / 10))}${abc(date.getMinutes() % 10)}`;
+  return `${base}-tiga${String(parts.month).padStart(2, "0")}${String(parts.day).padStart(2, "0")}${abc(parts.hour)}${abc(Math.floor(parts.minute / 10))}${abc(parts.minute % 10)}`;
 }
 function baseFromDoneBranch(branch) {
   return branch.match(/^(.+)-tiga\d{4}[a-x][a-j][a-j]-done$/)?.[1] ?? "";
@@ -95,7 +98,7 @@ export async function run(options, dependencies = {}) {
   if (!base || !NAME.test(base)) throw new Error("Base branch is unresolved; pass --base");
   const remoteBase = `${options.remote}/${base}`;
   const baseCommit = git(root, ["rev-parse", remoteBase]).out;
-  const next = branchName(base, dependencies.now ? dependencies.now() : new Date());
+  const next = workBranchName(base, dependencies.now ? dependencies.now() : new Date());
   if (git(root, ["show-ref", "--verify", "--quiet", `refs/heads/${next}`], true).ok) throw new Error(`Next work branch already exists: ${next}`);
   const info = await version(root, baseCommit, git);
   const tagLookup = info.tag === "unresolved"
