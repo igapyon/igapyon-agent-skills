@@ -15,6 +15,24 @@ update_when:
 This file records important decisions for the AI agent.
 Read this before making or revisiting decisions, especially when the work seems to loop.
 
+## 2026-08-10: Make The miku-scm Work Cycle Responsive Without Removing Its Safety Model
+
+理由:
+The user identified excessive conversational waiting as a quality risk in the
+normal branch-to-PR flow. The merged Work Cycle design separates checks that a
+deterministic runner can complete from genuine human authorization boundaries.
+
+影響:
+Keep `-done`, backup creation, exact remote expectations, `force-with-lease`,
+post-push comparison, and human GitHub tag/Release work. Introduce a clearly
+named `pr recommit push` operation rather than changing the meaning of
+`pr recommit`. After a successful backup and expected fixed checks, the runner
+should continue locally and, when authorized, through its fixed publication
+checks without returning to the AI agent between each successful command.
+Version-increment reminders are informational, not a hard gate. Implement one
+Node.js workflow core with platform adapters; make `rg` optional so Windows 11
+does not require a separate full workflow implementation.
+
 ## 2026-07-31: Separate Practice, Target State, And External Constraint
 
 理由:

@@ -110,7 +110,7 @@ function sha256(value) { return createHash("sha256").update(value).digest("hex")
 
 function planDirectory(root) { return path.join(root, "workplace", "miku-scm", "ok-push"); }
 
-async function savePlan(root, result) {
+export async function savePublicationPlan(root, result) {
   const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 12);
   const plan = { schema_version: 1, repository: result.repository, branch: result.branch, remote: result.remote,
     reviewed_head: result.head, remote_branch: result.remote_branch, done_branch: `${result.branch}-done`,
@@ -525,7 +525,7 @@ export async function executePublish(options, dependencies = {}) {
     }
   }
   let result = await runPublish(options, dependencies);
-  if (options.savePlan) result = await savePlan(await realpath(options.repo), result);
+  if (options.savePlan) result = await savePublicationPlan(await realpath(options.repo), result);
   return result;
 }
 

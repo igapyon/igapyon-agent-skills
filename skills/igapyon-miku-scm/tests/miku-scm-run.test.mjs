@@ -116,6 +116,7 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
     "pr.publish.apply",
     "pr.recommit.preflight",
     "pr.recommit.apply",
+    "pr.recommit.push",
     "version.status",
     "version.increment.validate",
     "writing.issue.prepare",
@@ -128,7 +129,7 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
 });
 
 test("manifest exposes complete AI-readable CLI help contracts", () => {
-  assert.equal(WORKFLOW_MANIFEST.length, 31);
+  assert.equal(WORKFLOW_MANIFEST.length, 32);
   for (const workflow of WORKFLOW_MANIFEST) {
     assert.equal(typeof workflow.cli.summary, "string", workflow.id);
     assert.ok(workflow.cli.summary.length > 0, workflow.id);
@@ -1114,6 +1115,65 @@ test("local apply failure after a known mutation is unresolved", async (t) => {
   });
   assert.equal(result.status, "unresolved");
   assert.equal(result.mutation_invoked, true);
+});
+
+test("recommit push runner requires one explicit apply request and returns one combined result", async (t) => {
+  const root = await workspace(t);
+  const calls = [];
+  const result = await runWorkflow("pr.recommit.push", [
+    "--repo", root,
+    "--base", "origin/devel",
+    "--pr-draft", "workplace/miku-scm/pr-drafts/pr-test.md",
+    "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "recommit-push",
+    recommitPushExecute: async (options) => {
+      calls.push(options);
+      return {
+        status: "published",
+        mode: "apply",
+        repository: "test-repository",
+        branch: "devel-test",
+        base: "origin/devel",
+        backup_branch: "backup/2026-07-28-2200",
+        pr_draft: options.prDraft,
+        new_head: "b".repeat(40),
+        pushed_branch: "devel-test",
+        final_branch: "devel-test-done",
+        comparison: "0 0",
+        repository_url: "https://github.com/example/test-repository",
+        pr_lookup: "confirmed-none",
+        pr_creation_url: "https://github.com/example/test-repository/pull/new/devel-test",
+        version: "1.20260728.1",
+        recommended_tag: "v20260728a",
+        human_handoff: "Create the PR and tag through GitHub.",
+      };
+    },
+  });
+  assert.equal(result.status, "success");
+  assert.equal(result.delegate_status, "published");
+  assert.equal(result.mutation_invoked, true);
+  assert.equal(calls.length, 1);
+  assert.match(result.human_output, /^\[SUCCESS\] PR recommit push$/m);
+  assert.match(result.human_output, /^Final branch: devel-test-done$/m);
+
+  const rejected = await runWorkflow("pr.recommit.push", [
+    "--repo", root,
+    "--base", "origin/devel",
+    "--pr-draft", "workplace/miku-scm/pr-drafts/pr-test.md",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "recommit-push-rejected",
+    recommitPushExecute: () => {
+      throw new Error("must not execute");
+    },
+  });
+  assert.equal(rejected.status, "not-applied");
+  assert.match(rejected.error.message, /requires --apply/);
+  assert.equal(rejected.mutation_invoked, false);
 });
 
 test("version runner separates status from explicit increment validation", async (t) => {

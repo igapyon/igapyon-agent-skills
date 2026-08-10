@@ -49,6 +49,10 @@ import {
   runRecommit,
 } from "./pr-soft-reset-recommit-preflight.mjs";
 import {
+  parseArgs as parseRecommitPushArgs,
+  runRecommitPush,
+} from "./pr-recommit-push.mjs";
+import {
   WORKFLOW_MANIFEST,
   WORKFLOW_MANIFEST_VERSION,
   workflowManifestById,
@@ -101,7 +105,7 @@ import { failureEvent } from "./miku-scm-observability.mjs";
 
 export const RUNNER_SCHEMA_VERSION = "miku-scm.runner/v1";
 export const RESULT_SCHEMA_VERSION = "miku-scm.runner-result/v1";
-export const PRODUCT_VERSION = "1.20260809.1";
+export const PRODUCT_VERSION = "1.20260810.1";
 
 const RUN_ID = /^[A-Za-z0-9._-]+$/;
 const SECRET_OPTION = /(?:token|password|secret|authorization|credential)/i;
@@ -386,6 +390,33 @@ function recommitWorkflow(mode, dependencies) {
   };
 }
 
+function recommitPushWorkflow(dependencies) {
+  return {
+    version: 1,
+    mutationLevel: "remote",
+    approvalGate: "apply",
+    parse(argv, cwd) {
+      const options = parseRecommitPushArgs(argv, cwd);
+      if (!options.apply) throw new Error("pr.recommit.push requires --apply");
+      return options;
+    },
+    plan(options) {
+      return {
+        operation: "pr-recommit-push",
+        repository: path.resolve(options.repo),
+        remote: options.remote,
+        base: options.base,
+        pr_draft: options.prDraft,
+        mutation_invocation_allowed: true,
+      };
+    },
+    execute(options) {
+      const implementation = dependencies.recommitPushExecute ?? runRecommitPush;
+      return implementation(options, dependencies.recommitPushDependencies);
+    },
+  };
+}
+
 function versionWorkflow(mode, dependencies) {
   return {
     version: 1,
@@ -601,6 +632,7 @@ export function workflowRegistry(dependencies = {}) {
     ["pr.publish.apply", publishWorkflow("apply", dependencies)],
     ["pr.recommit.preflight", recommitWorkflow("preflight", dependencies)],
     ["pr.recommit.apply", recommitWorkflow("apply", dependencies)],
+    ["pr.recommit.push", recommitPushWorkflow(dependencies)],
     ["version.status", versionWorkflow("status", dependencies)],
     ["version.increment.validate", versionWorkflow("validate", dependencies)],
     ["writing.issue.prepare", writingWorkflow("issue", dependencies)],
