@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -8,6 +8,7 @@ import test from "node:test";
 
 import {
   commandForPlatform,
+  createGitRunner,
   parseArgs,
   runWorkCommit,
 } from "../scripts/work-commit.mjs";
@@ -18,6 +19,22 @@ function git(cwd, ...args) {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   }).trim();
+}
+
+function gitRunner(cwd, args, options = {}) {
+  const result = spawnSync("git", args, {
+    cwd,
+    encoding: "utf8",
+    input: options.input,
+  });
+  if (result.status !== 0 && !options.allowFailure) {
+    throw new Error(`git ${args.join(" ")} failed: ${(result.stderr || result.stdout || "").trim()}`);
+  }
+  return {
+    ok: result.status === 0,
+    stdout: result.stdout || "",
+    stderr: result.stderr || "",
+  };
 }
 
 async function repository(t, options = {}) {
@@ -74,6 +91,30 @@ test("fixed checks use Windows command shims without a shell", () => {
   assert.equal(commandForPlatform("npm", "darwin"), "npm");
 });
 
+test("Git failure diagnostics identify a failed diff without exposing its stdout", () => {
+  const stagedDiff = "<private-staged-diff>\n".repeat(5000);
+  const runner = createGitRunner(() => ({
+    status: 1,
+    signal: null,
+    error: undefined,
+    stdout: stagedDiff,
+    stderr: "textconv fixture returned 1",
+  }));
+
+  assert.throws(
+    () => runner("/fixture", ["diff", "--cached"]),
+    (error) => {
+      assert.match(error.message, /exit_code=1/);
+      assert.match(error.message, /signal=none/);
+      assert.match(error.message, /stdout_bytes=110000/);
+      assert.match(error.message, /stdout_sha256=[a-f0-9]{64}/);
+      assert.match(error.message, /stderr=textconv fixture returned 1/);
+      assert.doesNotMatch(error.message, /private-staged-diff/);
+      return true;
+    },
+  );
+});
+
 test("fixed npm and Maven checks execute before the local commit", async (t) => {
   const root = await repository(t, { fixedChecks: true });
   await writeFile(path.join(root, "README.md"), "checked\n", "utf8");
@@ -105,6 +146,67 @@ test("one invocation stages all ordinary non-ignored changes and commits them", 
   assert.equal(git(root, "status", "--porcelain"), "");
   assert.equal(git(root, "show", "--format=", "--name-only", "HEAD").split("\n").filter(Boolean).sort().join(","), "README.md,feature.txt");
   assert.equal(result.version_notice.increment_status, "not_applicable");
+});
+
+test("staged fingerprint disables textconv and commits previously staged mixed changes", async (t) => {
+  const root = await repository(t);
+  await writeFile(path.join(root, "rename-source.txt"), "before rename\n", "utf8");
+  git(root, "add", "rename-source.txt");
+  git(root, "commit", "-m", "add rename source");
+  git(root, "mv", "rename-source.txt", "renamed.txt");
+  await writeFile(path.join(root, "README.md"), "modified\n", "utf8");
+  await writeFile(path.join(root, "added.txt"), "added\n", "utf8");
+  await writeFile(path.join(root, "asset.bin"), Buffer.from([0, 255, 1, 254]));
+  git(root, "add", "--all");
+
+  let textconvAttempts = 0;
+  const result = await runWorkCommit(options(root, "--message", "Commit staged mixed changes"), {
+    git(cwd, args, runnerOptions) {
+      if (
+        args[0] === "diff"
+        && args.includes("--cached")
+        && args.includes("--binary")
+        && !args.includes("--no-textconv")
+      ) {
+        textconvAttempts += 1;
+        throw new Error("git diff --cached failed: textconv emitted a staged diff and returned 1");
+      }
+      return gitRunner(cwd, args, runnerOptions);
+    },
+  });
+
+  assert.equal(result.status, "committed");
+  assert.equal(result.mutation_invoked, true);
+  assert.equal(textconvAttempts, 0);
+  assert.equal(git(root, "status", "--porcelain"), "");
+  assert.equal(git(root, "show", "--format=", "--name-only", "HEAD").split("\n").filter(Boolean).sort().join(","), "README.md,added.txt,asset.bin,renamed.txt");
+});
+
+test("a genuine staged fingerprint failure remains partial and preserves the index", async (t) => {
+  const root = await repository(t);
+  const before = git(root, "rev-parse", "HEAD");
+  await writeFile(path.join(root, "README.md"), "staged change\n", "utf8");
+
+  const result = await runWorkCommit(options(root, "--message", "Keep genuine Git failure"), {
+    git(cwd, args, runnerOptions) {
+      if (
+        args[0] === "diff"
+        && args.includes("--cached")
+        && args.includes("--binary")
+        && args.includes("--no-textconv")
+      ) {
+        throw new Error("git diff --cached failed: exit_code=128; stderr=broken repository state");
+      }
+      return gitRunner(cwd, args, runnerOptions);
+    },
+  });
+
+  assert.equal(result.status, "partial");
+  assert.equal(result.stage, "stage");
+  assert.equal(result.mutation_invoked, true);
+  assert.match(result.message, /broken repository state/);
+  assert.equal(git(root, "rev-parse", "HEAD"), before);
+  assert.equal(git(root, "diff", "--cached", "--name-only"), "README.md");
 });
 
 test("version-only work uses the deterministic version message without a blocking prompt", async (t) => {
