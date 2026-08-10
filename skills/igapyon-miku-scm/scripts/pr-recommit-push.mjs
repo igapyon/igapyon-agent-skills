@@ -13,7 +13,7 @@ import { runRecommit } from "./pr-soft-reset-recommit-preflight.mjs";
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/pr-recommit-push.mjs \\
-    --base <git-ref> --pr-draft <repository-relative-path> \\
+    [--base <git-ref>] [--pr-draft <repository-relative-path>] \\
     [--repo <path>] [--remote <name>] --apply
 
 Runs one explicitly authorized transition: fixes the remote expectation, creates
@@ -45,8 +45,6 @@ export function parseArgs(argv, cwd = process.cwd()) {
   if (!/^[A-Za-z0-9._-]+$/.test(options.remote)) {
     throw new Error("--remote must be a Git remote name");
   }
-  if (!options.base) throw new Error("--base is required");
-  if (!options.prDraft) throw new Error("--pr-draft is required");
   if (!options.apply) throw new Error("pr.recommit.push requires --apply");
   return options;
 }
@@ -122,6 +120,7 @@ export async function runRecommitPush(options, dependencies = {}) {
   try {
     const recommitPreflight = await recommit({
       repo: options.repo,
+      remote: options.remote,
       base: options.base,
       prDraft: options.prDraft,
       apply: false,
@@ -130,6 +129,15 @@ export async function runRecommitPush(options, dependencies = {}) {
     if (recommitPreflight.status !== "preflight-ok") {
       return { ...recommitPreflight, status: "not-applied", mode: "apply", mutation_invoked: false };
     }
+
+    const resolvedRecommitOptions = {
+      repo: options.repo,
+      remote: options.remote,
+      base: recommitPreflight.base,
+      prDraft: recommitPreflight.pr_draft,
+      apply: true,
+      allowDirty: false,
+    };
 
     initialPublication = await publish(publicationOptions({
       repo: options.repo,
@@ -146,13 +154,7 @@ export async function runRecommitPush(options, dependencies = {}) {
       };
     }
 
-    recommitResult = await recommit({
-      repo: options.repo,
-      base: options.base,
-      prDraft: options.prDraft,
-      apply: true,
-      allowDirty: false,
-    }, recommitDependencies);
+    recommitResult = await recommit(resolvedRecommitOptions, recommitDependencies);
     if (recommitResult.status !== "recommitted") {
       return {
         ...recommitResult,

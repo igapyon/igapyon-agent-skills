@@ -270,7 +270,8 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 ## Initial Safety Rules
 
 - Inspect before changing.
-- Before `git add` or `git commit`, apply the mandatory human confirmation gate in [version-increment-confirmation.md](version-increment-confirmation.md).
+- Route exact `miku-scm git add commit` to the fixed [work-commit.md](work-commit.md) runner. Its version notice is non-blocking; do not recreate a human confirmation gate or a sequence of ordinary Git commands around it.
+- The legacy ordinary `git add` or `git commit` path retains [version-increment-confirmation.md](version-increment-confirmation.md) until it is replaced by `work.commit`.
 - After staging and immediately before `git commit`, run the repository-declared consistency gates in [repository-precommit-checks.md](repository-precommit-checks.md). Do not commit after a failed or invalidated check.
 - Resolve the exact repository, branch, remote, commit, tag, release, and version target needed for the request.
 - Preserve unrelated working-tree changes.

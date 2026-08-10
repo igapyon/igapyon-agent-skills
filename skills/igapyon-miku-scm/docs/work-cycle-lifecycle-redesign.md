@@ -12,13 +12,19 @@ Cycleとして整理し直すための設計ドラフトである。
 
 ## 実装状況（2026-08-10）
 
+Phase 2の最初のsliceとして、exact `miku-scm git add commit`に対応する
+`work.commit` fixed workflowを実装した。これは、non-ignored変更を速度優先で
+一括stageし、recognised pre-commit check、staged digest再確認、local commit、
+postconditionを一つのrunner invocationで実行する。conflict、`-done` branch、
+secret candidate、coupled version mismatchはstage前に停止する。
+
 Phase 3の最初のsliceとして、exact `pr recommit push`に対応する
 `pr.recommit.push` fixed workflowを実装した。これはmacOS上で、remote stateを
 backup前に固定し、backup、recommit、publication plan、conditional push、remote
 equality確認、`-done` renameを一つのrunner invocationで実行する。remote stateが
 変わった場合はpushせず`partial`で止まる。
 
-Windows 11のpublication、cycle artifact、通常commitのone-shot化、PR evidenceの
+Windows 11のpublication、cycle artifact、作業開始のone-shot化、PR evidenceの
 完全統合は未実装であり、この文書の残りの段階的移行案に従う。
 
 主な目的は次のとおりである。
@@ -59,7 +65,7 @@ handoffの確定情報ではない。
 | 作業開始 | [`scm-rules.md`](../references/scm-rules.md) のStartup Work Branch Checkout | AgentがGit command列を判断するlegacy経路 |
 | version確認 | [`version-increment-confirmation.md`](../references/version-increment-confirmation.md)、`version.status` | READONLY runnerと会話内session recordの組み合わせ |
 | version候補計算 | `version.increment.validate` | 固定READONLY runner |
-| `git add`・通常commit | [`repository-precommit-checks.md`](../references/repository-precommit-checks.md) | Agentがstage、diff、check、commitを順に実行 |
+| `git add`・通常commit | `work.commit` | fixed local applyがstage、check、commitを一度に実行 |
 | PR evidence収集 | `writing.pr.prepare` | 固定READONLY runner |
 | PR文案作成 | [`github-pr-writing.md`](../references/github-pr-writing.md) | 構造化evidenceから生成AIが一度作文 |
 | recommit事前確認 | `pr.recommit.preflight` | 固定READONLY runner |
@@ -71,8 +77,8 @@ handoffの確定情報ではない。
 | tag・Release | [`github-release-tag-handoff.md`](../references/github-release-tag-handoff.md) | GitHub Release UIへの人間handoff |
 
 後半のrecommit、publication、post-mergeは固定runner化されている。一方で、
-作業ブランチ作成、通常のstage・commit、ライフサイクル全体の状態管理は
-Agentの会話内判断に残っている。
+作業ブランチ作成とライフサイクル全体の状態管理はAgentの会話内判断に残っている。
+通常のstage・commitは`work.commit`へ移行済みである。
 
 現行publication applyにはmacOS限定guardがあり、規範文書もmacOSを前提としている。
 したがってWindows 11対応は、単なる動作確認ではなく、platform contract、path
@@ -803,9 +809,9 @@ postconditionを削ってはならない。安全処理は生成AIから決定�
 ### Phase 2: 作業開始と通常commit
 
 - `work.cycle.start`を固定runner化する
-- one-shotの`work.commit`を追加する
-- version increment確認をnon-blocking noticeへ変更する
-- repository-declared checksを内部commit planへ固定する
+- [x] one-shotの`work.commit`を追加する
+- [x] `work.commit`のversion increment確認をnon-blocking noticeへ変更する
+- [x] recognised repository-declared checksを内部commit planへ固定する
 
 ### Phase 3: PR candidate統合
 

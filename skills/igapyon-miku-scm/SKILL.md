@@ -43,10 +43,28 @@ Do not inspect the repository or load detailed references yet.
    keep a one-commit branch as a single-commit PR. Explicit commits and ranges
    always win. This routing authorizes preparation only; preserve the explicit
    approval gate before the local history rewrite.
-   Treat exact `pr recommit push` as the separate remote workflow after the
-   reviewed PR draft exists. Its exact `push` token authorizes only the fixed
-   recommit-and-publication transition; do not route bare `recommit` or
+   Treat exact `pr recommit push` as the separate remote workflow. First run
+   one READONLY `pr.recommit.preflight`. If it has any blocker other than
+   `PR draft is unresolved or missing`, return that fixed stop without
+   drafting or mutation. If it has a matching draft and no blocker, invoke
+   `pr.recommit.push --base <resolved-base> --pr-draft <resolved-draft>
+   --apply` once. If the missing draft is its only blocker, run
+   `writing.pr.prepare --target <resolved-base>..HEAD` once, draft once from
+   that evidence, save it at the returned `suggested_draft_path`, then invoke
+   the same fixed push workflow with that exact base and saved draft in the
+   same user turn. The runner never invents PR prose; this Skill-only writing
+   fallback supplies the reviewed artifact it requires. Its exact `push`
+   token authorizes this bounded draft preparation and the fixed
+   recommit-and-publication transition. Do not route bare `recommit` or
    `pr recommit` to it.
+   Route exact `miku-scm git add commit` to `work.commit --apply`. When the
+   current user request or current TODO heading identifies the work, pass that
+   concise one-line title with `--message`; do not use the generic fallback.
+   Omit `--message` only when no concrete title is available, or for a
+   version-only change so the runner selects its deterministic version title.
+   Then let the fixed runner stage all ordinary non-ignored changes, check, and
+   commit without returning between successful steps. Do not reconstruct that
+   Git command sequence.
 4. For a current Issue status, backlog, or progress request, invoke
    `github.issue.read --list` once with its default Open state. Do not add a
    second `--state all` read merely to calculate an Open/Closed breakdown.
