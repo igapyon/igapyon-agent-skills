@@ -12,6 +12,13 @@ Increment a project's version only when the user explicitly requests it. Resolve
 6. Run the repository's version-alignment check, build, or package command and confirm any versioned artifact name.
 7. Review the relevant diff and run `git status -sb`. Record the verified repository, branch, version-source paths and values, and successful validation in the current session so a later add or commit need not repeat the reminder. Leave the changes unstaged unless the user separately requests staging or committing.
 
+For `igapyon-agent-skills`, `pom.xml`, `skills/igapyon-mikuku-agent/references/VERSION.md`,
+and the `PRODUCT_VERSION` literal in
+`skills/igapyon-miku-scm/scripts/miku-scm-run.mjs` form one checked update set.
+The runner literal keeps an installed skill's `--version` self-contained; it
+must equal the project version. `mvn validate` checks all three values, so do
+not commit a partial update.
+
 ## Date-Based Versions
 
 Use the repository's documented date, timezone, prefix, separators, sequence, and coupled-file mapping. Do not treat every version containing eight digits as date-based.
