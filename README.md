@@ -366,8 +366,8 @@ release staging に全 skill をそろえた後、同梱した index generator �
 - `miku-ai-assistant-builder-skills` `v0.13.0`: `skills/igapyon-miku-ai-assistant-builder/`
 - `miku-ms-office-skills` `v0.7.1`: `skills/igapyon-miku-ms-office/`
 - `miku-json2xlsx-skills` `v0.5.0`: `skills/igapyon-miku-json2xlsx/`
-- `mikuproject-skills` `v0.8.1.1`: `skills/mikuproject/`
-- `mikuscore-skills` `v0.1.0`: `skills/mikuscore/`
+- `miku-project-skills` `v0.12.4`: `skills/igapyon-miku-project/`
+- `miku-score-skills` `v0.6.1`: `skills/igapyon-miku-score/`
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
 生成された zip を GitHub Release asset として添付します。archive 内の `index.json` は
