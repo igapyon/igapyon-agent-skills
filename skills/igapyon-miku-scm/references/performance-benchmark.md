@@ -20,11 +20,21 @@ node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
 node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
   --scenario writing-issue-prepare --iterations 10 --warmup 2
 node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
+  --scenario writing-issue-update-prepare --iterations 10 --warmup 2
+node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
+  --scenario writing-issue-comment-prepare --iterations 10 --warmup 2
+node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
   --scenario github-issue-create-preflight --iterations 10 --warmup 2
+node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
+  --scenario github-issue-label-preflight --iterations 10 --warmup 2
+node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
+  --scenario github-issue-close-preflight --iterations 10 --warmup 2
 ```
 
-These represent `mechanical`, `writing`, and `approval` respectively. Each
-result exposes the same comparison dimensions: expected model invocations
+These represent `mechanical`, operation-aware `writing`, and `approval` paths.
+Create, update, and comment retain one expected model invocation after writing
+evidence; create, label, and close preflight retain zero. Each result exposes
+the same comparison dimensions: expected model invocations
 after the runner, expected Agent tool calls, elapsed-time statistics, and
 observed failure rate. Writing retains one expected model invocation for the
 prose draft; mechanical and approval output require none after the runner.

@@ -138,6 +138,106 @@ Update this section while working. Do not rewrite unrelated TODO items.
 
 ### Tasks
 
+- [x] [Completed: Miku Fixed Workflow ArchitectureによるIssue高速化]
+  `igapyon-miku-scm`のIssue操作を、正式名称
+  **Miku Fixed Workflow Architecture（MFWA）**に基づく短い実行経路へそろえる。
+  公開文面を必要とするcreate/update/commentだけAI生成を1回許可し、その前後の
+  対象解決、evidence収集、保存先決定、preflight、approval handoff、承認後applyを
+  Miku Fixed Runnerへ固定する。
+
+  - 正式用語:
+    - 全体設計: `Miku Fixed Workflow Architecture`（MFWA）
+    - 個別処理: `Miku Fixed Workflow`
+    - MJS実行部: `Miku Fixed Runner`
+    - normative MDとRunnerの契約: `Miku Workflow Contract`
+    - MD、Runner、contract test、generated lockの一式:
+      `Miku Workflow Contract Bundle`
+    - immutableな承認連携: `Miku Approval Handoff`
+
+  - 作業境界:
+    - 既存のIssue create/update/comment/label/close helper、snapshot digest、attempt record、
+      mutation non-retry、postcondition verificationを再利用する。
+    - Issueのremote mutationには従来どおり明示承認を必須とし、writing、preflight、
+      activation-only requestをapply承認として扱わない。
+    - Agentは`gh`を直接呼ばず、承認後にapply引数やhandoff IDを再構成しない。
+    - `github.issue.handoff.apply`とordered batch applyのconflict、not-applied、unresolved時の
+      停止契約を弱めない。
+    - macOS用とWindows用にMJSを分割せず、Node.js共通実装、`path` API、shell-free spawn、
+      LF正規化、JST timestampで同じcontractを維持する。
+    - ユーザーの明示指示なしにcommit、push、`~/.codex/skills`同期を行わない。
+
+  - [x] [Step 0 / P0: baselineと契約境界]
+    - branch、worktree、現行workflow/help、contract drift、fast suiteを記録する。
+    - create/update/comment/label/closeについて、Runner回数、AI生成回数、result bytes、
+      human-output bytesをremote-free fixtureで測定する。
+    - 完了条件: 改善前後を同じbenchmark軸で比較できる。
+    - 2026-08-12: 開始時contract 33件はcurrent。fast suiteは162件中161件成功で、
+      既存Runner埋め込み版`1.20260812.4`とrepository版`1.20260812.7`のdrift 1件を確認し、
+      実装中に整合させた。remote-free benchmarkを7 scenarioへ拡張した。
+
+  - [x] [Step 1 / P0: MFWA名称と設計文書]
+    - `SKILL.md`と既存のAI関与削減設計文書へMFWAの正式名称と用語階層を追加する。
+    - Miku Fixed Workflow Architectureがthin Prompt Router、normative Markdown、
+      Miku Fixed Runner、contract test、contract lock、Miku Approval Handoff、stable
+      human output、Writing/Mechanical境界の集合であることを定義する。
+    - `Fixed Runner Design`はRunner単体を指す説明語に限定する。
+    - 2026-08-12: `SKILL.md`、deterministic runner reference、UI metadataへ正式用語を
+      反映し、設計ノートを`docs/miku-fixed-workflow-architecture.md`へ改名した。
+      generated `index.json`も新名称とsummaryへ更新した。
+
+  - [x] [Step 2 / P0: operation-aware Issue writing evidence]
+    - `writing.issue.prepare`へ`--operation create|update|comment`を追加し、未指定時は
+      後方互換の`create`とする。
+    - update/commentでは`--issue`を必須、createでは`--issue`を拒否する。
+    - operation別にwriting contract、GitHub evidence、JST固定の保存先を返す。
+      - create: `workplace/miku-scm/new-issues/issue-new-<timestamp>.md`
+      - update: `workplace/miku-scm/issue-updates/issue-<n>-update-<timestamp>.md`
+      - comment: `workplace/miku-scm/issue-comments/issue-<n>-comment-<timestamp>.md`
+    - resultへ次の固定preflight workflow、repository、Issue、draft pathを含む
+      `next_preflight`記述子を追加し、Agentの経路再判断をなくす。
+    - 2026-08-12: writing evidence schema v2で実装した。`--github-repo`明示値を優先し、
+      省略時はcurrent `origin`のGitHub URLだけを固定解決する。updateはIssueと全label、
+      commentはIssueを取得し、本文、comment、label説明をredact・boundする。
+
+  - [x] [Step 3 / P0: Issue同一ターン短縮ルート]
+    - create/update/comment要求では、`writing.issue.prepare`、1回だけの作文、返された
+      pathへの保存、対応する固定preflight、Miku Approval Handoff生成まで同一ターンで進む。
+    - label/closeは作文を呼ばず、既存の固定preflightへ直接進む。
+    - preflight成功時は固定human outputと完全なhandoff IDを返し、remote mutationは行わない。
+    - `miku-scm approve <id>`は既存handoff applyを1回だけ呼ぶ。
+    - 2026-08-12: `SKILL.md`とIssue writing handoff仕様へ同一ターンrouteを追加した。
+      remote mutationの明示承認、exact ID、ordered batch、non-retry契約は変更していない。
+
+  - [x] [Step 4 / P1: manifest、CLI、output、contract]
+    - manifest trigger、CLI option schema、help、writing human outputへoperationと
+      `next_preflight`を反映する。
+    - normative spec、contract test、Runnerのversioned bundleを同時に更新する。
+    - generated contract lockと`references/workflow-contracts.md`はgeneratorだけで更新する。
+    - 2026-08-12: manifest trigger、operation choices、origin fallback help、human output
+      schema v9、benchmark helpを更新した。generatorでcontract 33件を再生成し、
+      `--check`でcurrentを確認した。
+
+  - [x] [Step 5 / P0: focused regression]
+    - create/update/commentのparse、evidence、保存先、writing contract、next preflightを検証する。
+    - create+Issue拒否、update/commentのIssue不足、unknown operationをsafe stopさせる。
+    - 大きなIssue本文とcomment evidenceがboundedとなり、secret候補を出力しないことを確認する。
+    - JST固定、LF/digest、macOS/Windows path separator差をcontract testで吸収する。
+    - writingはexpected model pass 1、label/close/preflight/approveは0を維持する。
+    - 2026-08-12: focused 65件、fast 171件が成功した。7 scenarioの各3 iterationで
+      failure 0、Runner callは各1回。warm p50はIssue read 3.317ms、create/update/comment
+      writing 3.551/3.727/3.844ms、create/label/close preflight
+      6.564/5.108/4.926ms。Writingだけmodel pass 1、ほかは0を確認した。
+
+  - [x] [Step 6 / P0: 完了検証]
+    - workflow contract生成と`--check`、`npm run test:miku-scm:fast`、
+      `npm run test:miku-scm:full`、Skill validation、`git diff --check`を成功させる。
+    - macOS/Windows CI対象のfast suite契約を確認する。
+    - TODOへ実測値、変更file、test結果、残課題を追記して完了状態にする。
+    - 2026-08-12: full suite 269件、contract drift、Maven version alignmentとindex生成、
+      `skill-creator` quick validation、`git diff --check`がすべて成功した。
+      `.github/workflows/miku-scm-contract.yml`がmacOS/Windows両方でfast suiteを実行する
+      matrixを維持していることを確認した。remote mutation、commit、push、Skill同期は未実行。
+
 - [x] [Completed: igapyon-github-writer 固定Runner改善]
   `igapyon-miku-scm`の最新固定Runnerから、安全性、PR対象解決、大差分耐性、
   AI Agent関与削減、承認handoff、CLI自己記述性、性能計測を取り込む。以下の

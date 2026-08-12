@@ -6,12 +6,14 @@ import path from "node:path";
 import { runIssueRead } from "./github-issue-read.mjs";
 import { jstTimestamp } from "./miku-scm-jst-time.mjs";
 
-export const WRITING_EVIDENCE_SCHEMA_VERSION = "miku-scm.writing-evidence/v1";
+export const WRITING_EVIDENCE_SCHEMA_VERSION = "miku-scm.writing-evidence/v2";
 
 const GIT_TARGET = /^[^\s\u0000-\u001f\u007f]{1,240}$/;
 const GITHUB_REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const ISSUE_OPERATIONS = new Set(["create", "update", "comment"]);
 const MAX_PATCH_CHARS = 120_000;
 const MAX_DOCUMENT_CHARS = 40_000;
+const MAX_LABEL_DESCRIPTION_CHARS = 512;
 const MAX_COMMITS = 200;
 const GIT_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 
@@ -50,6 +52,7 @@ export function parseWritingPrepareArgs(mode, argv, cwd = process.cwd()) {
     target: "",
     githubRepository: "",
     issue: null,
+    issueOperation: mode === "issue" ? "create" : null,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
@@ -57,6 +60,7 @@ export function parseWritingPrepareArgs(mode, argv, cwd = process.cwd()) {
     else if (argument === "--target") options.target = argv[++index] ?? "";
     else if (argument === "--github-repo") options.githubRepository = argv[++index] ?? "";
     else if (argument === "--issue") options.issue = Number(argv[++index]);
+    else if (argument === "--operation") options.issueOperation = argv[++index] ?? "";
     else throw new Error(`Unknown argument: ${argument}`);
   }
   if (options.target) validateTarget(options.target);
@@ -64,15 +68,24 @@ export function parseWritingPrepareArgs(mode, argv, cwd = process.cwd()) {
     throw new Error("writing.release.prepare requires --target");
   }
   if (mode === "issue") {
-    if (!GITHUB_REPOSITORY.test(options.githubRepository)) {
-      throw new Error("writing.issue.prepare requires --github-repo owner/repository");
+    if (options.githubRepository && !GITHUB_REPOSITORY.test(options.githubRepository)) {
+      throw new Error("--github-repo must use owner/repository when specified");
     }
-    if (options.issue !== null
+    if (!ISSUE_OPERATIONS.has(options.issueOperation)) {
+      throw new Error("--operation must be create, update, or comment");
+    }
+    if (options.issueOperation === "create" && options.issue !== null) {
+      throw new Error("writing.issue.prepare create does not accept --issue");
+    }
+    if (options.issueOperation !== "create"
       && (!Number.isSafeInteger(options.issue) || options.issue < 1)) {
+      throw new Error(`writing.issue.prepare ${options.issueOperation} requires --issue`);
+    }
+    if (options.issue !== null && (!Number.isSafeInteger(options.issue) || options.issue < 1)) {
       throw new Error("--issue must be a positive integer");
     }
-  } else if (options.githubRepository || options.issue !== null) {
-    throw new Error("--github-repo and --issue are only valid for writing.issue.prepare");
+  } else if (options.githubRepository || options.issue !== null || options.issueOperation !== null) {
+    throw new Error("--github-repo, --issue, and --operation are only valid for writing.issue.prepare");
   }
   if ((mode === "about" || mode === "issue") && options.target) {
     throw new Error(`writing.${mode}.prepare does not accept --target`);
@@ -85,7 +98,7 @@ function branchSlug(branch) {
   return value.replace(/^-+|-+$/g, "");
 }
 
-function suggestedPath(mode, branch, now) {
+function suggestedPath(mode, branch, now, issueOperation = null, issue = null) {
   const stamp = jstTimestamp(now);
   if (mode === "pr") {
     const slug = branchSlug(branch);
@@ -93,7 +106,36 @@ function suggestedPath(mode, branch, now) {
   }
   if (mode === "release") return `workplace/miku-scm/release-${stamp}.md`;
   if (mode === "about") return `workplace/miku-scm/about-${stamp}.md`;
+  if (issueOperation === "update") {
+    return `workplace/miku-scm/issue-updates/issue-${issue}-update-${stamp}.md`;
+  }
+  if (issueOperation === "comment") {
+    return `workplace/miku-scm/issue-comments/issue-${issue}-comment-${stamp}.md`;
+  }
   return `workplace/miku-scm/new-issues/issue-new-${stamp}.md`;
+}
+
+export function canonicalGitHubRepository(remoteUrl) {
+  const value = String(remoteUrl || "").trim();
+  const scp = value.match(/^git@github\.com:([^/]+)\/([^/]+)$/i);
+  let owner;
+  let repository;
+  if (scp) {
+    [, owner, repository] = scp;
+  } else {
+    try {
+      const parsed = new URL(value);
+      if (parsed.hostname.toLowerCase() !== "github.com") return null;
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      if (parts.length !== 2) return null;
+      [owner, repository] = parts;
+    } catch {
+      return null;
+    }
+  }
+  repository = repository.replace(/\.git$/i, "");
+  const fullName = `${owner}/${repository}`;
+  return GITHUB_REPOSITORY.test(fullName) ? fullName : null;
 }
 
 function redactSensitiveLines(value) {
@@ -308,7 +350,7 @@ function resolveGitTarget(mode, root, branch, requested, head, git) {
   };
 }
 
-function writingContract(mode) {
+function writingContract(mode, issueOperation = null) {
   const shared = {
     language: "Japanese unless the user requests otherwise",
     source_rule: "Use only the supplied evidence and current user direction",
@@ -335,6 +377,20 @@ function writingContract(mode) {
       language: "English primary text with Japanese reference translation",
       output: "Short factual GitHub About text",
       audience: "repository visitors",
+    };
+  }
+  if (mode === "issue" && issueOperation === "comment") {
+    return {
+      ...shared,
+      output: "Complete Issue comment Markdown body without a title line or outer fence",
+      audience: "maintainers and contributors",
+    };
+  }
+  if (mode === "issue" && issueOperation === "update") {
+    return {
+      ...shared,
+      output: "First line is the proposed Issue title; remaining Markdown is the complete proposed body",
+      audience: "maintainers and contributors",
     };
   }
   return {
@@ -395,7 +451,7 @@ async function prepareGitWriting(options, dependencies) {
     changed_files: nameStatus.split("\n").filter(Boolean),
     patch_excerpt: patch.text,
     patch_truncated: patch.truncated,
-    writing_contract: writingContract(options.mode),
+    writing_contract: writingContract(options.mode, options.issueOperation),
     suggested_draft_path: suggestedPath(
       options.mode,
       identity.branch,
@@ -452,46 +508,112 @@ function boundedGitHubEvidence(evidence) {
   };
 }
 
+function boundedLabelEvidence(evidence) {
+  if (!evidence || evidence.mode !== "labels") return evidence;
+  let labelsTruncated = false;
+  const labels = evidence.labels.map((label) => {
+    const description = boundedText(label.description ?? "", MAX_LABEL_DESCRIPTION_CHARS);
+    labelsTruncated ||= description.truncated;
+    return {
+      ...label,
+      description: description.text,
+      description_truncated: description.truncated,
+    };
+  });
+  return { ...evidence, labels, labels_truncated: labelsTruncated };
+}
+
 async function prepareDocumentWriting(options, dependencies) {
   const git = dependencies.git ?? defaultGit;
   const identity = await repositoryIdentity(options.repo, git);
   const documents = await localDocuments(identity.root, dependencies.readFile);
   let githubEvidence = null;
+  let githubRepository = options.githubRepository;
+  let githubRepositorySource = options.githubRepository ? "explicit" : null;
   if (options.mode === "issue") {
-    githubEvidence = boundedGitHubEvidence(runIssueRead(
-      options.issue
-        ? {
-            repo: options.githubRepository,
-            mode: "issue",
-            state: "open",
-            issue: options.issue,
-          }
-        : {
-            repo: options.githubRepository,
-            mode: "labels",
-            state: "open",
-            issue: null,
-      },
-      { gh: dependencies.gh },
-    ));
+    if (!githubRepository) {
+      const remoteUrl = git(identity.root, ["remote", "get-url", "origin"], {
+        allowFailure: true,
+      });
+      githubRepository = remoteUrl.ok ? canonicalGitHubRepository(remoteUrl.out) : null;
+      githubRepositorySource = githubRepository ? "origin" : null;
+      if (!githubRepository) {
+        throw new Error(
+          "GitHub repository is unresolved; pass --github-repo owner/repository or configure a GitHub origin",
+        );
+      }
+    }
+    if (options.issueOperation === "create") {
+      githubEvidence = boundedLabelEvidence(runIssueRead({
+        repo: githubRepository,
+        mode: "labels",
+        state: "open",
+        issue: null,
+      }, { gh: dependencies.gh }));
+    } else {
+      githubEvidence = boundedGitHubEvidence(runIssueRead({
+        repo: githubRepository,
+        mode: "issue",
+        state: "open",
+        issue: options.issue,
+      }, { gh: dependencies.gh }));
+      if (options.issueOperation === "update") {
+        const labelEvidence = boundedLabelEvidence(runIssueRead({
+          repo: githubRepository,
+          mode: "labels",
+          state: "open",
+          issue: null,
+        }, { gh: dependencies.gh }));
+        githubEvidence = {
+          ...githubEvidence,
+          repository_labels: labelEvidence.labels,
+          repository_labels_truncated: labelEvidence.labels_truncated,
+        };
+      }
+    }
   }
+  const draftPath = suggestedPath(
+    options.mode,
+    identity.branch,
+    dependencies.now ? dependencies.now() : new Date(),
+    options.issueOperation,
+    options.issue,
+  );
+  const nextPreflight = options.mode === "issue"
+    ? {
+        workflow: `github.issue.${options.issueOperation}.preflight`,
+        repository: githubRepository,
+        issue: options.issue,
+        draft: draftPath,
+        reviewed_optional_flags: options.issueOperation === "create"
+          ? ["--label", "--parent"]
+          : options.issueOperation === "update"
+            ? ["--add-label", "--remove-label"]
+            : [],
+      }
+    : null;
+  const githubEvidenceTruncated = Boolean(
+    githubEvidence?.issue?.body_truncated || githubEvidence?.issue?.comments_truncated
+      || githubEvidence?.labels_truncated || githubEvidence?.repository_labels_truncated,
+  );
   const evidence = {
     schema_version: WRITING_EVIDENCE_SCHEMA_VERSION,
     mode: options.mode,
     status: "prepared",
     repository: identity.repository,
-    github_repository: options.githubRepository || null,
+    github_repository: githubRepository || null,
+    github_repository_source: githubRepositorySource,
+    issue_operation: options.issueOperation,
+    issue: options.issue,
     branch: identity.branch,
     head: identity.head,
     documents,
     documents_truncated: documents.some((document) => document.truncated),
     github_evidence: githubEvidence,
-    writing_contract: writingContract(options.mode),
-    suggested_draft_path: suggestedPath(
-      options.mode,
-      identity.branch,
-      dependencies.now ? dependencies.now() : new Date(),
-    ),
+    github_evidence_truncated: githubEvidenceTruncated,
+    writing_contract: writingContract(options.mode, options.issueOperation),
+    suggested_draft_path: draftPath,
+    next_preflight: nextPreflight,
   };
   return { ...evidence, evidence_sha256: digest(evidence) };
 }

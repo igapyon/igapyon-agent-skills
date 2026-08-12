@@ -23,6 +23,14 @@ test("benchmark parser fixes scenario and bounded iteration counts", () => {
     parseArgs(["--scenario", "github-issue-create-preflight"]).scenario,
     "github-issue-create-preflight",
   );
+  for (const scenario of [
+    "writing-issue-update-prepare",
+    "writing-issue-comment-prepare",
+    "github-issue-label-preflight",
+    "github-issue-close-preflight",
+  ]) {
+    assert.equal(parseArgs(["--scenario", scenario]).scenario, scenario);
+  }
   assert.throws(() => parseArgs(["--scenario", "remote-mutation"]), /Unsupported/);
   assert.throws(() => parseArgs(["--iterations", "0"]), /1 through 100/);
   assert.throws(() => parseArgs(["--warmup", "21"]), /0 through 20/);
@@ -60,7 +68,7 @@ test("benchmark separates cold and warm metrics without remote mutation", async 
   assert.ok(result.fixture.human_output_bytes > 0);
   assert.equal(
     result.fixture.human_output_schema_version,
-    "miku-scm.human-output/v8",
+    "miku-scm.human-output/v9",
   );
   assert.equal(result.context.file_count, 1);
   assert.deepEqual(result.context.files, ["skills/igapyon-miku-scm/SKILL.md"]);
@@ -69,7 +77,14 @@ test("benchmark separates cold and warm metrics without remote mutation", async 
 
 test("benchmark exposes comparable writing and approval profiles", async () => {
   const profiles = [];
-  for (const scenario of ["writing-issue-prepare", "github-issue-create-preflight"]) {
+  for (const scenario of [
+    "writing-issue-prepare",
+    "writing-issue-update-prepare",
+    "writing-issue-comment-prepare",
+    "github-issue-create-preflight",
+    "github-issue-label-preflight",
+    "github-issue-close-preflight",
+  ]) {
     profiles.push(await benchmark(parseArgs([
       "--scenario", scenario, "--iterations", "1", "--warmup", "0",
     ]), {
@@ -81,11 +96,11 @@ test("benchmark exposes comparable writing and approval profiles", async () => {
 
   assert.deepEqual(
     profiles.map((entry) => entry.workflow_class),
-    ["writing", "approval"],
+    ["writing", "writing", "writing", "approval", "approval", "approval"],
   );
   assert.deepEqual(
     profiles.map((entry) => entry.fixture.expected_model_invocations_after_runner),
-    [1, 0],
+    [1, 1, 1, 0, 0, 0],
   );
   for (const profile of profiles) {
     assert.equal(profile.remote_mutation_invoked, false);

@@ -1,15 +1,31 @@
-# Prompt–Runner Pairingによる生成AI関与削減パターン
+# Miku Fixed Workflow Architecture
 
 ## 位置づけ
 
-この文書は、`igapyon-miku-scm`で実践した設計を、ほかのAgent Skillや
-CLI workflowにも再利用できる方式として記録する設計ノートである。
+**Miku Fixed Workflow Architecture（MFWA）**は、`igapyon-miku-scm`で
+実践したPrompt–Runner Pairingによる生成AI関与削減設計の正式名称である。
+この文書は、その設計をほかのAgent SkillやCLI workflowにも再利用できる
+方式として記録する設計ノートである。
 個々のworkflowの規範的な仕様は`references/`、実行契約はworkflow
 manifestとcontract lockを正本とする。
 
 この方式の主眼は、生成AIがshell commandを組み立てる処理だけでなく、
 実行後に結果を再解釈・再要約し、次の操作を判断する処理も極力減らす
 ことにある。
+
+## 正式用語
+
+| 用語 | 定義 |
+| --- | --- |
+| Miku Fixed Workflow Architecture | thin Prompt Router、normative Markdown、固定実行、契約検証、承認境界を含む全体設計 |
+| Miku Fixed Workflow | manifestで識別される個別の固定workflow |
+| Miku Fixed Runner | workflowの機械的処理を実行するshell-freeなMJS実装 |
+| Miku Workflow Contract | normative MarkdownとRunnerのversioned実行契約 |
+| Miku Workflow Contract Bundle | normative Markdown、Runner、contract test、generated lockの一式 |
+| Miku Approval Handoff | reviewed artifact、digest、固定apply引数をsealedする承認連携 |
+
+`Fixed Runner Design`はMiku Fixed Runner単体の設計を説明する一般語として
+使用し、Markdown、contract test、lock、handoffまで含む全体にはMFWAを使う。
 
 ## 解決したい問題
 
@@ -32,13 +48,13 @@ Agent Skillの手順をMarkdownだけで記述すると、生成AIが実行の�
 利用者の依頼
     |
     v
-薄いprompt router
+薄いPrompt Router
     |  workflow ID + 固定option
     v
 versioned manifest
     |
     v
-deterministic .mjs runner
+Miku Fixed Runner
     |  snapshot / validation / mutation / verification
     v
 structured result + stable human_output
@@ -50,14 +66,14 @@ structured result + stable human_output
 人間の承認が必要なmutationは、次の独立した境界を持つ。
 
 ```text
-preflight .mjs
+preflight Miku Fixed Runner
     |
     v
 immutable handoff + digest
     |
     |  チャット上の明示承認
     v
-fixed apply .mjs
+apply Miku Fixed Runner
     |
     v
 postcondition + stable human_output
@@ -98,9 +114,9 @@ mutation前に停止して新しいpreflightを要求する。
 hashは既知の組み合わせを特定するために使い、意味上の正しさはcontract
 testで検証する。hashだけを安全性の証明にしない。
 
-### 3. 機械的処理を固定runnerへ集約する
+### 3. 機械的処理をMiku Fixed Runnerへ集約する
 
-`.mjs` runnerが一つのworkflow内で次を完結させる。
+Miku Fixed Runnerが一つのworkflow内で次を完結させる。
 
 - repositoryと対象の解決
 - local・remote snapshot取得
@@ -111,7 +127,7 @@ testで検証する。hashだけを安全性の証明にしない。
 - attempt recordとerror classification
 - versioned structured resultの生成
 
-runnerはfree-form shell、任意command fragment、任意実行ファイル名を
+Miku Fixed Runnerはfree-form shell、任意command fragment、任意実行ファイル名を
 入力として受け付けない。AI Agentは`gh`などの外部CLIを直接呼ばず、
 固定helper内部だけで利用する。
 
@@ -245,4 +261,4 @@ pre-mutation failureはmutation未実行として扱う。mutation後の成否�
 Mechanical modeとWriting modeの分離、チャット承認handoffはIssue #308で
 発展した。現在の実装では、workflow manifest、deterministic runner、
 workflow contract lock、human output renderer、writing prepare、approval
-handoffがこの方式を構成している。
+handoffがMFWAを構成している。

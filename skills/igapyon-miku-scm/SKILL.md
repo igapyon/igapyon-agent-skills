@@ -9,6 +9,16 @@ Run documented miku-soft source-control workflows with a small runtime context.
 Detailed policy remains under `references/` for design, maintenance, legacy
 operations, and exceptions; migrated workflows execute through the fixed runner.
 
+## Miku Fixed Workflow Architecture
+
+This Skill uses [Miku Fixed Workflow Architecture
+(MFWA)](docs/miku-fixed-workflow-architecture.md): a thin Prompt Router selects
+a versioned Miku Fixed Workflow, while its normative Markdown,
+Miku Fixed Runner, contract test, generated contract lock, stable human output,
+and optional Miku Approval Handoff form one Miku Workflow Contract Bundle.
+Writing may use one evidence-bounded model pass; Mechanical execution remains
+inside the fixed runner and never delegates command sequencing back to the Agent.
+
 ## Current Scope
 
 Support repository status and maintenance; PR, Release, About, and Issue work;
@@ -74,6 +84,20 @@ Do not inspect the repository or load detailed references yet.
    Use `--state closed` or `--state all` only when the user explicitly needs
    closed or historical Issues, completion metrics, or comparison with a
    closed Issue.
+   Route `miku-scm issue create`, `miku-scm issue update <number>`, and
+   `miku-scm issue comment <number>` through operation-aware
+   `writing.issue.prepare`. Use an explicit `owner/repository` when supplied;
+   otherwise let that fixed workflow resolve only the current GitHub `origin`.
+   Draft exactly once from its bounded evidence, save at the exact
+   `suggested_draft_path`, and invoke the returned `next_preflight.workflow`
+   in the same user turn with that repository, Issue, and draft. Include only
+   label or parent options supported by evidence and user direction. Show the
+   complete draft once followed by the preflight's fixed `human_output`, then
+   stop for approval. Writing and preflight do not authorize mutation.
+   Route `miku-scm issue label <number>` and `miku-scm issue close <number>`
+   directly to their fixed preflight when exact label changes or a close
+   reason are supplied; do not invoke Writing mode. After a successful Issue
+   preflight, use only the approval-handoff commands in items 10–12.
 5. Never issue `gh` directly. GitHub CLI access is allowed only inside the
    fixed bundled helpers. If no fixed helper or anonymous REST route exists,
    stop instead of inventing a command.
@@ -130,7 +154,8 @@ never authorizes mutation.
 The generated lock
 [scripts/miku-scm-workflow-contract-lock.mjs](scripts/miku-scm-workflow-contract-lock.mjs)
 binds each workflow ID, contract version, runner, normative spec, contract test,
-and SHA-256 pair. Runtime results expose the contract identity. The generated
+and SHA-256 pair as a Miku Workflow Contract Bundle. Runtime results expose the
+contract identity. The generated
 [references/workflow-contracts.md](references/workflow-contracts.md) is for
 human inspection; neither generated file is hand-maintained.
 

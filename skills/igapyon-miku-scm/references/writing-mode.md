@@ -34,11 +34,24 @@ prepare evidence for exactly the resolved `<base>..HEAD` range, draft once,
 save only at `suggested_draft_path`, and then return to the fixed remote apply
 workflow in the same turn. Other blockers prevent both drafting and mutation.
 
+Issue mode is operation-aware. `--operation create` is the compatibility
+default and rejects `--issue`; `update` and `comment` require one exact Issue
+number. An explicit `--github-repo owner/repository` wins. When it is omitted,
+the fixed runner accepts only an exact GitHub repository resolved from the
+current repository's `origin`; another host, missing origin, or ambiguous URL
+stops before GitHub access.
+
+Create mode retrieves repository labels and proposes a `new-issues/` path.
+Update mode retrieves the exact Issue with comments plus repository labels and
+proposes an `issue-updates/` path. Comment mode retrieves the exact Issue with
+comments and proposes an `issue-comments/` path. Each result includes the
+operation-specific writing contract and a `next_preflight` descriptor fixing
+the workflow, repository, Issue, and draft path. The Agent drafts once, saves
+at that exact path, and returns to that fixed preflight in the same user turn.
+
 Release mode requires an explicit start commit or range. A single Release
 start commit is inclusive through `HEAD`. About mode reads bounded repository
-documents. Issue mode requires an exact `owner/repository`; it retrieves either
-the exact existing Issue or the repository's existing labels through the fixed
-Issue READONLY helper.
+documents.
 
 The evidence collector redacts lines that resemble common credential
 assignments and bounds patch and document excerpts. Truncation is explicit.

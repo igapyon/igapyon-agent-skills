@@ -14,27 +14,52 @@ import { workflowManifestById } from "./miku-scm-workflow-manifest.mjs";
 const SCENARIOS = new Set([
   "github-issue-read",
   "writing-issue-prepare",
+  "writing-issue-update-prepare",
+  "writing-issue-comment-prepare",
   "github-issue-create-preflight",
+  "github-issue-label-preflight",
+  "github-issue-close-preflight",
 ]);
 const SCENARIO_WORKFLOW = Object.freeze({
   "github-issue-read": "github.issue.read",
   "writing-issue-prepare": "writing.issue.prepare",
+  "writing-issue-update-prepare": "writing.issue.prepare",
+  "writing-issue-comment-prepare": "writing.issue.prepare",
   "github-issue-create-preflight": "github.issue.create.preflight",
+  "github-issue-label-preflight": "github.issue.label.preflight",
+  "github-issue-close-preflight": "github.issue.close.preflight",
 });
 const SCENARIO_CLASS = Object.freeze({
   "github-issue-read": "mechanical",
   "writing-issue-prepare": "writing",
+  "writing-issue-update-prepare": "writing",
+  "writing-issue-comment-prepare": "writing",
   "github-issue-create-preflight": "approval",
+  "github-issue-label-preflight": "approval",
+  "github-issue-close-preflight": "approval",
 });
 const EXPECTED_MODEL_INVOCATIONS_AFTER_RUNNER = Object.freeze({
   "github-issue-read": 0,
   "writing-issue-prepare": 1,
+  "writing-issue-update-prepare": 1,
+  "writing-issue-comment-prepare": 1,
   "github-issue-create-preflight": 0,
+  "github-issue-label-preflight": 0,
+  "github-issue-close-preflight": 0,
+});
+const FIXED_GH_READS_PER_SAMPLE = Object.freeze({
+  "github-issue-read": 1,
+  "writing-issue-prepare": 1,
+  "writing-issue-update-prepare": 2,
+  "writing-issue-comment-prepare": 1,
+  "github-issue-create-preflight": 1,
+  "github-issue-label-preflight": 2,
+  "github-issue-close-preflight": 1,
 });
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
-    [--scenario github-issue-read|writing-issue-prepare|github-issue-create-preflight] \
+    [--scenario github-issue-read|writing-issue-prepare|writing-issue-update-prepare|writing-issue-comment-prepare|github-issue-create-preflight|github-issue-label-preflight|github-issue-close-preflight] \
     [--iterations <1..100>] [--warmup <0..20>] \
     [--max-warm-p50-ms <milliseconds>] [--save]
 
@@ -113,7 +138,7 @@ function statistics(samples) {
 function fakeGh(counter, mode) {
   return (args) => {
     counter.gh += 1;
-    if (mode === "labels") {
+    if (mode === "labels" || args[0] === "label") {
       return {
         ok: true,
         status: 0,
@@ -187,7 +212,21 @@ async function runFixture(scenario, fixtureRoot, runId, counter = { gh: 0 }) {
       writingReadFile: missingDocument,
       gh: fakeGh(counter, "labels"),
     });
-  } else {
+  } else if (scenario === "writing-issue-update-prepare"
+    || scenario === "writing-issue-comment-prepare") {
+    const operation = scenario === "writing-issue-update-prepare" ? "update" : "comment";
+    result = await runWorkflow("writing.issue.prepare", [
+      "--repo", fixtureRoot,
+      "--github-repo", "igapyon/igapyon-agent-skills",
+      "--operation", operation,
+      "--issue", "293",
+    ], {
+      ...common,
+      writingGit: fakeWritingGit(fixtureRoot),
+      writingReadFile: missingDocument,
+      gh: fakeGh(counter, operation),
+    });
+  } else if (scenario === "github-issue-create-preflight") {
     const draft = path.join(
       fixtureRoot,
       "workplace/miku-scm/new-issues/issue-new-202607282200.md",
@@ -205,6 +244,55 @@ async function runFixture(scenario, fixtureRoot, runId, counter = { gh: 0 }) {
         readLabels: async () => {
           counter.gh += 1;
           return ["enhancement"];
+        },
+      },
+    });
+  } else if (scenario === "github-issue-label-preflight") {
+    result = await runWorkflow("github.issue.label.preflight", [
+      "--repo", "igapyon/igapyon-agent-skills",
+      "--issue", "293",
+      "--add-label", "enhancement",
+      "--root", fixtureRoot,
+    ], {
+      ...common,
+      issueLabelDependencies: {
+        readLabels: async () => {
+          counter.gh += 1;
+          return ["enhancement"];
+        },
+        readIssue: async () => {
+          counter.gh += 1;
+          return {
+            number: 293,
+            url: "https://github.com/igapyon/igapyon-agent-skills/issues/293",
+            title: "Runner",
+            state: "OPEN",
+            labels: [],
+            updatedAt: "2026-07-27T13:00:00Z",
+          };
+        },
+      },
+    });
+  } else {
+    result = await runWorkflow("github.issue.close.preflight", [
+      "--repo", "igapyon/igapyon-agent-skills",
+      "--issue", "293",
+      "--reason", "completed",
+      "--root", fixtureRoot,
+    ], {
+      ...common,
+      issueCloseDependencies: {
+        readIssue: async () => {
+          counter.gh += 1;
+          return {
+            number: 293,
+            url: "https://github.com/igapyon/igapyon-agent-skills/issues/293",
+            title: "Runner",
+            body: "Benchmark fixture",
+            state: "OPEN",
+            stateReason: null,
+            updatedAt: "2026-07-27T13:00:00Z",
+          };
         },
       },
     });
@@ -314,7 +402,7 @@ export async function benchmark(options, dependencies = {}) {
         expected_ai_tool_calls_per_sample: 1,
         expected_model_invocations_after_runner:
           EXPECTED_MODEL_INVOCATIONS_AFTER_RUNNER[options.scenario],
-        fixed_gh_reads_per_warm_sample: 1,
+        fixed_gh_reads_per_warm_sample: FIXED_GH_READS_PER_SAMPLE[options.scenario],
         actual_network_requests_per_sample: 0,
         input_tokens: null,
         output_tokens: null,

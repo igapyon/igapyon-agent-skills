@@ -1,5 +1,10 @@
 # Deterministic Workflow Runner
 
+This runner is the execution layer of **Miku Fixed Workflow Architecture
+(MFWA)**. A normative specification, Miku Fixed Runner, contract test, and
+generated lock form one Miku Workflow Contract Bundle; an approval-gated
+workflow may additionally produce a Miku Approval Handoff.
+
 Use `scripts/miku-scm-run.mjs` as the fixed entry point for migrated
 `igapyon-miku-scm` workflows.
 
