@@ -3,11 +3,11 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":12145,"description":"Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, explicitly says `recommit` to invoke the miku-soft PR soft-reset recommit flow with implicit PR drafting, or explicitly asks to perform Git, GitH...","summary":"igapyon-miku-scm"},
-  {"name":"prompt-runner-ai-involvement-reduction-pattern.md","path":"docs/prompt-runner-ai-involvement-reduction-pattern.md","ext":"md","dir":"docs","size":9878,"summary":"Prompt–Runner Pairingによる生成AI関与削減パターン"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":13763,"description":"Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, explicitly says `recommit` to invoke the miku-soft PR soft-reset recommit flow with implicit PR drafting, or explicitly asks to perform Git, GitH...","summary":"igapyon-miku-scm"},
+  {"name":"miku-fixed-workflow-architecture.md","path":"docs/miku-fixed-workflow-architecture.md","ext":"md","dir":"docs","size":10847,"summary":"Miku Fixed Workflow Architecture"},
   {"name":"work-cycle-lifecycle-redesign.md","path":"docs/work-cycle-lifecycle-redesign.md","ext":"md","dir":"docs","size":48018,"summary":"miku-scm Work Cycleライフサイクル再設計案"},
   {"name":"approval-handoff.md","path":"references/approval-handoff.md","ext":"md","dir":"references","size":5521,"summary":"Approval Handoff"},
-  {"name":"deterministic-workflow-runner.md","path":"references/deterministic-workflow-runner.md","ext":"md","dir":"references","size":15215,"summary":"Deterministic Workflow Runner"},
+  {"name":"deterministic-workflow-runner.md","path":"references/deterministic-workflow-runner.md","ext":"md","dir":"references","size":15496,"summary":"Deterministic Workflow Runner"},
   {"name":"github-about-writing.md","path":"references/github-about-writing.md","ext":"md","dir":"references","size":1131,"summary":"GitHub About Writing"},
   {"name":"github-anonymous-readonly.md","path":"references/github-anonymous-readonly.md","ext":"md","dir":"references","size":6380,"summary":"GitHub Anonymous READONLY"},
   {"name":"github-backup-branch.md","path":"references/github-backup-branch.md","ext":"md","dir":"references","size":2489,"summary":"Backup Branch"},
@@ -17,7 +17,7 @@
   {"name":"github-issue-comment.md","path":"references/github-issue-comment.md","ext":"md","dir":"references","size":3138,"summary":"GitHub Issue Comment"},
   {"name":"github-issue-create.md","path":"references/github-issue-create.md","ext":"md","dir":"references","size":8757,"summary":"GitHub New Issue Creation"},
   {"name":"github-issue-label-update.md","path":"references/github-issue-label-update.md","ext":"md","dir":"references","size":2959,"summary":"GitHub Existing Issue Label Update"},
-  {"name":"github-issue-rewrite-handoff.md","path":"references/github-issue-rewrite-handoff.md","ext":"md","dir":"references","size":7561,"summary":"GitHub Issue Draft and Rewrite Handoff"},
+  {"name":"github-issue-rewrite-handoff.md","path":"references/github-issue-rewrite-handoff.md","ext":"md","dir":"references","size":8166,"summary":"GitHub Issue Draft and Rewrite Handoff"},
   {"name":"github-issue-update.md","path":"references/github-issue-update.md","ext":"md","dir":"references","size":7931,"summary":"GitHub Existing Issue Content Update"},
   {"name":"github-post-push-pr-url.md","path":"references/github-post-push-pr-url.md","ext":"md","dir":"references","size":3072,"summary":"GitHub Post-Push PR URL"},
   {"name":"github-post-recommit-publish.md","path":"references/github-post-recommit-publish.md","ext":"md","dir":"references","size":8104,"summary":"Post-Recommit Publication"},
@@ -31,7 +31,7 @@
   {"name":"github-writing-rules.md","path":"references/github-writing-rules.md","ext":"md","dir":"references","size":7066,"summary":"GitHub Writing Rules"},
   {"name":"local-git-readonly.md","path":"references/local-git-readonly.md","ext":"md","dir":"references","size":3200,"summary":"Local Git READONLY"},
   {"name":"local-git-snapshot.md","path":"references/local-git-snapshot.md","ext":"md","dir":"references","size":1080,"summary":"Local Git Snapshot"},
-  {"name":"performance-benchmark.md","path":"references/performance-benchmark.md","ext":"md","dir":"references","size":2782,"summary":"Performance Benchmark"},
+  {"name":"performance-benchmark.md","path":"references/performance-benchmark.md","ext":"md","dir":"references","size":3453,"summary":"Performance Benchmark"},
   {"name":"repository-maintenance.md","path":"references/repository-maintenance.md","ext":"md","dir":"references","size":7275,"summary":"Repository Maintenance"},
   {"name":"repository-precommit-checks.md","path":"references/repository-precommit-checks.md","ext":"md","dir":"references","size":3171,"summary":"Repository-Declared Pre-Commit Checks"},
   {"name":"runtime-and-test-suites.md","path":"references/runtime-and-test-suites.md","ext":"md","dir":"references","size":2487,"summary":"Runtime and Test Suites"},
@@ -44,6 +44,6 @@
   {"name":"work-commit.md","path":"references/work-commit.md","ext":"md","dir":"references","size":4758,"summary":"Work Commit"},
   {"name":"workflow-contracts.md","path":"references/workflow-contracts.md","ext":"md","dir":"references","size":11397,"summary":"Workflow Contracts"},
   {"name":"workflow-routing.md","path":"references/workflow-routing.md","ext":"md","dir":"references","size":1638,"summary":"Workflow Routing"},
-  {"name":"writing-mode.md","path":"references/writing-mode.md","ext":"md","dir":"references","size":3012,"summary":"Writing Mode"}
+  {"name":"writing-mode.md","path":"references/writing-mode.md","ext":"md","dir":"references","size":3795,"summary":"Writing Mode"}
  ]
 }

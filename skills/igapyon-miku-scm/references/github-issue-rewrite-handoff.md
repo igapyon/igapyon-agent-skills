@@ -6,14 +6,14 @@ The AI Agent must not invoke `gh` directly during drafting or handoff. Invoke on
 
 ## Workflow
 
-1. Resolve the exact target repository and whether the request is for a new Issue or an update to an existing Issue.
+1. Resolve the exact target repository and whether the request is for a new Issue, an update to an existing Issue, or a comment. For an exact `miku-scm issue create`, `update`, or `comment` request, use operation-aware `writing.issue.prepare`; an explicit `owner/repository` wins, otherwise its fixed GitHub-origin resolution is authoritative.
 2. For an existing Issue, resolve its number, then use `node skills/igapyon-miku-scm/scripts/github-issue-read.mjs --repo <owner>/<repo> --issue <number>` to retrieve the current Issue and comments. If the helper reports that the Issue cannot be read, stop and report the READONLY failure; do not fall back to anonymous REST.
 3. For a new Issue, use the user's direction and inspected repository evidence. Do not imply that an Issue number or GitHub URL already exists. Retrieve the target repository's existing labels with `node skills/igapyon-miku-scm/scripts/github-issue-read.mjs --repo <owner>/<repo> --labels` and select each label clearly supported by the evidence and established repository semantics. When the user requests a sub-Issue, resolve exactly one same-repository parent Issue and treat its number as reviewed registration metadata outside the draft body.
 4. Preserve the Issue's intent, constraints, and established terminology. For an existing Issue, incorporate relevant clarification from comments.
 5. Draft or rewrite the title and body so the purpose, background, scope, and completion conditions are clear when those sections are supported by the evidence or the user's direction.
 6. Distinguish new proposals or inferences from confirmed facts. Do not invent decisions, dependencies, or acceptance criteria and present them as already agreed.
-7. Save the draft under the repository according to Local Draft Save Rules.
-8. Return the draft and proposed existing labels to the user for review or human transfer. If the user corrects the intent, revise the draft and save a new file rather than defending or silently overwriting the first draft.
+7. Save the draft only at the operation-specific `suggested_draft_path` returned by the fixed writing workflow.
+8. For an exact miku-scm Issue operation, immediately invoke the returned fixed mechanical preflight in the same user turn and return its Miku Approval Handoff for review. For a writing-only request, return the draft and proposed existing labels for human transfer. If the user corrects the intent, revise the draft and save a new file rather than defending or silently overwriting the first draft.
 
 Do not omit labels by default when an existing label clearly applies. Prefer the repository's exact established label, such as `bug` for a defect or `enhancement` for a new or improved capability, only when the Issue evidence supports that meaning. When multiple classifications are plausible or the repository's label semantics are unclear, show the candidates and ask the human instead of guessing. Labels and an optional parent Issue number are reviewed registration metadata and remain outside the paste-ready draft file.
 
@@ -83,7 +83,7 @@ Keep the draft ready to paste and save it according to Local Draft Save Rules un
 
 ## Human Handoff and Registration Boundary
 
-End after returning the drafted text and saved path unless the user explicitly requests a documented remote Issue operation. For new-Issue registration, content update, comment, standalone existing-label update, or closure, read and follow the matching dedicated workflow. Drafting alone never authorizes remote mutation.
+End after returning the drafted text and saved path unless the user explicitly requests a documented miku-scm Issue operation. Such a request authorizes same-turn preparation through the matching preflight and Miku Approval Handoff only. For new-Issue registration, content update, comment, standalone existing-label update, or closure, follow the matching dedicated workflow. Drafting and preflight never authorize remote mutation; only the later exact approval command authorizes apply.
 
 Do not:
 

@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v8";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v9";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -377,6 +377,11 @@ function appendVersion(lines, result) {
 
 function appendWriting(lines, result) {
   lines.push(`Repository: ${displayValue(result.github_repository ?? result.repository)}`);
+  if (result.github_repository_source) {
+    lines.push(`GitHub repository source: ${displayValue(result.github_repository_source)}`);
+  }
+  if (result.issue_operation) lines.push(`Issue operation: ${displayValue(result.issue_operation)}`);
+  if (result.issue) lines.push(`Issue: #${result.issue}`);
   if (result.branch) lines.push(`Branch: ${displayValue(result.branch)}`);
   if (result.target) {
     lines.push(`Git target: ${displayValue(result.target.resolved_log_target)}`);
@@ -393,8 +398,12 @@ function appendWriting(lines, result) {
   }
   lines.push(`evidence SHA-256: ${displayValue(result.evidence_sha256)}`);
   lines.push(`Suggested draft: ${displayValue(result.suggested_draft_path)}`);
+  if (result.next_preflight?.workflow) {
+    lines.push(`Next fixed workflow: ${displayValue(result.next_preflight.workflow)}`);
+  }
   const truncated = Boolean(
-    result.commits_truncated || result.patch_truncated || result.documents_truncated,
+    result.commits_truncated || result.patch_truncated || result.documents_truncated
+      || result.github_evidence_truncated,
   );
   lines.push(`Evidence truncated: ${truncated ? "yes" : "no"}`);
   lines.push("Writing: not invoked");

@@ -8,7 +8,7 @@ import {
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v8");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v9");
 });
 
 test("every workflow uses English fixed output wording", () => {
@@ -89,6 +89,35 @@ test("Issue create preflight output contains complete review identifiers", () =>
   assert.match(output, new RegExp(`Draft SHA-256: ${"a".repeat(64)}`));
   assert.match(output, /Remote mutation: not invoked/);
   assert.match(output, /miku-scm approve/);
+});
+
+test("Issue writing output fixes operation, repository source, and next workflow", () => {
+  const output = renderHumanOutput({
+    workflow: "writing.issue.prepare",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "prepared",
+    mutationInvoked: false,
+    result: {
+      repository: "local",
+      github_repository: "a/b",
+      github_repository_source: "origin",
+      issue_operation: "update",
+      issue: 7,
+      evidence_sha256: "a".repeat(64),
+      suggested_draft_path: "workplace/miku-scm/issue-updates/issue-7-update-202608122300.md",
+      next_preflight: { workflow: "github.issue.update.preflight" },
+      github_evidence_truncated: true,
+    },
+  });
+
+  assert.match(output, /Repository: a\/b/);
+  assert.match(output, /GitHub repository source: origin/);
+  assert.match(output, /Issue operation: update/);
+  assert.match(output, /Issue: #7/);
+  assert.match(output, /Next fixed workflow: github\.issue\.update\.preflight/);
+  assert.match(output, /Evidence truncated: yes/);
+  assert.match(output, /Writing: not invoked/);
 });
 
 test("handoff recovery output exposes exact commands and dismissal state", () => {

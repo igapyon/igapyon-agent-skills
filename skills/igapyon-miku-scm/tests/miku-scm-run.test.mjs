@@ -146,6 +146,14 @@ test("manifest exposes complete AI-readable CLI help contracts", () => {
       assert.equal(typeof option.description, "string", `${workflow.id} ${option.flag}`);
     }
   }
+
+  const issueWriting = WORKFLOW_MANIFEST.find((entry) => entry.id === "writing.issue.prepare");
+  const operation = issueWriting.cli.options.find((entry) => entry.flag === "--operation");
+  const githubRepository = issueWriting.cli.options.find((entry) => entry.flag === "--github-repo");
+  assert.deepEqual(operation.choices, ["create", "update", "comment"]);
+  assert.equal(operation.default, "create");
+  assert.equal(githubRepository.required, false);
+  assert.match(githubRepository.default, /current origin/);
 });
 
 test("workflow help never advertises an option absent from its fixed parser", async () => {
@@ -331,6 +339,69 @@ test("READONLY Issue workflow completes in one runner call with stable artifacts
   assert.equal(plan.mutation_invocation_allowed, false);
   assert.equal(snapshot.contract_pair_sha256, result.contract_pair_sha256);
   assert.equal(snapshot.delegate_result.issue.number, 7);
+});
+
+test("operation-aware Issue writing fixes the next comment preflight in one runner result", async (t) => {
+  const root = await workspace(t);
+  const result = await runWorkflow("writing.issue.prepare", [
+    "--repo", root,
+    "--github-repo", "a/b",
+    "--operation", "comment",
+    "--issue", "7",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "writing-issue-comment",
+    now: () => new Date("2026-07-27T14:00:00Z"),
+    writingGit: (_cwd, args) => {
+      const command = args.join(" ");
+      const values = new Map([
+        ["rev-parse --show-toplevel", root],
+        ["branch --show-current", "devel-test"],
+        ["rev-parse HEAD", "a".repeat(40)],
+      ]);
+      if (!values.has(command)) throw new Error(`Unexpected Git command: ${command}`);
+      return { ok: true, out: values.get(command), err: "" };
+    },
+    writingReadFile: async () => {
+      const error = new Error("missing");
+      error.code = "ENOENT";
+      throw error;
+    },
+    gh: () => ({
+      ok: true,
+      status: 0,
+      stderr: "",
+      stdout: JSON.stringify({
+        number: 7,
+        state: "OPEN",
+        title: "Title",
+        body: "Body",
+        url: "https://github.com/a/b/issues/7",
+        updatedAt: "2026-07-27T13:00:00Z",
+        labels: [],
+        comments: [],
+      }),
+    }),
+  });
+
+  assert.equal(result.status, "success");
+  assert.equal(result.result.issue_operation, "comment");
+  assert.deepEqual(result.result.next_preflight, {
+    workflow: "github.issue.comment.preflight",
+    repository: "a/b",
+    issue: 7,
+    draft: "workplace/miku-scm/issue-comments/issue-7-comment-202607272300.md",
+    reviewed_optional_flags: [],
+  });
+  assert.match(result.human_output, /Issue operation: comment/);
+  assert.match(result.human_output, /Next fixed workflow: github\.issue\.comment\.preflight/);
+  const plan = JSON.parse(await readFile(
+    path.join(root, "runs", "writing-issue-comment", "plan.json"),
+    "utf8",
+  ));
+  assert.equal(plan.issue_operation, "comment");
+  assert.equal(plan.mutation_invocation_allowed, false);
 });
 
 test("preflight and apply workflow IDs cannot cross the approval boundary", async (t) => {

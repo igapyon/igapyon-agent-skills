@@ -267,8 +267,14 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "writing.issue.prepare",
-    triggers: ["Issue文面準備", "Issue writing evidence"],
-    required_parameters: ["repository", "github_repository"],
+    triggers: [
+      "Issue文面準備",
+      "Issue writing evidence",
+      "miku-scm issue create",
+      "miku-scm issue update <number>",
+      "miku-scm issue comment <number>",
+    ],
+    required_parameters: ["repository", "github_repository_or_origin", "issue_operation"],
     mutation_level: "readonly",
     approval_gate: "none",
     runner_entry: "miku-scm-writing-prepare.mjs",

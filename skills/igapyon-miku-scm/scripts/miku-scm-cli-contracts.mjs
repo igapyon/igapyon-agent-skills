@@ -749,16 +749,28 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     },
   ),
   "writing.issue.prepare": contract(
-    "Collect bounded repository and GitHub evidence for drafting Issue prose.",
+    "Collect operation-aware bounded repository and GitHub evidence for drafting Issue create, update, or comment prose.",
     [
       repoPath,
-      option("--github-repo", "<owner/repo>", "Target GitHub repository.", { required: true }),
-      option("--issue", "<positive-integer>", "Existing Issue to include as evidence."),
+      option("--github-repo", "<owner/repo>", "Target GitHub repository.", {
+        default: "repository resolved from current origin",
+      }),
+      option("--operation", "<create|update|comment>", "Issue writing operation.", {
+        choices: ["create", "update", "comment"],
+        default: "create",
+      }),
+      option("--issue", "<positive-integer>", "Existing Issue to include as evidence.", {
+        required_when: "--operation is update or comment",
+      }),
     ],
-    ["--github-repo", "owner/repository"],
+    ["--operation", "create", "--github-repo", "owner/repository"],
     {
       network_access: "GitHub read",
       authentication: "existing gh authentication",
+      notes: [
+        "create rejects --issue; update and comment require --issue.",
+        "When --github-repo is omitted, only an exact GitHub origin remote is accepted.",
+      ],
     },
   ),
   "writing.pr.prepare": contract(
