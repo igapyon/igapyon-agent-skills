@@ -45,7 +45,10 @@ silently committing a candidate.
 3. Stage all current non-ignored changes with `git add --all`.
 4. Fix the exact staged path list and binary staged-diff SHA-256. Obtain that
    diff with `--no-ext-diff --no-textconv` so repository-configured renderers
-   cannot alter the fingerprint or return a presentation-specific status.
+   cannot alter the fingerprint or return a presentation-specific status. The
+   fixed Git runner permits at most 64 MiB on each captured output stream so a
+   staged diff larger than Node.js's 1 MiB default remains deterministic while
+   memory use stays bounded. It never writes the diff body to the result.
 5. Run the resolved checks without an Agent or conversational pause.
 6. Re-read the staged path list and digest, then require both the unstaged
    tracked-path list and non-ignored untracked-path list to be empty. Any

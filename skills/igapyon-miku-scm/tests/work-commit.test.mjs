@@ -182,6 +182,21 @@ test("staged fingerprint disables textconv and commits previously staged mixed c
   assert.equal(git(root, "show", "--format=", "--name-only", "HEAD").split("\n").filter(Boolean).sort().join(","), "README.md,added.txt,asset.bin,renamed.txt");
 });
 
+test("staged fingerprint commits a diff larger than spawnSync's default buffer", async (t) => {
+  const root = await repository(t);
+  const content = `${"large staged diff\n".repeat(140_000)}end\n`;
+  assert.ok(Buffer.byteLength(content, "utf8") > 1024 * 1024);
+  await writeFile(path.join(root, "large-diff.txt"), content, "utf8");
+
+  const result = await runWorkCommit(options(root, "--message", "Commit large staged diff"));
+
+  assert.equal(result.status, "committed");
+  assert.equal(result.working_tree_clean, true);
+  assert.match(result.staged_diff_sha256, /^[a-f0-9]{64}$/);
+  assert.equal(git(root, "status", "--porcelain"), "");
+  assert.equal(git(root, "log", "-1", "--format=%s"), "Commit large staged diff");
+});
+
 test("a genuine staged fingerprint failure remains partial and preserves the index", async (t) => {
   const root = await repository(t);
   const before = git(root, "rev-parse", "HEAD");
