@@ -1,15 +1,16 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+
+import { readNormalizedText } from "./miku-scm-test-text.mjs";
 
 const SKILL_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 test("handoff guidance requires exact human-selected IDs for recovery", async () => {
   const [skill, approval] = await Promise.all([
-    readFile(path.join(SKILL_ROOT, "SKILL.md"), "utf8"),
-    readFile(path.join(SKILL_ROOT, "references", "approval-handoff.md"), "utf8"),
+    readNormalizedText(path.join(SKILL_ROOT, "SKILL.md")),
+    readNormalizedText(path.join(SKILL_ROOT, "references", "approval-handoff.md")),
   ]);
 
   assert.match(skill, /miku-scm pending/);

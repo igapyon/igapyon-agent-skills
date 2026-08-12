@@ -1,14 +1,19 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { normalizeTextLineEndings, readNormalizedText } from "./miku-scm-test-text.mjs";
+
 const SKILL_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 async function guidance(relative) {
-  return readFile(path.join(SKILL_ROOT, relative), "utf8");
+  return readNormalizedText(path.join(SKILL_ROOT, relative));
 }
+
+test("guidance text normalization makes CRLF assertions portable", () => {
+  assert.equal(normalizeTextLineEndings("first\r\nsecond\rthird\n"), "first\nsecond\nthird\n");
+});
 
 test("verification guidance scopes self-tests to miku-scm source maintenance", async () => {
   const [skill, suites, recommit, publication] = await Promise.all([
