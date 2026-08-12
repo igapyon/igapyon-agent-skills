@@ -4,8 +4,12 @@ import test from "node:test";
 
 const SKILL_ROOT = new URL("../", import.meta.url);
 
+async function skillText() {
+  return (await readFile(new URL("SKILL.md", SKILL_ROOT), "utf8")).replace(/\r\n?/g, "\n");
+}
+
 test("known work titles are passed to work.commit instead of using the generic fallback", async () => {
-  const skill = await readFile(new URL("SKILL.md", SKILL_ROOT), "utf8");
+  const skill = await skillText();
 
   assert.match(skill, /current user request or current TODO heading identifies the work, pass that\n   concise one-line title with `--message`/);
   assert.match(skill, /do not use the generic fallback/);
@@ -13,7 +17,7 @@ test("known work titles are passed to work.commit instead of using the generic f
 });
 
 test("human output format remains a runner-global option before the workflow ID", async () => {
-  const skill = await readFile(new URL("SKILL.md", SKILL_ROOT), "utf8");
+  const skill = await skillText();
 
   assert.match(
     skill,
