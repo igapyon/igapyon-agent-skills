@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20260812.10</version>
+  <version>1.20260812.11</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -57,11 +57,12 @@
               <goal>exec</goal>
             </goals>
             <configuration>
-              <executable>sh</executable>
+              <executable>node</executable>
               <arguments>
-                <argument>${project.basedir}/scripts/validate-version-alignment.sh</argument>
+                <argument>${project.basedir}/scripts/validate-version-alignment.mjs</argument>
                 <argument>${project.version}</argument>
                 <argument>${project.basedir}/skills/igapyon-mikuku-agent/references/VERSION.md</argument>
+                <argument>${project.basedir}/skills/igapyon-miku-scm/scripts/miku-scm-run.mjs</argument>
               </arguments>
             </configuration>
           </execution>
