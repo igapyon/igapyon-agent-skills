@@ -45,5 +45,12 @@ assignments and bounds patch and document excerpts. Truncation is explicit.
 The Agent must not treat mechanical file classification as confirmed intent or
 impact.
 
+For Git-based writing modes, collect diff statistics, changed paths, and the
+bounded patch excerpt with `--no-textconv`. This keeps repository-configured
+text renderers from changing evidence collection or causing a renderer-specific
+failure. The fixed Git runner permits at most 64 MiB on each captured output
+stream; it does not pass `--exit-code`, so an ordinary diff remains successful
+while a genuine Git failure remains a stop.
+
 Writing output never authorizes GitHub mutation. Validate and save the draft,
 then enter the matching mechanical preflight and approval workflow.

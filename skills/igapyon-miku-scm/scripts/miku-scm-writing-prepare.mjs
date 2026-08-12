@@ -13,6 +13,7 @@ const GITHUB_REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const MAX_PATCH_CHARS = 120_000;
 const MAX_DOCUMENT_CHARS = 40_000;
 const MAX_COMMITS = 200;
+const GIT_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 
 function digest(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -23,7 +24,7 @@ function defaultGit(cwd, args, { allowFailure = false, input } = {}) {
     cwd,
     encoding: "utf8",
     input,
-    maxBuffer: 16 * 1024 * 1024,
+    maxBuffer: GIT_MAX_BUFFER_BYTES,
   });
   if (result.status !== 0 && !allowFailure) {
     throw new Error(`git ${args[0]} failed: ${(result.stderr || result.stdout || "unknown failure").trim()}`);
@@ -370,13 +371,13 @@ async function prepareGitWriting(options, dependencies) {
     return { commit, subject: subject.join("\t") };
   });
   const diffStat = git(identity.root, [
-    "diff", "--stat", "--no-renames", target.resolved_diff_target, "--",
+    "diff", "--stat", "--no-renames", "--no-textconv", target.resolved_diff_target, "--",
   ]).out;
   const nameStatus = git(identity.root, [
-    "diff", "--name-status", "--no-renames", target.resolved_diff_target, "--",
+    "diff", "--name-status", "--no-renames", "--no-textconv", target.resolved_diff_target, "--",
   ]).out;
   const patch = boundedText(git(identity.root, [
-    "diff", "--no-ext-diff", "--no-renames", "--unified=1",
+    "diff", "--no-ext-diff", "--no-renames", "--no-textconv", "--unified=1",
     target.resolved_diff_target, "--",
   ]).out, MAX_PATCH_CHARS);
   const evidence = {
