@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
+import { readNormalizedText } from "./miku-scm-test-text.mjs";
 
 const SKILL_ROOT = new URL("../", import.meta.url);
 
 async function skillText(relative) {
-  return readFile(new URL(relative, SKILL_ROOT), "utf8");
+  return readNormalizedText(new URL(relative, SKILL_ROOT));
 }
 
 test("bare recommit implicitly enters PR writing before the rewrite approval gate", async () => {

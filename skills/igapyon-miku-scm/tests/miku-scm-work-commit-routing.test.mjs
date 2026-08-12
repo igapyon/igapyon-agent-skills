@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
+
+import { readNormalizedText } from "./miku-scm-test-text.mjs";
 
 const SKILL_ROOT = new URL("../", import.meta.url);
 
 async function skillText() {
-  return (await readFile(new URL("SKILL.md", SKILL_ROOT), "utf8")).replace(/\r\n?/g, "\n");
+  return readNormalizedText(new URL("SKILL.md", SKILL_ROOT));
 }
 
 test("known work titles are passed to work.commit instead of using the generic fallback", async () => {
