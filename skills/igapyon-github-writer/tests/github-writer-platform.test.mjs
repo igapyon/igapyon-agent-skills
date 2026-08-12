@@ -15,7 +15,7 @@ import {
 } from "../scripts/github-writer-workflow-manifest.mjs";
 
 test("fixed workflow manifest exposes the supported contract", () => {
-  assert.equal(WORKFLOW_MANIFEST_VERSION, "github-writer.workflow-manifest/v2");
+  assert.equal(WORKFLOW_MANIFEST_VERSION, "github-writer.workflow-manifest/v3");
   assert.deepEqual(
     WORKFLOW_DEFINITIONS.map((workflow) => workflow.id),
     [
@@ -28,6 +28,9 @@ test("fixed workflow manifest exposes the supported contract", () => {
       "backup.apply",
       "pr.recommit.preflight",
       "pr.recommit.apply",
+      "approval.handoff.list",
+      "approval.handoff.apply",
+      "approval.handoff.dismiss",
     ],
   );
   for (const workflow of WORKFLOW_DEFINITIONS) {
@@ -40,6 +43,9 @@ test("fixed workflow manifest exposes the supported contract", () => {
     assert.ok(workflow.contract_sources.includes("scripts/github-writer-core.mjs"));
     assert.ok(workflow.contract_sources.includes("scripts/github-writer-output.mjs"));
     assert.ok(workflow.contract_sources.includes("scripts/github-writer-observability.mjs"));
+    assert.ok(workflow.contract_sources.includes("scripts/github-writer-help.mjs"));
+    assert.deepEqual(workflow.runtime_references, []);
+    assert.equal(workflow.help_contract.artifact_writes, false);
   }
 });
 
@@ -76,6 +82,7 @@ test("runner process execution avoids command shells", () => {
     "utf8",
   );
   assert.match(core, /spawnSync\("git", args,/);
+  assert.match(core, /MAX_GIT_CAPTURE_BYTES = 64 \* 1024 \* 1024/);
   assert.match(core, /shell: false/);
   assert.doesNotMatch(`${core}\n${kernel}\n${runner}`, /\bexec(?:File)?Sync\s*\(/);
   assert.doesNotMatch(`${core}\n${kernel}\n${runner}`, /spawnSync\("(?:sh|bash|cmd|powershell|pwsh)"/);
@@ -88,4 +95,15 @@ test("runner process execution avoids command shells", () => {
     () => defaultGit(process.cwd(), ["push", "origin", "HEAD"]),
     /outside the local allowlist/,
   );
+});
+
+test("evidence disables repository-specific diff renderers and bounds output fields", () => {
+  const evidence = readFileSync(
+    new URL("../scripts/github-writer-evidence.mjs", import.meta.url),
+    "utf8",
+  );
+  assert.match(evidence, /"--no-ext-diff", "--no-textconv", "--no-renames"/);
+  assert.match(evidence, /changed_files_truncated/);
+  assert.match(evidence, /diff_stat_truncated/);
+  assert.match(evidence, /github-writer\.writing-contract\/v1/);
 });

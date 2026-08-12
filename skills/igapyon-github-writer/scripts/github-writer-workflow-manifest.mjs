@@ -1,5 +1,6 @@
-export const WORKFLOW_MANIFEST_VERSION = "github-writer.workflow-manifest/v2";
-export const WORKFLOW_CONTRACT_VERSION = 2;
+export const WORKFLOW_MANIFEST_VERSION = "github-writer.workflow-manifest/v3";
+export const WORKFLOW_CONTRACT_VERSION = 3;
+export const PRODUCT_VERSION = "1.20260812.4";
 
 const common = {
   network_access: "none",
@@ -7,8 +8,27 @@ const common = {
   allowed_executables: ["git"],
 };
 
-function option(flag, value, description, { required = false, repeatable = false } = {}) {
-  return Object.freeze({ flag, value, description, required, repeatable });
+function option(flag, value, description, {
+  key,
+  required = false,
+  repeatable = false,
+  choices = undefined,
+  defaultValue = undefined,
+  minimumOccurrences = undefined,
+  maximumOccurrences = undefined,
+} = {}) {
+  return Object.freeze({
+    flag,
+    value,
+    key,
+    required,
+    repeatable,
+    choices: choices ? Object.freeze([...choices]) : undefined,
+    default: defaultValue,
+    minimum_occurrences: minimumOccurrences,
+    maximum_occurrences: maximumOccurrences,
+    description,
+  });
 }
 
 function workflow(definition) {
@@ -16,9 +36,11 @@ function workflow(definition) {
     "scripts/github-writer-run.mjs",
     "scripts/github-writer-kernel.mjs",
     "scripts/github-writer-core.mjs",
+    "scripts/github-writer-handoff.mjs",
     `scripts/${definition.runner_entry}`,
     "scripts/github-writer-output.mjs",
     "scripts/github-writer-observability.mjs",
+    "scripts/github-writer-help.mjs",
     "scripts/github-writer-workflow-manifest.mjs",
   ];
   return Object.freeze({
@@ -31,8 +53,21 @@ function workflow(definition) {
       "github-cli-prohibition.md",
       "runtime-and-observability.md",
     ]),
+    runtime_references: Object.freeze([...(definition.runtime_references ?? [])]),
+    design_references: Object.freeze([
+      ...definition.references,
+      "github-cli-prohibition.md",
+      "runtime-and-observability.md",
+    ]),
     allowed_options: Object.freeze([...definition.allowed_options]),
     allowed_executables: Object.freeze([...common.allowed_executables]),
+    help_contract: Object.freeze({
+      side_effect_free: true,
+      delegate_invoked: false,
+      subprocess_invoked: false,
+      network_access: false,
+      artifact_writes: false,
+    }),
     contract_sources: Object.freeze([...new Set(contractSources)]),
   });
 }
@@ -49,8 +84,8 @@ export const WORKFLOW_DEFINITIONS = Object.freeze([
     references: ["pr-writing.md", "github-writing-rules.md", "deterministic-runner.md"],
     contract_test: "tests/github-writer-evidence.test.mjs",
     allowed_options: [
-      option("--repo", "<path>", "Target local Git repository."),
-      option("--target", "<commit-or-range>", "Commit or range; defaults to the latest single commit."),
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
+      option("--target", "<commit-or-range>", "Commit or range; defaults to the resolved branch range.", { key: "target" }),
     ],
   }),
   workflow({
@@ -64,8 +99,8 @@ export const WORKFLOW_DEFINITIONS = Object.freeze([
     references: ["release-writing.md", "github-writing-rules.md", "deterministic-runner.md"],
     contract_test: "tests/github-writer-evidence.test.mjs",
     allowed_options: [
-      option("--repo", "<path>", "Target local Git repository."),
-      option("--target", "<commit-or-range>", "Required start commit or explicit range.", { required: true }),
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
+      option("--target", "<commit-or-range>", "Required start commit or explicit range.", { key: "target", required: true }),
     ],
   }),
   workflow({
@@ -79,8 +114,8 @@ export const WORKFLOW_DEFINITIONS = Object.freeze([
     references: ["about-writing.md", "github-writing-rules.md", "deterministic-runner.md"],
     contract_test: "tests/github-writer-evidence.test.mjs",
     allowed_options: [
-      option("--repo", "<path>", "Target local Git repository."),
-      option("--document", "<relative-path>", "Repository-relative evidence document.", { repeatable: true }),
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
+      option("--document", "<relative-path>", "Repository-relative evidence document.", { key: "documents", repeatable: true }),
     ],
   }),
   workflow({
@@ -94,9 +129,9 @@ export const WORKFLOW_DEFINITIONS = Object.freeze([
     references: ["github-writing-rules.md", "deterministic-runner.md"],
     contract_test: "tests/github-writer-evidence.test.mjs",
     allowed_options: [
-      option("--repo", "<path>", "Target local Git repository."),
-      option("--mode", "pr|release|about", "Draft type.", { required: true }),
-      option("--input", "<relative-path>", "Repository-relative draft source.", { required: true }),
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
+      option("--mode", "pr|release|about", "Draft type.", { key: "mode", required: true, choices: ["pr", "release", "about"] }),
+      option("--input", "<relative-path>", "Repository-relative draft source.", { key: "input", required: true }),
     ],
   }),
   workflow({
@@ -110,7 +145,7 @@ export const WORKFLOW_DEFINITIONS = Object.freeze([
     references: ["branch-status.md", "deterministic-runner.md"],
     contract_test: "tests/github-writer-platform.test.mjs",
     allowed_options: [
-      option("--repo", "<path>", "Target local Git repository."),
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
     ],
   }),
   workflow({
@@ -124,8 +159,8 @@ export const WORKFLOW_DEFINITIONS = Object.freeze([
     references: ["backup-branch.md", "deterministic-runner.md"],
     contract_test: "tests/github-writer-operation.test.mjs",
     allowed_options: [
-      option("--repo", "<path>", "Target local Git repository."),
-      option("--backup-name", "<backup/name>", "Explicit unused local branch under backup/."),
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
+      option("--backup-name", "<backup/name>", "Explicit unused local branch under backup/.", { key: "backupName" }),
     ],
   }),
   workflow({
@@ -139,9 +174,9 @@ export const WORKFLOW_DEFINITIONS = Object.freeze([
     references: ["backup-branch.md", "deterministic-runner.md"],
     contract_test: "tests/github-writer-operation.test.mjs",
     allowed_options: [
-      option("--repo", "<path>", "Target local Git repository."),
-      option("--plan", "<relative-plan>", "Reviewed sealed plan.", { required: true }),
-      option("--expected-plan-sha256", "<sha256>", "Reviewed plan digest.", { required: true }),
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
+      option("--plan", "<relative-plan>", "Reviewed sealed plan.", { key: "plan", required: true }),
+      option("--expected-plan-sha256", "<sha256>", "Reviewed plan digest.", { key: "expectedPlanSha256", required: true }),
     ],
   }),
   workflow({
@@ -155,9 +190,9 @@ export const WORKFLOW_DEFINITIONS = Object.freeze([
     references: ["pr-soft-reset-recommit.md", "deterministic-runner.md"],
     contract_test: "tests/github-writer-operation.test.mjs",
     allowed_options: [
-      option("--repo", "<path>", "Target local Git repository."),
-      option("--base", "<ref>", "Explicit recommit base."),
-      option("--pr-draft", "<relative-path>", "Reviewed PR draft used as the commit message.", { required: true }),
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
+      option("--base", "<ref>", "Explicit recommit base.", { key: "base" }),
+      option("--pr-draft", "<relative-path>", "Reviewed PR draft used as the commit message.", { key: "prDraft", required: true }),
     ],
   }),
   workflow({
@@ -171,9 +206,55 @@ export const WORKFLOW_DEFINITIONS = Object.freeze([
     references: ["pr-soft-reset-recommit.md", "deterministic-runner.md"],
     contract_test: "tests/github-writer-operation.test.mjs",
     allowed_options: [
-      option("--repo", "<path>", "Target local Git repository."),
-      option("--plan", "<relative-plan>", "Reviewed sealed plan.", { required: true }),
-      option("--expected-plan-sha256", "<sha256>", "Reviewed plan digest.", { required: true }),
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
+      option("--plan", "<relative-plan>", "Reviewed sealed plan.", { key: "plan", required: true }),
+      option("--expected-plan-sha256", "<sha256>", "Reviewed plan digest.", { key: "expectedPlanSha256", required: true }),
+    ],
+  }),
+  workflow({
+    id: "approval.handoff.list",
+    summary: "List pending local approval handoffs without reconstructing apply arguments.",
+    triggers: ["approval pending", "承認待ち一覧"],
+    required_parameters: ["repository"],
+    mutation_level: "readonly",
+    approval_gate: "none",
+    runner_entry: "github-writer-handoff.mjs",
+    references: ["deterministic-runner.md"],
+    contract_test: "tests/github-writer-handoff.test.mjs",
+    allowed_options: [
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
+    ],
+  }),
+  workflow({
+    id: "approval.handoff.apply",
+    summary: "Apply one exact pending local handoff without rebuilding plan arguments.",
+    triggers: ["approve", "承認"],
+    required_parameters: ["repository", "explicit_apply_request", "optional_handoff_id"],
+    mutation_level: "local",
+    approval_gate: "apply",
+    runner_entry: "github-writer-handoff.mjs",
+    references: ["deterministic-runner.md"],
+    contract_test: "tests/github-writer-handoff.test.mjs",
+    allowed_options: [
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
+      option("--handoff", "<full-id>", "Optional exact pending handoff ID.", { key: "handoff" }),
+      option("--apply", null, "Confirm consumption of the selected handoff.", { key: "apply", required: true }),
+    ],
+  }),
+  workflow({
+    id: "approval.handoff.dismiss",
+    summary: "Dismiss one exact pending local handoff without applying it.",
+    triggers: ["dismiss", "承認待ち解除"],
+    required_parameters: ["repository", "handoff_id", "explicit_dismiss_request"],
+    mutation_level: "operational",
+    approval_gate: "apply",
+    runner_entry: "github-writer-handoff.mjs",
+    references: ["deterministic-runner.md"],
+    contract_test: "tests/github-writer-handoff.test.mjs",
+    allowed_options: [
+      option("--repo", "<path>", "Target local Git repository.", { key: "repo" }),
+      option("--handoff", "<full-id>", "Exact pending handoff ID.", { key: "handoff", required: true }),
+      option("--apply", null, "Confirm dismissal of the selected handoff.", { key: "apply", required: true }),
     ],
   }),
 ]);

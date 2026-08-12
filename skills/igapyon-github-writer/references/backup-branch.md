@@ -36,15 +36,18 @@ node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json ba
 An explicit name can be supplied with `--backup-name backup/<name>`. Review the
 returned branch, `HEAD`, dirty flag, `plan_path`, and `plan_sha256`.
 
-After the user-approved apply step, consume the plan exactly once:
+The preflight also creates an immutable pending approval handoff. After a later
+explicit approval, consume that handoff exactly once:
 
 ```text
-node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json backup.apply --plan <plan_path> --expected-plan-sha256 <plan_sha256>
+node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json approval.handoff.apply --apply
 ```
 
-The runner verifies that the repository state and plan digest are unchanged,
-creates the branch with argument-array Git execution, verifies the target, and
-records the attempt. Never retry the same plan.
+Use `--handoff <full-id>` only when there is more than one pending handoff. The
+runner verifies that the repository state and plan digest are unchanged, creates
+the branch with argument-array Git execution, verifies that it resolves to the
+reviewed `HEAD`, and records the attempt. Never retry the same plan. Cancel a
+pending request only with `approval.handoff.dismiss --handoff <full-id> --apply`.
 
 If the generated name already exists, choose the next available suffix:
 

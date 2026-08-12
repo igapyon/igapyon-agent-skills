@@ -12,11 +12,13 @@ import {
 
 export const RESULT_SCHEMA_VERSION = "github-writer.runner-result/v1";
 export const ERROR_SCHEMA_VERSION = "github-writer.error/v2";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "github-writer.human-output/v1";
 
 export function humanOutput(workflow, result) {
+  const heading = workflow.endsWith(".preflight") ? "READY FOR APPROVAL" : "SUCCESS";
   if (workflow.endsWith(".evidence")) {
     return [
-      `[SUCCESS] ${workflow}`,
+      `[${heading}] ${workflow}`,
       "",
       `Repository: ${result.repository}`,
       `Branch: ${result.branch || "none"}`,
@@ -36,8 +38,27 @@ export function humanOutput(workflow, result) {
       `Working tree: ${result.dirty ? "dirty" : "clean"}`,
     ].join("\n");
   }
+  if (workflow === "approval.handoff.list") {
+    return [
+      "[SUCCESS] approval.handoff.list",
+      "",
+      `Repository: ${result.repository}`,
+      `Pending handoffs: ${result.pending.length}`,
+      ...result.pending.map((handoff) => `${handoff.id} ${handoff.apply_workflow}`),
+    ].join("\n");
+  }
+  if (workflow.startsWith("approval.handoff.")) {
+    const handoff = result.handoff;
+    return [
+      `[SUCCESS] ${workflow}`,
+      "",
+      `Repository: ${result.repository}`,
+      `Handoff: ${handoff?.id ?? "unknown"}`,
+      `Handoff state: ${handoff?.state ?? "unknown"}`,
+    ].join("\n");
+  }
   const lines = [
-    `[SUCCESS] ${workflow}`,
+    `[${heading}] ${workflow}`,
     "",
     `Repository: ${result.repository ?? "unknown"}`,
   ];
@@ -79,6 +100,7 @@ export function successEnvelope(workflow, result, startedAt) {
     mutation_invoked: metadata.approval_gate === "apply" && metadata.mutation_level === "local",
     result,
     human_output: humanOutput(workflow, result),
+    human_output_schema_version: HUMAN_OUTPUT_SCHEMA_VERSION,
   };
 }
 
@@ -100,7 +122,7 @@ export function failureEnvelope(workflow, error, startedAt, context = {}) {
   const message = context.repository_root
     ? rawMessage.replaceAll(context.repository_root, "<repository>")
     : rawMessage;
-  const code = errorCode(message, mutationInvoked);
+  const code = error?.code ?? errorCode(message, mutationInvoked);
   const classification = mutationInvoked
     ? "mutation-state-unconfirmed"
     : code === "REVIEWED_STATE_CONFLICT" ? "conflict" : "safe-stop";
@@ -138,12 +160,13 @@ export function failureEnvelope(workflow, error, startedAt, context = {}) {
       help_command: context.help_command ?? null,
     },
     human_output: [
-      `[${mutationInvoked ? "UNCONFIRMED" : "NOT APPLIED"}] ${workflow}`,
+      `[${mutationInvoked ? "UNRESOLVED" : classification === "conflict" ? "CONFLICT" : "NOT APPLIED"}] ${workflow}`,
       "",
       `Code: ${code}`,
       `Message: ${message}`,
       `Mutation invoked: ${mutationInvoked ? "yes; inspect repository before any next action" : "no"}`,
     ].join("\n"),
+    human_output_schema_version: HUMAN_OUTPUT_SCHEMA_VERSION,
   };
 }
 

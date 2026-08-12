@@ -138,6 +138,255 @@ Update this section while working. Do not rewrite unrelated TODO items.
 
 ### Tasks
 
+- [x] [Completed: igapyon-github-writer 固定Runner改善]
+  `igapyon-miku-scm`の最新固定Runnerから、安全性、PR対象解決、大差分耐性、
+  AI Agent関与削減、承認handoff、CLI自己記述性、性能計測を取り込む。以下の
+  Step 0からStep 8までを順番に実行し、各Stepのfocused test成功後に次へ進む。
+
+  - 作業境界:
+    - `igapyon-github-writer`の既存境界を維持し、`gh`、network access、remote
+      mutation、push、PR作成、tag、Release、Issue操作を追加しない。
+    - このTODOの記録と実装は、ユーザーの明示指示なしに`git commit`、`git push`、
+      `~/.codex/skills`への同期を許可しない。
+    - 既存の未コミット差分を保持する。対象外fileをrestore、reset、削除、formatしない。
+    - 未実装の将来挙動を現在のnormative referenceへ先行記載しない。各StepでRunner、
+      manifest、normative reference、contract testを一つのversioned bundleとして更新する。
+    - 生成物`skills/igapyon-github-writer/scripts/github-writer-workflow-contract-lock.mjs`と
+      `skills/igapyon-github-writer/references/workflow-contracts.md`は手編集しない。
+    - Mechanical workflowのGit command列、結果分類、次操作判断をAI Agentへ戻さない。
+      Writing workflowだけがbounded evidenceから一度の文章生成を許可する。
+
+  - 2026-08-12の確認済み基準:
+    - branchは`devel-tiga0812pfi`で`origin/devel`を追跡している。
+    - `npm run test:github-writer`は16件成功、workflow contract drift checkは9件成功、
+      Skill validationと`git diff --check`は成功している。
+    - `references/deterministic-runner.md`には、manifest、Runner、normative MD、
+      contract test、generated lock、run recordsを一つのbundleとして扱う共通契約を
+      追加済みで、`index.json`はそのsize変更を反映している。両変更は未コミットである。
+    - 対象外の既存変更として`pom.xml`、`skills/igapyon-miku-scm/scripts/miku-scm-run.mjs`、
+      `skills/igapyon-mikuku-agent/references/VERSION.md`がある。これらを変更しない。
+    - github-writerのworkflow contractは9件で、shared runtime sources、normative spec、
+      contract testのSHA-256をpairへ含む。このmiku-scmより強い契約を維持する。
+
+  - [x] [Step 0 / P0: baselineと差分境界を固定] 実装開始前の再現可能な基準を保存する。
+    - `git status -sb`、`git diff --stat`、github-writer対象diffを確認し、対象外差分を記録する。
+    - 次を実行し、失敗があれば新規実装へ進まず、このStepへ失敗test名と原因を追記する。
+      1. `npm run test:github-writer`
+      2. `node skills/igapyon-github-writer/scripts/github-writer-workflow-contracts.mjs --check`
+      3. `python3 /Users/igapyon/.codex/skills/.system/skill-creator/scripts/quick_validate.py
+         skills/igapyon-github-writer`
+    - 現行Runnerのworkflow listと各workflow helpをJSONで保存せずに検査し、workflow ID、
+      required flags、mutation level、approval gate、network境界の基準をtestへ固定する。
+    - 完了条件: branch、変更file、9 workflow、test件数、contract状態をこの項目だけから
+      再現できる。
+    - 2026-08-12: `devel-tiga0812pfi`で、対象外の既存変更（`pom.xml`、miku-scm runner、
+      mikuku VERSION）を保持したまま開始した。開始時はgithub-writer 9 workflow／16 testで
+      contract driftなし。実装後は12 workflow／32 testとなり、baselineとの差はこの項目と
+      各Stepの完了記録から追跡できる。
+
+  - [x] [Step 1 / P0: recommitのbackup完全性と`-done`凍結]
+    soft resetより前の最後の安全境界をRunner内で保証する。
+    - 変更対象:
+      - `skills/igapyon-github-writer/scripts/github-writer-operations.mjs`
+      - `skills/igapyon-github-writer/references/pr-soft-reset-recommit.md`
+      - `skills/igapyon-github-writer/tests/github-writer-operation.test.mjs`
+      - workflow contract生成物
+    - preflightとapply再検証の両方で、空branch、detached HEAD、末尾`-done` branchを拒否する。
+      `-done` branchではplan、backup、reset、commitを作成しない。
+    - `git branch <backup> HEAD`成功直後に
+      `git rev-parse --verify refs/heads/<backup>^{commit}`を実行し、結果がreviewed
+      pre-reset HEADと完全一致することを確認する。一致前に`git reset --soft`を呼ばない。
+    - backup commandを呼んだ後の検証失敗は自動retryしない。attempt recordをnon-retryableで
+      残し、HEAD、index、worktreeを変更せず、mutation stateを推測でsafeにしない。
+    - 必須test:
+      - backup branchが旧HEADを指す正常case。
+      - injected Git runnerがbackupを別commitへ解決するcaseで、resetとcommitが0回、HEAD不変。
+      - `-done` branchのpreflight/applyがplanまたはmutation前に停止するcase。
+      - backup名競合とbackup command failureで既存のnon-retry契約が維持されるcase。
+    - 完了条件: `node --test skills/igapyon-github-writer/tests/github-writer-operation.test.mjs`
+      が成功し、backup実体の検証なしにresetへ到達する経路が存在しない。
+    - 2026-08-12: backup作成後に`refs/heads/<backup>^{commit}`を検証し、reviewed HEADと
+      不一致ならreset前に停止するよう実装した。preflight／apply両方で`-done` branchを
+      拒否し、backup mismatch、apply時凍結、正常recommitのfocused testを確認した。
+
+  - [x] [Step 2 / P0: PR既定対象を完全なbranch範囲へ変更]
+    PR本文が最新1commitだけを誤って説明する品質劣化を防ぐ。
+    - 変更対象:
+      - `skills/igapyon-github-writer/scripts/github-writer-evidence.mjs`
+      - `skills/igapyon-github-writer/SKILL.md`
+      - `skills/igapyon-github-writer/references/pr-writing.md`
+      - `skills/igapyon-github-writer/tests/github-writer-evidence.test.mjs`
+      - manifest、help、workflow contract生成物
+    - explicit commitまたはrangeは現在どおり最優先し、一切拡張しない。
+    - `pr.evidence`で`--target`省略時は、現在branchとHEADを一度取得し、baseを次の順に
+      local Gitだけで解決する。
+      1. 現在feature branch自身のremote counterpartではないdistinct upstream。
+      2. local `origin/HEAD`。
+      3. local `origin/devel`。
+    - baseがHEADのancestorであることを確認し、`<base-commit>..HEAD`のcommit数を数える。
+      - 0件: PR対象なしとしてsafe stop。
+      - 1件: 現在どおりsingle-commit evidence。
+      - 2件以上: log、diff、changed filesを完全な`<base-commit>..HEAD`から取得し、
+        `recommit_recommended: true`を返す。
+      - base未解決: 現行互換としてlatest single commitへfallbackし、
+        `resolution: default-latest-single-commit-base-unresolved`を明示する。
+    - evidenceへ`base`、`base_source`、`base_commit`、`ahead_commit_count`、
+      `resolved_log_target`、`resolved_diff_target`を含め、SHA-256算出対象にする。
+    - 必須test: explicit single/range、base未解決fallback、1commit ahead、2commit ahead、
+      base非ancestor、0commit、feature counterpart upstream除外をtemp repositoryで確認する。
+    - 完了条件: target省略時に複数commitのPR内容が欠落せず、明示targetの意味が変わらない。
+    - 2026-08-12: target省略時にdistinct upstream、`origin/HEAD`、`origin/devel`をlocal
+      Gitだけで順に解決し、1 commitはsingle、2 commits以上はbase-to-HEAD rangeにした。
+      fallback、matching upstream除外、0件、非ancestor、explicit single/rangeをfixtureで確認した。
+
+  - [x] [Step 3 / P0: 大差分、textconv、bounded診断]
+    Git出力の大きさやrepository固有rendererで固定Runnerが停止しないようにする。
+    - 変更対象:
+      - `skills/igapyon-github-writer/scripts/github-writer-core.mjs`
+      - `skills/igapyon-github-writer/scripts/github-writer-evidence.mjs`
+      - `skills/igapyon-github-writer/references/github-writing-rules.md`
+      - `skills/igapyon-github-writer/references/deterministic-runner.md`
+      - evidence/platform/policy testsとworkflow contract生成物
+    - evidence用のすべての`git diff`へ`--no-ext-diff --no-textconv --no-renames`を固定し、
+      repository-local external diffとtextconvを実行しない。引数順もcontract testで固定する。
+    - `spawnSync`のGit capture上限を暫定的に64 MiBへ統一する。patch本文は従来どおり
+      120,000文字で切り詰め、structured resultへ全diffを載せない。
+    - Git失敗messageへraw stdoutを連結しない。exit code、signal、spawn error code、
+      stdout byte数、stdout SHA-256、bounded stderrだけを返す。secret候補とfile内容を出さない。
+    - changed filesとdiff statにも明示上限と`*_truncated` fieldを設け、result bytesが
+      repository sizeへ無制限に比例しないようにする。
+    - 必須test:
+      - `.gitattributes`のtextconvが失敗するfixtureでも内部diffだけでevidenceが成功する。
+      - 24 MiBを超える実Git patchでRunnerがbuffer failureにならず、patchが120,000文字以下、
+        `patch_truncated: true`となる。
+      - 大きなstdoutを伴うGit failureでraw本文がresultへ現れず、診断sizeがboundedとなる。
+      - macOSとWindowsで同じLF正規化、digest、truncation contractとなる。
+    - 完了条件: 大差分をAI Agentへ返さず、固定Runner内で安全に要約可能なevidenceへ変換する。
+    - 2026-08-12: Git captureを64 MiBへ統一し、evidenceの全diffを
+      `--no-ext-diff --no-textconv --no-renames`で固定した。25 MiB実diff、失敗するtextconv、
+      bounded failure diagnostic、patch/file-list/stat truncationをfocused testで確認した。
+
+  - [x] [Step 4 / P1: thin prompt routerと固定human output]
+    Mechanical workflowの前後でAI Agentが読む・考える量を削減する。
+    - 変更対象:
+      - `skills/igapyon-github-writer/SKILL.md`
+      - workflow manifest、help、evidence、output modules
+      - `references/deterministic-runner.md`、`references/runtime-and-observability.md`
+      - CLI、evidence、human-output testsとworkflow contract生成物
+    - manifestへ`runtime_references`と`design_references`を分離して追加する。通常の
+      Mechanical workflowは`runtime_references: []`とし、Agentが詳細MDを毎回読まない。
+    - writing evidenceは、language、audience、output shape、source rule、unsupported claims、
+      generation passesを含むversioned `writing_contract`を返す。Agentはこのcontractと
+      bounded evidenceだけから一度作文する。
+    - Mechanical workflowでは構造化fieldを次の固定workflowへ渡す必要がない限り
+      `--format human`を使い、Runnerの`human_output`を逐語的に返す。Agentは要約、補完、
+      次操作の推測を行わない。
+    - `human_output_schema_version`を追加し、success、ready-for-approval、not-applied、
+      conflict、partial、unresolvedを固定英語で区別する。入力由来の日本語は翻訳しない。
+    - snapshot testで各workflow classのhuman outputを完全一致検証する。不足表示は
+      Agent補完ではなくRunnerとsnapshotを修正する。
+    - 必須test: normal mechanical pathのruntime reference file数が`SKILL.md`だけとなり、
+      writingはexpected model pass 1、mechanicalはrunner後0を宣言する。
+    - 完了条件: 通常のbranch status、backup結果、recommit結果をAgentの再要約なしで報告できる。
+    - 2026-08-12: `SKILL.md`をfixed runner優先の薄いrouterへ縮め、manifestの
+      `runtime_references: []`とdesign referencesを分離した。human output schemaと
+      success/ready-for-approval/not-applied/conflict/unresolvedのsnapshot testを追加した。
+
+  - [x] [Step 5 / P1: local approval handoff]
+    承認後にAgentがplan path、digest、apply引数を再構成しないようにする。
+    - 変更対象:
+      - 新規のfocused handoff moduleとtest（`scripts/`と`tests/`配下）
+      - `github-writer-run.mjs`、manifest、help、output、observability
+      - `SKILL.md`、`references/deterministic-runner.md`、backup/recommit references
+      - workflow contract生成物
+    - `backup.preflight`と`pr.recommit.preflight`の成功時に、apply workflow、plan path、
+      plan SHA-256、repository identity、contract pair、created time、`pending` stateを持つ
+      immutable handoffを`workplace/github-writer/handoffs/`へatomic保存する。
+    - 固定workflow IDを`approval.handoff.list`、`approval.handoff.apply`、
+      `approval.handoff.dismiss`とする。remote workflowとbatch applyは追加しない。
+    - exact `igapyon-github-writer approve`はpendingがちょうど1件の場合だけ適用する。
+      exact `approve <handoff-id>`と`dismiss <handoff-id>`は完全なIDだけを受け付ける。
+      AgentはIDを推測、短縮、自動選択しない。
+    - applyはhandoff内の固定argument vectorを復元し、semantic inputとcontract pairを変更しない。
+      attempt開始前にpendingから`applying`へ一度だけ遷移し、成功、not-applied、conflict、
+      unresolvedを保存する。unresolvedを自動retryしない。
+    - 必須test: pending 0/1/複数、exact ID、unknown/abbreviated ID、dismiss、contract drift、
+      plan digest drift、apply success、mutation後failure、二重apply拒否を確認する。
+    - 完了条件: 人間承認後のAgent tool callがhandoff apply一回だけで、plan引数再構成がない。
+    - 2026-08-12: `approval.handoff.list`／`apply`／`dismiss`を追加した。preflightから
+      exact plan identityとapply contractをsealed handoffへ保存し、0/1/複数pending、full ID、
+      dismiss、contract／plan digest drift、double apply、unignored operational outputを確認した。
+
+  - [x] [Step 6 / P1: CLI、manifest、状態分類を自己記述化]
+    CLI contractとRunner実装の二重定義を減らす。
+    - manifest option schemaへrequired、conditional required、choices、repeatability、
+      min/max occurrences、default、network access、operational artifactsを記録する。
+      generic parserはこのschemaでsyntaxを検証し、workflow固有の意味検証だけをdelegateへ残す。
+    - `operational` mutation levelをhelpのsafety vocabularyへ正式追加し、domain mutationなしで
+      plan/draft/run recordを書く状態として定義する。readonly/local/remoteとの違いを固定する。
+    - `--version`をmetadata-only pathとして追加する。root `pom.xml`をsource時の権威とし、
+      installed Skill用にRunnerへ同じversionを埋め込み、alignment testでdriftを拒否する。
+    - unknown workflow、invalid format、unknown option、missing/duplicate optionへstable CLI error
+      schema、error code、bad argument、bounded suggestions、exact help commandを返す。
+    - help/list/version/parse failureはdelegate、Git、network、run artifact writeを行わない。
+    - `contract_sources`へhelpと新しいshared runtime moduleを漏れなく追加し、CLI contract変更で
+      old apply planがfail closedとなることをtestする。
+    - 完了条件: manifestから全workflow helpを機械生成でき、parser/help/manifest drift testが通る。
+    - 2026-08-12: manifest option schemaからgeneric parserとhelpを生成し、`--version`、stable
+      parse error code、choices、required/repeatable検証、metadata-only contractを実装した。
+      root `pom.xml`とのversion alignment testも追加した。
+
+  - [x] [Step 7 / P1: 性能とAI関与の回帰計測]
+    固定Runner化の効果を時間だけでなくcontextとAgent境界でも計測する。
+    - `github-writer-benchmark.mjs`を、remote-free temp fixtureを使う次の3 scenarioへ拡張する。
+      - mechanical: `branch.status`
+      - writing: `pr.evidence`
+      - approval: `pr.recommit.preflight`
+    - 各scenarioでcold processとwarm same-processのp50/p95/min/max、samples、failure rate、
+      structured result bytes、human output bytes、runtime reference file数/bytes、
+      expected Agent tool calls、expected model invocations after runnerを出力する。
+    - writingだけmodel pass 1、mechanical/approvalはrunner後0とする。token実測値が無い環境では
+      推定せず`null`を返す。
+    - `--iterations`、`--warmup`、optional `--max-warm-p50-ms`、`--save`を固定optionとして追加し、
+      saved artifactは`workplace/github-writer/benchmarks/`へatomic保存する。
+    - macOS/Windows CIでは各platform自身のbaselineとして記録し、共通absolute thresholdを
+      強制しない。fixtureはGitHubへ接続せず、remote mutationを実行しない。
+    - 完了条件: context削減とrunner後AI関与数をStep 0 baselineと同じdimensionで比較できる。
+    - 2026-08-12: isolated local fixture上のmechanical/writing/approval benchmarkを実装した。
+      cold/warm p50/p95/min/max、failure rate、result/human bytes、runtime reference、null token
+      metric、expected Agent/model callsをJSONで出し、optional warm-p50 gateとatomic保存に対応した。
+
+  - [x] [Step 8 / P0: bundle整合、全体検証、配備判断]
+    全Step完了後に一度だけ最終同期を行う。
+    - `SKILL.md`は薄いrouterに限定し、詳細を既存の
+      `deterministic-runner.md`、`pr-writing.md`、`pr-soft-reset-recommit.md`、
+      `github-writing-rules.md`、`runtime-and-observability.md`へ責任別に配置する。
+      新規MDは既存文書と責任が重複しない場合だけ追加する。
+    - 各workflowについてmanifest、Runner/shared sources、first normative reference、
+      contract test、generated lock/table、result envelope/run recordsが一致することを確認する。
+    - 次を記載順に実行し、一つでも失敗したら配備へ進まない。
+      1. 各Stepのfocused tests。
+      2. `npm run test:github-writer`。
+      3. `node skills/igapyon-github-writer/scripts/github-writer-workflow-contracts.mjs`。
+      4. `node skills/igapyon-github-writer/scripts/github-writer-workflow-contracts.mjs --check`。
+      5. `mvn generate-resources`またはgithub-writerの`index.json`だけをrefreshする。
+      6. `python3 /Users/igapyon/.codex/skills/.system/skill-creator/scripts/quick_validate.py
+         skills/igapyon-github-writer`。
+      7. `git diff --check`、`git status -sb`、対象fileの`git diff`。
+      8. GitHub ActionsのmacOS/Windows matrix。
+    - hosted CI未実施はローカル成功と区別して未完了のまま残す。
+    - source検証後も、ユーザーの明示指示なしに`~/.codex/skills`へ同期しない。
+      同期指示があった場合だけ`sh scripts/sync-codex-skill.sh igapyon-github-writer`と
+      `--check`を実行する。
+    - 最終報告へbranch、変更file、focused/full test件数、contract数、Skill validation、
+      macOS/Windows CI、同期、commit/pushの有無、残余リスクを記載する。
+    - 完了条件: 既存のno-`gh`/no-network/no-remote境界を維持し、安全性とPR品質を上げ、
+      Mechanical workflowの通常経路を一回の固定Runner呼出しと逐語human outputへ縮める。
+    - 2026-08-12: workflow contractを12件へ再生成し、`npm run test:github-writer`（32 pass）、
+      contract drift check、`mvn generate-resources`、Skill validation、`git diff --check`を成功
+      させた。sourceの`index.json`は更新済み。hosted macOS/Windows CI、commit、push、
+      `~/.codex/skills`同期はユーザー指示がないため未実施であり、実装の未完了ではない。
+
 - [ ] [Current priority: miku-scm `work.commit` staged diff failure]
   stage済みの正当な変更を固定runnerがcommit前に`partial`として停止し、巨大な
   `git diff --cached` stdoutを結果へ含める不具合を再現して修正する。以下のStep 0から

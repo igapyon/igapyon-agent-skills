@@ -31,7 +31,7 @@ Use these interpretations unless the user explicitly says otherwise:
 - `<commit> の変更内容`: use exactly that single commit.
 - `<base>..<head>`: use Git's normal exclusive-left range; changes reachable from `<head>` but not from `<base>`.
 - `<base>...<head>`: use Git's normal merge-base comparison semantics.
-- PR request without a commit ID, explicit Git range, branch comparison, or working-tree target: invoke `pr.evidence` without `--target`. The runner resolves the current latest commit as a single-commit target and excludes uncommitted changes.
+- PR request without a commit ID, explicit Git range, branch comparison, or working-tree target: invoke `pr.evidence` without `--target`. The runner resolves a distinct current-branch upstream, `origin/HEAD`, or `origin/devel` when available. One commit ahead becomes a single-commit target; two or more commits ahead become the complete base-to-`HEAD` range. It excludes uncommitted changes and reports its resolution and `recommit_recommended` flag in the evidence target.
 - Release request with only a start commit ID: implicitly treat it as `<start>` through `HEAD`, including the change introduced by `<start>`; use `<start>^..HEAD`.
 - `<start> から HEAD まで` with wording that says `<start>` itself is included: use `<start>^..HEAD`.
 - `<start> から HEAD まで` in Release mode: treat `<start>` itself as included by default; use `<start>^..HEAD` unless the user explicitly says to exclude `<start>`.
