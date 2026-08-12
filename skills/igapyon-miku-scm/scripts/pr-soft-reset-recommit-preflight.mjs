@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 import { jstDashedTimestamp } from "./miku-scm-jst-time.mjs";
+import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs [--base <base>] [--pr-draft <path>] [--repo <path>] [--remote <name>] [--apply] [--allow-dirty]
@@ -155,7 +156,7 @@ export function findDrafts(root, branch) {
       const absolute = path.join(fullDir, name);
       const st = statSync(absolute);
       drafts.push({
-        rel: path.relative(root, absolute),
+        rel: relativeOperationalPath(root, absolute),
         priority,
         timestamp: match[1],
         mtimeMs: st.mtimeMs,
@@ -260,7 +261,7 @@ export function runRecommit(args, dependencies = {}) {
 
     const { slug, drafts } = findDrafts(root, branch);
     const explicitDraft = args.prDraft && explicitDraftSafe
-      ? path.relative(root, explicitDraftAbs)
+      ? relativeOperationalPath(root, explicitDraftAbs)
       : "";
     const resolvedDraft = args.prDraft ? explicitDraft : drafts[0]?.rel || "";
     const resolvedDraftAbs = resolvedDraft ? path.resolve(root, resolvedDraft) : "";

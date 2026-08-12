@@ -7,6 +7,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const ISSUE_LABEL_APPLY_CONTRACT = workflowContractById().get("github.issue.label.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -368,7 +369,7 @@ export async function runIssueLabelUpdate(options, dependencies = {}) {
     add_labels: options.addLabels,
     remove_labels: options.removeLabels,
     operation_sha256: digest,
-    attempt_record: path.relative(root, attempt),
+    attempt_record: relativeOperationalPath(root, attempt),
     planned_gh_arguments: ghArguments(options),
   };
 

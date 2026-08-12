@@ -7,6 +7,8 @@ import {
   workflowContractById,
 } from "../scripts/miku-scm-workflow-contract-lock.mjs";
 import {
+  canonicalContractText,
+  contractSha256,
   calculateWorkflowContracts,
   updateWorkflowContracts,
 } from "../scripts/miku-scm-workflow-contracts.mjs";
@@ -30,4 +32,15 @@ test("generated lock and human management table have no drift", async () => {
     await updateWorkflowContracts({ check: true }),
     { status: "current", contracts: WORKFLOW_MANIFEST.length },
   );
+});
+
+test("workflow contract hashes ignore checkout line-ending representation", () => {
+  const lf = "first\nsecond\nthird\n";
+  const crlf = "first\r\nsecond\r\nthird\r\n";
+  const cr = "first\rsecond\rthird\r";
+
+  assert.equal(canonicalContractText(crlf), lf);
+  assert.equal(canonicalContractText(cr), lf);
+  assert.equal(contractSha256(crlf), contractSha256(lf));
+  assert.equal(contractSha256(cr), contractSha256(lf));
 });

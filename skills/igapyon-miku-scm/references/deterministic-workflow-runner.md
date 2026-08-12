@@ -20,6 +20,11 @@ Repository resolution, validation, fixed command execution, digest checks,
 attempt records, and postcondition checks remain inside tracked and tested
 Node code.
 
+Every repository-relative operational path exposed in a result, plan, handoff,
+or human output is serialized with POSIX `/` separators. The fixed runners may
+use host-native `path` APIs internally, but a reviewed path never changes when
+the same workflow runs on macOS or Windows.
+
 Normal execution does not require the Agent to read this document or the
 workflow's normative spec. The manifest's `runtime_references` is the complete
 additional Markdown set after routing; an empty list means none.

@@ -2,6 +2,8 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+
 export const HANDOFF_SCHEMA_VERSION = "miku-scm.approval-handoff/v1";
 
 const ISSUE_APPLY_WORKFLOWS = new Set([
@@ -236,7 +238,7 @@ export async function createIssueApprovalHandoff({
   const directory = path.join(path.resolve(root), "workplace", "miku-scm", "handoffs");
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const file = path.join(directory, `${runId}.json`);
-  const relativeFile = path.relative(path.resolve(root), file);
+  const relativeFile = relativeOperationalPath(path.resolve(root), file);
   const review = {
     repository: reviewedResult.repository ?? null,
     issue: reviewedResult.issue_number ?? reviewedResult.issue ?? null,

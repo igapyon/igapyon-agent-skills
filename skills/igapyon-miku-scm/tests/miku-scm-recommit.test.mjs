@@ -9,6 +9,10 @@ import {
   parseArgs,
   runRecommit,
 } from "../scripts/pr-soft-reset-recommit-preflight.mjs";
+import {
+  normalizeOperationalPath,
+  relativeOperationalPath,
+} from "../scripts/miku-scm-operational-path.mjs";
 
 function git(cwd, ...args) {
   return execFileSync("git", args, {
@@ -141,4 +145,15 @@ test("recommit workflow preserves preflight and mutation safety", async (t) => {
 test("recommit parser fixes a safe remote namespace for base resolution", () => {
   assert.equal(parseArgs(["--remote", "upstream"]).remote, "upstream");
   assert.throws(() => parseArgs(["--remote", "bad/name"]), /Git remote name/);
+});
+
+test("operational paths are serialized with POSIX separators", () => {
+  const windowsRelative = "workplace\\miku-scm\\pr-drafts\\pr-devel-test-202607272300.md";
+  const expected = "workplace/miku-scm/pr-drafts/pr-devel-test-202607272300.md";
+
+  assert.equal(normalizeOperationalPath(windowsRelative), expected);
+  assert.equal(
+    relativeOperationalPath("ignored", "ignored", { relative: () => windowsRelative }),
+    expected,
+  );
 });

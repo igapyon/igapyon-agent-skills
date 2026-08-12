@@ -10,6 +10,7 @@ import { pathToFileURL } from "node:url";
 
 import { runWorkflow } from "./miku-scm-run.mjs";
 import { workflowManifestById } from "./miku-scm-workflow-manifest.mjs";
+import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const SCENARIOS = new Set([
   "github-issue-read",
@@ -239,7 +240,7 @@ async function saveResult(root, result) {
   const stamp = result.measured_at.replace(/[-:.TZ]/g, "");
   const file = path.join(directory, `benchmark-${result.scenario}-${stamp}.json`);
   await writeJsonAtomic(file, result);
-  return path.relative(root, file);
+  return relativeOperationalPath(root, file);
 }
 
 async function internalWorker(options) {

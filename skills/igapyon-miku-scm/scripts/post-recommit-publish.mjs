@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+import { normalizeOperationalPath, relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const SHA_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i;
 const PUBLISH_APPLY_CONTRACT = workflowContractById().get("pr.publish.apply");
@@ -125,7 +126,12 @@ export async function savePublicationPlan(root, result) {
   await mkdir(directory, { recursive: true });
   const file = path.join(directory, filename);
   await writeFile(file, content, { encoding: "utf8", flag: "wx", mode: 0o600 });
-  return { ...result, plan_path: path.relative(root, file), plan_sha256: digest, publication_plan: plan };
+  return {
+    ...result,
+    plan_path: relativeOperationalPath(root, file),
+    plan_sha256: digest,
+    publication_plan: plan,
+  };
 }
 
 async function loadPlan(options) {
@@ -514,7 +520,12 @@ export async function executePublish(options, dependencies = {}) {
         },
       });
       await writeFile(attempt, `${JSON.stringify({ ...pending, status: "published", result_recorded_at: new Date().toISOString() }, null, 2)}\n`, "utf8");
-      return { ...result, plan_path: options.applyPlan, plan_sha256: options.expectedPlanSha256.toLowerCase(), attempt_record: path.relative(ordinary.repo, attempt) };
+      return {
+        ...result,
+        plan_path: normalizeOperationalPath(options.applyPlan),
+        plan_sha256: options.expectedPlanSha256.toLowerCase(),
+        attempt_record: relativeOperationalPath(ordinary.repo, attempt),
+      };
     } catch (error) {
       if (attemptClaimed) {
         await writeFile(attempt, `${JSON.stringify({ ...pending, status: "unresolved", detail: error instanceof Error ? error.message : String(error), result_recorded_at: new Date().toISOString() }, null, 2)}\n`, "utf8");

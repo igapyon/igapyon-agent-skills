@@ -7,6 +7,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const ISSUE_CLOSE_APPLY_CONTRACT = workflowContractById().get("github.issue.close.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -323,7 +324,7 @@ export async function runIssueClose(options, dependencies = {}) {
     reason: options.reason,
     duplicate_of: options.duplicateOf || null,
     operation_sha256: digest,
-    attempt_record: path.relative(root, attempt),
+    attempt_record: relativeOperationalPath(root, attempt),
     recovering_safe_attempt: Boolean(prior),
     planned_gh_arguments: ghArguments(options),
   };
@@ -380,7 +381,7 @@ export async function runIssueClose(options, dependencies = {}) {
   };
   if (prior) {
     const archived = await archiveRecoverableAttempt(attempt, prior);
-    pending.recovered_from_attempt = path.relative(root, archived);
+    pending.recovered_from_attempt = relativeOperationalPath(root, archived);
   }
   await claimAttempt(attempt, pending);
   let current;

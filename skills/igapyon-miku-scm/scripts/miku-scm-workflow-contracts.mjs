@@ -17,8 +17,12 @@ const SKILL_DIRECTORY = path.dirname(SCRIPT_DIRECTORY);
 const LOCK_FILE = path.join(SCRIPT_DIRECTORY, "miku-scm-workflow-contract-lock.mjs");
 const TABLE_FILE = path.join(SKILL_DIRECTORY, "references", "workflow-contracts.md");
 
-function sha256(value) {
-  return createHash("sha256").update(value).digest("hex");
+export function canonicalContractText(value) {
+  return String(value).replace(/\r\n?/g, "\n");
+}
+
+export function contractSha256(value) {
+  return createHash("sha256").update(canonicalContractText(value)).digest("hex");
 }
 
 function canonicalPair(entry, runnerSha256, specSha256) {
@@ -60,8 +64,8 @@ export async function calculateWorkflowContracts() {
       readFile(specPath),
       readFile(testPath),
     ]);
-    const runnerSha256 = sha256(runner);
-    const specSha256 = sha256(spec);
+    const runnerSha256 = contractSha256(runner);
+    const specSha256 = contractSha256(spec);
     contracts.push(Object.freeze({
       workflow: entry.id,
       contract_id: entry.contract_id,
@@ -71,7 +75,7 @@ export async function calculateWorkflowContracts() {
       contract_test: entry.contract_test,
       runner_sha256: runnerSha256,
       spec_sha256: specSha256,
-      pair_sha256: sha256(canonicalPair(entry, runnerSha256, specSha256)),
+      pair_sha256: contractSha256(canonicalPair(entry, runnerSha256, specSha256)),
     }));
   }
   return contracts;
@@ -110,7 +114,7 @@ export function renderContractTable(contracts) {
 
 async function matches(file, expected) {
   try {
-    return await readFile(file, "utf8") === expected;
+    return canonicalContractText(await readFile(file, "utf8")) === canonicalContractText(expected);
   } catch (error) {
     if (error?.code === "ENOENT") return false;
     throw error;
