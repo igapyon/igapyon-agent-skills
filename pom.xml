@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20260812.2</version>
+  <version>1.20260812.3</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -35,12 +35,12 @@
     <external.miku-json2xlsx-skills.repo>https://github.com/igapyon/miku-json2xlsx-skills.git</external.miku-json2xlsx-skills.repo>
     <external.miku-json2xlsx-skills.ref>v0.5.0</external.miku-json2xlsx-skills.ref>
     <external.miku-json2xlsx-skills.skillName>igapyon-miku-json2xlsx</external.miku-json2xlsx-skills.skillName>
-    <external.mikuproject-skills.repo>https://github.com/igapyon/mikuproject-skills.git</external.mikuproject-skills.repo>
-    <external.mikuproject-skills.ref>v0.8.1.1</external.mikuproject-skills.ref>
-    <external.mikuproject-skills.skillName>mikuproject</external.mikuproject-skills.skillName>
-    <external.mikuscore-skills.repo>https://github.com/igapyon/mikuscore-skills.git</external.mikuscore-skills.repo>
-    <external.mikuscore-skills.ref>v0.1.0</external.mikuscore-skills.ref>
-    <external.mikuscore-skills.skillName>mikuscore</external.mikuscore-skills.skillName>
+    <external.miku-project-skills.repo>https://github.com/igapyon/miku-project-skills.git</external.miku-project-skills.repo>
+    <external.miku-project-skills.ref>v0.12.4</external.miku-project-skills.ref>
+    <external.miku-project-skills.skillName>igapyon-miku-project</external.miku-project-skills.skillName>
+    <external.miku-score-skills.repo>https://github.com/igapyon/miku-score-skills.git</external.miku-score-skills.repo>
+    <external.miku-score-skills.ref>v0.6.1</external.miku-score-skills.ref>
+    <external.miku-score-skills.skillName>igapyon-miku-score</external.miku-score-skills.skillName>
   </properties>
 
   <build>
@@ -117,12 +117,12 @@
                 <argument>${external.miku-json2xlsx-skills.repo}</argument>
                 <argument>${external.miku-json2xlsx-skills.ref}</argument>
                 <argument>${external.miku-json2xlsx-skills.skillName}</argument>
-                <argument>${external.mikuproject-skills.repo}</argument>
-                <argument>${external.mikuproject-skills.ref}</argument>
-                <argument>${external.mikuproject-skills.skillName}</argument>
-                <argument>${external.mikuscore-skills.repo}</argument>
-                <argument>${external.mikuscore-skills.ref}</argument>
-                <argument>${external.mikuscore-skills.skillName}</argument>
+                <argument>${external.miku-project-skills.repo}</argument>
+                <argument>${external.miku-project-skills.ref}</argument>
+                <argument>${external.miku-project-skills.skillName}</argument>
+                <argument>${external.miku-score-skills.repo}</argument>
+                <argument>${external.miku-score-skills.ref}</argument>
+                <argument>${external.miku-score-skills.skillName}</argument>
               </arguments>
             </configuration>
           </execution>

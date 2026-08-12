@@ -1335,14 +1335,10 @@ prompt test が成功しても実動作が保証されたとは扱わず、肥�
   - 正式 skill 名: `igapyon-miku-text-file-ops`
   - 同梱先: `skills/igapyon-miku-text-file-ops/`
   - 互換 trigger: `miku-text-file-ops`, `miku-text-file-ops-skills`
-- [ ] `mikuproject-skills` も同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリに `igapyon-` prefix を付ける方針へ移行する
-  - 現状の同梱先: `skills/mikuproject/`
-  - 移行候補: `skills/igapyon-mikuproject/`
-  - 互換 trigger として `mikuproject` は維持する
-- [ ] `mikuscore-skills` も同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリに `igapyon-` prefix を付ける方針へ移行する
-  - 現状の同梱先: `skills/mikuscore/`
-  - 移行候補: `skills/igapyon-mikuscore/`
-  - 互換 trigger として `mikuscore` は維持する
+- [x] `miku-project-skills` `v0.12.4` を、正式 skill 名 `igapyon-miku-project` として release archive に同梱する
+  - 同梱先: `skills/igapyon-miku-project/`
+- [x] `miku-score-skills` `v0.6.1` を、正式 skill 名 `igapyon-miku-score` として release archive に同梱する
+  - 同梱先: `skills/igapyon-miku-score/`
 
 ## miku-soft アーキテクチャ考察メモ
 
