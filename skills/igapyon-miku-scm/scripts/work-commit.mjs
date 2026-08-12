@@ -13,6 +13,8 @@ import {
 
 export { commandForPlatform } from "./miku-scm-fixed-command-runner.mjs";
 
+const GIT_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
+
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/work-commit.mjs \\
     [--repo <path>] [--message <commit-message>] --apply
@@ -56,6 +58,7 @@ export function createGitRunner(spawn = spawnSync) {
       cwd,
       encoding: "utf8",
       input: options.input,
+      maxBuffer: GIT_MAX_BUFFER_BYTES,
     });
     const stdout = result.stdout ? String(result.stdout) : "";
     const stderr = result.stderr ? String(result.stderr) : "";

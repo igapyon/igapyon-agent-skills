@@ -41,7 +41,7 @@
   {"name":"version-increment.md","path":"references/version-increment.md","ext":"md","dir":"references","size":6005,"summary":"Version Increment"},
   {"name":"version-tag-release-audit.md","path":"references/version-tag-release-audit.md","ext":"md","dir":"references","size":6289,"summary":"Version, Tag, Release, and Asset Audit"},
   {"name":"version-workflow-runner.md","path":"references/version-workflow-runner.md","ext":"md","dir":"references","size":3394,"summary":"Version Status and Increment Validation Runner"},
-  {"name":"work-commit.md","path":"references/work-commit.md","ext":"md","dir":"references","size":4522,"summary":"Work Commit"},
+  {"name":"work-commit.md","path":"references/work-commit.md","ext":"md","dir":"references","size":4758,"summary":"Work Commit"},
   {"name":"workflow-contracts.md","path":"references/workflow-contracts.md","ext":"md","dir":"references","size":11397,"summary":"Workflow Contracts"},
   {"name":"workflow-routing.md","path":"references/workflow-routing.md","ext":"md","dir":"references","size":1638,"summary":"Workflow Routing"},
   {"name":"writing-mode.md","path":"references/writing-mode.md","ext":"md","dir":"references","size":2577,"summary":"Writing Mode"}
