@@ -30,6 +30,7 @@ import {
   parseArgs as parseIssueCloseArgs,
   runIssueClose,
 } from "./github-issue-close.mjs";
+import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 import {
   applyMaintenancePlan,
   diagnose as diagnoseMaintenance,
@@ -109,7 +110,7 @@ import { failureEvent } from "./miku-scm-observability.mjs";
 
 export const RUNNER_SCHEMA_VERSION = "miku-scm.runner/v1";
 export const RESULT_SCHEMA_VERSION = "miku-scm.runner-result/v1";
-export const PRODUCT_VERSION = "1.20260812.4";
+export const PRODUCT_VERSION = "1.20260812.8";
 
 const RUN_ID = /^[A-Za-z0-9._-]+$/;
 const SECRET_OPTION = /(?:token|password|secret|authorization|credential)/i;
@@ -815,7 +816,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       finished_at: finishedAt,
       duration_ms: Math.round((performance.now() - performanceStarted) * 1000) / 1000,
       mutation_invoked: mutationState(workflow, delegateResult?.status),
-      run_directory: path.relative(cwd, runDirectory),
+      run_directory: relativeOperationalPath(cwd, runDirectory),
       result: delegateResult,
     };
     result.human_output_schema_version = HUMAN_OUTPUT_SCHEMA_VERSION;
@@ -897,7 +898,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       finished_at: finishedAt,
       duration_ms: Math.round((performance.now() - performanceStarted) * 1000) / 1000,
       mutation_invoked: mutationInvoked,
-      run_directory: path.relative(cwd, runDirectory),
+      run_directory: relativeOperationalPath(cwd, runDirectory),
       error: {
         name: error instanceof Error ? error.name : "Error",
         message,

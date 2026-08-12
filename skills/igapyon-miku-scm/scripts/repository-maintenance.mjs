@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 import { dateFromJstParts } from "./miku-scm-jst-time.mjs";
+import { normalizeOperationalPath, relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 
@@ -448,7 +449,7 @@ export async function saveMaintenancePlan(diagnosis, dependencies = {}) {
   return {
     ...diagnosis,
     status: "plan-saved",
-    plan_path: path.relative(diagnosis.repository, file),
+    plan_path: relativeOperationalPath(diagnosis.repository, file),
     plan_sha256: digest,
     deletion_candidates: plan.candidates,
   };
@@ -571,11 +572,11 @@ export async function applyMaintenancePlan(options, dependencies = {}) {
     return {
       status: "applied",
       repository: loaded.root,
-      plan_path: options.applyPlan,
+      plan_path: normalizeOperationalPath(options.applyPlan),
       plan_sha256: options.expectedPlanSha256.toLowerCase(),
       deleted: loaded.plan.candidates,
       recovery,
-      attempt_record: path.relative(loaded.root, attemptFile),
+      attempt_record: relativeOperationalPath(loaded.root, attemptFile),
     };
   } catch (error) {
     await writeAttempt(attemptFile, {

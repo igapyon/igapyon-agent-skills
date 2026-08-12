@@ -17,6 +17,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const ISSUE_CREATE_APPLY_CONTRACT = workflowContractById().get("github.issue.create.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -199,7 +200,7 @@ async function resolveDraft(options) {
   return {
     root,
     draft,
-    relativeDraft: path.relative(root, draft),
+    relativeDraft: relativeOperationalPath(root, draft),
     content,
     digest: sha256(content),
     ...parsed,
@@ -502,8 +503,8 @@ export async function runIssueCreate(options, dependencies = {}) {
     parent_sha256: parentSha256(parent),
     title: draft.title,
     body: draft.body,
-    attempt_record: path.relative(draft.root, operational.attempt),
-    created_draft: path.relative(draft.root, operational.createdDraft),
+    attempt_record: relativeOperationalPath(draft.root, operational.attempt),
+    created_draft: relativeOperationalPath(draft.root, operational.createdDraft),
     planned_gh_arguments: plannedGhArguments,
   };
 
@@ -544,7 +545,7 @@ export async function runIssueCreate(options, dependencies = {}) {
     status: "pending",
     repository: options.repository,
     source_draft: draft.relativeDraft,
-    planned_created_draft: path.relative(draft.root, operational.createdDraft),
+    planned_created_draft: relativeOperationalPath(draft.root, operational.createdDraft),
     draft_sha256: draft.digest,
     labels: options.labels,
     labels_sha256: actualLabelsSha256,
@@ -671,18 +672,18 @@ export async function runIssueCreate(options, dependencies = {}) {
       );
     }
 
-    let archive = { status: "archived", path: path.relative(draft.root, operational.createdDraft) };
+    let archive = { status: "archived", path: relativeOperationalPath(draft.root, operational.createdDraft) };
     try {
       await mkdir(operational.createdDirectory, { recursive: true });
       await rename(draft.draft, operational.createdDraft);
       await replaceAttemptRecord(operational.attempt, {
         ...createdRecord,
-        archived_draft: path.relative(draft.root, operational.createdDraft),
+        archived_draft: relativeOperationalPath(draft.root, operational.createdDraft),
       });
     } catch (error) {
       archive = {
         status: "warning",
-        path: path.relative(draft.root, operational.createdDraft),
+        path: relativeOperationalPath(draft.root, operational.createdDraft),
         message: error instanceof Error ? error.message : String(error),
       };
     }
