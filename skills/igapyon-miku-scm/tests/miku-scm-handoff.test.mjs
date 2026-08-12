@@ -98,30 +98,33 @@ async function createExistingIssuePending(root, {
 }
 
 test("handoff parsers accept only fixed list, selection, and dismissal options", () => {
+  const root = path.resolve("/tmp/project");
+  const nestedRoot = path.resolve(root, "nested");
+
   assert.deepEqual(parseHandoffListArgs([], "/tmp/project"), {
-    root: "/tmp/project",
+    root,
   });
   assert.deepEqual(parseHandoffListArgs(["--root", "nested"], "/tmp/project"), {
-    root: "/tmp/project/nested",
+    root: nestedRoot,
   });
   assert.deepEqual(parseHandoffApplyArgs(["--apply"], "/tmp/project"), {
-    root: "/tmp/project",
+    root,
     handoff: null,
     apply: true,
   });
   assert.deepEqual(
     parseHandoffApplyArgs(["--handoff", "handoff-2", "--apply"], "/tmp/project"),
-    { root: "/tmp/project", handoff: "handoff-2", apply: true },
+    { root, handoff: "handoff-2", apply: true },
   );
   assert.deepEqual(
     parseHandoffBatchApplyArgs([
       "--handoff", "handoff-2", "--handoff", "handoff-1", "--apply",
     ], "/tmp/project"),
-    { root: "/tmp/project", handoffs: ["handoff-2", "handoff-1"], apply: true },
+    { root, handoffs: ["handoff-2", "handoff-1"], apply: true },
   );
   assert.deepEqual(
     parseHandoffDismissArgs(["--handoff", "handoff-2", "--apply"], "/tmp/project"),
-    { root: "/tmp/project", handoff: "handoff-2", apply: true },
+    { root, handoff: "handoff-2", apply: true },
   );
   assert.throws(() => parseHandoffApplyArgs([]), /requires --apply/);
   assert.throws(() => parseHandoffApplyArgs(["--handoff", "../other", "--apply"]), /exact approval handoff ID/);
