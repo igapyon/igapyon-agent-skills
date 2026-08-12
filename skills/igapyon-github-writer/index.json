@@ -3,17 +3,17 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":7651,"description":"Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, rebuild local commits with soft reset and a drafted PR text as the commit message, create a local backup branch, or inspect the current branch statu...","summary":"igapyon-github-writer"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":7564,"description":"Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, rebuild local commits with soft reset and a drafted PR text as the commit message, create a local backup branch, or inspect the current branch statu...","summary":"igapyon-github-writer"},
   {"name":"about-writing.md","path":"references/about-writing.md","ext":"md","dir":"references","size":1352,"summary":"GitHub About Writing"},
-  {"name":"backup-branch.md","path":"references/backup-branch.md","ext":"md","dir":"references","size":2785,"summary":"Backup Branch"},
-  {"name":"branch-status.md","path":"references/branch-status.md","ext":"md","dir":"references","size":2375,"summary":"GitHub Branch Status"},
-  {"name":"deterministic-runner.md","path":"references/deterministic-runner.md","ext":"md","dir":"references","size":6187,"summary":"Deterministic GitHub Writer Runner"},
+  {"name":"backup-branch.md","path":"references/backup-branch.md","ext":"md","dir":"references","size":3010,"summary":"Backup Branch"},
+  {"name":"branch-status.md","path":"references/branch-status.md","ext":"md","dir":"references","size":2360,"summary":"GitHub Branch Status"},
+  {"name":"deterministic-runner.md","path":"references/deterministic-runner.md","ext":"md","dir":"references","size":11985,"summary":"Deterministic GitHub Writer Runner"},
   {"name":"github-cli-prohibition.md","path":"references/github-cli-prohibition.md","ext":"md","dir":"references","size":1246,"summary":"GitHub CLI And Network Prohibition"},
-  {"name":"github-writing-rules.md","path":"references/github-writing-rules.md","ext":"md","dir":"references","size":4379,"summary":"GitHub Writing Rules"},
-  {"name":"pr-soft-reset-recommit.md","path":"references/pr-soft-reset-recommit.md","ext":"md","dir":"references","size":2559,"summary":"PR Soft Reset Recommit"},
-  {"name":"pr-writing.md","path":"references/pr-writing.md","ext":"md","dir":"references","size":3075,"summary":"GitHub PR Writing"},
+  {"name":"github-writing-rules.md","path":"references/github-writing-rules.md","ext":"md","dir":"references","size":4610,"summary":"GitHub Writing Rules"},
+  {"name":"pr-soft-reset-recommit.md","path":"references/pr-soft-reset-recommit.md","ext":"md","dir":"references","size":3056,"summary":"PR Soft Reset Recommit"},
+  {"name":"pr-writing.md","path":"references/pr-writing.md","ext":"md","dir":"references","size":3342,"summary":"GitHub PR Writing"},
   {"name":"release-writing.md","path":"references/release-writing.md","ext":"md","dir":"references","size":3638,"summary":"GitHub Release Writing"},
-  {"name":"runtime-and-observability.md","path":"references/runtime-and-observability.md","ext":"md","dir":"references","size":2415,"summary":"Runtime And Observability"},
-  {"name":"workflow-contracts.md","path":"references/workflow-contracts.md","ext":"md","dir":"references","size":4711,"summary":"GitHub Writer Workflow Contracts"}
+  {"name":"runtime-and-observability.md","path":"references/runtime-and-observability.md","ext":"md","dir":"references","size":4853,"summary":"Runtime And Observability"},
+  {"name":"workflow-contracts.md","path":"references/workflow-contracts.md","ext":"md","dir":"references","size":6992,"summary":"GitHub Writer Workflow Contracts"}
  ]
 }

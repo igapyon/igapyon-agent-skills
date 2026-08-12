@@ -36,29 +36,24 @@ Examples:
 
 If the mode is clear but required evidence is missing, do not draft yet. Ask for the missing target, except for PR mode's default target rule:
 
-- PR mode: if the user asks for PR text without specifying a commit ID, Git range, branch comparison, or working-tree target, use the runner's default latest-single-commit target. Do not include uncommitted working-tree changes.
+- PR mode: if the user asks for PR text without specifying a commit ID, Git range, branch comparison, or working-tree target, run the fixed `pr.evidence` workflow without `--target`. It selects a distinct local upstream or `origin/HEAD`/`origin/devel` base when available; one commit ahead becomes a single-commit target, and two or more commits ahead become the full base-to-`HEAD` range. Do not include uncommitted working-tree changes.
 - Release mode: ask for the start commit ID, explicit Git range, or tag/range target.
 - About mode: use `README.md` and available `package.json` or `pom.xml` by default. Ask for source text only when repository evidence is not obvious.
 
 ## Core Workflow
 
 1. Identify whether the request is for PR, Release, About text, PR Soft Reset Recommit, Backup Branch, or Branch Status.
-2. Read [references/deterministic-runner.md](references/deterministic-runner.md), [references/github-cli-prohibition.md](references/github-cli-prohibition.md), and [references/github-writing-rules.md](references/github-writing-rules.md) before acting.
-3. Read the mode-specific reference: [references/pr-writing.md](references/pr-writing.md), [references/release-writing.md](references/release-writing.md), [references/about-writing.md](references/about-writing.md), [references/pr-soft-reset-recommit.md](references/pr-soft-reset-recommit.md), [references/backup-branch.md](references/backup-branch.md), or [references/branch-status.md](references/branch-status.md).
-4. Invoke the fixed runner workflow. Use its structured result as the normal evidence source; do not reconstruct the same Git evidence with ad hoc shell commands.
-5. For PR, Release, and About, make one AI writing pass from the bounded evidence. Do not repeatedly reread the repository unless evidence is missing or invalid.
-6. Validate and save the completed inner Markdown with `draft.validate-and-save` unless the user says not to save.
-7. Return the final answer using the format required by the selected reference.
+2. Invoke the fixed runner workflow declared by [references/deterministic-runner.md](references/deterministic-runner.md). Treat its JSON result, fixed human summary, and returned relative paths as authoritative. Do not reconstruct its Git sequence with ad hoc shell commands.
+3. For PR, Release, and About only, read the one corresponding writing reference and make exactly one AI writing pass from the bounded runner evidence. Use [references/github-writing-rules.md](references/github-writing-rules.md) only for shared writing constraints.
+4. Validate and save the completed inner Markdown with `draft.validate-and-save` unless the user says not to save.
+5. For backup or recommit, present the `READY FOR APPROVAL` preflight result. A later explicit approval is consumed only through the fixed approval handoff workflow; never reconstruct plan arguments or retry an apply.
+6. Return the final answer using the selected mode's output requirements.
 
 ## Reference Use
 
-Use [references/github-writing-rules.md](references/github-writing-rules.md) for shared evidence collection and hallucination-prevention rules.
-
-Use [references/deterministic-runner.md](references/deterministic-runner.md) for the workflow manifest, CLI, result schema, approval gates, and macOS/Windows 11 portability contract.
-
-Use [references/runtime-and-observability.md](references/runtime-and-observability.md)
-for the Node module boundaries, per-run audit records, structured error events,
-and error-report command.
+Normal execution should not load detailed reference files pre-emptively. The fixed
+runner carries the executable workflow contract. Open a detailed reference only
+when its specific output rule, recovery rule, or a human explanation is needed.
 
 Use these mode-specific references:
 
@@ -80,6 +75,7 @@ Before finishing:
 - ensure the final answer contains no absolute paths, home directories, or working directories
 - ensure unsupported items are marked `未確認`, `要確認`, or omitted
 - ensure runner failures are reported according to `mutation_invoked` and `retryability`; never retry an apply plan automatically
+- for `READY FOR APPROVAL`, show the returned handoff ID and state; use `approval.handoff.apply --apply` only after an explicit later approval, and `approval.handoff.dismiss --handoff <full-id> --apply` only to cancel it
 - verify workflow contract drift with `node scripts/github-writer-workflow-contracts.mjs --check`
 - ensure the static policy test proves that no runtime path invokes `gh`
 - ensure successful and failed execution paths write the documented run records without changing Git evidence

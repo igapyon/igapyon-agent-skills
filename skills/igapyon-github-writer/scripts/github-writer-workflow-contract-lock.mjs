@@ -5,183 +5,264 @@ export const WORKFLOW_CONTRACT_LOCK_VERSION = "github-writer.workflow-contract-l
 export const WORKFLOW_CONTRACTS = Object.freeze([
   {
     "id": "pr.evidence",
-    "contract_version": 2,
+    "contract_version": 3,
     "runner": "scripts/github-writer-evidence.mjs",
     "runner_sources": [
       "scripts/github-writer-run.mjs",
       "scripts/github-writer-kernel.mjs",
       "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
       "scripts/github-writer-evidence.mjs",
       "scripts/github-writer-output.mjs",
       "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
       "scripts/github-writer-workflow-manifest.mjs"
     ],
     "normative_spec": "references/pr-writing.md",
     "contract_test": "tests/github-writer-evidence.test.mjs",
-    "runner_sha256": "8423a11c7228e60f16b1c59ee869b019c3005fd7eb1da50bea0bdff96671bd72",
-    "normative_spec_sha256": "efb61ef2d48c17a13b1f9ceeecee138c928d6747a207103fbce74b47ab78f243",
-    "contract_test_sha256": "7d205084e2afac90658f86d948b1eae8bfc4d0baff035ef6830d4ca887d90339",
-    "contract_pair_sha256": "125a58d9063a263a87b2a0582d13ab0f901d4d549286ea9ec4ff7e9e0091c6f2"
+    "runner_sha256": "8263a638a874a32eac16936d7bce6f74f229b29fe321950fdf69a3dc4437554a",
+    "normative_spec_sha256": "98eb5c4fb5111f6ebf2d025327fba31f4270c6d1c57468547642dc47d6097327",
+    "contract_test_sha256": "46f92c76a7f94f8e52dd061e4521df874e6cbcec16e920fcc61c0de178cd8f5b",
+    "contract_pair_sha256": "cf327f5be85bdef4ab144287566d4f18cd32e600c857ff2727b69249f3d7635c"
   },
   {
     "id": "release.evidence",
-    "contract_version": 2,
+    "contract_version": 3,
     "runner": "scripts/github-writer-evidence.mjs",
     "runner_sources": [
       "scripts/github-writer-run.mjs",
       "scripts/github-writer-kernel.mjs",
       "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
       "scripts/github-writer-evidence.mjs",
       "scripts/github-writer-output.mjs",
       "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
       "scripts/github-writer-workflow-manifest.mjs"
     ],
     "normative_spec": "references/release-writing.md",
     "contract_test": "tests/github-writer-evidence.test.mjs",
-    "runner_sha256": "8423a11c7228e60f16b1c59ee869b019c3005fd7eb1da50bea0bdff96671bd72",
+    "runner_sha256": "8263a638a874a32eac16936d7bce6f74f229b29fe321950fdf69a3dc4437554a",
     "normative_spec_sha256": "0169d894b046f35689e4d3de82b4ef86c3f045938ed586d34f123b0815e5e705",
-    "contract_test_sha256": "7d205084e2afac90658f86d948b1eae8bfc4d0baff035ef6830d4ca887d90339",
-    "contract_pair_sha256": "bd68e342c62b886fd98aeba15ed71f1003d192edd1ad9023aaa1ee5e93b1111c"
+    "contract_test_sha256": "46f92c76a7f94f8e52dd061e4521df874e6cbcec16e920fcc61c0de178cd8f5b",
+    "contract_pair_sha256": "2b894e0ebf58ab843197927104f3bff9367edb99d60516d27359a38aeaa72048"
   },
   {
     "id": "about.evidence",
-    "contract_version": 2,
+    "contract_version": 3,
     "runner": "scripts/github-writer-evidence.mjs",
     "runner_sources": [
       "scripts/github-writer-run.mjs",
       "scripts/github-writer-kernel.mjs",
       "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
       "scripts/github-writer-evidence.mjs",
       "scripts/github-writer-output.mjs",
       "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
       "scripts/github-writer-workflow-manifest.mjs"
     ],
     "normative_spec": "references/about-writing.md",
     "contract_test": "tests/github-writer-evidence.test.mjs",
-    "runner_sha256": "8423a11c7228e60f16b1c59ee869b019c3005fd7eb1da50bea0bdff96671bd72",
+    "runner_sha256": "8263a638a874a32eac16936d7bce6f74f229b29fe321950fdf69a3dc4437554a",
     "normative_spec_sha256": "489d4a9655ac98d6654c7cc4f42742c551eb5f5c9fc44e55f5a4c09b9f9bba43",
-    "contract_test_sha256": "7d205084e2afac90658f86d948b1eae8bfc4d0baff035ef6830d4ca887d90339",
-    "contract_pair_sha256": "96f79417e5eebd77ccec45af25c7f0f2f3522f11dc8b1d27098b9980ca5b4035"
+    "contract_test_sha256": "46f92c76a7f94f8e52dd061e4521df874e6cbcec16e920fcc61c0de178cd8f5b",
+    "contract_pair_sha256": "89143dc3a88654c37879a7fbb6d317bff4a8f8bb5a34b2e5386828fed432096a"
   },
   {
     "id": "draft.validate-and-save",
-    "contract_version": 2,
+    "contract_version": 3,
     "runner": "scripts/github-writer-operations.mjs",
     "runner_sources": [
       "scripts/github-writer-run.mjs",
       "scripts/github-writer-kernel.mjs",
       "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
       "scripts/github-writer-operations.mjs",
       "scripts/github-writer-output.mjs",
       "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
       "scripts/github-writer-workflow-manifest.mjs"
     ],
     "normative_spec": "references/github-writing-rules.md",
     "contract_test": "tests/github-writer-evidence.test.mjs",
-    "runner_sha256": "cd8c622a669e64ebc107d901b1e19d5a236d48b1d770f7df3e325fcdc4d13134",
-    "normative_spec_sha256": "dcf608a6536a4a5d9c30edab2be04455230b90dbe69760dc2ab5c60d3229d691",
-    "contract_test_sha256": "7d205084e2afac90658f86d948b1eae8bfc4d0baff035ef6830d4ca887d90339",
-    "contract_pair_sha256": "3834fb1cfee13b5fd622ece12eddfb18ed894db2671ae81b6bc7228af2b67dbb"
+    "runner_sha256": "3ee214c083685699f1f16e7e70a407b8c4b734f55880532241a2902676e41b34",
+    "normative_spec_sha256": "c3ef001357d05025891b3851c52d6c6af2f6660996d318b48e743b7222fe5696",
+    "contract_test_sha256": "46f92c76a7f94f8e52dd061e4521df874e6cbcec16e920fcc61c0de178cd8f5b",
+    "contract_pair_sha256": "4be0ee78c40cfbe38171779a266d938f27938658a494a28e5259e79c5d7ae79a"
   },
   {
     "id": "branch.status",
-    "contract_version": 2,
+    "contract_version": 3,
     "runner": "scripts/github-writer-evidence.mjs",
     "runner_sources": [
       "scripts/github-writer-run.mjs",
       "scripts/github-writer-kernel.mjs",
       "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
       "scripts/github-writer-evidence.mjs",
       "scripts/github-writer-output.mjs",
       "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
       "scripts/github-writer-workflow-manifest.mjs"
     ],
     "normative_spec": "references/branch-status.md",
     "contract_test": "tests/github-writer-platform.test.mjs",
-    "runner_sha256": "8423a11c7228e60f16b1c59ee869b019c3005fd7eb1da50bea0bdff96671bd72",
-    "normative_spec_sha256": "51500629bc77934c770960d30692dcee417b63830759f5ccbbc2ea35bea6c5bf",
-    "contract_test_sha256": "1e87d4f56a004d14853f3cd27c4fabbf6262d25afa3b0ad641f659fb59f8d90e",
-    "contract_pair_sha256": "da4080adcd51036570b8282f3005869eb526fdabacbfbf63b0e679ee16c9cdc8"
+    "runner_sha256": "8263a638a874a32eac16936d7bce6f74f229b29fe321950fdf69a3dc4437554a",
+    "normative_spec_sha256": "27f7f8f1f10a78746d7a1be5f7382070721d4f9988138cbbe3e2670476558c5f",
+    "contract_test_sha256": "c1cb322eabe68d7f832747e987fa3133ee4c4bdece5b9ff464889d3ad34a3121",
+    "contract_pair_sha256": "57af0683e5fb53ee12e73758e1b251ef9b995253cf86459d7150392a5f240863"
   },
   {
     "id": "backup.preflight",
-    "contract_version": 2,
+    "contract_version": 3,
     "runner": "scripts/github-writer-operations.mjs",
     "runner_sources": [
       "scripts/github-writer-run.mjs",
       "scripts/github-writer-kernel.mjs",
       "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
       "scripts/github-writer-operations.mjs",
       "scripts/github-writer-output.mjs",
       "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
       "scripts/github-writer-workflow-manifest.mjs"
     ],
     "normative_spec": "references/backup-branch.md",
     "contract_test": "tests/github-writer-operation.test.mjs",
-    "runner_sha256": "cd8c622a669e64ebc107d901b1e19d5a236d48b1d770f7df3e325fcdc4d13134",
-    "normative_spec_sha256": "9de11ae86939d94c3c9309b878f103b5ce3459956b1b9b8bf6c115fb3a74fabd",
-    "contract_test_sha256": "7192b1652da09294de9c365b43506908a94f700099d843173db2bd8e30afa947",
-    "contract_pair_sha256": "1da35e4efa718e64a5e21242604fe87868f4d60714eec33c013f085cea78193b"
+    "runner_sha256": "3ee214c083685699f1f16e7e70a407b8c4b734f55880532241a2902676e41b34",
+    "normative_spec_sha256": "95000e072a749cd587be5256dedafe07d40f15bc3f74a01ec974cb4968ae0be3",
+    "contract_test_sha256": "4bf274758d94e87b8d88fe417eabed4cbbddb6cd319882f32107f3011af49123",
+    "contract_pair_sha256": "10fab7297e58b8171ee81ad64a91c171652547596c22d054a914e3b5afd398c0"
   },
   {
     "id": "backup.apply",
-    "contract_version": 2,
+    "contract_version": 3,
     "runner": "scripts/github-writer-operations.mjs",
     "runner_sources": [
       "scripts/github-writer-run.mjs",
       "scripts/github-writer-kernel.mjs",
       "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
       "scripts/github-writer-operations.mjs",
       "scripts/github-writer-output.mjs",
       "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
       "scripts/github-writer-workflow-manifest.mjs"
     ],
     "normative_spec": "references/backup-branch.md",
     "contract_test": "tests/github-writer-operation.test.mjs",
-    "runner_sha256": "cd8c622a669e64ebc107d901b1e19d5a236d48b1d770f7df3e325fcdc4d13134",
-    "normative_spec_sha256": "9de11ae86939d94c3c9309b878f103b5ce3459956b1b9b8bf6c115fb3a74fabd",
-    "contract_test_sha256": "7192b1652da09294de9c365b43506908a94f700099d843173db2bd8e30afa947",
-    "contract_pair_sha256": "ba15ed5da8ddb5f2555d9ed0cac31d6d41c314859b97c57772780db25034ec0b"
+    "runner_sha256": "3ee214c083685699f1f16e7e70a407b8c4b734f55880532241a2902676e41b34",
+    "normative_spec_sha256": "95000e072a749cd587be5256dedafe07d40f15bc3f74a01ec974cb4968ae0be3",
+    "contract_test_sha256": "4bf274758d94e87b8d88fe417eabed4cbbddb6cd319882f32107f3011af49123",
+    "contract_pair_sha256": "639a17192f14dd839105dea8206af3c4f737ba9c59092082c90639c17e4dd5e0"
   },
   {
     "id": "pr.recommit.preflight",
-    "contract_version": 2,
+    "contract_version": 3,
     "runner": "scripts/github-writer-operations.mjs",
     "runner_sources": [
       "scripts/github-writer-run.mjs",
       "scripts/github-writer-kernel.mjs",
       "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
       "scripts/github-writer-operations.mjs",
       "scripts/github-writer-output.mjs",
       "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
       "scripts/github-writer-workflow-manifest.mjs"
     ],
     "normative_spec": "references/pr-soft-reset-recommit.md",
     "contract_test": "tests/github-writer-operation.test.mjs",
-    "runner_sha256": "cd8c622a669e64ebc107d901b1e19d5a236d48b1d770f7df3e325fcdc4d13134",
-    "normative_spec_sha256": "15d4a30da6c1332f0bdf0a3d07ad3993da5c133fb11de0377aa1b7df6c001173",
-    "contract_test_sha256": "7192b1652da09294de9c365b43506908a94f700099d843173db2bd8e30afa947",
-    "contract_pair_sha256": "56589a464b9370d60d268add9ccb9815a7aae90a30625c0de355e525c8bf83a7"
+    "runner_sha256": "3ee214c083685699f1f16e7e70a407b8c4b734f55880532241a2902676e41b34",
+    "normative_spec_sha256": "4baf129f38df33643863fc7ae6f2b3ef857ff4ecbdd169c1c2cb6555d31aa67c",
+    "contract_test_sha256": "4bf274758d94e87b8d88fe417eabed4cbbddb6cd319882f32107f3011af49123",
+    "contract_pair_sha256": "8f6d51df8b5034af5081940b87353a05cc26a144efa5ec9b5310ae554689fbd3"
   },
   {
     "id": "pr.recommit.apply",
-    "contract_version": 2,
+    "contract_version": 3,
     "runner": "scripts/github-writer-operations.mjs",
     "runner_sources": [
       "scripts/github-writer-run.mjs",
       "scripts/github-writer-kernel.mjs",
       "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
       "scripts/github-writer-operations.mjs",
       "scripts/github-writer-output.mjs",
       "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
       "scripts/github-writer-workflow-manifest.mjs"
     ],
     "normative_spec": "references/pr-soft-reset-recommit.md",
     "contract_test": "tests/github-writer-operation.test.mjs",
-    "runner_sha256": "cd8c622a669e64ebc107d901b1e19d5a236d48b1d770f7df3e325fcdc4d13134",
-    "normative_spec_sha256": "15d4a30da6c1332f0bdf0a3d07ad3993da5c133fb11de0377aa1b7df6c001173",
-    "contract_test_sha256": "7192b1652da09294de9c365b43506908a94f700099d843173db2bd8e30afa947",
-    "contract_pair_sha256": "c3d0a1455ba626ec750e364cde7121712e3ce6f3166009aab88a1d25c2efd1a7"
+    "runner_sha256": "3ee214c083685699f1f16e7e70a407b8c4b734f55880532241a2902676e41b34",
+    "normative_spec_sha256": "4baf129f38df33643863fc7ae6f2b3ef857ff4ecbdd169c1c2cb6555d31aa67c",
+    "contract_test_sha256": "4bf274758d94e87b8d88fe417eabed4cbbddb6cd319882f32107f3011af49123",
+    "contract_pair_sha256": "dd08837c68c958e849e28a5733471e198f9174030265277252c62323425a5b2e"
+  },
+  {
+    "id": "approval.handoff.list",
+    "contract_version": 3,
+    "runner": "scripts/github-writer-handoff.mjs",
+    "runner_sources": [
+      "scripts/github-writer-run.mjs",
+      "scripts/github-writer-kernel.mjs",
+      "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
+      "scripts/github-writer-output.mjs",
+      "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
+      "scripts/github-writer-workflow-manifest.mjs"
+    ],
+    "normative_spec": "references/deterministic-runner.md",
+    "contract_test": "tests/github-writer-handoff.test.mjs",
+    "runner_sha256": "9d54397b354b47ad0966babd05c1e20b81eaed1befd63225b18068f396e1fb18",
+    "normative_spec_sha256": "1215787eac5b6f0250c03c73943273cbdae0dfa601e893ca6ed9aa1bd67760c8",
+    "contract_test_sha256": "8474adc1cbf21282557a358ee05a7f57cd76443bf498e832538b6334f5442f33",
+    "contract_pair_sha256": "d336fb11c1fb052f8458e0ea96713c26f01e3c9ef043ca689d5be1787a55eb27"
+  },
+  {
+    "id": "approval.handoff.apply",
+    "contract_version": 3,
+    "runner": "scripts/github-writer-handoff.mjs",
+    "runner_sources": [
+      "scripts/github-writer-run.mjs",
+      "scripts/github-writer-kernel.mjs",
+      "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
+      "scripts/github-writer-output.mjs",
+      "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
+      "scripts/github-writer-workflow-manifest.mjs"
+    ],
+    "normative_spec": "references/deterministic-runner.md",
+    "contract_test": "tests/github-writer-handoff.test.mjs",
+    "runner_sha256": "9d54397b354b47ad0966babd05c1e20b81eaed1befd63225b18068f396e1fb18",
+    "normative_spec_sha256": "1215787eac5b6f0250c03c73943273cbdae0dfa601e893ca6ed9aa1bd67760c8",
+    "contract_test_sha256": "8474adc1cbf21282557a358ee05a7f57cd76443bf498e832538b6334f5442f33",
+    "contract_pair_sha256": "ceac4677942a41e4f07e47e4a3d5dd4543c8e540920ce4fc4463365b3050909d"
+  },
+  {
+    "id": "approval.handoff.dismiss",
+    "contract_version": 3,
+    "runner": "scripts/github-writer-handoff.mjs",
+    "runner_sources": [
+      "scripts/github-writer-run.mjs",
+      "scripts/github-writer-kernel.mjs",
+      "scripts/github-writer-core.mjs",
+      "scripts/github-writer-handoff.mjs",
+      "scripts/github-writer-output.mjs",
+      "scripts/github-writer-observability.mjs",
+      "scripts/github-writer-help.mjs",
+      "scripts/github-writer-workflow-manifest.mjs"
+    ],
+    "normative_spec": "references/deterministic-runner.md",
+    "contract_test": "tests/github-writer-handoff.test.mjs",
+    "runner_sha256": "9d54397b354b47ad0966babd05c1e20b81eaed1befd63225b18068f396e1fb18",
+    "normative_spec_sha256": "1215787eac5b6f0250c03c73943273cbdae0dfa601e893ca6ed9aa1bd67760c8",
+    "contract_test_sha256": "8474adc1cbf21282557a358ee05a7f57cd76443bf498e832538b6334f5442f33",
+    "contract_pair_sha256": "e8a403843e8fef1e91f78f84b92deef645e6a93e190bbbabb392e23c49fd4824"
   }
 ]);
 

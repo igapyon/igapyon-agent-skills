@@ -7,6 +7,7 @@ import {
   canonicalText,
   generate,
 } from "../scripts/github-writer-workflow-contracts.mjs";
+import { WORKFLOW_DEFINITIONS } from "../scripts/github-writer-workflow-manifest.mjs";
 
 const skillDirectory = new URL("../", import.meta.url);
 
@@ -35,7 +36,7 @@ test("runtime command surface prohibits gh, shells, network clients, and remote 
 });
 
 test("generated workflow contract lock has no drift", () => {
-  assert.equal(generate({ check: true }).length, 9);
+  assert.equal(generate({ check: true }).length, WORKFLOW_DEFINITIONS.length);
 });
 
 test("workflow contracts are stable for CRLF checkouts", () => {
@@ -43,5 +44,5 @@ test("workflow contracts are stable for CRLF checkouts", () => {
 
   assert.equal(canonicalText("first\r\nsecond\rthird"), "first\nsecond\nthird");
   assert.deepEqual(buildContracts({ readText: readAsCrLf }), buildContracts());
-  assert.equal(generate({ check: true, readText: readAsCrLf }).length, 9);
+  assert.equal(generate({ check: true, readText: readAsCrLf }).length, WORKFLOW_DEFINITIONS.length);
 });

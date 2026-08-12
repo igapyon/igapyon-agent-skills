@@ -13,12 +13,21 @@ import {
   validateAndSaveDraft,
 } from "./github-writer-kernel.mjs";
 import {
+  applyPendingHandoff,
+  createPendingHandoff,
+  dismissPendingHandoff,
+  listPendingHandoffs,
+} from "./github-writer-handoff.mjs";
+import {
+  PRODUCT_VERSION,
   WORKFLOW_DEFINITIONS,
   workflowById,
 } from "./github-writer-workflow-manifest.mjs";
 import {
+  GitHubWriterCliError,
   renderHelp,
   resolveHelpRequest,
+  unknownWorkflowError,
 } from "./github-writer-help.mjs";
 import {
   attachRunArtifacts,
@@ -31,60 +40,73 @@ export const usage = renderHelp(resolveHelpRequest(undefined, []), "human").trim
 
 function readOption(argv, index, name) {
   const value = argv[index + 1];
-  if (!value || value.startsWith("--")) throw new Error(`${name} requires a value`);
+  if (!value || value.startsWith("--")) {
+    throw new GitHubWriterCliError("MISSING_OPTION_VALUE", `${name} requires a value`, { bad_argument: name });
+  }
   return value;
+}
+
+function initialOptions(definition, cwd) {
+  const options = { repo: cwd };
+  for (const entry of definition.allowed_options) {
+    if (entry.key === "repo") continue;
+    if (entry.repeatable) options[entry.key] = [];
+    else if (entry.value === null) options[entry.key] = false;
+    else options[entry.key] = entry.default ?? "";
+  }
+  return options;
 }
 
 function parseOptions(workflow, argv, cwd = process.cwd()) {
   const definition = workflowById(workflow);
-  const allowed = new Set(definition.allowed_options.map((entry) => entry.flag));
-  const options = {
-    repo: cwd,
-    target: "",
-    documents: [],
-    mode: "",
-    input: "",
-    backupName: "",
-    plan: "",
-    expectedPlanSha256: "",
-    base: "",
-    prDraft: "",
-  };
+  const allowed = new Map(definition.allowed_options.map((entry) => [entry.flag, entry]));
+  const options = initialOptions(definition, cwd);
+  const occurrences = new Map();
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
-    if (!allowed.has(argument)) throw new Error(`${workflow} does not accept ${argument}`);
-    if (argument === "--repo") options.repo = readOption(argv, index++, "--repo");
-    else if (argument === "--target") options.target = readOption(argv, index++, "--target");
-    else if (argument === "--document") options.documents.push(readOption(argv, index++, "--document"));
-    else if (argument === "--mode") options.mode = readOption(argv, index++, "--mode");
-    else if (argument === "--input") options.input = readOption(argv, index++, "--input");
-    else if (argument === "--backup-name") options.backupName = readOption(argv, index++, "--backup-name");
-    else if (argument === "--plan") options.plan = readOption(argv, index++, "--plan");
-    else if (argument === "--expected-plan-sha256") {
-      options.expectedPlanSha256 = readOption(argv, index++, "--expected-plan-sha256");
-    } else if (argument === "--base") options.base = readOption(argv, index++, "--base");
-    else if (argument === "--pr-draft") options.prDraft = readOption(argv, index++, "--pr-draft");
-  }
-
-  if (workflow === "release.evidence" && !options.target) {
-    throw new Error("release.evidence requires --target");
-  }
-  if (workflow === "about.evidence" && options.target) {
-    throw new Error("about.evidence does not accept --target");
-  }
-  if (workflow === "draft.validate-and-save") {
-    if (!["pr", "release", "about"].includes(options.mode)) {
-      throw new Error("draft.validate-and-save requires --mode pr|release|about");
+    const entry = allowed.get(argument);
+    if (!entry) throw new GitHubWriterCliError(
+      "UNKNOWN_OPTION", `${workflow} does not accept ${argument}`,
+      { bad_argument: argument, help_command: `node <skill-root>/scripts/github-writer-run.mjs help ${workflow}` },
+    );
+    const count = (occurrences.get(entry.flag) ?? 0) + 1;
+    occurrences.set(entry.flag, count);
+    if (!entry.repeatable && count > 1) throw new GitHubWriterCliError(
+      "DUPLICATE_OPTION", `${workflow} does not accept duplicate ${entry.flag}`, { bad_argument: entry.flag },
+    );
+    if (entry.maximum_occurrences !== undefined && count > entry.maximum_occurrences) {
+      throw new GitHubWriterCliError(
+        "TOO_MANY_OPTIONS", `${workflow} accepts at most ${entry.maximum_occurrences} ${entry.flag} options`,
+        { bad_argument: entry.flag },
+      );
     }
-    if (!options.input) throw new Error("draft.validate-and-save requires --input");
-  }
-  if (workflow === "backup.apply" || workflow === "pr.recommit.apply") {
-    if (!options.plan || !options.expectedPlanSha256) {
-      throw new Error(`${workflow} requires --plan and --expected-plan-sha256`);
+    if (entry.value === null) {
+      options[entry.key] = true;
+      continue;
     }
+    const value = readOption(argv, index++, entry.flag);
+    if (entry.choices && !entry.choices.includes(value)) {
+      throw new GitHubWriterCliError(
+        "INVALID_OPTION_VALUE", `${entry.flag} must be one of: ${entry.choices.join(", ")}`,
+        { bad_argument: value, valid_values: entry.choices },
+      );
+    }
+    if (entry.repeatable) options[entry.key].push(value);
+    else options[entry.key] = value;
   }
-  if (workflow === "pr.recommit.preflight" && !options.prDraft) {
-    throw new Error("pr.recommit.preflight requires --pr-draft");
+  for (const entry of definition.allowed_options) {
+    const count = occurrences.get(entry.flag) ?? 0;
+    if (entry.required && (entry.value === null ? options[entry.key] !== true : count === 0)) {
+      throw new GitHubWriterCliError(
+        "MISSING_REQUIRED_OPTION", `${workflow} requires ${entry.flag}`, { bad_argument: entry.flag },
+      );
+    }
+    if (entry.minimum_occurrences !== undefined && count < entry.minimum_occurrences) {
+      throw new GitHubWriterCliError(
+        "TOO_FEW_OPTIONS", `${workflow} requires at least ${entry.minimum_occurrences} ${entry.flag} options`,
+        { bad_argument: entry.flag },
+      );
+    }
   }
   return options;
 }
@@ -103,6 +125,9 @@ function execute(workflow, options) {
   if (workflow === "backup.apply") return backupApply(options);
   if (workflow === "pr.recommit.preflight") return recommitPreflight(options);
   if (workflow === "pr.recommit.apply") return recommitApply(options);
+  if (workflow === "approval.handoff.list") return listPendingHandoffs(options);
+  if (workflow === "approval.handoff.apply") return applyPendingHandoff(options);
+  if (workflow === "approval.handoff.dismiss") return dismissPendingHandoff(options);
   throw new Error(`Unsupported workflow: ${workflow}`);
 }
 
@@ -115,11 +140,23 @@ export function parseInvocation(argv) {
     remaining.splice(0, 2);
     explicitFormat = true;
   }
-  if (!["json", "human"].includes(format)) throw new Error("--format must be json or human");
+  if (!["json", "human"].includes(format)) {
+    throw new GitHubWriterCliError("INVALID_FORMAT", "--format must be json or human", {
+      bad_argument: format,
+      valid_values: ["json", "human"],
+      help_command: "node <skill-root>/scripts/github-writer-run.mjs --help",
+    });
+  }
+  if (remaining[0] === "--version") {
+    if (remaining.length !== 1) throw new GitHubWriterCliError(
+      "INVALID_VERSION", "--version does not accept arguments", { help_command: "node <skill-root>/scripts/github-writer-run.mjs --help" },
+    );
+    return { version: true };
+  }
   const workflow = remaining.shift();
   const help = resolveHelpRequest(workflow, remaining);
   if (help) return { help: true, format: explicitFormat ? format : "human", document: help };
-  if (!workflowById(workflow)) throw new Error(`Unknown workflow: ${workflow}`);
+  if (!workflowById(workflow)) throw unknownWorkflowError(workflow);
   return { help: false, format, workflow, options: parseOptions(workflow, remaining) };
 }
 
@@ -130,6 +167,10 @@ export function runCli(argv = process.argv.slice(2)) {
   let phase = "parse";
   try {
     invocation = parseInvocation(argv);
+    if (invocation.version) {
+      process.stdout.write(`${PRODUCT_VERSION}\n`);
+      return 0;
+    }
     if (invocation.help) {
       process.stdout.write(renderHelp(invocation.document, invocation.format));
       return 0;
@@ -142,11 +183,12 @@ export function runCli(argv = process.argv.slice(2)) {
       startedAt,
     });
     phase = "execute";
-    let envelope = successEnvelope(
-      invocation.workflow,
-      execute(invocation.workflow, invocation.options),
-      startedAt,
-    );
+    let result = execute(invocation.workflow, invocation.options);
+    if (invocation.workflow === "backup.preflight" || invocation.workflow === "pr.recommit.preflight") {
+      const handoff = createPendingHandoff(invocation.options, invocation.workflow, result);
+      if (handoff) result = { ...result, approval_handoff: handoff };
+    }
+    let envelope = successEnvelope(invocation.workflow, result, startedAt);
     envelope = attachRunArtifacts(envelope, runContext);
     phase = "audit-result";
     try {

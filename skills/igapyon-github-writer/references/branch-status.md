@@ -34,12 +34,8 @@ is a successful result with null counts.
 
 For tag output, show only the newest three `tag*` tags and newest three `v*` tags in the report. If either pattern has no matches, report that clearly.
 
-When an upstream exists, inspect the ahead / behind commits only when useful:
-
-```sh
-git log --oneline --decorate @{u}..HEAD
-git log --oneline --decorate HEAD..@{u}
-```
+When an upstream exists, use the runner's returned ahead / behind counts and
+recent local commits. Do not reconstruct additional Git inspection commands.
 
 ## Report Shape
 

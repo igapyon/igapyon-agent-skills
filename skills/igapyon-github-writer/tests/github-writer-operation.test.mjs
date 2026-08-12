@@ -14,6 +14,7 @@ import test from "node:test";
 import {
   backupApply,
   backupPreflight,
+  defaultGit,
   recommitApply,
   recommitPreflight,
   sha256,
@@ -121,4 +122,66 @@ test("recommit verifies draft digest, creates backup, and collapses commits", (t
   assert.equal(git(root, ["status", "--porcelain"]), "");
   assert.equal(git(root, ["log", "-1", "--format=%s"]), "feat: deterministic GitHub Writer runner");
   assert.match(readFileSync(path.join(root, applied.attempt_record), "utf8"), /"status": "success"/);
+});
+
+test("recommit stops before reset when the backup no longer resolves to the reviewed HEAD", (t) => {
+  const { root, base } = fixture(t);
+  const draft = path.join(root, "PR_DRAFT.md");
+  writeFileSync(draft, "feat: backup integrity\n\nVerify backup before reset.\n", "utf8");
+  git(root, ["add", "PR_DRAFT.md"]);
+  git(root, ["commit", "-m", "Add draft"]);
+  const before = git(root, ["rev-parse", "HEAD"]);
+  const plan = recommitPreflight({ repo: root, base, prDraft: "PR_DRAFT.md" });
+  let resetCalled = false;
+  const injectedGit = (cwd, args, options) => {
+    if (args[0] === "reset") resetCalled = true;
+    if (args[0] === "rev-parse" && args[2] === `refs/heads/${plan.backup_branch}^{commit}`) {
+      return { ok: true, out: "0".repeat(40), err: "", status: 0 };
+    }
+    return defaultGit(cwd, args, options);
+  };
+  assert.throws(() => recommitApply({
+    repo: root,
+    plan: plan.plan_path,
+    expectedPlanSha256: plan.plan_sha256,
+  }, { git: injectedGit }), /Backup branch does not point/);
+  assert.equal(resetCalled, false);
+  assert.equal(git(root, ["rev-parse", "HEAD"]), before);
+  assert.equal(git(root, ["status", "--porcelain"]), "");
+  assert.equal(git(root, ["rev-parse", plan.backup_branch]), before);
+});
+
+test("recommit refuses a frozen -done branch before creating a plan or mutation", (t) => {
+  const { root, base } = fixture(t);
+  const draft = path.join(root, "PR_DRAFT.md");
+  writeFileSync(draft, "feat: frozen guard\n\nStop safely.\n", "utf8");
+  git(root, ["add", "PR_DRAFT.md"]);
+  git(root, ["commit", "-m", "Add draft"]);
+  git(root, ["branch", "-m", "feature/日本語-done"]);
+  const before = git(root, ["rev-parse", "HEAD"]);
+  assert.throws(
+    () => recommitPreflight({ repo: root, base, prDraft: "PR_DRAFT.md" }),
+    /frozen branch/,
+  );
+  assert.equal(git(root, ["rev-parse", "HEAD"]), before);
+  assert.equal(git(root, ["branch", "--list", "backup/*"]), "");
+});
+
+test("recommit apply refuses a branch frozen after preflight before backup or reset", (t) => {
+  const { root, base } = fixture(t);
+  const draft = path.join(root, "PR_DRAFT.md");
+  writeFileSync(draft, "feat: frozen apply guard\n\nStop before mutation.\n", "utf8");
+  git(root, ["add", "PR_DRAFT.md"]);
+  git(root, ["commit", "-m", "Add draft"]);
+  const plan = recommitPreflight({ repo: root, base, prDraft: "PR_DRAFT.md" });
+  const before = git(root, ["rev-parse", "HEAD"]);
+  git(root, ["branch", "-m", "feature/日本語-done"]);
+
+  assert.throws(() => recommitApply({
+    repo: root,
+    plan: plan.plan_path,
+    expectedPlanSha256: plan.plan_sha256,
+  }), /frozen branch/);
+  assert.equal(git(root, ["rev-parse", "HEAD"]), before);
+  assert.equal(git(root, ["branch", "--list", plan.backup_branch]), "");
 });

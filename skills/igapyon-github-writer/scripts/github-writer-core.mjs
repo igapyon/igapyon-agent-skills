@@ -10,6 +10,8 @@ import {
 import path from "node:path";
 
 export const MAX_DOCUMENT_CHARS = 40_000;
+export const MAX_GIT_CAPTURE_BYTES = 64 * 1024 * 1024;
+export const MAX_GIT_DIAGNOSTIC_CHARS = 4_096;
 export const TARGET_PATTERN = /^[^\s\u0000-\u001f\u007f]{1,240}$/;
 export const BRANCH_PATTERN = /^[A-Za-z0-9._/-]{1,240}$/;
 
@@ -75,6 +77,23 @@ export function boundedText(value, limit) {
   };
 }
 
+export function boundedLines(value, { maxChars, maxLines }) {
+  const canonical = canonicalText(value);
+  const lines = canonical.split("\n");
+  const accepted = [];
+  let chars = 0;
+  for (const line of lines) {
+    if (!line && lines.length > 1 && accepted.length === lines.length - 1) continue;
+    const next = `${line}\n`;
+    if (accepted.length >= maxLines || chars + next.length > maxChars) {
+      return { lines: accepted, text: accepted.join("\n"), truncated: true };
+    }
+    accepted.push(line);
+    chars += next.length;
+  }
+  return { lines: accepted.filter((line, index, all) => !(index === all.length - 1 && line === "")), text: canonical.trimEnd(), truncated: false };
+}
+
 export function formatJst(now, withSeparators = false) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Tokyo",
@@ -109,13 +128,19 @@ export function defaultGit(cwd, args, { allowFailure = false, input = undefined 
     cwd,
     encoding: "utf8",
     input,
-    maxBuffer: 24 * 1024 * 1024,
+    maxBuffer: MAX_GIT_CAPTURE_BYTES,
     shell: false,
     windowsHide: true,
   });
   if (result.status !== 0 && !allowFailure) {
-    const detail = (result.stderr || result.stdout || "unknown failure").trim();
-    throw new Error(`git ${args[0]} failed: ${detail}`);
+    const stdout = canonicalText(result.stdout || "");
+    const stderr = boundedText(result.stderr || result.error?.message || "", MAX_GIT_DIAGNOSTIC_CHARS).text.trim();
+    const commandName = command || args[0] || "missing";
+    throw new Error(
+      `git ${commandName} failed: exit_code=${result.status ?? "null"}; signal=${result.signal ?? "none"}; `
+      + `spawn_error=${result.error?.code ?? "none"}; stdout_bytes=${Buffer.byteLength(stdout, "utf8")}; `
+      + `stdout_sha256=${sha256(stdout)}; stderr=${stderr || "none"}`,
+    );
   }
   return {
     ok: result.status === 0,
@@ -123,6 +148,21 @@ export function defaultGit(cwd, args, { allowFailure = false, input = undefined 
     out: canonicalText(result.stdout || "").trimEnd(),
     err: canonicalText(result.stderr || "").trimEnd(),
   };
+}
+
+function isRunnerOperationalUntracked(record) {
+  if (!record.startsWith("?? ")) return false;
+  const candidate = normalizeResultPath(record.slice(3));
+  return candidate.startsWith("workplace/github-writer/")
+    || candidate.startsWith("temp/github-writer/");
+}
+
+function repositoryStatus(root, git) {
+  const raw = git(root, ["status", "--porcelain=v1", "-z", "--untracked-files=all"]).out;
+  return raw.split("\0")
+    .filter(Boolean)
+    .filter((record) => !isRunnerOperationalUntracked(record))
+    .join("\0");
 }
 
 export function repositoryRoot(repo, git = defaultGit) {
@@ -133,7 +173,7 @@ export function repositoryIdentity(repo, git = defaultGit) {
   const root = repositoryRoot(repo, git);
   const branch = git(root, ["branch", "--show-current"], { allowFailure: true }).out;
   const head = git(root, ["rev-parse", "HEAD"]).out;
-  const status = git(root, ["status", "--porcelain=v1"]).out;
+  const status = repositoryStatus(root, git);
   return {
     root,
     repository: path.basename(root),
@@ -174,6 +214,16 @@ export function uniqueFile(directory, basename) {
 
 export function writeFileAtomic(file, content) {
   if (existsSync(file)) throw new Error(`Refusing to overwrite existing file: ${path.basename(file)}`);
+  mkdirSync(path.dirname(file), { recursive: true });
+  const temporary = path.join(
+    path.dirname(file),
+    `.${path.basename(file)}.${process.pid}.${randomUUID()}.tmp`,
+  );
+  writeFileSync(temporary, content, { encoding: "utf8", flag: "wx", mode: 0o600 });
+  renameSync(temporary, file);
+}
+
+export function replaceFileAtomic(file, content) {
   mkdirSync(path.dirname(file), { recursive: true });
   const temporary = path.join(
     path.dirname(file),

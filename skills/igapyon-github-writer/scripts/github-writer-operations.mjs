@@ -230,6 +230,18 @@ function verifyPlanState(identity, plan) {
   }
 }
 
+function assertRecommitBranch(identity) {
+  if (!identity.branch) throw new Error("PR recommit requires a non-detached branch");
+  if (identity.branch.endsWith("-done")) throw new Error(`PR recommit refuses a frozen branch: ${identity.branch}`);
+}
+
+function createAndVerifyBackup(root, backupBranch, expectedHead, git) {
+  git(root, ["branch", backupBranch, "HEAD"]);
+  const target = git(root, ["rev-parse", "--verify", `refs/heads/${backupBranch}^{commit}`]).out;
+  if (target !== expectedHead) throw new Error("Backup branch does not point to the reviewed pre-reset HEAD");
+  return target;
+}
+
 export function backupApply(options, dependencies = {}) {
   const git = dependencies.git ?? defaultGit;
   const identity = repositoryIdentity(options.repo, git);
@@ -238,9 +250,7 @@ export function backupApply(options, dependencies = {}) {
   verifyPlanState(identity, loaded.plan);
   const attempt = beginAttempt(identity.root, loaded);
   try {
-    git(identity.root, ["branch", loaded.plan.backup_branch, "HEAD"]);
-    const target = git(identity.root, ["rev-parse", loaded.plan.backup_branch]).out;
-    if (target !== identity.head) throw new Error("Backup branch postcondition failed");
+    const target = createAndVerifyBackup(identity.root, loaded.plan.backup_branch, identity.head, git);
     const result = {
       schema_version: "github-writer.attempt/v1",
       status: "success",
@@ -294,6 +304,7 @@ export function recommitPreflight(options, dependencies = {}) {
   const git = dependencies.git ?? defaultGit;
   const now = dependencies.now?.() ?? new Date();
   const identity = repositoryIdentity(options.repo, git);
+  assertRecommitBranch(identity);
   if (identity.dirty) throw new Error("PR recommit requires a clean working tree");
   const base = resolveBase(identity.root, identity.branch, options.base, git);
   const ancestor = git(identity.root, [
@@ -347,6 +358,7 @@ export function recommitPreflight(options, dependencies = {}) {
 export function recommitApply(options, dependencies = {}) {
   const git = dependencies.git ?? defaultGit;
   const identity = repositoryIdentity(options.repo, git);
+  assertRecommitBranch(identity);
   const loaded = loadPlan(identity.root, options.plan, options.expectedPlanSha256);
   const plan = loaded.plan;
   if (plan.workflow !== "pr.recommit.apply") throw new Error("Plan is not a recommit plan");
@@ -358,7 +370,7 @@ export function recommitApply(options, dependencies = {}) {
   if (sha256(draftContent) !== plan.pr_draft_sha256) throw new Error("PR draft changed after preflight");
   const attempt = beginAttempt(identity.root, loaded);
   try {
-    git(identity.root, ["branch", plan.backup_branch, "HEAD"]);
+    createAndVerifyBackup(identity.root, plan.backup_branch, plan.expected_head, git);
     git(identity.root, ["reset", "--soft", plan.base_commit]);
     git(identity.root, ["commit", "-F", draft.absolute]);
     const finalIdentity = repositoryIdentity(identity.root, git);
