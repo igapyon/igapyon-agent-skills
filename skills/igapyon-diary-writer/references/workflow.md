@@ -58,6 +58,23 @@ Write as igapyon's diary, not as Mikuku.
 - Do not invent events, dates, URLs, releases, results, or personal observations.
 - If source facts are missing, ask briefly or mark the gap as unresolved.
 
+### Style Source Priority
+
+When style sources or editorial signals differ, apply them in this order:
+
+1. The user's instructions and corrections in the current conversation
+2. The canonical diary source currently being edited
+3. Existing diary entries close to the target in time, topic, and format
+4. A user-approved style calibration example whose intended use matches the target
+5. Other existing diary entries written by igapyon
+6. AI-assisted entries not explicitly approved as style calibration examples
+7. Comparison material about the relationship between igapyon and Mikuku writing
+
+Use this priority for style and editorial judgment, not to import facts from one entry into
+another. Treat explicit approval as a style calibration example separately from ordinary
+AI-assisted writing. Classify an AI-assisted entry without explicit calibration approval under
+item 6 even when it is close to the target in time, topic, or format.
+
 ## Verification
 
 For diary source-only edits, at minimum confirm:
