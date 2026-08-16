@@ -12,9 +12,12 @@ node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   github.issue.handoff.list
 ```
 
-The READONLY list returns stable handoff IDs and bounded review summaries. It
-does not return reviewed apply arguments. The Agent must not choose or
-abbreviate an ID for the human.
+The READONLY list returns stable full handoff IDs, bounded review summaries,
+and a 12-character approval suffix when the ID has one. It does not return
+reviewed apply arguments. A human may use the listed suffix as a selector; the
+helper resolves it only against pending handoffs in the current repository and
+only when exactly one record matches. The Agent must not choose, invent, or
+reconstruct a selector for the human.
 
 After the human reviews the complete preflight and explicitly replies
 `miku-scm approve` (or the legacy `miku-scm 承認` input), invoke:
@@ -28,28 +31,30 @@ This compatibility form accepts no handoff ID or apply argument from the Agent.
 It requires exactly one pending Issue handoff in the current repository. Zero
 or multiple pending handoffs stop safely.
 
-When multiple handoffs are pending, the human may copy one exact ID from the
-preflight or pending list and reply `miku-scm approve <handoff-id>`. Invoke:
+When multiple handoffs are pending, the human may copy either a full ID or its
+listed 12-character approval suffix from the preflight or pending list and
+reply `miku-scm approve <handoff-selector>`. Invoke:
 
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
-  github.issue.handoff.apply --handoff <handoff-id> --apply
+  github.issue.handoff.apply --handoff <handoff-selector> --apply
 ```
 
-The fixed workflow matches that complete ID against pending handoffs and
-applies only the matching record. The Agent must never infer the ID from Issue
-content, order, recency, or intent.
+The fixed workflow matches a full ID exactly, or resolves a listed suffix only
+when exactly one pending record ends with it, and applies only that matching
+record. A missing or ambiguous suffix stops without a mutation. The Agent must
+never infer a selector from Issue content, order, recency, or intent.
 
-For a reviewed batch, the human must supply two to twenty unique exact IDs in
-the intended execution order with
-`miku-scm approve batch <handoff-id> <handoff-id> [...]`. Invoke one fixed
+For a reviewed batch, the human must supply two to twenty full IDs or listed
+suffixes that resolve to unique pending handoffs, in the intended execution
+order, with `miku-scm approve batch <handoff-selector> <handoff-selector> [...]`. Invoke one fixed
 batch workflow, repeating `--handoff` in that same order:
 
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   github.issue.handoff.batch.apply \
-  --handoff <first-handoff-id> \
-  --handoff <second-handoff-id> \
+  --handoff <first-handoff-selector> \
+  --handoff <second-handoff-selector> \
   --apply
 ```
 
@@ -91,17 +96,17 @@ applied and are reported as a partial result; the workflow never rolls them
 back or retries them. A vague approval such as `all` does not authorize the
 Agent to select or order handoffs.
 
-After an exact `miku-scm dismiss <handoff-id>` request, mark only that pending
+After an exact `miku-scm dismiss <handoff-selector>` request, mark only that pending
 handoff as `not-applied` with:
 
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
-  github.issue.handoff.dismiss --handoff <handoff-id> --apply
+  github.issue.handoff.dismiss --handoff <handoff-selector> --apply
 ```
 
 Dismissal changes only the local approval handoff record and performs no
-GitHub or Git mutation. A missing, non-pending, malformed, or ambiguous ID
-stops without changing another record.
+GitHub or Git mutation. A missing, non-pending, malformed, or ambiguous
+selector stops without changing another record.
 
 The helper validates the record digest, immutable-content digest, workflow
 pair, apply workflow allowlist, `--apply` gate, and reviewed workflow contract

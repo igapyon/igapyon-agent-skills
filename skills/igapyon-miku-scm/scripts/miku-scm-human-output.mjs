@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v8";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v9";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -131,9 +131,12 @@ function appendIssueOperation(lines, workflow, result) {
   }
   if (workflow.endsWith(".preflight") && result.apply_arguments) {
     lines.push("Remote mutation: not invoked");
-    if (result.handoff) lines.push(`Approval ID: ${result.handoff.id}`);
+    if (result.handoff) {
+      lines.push(`Approval ID: ${result.handoff.id}`);
+      if (result.handoff.short_id) lines.push(`Approval suffix: ${result.handoff.short_id}`);
+    }
     const approval = result.handoff
-      ? `miku-scm approve ${result.handoff.id}`
+      ? `miku-scm approve ${result.handoff.short_id ?? result.handoff.id}`
       : "miku-scm approve";
     lines.push(`Approval command: reply with exactly \`${approval}\` in chat`);
   }
@@ -144,17 +147,19 @@ function appendHandoffList(lines, result) {
   lines.push(`Pending handoff count: ${result.pending_count ?? handoffs.length}`);
   for (const handoff of handoffs) {
     lines.push(`Handoff ID: ${displayValue(handoff.id)}`);
+    if (handoff.short_id) lines.push(`Approval suffix: ${displayValue(handoff.short_id)}`);
     lines.push(`Apply workflow: ${displayValue(handoff.apply_workflow)}`);
     lines.push(`Repository: ${displayValue(handoff.repository)}`);
     if (handoff.issue) lines.push(`Issue: #${handoff.issue}`);
     if (handoff.title) lines.push(`Title: ${displayValue(handoff.title)}`);
     if (handoff.draft) lines.push(`Draft: ${displayValue(handoff.draft)}`);
     lines.push(`Created at: ${displayValue(handoff.created_at)}`);
-    lines.push(`Approve command: miku-scm approve ${displayValue(handoff.id)}`);
-    lines.push(`Dismiss command: miku-scm dismiss ${displayValue(handoff.id)}`);
+    const selector = handoff.short_id ?? handoff.id;
+    lines.push(`Approve command: miku-scm approve ${displayValue(selector)}`);
+    lines.push(`Dismiss command: miku-scm dismiss ${displayValue(selector)}`);
   }
   if (handoffs.length > 1) {
-    lines.push("Batch approval format: miku-scm approve batch <handoff-id> <handoff-id> [...]");
+    lines.push("Batch approval format: miku-scm approve batch <handoff-selector> <handoff-selector> [...]");
   }
 }
 

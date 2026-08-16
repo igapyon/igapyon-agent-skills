@@ -8,7 +8,7 @@ import {
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v8");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v9");
 });
 
 test("every workflow uses English fixed output wording", () => {
@@ -102,7 +102,8 @@ test("handoff recovery output exposes exact commands and dismissal state", () =>
       status: "listed",
       pending_count: 1,
       handoffs: [{
-        id: "handoff-7",
+        id: "20260816003919398-c119ac32-29cb-4f58-ad70-550b907faf95",
+        short_id: "550b907faf95",
         apply_workflow: "github.issue.update.apply",
         repository: "a/b",
         issue: 7,
@@ -112,8 +113,9 @@ test("handoff recovery output exposes exact commands and dismissal state", () =>
     },
   });
   assert.match(listed, /Pending handoff count: 1/);
-  assert.match(listed, /Approve command: miku-scm approve handoff-7/);
-  assert.match(listed, /Dismiss command: miku-scm dismiss handoff-7/);
+  assert.match(listed, /Approval suffix: 550b907faf95/);
+  assert.match(listed, /Approve command: miku-scm approve 550b907faf95/);
+  assert.match(listed, /Dismiss command: miku-scm dismiss 550b907faf95/);
   assert.match(listed, /Mutation invoked: no/);
 
   const dismissed = renderHumanOutput({

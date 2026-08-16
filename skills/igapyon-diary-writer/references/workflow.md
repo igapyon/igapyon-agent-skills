@@ -42,8 +42,9 @@ Common patterns:
 
 - Start content sections with `## ` headings.
 - Keep the first meaningful `## ` heading suitable as the entry title because `igapyonv3` title parsing relies on it.
-- Use `<@lastmodified date="YYYY-MM-DD"/>` when an entry needs an explicit last-modified marker.
+- Set `<@lastmodified date="YYYY-MM-DD"/>` to the actual local date when the source is changed, not automatically to the diary entry date. Use another date only when the user explicitly requests it. Apply this rule to every changed source, including an older entry changed only to add a reciprocal link.
 - Use `## 関連する日記` or `### 関連する日記` with `<@linkdiary date="YYYY-MM-DD" />` for related diary links when applicable.
+- When entries have a strong direct relationship, such as the same instrument or project or a clear planning-to-result sequence, add reciprocal `<@linkdiary ... />` entries to the related existing sources. Treat this as a judgment rule, not a universal requirement; do not add reverse links for weak or merely topical relationships.
 - Preserve existing directives, keyword links, memo links, and local navigation conventions.
 - Do not edit generated `.md`, `.html.md`, `.html`, Atom, index, or keyword files unless the user explicitly asks or generation produces them.
 

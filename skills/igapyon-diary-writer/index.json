@@ -7,7 +7,7 @@
   {"name":"diary-structure.md","path":"references/diary-structure.md","ext":"md","dir":"references","size":6238,"summary":"Diary Structure Reference"},
   {"name":"igapyon-diary-style-example.md","path":"references/igapyon-diary-style-example.md","ext":"md","dir":"references","size":6511,"summary":"igapyon考察型日記の文体較正例"},
   {"name":"igapyon-mikuku-writing-relationship.md","path":"references/igapyon-mikuku-writing-relationship.md","ext":"md","dir":"references","size":6355,"summary":"igapyon文体とみくく文体の関係"},
-  {"name":"workflow.md","path":"references/workflow.md","ext":"md","dir":"references","size":5159,"summary":"Diary Writer Workflow"},
+  {"name":"workflow.md","path":"references/workflow.md","ext":"md","dir":"references","size":5699,"summary":"Diary Writer Workflow"},
   {"name":"diary-entry-template.md","path":"templates/diary-entry-template.md","ext":"md","dir":"templates","size":257,"summary":"{{title}}"},
   {"name":"year-index-template.md","path":"templates/year-index-template.md","ext":"md","dir":"templates","size":203,"summary":"<#assign localYear=\"{{year}}\" /> <@localyearlist /> / [keyword](../keyword/index.html) / [memo](../memo/index.html)"}
  ]

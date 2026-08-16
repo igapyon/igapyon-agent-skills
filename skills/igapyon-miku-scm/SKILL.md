@@ -100,19 +100,23 @@ Do not inspect the repository or load detailed references yet.
    `miku-scm approve` request routes to `github.issue.handoff.apply --apply`
    and still requires exactly one pending handoff. The legacy `miku-scm 承認`
    input remains accepted.
-11. When the human supplies an exact handoff ID from the preflight or pending
-    list, route `miku-scm approve <id>` to
-    `github.issue.handoff.apply --handoff <id> --apply`, or route
-    `miku-scm dismiss <id>` to
-    `github.issue.handoff.dismiss --handoff <id> --apply`. Never choose,
-    abbreviate, or reconstruct the ID or reviewed apply arguments. These exact
+11. When the human supplies either a full handoff ID or the exact 12-character
+    approval suffix shown by the preflight or pending list, route
+    `miku-scm approve <selector>` to
+    `github.issue.handoff.apply --handoff <selector> --apply`, or route
+    `miku-scm dismiss <selector>` to
+    `github.issue.handoff.dismiss --handoff <selector> --apply`. The fixed
+    helper resolves a suffix only when exactly one pending handoff in the
+    target repository matches it; otherwise it stops. Never choose, invent,
+    or reconstruct a selector or reviewed apply arguments. These exact
     commands are fast paths and do not require loading detailed references.
-12. Route an exact `miku-scm approve batch <id> <id> [...]` request to
-    `github.issue.handoff.batch.apply`, repeating `--handoff <id>` in the exact
-    human-supplied order and ending with `--apply`. Require two to twenty
-    unique pending IDs. Never infer membership or order from `all`, recency,
-    Issue numbers, or prior prose. The fixed workflow validates the complete
-    batch before the first mutation. For later mutations to the same Issue,
+12. Route an exact `miku-scm approve batch <selector> <selector> [...]`
+    request to `github.issue.handoff.batch.apply`, repeating `--handoff
+    <selector>` in the exact human-supplied order and ending with `--apply`.
+    Require two to twenty selectors that resolve to unique pending handoffs.
+    Never infer membership or order from `all`, recency, Issue numbers, or
+    prior prose. The fixed workflow validates the complete batch before the
+    first mutation. For later mutations to the same Issue,
     the fixed workflow runs a handoff-free dependency preflight after each
     preceding success and accepts only allowlisted snapshot-expectation
     changes caused by the ordered sequence. Any semantic change, failed
