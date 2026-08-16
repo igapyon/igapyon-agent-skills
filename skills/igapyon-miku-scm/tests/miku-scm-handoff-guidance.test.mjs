@@ -7,18 +7,19 @@ import { readNormalizedText } from "./miku-scm-test-text.mjs";
 
 const SKILL_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-test("handoff guidance requires exact human-selected IDs for recovery", async () => {
+test("handoff guidance requires human-selected full IDs or uniquely resolving suffixes for recovery", async () => {
   const [skill, approval] = await Promise.all([
     readNormalizedText(path.join(SKILL_ROOT, "SKILL.md")),
     readNormalizedText(path.join(SKILL_ROOT, "references", "approval-handoff.md")),
   ]);
 
   assert.match(skill, /miku-scm pending/);
-  assert.match(skill, /miku-scm approve <id>/);
-  assert.match(skill, /miku-scm dismiss <id>/);
-  assert.match(skill, /miku-scm approve batch <id> <id> \[\.\.\.\]/);
-  assert.match(skill, /Never choose,\n    abbreviate, or reconstruct the ID/);
-  assert.match(approval, /must never infer the ID from Issue\ncontent, order, recency, or intent/);
+  assert.match(skill, /miku-scm approve <selector>/);
+  assert.match(skill, /miku-scm dismiss <selector>/);
+  assert.match(skill, /12-character\n    approval suffix/);
+  assert.match(skill, /Never choose, invent,\n    or reconstruct a selector/);
+  assert.match(approval, /only against pending handoffs in the current repository and\nonly when exactly one record matches/);
+  assert.match(approval, /must\nnever infer a selector from Issue content, order, recency, or intent/);
   assert.match(approval, /Dismissal changes only the local approval handoff record/);
   assert.match(approval, /applies one handoff at a\ntime in the supplied order/);
   assert.match(approval, /later selected handoff mutates the same existing Issue/);

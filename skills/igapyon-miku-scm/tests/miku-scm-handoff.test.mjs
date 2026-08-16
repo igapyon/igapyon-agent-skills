@@ -13,6 +13,7 @@ import {
   parseHandoffBatchApplyArgs,
   parseHandoffDismissArgs,
   parseHandoffListArgs,
+  shortHandoffId,
   listPendingIssueHandoffs,
   validateHandoffRecord,
 } from "../scripts/miku-scm-handoff.mjs";
@@ -117,6 +118,10 @@ test("handoff parsers accept only fixed list, selection, and dismissal options",
     { root, handoff: "handoff-2", apply: true },
   );
   assert.deepEqual(
+    parseHandoffApplyArgs(["--handoff", "550b907faf95", "--apply"], "/tmp/project"),
+    { root, handoff: "550b907faf95", apply: true },
+  );
+  assert.deepEqual(
     parseHandoffBatchApplyArgs([
       "--handoff", "handoff-2", "--handoff", "handoff-1", "--apply",
     ], "/tmp/project"),
@@ -127,7 +132,10 @@ test("handoff parsers accept only fixed list, selection, and dismissal options",
     { root, handoff: "handoff-2", apply: true },
   );
   assert.throws(() => parseHandoffApplyArgs([]), /requires --apply/);
-  assert.throws(() => parseHandoffApplyArgs(["--handoff", "../other", "--apply"]), /exact approval handoff ID/);
+  assert.throws(
+    () => parseHandoffApplyArgs(["--handoff", "../other", "--apply"]),
+    /full approval handoff ID or a 12-character approval suffix/,
+  );
   assert.throws(
     () => parseHandoffApplyArgs(["--handoff", "handoff-1", "--handoff", "handoff-2", "--apply"]),
     /Duplicate argument/,
@@ -140,7 +148,7 @@ test("handoff parsers accept only fixed list, selection, and dismissal options",
     () => parseHandoffBatchApplyArgs([
       "--handoff", "handoff-1", "--handoff", "handoff-1", "--apply",
     ]),
-    /Duplicate batch approval handoff ID/,
+    /Duplicate batch approval handoff selector/,
   );
   assert.throws(() => parseHandoffListArgs(["--root"]), /requires a value/);
   assert.throws(() => parseHandoffDismissArgs(["--apply"]), /requires --handoff/);
@@ -192,6 +200,18 @@ test("list returns deterministic public summaries for every pending handoff", as
   assert.equal(result.handoffs[0].repository, "a/b");
   assert.equal(result.handoffs[0].title, "Title");
   assert.equal(Object.hasOwn(result.handoffs[0], "apply_arguments"), false);
+});
+
+test("list exposes a 12-character approval suffix for a generated-style handoff ID", async (t) => {
+  const root = await workspace(t);
+  const id = "20260816003919398-c119ac32-29cb-4f58-ad70-550b907faf95";
+  await createPending(root, id);
+
+  const result = await listPendingIssueHandoffs({ root });
+
+  assert.equal(shortHandoffId(id), "550b907faf95");
+  assert.equal(result.handoffs[0].id, id);
+  assert.equal(result.handoffs[0].short_id, "550b907faf95");
 });
 
 test("apply requires exactly one pending handoff and forwards unchanged arguments", async (t) => {
@@ -270,6 +290,61 @@ test("explicit handoff selection applies only that pending record", async (t) =>
   assert.equal(calls.length, 1);
   assert.equal(JSON.parse(await readFile(path.join(root, first.path), "utf8")).status, "pending");
   assert.equal(JSON.parse(await readFile(path.join(root, second.path), "utf8")).status, "applied");
+});
+
+test("a human-supplied approval suffix applies its uniquely matching pending handoff", async (t) => {
+  const root = await workspace(t);
+  const first = await createPending(root, "20260816003919397-b119ac32-29cb-4f58-ad70-118b907faf95");
+  const selected = await createPending(root, "20260816003919398-c119ac32-29cb-4f58-ad70-550b907faf95");
+  const calls = [];
+
+  const result = await applyPendingIssueHandoff(
+    { root, handoff: "550b907faf95", apply: true },
+    {
+      runApply: async (workflow, args) => {
+        calls.push({ workflow, args });
+        return { status: "success", mutation_invoked: true, run_id: "suffix-apply" };
+      },
+    },
+  );
+
+  assert.equal(result.handoff.id, selected.id);
+  assert.equal(calls.length, 1);
+  assert.equal(JSON.parse(await readFile(path.join(root, first.path), "utf8")).status, "pending");
+  assert.equal(JSON.parse(await readFile(path.join(root, selected.path), "utf8")).status, "applied");
+});
+
+test("an ambiguous approval suffix stops before a mutation", async (t) => {
+  const root = await workspace(t);
+  await createPending(root, "20260816003919398-c119ac32-29cb-4f58-ad70-550b907faf95");
+  await createPending(root, "20260816003919399-d119ac32-29cb-4f58-ad70-550b907faf95");
+  let invoked = false;
+
+  await assert.rejects(
+    applyPendingIssueHandoff(
+      { root, handoff: "550b907faf95", apply: true },
+      { runApply: async () => { invoked = true; } },
+    ),
+    (error) => error.mutationInvoked === false && /Ambiguous pending Issue approval suffix/.test(error.message),
+  );
+  assert.equal(invoked, false);
+});
+
+test("a batch cannot select the same pending handoff by full ID and suffix", async (t) => {
+  const root = await workspace(t);
+  const id = "20260816003919398-c119ac32-29cb-4f58-ad70-550b907faf95";
+  await createPending(root, id);
+  let invoked = false;
+
+  await assert.rejects(
+    applyPendingIssueHandoffBatch(
+      { root, handoffs: [id, "550b907faf95"], apply: true },
+      { runApply: async () => { invoked = true; } },
+    ),
+    (error) => error.mutationInvoked === false
+      && /selectors must resolve to unique pending handoffs/.test(error.message),
+  );
+  assert.equal(invoked, false);
 });
 
 test("apply preserves a known conflict as a distinct terminal handoff state", async (t) => {

@@ -21,6 +21,7 @@ const HANDOFF_STATUSES = new Set([
   "unresolved",
 ]);
 const HANDOFF_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
+const HANDOFF_SHORT_ID = /^[0-9a-f]{12}$/;
 const MAX_BATCH_HANDOFFS = 20;
 const SHA256 = /^[0-9a-f]{64}$/;
 
@@ -85,11 +86,17 @@ function validateApplyArguments(args) {
   }
 }
 
-function validateHandoffId(value) {
+function validateHandoffSelector(value) {
   if (typeof value !== "string" || !HANDOFF_ID.test(value)) {
-    throw new Error("--handoff must be an exact approval handoff ID");
+    throw new Error("--handoff must be a full approval handoff ID or a 12-character approval suffix");
   }
   return value;
+}
+
+export function shortHandoffId(value) {
+  if (typeof value !== "string" || !HANDOFF_ID.test(value)) return null;
+  const suffix = value.slice(-12);
+  return HANDOFF_SHORT_ID.test(suffix) ? suffix : null;
 }
 
 function optionValue(argv, index, flag) {
@@ -136,7 +143,7 @@ export function parseHandoffApplyArgs(argv, cwd = process.cwd()) {
     } else if (argument === "--handoff") {
       if (seen.has(argument)) throw new Error(`Duplicate argument: ${argument}`);
       seen.add(argument);
-      options.handoff = validateHandoffId(optionValue(argv, index, "--handoff"));
+      options.handoff = validateHandoffSelector(optionValue(argv, index, "--handoff"));
       index += 1;
     } else {
       throw new Error(`Unknown argument: ${argument}`);
@@ -165,9 +172,9 @@ export function parseHandoffBatchApplyArgs(argv, cwd = process.cwd()) {
       options.root = path.resolve(cwd, optionValue(argv, index, "--root"));
       index += 1;
     } else if (argument === "--handoff") {
-      const handoff = validateHandoffId(optionValue(argv, index, "--handoff"));
+      const handoff = validateHandoffSelector(optionValue(argv, index, "--handoff"));
       if (options.handoffs.includes(handoff)) {
-        throw new Error(`Duplicate batch approval handoff ID: ${handoff}`);
+        throw new Error(`Duplicate batch approval handoff selector: ${handoff}`);
       }
       options.handoffs.push(handoff);
       index += 1;
@@ -206,7 +213,7 @@ export function parseHandoffDismissArgs(argv, cwd = process.cwd()) {
     } else if (argument === "--handoff") {
       if (seen.has(argument)) throw new Error(`Duplicate argument: ${argument}`);
       seen.add(argument);
-      options.handoff = validateHandoffId(optionValue(argv, index, "--handoff"));
+      options.handoff = validateHandoffSelector(optionValue(argv, index, "--handoff"));
       index += 1;
     } else {
       throw new Error(`Unknown argument: ${argument}`);
@@ -233,7 +240,7 @@ export async function createIssueApprovalHandoff({
   if (`${applyWorkflow.slice(0, -".apply".length)}.preflight` !== preflightWorkflow) {
     throw new Error("Issue approval handoff workflow pair is inconsistent");
   }
-  validateHandoffId(runId);
+  validateHandoffSelector(runId);
   validateApplyArguments(applyArguments);
   const directory = path.join(path.resolve(root), "workplace", "miku-scm", "handoffs");
   await mkdir(directory, { recursive: true, mode: 0o700 });
@@ -277,6 +284,7 @@ export async function createIssueApprovalHandoff({
   return {
     schema_version: HANDOFF_SCHEMA_VERSION,
     id: runId,
+    ...(shortHandoffId(runId) ? { short_id: shortHandoffId(runId) } : {}),
     status: "pending",
     path: relativeFile,
     immutable_sha256: record.immutable_sha256,
@@ -349,6 +357,7 @@ async function pendingHandoffs(root) {
 function publicHandoff({ file, record }) {
   return {
     id: record.id,
+    ...(shortHandoffId(record.id) ? { short_id: shortHandoffId(record.id) } : {}),
     status: record.status,
     created_at: record.created_at,
     updated_at: record.updated_at,
@@ -364,15 +373,20 @@ function publicHandoff({ file, record }) {
 
 function selectPendingHandoff(pending, handoffId = null) {
   if (handoffId) {
-    validateHandoffId(handoffId);
-    const matches = pending.filter(({ record }) => record.id === handoffId);
-    if (matches.length === 0) {
-      throw new Error(`Pending Issue approval handoff not found: ${handoffId}`);
-    }
-    if (matches.length > 1) {
+    validateHandoffSelector(handoffId);
+    const exactMatches = pending.filter(({ record }) => record.id === handoffId);
+    if (exactMatches.length === 1) return exactMatches[0];
+    if (exactMatches.length > 1) {
       throw new Error(`Duplicate pending Issue approval handoff ID: ${handoffId}`);
     }
-    return matches[0];
+    if (HANDOFF_SHORT_ID.test(handoffId)) {
+      const suffixMatches = pending.filter(({ record }) => record.id.endsWith(handoffId));
+      if (suffixMatches.length === 1) return suffixMatches[0];
+      if (suffixMatches.length > 1) {
+        throw new Error(`Ambiguous pending Issue approval suffix: ${handoffId}`);
+      }
+    }
+    throw new Error(`Pending Issue approval handoff not found: ${handoffId}`);
   }
   if (pending.length === 0) {
     throw new Error("No pending Issue approval handoff exists");
@@ -387,15 +401,19 @@ function selectPendingHandoff(pending, handoffId = null) {
 
 function selectPendingHandoffBatch(pending, handoffIds) {
   if (!Array.isArray(handoffIds) || handoffIds.length < 2) {
-    throw new Error("Batch approval requires at least two exact handoff IDs");
+    throw new Error("Batch approval requires at least two handoff selectors");
   }
   if (handoffIds.length > MAX_BATCH_HANDOFFS) {
     throw new Error(`Batch approval accepts at most ${MAX_BATCH_HANDOFFS} handoffs`);
   }
   if (new Set(handoffIds).size !== handoffIds.length) {
-    throw new Error("Batch approval handoff IDs must be unique");
+    throw new Error("Batch approval handoff selectors must be unique");
   }
-  return handoffIds.map((handoffId) => selectPendingHandoff(pending, handoffId));
+  const selected = handoffIds.map((handoffId) => selectPendingHandoff(pending, handoffId));
+  if (new Set(selected.map(({ record }) => record.id)).size !== selected.length) {
+    throw new Error("Batch approval handoff selectors must resolve to unique pending handoffs");
+  }
+  return selected;
 }
 
 function applyArgumentValue(record, option) {
@@ -791,7 +809,7 @@ export async function applyPendingIssueHandoffBatch(options, dependencies = {}) 
 
 export async function dismissPendingIssueHandoff(options, dependencies = {}) {
   if (!options.handoff) {
-    throw new Error("github.issue.handoff.dismiss requires an exact handoff ID");
+    throw new Error("github.issue.handoff.dismiss requires a full handoff ID or a 12-character approval suffix");
   }
   const root = path.resolve(options.root);
   let selected;

@@ -132,8 +132,8 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "github.issue.handoff.apply",
-    triggers: ["miku-scm approve", "miku-scm approve <handoff-id>", "miku-scm 承認"],
-    required_parameters: ["repository", "explicit_apply_request", "optional_handoff_id"],
+    triggers: ["miku-scm approve", "miku-scm approve <handoff-selector>", "miku-scm 承認"],
+    required_parameters: ["repository", "explicit_apply_request", "optional_handoff_selector"],
     mutation_level: "remote",
     approval_gate: "apply",
     runner_entry: "miku-scm-handoff.mjs",
@@ -141,8 +141,8 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "github.issue.handoff.batch.apply",
-    triggers: ["miku-scm approve batch <handoff-id> <handoff-id> ...", "順序付きIssue handoff一括承認"],
-    required_parameters: ["repository", "ordered_handoff_ids", "explicit_batch_apply_request"],
+    triggers: ["miku-scm approve batch <handoff-selector> <handoff-selector> ...", "順序付きIssue handoff一括承認"],
+    required_parameters: ["repository", "ordered_handoff_selectors", "explicit_batch_apply_request"],
     mutation_level: "remote",
     approval_gate: "apply",
     runner_entry: "miku-scm-handoff.mjs",
@@ -150,8 +150,8 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "github.issue.handoff.dismiss",
-    triggers: ["miku-scm dismiss <handoff-id>", "miku-scm 保留解除 <handoff-id>"],
-    required_parameters: ["repository", "handoff_id", "explicit_dismiss_request"],
+    triggers: ["miku-scm dismiss <handoff-selector>", "miku-scm 保留解除 <handoff-selector>"],
+    required_parameters: ["repository", "handoff_selector", "explicit_dismiss_request"],
     mutation_level: "local",
     approval_gate: "apply",
     runner_entry: "miku-scm-handoff.mjs",

@@ -476,7 +476,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     [],
     {
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Returns stable IDs and review summaries for pending handoffs only."],
+      notes: ["Returns stable IDs, 12-character approval suffixes when available, and review summaries for pending handoffs only."],
     },
   ),
   "github.issue.handoff.apply": contract(
@@ -485,7 +485,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       option("--root", "<path>", "Repository root containing the pending handoff.", {
         default: "current directory",
       }),
-      option("--handoff", "<handoff-id>", "Exact pending handoff selected by the human."),
+      option("--handoff", "<handoff-selector>", "Human-supplied full pending ID, or a listed 12-character approval suffix that resolves uniquely."),
       apply,
     ],
     ["--apply"],
@@ -493,7 +493,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "Depends on the reviewed Issue apply workflow",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Without --handoff, exactly one pending handoff must exist."],
+      notes: ["Without --handoff, exactly one pending handoff must exist. A suffix must resolve to exactly one pending handoff."],
     },
   ),
   "github.issue.handoff.batch.apply": contract(
@@ -502,7 +502,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       option("--root", "<path>", "Repository root containing pending handoffs.", {
         default: "current directory",
       }),
-      option("--handoff", "<handoff-id>", "Exact pending handoff in human-approved order.", {
+      option("--handoff", "<handoff-selector>", "Human-supplied full pending ID, or a uniquely resolving listed suffix, in approved order.", {
         required: true,
         repeatable: true,
         minimum_occurrences: 2,
@@ -510,13 +510,13 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       }),
       apply,
     ],
-    ["--handoff", "<first-id>", "--handoff", "<second-id>", "--apply"],
+    ["--handoff", "<first-selector>", "--handoff", "<second-selector>", "--apply"],
     {
       network_access: "Depends on each reviewed Issue apply workflow",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
       notes: [
-        "Validates every unique pending ID before the first apply.",
+        "Validates every unique pending handoff resolved from the supplied selectors before the first apply.",
         "Preserves the supplied order and stops before later handoffs after any non-applied result.",
       ],
     },
@@ -527,12 +527,12 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       option("--root", "<path>", "Repository root containing the pending handoff.", {
         default: "current directory",
       }),
-      option("--handoff", "<handoff-id>", "Exact pending handoff selected by the human.", {
+      option("--handoff", "<handoff-selector>", "Human-supplied full pending ID, or a listed suffix that resolves uniquely.", {
         required: true,
       }),
       apply,
     ],
-    ["--handoff", "<handoff-id>", "--apply"],
+    ["--handoff", "<handoff-selector>", "--apply"],
     {
       network_access: "none",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
