@@ -71,11 +71,12 @@ second approval is requested after backup when the fixed state remains valid.
 
 ## Platform Boundary
 
-Current apply support is macOS only because it reuses the proven publication
-contract. On `win32` and other platforms, `pr.recommit.push` stops before
-backup creation and reports no mutation. This is deliberate: enabling Windows
-publication requires the shared platform-adapter migration and Windows contract
-tests described in the Work Cycle redesign; it is not a shell-script split.
+Current apply support covers macOS and native Windows (`darwin` and `win32`).
+The shared argv-based command runner keeps the publication contract identical on
+both platforms. Linux, WSL-as-Linux, and other platforms stop before backup
+creation and report no mutation. Windows enablement requires the native Windows
+smoke evidence recorded in the repository plan before a release claim is made;
+it is not a shell-script split.
 
 `rg` is not required by this transition.
 

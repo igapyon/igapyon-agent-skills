@@ -7,7 +7,8 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 import { jstDashedTimestamp } from "./miku-scm-jst-time.mjs";
-import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+import { createGitCommandRunner } from "./miku-scm-command-runner.mjs";
+import { isPathWithin, relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs [--base <base>] [--pr-draft <path>] [--repo <path>] [--remote <name>] [--apply] [--allow-dirty]
@@ -51,21 +52,11 @@ export function parseArgs(argv, cwd = process.cwd()) {
 }
 
 function git(repo, args, options = {}) {
-  const result = spawnSync("git", args, {
-    cwd: repo,
-    encoding: "utf8",
-    input: options.input,
-    maxBuffer: 20 * 1024 * 1024,
-  });
-  if (result.status !== 0 && !options.allowFailure) {
-    const message = (result.stderr || result.stdout || "").trim();
-    throw new Error(`git ${args.join(" ")} failed${message ? `: ${message}` : ""}`);
-  }
-  return {
-    ok: result.status === 0,
-    stdout: (result.stdout || "").trimEnd(),
-    stderr: (result.stderr || "").trimEnd(),
-  };
+  const result = createGitCommandRunner({
+    platform: options.platform ?? process.platform,
+    spawn: options.spawn ?? spawnSync,
+  })(repo, args, options);
+  return { ...result, stdout: result.stdout.trimEnd(), stderr: result.stderr.trimEnd() };
 }
 
 function remoteBranchIsCurrentFeature(upstream, branch) {
@@ -213,20 +204,21 @@ function asFailure(error, mutationInvoked) {
 }
 
 export function runRecommit(args, dependencies = {}) {
-  const runGit = dependencies.git ?? git;
+  const runGit = dependencies.git ?? ((repo, gitArgs, options = {}) => git(repo, gitArgs, {
+    ...options,
+    platform: dependencies.platform ?? process.platform,
+  }));
   const now = dependencies.now ? dependencies.now() : new Date();
   const remote = args.remote ?? "origin";
   let mutationInvoked = false;
   try {
     const root = runGit(args.repo, ["rev-parse", "--show-toplevel"]).stdout;
     const resolvedRoot = path.resolve(root);
-    const rootPrefix = `${resolvedRoot}${path.sep}`;
-    const realRootPrefix = `${realpathSync(root)}${path.sep}`;
     const explicitDraftAbs = args.prDraft ? path.resolve(root, args.prDraft) : "";
-    const explicitDraftSafe = !args.prDraft || explicitDraftAbs.startsWith(rootPrefix);
+    const explicitDraftSafe = !args.prDraft || isPathWithin(resolvedRoot, explicitDraftAbs);
     const explicitDraftExists = explicitDraftSafe && existsSync(explicitDraftAbs);
     const explicitDraftRealSafe = !explicitDraftExists
-      || realpathSync(explicitDraftAbs).startsWith(realRootPrefix);
+      || isPathWithin(realpathSync(root), realpathSync(explicitDraftAbs));
     if (args.apply && args.prDraft && (!explicitDraftSafe || !explicitDraftRealSafe)) {
       throw new Error("PR draft must stay inside the repository");
     }
@@ -267,7 +259,7 @@ export function runRecommit(args, dependencies = {}) {
     const resolvedDraftAbs = resolvedDraft ? path.resolve(root, resolvedDraft) : "";
     const draftExists = resolvedDraftAbs ? existsSync(resolvedDraftAbs) : false;
     const realDraftSafe = !draftExists
-      || realpathSync(resolvedDraftAbs).startsWith(realRootPrefix);
+      || isPathWithin(realpathSync(root), realpathSync(resolvedDraftAbs));
     const draftSafe = explicitDraftSafe && realDraftSafe;
     const draftContent = draftExists && draftSafe ? readFileSync(resolvedDraftAbs) : null;
     const draftSha256 = draftContent ? digest(draftContent) : "";

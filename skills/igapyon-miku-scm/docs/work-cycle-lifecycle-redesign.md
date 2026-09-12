@@ -19,13 +19,13 @@ postconditionを一つのrunner invocationで実行する。conflict、`-done` b
 secret candidate、coupled version mismatchはstage前に停止する。
 
 Phase 3の最初のsliceとして、exact `pr recommit push`に対応する
-`pr.recommit.push` fixed workflowを実装した。これはmacOS上で、remote stateを
+`pr.recommit.push` fixed workflowを実装した。これはmacOSとnative Windows上で、remote stateを
 backup前に固定し、backup、recommit、publication plan、conditional push、remote
 equality確認、`-done` renameを一つのrunner invocationで実行する。remote stateが
 変わった場合はpushせず`partial`で止まる。
 
-Windows 11のpublication、cycle artifact、作業開始のone-shot化、PR evidenceの
-完全統合は未実装であり、この文書の残りの段階的移行案に従う。
+Windows 11のnative smoke evidence、cycle artifact、作業開始のone-shot化、PR evidenceの
+完全統合は未完了であり、この文書の残りの段階的移行案に従う。
 
 主な目的は次のとおりである。
 
@@ -80,9 +80,9 @@ handoffの確定情報ではない。
 作業ブランチ作成とライフサイクル全体の状態管理はAgentの会話内判断に残っている。
 通常のstage・commitは`work.commit`へ移行済みである。
 
-現行publication applyにはmacOS限定guardがあり、規範文書もmacOSを前提としている。
-したがってWindows 11対応は、単なる動作確認ではなく、platform contract、path
-validation、artifact write、test matrixを含む明示的なmigrationとして扱う。
+publication apply は `darwin` と `win32` を明示的に許可している。native Windows 11 の
+smoke evidence がまだ未完了のため、Windows対応の完了宣言には、platform contract、path
+validation、artifact write、test matrixに加えて実機の証拠が必要である。
 
 ## 現状の構造的な課題
 
@@ -268,14 +268,14 @@ Windows対応に有利な点として、主要な`git`・`gh` helperはすでに
 `spawnSync`を使い、shellを介していない。一方で、次は移行前に直す必要がある。
 
 - publication applyが`darwin`以外を明示的に拒否する
-- publicationの規範文書がmacOS限定approvalを定義している
+- publicationの規範文書がmacOSとWindowsのapproval境界を定義している
 - 一部のpath containmentがcanonical pathの文字列prefix比較に依存している
 - test fixtureの一部に`/tmp/...`というPOSIX path literalがある
 - draftはLF限定であり、Windows editorが作ったCRLF artifactの入口規約が必要である
 - file mode `0o600`を使用しているが、Windows ACLの保証にはならない
 
-この設計文書の変更だけではWindows publicationを有効化しない。上記の実装、規範、
-contract、testを同じmigrationで更新する。
+この設計文書だけを変更してWindows publicationを有効化することはできない。実装、規範、
+contract、testを同じmigrationで更新し、native smoke evidenceを別途記録する。
 
 ### 分割判断
 
@@ -348,8 +348,8 @@ repository identityは表示用pathでなく、canonical rootとGit common direc
 
 ### Windows 11での安全なpublication
 
-現行`post-recommit-publish.mjs`のmacOS限定guardを単純に削除してはならない。
-Windows adapterと次のcontract testが揃った後に、`darwin`と`win32`を明示allowlistする。
+現行`post-recommit-publish.mjs`は、共有argv adapterとcontract testを経て
+`darwin`と`win32`を明示allowlistしている。
 
 - new branch pushとexact SHA付きforce-with-lease
 - push直前remote expectation再検証
@@ -362,8 +362,8 @@ Windows adapterと次のcontract testが揃った後に、`darwin`と`win32`を�
 
 CIではmacOS runnerとWindows runnerで同じcontract suiteを実行する。CIのWindows環境に
 加えて、native Windows 11で少なくともrecommit backup、new-branch publication、
-existing-branch lease publicationのsmoke testを行う。Windows側のtestが未整備の間は
-macOS限定guardを維持し、未検証のplatformでremote mutationを許可しない。
+existing-branch lease publicationのsmoke testを行う。native Windows 11の実機証拠が
+揃うまでは、Windows対応をリリース済みと宣言しない。
 
 ### Agentへ制御を返す条件
 
@@ -831,7 +831,8 @@ postconditionを削ってはならない。安全処理は生成AIから決定�
 ### Phase 4: publication state修正
 
 - macOSとWindowsの同一publication contract suiteを追加する
-- native Windows 11 smoke test後にpublicationのplatform allowlistへ`win32`を加える
+- [x] platform contract後にpublicationのplatform allowlistへ`win32`を加える
+- [ ] native Windows 11 smoke testを実行して対応をリリース判定する
 - standalone / recovery publicationだけに独立approvalを残す
 - remote expectation conflictから`CANDIDATE_FINAL`へ停止する経路を固定する
 - publication成功時の`-done` renameを維持する

@@ -138,6 +138,11 @@ Update this section while working. Do not rewrite unrelated TODO items.
 
 ### Tasks
 
+- [ ] miku-scm Windows 11 publication 対応
+  - [詳細実装計画](WINDOWS11-PUSH-PLAN.md) の W00 → W09 を順番に処理する。
+  - 2026-09-12: 共通 runner、path containment、publication/recommit の `win32` 経路を実装済み。
+    native Windows 11 smoke と hosted CI 実行結果は未取得。進捗と検証結果の正本は上記計画。
+
 - [x] [Completed: igapyon-github-writer 固定Runner改善]
   `igapyon-miku-scm`の最新固定Runnerから、安全性、PR対象解決、大差分耐性、
   AI Agent関与削減、承認handoff、CLI自己記述性、性能計測を取り込む。以下の
