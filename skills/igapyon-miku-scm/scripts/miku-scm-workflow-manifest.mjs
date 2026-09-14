@@ -240,7 +240,12 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "pr.recommit.push",
-    triggers: ["miku-scm pr recommit push", "PR recommit push"],
+    triggers: [
+      "miku-scm draft recommit push",
+      "draft recommit push",
+      "miku-scm pr recommit push",
+      "PR recommit push",
+    ],
     required_parameters: ["repository", "explicit_recommit_and_push_request"],
     mutation_level: "remote",
     approval_gate: "apply",

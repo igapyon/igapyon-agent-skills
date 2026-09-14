@@ -8,7 +8,7 @@ import {
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v9");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v10");
 });
 
 test("every workflow uses English fixed output wording", () => {
@@ -339,13 +339,15 @@ test("PR recommit push output combines local rewrite and publication handoff", (
     },
   });
 
-  assert.match(output, /^\[SUCCESS\] PR recommit push$/m);
+  assert.match(output, /^\[SUCCESS\] Draft recommit push$/m);
   assert.match(output, /^Backup branch: backup\/2026-08-10-2100$/m);
   assert.match(output, new RegExp(`^New HEAD: ${"a".repeat(40)}$`, "m"));
   assert.match(output, /^Pushed branch: devel-test$/m);
   assert.match(output, /^Final branch: devel-test-done$/m);
+  assert.match(output, /^Draft file: workplace\/miku-scm\/pr-drafts\/pr-devel-test\.md$/m);
+  assert.match(output, /^Pull Request creation: not performed$/m);
   assert.match(output, /^Recommended tag: v20260810a$/m);
-  assert.match(output.trimEnd(), /Create the PR and tag through GitHub\.$/);
+  assert.match(output.trimEnd(), /PR text draft saved; Pull Request and tag operations remain in GitHub\.$/);
 });
 
 test("post-merge next-work output is complete and ends with the fixed handoff", () => {

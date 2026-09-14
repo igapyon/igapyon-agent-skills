@@ -92,11 +92,13 @@ After the human confirms that the Pull Request was merged, treat that confirmati
 ## PR Soft Reset Recommit Delegation
 
 - Treat bare `recommit`, `pr recommit`, `pr soft reset recommit`, and `pr reset recommit` as explicit requests to run the PR Soft Reset Recommit workflow built into `igapyon-miku-scm`. Bare `recommit` implicitly includes PR writing; do not require a separate PR request.
-- Treat the exact request `pr recommit push` as the distinct one-shot local
+- Treat the exact request `draft recommit push` as the distinct one-shot local
   rewrite and conditional-publication workflow in
-  [github-pr-recommit-push.md](github-pr-recommit-push.md). It still requires
-  the one PR-writing step, but the exact `push` token authorizes the fixed
-  remote transition after the reviewed draft is available.
+  [github-pr-recommit-push.md](github-pr-recommit-push.md). The older `pr
+  recommit push` spelling remains a compatible alias. Here `draft` means the
+  saved Pull Request title and body text; the workflow does not create or merge
+  a Pull Request. The exact compound request authorizes the fixed remote
+  transition after the reviewed draft is available.
 - Use [github-writing-rules.md](github-writing-rules.md), [github-pr-writing.md](github-pr-writing.md), [github-pr-soft-reset-recommit.md](github-pr-soft-reset-recommit.md), and [github-backup-branch.md](github-backup-branch.md) for PR draft composition, backup-branch creation, soft reset, and recommit behavior. Use the bundled `scripts/pr-soft-reset-recommit-preflight.mjs`; do not invoke `igapyon-github-writer`.
 - Resolve the reset base before drafting and use the exact `<base>..HEAD` commit range that the helper will collapse. Inspect every commit and the complete diff for that range. For ordinary PR writing without an explicit target, use the same range by default when it contains two or more commits; keep an exactly one-commit branch as a single-commit PR.
 - Before apply mode, compare the saved draft with `Commits To Collapse` and `Diff Stat`; require the title and body to cover every material change group in the collapsed range. If the draft covers a different scope, regenerate it before rewriting history.

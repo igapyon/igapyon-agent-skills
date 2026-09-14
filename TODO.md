@@ -1,5 +1,52 @@
 # TODO
 
+## igapyon-miku-scm 指示の明確化計画（Luna向け・2026-09-14）
+
+目的：GPT-5.6 Luna が会話履歴なしで、文面作成・recommit・pushの範囲、コミット対象、結果出力を一意に判断できるようにする。対象は `skills/igapyon-miku-scm/`。実装と自動検証は完了し、Lunaの独立セッション検証だけ未実施。
+
+### 0. 合意済みの仕様
+
+- 正式な利用者向けコマンドを `miku-scm draft recommit push` とする。スキルが選択済みの会話では `draft recommit push` と呼べる。旧 `miku-scm pr recommit push` / `pr recommit push` は同じ動作の互換別名として残す。
+- `draft` はPR用タイトル・本文をテキストファイルに保存すること。その文面でrecommitし、Gitブランチをpushする。GitHub上のPull Requestの作成・mergeは含まない。既存のPR作成URLの案内はPR作成そのものではない。
+- 上記複合コマンドの明示依頼は、下書きの準備、ローカル履歴の書き換え、ブランチのpushを一連の処理として許可する。正常に進んでいる途中で追加承認を挟まない。裸の `recommit` / `pr recommit` にはpushの許可を付与しない。
+- `miku-scm git add commit` の対象は、通常の非ignore変更のすべて。Agentが今回の話題と無関係だと判断した変更も、通常の変更ならstage対象から除外しない。既存の競合・機微パス・`-done`ブランチ等の停止条件は維持する。
+- 機械的ワークフローの最終応答は固定出力だけで完了する。Agentによる前置き、要約、補足、別の完了報告を追加しない。調査済み・変更済み・未完了の情報が必要なら固定出力側で担う。文章を作文するwriting工程とは区別する。
+
+### 1. 実装開始時の確認
+
+- [x] Git状態と、この節に関連する既存TODOを確認し、既存の変更・履歴を保持する。実装対象の `SKILL.md` と必要なreferenceを読む。スキル変更時は利用環境の `skill-creator` の指示も確認する。
+- [x] `rg` で対象スキル内の `pr recommit push`、`human_output`、`Report inspected`、`Preserve unrelated`、stage対象の説明を検索する。既存のmanifest・CLI help・規範reference・テストの対応を把握する。
+- [x] 主な確認先は `SKILL.md`、`scripts/miku-scm-workflow-manifest.mjs`、`scripts/miku-scm-cli-contracts.mjs`、`scripts/miku-scm-human-output.mjs`、`references/github-pr-recommit-push.md`、`references/scm-rules.md`、`references/work-commit.md`、`references/deterministic-workflow-runner.md`。実際の参照関係に沿って関連箇所も確認する。
+
+### 2. コマンド名と承認範囲をそろえる
+
+- [x] `SKILL.md` の発火条件とRuntime Kernelで、新名称を正規の入口、旧名称を互換別名として明記する。両者を既存の内部workflow ID `pr.recommit.push` に振り分ける。内部ID・スクリプト名・artifact schemaの改名は今回不要。
+- [x] manifestのtriggers、CLI help、実行例、現行規範referenceの利用者向け表記を整合させる。旧名称を全削除せず、互換経路を検証可能にする。過去の完了記録は改名しない。
+- [x] 入口に「PR用タイトル・本文をファイルに保存 → その文面でrecommit → ブランチをpush」と書き、GitHub上のPR作成を含まないことを明記する。`公開` / `published` が現れる説明では、ブランチのpushとPR作成を混同させない。既存の機械ステータス値は保持する。
+- [x] 共通承認ルールに、明示されたこの複合コマンドは一連の処理を許可することを記す。他workflowへ無制限に承認を引き継ぐ意味にせず、既存の単体recommit・Issue承認等の境界を保持する。
+- [x] 既存の分岐を維持する：最初にREADONLY preflightを1回実行し、下書き欠落だけなら `writing.pr.prepare` → 作文・保存 → 固定push runnerへ進む。下書きがありblockerなしなら既存の再利用経路を使う。他のblockerでは停止する。backup、digest、lease、失敗時の自動再試行禁止を維持する。
+
+### 3. コミット対象と固定出力を明確にする
+
+- [x] `SKILL.md` の `Preserve unrelated changes` を、既存内容の破棄・巻き戻しを避ける指示として整理する。`work.commit` では通常の非ignore変更すべてを含めることを明記し、Agentによるファイル選別や追加確認を誘発しない。
+- [x] `references/work-commit.md` と実装の固定 `git add --all` が合意済み仕様に一致することを確認する。このルールを、clean worktreeを要求するrecommit/pushや他の操作へ拡張しない。
+- [x] `SKILL.md` の固定出力返却と `Report inspected, changed, and pending work` の関係を一本化する。機械的処理ではrunnerが返した `human_output` をそのまま最終応答に使い、Agentによる追加報告を要求しない。
+- [x] 成功・停止・partial・unresolved・承認待ちの既存固定出力を確認する。必要な実行状況・次の操作が欠落した `draft recommit push` のrendererを修正し、Agentの補足で埋めない。途中のJSON出力利用は維持する。
+
+### 4. 受入検証と完了条件
+
+- [x] 新名称と旧名称が同じ内部workflowへ到達することを確認する。下書き欠落のみの場合と既存下書きがある場合を検証し、いずれもPR作成APIや `gh pr create` を実行しないこと、正常経路で追加承認を挟まないことを確認する。`npm run test:miku-scm:full` の `pr-recommit-push` shardで確認した。
+- [x] 裸の `recommit` / `pr recommit` がpushへ流れず、既存のローカル書き換えの承認境界を維持することを確認する。別のblockerがある場合は下書き作成やmutationへ進まないことも確認する。
+- [x] 一時Git repoで、現在の話題に関係する変更と別の通常変更、追加・削除・未追跡ファイル、ignore対象を用意する。`work.commit` が通常の非ignore変更をすべてstageし、ignore対象を新規追加せず、既存の停止条件を維持することを確認する。既存の `work-commit` test群で確認した。
+- [x] 機械的処理の最終応答が固定出力と一致し、挨拶・言い換え・追記がないことを確認する。既存テストを優先し、単なる指示文の文字列一致だけでモデルの動作を検証済みとしない。
+- [x] `references/runtime-and-test-suites.md` に従い、反復中は `npm run test:miku-scm:fast`、スキル実装変更の引き渡し前には `npm run test:miku-scm:full` を実行する。契約対象を変更した場合は `node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs` で再生成し、同コマンドの `--check` で確認する。index等の生成物は既存の生成手順に従う。
+- [ ] Lunaを利用できる場合は、会話履歴なしの独立セッションで上記の代表経路を検証する。架空のrepo情報とtool応答、または隔離されたfixtureを用い、実GitHubへのpush・PR作成は行わない。実際のモデル識別子、実行環境、入力、呼び出し記録、最終出力、結果を記録する。現環境ではGPT-5.6 Lunaを独立実行する手段がないため未実施。
+- [x] `git diff --check` と関連diffを確認し、この節の実施済み項目だけチェックする。実装・自動テスト・Luna実行検証を分けて結果を記録する。この計画の実施だけを根拠にcommit/pushや配備を行わない。
+
+### 5. 別途検討する既知の論点
+
+- [ ] 既存PR下書きの「matching」がブランチ名・最新ファイルの選択に留まり、現在のbase・HEADとの対応を保証していない点を調査する。下書きと対象コミットを結び付ける案、既存下書きの移行、欠落・不一致時の扱いを別途提案する。今回の名称・指示整理に便乗してartifact契約や下書き再利用動作を変更しない。
+
 ## igapyon-miku-daybook 作成計画（Luna向け・2026-09-14）
 
 目的：daybookのtask・schedule・activity・day-planを、自然文の依頼から一貫したルールで管理できるスキルを作る。基本実装は完了し、受入検証・配備・commit/pushを残す。既存の他スキルの作業計画と未コミット変更は保持する。
