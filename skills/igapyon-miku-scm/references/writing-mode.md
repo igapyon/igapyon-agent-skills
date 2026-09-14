@@ -28,11 +28,14 @@ matching saved draft does not exist, prepare evidence, draft and save the PR
 text, and then enter recommit preflight. This implicit writing step does not
 authorize the local history rewrite.
 
-For the exact `miku-scm pr recommit push` request, first use READONLY
-recommit preflight. When its sole blocker is a missing branch-matching draft,
+For the exact `miku-scm draft recommit push` request, first use READONLY
+recommit preflight. The older `miku-scm pr recommit push` spelling is a
+compatible alias. When its sole blocker is a missing branch-matching draft,
 prepare evidence for exactly the resolved `<base>..HEAD` range, draft once,
 save only at `suggested_draft_path`, and then return to the fixed remote apply
 workflow in the same turn. Other blockers prevent both drafting and mutation.
+The workflow saves and consumes Pull Request text; it does not create the
+Pull Request on GitHub.
 
 Release mode requires an explicit start commit or range. A single Release
 start commit is inclusive through `HEAD`. About mode reads bounded repository

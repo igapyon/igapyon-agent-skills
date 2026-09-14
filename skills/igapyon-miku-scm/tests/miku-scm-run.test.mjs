@@ -1157,7 +1157,8 @@ test("recommit push runner requires one explicit apply request and returns one c
   assert.equal(calls.length, 1);
   assert.equal(calls[0].base, "");
   assert.equal(calls[0].prDraft, "");
-  assert.match(result.human_output, /^\[SUCCESS\] PR recommit push$/m);
+  assert.match(result.human_output, /^\[SUCCESS\] Draft recommit push$/m);
+  assert.match(result.human_output, /^Pull Request creation: not performed$/m);
   assert.match(result.human_output, /^Final branch: devel-test-done$/m);
 
   const rejected = await runWorkflow("pr.recommit.push", [

@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v9";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v10";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -27,7 +27,7 @@ const WORKFLOW_TITLES = Object.freeze({
   "pr.publish.apply": "PR publication",
   "pr.recommit.preflight": "PR recommit",
   "pr.recommit.apply": "PR recommit",
-  "pr.recommit.push": "PR recommit push",
+  "pr.recommit.push": "Draft recommit push",
   "version.status": "Version status",
   "version.increment.validate": "Version increment validation",
   "writing.issue.prepare": "Issue writing evidence",
@@ -288,8 +288,8 @@ function appendRecommitPush(lines, result) {
   lines.push(`Base: ${displayValue(result.base)}`);
   if (result.base_commit) lines.push(`Base commit: ${displayValue(result.base_commit)}`);
   lines.push(`Backup branch: ${displayValue(result.backup_branch)}`);
-  lines.push(`PR draft: ${displayValue(result.pr_draft)}`);
-  if (result.pr_draft_sha256) lines.push(`PR draft SHA-256: ${displayValue(result.pr_draft_sha256)}`);
+  lines.push(`Draft file: ${displayValue(result.pr_draft)}`);
+  if (result.pr_draft_sha256) lines.push(`Draft SHA-256: ${displayValue(result.pr_draft_sha256)}`);
   if (Number.isSafeInteger(result.commits_to_collapse)) {
     lines.push(`Commits to collapse: ${result.commits_to_collapse}`);
   }
@@ -299,9 +299,10 @@ function appendRecommitPush(lines, result) {
     lines.push(`Final branch: ${displayValue(result.final_branch)}`);
     lines.push(`Post-push comparison: ${displayValue(result.comparison)}`);
     lines.push(`Repository URL: ${displayValue(result.repository_url, "unresolved")}`);
-    lines.push(`PR lookup: ${displayValue(result.pr_lookup, "unresolved")}`);
-    if (result.pr_url) lines.push(`PR URL: ${displayValue(result.pr_url)}`);
-    else lines.push(`PR creation URL: ${displayValue(result.pr_creation_url, "unresolved")}`);
+    lines.push("Pull Request creation: not performed");
+    lines.push(`Pull Request lookup: ${displayValue(result.pr_lookup, "unresolved")}`);
+    if (result.pr_url) lines.push(`Pull Request URL: ${displayValue(result.pr_url)}`);
+    else lines.push(`Pull Request creation URL: ${displayValue(result.pr_creation_url, "unresolved")}`);
     lines.push(`Version: ${displayValue(result.version, "unresolved")}`);
     lines.push(`Recommended tag: ${displayValue(result.recommended_tag, "unresolved")}`);
   } else if (result.publication) {
@@ -466,7 +467,9 @@ export function renderHumanOutput({
   if ((workflow === "pr.publish.apply" || workflow === "pr.recommit.push" || workflow === "repository.post-merge.next-work")
     && result?.human_handoff) {
     lines.push("");
-    lines.push(displayValue(result.human_handoff));
+    lines.push(workflow === "pr.recommit.push"
+      ? "PR text draft saved; Pull Request and tag operations remain in GitHub."
+      : displayValue(result.human_handoff));
   }
   return `${lines.join("\n")}\n`;
 }

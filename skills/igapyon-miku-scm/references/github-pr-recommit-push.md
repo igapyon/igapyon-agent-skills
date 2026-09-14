@@ -1,7 +1,10 @@
-# PR Recommit Push
+# Draft Recommit Push
 
 `pr.recommit.push` is the fixed remote-mutation transition behind the exact
-user-facing command `miku-scm pr recommit push`. It is distinct from
+user-facing command `miku-scm draft recommit push`. The older
+`miku-scm pr recommit push` spelling is a compatible alias. In this command,
+`draft` means the Pull Request title and body text file; it does not mean that
+the workflow creates the Pull Request. It is distinct from
 `pr.recommit.apply`, which remains local-only.
 
 ## Invocation
@@ -20,20 +23,22 @@ same fixed resolver used by recommit preflight otherwise selects the safe base
 and latest branch-matching draft. A direct runner invocation with no matching
 draft stops before backup creation: the runner never invents PR prose.
 
-For the exact user request `miku-scm pr recommit push`, the Skill runs one
+For the exact user request `miku-scm draft recommit push` (or its compatible
+`miku-scm pr recommit push` spelling), the Skill runs one
 READONLY recommit preflight first. When the missing draft is the only blocker,
 it collects `writing.pr.prepare` evidence for exactly `<resolved-base>..HEAD`,
 drafts once, saves the returned `suggested_draft_path`, and immediately runs
 this fixed runner with the resolved base and saved draft. Any other preflight
 blocker stops the entire route before writing, backup, reset, or push. The
-exact `push` token authorizes this bounded preparation plus the remote
+exact compound request authorizes this bounded preparation plus the remote
 transition; a separate approval is not required after the backup succeeds.
 
 `--remote` defaults to `origin`. `pr recommit` and bare `recommit` never imply
 remote publication.
 
 The command does not create or merge a Pull Request, create or move a tag, or
-create a GitHub Release.
+create a GitHub Release. It only saves and consumes the Pull Request text,
+recommits the local branch, and pushes that branch.
 
 ## One-shot Safety Sequence
 

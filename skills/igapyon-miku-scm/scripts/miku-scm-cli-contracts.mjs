@@ -698,7 +698,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     },
   ),
   "pr.recommit.push": contract(
-    "Resolve the base and reviewed PR draft, then create a backup, recommit, and conditionally publish in one fixed transition.",
+    "Resolve the base and reviewed Pull Request text draft, then create a backup, recommit, and conditionally push in one fixed transition.",
     [
       repoPath,
       option("--remote", "<name>", "Git remote name.", { default: "origin" }),
@@ -712,8 +712,8 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       authentication: "existing Git authentication",
       operational_artifacts: ["local backup branch", "workplace/miku-scm/ok-push"],
       notes: [
-        "The explicit push request authorizes only this exact branch publication; it never creates a PR, tag, or Release.",
-        "No matching reviewed PR draft stops before backup creation; the runner never invents PR prose.",
+        "The explicit draft recommit push request authorizes only this exact branch publication; it never creates a Pull Request, tag, or Release.",
+        "No matching reviewed Pull Request text draft stops before backup creation; the runner never invents PR prose.",
         "Current apply support is macOS and native Windows; other platforms stop before backup creation.",
       ],
     },

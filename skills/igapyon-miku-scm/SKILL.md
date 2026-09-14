@@ -1,6 +1,6 @@
 ---
 name: igapyon-miku-scm
-description: Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, explicitly says `recommit` to invoke the miku-soft PR soft-reset recommit flow with implicit PR drafting, or explicitly asks to perform Git, GitHub writing, GitHub Release, repository-maintenance, or version-management work under miku-soft SCM rules. Supports PR, Release, About, and public GitHub Issue drafting; human-approved Issue and optional sub-Issue creation, title/body/existing-label updates, comments, standalone existing-label changes, and closure through narrowly documented `gh` workflows; PR soft-reset recommit; backup, branch-status, and three-stage local repository-maintenance workflows; date-based and Semantic Version increments; and READONLY version, tag, Release, and asset audits. Do not activate for generic Git or GitHub questions, ordinary repository inspection, or release-note writing outside an explicit miku-soft SCM request.
+description: Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, explicitly says `recommit` or `draft recommit push` to invoke the miku-soft PR-text drafting, soft-reset, and optional push flow, or explicitly asks to perform Git, GitHub writing, GitHub Release, repository-maintenance, or version-management work under miku-soft SCM rules. Supports PR-text, Release, About, and public GitHub Issue drafting; human-approved Issue and optional sub-Issue creation, title/body/existing-label updates, comments, standalone existing-label changes, and closure through narrowly documented `gh` workflows; PR soft-reset recommit; backup, branch-status, and three-stage local repository-maintenance workflows; date-based and Semantic Version increments; and READONLY version, tag, Release, and asset audits. Do not activate for generic Git or GitHub questions, ordinary repository inspection, or release-note writing outside an explicit miku-soft SCM request.
 ---
 
 # igapyon-miku-scm
@@ -11,7 +11,7 @@ operations, and exceptions; migrated workflows execute through the fixed runner.
 
 ## Current Scope
 
-Support repository status and maintenance; PR, Release, About, and Issue work;
+Support repository status and maintenance; PR-text, Release, About, and Issue work;
 recommit, publication, backup, and post-merge work; version and release audits;
 and deterministic READONLY, preflight, and apply workflows.
 
@@ -19,6 +19,11 @@ and deterministic READONLY, preflight, and apply workflows.
 
 If no concrete SCM task is given, acknowledge activation and ask what is wanted.
 Do not inspect the repository or load detailed references yet.
+
+In this Skill, `draft` means composing and saving the Pull Request title and
+body as a text file. `draft recommit push` writes that text, uses it for the
+recommit, and pushes the branch; it does not create or merge a Pull Request on
+GitHub. The older `pr recommit push` spelling remains a compatible alias.
 
 ## Runtime Kernel
 
@@ -46,8 +51,9 @@ Do not inspect the repository or load detailed references yet.
    keep a one-commit branch as a single-commit PR. Explicit commits and ranges
    always win. This routing authorizes preparation only; preserve the explicit
    approval gate before the local history rewrite.
-   Treat exact `pr recommit push` as the separate remote workflow. First run
-   one READONLY `pr.recommit.preflight`. If it has any blocker other than
+   Treat exact `draft recommit push` as the separate remote workflow. The older
+   exact `pr recommit push` spelling is a compatible alias. First run one
+   READONLY `pr.recommit.preflight`. If it has any blocker other than
    `PR draft is unresolved or missing`, return that fixed stop without
    drafting or mutation. If it has a matching draft and no blocker, invoke
    `pr.recommit.push --base <resolved-base> --pr-draft <resolved-draft>
@@ -56,9 +62,9 @@ Do not inspect the repository or load detailed references yet.
    that evidence, save it at the returned `suggested_draft_path`, then invoke
    the same fixed push workflow with that exact base and saved draft in the
    same user turn. The runner never invents PR prose; this Skill-only writing
-   fallback supplies the reviewed artifact it requires. Its exact `push`
-   token authorizes this bounded draft preparation and the fixed
-   recommit-and-publication transition. Do not route bare `recommit` or
+   fallback supplies the reviewed artifact it requires. The exact compound
+   request authorizes this bounded draft preparation and the fixed
+   recommit-and-branch-push transition. Do not route bare `recommit` or
    `pr recommit` to it.
    Route exact `miku-scm git add commit` to `work.commit --apply`. When the
    current user request or current TODO heading identifies the work, pass that
@@ -82,9 +88,10 @@ Do not inspect the repository or load detailed references yet.
    publication, and version change each require the matching explicit request
    and workflow gate. Approval never transfers between workflows.
 7. Before tracked-content mutation or an ordinary commit, inspect the current
-   branch and worktree. Do not mutate a `-done` branch. Preserve unrelated
-   changes. Operational drafts and workflows with their own branch checks keep
-   those documented rules.
+   branch and worktree. Do not mutate a `-done` branch or discard unrelated
+   changes. For `work.commit`, ordinary non-ignored changes are all in scope
+   even when they are unrelated to the current request; operational drafts and
+   workflows with their own branch checks keep those documented rules.
 8. A standalone apply must consume the unchanged reviewed artifact and
    expected digest when its workflow defines one. In an exact ordered batch,
    a later mutation for the same Issue may use the fixed preflight helper to
@@ -93,8 +100,12 @@ Do not inspect the repository or load detailed references yet.
    draft and digest, requested labels, close reason, duplicate target, and
    workflow contract must remain byte-for-byte equivalent. Never retry an
    unresolved mutation automatically.
-9. Report inspected, changed, and pending work. Keep tag recommendation
-   separate from tag mutation; normal tag handoff is GitHub's Release UI.
+9. For every mechanical workflow, the runner's `human_output` is the complete
+   final response. Return it unchanged and add no greeting, paraphrase,
+   summary, or separate completion report. The fixed output itself reports
+   inspected, changed, and pending work where applicable. Keep tag
+   recommendation separate from tag mutation; normal tag handoff is GitHub's
+   Release UI.
 10. Route an exact `miku-scm pending` request to
    `github.issue.handoff.list`. After a reviewed Issue preflight, an exact
    `miku-scm approve` request routes to `github.issue.handoff.apply --apply`
@@ -124,7 +135,7 @@ Do not inspect the repository or load detailed references yet.
     later handoff. Preserve a delegate `conflict` as a distinct terminal state.
 
 Mechanical workflows retrieve, validate, mutate, and render stable results.
-Writing mode is limited to evidence-based Issue, PR, Release, About, and
+Writing mode is limited to evidence-based Issue, PR-text, Release, About, and
 comment prose. Route normal writing evidence collection through
 `writing.issue.prepare`, `writing.pr.prepare`, `writing.release.prepare`, or
 `writing.about.prepare`. Draft once from that structured evidence and the
