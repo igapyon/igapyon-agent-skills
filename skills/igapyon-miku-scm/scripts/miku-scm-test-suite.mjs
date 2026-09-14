@@ -17,7 +17,7 @@ const SLOW_SHARDS = new Map([
     "^(?:push failure|post-push)",
   ]],
   ["repository-maintenance.test.mjs", [
-    "^(?:argument parser|backup name|diagnosis keeps|backup reachability)",
+    "^(?:argument parser|backup name|maintenance plan repository paths|diagnosis keeps|backup reachability)",
     "^(?:diagnosis classifies|diagnosis queries|publication provenance|one hundred)",
     "^(?:gh failure|gh timeout|open or mismatched|current done)",
     "^(?:saved plan|apply rejects|apply rechecks|apply stops)",

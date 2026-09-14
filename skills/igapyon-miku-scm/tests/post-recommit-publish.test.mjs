@@ -79,6 +79,11 @@ function optionsFor(state, ...extra) {
 }
 
 const applyDependencies = { platform: "darwin", fetchImpl: null };
+const windowsApplyDependencies = { platform: "win32", gh: null };
+const nativeApplyDependencies = {
+  platform: process.platform === "win32" ? "win32" : "darwin",
+  gh: null,
+};
 
 test("post-merge tag lookup keeps all advisory states distinct", () => {
   const base = "a".repeat(40);
@@ -421,6 +426,44 @@ test("apply publishes a new branch and renames locally only after equality", asy
   assert.equal(git(state.remote, "rev-parse", `refs/heads/${state.branch}`), state.expectedHead);
 });
 
+test("apply publishes on Windows and renames after equality", async (t) => {
+  const state = await scenario(t);
+  const result = await runPublish(
+    optionsFor(state, "--expect-new-remote-branch", "--apply"),
+    windowsApplyDependencies,
+  );
+
+  assert.equal(result.status, "published");
+  assert.equal(result.push_mode, "new-branch");
+  assert.equal(result.comparison, "0 0");
+  assert.equal(git(state.remote, "rev-parse", `refs/heads/${state.branch}`), state.expectedHead);
+  assert.equal(git(state.repo, "branch", "--show-current"), `${state.branch}-done`);
+});
+
+test("apply publishes on the native platform and verifies the remote", async (t) => {
+  const state = await scenario(t);
+  const result = await runPublish(
+    optionsFor(state, "--expect-new-remote-branch", "--apply"),
+    nativeApplyDependencies,
+  );
+
+  assert.equal(result.status, "published");
+  assert.equal(result.platform, nativeApplyDependencies.platform);
+  assert.equal(result.comparison, "0 0");
+  assert.equal(git(state.remote, "rev-parse", `refs/heads/${state.branch}`), state.expectedHead);
+  assert.equal(git(state.repo, "branch", "--show-current"), `${state.branch}-done`);
+});
+
+test("apply stops before push on unsupported platform", async (t) => {
+  const state = await scenario(t);
+  await assert.rejects(
+    runPublish(optionsFor(state, "--expect-new-remote-branch", "--apply"), { platform: "linux" }),
+    /macOS and Windows/,
+  );
+  assert.equal(git(state.remote, "branch", "--list", state.branch), "");
+  assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
+});
+
 test("apply uses the reviewed remote SHA as an explicit force-with-lease", async (t) => {
   const state = await scenario(t, { existingRemoteBranch: true });
   const calls = [];
@@ -438,6 +481,27 @@ test("apply uses the reviewed remote SHA as an explicit force-with-lease", async
   assert.equal(result.push_mode, "force-with-explicit-lease");
   assert.ok(calls.some((args) => args.includes(`--force-with-lease=${destination}:${state.expectedRemoteHead}`)));
   assert.ok(calls.some((args) => args.includes(`HEAD:${destination}`)));
+  assert.ok(calls.every((args) => !args.includes("--force")));
+  assert.equal(git(state.remote, "rev-parse", destination), state.expectedHead);
+  assert.equal(git(state.repo, "branch", "--show-current"), `${state.branch}-done`);
+});
+
+test("apply uses an explicit force-with-lease on Windows for an existing branch", async (t) => {
+  const state = await scenario(t, { existingRemoteBranch: true });
+  const calls = [];
+  const windowsGit = createGitRunner({ platform: "win32" });
+  const recordingGit = (cwd, args, options) => {
+    calls.push(args);
+    return windowsGit(cwd, args, options);
+  };
+  const result = await runPublish(
+    optionsFor(state, "--expected-remote-head", state.expectedRemoteHead, "--apply"),
+    { ...windowsApplyDependencies, git: recordingGit },
+  );
+  const destination = `refs/heads/${state.branch}`;
+  assert.equal(result.status, "published");
+  assert.equal(result.push_mode, "force-with-explicit-lease");
+  assert.ok(calls.some((args) => args.includes(`--force-with-lease=${destination}:${state.expectedRemoteHead}`)));
   assert.ok(calls.every((args) => !args.includes("--force")));
   assert.equal(git(state.remote, "rev-parse", destination), state.expectedHead);
   assert.equal(git(state.repo, "branch", "--show-current"), `${state.branch}-done`);

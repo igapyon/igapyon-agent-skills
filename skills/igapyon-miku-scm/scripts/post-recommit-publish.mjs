@@ -7,7 +7,8 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
-import { normalizeOperationalPath, relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+import { createGhCommandRunner, createGitCommandRunner } from "./miku-scm-command-runner.mjs";
+import { isPathWithin, normalizeOperationalPath, relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const SHA_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i;
 const PUBLISH_APPLY_CONTRACT = workflowContractById().get("pr.publish.apply");
@@ -138,7 +139,9 @@ async function loadPlan(options) {
   const root = await realpath(options.repo);
   const file = path.resolve(root, options.applyPlan);
   const directory = await realpath(planDirectory(root));
-  if (!file.startsWith(`${directory}${path.sep}`)) throw new Error("Plan path escapes the plan directory");
+  if (!isPathWithin(directory, file)) throw new Error("Plan path escapes the plan directory");
+  const realFile = await realpath(file);
+  if (!isPathWithin(directory, realFile)) throw new Error("Plan path escapes the plan directory");
   const content = await readFile(file, "utf8");
   if (sha256(content) !== options.expectedPlanSha256.toLowerCase()) throw new Error("Publication plan SHA-256 changed");
   const plan = JSON.parse(content);
@@ -149,27 +152,14 @@ async function loadPlan(options) {
     || plan.contract_pair_sha256 !== PUBLISH_APPLY_CONTRACT.pair_sha256) {
     throw new Error("Publication plan workflow contract changed; run preflight again");
   }
-  return { root, file, plan };
+  return { root, file: realFile, plan };
 }
 
-export function createGitRunner() {
-  return (cwd, args, options = {}) => {
-    const result = spawnSync("git", args, {
-      cwd,
-      encoding: "utf8",
-      maxBuffer: 20 * 1024 * 1024,
-    });
-    const response = {
-      ok: result.status === 0,
-      status: result.status,
-      stdout: (result.stdout || "").trimEnd(),
-      stderr: (result.stderr || "").trimEnd(),
-    };
-    if (!response.ok && !options.allowFailure) {
-      const message = response.stderr || response.stdout;
-      throw new Error(`git ${args.join(" ")} failed${message ? `: ${message}` : ""}`);
-    }
-    return response;
+export function createGitRunner(options = {}) {
+  const runner = createGitCommandRunner({ ...options, spawn: options.spawn ?? spawnSync });
+  return (cwd, args, runnerOptions = {}) => {
+    const result = runner(cwd, args, runnerOptions);
+    return { ...result, stdout: result.stdout.trimEnd(), stderr: result.stderr.trimEnd() };
   };
 }
 
@@ -308,10 +298,11 @@ async function resolveRecommendedTag(root, git) {
   return { version, tag: "unresolved" };
 }
 
-function createGhRunner() {
+function createGhRunner(options = {}) {
+  const runner = createGhCommandRunner({ ...options, spawn: options.spawn ?? spawnSync });
   return (args) => {
-    const result = spawnSync("gh", args, { encoding: "utf8", maxBuffer: 1024 * 1024 });
-    return { ok: result.status === 0, stdout: (result.stdout || "").trim(), stderr: (result.stderr || "").trim(), error: result.error };
+    const result = runner(process.cwd(), args, { allowFailure: true });
+    return { ok: result.ok, stdout: result.stdout.trim(), stderr: result.stderr.trim(), error: result.error };
   };
 }
 
@@ -363,7 +354,7 @@ function preflightApplyArguments(options, head, actualRemoteHead) {
 export async function runPublish(options, dependencies = {}) {
   const git = dependencies.git ?? createGitRunner();
   const platform = dependencies.platform ?? process.platform;
-  const gh = Object.hasOwn(dependencies, "gh") ? dependencies.gh : createGhRunner();
+  const gh = Object.hasOwn(dependencies, "gh") ? dependencies.gh : createGhRunner({ platform, spawn: dependencies.spawn });
   const root = gitText(git, options.repo, ["rev-parse", "--show-toplevel"]);
   const branch = gitText(git, root, ["branch", "--show-current"], { allowFailure: true });
   if (!branch) throw new Error("Current branch is detached or unresolved");
@@ -395,6 +386,7 @@ export async function runPublish(options, dependencies = {}) {
     repository: path.basename(root),
     branch,
     remote: options.remote,
+    platform,
     upstream: upstream || "none",
     head,
     remote_branch: initialRemoteHead
@@ -413,8 +405,8 @@ export async function runPublish(options, dependencies = {}) {
     };
   }
 
-  if (platform !== "darwin") {
-    throw new Error(`Apply mode is supported only on macOS; current platform is ${platform}`);
+  if (platform !== "darwin" && platform !== "win32") {
+    throw new Error(`Apply mode is supported only on macOS and Windows; current platform is ${platform}`);
   }
 
   gitText(git, root, ["fetch", options.remote]);

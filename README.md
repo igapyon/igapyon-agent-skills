@@ -293,6 +293,10 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 
   miku-soft project の新規作成・既存保守ワークフロー向け。skill の利用を明示的に指定した場合のみ利用し、miku-soft 作成・保守の相談だけでは存在案内に留める。
 
+- `igapyon-miku-daybook`
+
+  daybook repository の activity・schedule・task・day-plan の追加、更新、一覧、生成確認向け。`miku-daybook` または `igapyon-miku-daybook` の明示、または daybook の記録管理が明確な場合に利用する。Git操作やGitHub通知の変更は、別途明示された場合だけ扱う。
+
 - `igapyon-mikuku-agent`
 
   日本語キャラクター agent `みくく` として応答するための会話スタイル向け。明示的に指定した場合に利用する。

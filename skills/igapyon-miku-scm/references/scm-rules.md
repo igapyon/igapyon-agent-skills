@@ -120,7 +120,7 @@ git log -1 | head -n 20
 - Run this post-check only after successful recommit. If recommit fails, report the failure instead of presenting the previous commit log as the new result.
 - Do not push or create a Pull Request as part of this delegated workflow.
 
-## One-Shot PR Recommit Push On macOS
+## One-Shot PR Recommit Push On macOS or Windows
 
 Use the fixed `pr.recommit.push` runner workflow after the reviewed PR draft is
 available. It validates the local candidate and fixes the remote branch state
@@ -133,10 +133,10 @@ a remote mutation and leaves the ordinary work branch checked out. Do not retry
 or force-push automatically. Use the reported backup and candidate HEAD for a
 separately authorized recovery.
 
-Current apply support is macOS only. Other platforms stop before backup; do not
-remove that guard until the shared Windows platform migration is complete.
+Current apply support covers macOS and native Windows. Linux, WSL-as-Linux, and
+other platforms stop before backup; retain that guard for unsupported platforms.
 
-## Human-Approved Post-Recommit Publication On macOS
+## Human-Approved Post-Recommit Publication On macOS or Windows
 
 After a successful PR Soft Reset Recommit and the required `git log -1 | head -n 20` display, stop and wait for the human to inspect the commit log.
 
@@ -144,7 +144,7 @@ Use [github-post-recommit-publish.md](github-post-recommit-publish.md) and the b
 
 Proceed only when all of these conditions hold:
 
-- the environment is macOS
+- the environment is macOS or native Windows
 - the working tree is clean
 - the human explicitly says the displayed commit is OK and authorizes publication
 - the target `<current-branch>-done` local branch does not already exist

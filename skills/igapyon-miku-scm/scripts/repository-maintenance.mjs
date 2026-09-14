@@ -122,6 +122,13 @@ function gitText(git, root, args, options) {
   return git(root, args, options).stdout.trim();
 }
 
+export function repositoryPathsEqual(left, right, pathApi = path) {
+  const leftResolved = pathApi.resolve(String(left));
+  const rightResolved = pathApi.resolve(String(right));
+  if (pathApi.sep === "\\") return leftResolved.toLowerCase() === rightResolved.toLowerCase();
+  return leftResolved === rightResolved;
+}
+
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -463,7 +470,8 @@ async function loadPlan(options) {
   const content = await readFile(file, "utf8");
   if (sha256(content) !== options.expectedPlanSha256.toLowerCase()) throw new Error("Maintenance plan SHA-256 changed");
   const plan = JSON.parse(content);
-  if (plan?.schema_version !== 1 || plan.repository !== root || !REMOTE.test(plan.remote)
+  if (plan?.schema_version !== 1 || typeof plan.repository !== "string" || !repositoryPathsEqual(plan.repository, root)
+    || !REMOTE.test(plan.remote)
     || !Array.isArray(plan.candidates) || plan.candidates.some((candidate) => !SHA.test(candidate?.object || "")
       || !validBranchName(candidate?.branch) || candidate?.ref !== `refs/heads/${candidate.branch}`
       || !["done", "backup"].includes(candidate?.kind)
