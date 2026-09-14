@@ -1,0 +1,11 @@
+{
+ "generator": "miku-indexgen",
+ "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
+ "basePath": ".",
+ "files": [
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":3528,"description":"Use for managing an igapyon daybook repository's activity, schedule, task, and day-plan records when the user names this skill or clearly asks to manage that daybook. Do not use for generic TODO lists, public diary writing, or Git operations unless the ...","summary":"igapyon-miku-daybook"},
+  {"name":"notification.md","path":"references/notification.md","ext":"md","dir":"references","size":3215,"summary":"Daybook notification workflow"},
+  {"name":"operations.md","path":"references/operations.md","ext":"md","dir":"references","size":5051,"summary":"Daybook operations"},
+  {"name":"records.md","path":"references/records.md","ext":"md","dir":"references","size":3655,"summary":"Daybook record contract"}
+ ]
+}

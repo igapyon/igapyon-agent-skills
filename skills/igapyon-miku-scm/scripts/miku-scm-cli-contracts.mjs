@@ -714,7 +714,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       notes: [
         "The explicit push request authorizes only this exact branch publication; it never creates a PR, tag, or Release.",
         "No matching reviewed PR draft stops before backup creation; the runner never invents PR prose.",
-        "Current apply support is macOS only; other platforms stop before backup creation.",
+        "Current apply support is macOS and native Windows; other platforms stop before backup creation.",
       ],
     },
   ),

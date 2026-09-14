@@ -105,12 +105,12 @@ export async function runRecommitPush(options, dependencies = {}) {
   const recommit = dependencies.recommit ?? runRecommit;
   const publish = dependencies.publish ?? runPublish;
   const publishExecute = dependencies.publishExecute ?? executePublish;
-  const recommitDependencies = dependencies.recommitDependencies;
+  const recommitDependencies = { ...dependencies.recommitDependencies, platform };
   const publishDependencies = { ...dependencies.publishDependencies, platform };
 
-  if (platform !== "darwin") {
+  if (platform !== "darwin" && platform !== "win32") {
     throw asFailure(
-      new Error(`pr.recommit.push apply is supported only on macOS; current platform is ${platform}`),
+      new Error(`pr.recommit.push apply is supported only on macOS and Windows; current platform is ${platform}`),
       false,
     );
   }

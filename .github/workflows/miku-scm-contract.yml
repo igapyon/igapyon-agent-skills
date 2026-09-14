@@ -40,4 +40,6 @@ jobs:
           distribution: temurin
           java-version: "17"
       - run: mvn --version
-      - run: npm run test:miku-scm:fast
+      - run: npm run test:miku-scm:full
+      - run: node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs --check
+      - run: git diff --check

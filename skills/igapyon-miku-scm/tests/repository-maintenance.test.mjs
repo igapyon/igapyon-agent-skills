@@ -11,6 +11,7 @@ import {
   diagnose,
   parseArgs,
   parseBackupName,
+  repositoryPathsEqual,
   saveMaintenancePlan,
 } from "../scripts/repository-maintenance.mjs";
 
@@ -89,6 +90,12 @@ test("backup name parser validates JST calendar values and collision suffixes", 
   assert.equal(parseBackupName("backup/2026-02-30-1230"), null);
   assert.equal(parseBackupName("backup/custom"), null);
   assert.equal(parseBackupName("backup/2026-07-27-1230-1"), null);
+});
+
+test("maintenance plan repository paths accept Windows separators and case", () => {
+  assert.equal(repositoryPathsEqual("D:/a/project", "d:\\a\\project", path.win32), true);
+  assert.equal(repositoryPathsEqual("D:/a/project", "D:/a/project-other", path.win32), false);
+  assert.equal(repositoryPathsEqual("/tmp/project", "/tmp/project", path.posix), true);
 });
 
 test("diagnosis keeps newest three backups and selects only older remaining backups", async (t) => {

@@ -10,6 +10,7 @@ import {
   runRecommit,
 } from "../scripts/pr-soft-reset-recommit-preflight.mjs";
 import {
+  isPathWithin,
   normalizeOperationalPath,
   relativeOperationalPath,
 } from "../scripts/miku-scm-operational-path.mjs";
@@ -156,4 +157,12 @@ test("operational paths are serialized with POSIX separators", () => {
     relativeOperationalPath("ignored", "ignored", { relative: () => windowsRelative }),
     expected,
   );
+});
+
+test("path containment handles Windows drive paths and sibling prefixes", () => {
+  const windows = path.win32;
+  assert.equal(isPathWithin("C:\\Work\\repo", "C:\\Work\\repo\\workplace\\draft.md", windows), true);
+  assert.equal(isPathWithin("C:\\Work\\repo", "C:\\Work\\repository-secret\\draft.md", windows), false);
+  assert.equal(isPathWithin("C:\\Work\\repo", "D:\\Work\\repo\\draft.md", windows), false);
+  assert.equal(isPathWithin("C:\\Work\\repo", "C:\\Work\\repo\\..\\secret.md", windows), false);
 });

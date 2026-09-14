@@ -1,5 +1,85 @@
 # TODO
 
+## igapyon-miku-daybook 作成計画（Luna向け・2026-09-14）
+
+目的：daybookのtask・schedule・activity・day-planを、自然文の依頼から一貫したルールで管理できるスキルを作る。基本実装は完了し、受入検証・配備・commit/pushを残す。既存の他スキルの作業計画と未コミット変更は保持する。
+
+実装済み：`SKILL.md`、3つのreference、`agents/openai.yaml`、生成`index.json`、READMEのskill一覧を追加した。`quick_validate.py`、`mvn generate-resources`、`git diff --check`は成功。forward test、Codex配備、commit/pushは未実施。
+
+### 0. 作成先と初版の範囲
+
+- [x] 正式名、ディレクトリ名、front matterの`name`を`igapyon-miku-daybook`で統一する。呼び出し用の短縮名は`miku-daybook`。`miku-daybook-skills`は将来独立リポジトリを作る場合の候補名であり、今回はリポジトリを新設しない。
+- [x] 作成先は`skills/igapyon-miku-daybook/`。対象データは姉妹リポジトリ`../daybook/`。実行時はユーザー指定の対象パスを優先し、READMEと記録構成を確認する。ユーザー固有の絶対パスをスキルへ埋め込まない。
+- [x] 初版は指示・参照資料を中心にする。通常のMarkdown編集はAgentが行い、day-planの機械的生成はdaybook側の既存スクリプトを使う。新規CLI、MCPサーバー、Office変換、独立した通知システムは作らない。
+- [x] Issueとtaskの双方向同期は検討段階のまま対象外とする。通常の記録依頼をcommit・push・Issue投稿・メール送信の依頼と扱わない。明示されたGit操作は利用可能なmiku-scmへ引き継ぐ。
+
+### 1. 実装開始時の確認
+
+- [x] このリポジトリのREADME、GOAL、TODO、DECISIONS、HANDOFFとGit状態を読み、今回の作業と既存SCM改善作業を区別する。`-done`ブランチや未コミット変更がある場合、適用される作業ブランチの運用に従い、既存変更を巻き込まない。
+- [x] `../daybook/README.md`を運用ルールの正本として読む。全年月の記録配置を確認し、task・schedule・activity・day-planの代表例を読む。月ごとの一覧だけから全件と判断しない。
+- [x] `../daybook/scripts/day-plan.mjs`、`generate-day-plan.mjs`、`post-day-plan.mjs`と対応テスト、package.json、`.github/workflows/day-plan-notify.yml`を確認する。現在の機能と未実装機能を区別する。
+- [x] スキル作成環境の`skill-creator`を参照する。既存の`igapyon-diary-writer`は別リポジトリの公開日記用なので、名前と発火条件を混同しない。
+
+### 2. 成果物を作る
+
+- [ ] `SKILL.md`：目的、対象repoの決定、発火条件、操作の振り分け、正本の優先順、編集後の確認を短く記載する。descriptionでは正式名・短縮名による依頼、および対象がdaybookと明確な記録管理を扱う。一般的なTODO相談や別のdiary管理を無条件で引き受けない。スキル自体の命名相談・説明・作成は管理操作と区別する。
+- [ ] `references/records.md`：配置、命名、採番、front matter、状態、日付解釈、リンク更新、4種類の最小記録例を書く。例は架空のものにし、実在の領収書・口座・メール本文などをコピーしない。
+- [ ] `references/operations.md`：task追加・更新・一覧、scheduleの追加・訂正、activityの追記、day-plan生成の手順と完了判定を書く。以下の仕様と受入ケースを反映する。
+- [ ] `references/notification.md`：既存ActionsとIssue通知の仕組み、設定箇所、実行履歴→投稿結果→メール受信の切り分けを書く。通知相談時だけ読む参照先とし、毎回読み込ませない。
+- [ ] `SKILL.md`から各referenceを読む条件を明記する。daybook READMEと説明が食い違う場合はユーザーの最新指示を優先し、現行README・実装を確認して差異を報告する。個人のタスク本文や変更されやすい設定値をスキルの固定仕様として持たない。
+- [ ] UI metadataを作る場合はskill-creatorの`references/openai_yaml.md`を読んで整合させる。単に既存スキルが明示呼び出し中心だからという理由で、非表示につながるdiscovery設定を追加しない。
+
+### 3. 記録の配置・データ契約
+
+- [ ] `YYYY/YYYYMM/activities/activity-YYYYMMDD.md`は活動日ごとに1ファイル。`schedules/schedule-YYYYMMDD-name.md`は予定1件につき1ファイル。`tasks/task-YYYYMM-NNNNN-name.md`はタスク1件につき1ファイル。`day-plan/day-plan-YYYYMMDD.md`は対象日のスナップショット。
+- [ ] taskは作成月に置き続け、scheduleは開催月、activityは活動月、day-planは対象月に置く。9月作成の10月期限taskを10月へ移動しない。予定の開催月変更ではファイル移動と参照元リンク修正を行う。
+- [ ] taskのIDは`task-YYYYMM-NNNNN`。月内5桁連番を既存ファイルとGit履歴の使用済み最大値から採番する。削除・欠番の再利用、既存IDの詰め直しをしない。履歴が不足して最大値を確定できなければ、その不足を明示する。
+- [ ] task必須項目は`type/id/status/created`。任意項目は`planned_date/planned_action/planned_week/due/due_month/completed`。activityは`type/date`、scheduleは`type/date`と必要な`start/end/doors`、day-planは`type/date/generated`を使う。日付は`YYYY-MM-DD`、時刻は引用符付き文字列。
+- [ ] `todo/in_progress/done/cancelled`と本文の状態チェック欄を一致させる。元ネタ作成、送付、資料完成などの部分進捗を区別し、報告された工程だけをチェックする。完了日はユーザーの報告と対象日に基づく。
+- [ ] 今日・明日はAsia/Tokyoで解釈し、対象日を出力する。年の省略は会話の対象年に基づく。月しかない期限は`due_month`に保存し、勝手に月末へ変換しない。EODや午前中などの指定は本文にも残し、時刻を推測しない。
+
+### 4. 操作ごとの手順
+
+- [ ] task追加：「TODO追加」であっても具体的な作業なら個別taskへ登録する。アイデア段階の検討はTODOへ置く。既存の同じ作業を確認してから新規採番し、ユーザーがまとめると指定した内訳は1件のチェックリストにする。
+- [ ] task更新：IDで対象を特定し、状態・着手日・期限・本文の該当箇所を整合させる。短いIDが複数月で一致する場合は月やタイトルで特定する。作成日とIDを変更しない。
+- [ ] task一覧：列を`ID / Status / Start / Due / Title`にする。Startは`planned_date`、Dueは`due`、なければ`due_month`、未設定は`—`。原則全年月から未完了を表示し、完了を含む指定にも対応する。複数月の場合は完全なIDを表示する。7日間制限は通常のタスク一覧へ適用しない。
+- [ ] schedule追加・変更：開催日、時刻、会場、参加状況、元資料へのリンクを記録する。同日でも別イベントは別ファイル。参加取消し・別公演への変更では関連準備taskとリンクを確認し、購入済みと申込済みを混同しない。
+- [ ] activity追記：その日の既存ファイルに実施事実を追記する。一つの出来事の場所・楽器・内容を一つの項目にまとめる。タスク作業の記録依頼ならIDまたは相対リンクを付ける。task完了を推測しない。
+- [ ] 入力メールやイベント資料：必要な要点と元URLを記録し、原文と要約を区別する。貼り付け済み内容で足りる記録では外部アクセスを前提にしない。URLだけの依頼で内容を取得できない場合は、不明項目を創作しない。
+- [ ] 編集後：YAML、IDとファイル名、日付、チェック欄、相対リンク、Git差分を確認する。変更したファイルと要点を短く伝える。一覧の依頼だけでデータ修正しない。
+
+### 5. day-planと通知の扱い
+
+- [ ] 対象日から+6日までの7日間を扱う。未完了taskの当日`planned_date`を今日の実施項目、範囲内`due`を近い期限、未来の`planned_date`を近々の実施予定、範囲内scheduleを近々の予定、期間が重なる`planned_week`を実施予定週として表示する。
+- [ ] 完了・中止、期限超過だけのtask、期限未定だけのtask、対象日+7日以降だけの情報は現行day-planには含めない。月期限を日付期限に補完しない。この抽出は生成AIなしで動くことを説明する。
+- [ ] repoルートで`node scripts/generate-day-plan.mjs --date YYYY-MM-DD --output-root workplace/generated`を利用する。手書きday-planを自動で上書きせず、ユーザーが正式配置への作成を依頼した場合だけ配置・リンクを確認する。生成物よりtask/scheduleを正本とする。
+- [ ] Actionsは現在JST 06:00/12:00/18:00、UTC cronは`0 21 * * *`、`0 3 * * *`、`0 9 * * *`。READMEとworkflowから実行時に再確認する。既定ブランチへの反映が必要で、実行・配送の定刻保証はしない。
+- [ ] 通知設定はRepository variablesの`DAYBOOK_ISSUE_NUMBER`と`DAYBOOK_NOTIFY_ENABLED`。現行Issue #3やメンション先を他repoへ決め打ちしない。コメントの重複判定は日付＋実行枠、手動はmanual。生成成功、Issue投稿成功、メール受信成功を分けて報告する。
+
+### 6. 既知の差異を実装判断に反映する
+
+- [ ] task 00014の`planned_date: 2026-09-30`は実装完了目標として登録されており、READMEのStart＝着手日と意味がずれる。初版ではこの登録例を一般化しない。実装完了目標と最終移行期限は本文で区別し、既存データの修正・マイルストーン項目追加は別の変更として扱う。
+- [ ] task 00003は依頼に「9/15 EOD」があるが現行front matterは日付のみ。新しい記録では本文にEODを保存する。既存データの修正はスキル作成に便乗して実行しない。
+- [ ] `loadRecords`はrepo全体を再帰探索しており、検証用のtasks/schedulesがworkplace等にあると拾う可能性がある。正式な記録範囲を確認し、受入fixtureはdaybookの外に作る。探索範囲のコード修正が必要ならdaybook側の別タスクとして記録する。
+
+### 7. 受入検証
+
+- [ ] 仮データの一時Gitリポジトリを作り、読み取り用の正本と編集結果を比較する。実タスク、実Issue、実メールを検証で変更しない。
+- [ ] 9月に10/31期限taskを追加→9月tasksへ保存。10月scheduleを追加→10月schedulesへ保存。削除済み00002と現存00003を含む履歴→00004以降へ採番。月間重複IDでは対象を誤更新しない。
+- [ ] 「9/14着手、9/18期限」→StartとDueを分離。「9/15 EOD」→日付と本文修飾を保持。「10月まで」→月期限として扱う。実装目標と移行期限を着手日に混ぜない。
+- [ ] 「ドラフト送付済み」→部分進捗のみ更新。「今日のactivityにも」→当日に追記。「午後、会場で合奏、バイオリン」→一つの活動項目。「一覧」→5列、未設定`—`、月跨ぎ表示、ファイル変更なし。
+- [ ] day-planは対象日と+6日を含み、+7日と完了・中止を除外。月末・年末の範囲、予定週の重なり、相対リンク、既存の手書きday-plan保持を確認する。既存テストを使える部分は再利用し、スキルの文言一致だけのテストを量産しない。
+- [ ] 「このスキル名は妥当？」、公開diaryの執筆、単なる一般TODO相談でdaybookの変更を始めないことを確認する。スキル単体の記録操作とSCM・外部通知の依頼を区別できることを確認する。
+- [ ] `skill-creator`の`quick_validate.py`でスキルを検証する。全referenceの導線、未置換テンプレート、個人情報混入、絶対パスの固定、未実装機能の断定がないことを確認する。
+
+### 8. 登録と完了条件
+
+- [ ] このrepoのREADMEのスキル一覧に名前・用途を追記する。indexが必要な箇所は既存の`miku-indexgen`手順で生成し、手書きしない。関係のないスキルや外部skill lockを更新しない。
+- [ ] `git diff --check`と受入検証の結果をこの節に残し、実施済みだけチェックする。スキル作成完了とCodexへの配備、commit/push、通知実機確認は別々に報告する。
+- [ ] 配備を依頼された場合は`sh scripts/sync-codex-skill.sh igapyon-miku-daybook`と`--check`を使う。配備先への書き込み権限と既存差分を確認する。
+- [ ] 完了条件：Lunaが会話履歴なしでSKILL.mdから必要なreferenceを選べ、追加・期限更新・部分進捗・活動記録・5列一覧・7日間day-plan生成を正しく実行できる。仕様上の差異と未実装事項を完成済みとして扱わない。
+
+
 - [ ] 必要性が明確になったら writer skill を追加する
 - [ ] skill 配布先が必要になったら mirror 方針を決める
 - [ ] UI metadata が必要になったら skill 用の `agents/openai.yaml` を検討する
@@ -137,6 +217,11 @@ This section tracks active work items for AI agents.
 Update this section while working. Do not rewrite unrelated TODO items.
 
 ### Tasks
+
+- [ ] miku-scm Windows 11 publication 対応
+  - [詳細実装計画](WINDOWS11-PUSH-PLAN.md) の W00 → W09 を順番に処理する。
+  - 2026-09-12: 共通 runner、path containment、publication/recommit の `win32` 経路を実装済み。
+    native Windows 11 smoke と hosted CI 実行結果は未取得。進捗と検証結果の正本は上記計画。
 
 - [x] [Completed: igapyon-github-writer 固定Runner改善]
   `igapyon-miku-scm`の最新固定Runnerから、安全性、PR対象解決、大差分耐性、
