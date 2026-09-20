@@ -122,6 +122,13 @@ prompts for a `みくく` article explainer, read and apply
 [references/graphic-recording.md](references/graphic-recording.md) in the
 current turn and follow its execution gate.
 
+The graphic-recording workflow uses
+[references/graphic-recording/style-contract.md](references/graphic-recording/style-contract.md)
+as its shared visual contract. For whole-article images, run the prompt audit
+described in that workflow before image generation; do not silently trade away
+the article-specific diagram, Mikuku presence, or speech bubble for a
+model-specific visual reinterpretation.
+
 When applying generated images from `workplace/<RUN_ID>-graphic-recording/` to
 a published `mikuku-articles` article directory, read
 [references/graphic-recording/publish-generated-images-to-article.md](references/graphic-recording/publish-generated-images-to-article.md). Treat the generation workspace and published article directory as separate outputs.
@@ -184,6 +191,9 @@ representative image choice or asset semantics.
 - [references/mikuku-expression-survey.md](references/mikuku-expression-survey.md): observation-based survey of `みくく` expressions in existing `mikuku-articles`, used as an optional supplement for tone density and self-review.
 - [references/text-characteristics-classification.md](references/text-characteristics-classification.md): text characteristics classification reference for Mikuku-oriented article types and their `律・らしさ`.
 - [references/graphic-recording.md](references/graphic-recording.md): graphic recording workflow entry for `みくく` article explainers.
+- [references/graphic-recording/style-contract.md](references/graphic-recording/style-contract.md): shared visual contract separating stable style from article-specific diagram design.
+- [references/graphic-recording/model-comparison.md](references/graphic-recording/model-comparison.md): same-prompt comparison sheet for separating prompt-generation and image-generation model effects.
+- [references/graphic-recording/scripts/audit-graphic-recording-prompt.mjs](references/graphic-recording/scripts/audit-graphic-recording-prompt.mjs): deterministic pre-generation audit for whole-article prompt preservation and contradictions.
 - [references/graphic-recording/publish-generated-images-to-article.md](references/graphic-recording/publish-generated-images-to-article.md): procedure for applying generated graphic recording images to published `mikuku-articles` article directories.
 - [references/graphic-recording/scripts/apply-generated-images-to-article.mjs](references/graphic-recording/scripts/apply-generated-images-to-article.mjs): dry-run-first helper for validating and applying selected generated images to an article.
 - [references/codex-local-token-usage.md](references/codex-local-token-usage.md): OpenAI Codex CLI-only local token usage investigation prompt and caveats.

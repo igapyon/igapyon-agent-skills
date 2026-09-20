@@ -266,6 +266,10 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 `section-text.md` は単なる短い要約ではなく、画像生成AIがセクションの意味、関係、配置を判断するための描画設計用の中間成果物です。
 数個の平坦な箇条書きと漠然とした「図」の一文だけで終了しないでください。
 
+記事全体画像と同じく、共通の描画品質は [style-contract.md](style-contract.md) の
+`mikuku-graphic-recording-v1` に従います。セクション固有の主図は変えてよいですが、
+みくくの存在感、吹き出し、暖色の手描き技術グラレコという共通条件を黙って外さないでください。
+
 原則として、次の構造を使ってください。
 
 ```markdown
@@ -283,6 +287,11 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 
 - 表、ASCII図、または関係を示す箇条書きを最低1つ
 
+## 図解構造
+
+- layout-family: flow | cards | comparison | layers | decision | cycle | custom
+- primary-relation: セクションの中心に置く関係、流れ、または対比
+
 ## グラレコ構図案
 
 - 左:
@@ -295,6 +304,16 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 
 - 記事本文に明記された事実だけを使う
 - 記事にないモデル名、数値、評価、生成環境などを補わない
+
+## 共通スタイル契約
+
+- style-profile: mikuku-graphic-recording-v1
+- 横長 3:2、左・中央・右の3領域、主図を最大化
+- みくくは説明役として読める大きさで1人、短い吹き出しを1つ、物を持たない
+
+## 変更（deviation）
+
+- none
 ```
 
 構造を選ぶときは、セクションの内容に最も合う関係を具体化してください。
@@ -308,6 +327,7 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 
 `グラレコ構図案` では、少なくとも3つの画面領域、みくくの位置または視線、吹き出しの短い実文を指定してください。
 画像生成AIが記事本文を読み直さなくても、何をどこへ描くか判断できる具体性を持たせてください。
+`図解構造` の `layout-family` と `primary-relation` は、セクション用 `image-prompt.md` にも保持します。
 
 セクションが非常に短く、いずれかの項目に根拠のある内容を置けない場合は、記事にない情報で水増しせず、その項目に `該当なし` と理由を短く記載してください。
 正確性メモは画像内へ描く文言ではなく、生成時の事実確認用メモとして扱います。
@@ -335,7 +355,8 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/compose-section-image-p
 node "{{SKILL_DIR}}/references/graphic-recording/scripts/compose-section-image-prompts.mjs" --run-dir "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
 ```
 
-このスクリプトは、`section-text.md` の本文、`{{MIKUKU_PROMPT_PATH}}` の本文、同一性維持ルール、横長グラレコ画像の固定方針を合成し、`image-prompt.md` を作成します。
+このスクリプトは、`section-text.md` の本文、`{{MIKUKU_PROMPT_PATH}}` の本文、同一性維持ルール、
+`style-contract.md` の固定方針を合成し、`image-prompt.md` を作成します。
 既存の `image-prompt.md` は、`--overwrite` を指定しない限り上書きしません。
 
 保存先:

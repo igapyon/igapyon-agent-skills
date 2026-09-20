@@ -126,6 +126,16 @@ function buildImagePrompt({ section, title, sectionText, mikukuPromptPath, mikuk
 Create a horizontal Japanese graphic recording explainer image for this section.
 Use only the section summary below as the explanation source. Do not mix in other article sections.
 
+## Style Contract
+
+- style-profile: mikuku-graphic-recording-v1
+- horizontal 3:2 technical graphic-recording poster
+- warm beige paper, soft hand-drawn lines, readable short labels, medium-high information density
+- use at least a left, center, and right region and make one article-grounded diagram the largest element
+- keep Mikuku recognizable and large enough to read as the explaining character (roughly 15–25% of the canvas)
+- include one short speech bubble based on the section summary or its \`グラレコ構図案\`
+- do not add scenic background decoration that is not grounded in the section
+
 ## Section Summary
 
 ${sectionText.trim()}
@@ -152,6 +162,7 @@ ${mikukuPromptText.trim()}
 - 図解、矢印、囲み、アイコンを使う
 - セクション本文に基づく重要語だけを使う
 - みくくの短い吹き出しを入れる
+- みくくを極端に小さくしたり、吹き出しを黙って削除したりしない。変更する場合は下の deviation に理由を書く
 - 日本語ラベルは短く、少数に絞る
 - 長文を画像内に入れすぎない
 - 明るく清潔で、Note.com や技術記事に合うビジュアル
@@ -163,6 +174,15 @@ ${mikukuPromptText.trim()}
 - 画像内テキストは section summary の語句を短く整理して使う
 - 本文の長い文をそのまま入れない
 - 文字が崩れても、元記事や section-text.md は変更しない
+
+## Article-specific Design
+
+- section-text.md の主題、関係、構図、短いラベルを保持する
+- section-text.md の \`layout-family\` と \`primary-relation\` を別の図解形式へ変えない
+
+## Deviation Record
+
+- none
 
 ## Output Target
 

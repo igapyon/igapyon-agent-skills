@@ -4,6 +4,10 @@
 
 画像生成AI用プロンプトには、すでにみくく描画プロンプト本文が含まれている前提です。
 
+画像生成前の保持監査は [style-contract.md](style-contract.md) と
+`audit-graphic-recording-prompt.mjs` を基準にします。
+画像生成モデルを比較する場合は [model-comparison.md](model-comparison.md) の同一プロンプト比較を使います。
+
 ---
 
 # 入力
@@ -38,6 +42,12 @@
 
 ```text
 {{RUN_OUTPUT_DIR}}
+```
+
+プロンプト監査レポート:
+
+```text
+{{RUN_OUTPUT_DIR}}/prompt-audit.md
 ```
 
 `{{IMAGE_OUTPUT_PATH}}` が未指定で、`{{RUN_OUTPUT_DIR}}` が指定されている場合は、次のパスへ保存してください。
@@ -106,6 +116,19 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 代表画像を採用したら、`image-generation-report.md` に候補数、採用画像、未採用理由、次工程を記録してください。採用画像を記事へ反映する前に、生成画像の内容を確認し、レポートの状態を `image-checked` と明記してください。内容確認が済んでいない画像は `image-generated` のままにしてください。
 `whole-article` の次工程は `report` です。ユーザーが章ごとの画像も明示した `whole-article-then-sections` の場合だけ、セクション用素材が未作成なら `40-article-section-graphic-recording-batch-prompt.md`、素材作成済みなら `50-generate-section-graphic-recording-images-prompt.md` へ進みます。
 
+`image-generation-report.md` には、可能な範囲で次の生成経路を別々に記録してください。
+
+```markdown
+- style-profile: mikuku-graphic-recording-v1
+- prompt-generator-model:
+- image-generator-model:
+- prompt-audit: prompt-audit.md (pass | pass-with-warnings)
+- prompt-sha256:
+- model-comparison: model-comparison.md (not-requested | pending | recorded)
+```
+
+プロンプトを作ったモデルと画像を描いたモデルが不明な場合は、推測せず `unknown` と記録します。
+
 同一性崩れ、重大な破綻、保存失敗などで候補として使えない画像は失敗として記録してよいですが、その場合も無制限に再生成せず、初回を含む最大 3 回で一度停止し、未解決点を報告してください。
 
 ---
@@ -115,20 +138,28 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 1. `{{IMAGE_PROMPT_PATH}}` の Markdown ファイルを読む
 2. `{{MIKUKU_PROMPT_PATH}}` の Markdown ファイルが存在することを確認する
 3. `{{IMAGE_PROMPT_PATH}}` の本文に、みくく描画プロンプト本文または意味を保った短縮本文が含まれていることを確認する
-4. 画像生成ツールがテキストプロンプトを受け取れることを確認する
-5. 既に記事全体画像の候補が何枚生成済みか確認する
-6. 候補が 1 枚以上あり、ユーザーが追加候補を明示していない場合は追加生成しない。追加候補が明示されていても、候補が 3 枚以上なら追加生成しない
-7. セッション JSONL 復元を使う可能性がある場合は、画像生成の直前にセッション JSONL の現在の最終行番号を `SESSION_AFTER_LINE` として記録する
-8. 画像生成AI用プロンプト本文を画像生成ツールへ渡す
-9. 横長ポスター構図のグラレコ説明画像を生成する
-10. 現在の画像生成ツール呼び出しが返した正確な元ファイルパスを使う。生成画像ディレクトリ全体から最新 PNG を探索してはいけない
-11. 今回の生成画像パスが返らなかった場合だけ、手順 7 の行番号より後のセッションイベントから復元する
-12. `copy-generated-image.md` を作成し、元画像パスまたはセッション復元情報、コピー先、実行するコピーコマンド、確認コマンドを記録する
-13. 生成画像を `{{IMAGE_OUTPUT_PATH}}`、`{{RUN_OUTPUT_DIR}}/graphic-recording.png`、または処理開始時のカレントフォルダ直下の `workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording.png` へコピーまたは保存する
-14. コピー先の存在、ファイルサイズ、画像形式を確認し、`copy-generated-image.md` を結果付きで更新する
-15. `image-generation-report.md` に元画像パスまたはセッション復元情報、みくく描画プロンプトパス、コピー手順記録パス、ワークスペース側の保存先、候補数、採用画像、次工程、または未実行理由を記録する
-16. 代表画像を採用できた場合は、追加の全体画像バリエーション生成を続けない。`whole-article-then-sections` が明示された場合だけ章ごとの画像生成へ進み、それ以外は報告へ進む
-17. 最後に、生成画像の保存先、または未生成の理由と次工程を短く報告する
+4. `graphic-recording-text.md` が同じ実行ディレクトリにある場合は、次の監査を実行する
+
+   ```bash
+   node "{{SKILL_DIR}}/references/graphic-recording/scripts/audit-graphic-recording-prompt.mjs" \
+     --run-dir "{{RUN_OUTPUT_DIR}}"
+   ```
+
+   `prompt-audit.md` の `status: fail` では画像生成へ進まない。`pass-with-warnings` は、未出現キーワードや `Deviation Record` を確認して `run-state.md` に記録する
+5. 画像生成ツールがテキストプロンプトを受け取れることを確認する
+6. 既に記事全体画像の候補が何枚生成済みか確認する
+7. 候補が 1 枚以上あり、ユーザーが追加候補を明示していない場合は追加生成しない。追加候補が明示されていても、候補が 3 枚以上なら追加生成しない
+8. セッション JSONL 復元を使う可能性がある場合は、画像生成の直前にセッション JSONL の現在の最終行番号を `SESSION_AFTER_LINE` として記録する
+9. 画像生成AI用プロンプト本文を画像生成ツールへ渡す
+10. 横長ポスター構図のグラレコ説明画像を生成する
+11. 現在の画像生成ツール呼び出しが返した正確な元ファイルパスを使う。生成画像ディレクトリ全体から最新 PNG を探索してはいけない
+12. 今回の生成画像パスが返らなかった場合だけ、手順 8 の行番号より後のセッションイベントから復元する
+13. `copy-generated-image.md` を作成し、元画像パスまたはセッション復元情報、コピー先、実行するコピーコマンド、確認コマンドを記録する
+14. 生成画像を `{{IMAGE_OUTPUT_PATH}}`、`{{RUN_OUTPUT_DIR}}/graphic-recording.png`、または処理開始時のカレントフォルダ直下の `workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recording.png` へコピーまたは保存する
+15. コピー先の存在、ファイルサイズ、画像形式を確認し、`copy-generated-image.md` を結果付きで更新する
+16. `image-generation-report.md` に元画像パスまたはセッション復元情報、みくく描画プロンプトパス、コピー手順記録パス、ワークスペース側の保存先、候補数、採用画像、次工程、または未実行理由を記録する。使用したプロンプト生成モデルと画像生成モデルが分かる場合は別々に記録する
+17. 代表画像を採用できた場合は、追加の全体画像バリエーション生成を続けない。`whole-article-then-sections` が明示された場合だけ章ごとの画像生成へ進み、それ以外は報告へ進む
+18. 最後に、生成画像の保存先、または未生成の理由と次工程を短く報告する
 
 `{{MIKUKU_PROMPT_PATH}}` はパス文字列としてプロンプト内に書くだけでなく、事前に本文を `{{IMAGE_PROMPT_PATH}}` へ埋め込んでください。
 別の生成実行で使った描画プロンプトが今回の生成へ暗黙に引き継がれるとは扱わないでください。
