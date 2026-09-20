@@ -61,6 +61,8 @@
 - [graphic-recording/10-article-to-graphic-recording-text-prompt.md](graphic-recording/10-article-to-graphic-recording-text-prompt.md)
 - [graphic-recording/20-graphic-recording-explainer-image-prompt.md](graphic-recording/20-graphic-recording-explainer-image-prompt.md)
 - [graphic-recording/30-generate-graphic-recording-image-prompt.md](graphic-recording/30-generate-graphic-recording-image-prompt.md)
+- [graphic-recording/style-contract.md](graphic-recording/style-contract.md)
+- [graphic-recording/model-comparison.md](graphic-recording/model-comparison.md)
 
 ユーザーが記事全体と章ごとの両方を明示した場合は、30番で全体画像を採用したあと、追加の全体画像バリエーション生成を続けず、次の 40番、50番、60番へ進んでください。
 
@@ -120,10 +122,12 @@
 <処理開始時のカレントフォルダ>/workplace/<YYYYMMDDHHmmss>-graphic-recording/
 ```
 
-主な生成物は次の 4 つです。
+主な生成物は次の 5 つです。
 
 - `graphic-recording-text.md`: グラレコ制作用整理テキスト
 - `image-prompt.md`: 画像生成AI用プロンプト
+- `prompt-audit.md`: 整理テキストと最終プロンプトの保持・矛盾監査
+- `model-comparison.md`: 同一プロンプトで画像生成モデルを比較する採点シート
 - `copy-generated-image.md`: 生成画像を作業ディレクトリへコピーするための記録と手順
 - `graphic-recording.png`: グラレコ説明画像
 
@@ -336,8 +340,8 @@ workplace/<YYYYMMDDHHmmss>-graphic-recording/
 
 ### 6. グラレコ制作用テキストを作る
 
-記事全体 1 枚で作る場合は、この手順 6 から手順 8 までを実行します。
-`##` 見出しごとの複数枚で作る場合は、この手順 6 から手順 8 ではなく、次の「6A. セクション別素材を一括初期化する」へ進んでください。
+記事全体 1 枚で作る場合は、この手順 6 から手順 9 までを実行します。
+`##` 見出しごとの複数枚で作る場合は、この手順 6 から手順 9 ではなく、次の「6A. セクション別素材を一括初期化する」へ進んでください。
 
 まず、[graphic-recording/10-article-to-graphic-recording-text-prompt.md](graphic-recording/10-article-to-graphic-recording-text-prompt.md) の方針に従って、記事本文をグラレコ制作用の整理テキストへ変換してください。
 
@@ -388,7 +392,27 @@ workplace/<YYYYMMDDHHmmss>-graphic-recording/
 - 対比や循環構造
 - 避けたい表現
 
-### 8. 画像生成を実行する
+### 8. 生成前プロンプトを監査する
+
+画像生成へ進む前に、10番で作った整理テキストと20番で作った最終プロンプトの対応を監査してください。
+監査は、重要語句や吹き出しの欠落、共通スタイルの不足、みくくの極端な縮小、吹き出しを外す指示などを確認します。
+
+可能であれば、次のスクリプトを使ってください。
+
+```bash
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/audit-graphic-recording-prompt.mjs" \
+  --run-dir "{{RUN_OUTPUT_DIR}}"
+```
+
+`prompt-audit.md` を `{{RUN_OUTPUT_DIR}}` に保存し、`run-state.md` の `prompt-audit-path`、
+`prompt-audit-status`、`prompt-sha256`、`prompt-audit-omissions` を更新してください。
+`fail` の場合は画像生成へ進まず、20番の最終プロンプトを修正してから再監査します。
+`pass-with-warnings` の場合は、未出現キーワードや明示した deviation を確認し、妥当性を記録してから進めます。
+
+Sol/Lunaなど画像生成モデルを比較する場合は、[graphic-recording/model-comparison.md](graphic-recording/model-comparison.md) を使います。
+同じ記事・同じ `image-prompt.md` を使う比較を先に行い、プロンプトが異なる過去画像については、プロンプト差と画像モデル差を分けて記録してください。
+
+### 9. 画像生成を実行する
 
 次に、手順 7 で保存した画像生成AI用プロンプトのファイルパスと、手順 3 で選んだみくく描画プロンプトのファイルパスを入力として、[graphic-recording/30-generate-graphic-recording-image-prompt.md](graphic-recording/30-generate-graphic-recording-image-prompt.md) の方針に従い、グラレコ説明画像を生成してください。
 

@@ -5,6 +5,10 @@
 
 作成した画像生成AI用プロンプトは、指定された出力パスへ Markdown ファイルとして保存してください。
 
+共通の描画品質と変更手順は [../style-contract.md](../style-contract.md) の
+`mikuku-graphic-recording-v1` を正本とします。この記事固有の構図は変えてよいですが、
+共通スタイルを別の雰囲気へ黙って置き換えないでください。
+
 ---
 
 # 入力
@@ -88,6 +92,36 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/image-prompt.md
 * 可愛く、わかりやすく、情報量は多め
 * 見るだけで記事全体像が伝わる構成
 
+## スタイル契約と記事固有設計の分離
+
+最終プロンプトは、必ず次の順序で構成してください。
+
+```markdown
+## Style Contract
+
+- style-profile: mikuku-graphic-recording-v1
+- 横長 3:2 の技術グラレコ説明ポスター
+- 暖色のベージュ紙、やわらかい手描き線、短い読みやすいラベル
+- 左・中央・右の3領域。記事の主図を最も大きく描く
+- みくくは説明役として読める大きさ（目安 15〜25%）で1人、物を持たない
+- `グラレコ構図案` の短い吹き出しを1つ入れる
+- 記事に根拠のない風景や装飾を主役にしない
+
+## Article-specific Design
+
+`graphic-recording-text.md` の主題、関係・流れ・対比、`図解構造` の `layout-family` と
+`primary-relation`、左・中央・右、主図、
+画像内ラベル、みくくの位置・視線・吹き出し、正確性メモを具体的に保持する。
+
+## Deviation Record
+
+none
+```
+
+`Style Contract` は固定条件、`Article-specific Design` は記事ごとの選択です。後者を
+考えやすくするために前者を削除したり、みくくを「小さなマスコット」へ置き換えたりしては
+いけません。固定条件を変更する場合は `Deviation Record` に項目、理由、影響を記録します。
+
 ---
 
 # レイアウト
@@ -97,6 +131,8 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/image-prompt.md
 * 横長ポスター構図
 * 左〜中央: グラレコ本体
 * 右側: みくくが説明している
+* 画面比率は既定で 3:2。記事固有の理由がある場合だけ `Deviation Record` で変更する
+* 主図を画面の最大領域に置き、背景の風景や余白だけで画面を埋めない
 
 ## キャラクター
 
@@ -116,6 +152,7 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/image-prompt.md
 * 優しい表情
 * アニメ調
 * みくくに物を持たせない
+* みくくは説明役として認識できる大きさにし、極端に小さくしない
 
 ---
 
@@ -173,6 +210,20 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/image-prompt.md
 記事本文や整理テキストにないモデル名、数値、評価、生成環境、機能名を足さないでください。
 現在の実行モデルや、この画像を生成している環境を、記事の事実として画像へ混ぜないでください。
 
+`graphic-recording-text.md` の `図解キーワード` と `グラレコ構図案` にある語句は、可能な限り
+そのまま画像内ラベルまたは設計記述へ残してください。短縮した場合は、元の語句と短縮語を
+`Article-specific Design` 内で対応づけてください。関係線、主図、吹き出し、みくくの位置の
+いずれかを省略する場合は、`Deviation Record` に理由を書きます。
+
+`図解構造` の `layout-family` と `primary-relation` は、Article-specific Design に次のように
+明記してください。`layout-family` は別の形式へ変更せず、変更が必要な場合だけ deviation に
+理由と影響を書きます。
+
+```markdown
+- layout-family: <flow | cards | comparison | layers | decision | cycle | custom>
+- primary-relation: <graphic-recording-text.md の文言>
+```
+
 ---
 
 # デザイン要素
@@ -199,6 +250,9 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/image-prompt.md
 「templates は構造、examples は温度感なのです…！」
 
 「小さな SKILL.md から始められます…！」
+
+`グラレコ構図案` の `吹き出し` が `該当なし` でない限り、吹き出しを削除してはいけません。
+画像内には、その短い実文または記事内容に忠実な短縮文を1つ入れてください。
 
 ---
 
