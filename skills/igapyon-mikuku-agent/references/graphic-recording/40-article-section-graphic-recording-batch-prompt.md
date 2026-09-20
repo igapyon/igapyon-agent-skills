@@ -94,6 +94,8 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 - `## 想定読者`
 - `## 使用ツール`
 - `## 関連リンク`
+- `## 参考`
+- `## 参考リンク`
 
 これらの見出しは、関連導線、著者情報、想定読者、使用ツール、関連リンクなどの補足情報です。
 `TODO.md` の画像生成対象セクションに入れず、既に抽出済みの再実行で見つけた場合は `image-skipped: footer-section` として扱い、`image-prompt.md` の作成や画像生成は行わないでください。
@@ -157,6 +159,8 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 再実行時に `TODO.md` が既に存在する場合も、未初期化の対象セクションがあれば、先に不足している `sections/<NNN>/` と `section-source.md` を補完してください。
 その後で、`section-text.md` または `image-prompt.md` が不足しているセクションだけを処理してください。
 
+再実行では、既存の `section-source.md`、`section-text.md`、`image-prompt.md`、`graphic-recording.png`、および `TODO.md` の状態を保持してください。既存セクションの本文または見出しが元記事と変わっている場合は、既存の実行ディレクトリを強制更新せず、新しい `{{RUN_OUTPUT_DIR}}` でやり直してください。既存の進捗を消す `--force` 再初期化は行わないでください。
+
 ---
 
 # TODO.md
@@ -184,7 +188,8 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 - 40番では最初に全セクションの `sections/<番号>/` と `section-source.md` を一括作成する
 - 40番では初期化完了後、各セクションで `section-text.md` を作り、`compose-section-image-prompts.mjs` で `image-prompt.md` を作る
 - 画像生成は50番で実行し、成功したら TODO を `image-generated` に更新する
-- 速度優先運用では50番は `image-generation-report.md` や `copy-generated-image.md` を作らず、画像コピーと `TODO.md` 更新だけで進む
+- 速度優先運用では50番は `image-generation-report.md` や `copy-generated-image.md` を作らず、構造検証済み画像のコピーと `TODO.md` 更新だけで進む
+- `image-generated` は保存と構造検証が完了した状態、`image-checked` は人間または画像確認工程で内容を確認した状態を表す。記事へ反映できるのは `image-checked` の画像だけとする
 ```
 
 再実行時に `TODO.md` が既に存在する場合は、`image-pending`、`image-prompt-missing`、または40番の再作成が必要な項目だけを処理してください。

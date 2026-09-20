@@ -2,6 +2,7 @@
 
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { validatePngBuffer } from "./png-validation.mjs";
 
 const expectedFiles = [
   "section-source.md",
@@ -128,6 +129,7 @@ async function main() {
     }
 
     const marks = [];
+    const completed = todo?.status === "image-generated" || todo?.status === "image-checked";
     for (const fileName of expectedFiles) {
       const fileStat = await exists(path.join(sectionDir, fileName));
       const ok = Boolean(fileStat?.isFile());
@@ -136,12 +138,21 @@ async function main() {
         warnings.push(`section ${section} is missing section-source.md`);
         exitCode = 1;
       }
-      if (todo?.status === "image-generated" && fileName === "graphic-recording.png" && !ok) {
-        warnings.push(`section ${section} is image-generated in TODO.md but image is missing`);
+      if (completed && !ok) {
+        warnings.push(`section ${section} is ${todo.status} in TODO.md but ${fileName} is missing`);
         exitCode = 1;
       }
-      if (todo?.status !== "image-generated" && fileName === "graphic-recording.png" && ok) {
+      if (fileName === "graphic-recording.png" && ok) {
+        try {
+          validatePngBuffer(await readFile(path.join(sectionDir, fileName)));
+        } catch (error) {
+          warnings.push(`section ${section} has an invalid PNG: ${error.message}`);
+          exitCode = 1;
+        }
+      }
+      if (!completed && fileName === "graphic-recording.png" && ok && !todo?.status?.startsWith("image-generated")) {
         warnings.push(`section ${section} has graphic-recording.png but TODO status is ${todo?.status}`);
+        exitCode = 1;
       }
     }
 

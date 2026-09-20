@@ -10,9 +10,9 @@
 画像生成結果に合わせて本文やプロンプトを直す必要がある場合は、生成済みファイルを直接書き換えず、`TODO.md` に再生成状態を記録し、必要な調整案を別ファイルへ保存してください。
 元記事への画像リンク挿入や本文修正は、ユーザーが明示的に許可した場合だけ別作業として行います。
 
-速度優先運用では、画像生成後に `copy-section-image.mjs` で対象セクションへ `graphic-recording.png` をコピーし、同スクリプトの自動 PNG 検証と `TODO.md` 更新に成功したらすぐ次へ進んでください。
+速度優先運用では、画像生成後に `copy-section-image.mjs` で対象セクションへ `graphic-recording.png` をコピーし、同スクリプトの構造的な PNG 検証と `TODO.md` 更新に成功したらすぐ次へ進んでください。コピー直後の状態は `image-generated` とし、記事へ反映する前に60番で内容を確認して `image-checked` に更新してください。
 `image-generation-report.md`、`copy-generated-image.md`、`run-state.md`、`ls -lh`、`file`、目視確認は各セクションごとに実行しません。
-目視確認を省略しても、0 バイト確認と PNG シグネチャ確認を行う `copy-section-image.mjs` の自動検証は省略してはいけません。
+目視確認を省略しても、0 バイトだけでなく PNG チャンク、CRC、画像データの展開まで確認する `copy-section-image.mjs` の自動検証は省略してはいけません。
 必要になった場合だけ、後からまとめて検品・記録してください。
 速度優先運用を既定とします。詳細記録運用は、ユーザーが明示した場合だけ使ってください。
 
@@ -259,7 +259,7 @@ SESSION_AFTER_LINE=$(awk 'END { print NR }' "$SESSION_JSONL")
 
 1. 現在の画像生成ツール呼び出しが返した正確な画像ファイルパスを受け取る
 2. そのパスを `copy-section-image.mjs` の `--src` に渡す
-3. 同スクリプトが 0 バイト確認と PNG シグネチャ確認を行った後、対象セクションの出力先へコピーする
+3. 同スクリプトが 0 バイト確認と PNG の構造検証を行った後、対象セクションの出力先へコピーする
 4. 検証とコピーに成功した場合だけ、同スクリプトが `TODO.md` を `image-generated` に更新する
 5. 元の `$CODEX_HOME/generated_images/...` 側の画像は残す
 
@@ -271,7 +271,7 @@ SESSION_AFTER_LINE=$(awk 'END { print NR }' "$SESSION_JSONL")
 
 現在の画像生成ツール呼び出しから今回生成分の正確な PNG パスが返らなかった場合は、Codex セッション JSONL の `image_generation_end.payload.result` から PNG を復元してください。
 復元専用スクリプトには、当該 `imagegen` 実行の直前に記録した `SESSION_AFTER_LINE` を必須の `--after-line` として渡します。指定行以前のイベントは今回の生成結果として使えません。
-復元後は `copy-section-image.mjs` を実行し、0 バイト確認と PNG シグネチャ確認に成功した場合だけ最終ファイルのコピーと `TODO.md` 更新を行ってください。
+復元後は `copy-section-image.mjs` を実行し、0 バイト確認と PNG の構造検証に成功した場合だけ最終ファイルのコピーと `TODO.md` 更新を行ってください。
 
 復元コマンド例:
 
@@ -335,7 +335,7 @@ file "<workspace-output-path>"
 1. 画像生成の直前にセッション JSONL の基準行番号を記録する
 2. 現在の画像生成ツール呼び出しが返した正確な PNG パスを受け取る。パスが返らない場合だけ、基準行より後のセッションイベントから復元する
 3. `copy-section-image.mjs` へ正確なパスまたは復元ファイルのパスを渡す
-4. 同スクリプトによる 0 バイト確認、PNG シグネチャ確認、コピー、`TODO.md` 更新が成功したことを確認する
+4. 同スクリプトによる 0 バイト確認、PNG の構造検証、コピー、`TODO.md` 更新が成功したことを確認する
 5. 次のセクションへ進む
 
 この省略実行でも、画像ファイルのコピーは省略しないでください。
@@ -375,7 +375,7 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/copy-section-image.mjs"
 復元できない場合は `image-generated-unsaved` または `image-generation-failed` として扱い、生成済みにはしないでください。
 
 コピー後の `ls -lh`、`file`、画像プレビューは実行しないでください。
-`copy-section-image.mjs` がエラーを返さなければ、0 バイト確認と PNG シグネチャ確認は成功し、`TODO.md` は `image-generated` に更新済みとして次へ進んでください。
+`copy-section-image.mjs` がエラーを返さなければ、PNG の構造検証とコピーは成功し、`TODO.md` は `image-generated` に更新済みとして次へ進んでください。`image-generated` のまま記事へ画像リンクを挿入してはいけません。
 
 生成時の基本方針:
 
@@ -391,7 +391,7 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/copy-section-image.mjs"
 ## 4. 生成結果を確認する
 
 速度優先運用では、この章の目視確認と手動確認は省略してください。
-ただし、`copy-section-image.mjs` による 0 バイト確認と PNG シグネチャ確認は必須です。自動検証、対象セクションへのコピー、`TODO.md` 更新に成功したら次のセクションへ進みます。
+ただし、`copy-section-image.mjs` による 0 バイト確認と PNG の構造検証は必須です。自動検証、対象セクションへのコピー、`TODO.md` 更新に成功したら次のセクションへ進みます。
 `image-generation-report.md`、`copy-generated-image.md`、目視確認は行いません。
 
 画像生成後、次を確認してください。
@@ -409,7 +409,7 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/copy-section-image.mjs"
 
 ## 5. TODO.md を更新する
 
-画像生成が完了したセクションは、`copy-section-image.mjs` の自動検証とコピーが成功した後に、同スクリプトが `TODO.md` の該当行を次のように更新します。
+画像生成が完了したセクションは、`copy-section-image.mjs` の自動検証とコピーが成功した後に、同スクリプトが `TODO.md` の該当行を次のように更新します。内容確認後の `image-checked` への更新は60番の確認工程で行います。
 検証付きコピーより先に手動で `image-generated` へ変更してはいけません。
 
 ```markdown

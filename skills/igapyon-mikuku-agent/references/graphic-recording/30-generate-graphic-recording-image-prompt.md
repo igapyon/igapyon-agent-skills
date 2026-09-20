@@ -103,7 +103,7 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 {{RUN_OUTPUT_DIR}}/graphic-recording-variant-03.png
 ```
 
-代表画像を採用したら、`image-generation-report.md` に候補数、採用画像、未採用理由、次工程を記録してください。
+代表画像を採用したら、`image-generation-report.md` に候補数、採用画像、未採用理由、次工程を記録してください。採用画像を記事へ反映する前に、生成画像の内容を確認し、レポートの状態を `image-checked` と明記してください。内容確認が済んでいない画像は `image-generated` のままにしてください。
 `whole-article` の次工程は `report` です。ユーザーが章ごとの画像も明示した `whole-article-then-sections` の場合だけ、セクション用素材が未作成なら `40-article-section-graphic-recording-batch-prompt.md`、素材作成済みなら `50-generate-section-graphic-recording-images-prompt.md` へ進みます。
 
 同一性崩れ、重大な破綻、保存失敗などで候補として使えない画像は失敗として記録してよいですが、その場合も無制限に再生成せず、初回を含む最大 3 回で一度停止し、未解決点を報告してください。

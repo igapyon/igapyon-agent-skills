@@ -57,11 +57,15 @@ test("PR and release evidence are bounded structured inputs", (t) => {
   assert.match(pr.patch_excerpt, /更新後の説明/);
   assert.match(pr.evidence_sha256, /^[0-9a-f]{64}$/);
   assert.equal(pr.writing_contract.generation_passes, 1);
+  assert.equal(pr.writing_contract.language, "ja");
+  assert.equal(pr.writing_contract.audience, "repository reviewers");
 
   const release = prepareGitEvidence({ repo: root, mode: "release", target: first });
   assert.equal(release.target.resolution, "release-start-through-head");
   assert.equal(release.commit_count, 2);
   assert.match(release.changed_files.join("\n"), /資料\/概要\.md/);
+  assert.equal(release.writing_contract.language, "ja");
+  assert.equal(release.writing_contract.audience, "repository users");
 });
 
 test("default PR evidence expands to the complete branch range only when two commits are ahead", (t) => {
@@ -175,6 +179,10 @@ test("About evidence and branch status support UTF-8 documents without an upstre
   assert.equal(about.documents.length, 2);
   assert.equal(about.documents[1].path, "資料/概要.md");
   assert.doesNotMatch(about.documents[1].text, /\r/);
+  assert.equal(about.writing_contract.language, "en");
+  assert.equal(about.writing_contract.secondary_language, "ja-reference");
+  assert.equal(about.writing_contract.audience, "repository visitors");
+  assert.match(about.writing_contract.output_shape, /English/);
 
   const status = branchStatus({ repo: root });
   assert.equal(status.branch, "devel");

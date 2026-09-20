@@ -26,3 +26,25 @@ test("repository version validation rejects a stale miku-scm runner version", ()
     /miku-scm PRODUCT_VERSION:\s+1\.20260812\.9/,
   );
 });
+
+test("repository version validation includes the github-writer runner version", () => {
+  assert.deepEqual(assertVersionAlignment({
+    ...aligned,
+    githubWriterText: 'export const PRODUCT_VERSION = "1.20260812.10";\n',
+  }), {
+    projectVersion: "1.20260812.10",
+    mikukuVersion: "20260812j",
+    runnerVersion: "1.20260812.10",
+    githubWriterVersion: "1.20260812.10",
+  });
+});
+
+test("repository version validation rejects a stale github-writer runner version", () => {
+  assert.throws(
+    () => assertVersionAlignment({
+      ...aligned,
+      githubWriterText: 'export const PRODUCT_VERSION = "1.20260812.9";\n',
+    }),
+    /github-writer PRODUCT_VERSION:\s+1\.20260812\.9/,
+  );
+});

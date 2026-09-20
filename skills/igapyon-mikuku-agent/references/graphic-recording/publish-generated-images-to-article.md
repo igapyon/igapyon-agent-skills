@@ -2,7 +2,7 @@
 
 この文書は、`igapyon-mikuku-agent` のグラレコ生成結果を、`mikuku-articles` の公開記事ディレクトリへ反映するときの手順です。
 
-対象は、生成済みの `workplace/<YYYYMMDDHHmmss>-graphic-recording/` 配下にある画像と生成元テキストを、記事側の次の構造へ整理する作業です。
+対象は、生成済みの `workplace/<YYYYMMDDHHmmss>-graphic-recording/` 配下にある画像と生成元テキストを、記事側の次の構造へ整理する作業です。生成結果の実行ディレクトリから記事へ画像を反映する場合は、同梱の `apply-generated-images-to-article.mjs` を使い、まず配置計画を dry-run で確認してください。
 
 ```text
 YYYY/MM/YYYYMMDD/
@@ -27,7 +27,9 @@ YYYY/MM/YYYYMMDD/
 - 記事ファイル名は `YYYYMMDD-...md` 形式である
 - front matter に `release_date: YYYY-MM-DD` がある
 - グラレコ生成結果は `workplace/<RUN_ID>-graphic-recording/` 配下にある
-- `export-images/` 配下に、代表画像とセクション別画像が存在する
+- 記事全体画像は実行ディレクトリ直下の `graphic-recording.png`、セクション画像は `sections/<NNN>/graphic-recording.png` にある（存在する種類だけを反映する）
+- セクション画像を記事へ反映する場合、対応する `TODO.md` の状態が `image-checked` である
+- 記事全体画像を記事へ反映する場合、`image-generation-report.md` または `run-state.md` で採用画像の状態が `image-checked` である
 
 ## 基本方針
 
@@ -58,11 +60,11 @@ images/002.png
 
 `## はじめに` が存在しない記事では、最初の本文 `##` セクションを `001.png` とします。
 
-補足セクションは採番対象外です。元の `export-images/000-whole-article.png` のような説明付きファイル名は、記事側には残しません。
+補足セクションは採番対象外です。生成作業側に説明付きの候補ファイル名があっても、記事側では `images/000.png` などの対応表で決めた相対パスだけを使います。
 
 ## 記事への画像リンク挿入規則
 
-記事本文には、対応する見出しの直後へ画像リンクを挿入します。
+記事本文には、実際に採用して内容確認を終えた画像だけを、対応する見出しの直後へ画像リンクとして挿入します。生成結果に画像がないセクション、`image-generated` のままのセクション、採用されていない候補は、リンクを作らず本文をそのままにします。
 
 代表画像は、通常 `## はじめに` の直後、または記事タイトル直後に置きます。
 
@@ -86,7 +88,7 @@ images/002.png
 ![まずは大きく7つに分ける](images/002.png)
 ```
 
-補足セクションには原則として画像を入れません。
+補足セクションには原則として画像を入れません。既存のフッター画像や記事固有の画像は、生成画像の検証対象・削除対象に含めず、そのまま保持します。
 
 画像を入れない代表例:
 
@@ -110,6 +112,21 @@ alt text は長くしすぎません。
 ```
 
 長い説明文を alt text に詰め込みすぎないでください。
+
+## 自動配置ヘルパー
+
+次のコマンドは既定で dry-run し、`article-image-placement-plan.md` だけを作成します。記事と生成結果の対応、既存画像の扱い、`image-checked` 状態を確認してから `--apply` を付けてください。
+
+```bash
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/apply-generated-images-to-article.mjs" \
+  --run-dir "{{RUN_OUTPUT_DIR}}" \
+  --article "{{ARTICLE_PATH}}" \
+  --mode whole-article-then-sections
+```
+
+利用できるモードは `whole-article`、`sections`、`whole-article-then-sections`（または `both`）です。特定セクションだけを反映する場合は `--section 002` のように指定してください。既存のリンク先画像を置き換える場合だけ `--overwrite` を追加します。`--apply` なしでは元記事も画像ファイルも変更しません。
+
+ヘルパーは、生成時点の `section-source.md` と現在の記事のセクション本文を照合します。見出しの並べ替えや本文変更がある場合は自動反映せず、記事と生成結果を確認して新しい実行ディレクトリで再生成してください。
 
 ## images/src のコピー規則
 
@@ -163,6 +180,8 @@ images/src/sections/001/
 
 - 記事内の画像リンクが `images/000.png` 形式になっている
 - リンク先画像がすべて存在する
+- 反映した生成画像が PNG として構造的に読み取れる
+- 反映したセクションの `TODO.md` が `image-checked` になっている
 - `images/src` に余分なファイルがない
 - `section-source.md` が入っていない
 - 補足セクションに画像を入れていない

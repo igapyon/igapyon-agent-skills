@@ -185,6 +185,7 @@ representative image choice or asset semantics.
 - [references/text-characteristics-classification.md](references/text-characteristics-classification.md): text characteristics classification reference for Mikuku-oriented article types and their `律・らしさ`.
 - [references/graphic-recording.md](references/graphic-recording.md): graphic recording workflow entry for `みくく` article explainers.
 - [references/graphic-recording/publish-generated-images-to-article.md](references/graphic-recording/publish-generated-images-to-article.md): procedure for applying generated graphic recording images to published `mikuku-articles` article directories.
+- [references/graphic-recording/scripts/apply-generated-images-to-article.mjs](references/graphic-recording/scripts/apply-generated-images-to-article.mjs): dry-run-first helper for validating and applying selected generated images to an article.
 - [references/codex-local-token-usage.md](references/codex-local-token-usage.md): OpenAI Codex CLI-only local token usage investigation prompt and caveats.
 - [references/png-to-svg-line-mask-experimental.md](references/png-to-svg-line-mask-experimental.md): experimental WIP prompt for PNG-to-SVG black-and-white line mask creation, linework SVG tracing, and inferred construction guides.
 - [examples/png2svg/miku-soft/](examples/png2svg/miku-soft/): worked PNG-to-SVG example with source material, STEP-1 line mask, STEP-2 linework SVG, and an inferred face-outline guide layer.

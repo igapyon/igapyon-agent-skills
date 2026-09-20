@@ -9,6 +9,7 @@ import test from "node:test";
 const runner = fileURLToPath(new URL("../scripts/github-writer-run.mjs", import.meta.url));
 const errorReporter = fileURLToPath(new URL("../scripts/github-writer-error-report.mjs", import.meta.url));
 const pom = fileURLToPath(new URL("../../../pom.xml", import.meta.url));
+const projectVersion = readFileSync(pom, "utf8").match(/<version>([^<]+)<\/version>/)?.[1];
 
 function invokeScript(script, args) {
   return spawnSync(process.execPath, [script, ...args], {
@@ -79,7 +80,7 @@ test("CLI exposes metadata-only workflow discovery", () => {
   assert.equal(listed.status, 0, listed.stderr);
   const catalog = JSON.parse(listed.stdout);
   assert.equal(catalog.schema_version, "github-writer.workflow-list/v1");
-  assert.match(catalog.product_version, /^1\.20260812\.4$/);
+  assert.equal(catalog.product_version, projectVersion);
   assert.equal(catalog.safety.gh_command, "prohibited");
   assert.equal(catalog.safety.network_access, "none");
   assert.equal(catalog.workflows.length, 12);
@@ -99,8 +100,7 @@ test("version, help, and parse failures remain metadata-only", (t) => {
   const root = fixture(t);
   const version = invoke(["--version"]);
   assert.equal(version.status, 0, version.stderr);
-  const pomVersion = readFileSync(pom, "utf8").match(/<version>([^<]+)<\/version>/)?.[1];
-  assert.equal(version.stdout, `${pomVersion}\n`);
+  assert.equal(version.stdout, `${projectVersion}\n`);
   assert.equal(existsSync(path.join(root, "workplace", "github-writer", "runs")), false);
 
   const invalid = invoke(["--format", "yaml", "branch.status", "--repo", root]);

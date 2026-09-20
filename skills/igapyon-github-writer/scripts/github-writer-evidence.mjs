@@ -175,16 +175,30 @@ function parseCommits(text) {
 }
 
 function writingContract(mode) {
-  const outputShape = mode === "pr"
-    ? "Japanese PR title on the first line followed by a reviewer-oriented Markdown body"
-    : mode === "release"
-      ? "Japanese release title and Markdown notes"
-      : "Japanese GitHub About text in the requested shape";
+  const contracts = {
+    pr: {
+      language: "ja",
+      audience: "repository reviewers",
+      output_shape: "Japanese PR title on the first line followed by a reviewer-oriented Markdown body",
+    },
+    release: {
+      language: "ja",
+      audience: "repository users",
+      output_shape: "Japanese release title and Markdown notes for repository users",
+    },
+    about: {
+      language: "en",
+      secondary_language: "ja-reference",
+      audience: "repository visitors",
+      output_shape: "English GitHub About text followed by a Japanese reference translation",
+    },
+  };
+  const contract = contracts[mode];
+  if (!contract) throw new Error(`Unsupported writing mode: ${mode}`);
   return {
-    schema_version: "github-writer.writing-contract/v1",
-    language: "ja",
-    audience: mode === "about" ? "repository visitors" : "repository reviewers",
-    output_shape: outputShape,
+    schema_version: "github-writer.writing-contract/v2",
+    ...contract,
+    language_rule: "An explicit language request from the user overrides this default.",
     generation_passes: 1,
     source_rule: mode === "about"
       ? "Use only these bounded documents and the current user direction"

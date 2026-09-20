@@ -9,6 +9,16 @@ function requireMatch(value, expression, label, format) {
   return match;
 }
 
+function productVersion(runnerText, label) {
+  const [, version] = requireMatch(
+    runnerText,
+    /export const PRODUCT_VERSION = "([^"]+)";/,
+    label,
+    'export const PRODUCT_VERSION = "<project version>";',
+  );
+  return version;
+}
+
 function suffixToNumber(suffix) {
   let number = 0;
   for (const character of suffix) {
@@ -19,7 +29,7 @@ function suffixToNumber(suffix) {
   return number;
 }
 
-export function assertVersionAlignment({ projectVersion, mikukuText, runnerText }) {
+export function assertVersionAlignment({ projectVersion, mikukuText, runnerText, githubWriterText }) {
   const [, projectDate, projectNumber] = requireMatch(
     projectVersion,
     /^1\.(\d{8})\.([1-9]\d*)$/,
@@ -38,12 +48,7 @@ export function assertVersionAlignment({ projectVersion, mikukuText, runnerText 
     "mikuku version",
     "YYYYMMDDx",
   );
-  const [, runnerVersion] = requireMatch(
-    runnerText,
-    /export const PRODUCT_VERSION = "([^"]+)";/,
-    "miku-scm runner PRODUCT_VERSION",
-    "export const PRODUCT_VERSION = \"<project version>\";",
-  );
+  const runnerVersion = productVersion(runnerText, "miku-scm runner PRODUCT_VERSION");
 
   if (projectDate !== mikukuDate || Number(projectNumber) !== suffixToNumber(mikukuSuffix)) {
     throw new Error(
@@ -55,24 +60,39 @@ export function assertVersionAlignment({ projectVersion, mikukuText, runnerText 
       `Version mismatch:\n  pom.xml project.version:          ${projectVersion}\n  miku-scm PRODUCT_VERSION:          ${runnerVersion}`,
     );
   }
-  return { projectVersion, mikukuVersion, runnerVersion };
+  const result = { projectVersion, mikukuVersion, runnerVersion };
+  if (githubWriterText !== undefined) {
+    const githubWriterVersion = productVersion(
+      githubWriterText,
+      "github-writer runner PRODUCT_VERSION",
+    );
+    if (githubWriterVersion !== projectVersion) {
+      throw new Error(
+        `Version mismatch:\n  pom.xml project.version:          ${projectVersion}\n  github-writer PRODUCT_VERSION:     ${githubWriterVersion}`,
+      );
+    }
+    result.githubWriterVersion = githubWriterVersion;
+  }
+  return result;
 }
 
 export async function validateVersionAlignment(argv, read = readFile) {
-  const [projectVersion, mikukuVersionFile, runnerFile] = argv;
-  if (!projectVersion || !mikukuVersionFile || !runnerFile || argv.length !== 3) {
-    throw new Error("Usage: validate-version-alignment.mjs <project-version> <mikuku-version-file> <runner-file>");
+  const [projectVersion, mikukuVersionFile, runnerFile, githubWriterFile] = argv;
+  if (!projectVersion || !mikukuVersionFile || !runnerFile || (argv.length !== 3 && argv.length !== 4)) {
+    throw new Error("Usage: validate-version-alignment.mjs <project-version> <mikuku-version-file> <runner-file> [github-writer-runner-file]");
   }
-  const [mikukuText, runnerText] = await Promise.all([
+  const [mikukuText, runnerText, githubWriterText] = await Promise.all([
     read(mikukuVersionFile, "utf8"),
     read(runnerFile, "utf8"),
+    githubWriterFile ? read(githubWriterFile, "utf8") : Promise.resolve(undefined),
   ]);
-  return assertVersionAlignment({ projectVersion, mikukuText, runnerText });
+  return assertVersionAlignment({ projectVersion, mikukuText, runnerText, githubWriterText });
 }
 
 async function main(argv = process.argv.slice(2)) {
   const result = await validateVersionAlignment(argv);
-  console.log(`Version alignment OK: ${result.projectVersion} / ${result.mikukuVersion} / miku-scm ${result.runnerVersion}`);
+  const githubWriter = result.githubWriterVersion ? ` / github-writer ${result.githubWriterVersion}` : "";
+  console.log(`Version alignment OK: ${result.projectVersion} / ${result.mikukuVersion} / miku-scm ${result.runnerVersion}${githubWriter}`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
