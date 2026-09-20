@@ -1,0 +1,100 @@
+name: Day plan notification
+
+on:
+  schedule:
+    # 06:00 JST（UTCでは前日21:00）を目安に1日1回
+    - cron: "0 21 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "対象日（YYYY-MM-DD、省略時は日本時間の当日）"
+        required: false
+        type: string
+      dry_run:
+        description: "Issueへ投稿せず生成結果だけ確認する"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: day-plan-notify
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    env:
+      DAYBOOK_DATE: ${{ inputs.date }}
+      DAYBOOK_DRY_RUN: ${{ inputs.dry_run }}
+      DAYBOOK_NOTIFY_ENABLED: ${{ vars.DAYBOOK_NOTIFY_ENABLED }}
+      DAYBOOK_ISSUE_NUMBER: ${{ vars.DAYBOOK_ISSUE_NUMBER }}
+      DAYBOOK_MENTION: ${{ vars.DAYBOOK_MENTION || '@igapyon' }}
+    steps:
+      - name: Check out daybook
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate day-plan
+        id: generate
+        shell: bash
+        run: |
+          set -euo pipefail
+          date_value="$DAYBOOK_DATE"
+          if [ -z "$date_value" ]; then
+            date_value="$(TZ=Asia/Tokyo date +%F)"
+          fi
+          output_root="$RUNNER_TEMP/daybook-generated"
+          node scripts/generate-day-plan.mjs --date "$date_value" --output-root "$output_root"
+          compact_date="${date_value//-/}"
+          month="${date_value:0:4}${date_value:5:2}"
+          plan_path="$output_root/${date_value:0:4}/$month/day-plan/day-plan-$compact_date.md"
+          echo "date=$date_value" >> "$GITHUB_OUTPUT"
+          echo "plan_path=$plan_path" >> "$GITHUB_OUTPUT"
+
+      - name: Upload generated day-plan
+        uses: actions/upload-artifact@v6
+        with:
+          name: day-plan-${{ steps.generate.outputs.date }}
+          path: ${{ steps.generate.outputs.plan_path }}
+
+      - name: Show dry-run result
+        if: github.event_name == 'workflow_dispatch' && env.DAYBOOK_DRY_RUN != 'false'
+        run: |
+          cat "${{ steps.generate.outputs.plan_path }}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Check scheduled notification setting
+        id: notification_gate
+        if: github.event_name == 'schedule'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${DAYBOOK_NOTIFY_ENABLED,,}" != "true" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "DAYBOOK_NOTIFY_ENABLED is not true; scheduled posting is disabled." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+      - name: Post day-plan to Daily Briefing issue
+        if: (github.event_name == 'schedule' && steps.notification_gate.outputs.enabled == 'true') || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/post-day-plan.mjs \
+            --file "${{ steps.generate.outputs.plan_path }}" \
+            --date "${{ steps.generate.outputs.date }}" \
+            --issue-number "$DAYBOOK_ISSUE_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --sha "$GITHUB_SHA" | tee -a "$GITHUB_STEP_SUMMARY"

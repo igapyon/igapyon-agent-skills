@@ -295,7 +295,7 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 
 - `igapyon-miku-daybook`
 
-  daybook repository の activity・schedule・task・day-plan の追加、更新、一覧、生成確認向け。`miku-daybook` または `igapyon-miku-daybook` の明示、または daybook の記録管理が明確な場合に利用する。Git操作やGitHub通知の変更は、別途明示された場合だけ扱う。
+  daybook repository の activity・schedule・task・day-plan の追加、更新、一覧、生成確認と、同梱された GitHub Actions 通知 workflow の生成・更新向け。`miku-daybook` または `igapyon-miku-daybook` の明示、または daybook の記録管理・通知 workflow 作成が明確な場合に利用する。Git操作やGitHubへの実行・投稿は、別途明示された場合だけ扱う。
 
 - `igapyon-mikuku-agent`
 

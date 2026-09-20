@@ -1,6 +1,6 @@
 ---
 name: igapyon-miku-daybook
-description: Use for managing an igapyon daybook repository's activity, schedule, task, and day-plan records when the user names this skill or clearly asks to manage that daybook. Do not use for generic TODO lists, public diary writing, or Git operations unless the request is explicitly about the daybook.
+description: Use for managing an igapyon daybook repository's activity, schedule, task, and day-plan records, or for generating and updating its bundled GitHub Actions notification workflow. Do not use for generic TODO lists, public diary writing, or unrelated Git operations.
 ---
 
 # igapyon-miku-daybook
@@ -9,9 +9,9 @@ Manage the Markdown records in a daybook repository. The records are the source 
 
 ## Activation and boundaries
 
-Use this skill when the user says `igapyon-miku-daybook`, `miku-daybook`, or clearly asks to add, update, list, or summarize records in the daybook repository. Do not activate for a generic TODO request, an igapyon diary entry, or a question about this skill itself.
+Use this skill when the user says `igapyon-miku-daybook`, `miku-daybook`, or clearly asks to add, update, list, or summarize records in the daybook repository. Also use it when the user explicitly asks to generate or update the daybook GitHub Actions notification workflow. Do not activate for a generic TODO request, an igapyon diary entry, or a question about this skill itself.
 
-This skill edits the daybook records and local documentation. It does not automatically commit, push, create pull requests, post Issue comments, send email, or synchronize Issues with tasks. Apply `igapyon-miku-scm` only when the user explicitly requests a Git or GitHub operation.
+This skill edits daybook records, local documentation, and an explicitly requested notification workflow. It does not automatically commit, push, create pull requests, dispatch workflows, post Issue comments, send email, or synchronize Issues with tasks. Apply `igapyon-miku-scm` only when the user explicitly requests a Git or GitHub operation.
 
 ## Required first checks
 
@@ -21,7 +21,7 @@ This skill edits the daybook records and local documentation. It does not automa
 4. Read only the reference needed for the current operation:
    - [records.md](references/records.md) for schemas, paths, IDs, and dates.
    - [operations.md](references/operations.md) for add, update, list, activity, schedule, and day-plan workflows.
-   - [notification.md](references/notification.md) for GitHub Actions, Issue comments, or email notification troubleshooting.
+   - [notification.md](references/notification.md) for GitHub Actions workflow generation, Issue comments, or email notification troubleshooting.
 
 ## Core workflow
 
@@ -32,6 +32,8 @@ For a concrete task request, create or update a `tasks/task-YYYYMM-NNNNN-name.md
 For a report of work already done, update the activity file for the Asia/Tokyo date. Keep one coherent event in one activity item when the place, activity, and instrument or other details describe the same event. Do not infer task completion from an activity report.
 
 For day-plan generation, use the target repository's existing `scripts/generate-day-plan.mjs` and its documented output location. The current rule is a target date plus six days, with active tasks, planned actions, due dates, schedules, and overlapping planned weeks selected mechanically. Do not reimplement this selection in the skill or overwrite a hand-written day-plan without an explicit request.
+
+For an explicit notification workflow generation or update, read `references/notification.md`, copy or update the complete runnable bundle under [assets/daybook](assets/daybook/), and adapt repository-specific values after inspecting the target repository. The bundle includes the workflow, day-plan generation and posting scripts, their shared module, package files, and tests. Do not create a YAML-only workflow that refers to scripts absent from the target repository.
 
 ## After editing
 
