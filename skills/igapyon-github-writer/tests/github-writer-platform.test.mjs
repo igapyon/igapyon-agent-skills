@@ -105,5 +105,5 @@ test("evidence disables repository-specific diff renderers and bounds output fie
   assert.match(evidence, /"--no-ext-diff", "--no-textconv", "--no-renames"/);
   assert.match(evidence, /changed_files_truncated/);
   assert.match(evidence, /diff_stat_truncated/);
-  assert.match(evidence, /github-writer\.writing-contract\/v1/);
+  assert.match(evidence, /github-writer\.writing-contract\/v2/);
 });

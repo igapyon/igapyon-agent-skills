@@ -483,6 +483,8 @@ Qiita の場合でも、硬い技術文体へ寄せすぎません。Note の場
 
 Note 記事全体の雛形が必要な場合は、通常記事向けの [templates/note-general-article-template.md](../templates/note-general-article-template.md)、またはリファレンス記事向けの [templates/note-reference-article-template.md](../templates/note-reference-article-template.md) を使います。両方ともフッター本文を重複保持せず、`article-footer-sections-template.md` の placeholder を記事 package に合わせて解決します。
 
+グラレコ画像のリンクは、生成しただけでは本文へ挿入しません。画像を保存・構造検証した状態は `image-generated`、内容確認を終えた状態は `image-checked` として区別し、`image-checked` の採用画像だけを記事へ任意で挿入します。画像がないセクションは、リンクなしで自然に読める本文にしてください。公開記事への反映は [graphic-recording/publish-generated-images-to-article.md](graphic-recording/publish-generated-images-to-article.md) の手順に従います。
+
 これらのセクションは、記事本文と本文後補足の後ろへ置きます。`## おわりに` は本文の締めとして扱います。`## 生成AI向け情報` のような本文後補足がある場合は、その後ろからフッターを始めます。
 
 `関連リンク`、`関連する記事`、`執筆担当`、`想定読者`、`使用ツール`、`参考リンク` はフッターとして扱います。本文後補足とは分けてください。

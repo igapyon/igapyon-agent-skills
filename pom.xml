@@ -63,6 +63,7 @@
                 <argument>${project.version}</argument>
                 <argument>${project.basedir}/skills/igapyon-mikuku-agent/references/VERSION.md</argument>
                 <argument>${project.basedir}/skills/igapyon-miku-scm/scripts/miku-scm-run.mjs</argument>
+                <argument>${project.basedir}/skills/igapyon-github-writer/scripts/github-writer-workflow-manifest.mjs</argument>
               </arguments>
             </configuration>
           </execution>

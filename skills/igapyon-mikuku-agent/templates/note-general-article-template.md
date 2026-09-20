@@ -25,33 +25,35 @@ release_date: {{YYYY-MM-DD}}
 
 ## 本文構成
 
+画像リンクは、実際に採用して `image-checked` まで確認したグラレコ画像がある場合だけ挿入します。画像がない場合は、次の任意画像コメントを削除して本文だけを残してください。
+
 ```markdown
 # {{ARTICLE_TITLE}}
 
-![{{ARTICLE_TITLE_SHORT}}](images/000.png)
+<!-- 任意: 採用・内容確認済みの代表画像がある場合だけ ![{{ARTICLE_TITLE_SHORT}}](images/000.png) を挿入 -->
 
 ## はじめに
 
-![はじめに](images/001.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![はじめに](images/001.png) を挿入 -->
 
 あ、あの…この記事は、みくくが担当します。
 {{INTRO_TEXT}}
 
 ## {{MAIN_SECTION_1}}
 
-![{{MAIN_SECTION_1}}](images/002.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![{{MAIN_SECTION_1}}](images/002.png) を挿入 -->
 
 {{BODY_TEXT}}
 
 ## {{MAIN_SECTION_2}}
 
-![{{MAIN_SECTION_2}}](images/003.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![{{MAIN_SECTION_2}}](images/003.png) を挿入 -->
 
 {{BODY_TEXT}}
 
 ## おわりに
 
-![おわりに](images/{{ENDING_IMAGE_NUMBER}}.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![おわりに](images/{{ENDING_IMAGE_NUMBER}}.png) を挿入 -->
 
 {{ENDING_TEXT}}
 ```

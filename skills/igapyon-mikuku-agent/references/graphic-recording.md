@@ -135,6 +135,8 @@
 - `sections/<NNN>/image-prompt.md`: セクション別画像生成AI用プロンプト
 - `sections/<NNN>/graphic-recording.png`: 50番で生成、保存するセクション別画像
 
+記事へ反映する場合は、生成画像を `export-images/` に集約する必要はありません。記事全体画像は実行ディレクトリ直下、セクション画像は `sections/<NNN>/graphic-recording.png` に保存し、内容確認後に [graphic-recording/publish-generated-images-to-article.md](graphic-recording/publish-generated-images-to-article.md) の `apply-generated-images-to-article.mjs` で配置計画を作成してください。
+
 保存先は原則として同じ `{{RUN_OUTPUT_DIR}}` 配下に揃えます。`workplace/` を使う場合、Git 管理外確認はカレントフォルダが Git リポジトリ内の場合だけ必要です。
 
 カレントフォルダが Git リポジトリ内で、`workplace/` が Git 管理外であることを確認できない場合は、勝手に別の場所へ保存せず、本文出力にフォールバックします。

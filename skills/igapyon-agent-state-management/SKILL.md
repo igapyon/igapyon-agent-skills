@@ -22,6 +22,7 @@ This skill intentionally uses hard triggers. Use it only for the frontmatter
 description triggers. Useful user-facing phrases:
 
 - `igapyon 状態管理`
+- `igapyon agent 状態管理`
 - `igapyon 作業状態`
 - `igapyon 作業再開`
 - `igapyon goal`
