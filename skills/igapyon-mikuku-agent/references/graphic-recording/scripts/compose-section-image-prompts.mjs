@@ -131,6 +131,7 @@ Use only the section summary below as the explanation source. Do not mix in othe
 - style-profile: mikuku-graphic-recording-v1
 - horizontal 3:2 technical graphic-recording poster
 - uniformly bright white to very pale ivory paper (e.g. #FFFDF5), subtle warm tint, soft hand-drawn lines, medium-high information density
+- fully opaque background; no transparent or semi-transparent pixels; no alpha transparency; do not generate a transparent canvas; export an opaque image
 - dark, high-contrast text including small annotations; pastel colors for accents, not faint lettering
 - no dark vignette, muddy gray-brown cast, heavy aged-paper shading, or dark shadows behind text
 - canonical character lighting must not darken the poster background
