@@ -119,7 +119,7 @@ function auditPrompt({ graphicText, imagePrompt }) {
   const styleChecks = [
     [/3\s*:\s*2|3\/2/u, "aspect-ratio", "3:2 の横長比率"],
     [/横長|horizontal/iu, "horizontal-layout", "横長構図"],
-    [/ベージュ|暖色|warm|beige/iu, "warm-paper", "暖色・ベージュ紙"],
+    [/ベージュ|暖色|warm|beige|アイボリー|ivory|白|white/iu, "warm-paper", "紙面の配色指定（画像の明度は別途検品）"],
     [/手描き|hand[- ]drawn|graphic recording/iu, "hand-drawn-style", "手描きグラレコ"],
     [/物を持たせない|do not let mikuku hold|no objects/iu, "no-objects", "みくくの持ち物なし"],
     [/みくく|mikuku/iu, "character-present", "みくくの明示"],
@@ -174,6 +174,8 @@ function auditPrompt({ graphicText, imagePrompt }) {
 function reportMarkdown({ result, graphicTextPath, imagePromptPath }) {
   const lines = [
     "# Graphic Recording Prompt Audit",
+    "",
+    "この監査はプロンプトの記述を確認します。pass は生成画像の明度・文字コントラスト・可読性の合格を意味しません。画像の目視確認を別途行ってください。",
     "",
     `- status: ${result.status}`,
     `- graphic-recording-text: ${graphicTextPath}`,

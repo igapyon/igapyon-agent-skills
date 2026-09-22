@@ -130,7 +130,10 @@ Use only the section summary below as the explanation source. Do not mix in othe
 
 - style-profile: mikuku-graphic-recording-v1
 - horizontal 3:2 technical graphic-recording poster
-- warm beige paper, soft hand-drawn lines, readable short labels, medium-high information density
+- uniformly bright white to very pale ivory paper (e.g. #FFFDF5), subtle warm tint, soft hand-drawn lines, medium-high information density
+- dark, high-contrast text including small annotations; pastel colors for accents, not faint lettering
+- no dark vignette, muddy gray-brown cast, heavy aged-paper shading, or dark shadows behind text
+- canonical character lighting must not darken the poster background
 - use at least a left, center, and right region and make one article-grounded diagram the largest element
 - keep Mikuku recognizable and large enough to read as the explaining character (roughly 15–25% of the canvas)
 - include one short speech bubble based on the section summary or its \`グラレコ構図案\`

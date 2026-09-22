@@ -113,7 +113,7 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 {{RUN_OUTPUT_DIR}}/graphic-recording-variant-03.png
 ```
 
-代表画像を採用したら、`image-generation-report.md` に候補数、採用画像、未採用理由、次工程を記録してください。採用画像を記事へ反映する前に、生成画像の内容を確認し、レポートの状態を `image-checked` と明記してください。内容確認が済んでいない画像は `image-generated` のままにしてください。
+代表画像を採用したら、`image-generation-report.md` に候補数、採用画像、未採用理由、次工程を記録してください。採用前に [style-contract.md](style-contract.md) の「生成後の可読性確認」を実施し、背景・文字コントラストと読みにくい箇所の有無を記録してください。プロンプト監査の pass だけで画像を合格にしてはいけません。内容と可読性を確認して採用できる画像だけ `image-checked` とし、未確認は `image-generated`、可読性に問題が残る画像は `regenerate-recommended` と記録してください。
 `whole-article` の次工程は `report` です。ユーザーが章ごとの画像も明示した `whole-article-then-sections` の場合だけ、セクション用素材が未作成なら `40-article-section-graphic-recording-batch-prompt.md`、素材作成済みなら `50-generate-section-graphic-recording-images-prompt.md` へ進みます。
 
 `image-generation-report.md` には、可能な範囲で次の生成経路を別々に記録してください。
@@ -134,6 +134,8 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 ---
 
 # 実施内容
+
+保存後の採用判定では [style-contract.md](style-contract.md) の透明度検査も必須です。背景合成で不透明化した場合は、元画像ではなく再検品した保存画像を採用先として記録してください。未検査・未処理の画像を `image-checked` にしないでください。
 
 1. `{{IMAGE_PROMPT_PATH}}` の Markdown ファイルを読む
 2. `{{MIKUKU_PROMPT_PATH}}` の Markdown ファイルが存在することを確認する
