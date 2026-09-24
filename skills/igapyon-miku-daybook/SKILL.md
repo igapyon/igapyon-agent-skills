@@ -13,6 +13,8 @@ Use this skill when the user says `igapyon-miku-daybook`, `miku-daybook`, or cle
 
 This skill edits daybook records, local documentation, and an explicitly requested notification workflow. It does not automatically commit, push, create pull requests, dispatch workflows, post Issue comments, send email, or synchronize Issues with tasks. Apply `igapyon-miku-scm` only when the user explicitly requests a Git or GitHub operation.
 
+Weekly recurrence handling is invocation-driven: during any record-writing request, maintain every active weekly task whose `next_occurrence` is today or overdue, following [operations.md](references/operations.md). The skill does not run in the background. Keep read-only task lists, explanations, and day-plan generation non-mutating.
+
 ## Required first checks
 
 1. Read [index.json](index.json) first to discover the bundled references.
@@ -27,7 +29,9 @@ This skill edits daybook records, local documentation, and an explicitly request
 
 Classify the request before editing: task, schedule, activity, task list, day-plan, notification, or explanation. Resolve an existing record by its full ID/path/title before creating a new one. When a request is ambiguous, use the available date, month, title, and links to narrow it; do not create a duplicate silently.
 
-For a concrete task request, create or update a `tasks/task-YYYYMM-NNNNN-name.md` record even when the user says “TODO”. Keep a vague idea in `TODO.md` only when it is genuinely not actionable. For a task list, show `ID / Status / Start / Due / Title`; map Start to `planned_date`, Due to `due` or `due_month`, and use `—` when absent.
+For a concrete task request, create or update a `tasks/task-YYYYMM-NNNNN-name.md` record even when the user says “TODO”. Keep a vague idea in `TODO.md` only when it is genuinely not actionable. For a task list, show `ID / Status / Start / Due / Title`; map Start to `planned_date`, Due to `due` or `due_month`, and use `—` when absent. Add a `Next` value for weekly tasks from `next_occurrence`; do not overload Start with the next recurrence date.
+
+For an explicitly weekly recurring task, keep one active task as the recurring rule and create one dated schedule record per occurrence. Mark it with `recurrence: weekly` and store its upcoming date in `next_occurrence`; keep `planned_date` for its usual start-date meaning. Read [records.md](references/records.md) and [operations.md](references/operations.md) for the record and rollover rules.
 
 For a report of work already done, update the activity file for the Asia/Tokyo date. Keep one coherent event in one activity item when the place, activity, and instrument or other details describe the same event. Do not infer task completion from an activity report.
 

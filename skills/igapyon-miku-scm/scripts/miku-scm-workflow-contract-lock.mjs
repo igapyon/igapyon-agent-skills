@@ -239,9 +239,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "work-commit.mjs",
     "contract_spec": "work-commit.md",
     "contract_test": "work-commit.test.mjs",
-    "runner_sha256": "1be3464e87f8ed287c99bb348184ba830abe542e3229ee54d59488e6bb138834",
-    "spec_sha256": "f7c79fc37373c8770361ebd3874334f0ed4cc03f892e3316ebbee67a03ca0ae4",
-    "pair_sha256": "c4361f596bd91633dc18539168f0eed58af591b41cbdc7eeb91bdcbe283aca82"
+    "runner_sha256": "1824cc77a628e500f8646032fb8f8936460531ac8fb7424c086174116b93c605",
+    "spec_sha256": "0ef43109e042adb59fbbfa3102eb8a6e33048889c4812c948f9e31e85a968bee",
+    "pair_sha256": "7a36b5dd590b6cb150b9c2b942f68f272911adb8c977040b2fb1251dc5281fd0"
   },
   {
     "workflow": "pr.publish.preflight",

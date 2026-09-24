@@ -208,12 +208,21 @@ export async function runWorkCommit(options, dependencies = {}) {
     root = output(git, options.repo, ["rev-parse", "--show-toplevel"]).trim();
     branch = output(git, root, ["branch", "--show-current"]).trim();
     headBefore = output(git, root, ["rev-parse", "HEAD"]).trim();
+    if (branch.endsWith("-done")) {
+      return result("not-applied", {
+        repository: root,
+        branch,
+        head_before: headBefore,
+        reason: "Current branch is frozen (-done)",
+        warning: "The current branch ends with -done. Switch to an active work branch before committing.",
+        mutation_invoked: false,
+      });
+    }
     paths = changedPaths(root, git);
     const conflicts = zeroPaths(output(git, root, ["diff", "--name-only", "--diff-filter=U", "-z"]));
     versionNotice = withIncrementStatus(await readVersionNotice(root, dependencies.readFile), paths);
     checks = dependencies.resolveChecks ? await dependencies.resolveChecks(root) : await resolveChecks(root, dependencies.readFile);
 
-    if (branch.endsWith("-done")) return result("not-applied", { repository: root, branch, head_before: headBefore, reason: "Current branch is frozen (-done)", mutation_invoked: false });
     if (conflicts.length > 0) return result("conflict", { repository: root, branch, head_before: headBefore, conflicted_paths: conflicts, mutation_invoked: false });
     if (paths.length === 0) return result("not-applied", { repository: root, branch, head_before: headBefore, reason: "No non-ignored changes to commit", mutation_invoked: false });
     const sensitivePaths = paths.filter(sensitivePath);

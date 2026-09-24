@@ -440,10 +440,31 @@ test("frozen done branches stop before staging", async (t) => {
   const root = await repository(t);
   git(root, "branch", "-m", "devel-test-done");
   await writeFile(path.join(root, "README.md"), "changed\n", "utf8");
+  git(root, "add", "README.md");
+  await writeFile(path.join(root, "feature.txt"), "untracked\n", "utf8");
+  const headBefore = git(root, "rev-parse", "HEAD");
+  const statusBefore = git(root, "status", "--porcelain");
 
-  const result = await runWorkCommit(options(root, "--message", "Frozen branch"));
+  const result = await runWorkCommit(options(root, "--message", "Frozen branch"), {
+    resolveChecks: async () => { throw new Error("checks must not run on a -done branch"); },
+  });
 
   assert.equal(result.status, "not-applied");
   assert.match(result.reason, /frozen/);
-  assert.equal(git(root, "diff", "--cached", "--name-only"), "");
+  assert.match(result.warning, /-done/);
+  assert.equal(result.mutation_invoked, false);
+  assert.equal(git(root, "rev-parse", "HEAD"), headBefore);
+  assert.equal(git(root, "status", "--porcelain"), statusBefore);
+});
+
+test("frozen done branches warn even when there are no changes", async (t) => {
+  const root = await repository(t);
+  git(root, "branch", "-m", "devel-test-done");
+
+  const result = await runWorkCommit(options(root));
+
+  assert.equal(result.status, "not-applied");
+  assert.match(result.warning, /-done/);
+  assert.match(result.reason, /frozen/);
+  assert.equal(result.mutation_invoked, false);
 });

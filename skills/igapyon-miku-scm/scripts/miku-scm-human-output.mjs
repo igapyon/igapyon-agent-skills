@@ -350,6 +350,7 @@ function appendWorkCommit(lines, result) {
   }
   if (Object.hasOwn(result, "working_tree_clean")) lines.push(`Working tree: ${result.working_tree_clean ? "clean" : "dirty"}`);
   if (result.stage) lines.push(`Stopped stage: ${displayValue(result.stage)}`);
+  if (result.warning) lines.push(`Warning: ${displayValue(result.warning)}`);
   if (result.reason) lines.push(`Reason: ${displayValue(result.reason)}`);
   if (result.message) lines.push(`Detail: ${displayValue(result.message)}`);
 }

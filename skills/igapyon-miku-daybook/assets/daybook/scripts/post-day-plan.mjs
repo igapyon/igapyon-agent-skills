@@ -15,6 +15,7 @@ function parseArgs(args) {
     else if (arg === "--repo") options.repo = args[++index];
     else if (arg === "--sha") options.sha = args[++index];
     else if (arg === "--dry-run") options.dryRun = true;
+    else if (arg === "--allow-duplicate") options.allowDuplicate = true;
     else if (arg === "--help") options.help = true;
     else throw new Error(`unknown option: ${arg}`);
   }
@@ -118,14 +119,14 @@ export async function postDayPlan(options) {
   if (issue.pull_request) throw new Error(`target is a pull request, not an issue: #${options.issueNumber}`);
   if (issue.state !== "open") throw new Error(`target issue is not open: #${options.issueNumber}`);
   const comments = await listComments({ apiUrl, repo: options.repo, issueNumber: options.issueNumber, token });
-  const existing = existingBriefing(comments, options.date);
+  const existing = options.allowDuplicate ? null : existingBriefing(comments, options.date);
   if (existing) return { status: "skipped", marker, url: existing.html_url };
   try {
     const created = await postComment({ apiUrl, repo: options.repo, issueNumber: options.issueNumber, token, body });
     return { status: "created", marker, url: created.html_url };
   } catch (error) {
     const afterFailure = await listComments({ apiUrl, repo: options.repo, issueNumber: options.issueNumber, token });
-    const accepted = existingBriefing(afterFailure, options.date);
+    const accepted = options.allowDuplicate ? null : existingBriefing(afterFailure, options.date);
     if (accepted) return { status: "skipped-after-uncertain-post", marker, url: accepted.html_url };
     const retry = await postComment({ apiUrl, repo: options.repo, issueNumber: options.issueNumber, token, body });
     return { status: "created-after-retry", marker, url: retry.html_url };
@@ -135,7 +136,7 @@ export async function postDayPlan(options) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
-    console.log("Usage: node scripts/post-day-plan.mjs --file FILE --date YYYY-MM-DD --issue-number NUMBER --repo OWNER/REPO --sha SHA [--dry-run]");
+    console.log("Usage: node scripts/post-day-plan.mjs --file FILE --date YYYY-MM-DD --issue-number NUMBER --repo OWNER/REPO --sha SHA [--dry-run] [--allow-duplicate]");
     return;
   }
   const file = path.resolve(requireOption(options, "file"));
