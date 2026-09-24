@@ -172,6 +172,46 @@ generated: 2026-09-14
   }
 });
 
+test("postDayPlan allows a duplicate when explicitly requested", async () => {
+  const originalFetch = globalThis.fetch;
+  const postedBodies = [];
+  const markdown = `---
+type: day-plan
+date: 2026-09-14
+generated: 2026-09-14
+---
+
+# 9月14日 デイリーブリーフ
+`;
+  try {
+    globalThis.fetch = async (url, options = {}) => {
+      if (url.endsWith("/issues/42")) return response({ state: "open" });
+      if (url.endsWith("/issues/42/comments") && options.method === "POST") {
+        postedBodies.push(JSON.parse(options.body).body);
+        return response({ html_url: `https://github.com/igapyon/daybook/issues/42#issuecomment-${postedBodies.length}` });
+      }
+      if (url.includes("/issues/42/comments")) {
+        return response([{ user: { type: "Bot" }, body: "<!-- daybook-briefing:2026-09-14 -->\n\nold comment", html_url: "https://github.com/igapyon/daybook/issues/42#issuecomment-existing" }]);
+      }
+      throw new Error(`unexpected URL: ${url}`);
+    };
+    const result = await postDayPlan({
+      markdown,
+      date: "2026-09-14",
+      repo: "igapyon/daybook",
+      sha: "abc123",
+      issueNumber: 42,
+      apiUrl: "https://api.github.test",
+      token: "test-token",
+      allowDuplicate: true,
+    });
+    assert.equal(result.status, "created");
+    assert.equal(postedBodies.length, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("postDayPlan dry-run does not call GitHub", async () => {
   const originalFetch = globalThis.fetch;
   try {

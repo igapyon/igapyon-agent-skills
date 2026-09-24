@@ -488,6 +488,28 @@ test("work commit output reports the one-shot local result and non-blocking vers
   assert.match(output, /Mutation invoked: yes/);
 });
 
+test("work commit output warns when a done branch blocks the commit", () => {
+  const output = renderHumanOutput({
+    workflow: "work.commit",
+    status: "not-applied",
+    approvalGate: "apply",
+    delegateStatus: "not-applied",
+    mutationInvoked: false,
+    result: {
+      status: "not-applied",
+      repository: "igapyon-agent-skills",
+      branch: "devel-test-done",
+      reason: "Current branch is frozen (-done)",
+      warning: "The current branch ends with -done. Switch to an active work branch before committing.",
+      mutation_invoked: false,
+    },
+  });
+
+  assert.match(output, /^\[NOT APPLIED\] Work commit$/m);
+  assert.match(output, /^Warning: .*ends with -done.*$/m);
+  assert.match(output, /^Mutation invoked: no$/m);
+});
+
 test("PR publication reports unresolved values without guessing", () => {
   const output = renderHumanOutput({
     workflow: "pr.publish.apply",

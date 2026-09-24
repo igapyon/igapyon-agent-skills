@@ -35,6 +35,11 @@ extensions (case-insensitive where applicable). It evaluates only paths, never
 reads candidate content, and requires separate explicit handling rather than
 silently committing a candidate.
 
+On a branch ending in `-done`, branch inspection takes precedence over change
+and check discovery. The runner returns `not-applied` with an explicit warning
+to switch to an active work branch. It leaves HEAD, the index, and non-ignored
+working files untouched, including when the branch has no changes.
+
 ## One-Shot Sequence
 
 1. Read the repository root, branch, HEAD, every changed/staged/untracked

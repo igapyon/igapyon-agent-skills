@@ -56,6 +56,19 @@ completed: YYYY-MM-DD
 
 Only include optional fields when they are known and useful. `planned_date` is the intended action or start date; it is distinct from the deadline `due`. `planned_week` is the Monday of a planned work week. If a deadline is known only as a month, use `due_month` and do not invent the month's last day. Preserve modifiers such as “EOD” or “午前中” in the body; a date-only `due` does not prove a time of day.
 
+## Weekly recurring tasks
+
+Represent an explicitly weekly routine with one persistent active task and a separate schedule record for each dated occurrence. Use `recurrence: weekly` as the machine-readable marker and `next_occurrence: YYYY-MM-DD` for the next schedule date. Keep the human-readable rule (weekday and any stable time or place) in the task body. Do not repurpose `planned_date`; it continues to mean the intended task start date. Keep the task active after an individual occurrence; mark it done or cancelled only when the recurring routine itself ends.
+
+Link each occurrence schedule to the persistent task with a relative Markdown link. The task also links to its schedule for `next_occurrence`. A schedule remains the dated record for that occurrence; the recurring task remains the rule. Preserve known times, place, participation details, and source links without inferring missing details.
+
+For example, add these fields only to a weekly task:
+
+```yaml
+recurrence: weekly
+next_occurrence: 2026-10-04
+```
+
 The minimum front matter for the other records is:
 
 ```yaml
@@ -97,4 +110,4 @@ For a task-list request, display this header and one row per selected task:
 ID / Status / Start / Due / Title
 ```
 
-`Start` is `planned_date`; `Due` is `due`, then `due_month` if no exact due date exists, otherwise `—`. By default list active tasks across all year/month directories. Apply a date window only when the user asks for a window or asks for a day-plan.
+`Start` is `planned_date`; `Due` is `due`, then `due_month` if no exact due date exists, otherwise `—`. For a weekly task, also show `Next` from `next_occurrence`; do not substitute it for `Start`. By default list active tasks across all year/month directories. Apply a date window only when the user asks for a window or asks for a day-plan.

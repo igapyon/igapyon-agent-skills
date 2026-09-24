@@ -3,11 +3,11 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":4169,"description":"Use for managing an igapyon daybook repository's activity, schedule, task, and day-plan records, or for generating and updating its bundled GitHub Actions notification workflow. Do not use for generic TODO lists, public diary writing, or unrelated Git o...","summary":"igapyon-miku-daybook"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":5018,"description":"Use for managing an igapyon daybook repository's activity, schedule, task, and day-plan records, or for generating and updating its bundled GitHub Actions notification workflow. Do not use for generic TODO lists, public diary writing, or unrelated Git o...","summary":"igapyon-miku-daybook"},
   {"name":"package-lock.json","path":"assets/daybook/package-lock.json","ext":"json","dir":"assets/daybook","size":668},
   {"name":"package.json","path":"assets/daybook/package.json","ext":"json","dir":"assets/daybook","size":187},
-  {"name":"notification.md","path":"references/notification.md","ext":"md","dir":"references","size":4387,"summary":"Daybook notification workflow"},
-  {"name":"operations.md","path":"references/operations.md","ext":"md","dir":"references","size":5051,"summary":"Daybook operations"},
-  {"name":"records.md","path":"references/records.md","ext":"md","dir":"references","size":3655,"summary":"Daybook record contract"}
+  {"name":"notification.md","path":"references/notification.md","ext":"md","dir":"references","size":4498,"summary":"Daybook notification workflow"},
+  {"name":"operations.md","path":"references/operations.md","ext":"md","dir":"references","size":8653,"summary":"Daybook operations"},
+  {"name":"records.md","path":"references/records.md","ext":"md","dir":"references","size":4774,"summary":"Daybook record contract"}
  ]
 }

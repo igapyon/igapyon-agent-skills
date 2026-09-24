@@ -8,7 +8,7 @@ The daybook workflow generates a day-plan mechanically and posts it to a configu
 
 The bundled default schedule is once per day at approximately 06:00 Asia/Tokyo, using the UTC cron `0 21 * * *`. GitHub schedule events are best effort and can be delayed or dropped. Before changing or reporting the target time, read the target repository's `.github/workflows/day-plan-notify.yml` because this value is operational configuration.
 
-The comment marker is date-only: `<!-- daybook-briefing:YYYY-MM-DD -->`. The posting script also recognizes previous date-only and date-plus-slot markers, so migrating an existing Issue does not create another comment for a date that was already posted. A scheduled retry and a manual non-dry-run for the same target date are skipped when a Bot comment for that date exists. Dry-runs never post.
+The comment marker is date-only: `<!-- daybook-briefing:YYYY-MM-DD -->`. The posting script also recognizes previous date-only and date-plus-slot markers, so migrating an existing Issue does not create another comment for a date that was already posted. A scheduled retry and a manual non-dry-run for the same target date are skipped when a Bot comment for that date exists. A manual dispatch may explicitly set `allow_duplicate: true` to post again; scheduled runs always deduplicate. Dry-runs never post.
 
 ## Bundled runnable files
 
