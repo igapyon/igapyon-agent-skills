@@ -1,6 +1,6 @@
 export const WORKFLOW_MANIFEST_VERSION = "github-writer.workflow-manifest/v3";
 export const WORKFLOW_CONTRACT_VERSION = 3;
-export const PRODUCT_VERSION = "1.20260924.1";
+export const PRODUCT_VERSION = "1.20260925.1";
 
 const common = {
   network_access: "none",

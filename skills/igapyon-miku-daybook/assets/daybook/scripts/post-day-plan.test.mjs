@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { markerForDate, postDayPlan, renderComment } from "./post-day-plan.mjs";
 
-test("renderComment adds the mention and commit-pinned source links", () => {
-  const body = renderComment({
-    markdown: `---
+test("renderComment omits an unset or empty mention and keeps commit-pinned source links", () => {
+  const previousMention = process.env.DAYBOOK_MENTION;
+  try {
+    const markdown = `---
 type: day-plan
 date: 2026-09-14
 generated: 2026-09-14
@@ -14,21 +15,54 @@ generated: 2026-09-14
 
 - [今日のタスク](../tasks/task-202609-00001-today.md)
 - [外部資料](https://example.com/reference)
-`,
-    date: "2026-09-14",
-    slot: "0 21 * * *",
-    repo: "igapyon/daybook",
-    sha: "abc123",
-  });
-  assert.ok(body.includes(markerForDate("2026-09-14")));
-  assert.equal(markerForDate("2026-09-14", "0 3 * * *"), markerForDate("2026-09-14"));
-  assert.match(body, /<!-- daybook-briefing:2026-09-14 -->/);
-  assert.match(body, /@igapyon/);
-  assert.match(body, /https:\/\/github\.com\/igapyon\/daybook\/blob\/abc123\/2026\/202609\/tasks\/task-202609-00001-today\.md/);
-  assert.match(body, /https:\/\/example\.com\/reference/);
+`;
+    for (const value of [undefined, ""]) {
+      if (value === undefined) delete process.env.DAYBOOK_MENTION;
+      else process.env.DAYBOOK_MENTION = value;
+      const body = renderComment({
+        markdown,
+        date: "2026-09-14",
+        repo: "igapyon/daybook",
+        sha: "abc123",
+      });
+      assert.ok(body.includes(markerForDate("2026-09-14")));
+      assert.equal(markerForDate("2026-09-14", "0 3 * * *"), markerForDate("2026-09-14"));
+      assert.match(body, /<!-- daybook-briefing:2026-09-14 -->/);
+      assert.doesNotMatch(body, /^@[^\n]+$/m);
+      assert.match(body, /https:\/\/github\.com\/igapyon\/daybook\/blob\/abc123\/2026\/202609\/tasks\/task-202609-00001-today\.md/);
+      assert.match(body, /https:\/\/example\.com\/reference/);
+    }
+  } finally {
+    if (previousMention === undefined) delete process.env.DAYBOOK_MENTION;
+    else process.env.DAYBOOK_MENTION = previousMention;
+  }
 });
 
-test("renderComment accepts a configured mention", () => {
+test("renderComment uses a configured mention", () => {
+  const previousMention = process.env.DAYBOOK_MENTION;
+  process.env.DAYBOOK_MENTION = "@daybook-owner";
+  try {
+    const body = renderComment({
+      markdown: `---
+type: day-plan
+date: 2026-09-14
+generated: 2026-09-14
+---
+
+# 9月14日 デイリーブリーフ
+`,
+      date: "2026-09-14",
+      repo: "example/daybook",
+      sha: "abc123",
+    });
+    assert.match(body, /@daybook-owner/);
+  } finally {
+    if (previousMention === undefined) delete process.env.DAYBOOK_MENTION;
+    else process.env.DAYBOOK_MENTION = previousMention;
+  }
+});
+
+test("renderComment omits an empty configured mention", () => {
   const body = renderComment({
     markdown: `---
 type: day-plan
@@ -39,12 +73,12 @@ generated: 2026-09-14
 # 9月14日 デイリーブリーフ
 `,
     date: "2026-09-14",
-    mention: "@daybook-owner",
+    mention: "   ",
     repo: "example/daybook",
     sha: "abc123",
   });
-  assert.match(body, /@daybook-owner/);
-  assert.doesNotMatch(body, /@igapyon/);
+  assert.doesNotMatch(body, /^@[^\n]+$/m);
+  assert.match(body, /<!-- daybook-briefing:2026-09-14 -->\n\n# 9月14日/);
 });
 
 function response(body, status = 200, link = null) {

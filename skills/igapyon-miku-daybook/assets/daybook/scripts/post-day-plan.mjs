@@ -36,7 +36,7 @@ export function markerForDate(date) {
   return `<!-- daybook-briefing:${date} -->`;
 }
 
-export function renderComment({ markdown, date, repo, sha, mention = process.env.DAYBOOK_MENTION || "@igapyon", serverUrl = "https://github.com" }) {
+export function renderComment({ markdown, date, repo, sha, mention = process.env.DAYBOOK_MENTION, serverUrl = "https://github.com" }) {
   validateIsoDate(date, "date");
   if (!repo || !sha) throw new Error("repo and sha are required to render a GitHub comment");
   const parsed = parseFrontMatter(markdown, "day-plan");
@@ -47,7 +47,9 @@ export function renderComment({ markdown, date, repo, sha, mention = process.env
     if (sourcePath.startsWith("../") || sourcePath === "..") return match;
     return `[${label}](${absoluteGitHubUrl(serverUrl, repo, sha, sourcePath)})`;
   });
-  return `${markerForDate(date)}\n\n${mention}\n\n${body}\n`;
+  const mentionText = typeof mention === "string" ? mention.trim() : "";
+  const mentionBlock = mentionText ? `${mentionText}\n\n` : "";
+  return `${markerForDate(date)}\n\n${mentionBlock}${body}\n`;
 }
 
 function parseNextLink(header) {

@@ -38,7 +38,7 @@ jobs:
       DAYBOOK_ALLOW_DUPLICATE: ${{ inputs.allow_duplicate }}
       DAYBOOK_NOTIFY_ENABLED: ${{ vars.DAYBOOK_NOTIFY_ENABLED }}
       DAYBOOK_ISSUE_NUMBER: ${{ vars.DAYBOOK_ISSUE_NUMBER }}
-      DAYBOOK_MENTION: ${{ vars.DAYBOOK_MENTION || '@igapyon' }}
+      DAYBOOK_MENTION: ${{ vars.DAYBOOK_MENTION }}
     steps:
       - name: Check out daybook
         uses: actions/checkout@v5
