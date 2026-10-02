@@ -4,6 +4,7 @@ import { parse as parseYaml } from "yaml";
 
 const TOKYO = "Asia/Tokyo";
 const TERMINAL_STATUSES = new Set(["done", "cancelled"]);
+const SCHEDULE_STATUSES = new Set(["scheduled", "cancelled"]);
 
 export function validateIsoDate(value, label = "date") {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -47,18 +48,7 @@ export function parseFrontMatter(text, filePath = "<input>") {
   const normalized = Object.fromEntries(
     Object.entries(frontMatter).map(([key, value]) => [key, valueAsString(value)]),
   );
-  return { frontMatter: normalized, body: lines.slice(end + 1).join("\n") };
-}
-
-function walkMarkdownFiles(directory) {
-  if (!fs.existsSync(directory)) return [];
-  const result = [];
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    const entryPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) result.push(...walkMarkdownFiles(entryPath));
-    else if (entry.isFile() && entry.name.endsWith(".md")) result.push(entryPath);
-  }
-  return result;
+  return { frontMatter: normalized, rawFrontMatter: frontMatter, body: lines.slice(end + 1).join("\n") };
 }
 
 function titleFromBody(body, filePath) {
@@ -72,8 +62,26 @@ function recordFromFile(repoRoot, filePath, expectedType) {
   if (parsed.frontMatter.type !== expectedType) {
     throw new Error(`expected type ${expectedType}: ${filePath}`);
   }
+  if (expectedType === "task" && Object.hasOwn(parsed.rawFrontMatter, "priority")) {
+    const priority = parsed.rawFrontMatter.priority;
+    if (typeof priority !== "number" || !Number.isInteger(priority) || priority < 1 || priority > 9) {
+      throw new Error(`priority must be an integer from 1 to 9: ${filePath}`);
+    }
+  }
+  if (expectedType === "schedule") {
+    const hasStatus = Object.hasOwn(parsed.rawFrontMatter, "status");
+    const status = hasStatus ? parsed.rawFrontMatter.status : "scheduled";
+    if (typeof status !== "string" || !SCHEDULE_STATUSES.has(status)) {
+      throw new Error(`schedule status must be scheduled or cancelled: ${filePath}`);
+    }
+    parsed.frontMatter.status = status;
+  }
   for (const key of ["date", "created", "due", "planned_date", "planned_week"]) {
-    if (parsed.frontMatter[key]) validateIsoDate(parsed.frontMatter[key], `${filePath}: ${key}`);
+    const explicitTaskCreationDate = expectedType === "task" && key === "created"
+      && Object.hasOwn(parsed.rawFrontMatter, "created");
+    if (parsed.frontMatter[key] || explicitTaskCreationDate) {
+      validateIsoDate(parsed.frontMatter[key], `${filePath}: ${key}`);
+    }
   }
   const relativePath = path.relative(repoRoot, filePath).split(path.sep).join("/");
   return {
@@ -87,13 +95,50 @@ function recordFromFile(repoRoot, filePath, expectedType) {
 export function loadRecords(repoRoot) {
   const tasks = [];
   const schedules = [];
-  for (const filePath of walkMarkdownFiles(repoRoot)) {
-    const segments = path.relative(repoRoot, filePath).split(path.sep);
-    const type = segments.includes("tasks") ? "task" : segments.includes("schedules") ? "schedule" : null;
-    if (!type) continue;
-    const record = recordFromFile(repoRoot, filePath, type);
-    if (type === "task") tasks.push(record);
-    else schedules.push(record);
+  if (!fs.existsSync(repoRoot)) return { tasks, schedules };
+
+  for (const yearEntry of fs.readdirSync(repoRoot, { withFileTypes: true })) {
+    if (!yearEntry.isDirectory() || !/^\d{4}$/.test(yearEntry.name)) continue;
+    const yearPath = path.join(repoRoot, yearEntry.name);
+    for (const monthEntry of fs.readdirSync(yearPath, { withFileTypes: true })) {
+      if (!monthEntry.isDirectory() || !/^\d{4}(0[1-9]|1[0-2])$/.test(monthEntry.name)
+        || !monthEntry.name.startsWith(yearEntry.name)) continue;
+      const monthPath = path.join(yearPath, monthEntry.name);
+      for (const [directoryName, type, filenamePattern] of [
+        ["tasks", "task", /^task-(\d{6})-(\d{5})-(.+)\.md$/],
+        ["schedules", "schedule", /^schedule-(\d{8})-(.+)\.md$/],
+      ]) {
+        const recordDirectory = path.join(monthPath, directoryName);
+        if (!fs.existsSync(recordDirectory)) continue;
+        for (const entry of fs.readdirSync(recordDirectory, { withFileTypes: true })) {
+          if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+          const match = filenamePattern.exec(entry.name);
+          if (!match) continue;
+          const filePath = path.join(recordDirectory, entry.name);
+          const record = recordFromFile(repoRoot, filePath, type);
+          if (type === "task") {
+            const [, idMonth, sequence] = match;
+            const expectedId = `task-${idMonth}-${sequence}`;
+            if (idMonth !== monthEntry.name || record.frontMatter.id !== expectedId) {
+              throw new Error(`task path, filename, and ID must agree: ${filePath}`);
+            }
+            const createdMonth = record.frontMatter.created?.slice(0, 7).replace("-", "");
+            if (createdMonth && createdMonth !== monthEntry.name) {
+              throw new Error(`task created month must agree with its directory and ID: ${filePath}`);
+            }
+            tasks.push(record);
+          } else {
+            const [, compactDate] = match;
+            const date = `${compactDate.slice(0, 4)}-${compactDate.slice(4, 6)}-${compactDate.slice(6, 8)}`;
+            validateIsoDate(date, `${filePath}: filename date`);
+            if (compactDate.slice(0, 6) !== monthEntry.name || record.frontMatter.date !== date) {
+              throw new Error(`schedule path, filename, and date must agree: ${filePath}`);
+            }
+            schedules.push(record);
+          }
+        }
+      }
+    }
   }
   tasks.sort((left, right) => left.relativePath.localeCompare(right.relativePath));
   schedules.sort((left, right) => left.relativePath.localeCompare(right.relativePath));
@@ -102,6 +147,27 @@ export function loadRecords(repoRoot) {
 
 function isActiveTask(task) {
   return !TERMINAL_STATUSES.has(task.frontMatter.status);
+}
+
+function taskPriority(task) {
+  return task.frontMatter.priority === undefined ? 5 : Number(task.frontMatter.priority);
+}
+
+function taskId(task) {
+  return task.frontMatter.id || task.relativePath;
+}
+
+function compareTaskId(left, right) {
+  return taskId(left).localeCompare(taskId(right));
+}
+
+function comparePriorityThenId(left, right) {
+  return taskPriority(left) - taskPriority(right) || compareTaskId(left, right);
+}
+
+function compareDateThenPriority(field) {
+  return (left, right) => left.frontMatter[field].localeCompare(right.frontMatter[field])
+    || comparePriorityThenId(left, right);
 }
 
 function inWindow(value, start, end) {
@@ -138,7 +204,7 @@ function scheduleLink(date, schedule) {
 
 function taskLine(date, task, detail) {
   const suffix = detail ? `\n  - ${detail}` : "";
-  return `- ${taskLink(date, task)}${suffix}`;
+  return `- ${taskLink(date, task)}（優先度 ${taskPriority(task)}）${suffix}`;
 }
 
 function scheduleLine(date, schedule) {
@@ -168,15 +234,19 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
   const windowEnd = addDays(targetDate, 6);
   const { tasks, schedules } = loadRecords(repoRoot);
   const activeTasks = tasks.filter(isActiveTask);
-  const todayTasks = activeTasks.filter((task) => task.frontMatter.planned_date === targetDate);
+  const todayTasks = activeTasks.filter((task) => task.frontMatter.planned_date === targetDate)
+    .sort(comparePriorityThenId);
   const futurePlannedTasks = activeTasks.filter((task) =>
     task.frontMatter.planned_date > targetDate && inWindow(task.frontMatter.planned_date, targetDate, windowEnd));
+  const overdueTasks = activeTasks.filter((task) => task.frontMatter.due && task.frontMatter.due < targetDate)
+    .sort(compareDateThenPriority("due"));
   const dueTasks = activeTasks.filter((task) => inWindow(task.frontMatter.due, targetDate, windowEnd));
   const plannedWeekTasks = activeTasks.filter((task) => {
     const week = task.frontMatter.planned_week;
     return week && inWindow(addDays(week, 6), targetDate, windowEnd) || week && inWindow(week, targetDate, windowEnd);
   });
-  const nearSchedules = schedules.filter((schedule) => inWindow(schedule.frontMatter.date, targetDate, windowEnd));
+  const nearSchedules = schedules.filter((schedule) => schedule.frontMatter.status === "scheduled"
+    && inWindow(schedule.frontMatter.date, targetDate, windowEnd));
 
   const lines = [
     "---",
@@ -189,12 +259,15 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
     "",
     section("今日の実施項目", todayTasks.map((task) => taskLine(targetDate, task, task.frontMatter.planned_action))),
     "",
+    section("期限超過", overdueTasks
+      .map((task) => `- ${task.frontMatter.due}：${taskLink(targetDate, task)}（優先度 ${taskPriority(task)}）`)),
+    "",
     section("近い期限", dueTasks
-      .sort((left, right) => left.frontMatter.due.localeCompare(right.frontMatter.due) || left.relativePath.localeCompare(right.relativePath))
-      .map((task) => `- ${task.frontMatter.due}：${taskLink(targetDate, task)}`)),
+      .sort(compareDateThenPriority("due"))
+      .map((task) => `- ${task.frontMatter.due}：${taskLink(targetDate, task)}（優先度 ${taskPriority(task)}）`)),
     "",
     section("近々の実施予定", futurePlannedTasks
-      .sort((left, right) => left.frontMatter.planned_date.localeCompare(right.frontMatter.planned_date))
+      .sort(compareDateThenPriority("planned_date"))
       .map((task) => taskLine(targetDate, task, `${task.frontMatter.planned_date}：${task.frontMatter.planned_action || "実施予定"}`))),
     "",
     section("近々の予定", nearSchedules
@@ -202,8 +275,8 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
       .map((schedule) => scheduleLine(targetDate, schedule))),
     "",
     section("実施予定週", plannedWeekTasks
-      .sort((left, right) => left.frontMatter.planned_week.localeCompare(right.frontMatter.planned_week))
-      .map((task) => `- ${task.frontMatter.planned_week}週：${taskLink(targetDate, task)}`)),
+      .sort(compareDateThenPriority("planned_week"))
+      .map((task) => `- ${task.frontMatter.planned_week}週：${taskLink(targetDate, task)}（優先度 ${taskPriority(task)}）`)),
     "",
     "## 参照方針",
     "",
@@ -215,7 +288,7 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
     generatedDate,
     relativePath: canonicalPlanPath(targetDate),
     markdown: lines.join("\n"),
-    records: { todayTasks, futurePlannedTasks, dueTasks, nearSchedules, plannedWeekTasks },
+    records: { todayTasks, overdueTasks, futurePlannedTasks, dueTasks, nearSchedules, plannedWeekTasks },
   };
 }
 

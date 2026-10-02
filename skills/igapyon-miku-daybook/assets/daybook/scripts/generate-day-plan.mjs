@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { todayInTokyo, validateIsoDate, writeDayPlan } from "./day-plan.mjs";
 
 function parseArgs(args) {
-  const options = { date: todayInTokyo(), outputRoot: path.resolve("workplace/generated") };
+  const options = { date: todayInTokyo() };
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === "--date") options.date = args[++index];
@@ -19,12 +19,12 @@ function parseArgs(args) {
 function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
-    console.log("Usage: node scripts/generate-day-plan.mjs [--date YYYY-MM-DD] [--output-root DIRECTORY]");
+    console.log("Usage: node scripts/generate-day-plan.mjs [--date YYYY-MM-DD] [--output-root DIRECTORY] (default output root: repository root)");
     return;
   }
   validateIsoDate(options.date, "date");
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-  const result = writeDayPlan({ repoRoot, outputRoot: options.outputRoot, targetDate: options.date });
+  const result = writeDayPlan({ repoRoot, outputRoot: options.outputRoot || repoRoot, targetDate: options.date });
   console.log(`Generated ${result.outputPath}`);
 }
 
