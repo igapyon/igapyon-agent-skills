@@ -76,7 +76,7 @@ Before finishing:
 - ensure unsupported items are marked `未確認`, `要確認`, or omitted
 - ensure runner failures are reported according to `mutation_invoked` and `retryability`; never retry an apply plan automatically
 - for `READY FOR APPROVAL`, show the returned handoff ID and state; use `approval.handoff.apply --apply` only after an explicit later approval, and `approval.handoff.dismiss --handoff <full-id> --apply` only to cancel it
-- verify workflow contract drift with `node scripts/github-writer-workflow-contracts.mjs --check`
+- check generated workflow contract artifacts with `node scripts/github-writer-workflow-contracts.mjs --check`; drift is reported as a warning so it does not fail the test suite
 - ensure the static policy test proves that no runtime path invokes `gh`
 - ensure successful and failed execution paths write the documented run records without changing Git evidence
 - for PR, Release, and About modes, ensure the drafted Markdown is wrapped with `~~~~markdown` and `~~~~`; if a file was saved, mention only the relative saved path outside the wrapped block

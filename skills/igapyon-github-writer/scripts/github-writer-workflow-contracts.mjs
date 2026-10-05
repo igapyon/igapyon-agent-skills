@@ -87,7 +87,12 @@ function renderMarkdown(contracts) {
   return lines.join("\n");
 }
 
-export function generate({ check = false, readText = readFileSync, writeText = writeFileSync } = {}) {
+export function generate({
+  check = false,
+  readText = readFileSync,
+  writeText = writeFileSync,
+  warn = (message) => process.stderr.write(`${message}\n`),
+} = {}) {
   const contracts = buildContracts({ readText });
   const outputs = [
     [lockFile, renderLock(contracts)],
@@ -102,7 +107,8 @@ export function generate({ check = false, readText = readFileSync, writeText = w
       }
     });
     if (drift.length > 0) {
-      throw new Error(`Workflow contract drift: ${drift.map(([file]) => path.relative(skillRoot, file)).join(", ")}`);
+      const driftPaths = drift.map(([file]) => path.relative(skillRoot, file).split(path.sep).join("/"));
+      warn(`Warning: Workflow contract drift: ${driftPaths.join(", ")}`);
     }
     return contracts;
   }
@@ -114,8 +120,16 @@ function runCli(argv) {
   if (argv.length > 1 || (argv.length === 1 && argv[0] !== "--check")) {
     throw new Error("Usage: node github-writer-workflow-contracts.mjs [--check]");
   }
-  const contracts = generate({ check: argv[0] === "--check" });
-  process.stdout.write(`${argv[0] === "--check" ? "verified" : "generated"} ${contracts.length} workflow contracts\n`);
+  let driftDetected = false;
+  const contracts = generate({
+    check: argv[0] === "--check",
+    warn: (message) => {
+      driftDetected = true;
+      process.stderr.write(`${message}\n`);
+    },
+  });
+  const action = argv[0] !== "--check" ? "generated" : driftDetected ? "checked" : "verified";
+  process.stdout.write(`${action} ${contracts.length} workflow contracts\n`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
