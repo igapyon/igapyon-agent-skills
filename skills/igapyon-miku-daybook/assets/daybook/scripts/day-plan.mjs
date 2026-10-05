@@ -106,6 +106,18 @@ function recordFromFile(repoRoot, filePath, expectedType) {
       && parsed.frontMatter.planned_start_date > parsed.frontMatter.planned_end_date) {
       throw new Error(`planned_start_date must not be after planned_end_date: ${filePath}`);
     }
+    if (Object.hasOwn(parsed.rawFrontMatter, "planned_dates_status")) {
+      const value = parsed.rawFrontMatter.planned_dates_status;
+      if (typeof value !== "string" || !new Set(["confirmed", "provisional"]).has(value)) {
+        throw new Error(`planned_dates_status must be confirmed or provisional: ${filePath}`);
+      }
+      if (!parsed.frontMatter.planned_start_date || !parsed.frontMatter.planned_end_date) {
+        throw new Error(`planned_dates_status requires a complete planned period: ${filePath}`);
+      }
+      if (parsed.frontMatter.recurrence === "weekly") {
+        throw new Error(`weekly recurrence must not use planned_dates_status: ${filePath}`);
+      }
+    }
   }
   for (const key of ["date", "created", "due", "planned_date", "planned_start_date", "planned_end_date", "planned_week"]) {
     const explicitTaskCreationDate = expectedType === "task" && key === "created"
@@ -184,7 +196,8 @@ function needsDateReview(task) {
   const hasPlannedPeriod = task.frontMatter.planned_start_date || task.frontMatter.planned_end_date;
   const unboundedWeeklyRule = task.frontMatter.recurrence === "weekly" && !hasPlannedPeriod;
   return isActiveTask(task) && !unboundedWeeklyRule
-    && (!task.frontMatter.planned_start_date || !task.frontMatter.planned_end_date);
+    && (!task.frontMatter.planned_start_date || !task.frontMatter.planned_end_date
+      || task.frontMatter.planned_dates_status === "provisional");
 }
 
 function taskPriority(task) {
@@ -250,12 +263,14 @@ function taskPeriod(task) {
 }
 
 function dateReviewLine(date, task) {
-  const details = [
-    task.frontMatter.planned_start_date && `開始 ${task.frontMatter.planned_start_date}`,
-    task.frontMatter.planned_end_date && `終了 ${task.frontMatter.planned_end_date}`,
-    task.frontMatter.due_month && `期限月 ${task.frontMatter.due_month}`,
-    task.frontMatter.planned_week && `予定週 ${task.frontMatter.planned_week}`,
-  ].filter(Boolean);
+  const details = task.frontMatter.planned_dates_status === "provisional"
+    ? [`暫定期間 ${task.frontMatter.planned_start_date}〜${task.frontMatter.planned_end_date}`]
+    : [
+      task.frontMatter.planned_start_date && `開始 ${task.frontMatter.planned_start_date}`,
+      task.frontMatter.planned_end_date && `終了 ${task.frontMatter.planned_end_date}`,
+    ].filter(Boolean);
+  if (task.frontMatter.due_month) details.push(`期限月 ${task.frontMatter.due_month}`);
+  if (task.frontMatter.planned_week) details.push(`予定週 ${task.frontMatter.planned_week}`);
   return taskLine(date, task, `日程要確認${details.length ? `：${details.join(" / ")}` : "：予定期間未設定"}`);
 }
 
@@ -287,7 +302,7 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
   const { tasks, schedules } = loadRecords(repoRoot);
   const activeTasks = tasks.filter(isActiveTask);
   const datedTasks = activeTasks.filter((task) => task.frontMatter.planned_start_date
-    && task.frontMatter.planned_end_date);
+    && task.frontMatter.planned_end_date && !needsDateReview(task));
   const dateReviewTasks = activeTasks.filter(needsDateReview);
   const todayTasks = datedTasks.filter((task) =>
     task.frontMatter.planned_start_date <= targetDate && targetDate <= task.frontMatter.planned_end_date)
@@ -300,6 +315,7 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
   const nearEndTasks = datedTasks.filter((task) =>
     inWindow(task.frontMatter.planned_end_date, targetDate, windowEnd));
   const plannedWeekTasks = activeTasks.filter((task) => {
+    if (task.frontMatter.planned_dates_status === "provisional") return false;
     const week = task.frontMatter.planned_week;
     return week && inWindow(addDays(week, 6), targetDate, windowEnd) || week && inWindow(week, targetDate, windowEnd);
   });

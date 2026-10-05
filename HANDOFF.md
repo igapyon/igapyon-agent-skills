@@ -15,6 +15,18 @@ update_when:
 This file summarizes the current working state for the next human or AI agent.
 Keep it concise. Do not use this as a full work log or a replacement for `TODO.md` and `DECISIONS.md`.
 
+## Daybook Issue受信のローカル実装（2026-10-06）
+
+利用者の実装指示に基づき、ISSUE-00→A→B→C→D→E→F→Gを実施した。チェックリストと詳細仕様は[TODO.md](TODO.md)と[daybook-issue-import.md](../daybook/docs/plans/daybook-issue-import.md)。
+
+- daybookの`planned_dates_status`対応、Issue source正規化・検証、manifest/plan/preview生成、task/schedule/activityのローカル適用、result journalと再開CLIを追加。resultコメント／closeの操作手順は新しいdaybook referenceに記載。
+- daybook READMEとskill SKILL.md/referencesを更新し、skill indexを再生成した。daybook側とskill bundle側の6スクリプト／テストを一致させた。miku-scmソース・通知workflowには変更を加えていない。
+- 検証：skill bundleの`node --test skills/igapyon-miku-daybook/assets/daybook/scripts/*.test.mjs`は42/42成功。daybookの`npm test`は41/41成功。両repoの`git diff --check`も成功。
+- 実GitHub取得・投稿・close、認証、skill配備、commit/pushは未実施。Issue取込の実運用は後続の明示依頼で行う。
+- worktreeにはこの作業以外の利用者変更がある。特に`pom.xml`、miku-scm/GitHub Writer、Mikuku VERSION、既存の別TODOおよび過去作業handoffをこの作業に含めず保持する。
+
+次の操作：差分を確認したうえで、必要なら別途skill配備または実Issue取り込みを明示依頼する。commit/pushは行っていない。
+
 ## Priority Resume Context — miku-scm Work Cycle (2026-08-10)
 
 This is the active user-directed work; the older miku-soft reference-audit

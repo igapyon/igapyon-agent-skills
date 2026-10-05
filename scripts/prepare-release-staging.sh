@@ -5,18 +5,30 @@ BASE_DIR=$1
 STAGING_DIR=$2
 shift 2
 
-rm -rf "$STAGING_DIR" "$BASE_DIR/target/external"
-mkdir -p "$STAGING_DIR" "$STAGING_DIR/skills" "$STAGING_DIR/scripts" "$STAGING_DIR/src" "$BASE_DIR/target/external"
+if ! command -v rsync >/dev/null 2>&1; then
+  echo "rsync is required to stage skills" >&2
+  exit 1
+fi
 
-cp "$BASE_DIR/README.md" "$STAGING_DIR/"
+rm -rf "$STAGING_DIR" "$BASE_DIR/target/external"
+mkdir -p "$STAGING_DIR" "$STAGING_DIR/skills" "$BASE_DIR/target/external"
+
+cp "$BASE_DIR/src/assembly/README.md" "$STAGING_DIR/README.md"
 cp "$BASE_DIR/INSTALL.md" "$STAGING_DIR/"
 cp "$BASE_DIR/LICENSE" "$STAGING_DIR/"
-cp "$BASE_DIR/pom.xml" "$STAGING_DIR/"
-cp -R "$BASE_DIR/.mvn" "$STAGING_DIR/"
-cp -R "$BASE_DIR/lib" "$STAGING_DIR/"
-cp -R "$BASE_DIR/skills/." "$STAGING_DIR/skills/"
-cp -R "$BASE_DIR/scripts/." "$STAGING_DIR/scripts/"
-cp -R "$BASE_DIR/src/assembly" "$STAGING_DIR/src/"
+
+copy_skill() {
+  SOURCE_DIR=$1
+  DESTINATION_DIR=$2
+  mkdir -p "$DESTINATION_DIR"
+  rsync -a \
+    --exclude='.DS_Store' \
+    --exclude='node_modules' \
+    --exclude='.git' \
+    "$SOURCE_DIR/" "$DESTINATION_DIR/"
+}
+
+copy_skill "$BASE_DIR/skills" "$STAGING_DIR/skills"
 
 SOURCE_EXTERNAL_LOCK="$BASE_DIR/EXTERNAL_SKILLS.lock"
 STAGING_EXTERNAL_LOCK="$STAGING_DIR/EXTERNAL_SKILLS.lock"
@@ -55,11 +67,11 @@ while [ "$#" -gt 0 ]; do
     exit 1
   fi
 
-  cp -R "$EXTERNAL_WORK_DIR/skills/$EXTERNAL_SKILL_NAME" "$STAGING_DIR/skills/"
+  copy_skill \
+    "$EXTERNAL_WORK_DIR/skills/$EXTERNAL_SKILL_NAME" \
+    "$STAGING_DIR/skills/$EXTERNAL_SKILL_NAME"
   printf '%s\n' "$LOCK_ENTRY" >> "$STAGING_EXTERNAL_LOCK"
 done
 
-java -jar "$STAGING_DIR/lib/miku-indexgen-1.6.2.jar" \
+java -jar "$BASE_DIR/lib/miku-indexgen-1.6.2.jar" \
   --input-parent-directory "$STAGING_DIR/skills"
-
-find "$STAGING_DIR" -name .DS_Store -type f -delete

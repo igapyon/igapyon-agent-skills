@@ -48,3 +48,5 @@ The bundled generator reads old keys as aliases while migration is in progress. 
 8. Once all records are migrated and reviewed, remove the old `planned_date` and `due` keys. Keep their history and any separate deadline meaning in the task body. You may migrate incrementally while both generator keys remain supported, provided duplicate old/new values agree.
 
 There is no automatic data migration command in this bundle. The alias reader supports a staged transition; the daybook owner edits their own task records. Ask the daybook skill to help classify or update records when review of many tasks is useful, and approve the resulting per-record changes before applying them.
+
+This migration does not request weekly-task maintenance. Preserve existing `recurrence`, `next_occurrence`, and occurrence schedules while changing task date keys. Classify recurring tasks within the migration scope, but do not initialize missing recurrence fields, create the next occurrence schedule, or roll over a task as a side effect of the date migration. Resolve an ambiguous legacy date only for the task being migrated; weekly registration or rollover requires its own explicit request.
