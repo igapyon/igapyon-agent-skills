@@ -98,6 +98,12 @@ implementation slice; never make the active Skill promise planned behavior.
 7. review the final tracked diff; never hand-edit either generated contract
    artifact
 
+The `--check` command reports generated lock or table drift as a warning and
+exits successfully. Regenerate the artifacts with the command above when the
+workflow contract sources change. This advisory check does not weaken runtime
+plan and handoff checks: operations still reject plans sealed against a changed
+workflow contract and require a fresh preflight.
+
 Changing any locked runner source, normative specification, or contract test
 changes the workflow pair SHA-256. Existing apply plans sealed with the prior
 pair must then fail closed and require a new preflight. A documentation-only
@@ -190,6 +196,9 @@ and verify the tracked lock and table with:
 node skills/igapyon-github-writer/scripts/github-writer-workflow-contracts.mjs
 node skills/igapyon-github-writer/scripts/github-writer-workflow-contracts.mjs --check
 ```
+
+Generated artifact drift is printed as a warning and does not produce a
+nonzero exit status.
 
 ## Run Records And Errors
 
