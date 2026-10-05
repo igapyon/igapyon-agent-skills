@@ -52,20 +52,28 @@ id: task-YYYYMM-NNNNN
 status: todo
 priority: 5
 created: YYYY-MM-DD
-planned_date: YYYY-MM-DD
+planned_start_date: YYYY-MM-DD
+planned_end_date: YYYY-MM-DD
 planned_action: "作業内容"
 planned_week: YYYY-MM-DD
-due: YYYY-MM-DD
 due_month: YYYY-MM
 completed: YYYY-MM-DD
 ---
 ```
 
-`priority` is required on newly created task records and is an integer from `1` to `9`: `1` is highest, `5` is normal, and `9` is lowest. Smaller numbers mean higher priority. Use `5` when the user does not specify a priority; do not infer it from a due date. Existing task records may omit the field, in which case treat it as `5`. Other optional fields should be included only when they are known and useful. `planned_date` is the intended action or start date; it is distinct from the deadline `due`. `planned_week` is the Monday of a planned work week. If a deadline is known only as a month, use `due_month` and do not invent the month's last day. Preserve modifiers such as “EOD” or “午前中” in the body; a date-only `due` does not prove a time of day.
+`priority` is required on newly created task records and is an integer from `1` to `9`: `1` is highest, `5` is normal, and `9` is lowest. Smaller numbers mean higher priority. Use `5` when the user does not specify a priority. Existing task records may omit the field, in which case treat it as `5`.
+
+New ordinary tasks require `planned_start_date` and `planned_end_date`. They form an inclusive planned work period; a one-day task uses the same value for both. Require valid `YYYY-MM-DD` dates and `planned_start_date <= planned_end_date`. The end date is a planned finish date, not the actual completion date or necessarily an external deadline. Record actual completion with `status: done` and `completed`. If a user supplied a firm deadline, preserve its meaning, source, and modifiers in the task body; do not imply that the planned end is the deadline unless that is what the user intends. `planned_action` describes the intended work and does not imply it must occur on every day in the period.
+
+When dates are not specified for a new ordinary task, use Asia/Tokyo today as the provisional start and end date. If the user supplies only a start date, use it for both ends until adjusted. If the user supplies only an end date, use the earlier of today and that date as the provisional start. Never change a date the user specified. Identify each provisional value and its basis in the task body/history and in the response. `planned_week` is the Monday of a coarse work-week plan; it does not replace either required date on a new ordinary task.
+
+An ongoing weekly recurring rule with no natural finish date is exempt from the required period. Keep its next dated instance in `next_occurrence` and a schedule record. Do not give the rule a fabricated end date. If the user supplies a finite period for the recurring rule itself, preserve it separately from occurrence dates.
+
+`due_month` is retained for a known month-only external deadline. It does not supply or replace `planned_end_date`; do not invent a precise deadline date from it. Existing `planned_date` and `due` keys are read as aliases for `planned_start_date` and `planned_end_date` while users migrate existing records. New records use the new names. If old and new keys appear together, their values must agree; see [task-date-migration.md](task-date-migration.md) before changing existing records.
 
 ## Weekly recurring tasks
 
-Represent an explicitly weekly routine with one persistent active task and a separate schedule record for each dated occurrence. Use `recurrence: weekly` as the machine-readable marker and `next_occurrence: YYYY-MM-DD` for the next schedule date. Keep the human-readable rule (weekday and any stable time or place) in the task body. Do not repurpose `planned_date`; it continues to mean the intended task start date. Keep the task active after an individual occurrence; mark it done or cancelled only when the recurring routine itself ends.
+Represent an explicitly weekly routine with one persistent active task and a separate schedule record for each dated occurrence. Use `recurrence: weekly` as the machine-readable marker and `next_occurrence: YYYY-MM-DD` for the next schedule date. Keep the human-readable rule (weekday and any stable time or place) in the task body. Do not use `planned_start_date` or `planned_end_date` as the next occurrence date. Keep the task active after an individual occurrence; mark it done or cancelled only when the recurring routine itself ends.
 
 Link each occurrence schedule to the persistent task with a relative Markdown link. The task also links to its schedule for `next_occurrence`. A schedule remains the dated record for that occurrence; the recurring task remains the rule. Preserve known times, place, participation details, and source links without inferring missing details.
 
@@ -112,14 +120,14 @@ generated: YYYY-MM-DD
 
 Use relative links between records and to files under `attachments/`, and check that each target exists after edits. Keep supplied source URLs for event pages and emails. If multiple records use the same supporting file, keep one copy under its primary record's month and link to it from the other records. Treat the original task and schedule as authoritative; a day-plan is a snapshot and should not become a second source of truth.
 
-When a task has separate implementation and final execution deadlines, keep the final operational deadline in `due` and describe the earlier implementation milestone explicitly in the body or an intentional `planned_date`. Do not silently reinterpret every `planned_date` as a completion milestone.
+When a task has implementation milestones or a firm external deadline in addition to its planned work period, label each date's meaning in the body and preserve the source. Do not silently reinterpret a `planned_end_date` as a firm external deadline.
 
 ## List display
 
 For a task-list request, display this header and one row per selected task:
 
 ```text
-ID / Priority / Status / Start / Due / Title
+ID / Priority / Status / Planned start / Planned end / Title
 ```
 
-`Priority` is `priority`, or `5` when omitted. Sort by ascending priority, then deadline (`due`, or `due_month` when `due` is absent; missing deadlines last), then `planned_date` (missing dates last), then full task ID ascending. `Start` is `planned_date`; `Due` is `due`, then `due_month` if no exact due date exists, otherwise `—`. For a weekly task, also show `Next` from `next_occurrence`; do not substitute it for `Start` or use it as a sort key. By default list active tasks across all year/month directories. Apply a date window only when the user asks for a window or asks for a day-plan.
+`Priority` is `priority`, or `5` when omitted. Sort dated tasks by ascending priority, planned end date, planned start date, then full task ID. Put tasks with incomplete planned periods after dated tasks, sorted by priority and ID, and mark them `日程要確認`. Read existing records across all year/month directories. For weekly tasks, also show `Next` from `next_occurrence`; do not substitute it for either end of the task's planned period or use it as a sort key. By default list active tasks across all year/month directories. Apply a date window only when the user asks for a window or asks for a day-plan.
