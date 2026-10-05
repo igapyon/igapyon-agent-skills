@@ -6,7 +6,7 @@ Read this reference for an add, update, list, activity, schedule, or day-plan re
 
 1. Search all `YYYY/YYYYMM/tasks/task-*.md` files and recent Git history for the intended task or its ID.
 2. If it is a concrete action, choose the month of creation and assign the next unused five-digit number in that month. Do not reuse a deleted number or close a gap.
-3. Write front matter with `type`, full `id`, `status: todo`, `created`, and `priority` as an integer from `1` to `9`. Use `5` if the user does not specify a priority; do not infer it from the due date. Add only known `planned_date`, `planned_action`, `planned_week`, `due`, or `due_month` values.
+3. Write front matter with `type`, full `id`, `status: todo`, `created`, `priority`, `planned_start_date`, and `planned_end_date`. Priority is an integer from `1` to `9`, using `5` when unspecified. Use user-provided dates when known. For a one-day task, set both planned dates to the same date. If neither date is specified, provisionally use today's Asia/Tokyo date for both. If only a start is supplied, provisionally set the end to that date; if only an end is supplied, set the start to the earlier of today and that end date. Never replace an explicitly supplied date. Record provisional dates and their basis in the body/history and mention them in the response. Do not put a made-up date into an external-deadline field. An unbounded weekly recurring rule is exempt; use its `next_occurrence` and dated schedules.
 4. Add a Japanese title, concise content, checklist, and history entry. Store supplied email or source links under a related section.
 5. Use one task for work the user explicitly asks to combine; put the components in a checklist.
 
@@ -20,12 +20,12 @@ Update all representations that the request affects:
 
 - status and the one checked state in the body;
 - `priority` when the user changes the task's importance;
-- `planned_date` and `planned_action` for a deliberate work date;
-- `due` for an exact deadline;
-- `due_month` for a month-only deadline;
+- `planned_start_date` and `planned_end_date` for the inclusive planned work period;
+- `planned_action` for the work planned within that period;
+- `due_month` for a month-only external deadline, without guessing the day;
 - body and history for time modifiers, milestones, or uncertainty.
 
-Separate “start on 9/14” from “due on 9/18”. Separate “draft sent” from “presentation complete”. If the user supplies an implementation target and a final migration deadline, retain both with explicit labels.
+Separate a task's planned work period from its actual completion and any firm external deadline. Separate “draft sent” from “presentation complete”. If the user supplies an implementation target and a final migration deadline, retain both with explicit labels.
 
 ## Store an attachment
 
@@ -33,7 +33,7 @@ When a supplied local file is intended as supporting material for a daybook reco
 
 ## Maintain a weekly recurring task
 
-Use this rolling schedule only when the user explicitly identifies a task as weekly recurring. Keep one active task as the rule and one schedule file per occurrence. Set `recurrence: weekly`, put the human-readable rule in the task body, and store the next date in `next_occurrence`. Keep `planned_date` for its usual intended start-date meaning. When registering the routine, create a schedule for its first known occurrence and link the task and schedule to each other. Ask for a first date or required schedule details when they are unknown; do not guess. For an existing task, add the recurrence fields only when its weekly rule is explicit; repeated dates alone are not enough to infer a recurrence. For a legacy weekly task without the fields, use an explicitly identified next date or a clearly linked upcoming schedule to initialize `next_occurrence`. If only `planned_date` could be the old recurrence date and its meaning is unclear, ask before migrating it.
+Use this rolling schedule only when the user explicitly identifies a task as weekly recurring. Keep one active task as the rule and one schedule file per occurrence. Set `recurrence: weekly`, put the human-readable rule in the task body, and store the next date in `next_occurrence`. An unbounded recurring rule does not need a planned period. When registering the routine, create a schedule for its first known occurrence and link the task and schedule to each other. Ask for a first occurrence date or required schedule details when they are unknown; do not guess. For an existing task, add the recurrence fields only when its weekly rule is explicit; repeated dates alone are not enough to infer a recurrence. For a legacy weekly task without the fields, use an explicitly identified next date or a clearly linked upcoming schedule to initialize `next_occurrence`. If an old `planned_date` could mean the next recurrence date, read [task-date-migration.md](task-date-migration.md) and resolve its meaning before converting it.
 
 During any writable daybook record request, first apply the user's requested status or cancellation changes so a task explicitly ended by the request is not rolled forward. Then inspect active tasks (`status: todo` or `in_progress`) for an explicit weekly rule whose recurrence fields are missing. Initialize a legacy task only from an explicitly identified next date or a clearly linked upcoming schedule; if neither is clear, leave it unchanged and report what date is needed. Do not infer a recurrence from repeated schedule dates alone.
 
@@ -74,12 +74,12 @@ When the user says work was done, record the fact. Do not mark the related task 
 Search every year/month `tasks/` directory. By default include active and unfinished tasks and show:
 
 ```text
-ID / Priority / Status / Start / Due / Title
+ID / Priority / Status / Planned start / Planned end / Title
 ```
 
-`Priority` comes from `priority`, or is `5` when omitted. Sort by ascending priority, then deadline (`due`, or `due_month` when `due` is absent; missing deadlines last), then `planned_date` (missing dates last), then full task ID ascending. `Start` comes from `planned_date`; `Due` comes from `due`, then `due_month`; missing values are `—`. For a weekly task, add `Next` from `next_occurrence` without changing the meaning of `Start` or using it as a sort key. Include the full `task-YYYYMM-NNNNN` ID so identical short numbers cannot be confused. Include completed or cancelled tasks only when requested.
+`Priority` comes from `priority`, or is `5` when omitted. Sort tasks with a complete planned period by ascending priority, planned end, planned start, then full task ID. Put tasks with an incomplete period after them, sorted by priority and ID, and mark them `日程要確認`. `Planned start` and `Planned end` come from `planned_start_date` and `planned_end_date`; display `—` for a missing value. `due_month` remains separate month-only deadline information and does not fill `Planned end`. For a weekly task, add `Next` from `next_occurrence` without changing the meaning of the planned period or using it as a sort key. Include the full `task-YYYYMM-NNNNN` ID so identical short numbers cannot be confused. Include completed or cancelled tasks only when requested.
 
-Do not edit files for a list request. If a list reveals a missing deadline, report it separately and wait for an update request.
+Do not edit files for a list request. Report tasks with incomplete planned periods as needing date review, then wait for an update request.
 
 ## Generate a day-plan
 
@@ -96,16 +96,17 @@ The current implementation selects active tasks from all canonical year/month `t
 
 It shows active tasks with:
 
-- `planned_date == target` as today's work;
-- `due < target` in the overdue section;
-- `target <= due <= target+6` as near deadlines;
-- later `planned_date` in the window as upcoming work;
+- `planned_start_date <= target <= planned_end_date` as today's planned work, including work periods already in progress;
+- `planned_end_date < target` in the planned-period-overrun section;
+- `target <= planned_end_date <= target+6` as planned periods ending soon;
+- `target < planned_start_date <= target+6` as upcoming work starts;
+- active ordinary tasks missing either period date in the date-review section;
 - schedules dated in the window as upcoming schedules;
 - `planned_week` periods that overlap the window as planned weeks.
 
-It excludes `done` and `cancelled` tasks and does not turn `due_month` into a guessed date. It includes schedules with the scalar string `status: scheduled` and legacy schedules with no status, and omits schedules with the scalar string `status: cancelled`. Invalid explicit schedule statuses fail generation. Treat the generated output as a snapshot: generation overwrites the canonical file for that date. Keep lasting notes in the source task or schedule instead of editing the generated day-plan.
+It excludes `done` and `cancelled` tasks and does not turn `due_month` into a guessed date. An unbounded weekly recurring rule without a planned period is not flagged for date review; its dated schedules represent individual occurrences. It includes schedules with the scalar string `status: scheduled` and legacy schedules with no status, and omits schedules with the scalar string `status: cancelled`. Invalid explicit schedule statuses fail generation. Treat the generated output as a snapshot: generation overwrites the canonical file for that date. Keep lasting notes in the source task or schedule instead of editing the generated day-plan.
 
-Display each task's priority in the generated day-plan, treating an omitted legacy value as `5`. Sort today's tasks by ascending priority, then task ID. In deadline, planned-date, and planned-week sections, sort by the section's date first, then ascending priority, then task ID. Priority changes ordering only; it does not change which tasks are selected for the plan. The generator rejects a present priority that is not an integer from `1` to `9`.
+Display each task's priority and planned period in the generated day-plan, treating an omitted legacy priority as `5`. Sort today's tasks by ascending priority, then task ID. In planned-end, planned-start, and planned-week sections, sort by the section's date first, then ascending priority, then task ID. Priority changes ordering only; it does not change which tasks are selected for the plan. The generator rejects a present priority that is not an integer from `1` to `9`.
 
 After generation, inspect the output for expected inclusions and exclusions, and report its path. Use the existing tests for code behavior; do not add a second generator in the skill.
 

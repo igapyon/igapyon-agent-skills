@@ -76,7 +76,38 @@ function recordFromFile(repoRoot, filePath, expectedType) {
     }
     parsed.frontMatter.status = status;
   }
-  for (const key of ["date", "created", "due", "planned_date", "planned_week"]) {
+  if (expectedType === "task") {
+    for (const [currentKey, legacyKey] of [
+      ["planned_start_date", "planned_date"],
+      ["planned_end_date", "due"],
+    ]) {
+      const hasCurrent = Object.hasOwn(parsed.rawFrontMatter, currentKey);
+      const hasLegacy = Object.hasOwn(parsed.rawFrontMatter, legacyKey);
+      if (hasCurrent) {
+        const value = parsed.rawFrontMatter[currentKey];
+        if (typeof value !== "string") {
+          throw new Error(`${currentKey} must be a scalar YYYY-MM-DD string: ${filePath}`);
+        }
+        validateIsoDate(value, `${filePath}: ${currentKey}`);
+      }
+      const currentValue = parsed.frontMatter[currentKey];
+      const legacyValue = parsed.frontMatter[legacyKey];
+      if (hasLegacy && typeof parsed.rawFrontMatter[legacyKey] !== "string") {
+        throw new Error(`${legacyKey} must be a scalar YYYY-MM-DD string: ${filePath}`);
+      }
+      if (currentValue && legacyValue && currentValue !== legacyValue) {
+        throw new Error(`conflicting ${currentKey} and legacy ${legacyKey}: ${filePath}`);
+      }
+      if (!currentValue && legacyValue) parsed.frontMatter[currentKey] = legacyValue;
+      // Preserve legacy properties for diagnosis while all selection uses current names.
+      if (hasLegacy) validateIsoDate(legacyValue, `${filePath}: ${legacyKey}`);
+    }
+    if (parsed.frontMatter.planned_start_date && parsed.frontMatter.planned_end_date
+      && parsed.frontMatter.planned_start_date > parsed.frontMatter.planned_end_date) {
+      throw new Error(`planned_start_date must not be after planned_end_date: ${filePath}`);
+    }
+  }
+  for (const key of ["date", "created", "due", "planned_date", "planned_start_date", "planned_end_date", "planned_week"]) {
     const explicitTaskCreationDate = expectedType === "task" && key === "created"
       && Object.hasOwn(parsed.rawFrontMatter, "created");
     if (parsed.frontMatter[key] || explicitTaskCreationDate) {
@@ -149,6 +180,13 @@ function isActiveTask(task) {
   return !TERMINAL_STATUSES.has(task.frontMatter.status);
 }
 
+function needsDateReview(task) {
+  const hasPlannedPeriod = task.frontMatter.planned_start_date || task.frontMatter.planned_end_date;
+  const unboundedWeeklyRule = task.frontMatter.recurrence === "weekly" && !hasPlannedPeriod;
+  return isActiveTask(task) && !unboundedWeeklyRule
+    && (!task.frontMatter.planned_start_date || !task.frontMatter.planned_end_date);
+}
+
 function taskPriority(task) {
   return task.frontMatter.priority === undefined ? 5 : Number(task.frontMatter.priority);
 }
@@ -207,6 +245,20 @@ function taskLine(date, task, detail) {
   return `- ${taskLink(date, task)}（優先度 ${taskPriority(task)}）${suffix}`;
 }
 
+function taskPeriod(task) {
+  return `${task.frontMatter.planned_start_date}〜${task.frontMatter.planned_end_date}`;
+}
+
+function dateReviewLine(date, task) {
+  const details = [
+    task.frontMatter.planned_start_date && `開始 ${task.frontMatter.planned_start_date}`,
+    task.frontMatter.planned_end_date && `終了 ${task.frontMatter.planned_end_date}`,
+    task.frontMatter.due_month && `期限月 ${task.frontMatter.due_month}`,
+    task.frontMatter.planned_week && `予定週 ${task.frontMatter.planned_week}`,
+  ].filter(Boolean);
+  return taskLine(date, task, `日程要確認${details.length ? `：${details.join(" / ")}` : "：予定期間未設定"}`);
+}
+
 function scheduleLine(date, schedule) {
   const time = formatScheduleTime(schedule);
   const when = `${schedule.frontMatter.date}（${formatWeekday(schedule.frontMatter.date)}）${time ? ` ${time}` : ""}`;
@@ -234,13 +286,19 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
   const windowEnd = addDays(targetDate, 6);
   const { tasks, schedules } = loadRecords(repoRoot);
   const activeTasks = tasks.filter(isActiveTask);
-  const todayTasks = activeTasks.filter((task) => task.frontMatter.planned_date === targetDate)
+  const datedTasks = activeTasks.filter((task) => task.frontMatter.planned_start_date
+    && task.frontMatter.planned_end_date);
+  const dateReviewTasks = activeTasks.filter(needsDateReview);
+  const todayTasks = datedTasks.filter((task) =>
+    task.frontMatter.planned_start_date <= targetDate && targetDate <= task.frontMatter.planned_end_date)
     .sort(comparePriorityThenId);
-  const futurePlannedTasks = activeTasks.filter((task) =>
-    task.frontMatter.planned_date > targetDate && inWindow(task.frontMatter.planned_date, targetDate, windowEnd));
-  const overdueTasks = activeTasks.filter((task) => task.frontMatter.due && task.frontMatter.due < targetDate)
-    .sort(compareDateThenPriority("due"));
-  const dueTasks = activeTasks.filter((task) => inWindow(task.frontMatter.due, targetDate, windowEnd));
+  const upcomingStartTasks = datedTasks.filter((task) =>
+    task.frontMatter.planned_start_date > targetDate
+      && inWindow(task.frontMatter.planned_start_date, targetDate, windowEnd));
+  const overdueTasks = datedTasks.filter((task) => task.frontMatter.planned_end_date < targetDate)
+    .sort(compareDateThenPriority("planned_end_date"));
+  const nearEndTasks = datedTasks.filter((task) =>
+    inWindow(task.frontMatter.planned_end_date, targetDate, windowEnd));
   const plannedWeekTasks = activeTasks.filter((task) => {
     const week = task.frontMatter.planned_week;
     return week && inWindow(addDays(week, 6), targetDate, windowEnd) || week && inWindow(week, targetDate, windowEnd);
@@ -257,18 +315,23 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
     "",
     `# ${Number(targetDate.slice(5, 7))}月${Number(targetDate.slice(8, 10))}日 デイリーブリーフ`,
     "",
-    section("今日の実施項目", todayTasks.map((task) => taskLine(targetDate, task, task.frontMatter.planned_action))),
+    section("今日の作業予定", todayTasks.map((task) =>
+      taskLine(targetDate, task, `${taskPeriod(task)}：${task.frontMatter.planned_action || "作業予定"}`))),
     "",
-    section("期限超過", overdueTasks
-      .map((task) => `- ${task.frontMatter.due}：${taskLink(targetDate, task)}（優先度 ${taskPriority(task)}）`)),
+    section("予定期間超過", overdueTasks
+      .map((task) => `- ${taskPeriod(task)}：${taskLink(targetDate, task)}（優先度 ${taskPriority(task)}）`)),
     "",
-    section("近い期限", dueTasks
-      .sort(compareDateThenPriority("due"))
-      .map((task) => `- ${task.frontMatter.due}：${taskLink(targetDate, task)}（優先度 ${taskPriority(task)}）`)),
+    section("近い予定終了日", nearEndTasks
+      .sort(compareDateThenPriority("planned_end_date"))
+      .map((task) => `- ${taskPeriod(task)}：${taskLink(targetDate, task)}（優先度 ${taskPriority(task)}）`)),
     "",
-    section("近々の実施予定", futurePlannedTasks
-      .sort(compareDateThenPriority("planned_date"))
-      .map((task) => taskLine(targetDate, task, `${task.frontMatter.planned_date}：${task.frontMatter.planned_action || "実施予定"}`))),
+    section("近々始まる作業予定", upcomingStartTasks
+      .sort(compareDateThenPriority("planned_start_date"))
+      .map((task) => taskLine(targetDate, task, `${taskPeriod(task)}：${task.frontMatter.planned_action || "作業予定"}`))),
+    "",
+    section("日程要確認", dateReviewTasks
+      .sort(comparePriorityThenId)
+      .map((task) => dateReviewLine(targetDate, task))),
     "",
     section("近々の予定", nearSchedules
       .sort((left, right) => `${left.frontMatter.date} ${left.frontMatter.start || ""}`.localeCompare(`${right.frontMatter.date} ${right.frontMatter.start || ""}`))
@@ -280,7 +343,7 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
     "",
     "## 参照方針",
     "",
-    "このファイルは、当日の実施項目と対象日を含む7日間の予定・期限を書き出したスナップショット。taskとscheduleの内容が変わった場合は、元ファイルを正とする。",
+    "このファイルは、当日の予定作業と対象日を含む7日間の予定を書き出したスナップショット。taskとscheduleの内容が変わった場合は、元ファイルを正とする。",
     "",
   ];
   return {
@@ -288,7 +351,7 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
     generatedDate,
     relativePath: canonicalPlanPath(targetDate),
     markdown: lines.join("\n"),
-    records: { todayTasks, overdueTasks, futurePlannedTasks, dueTasks, nearSchedules, plannedWeekTasks },
+    records: { todayTasks, overdueTasks, upcomingStartTasks, nearEndTasks, dateReviewTasks, nearSchedules, plannedWeekTasks },
   };
 }
 

@@ -31,18 +31,22 @@ repo 全体のバージョンを更新するときは、日付部分に合わせ
 `みくく` のバージョンは `YYYYMMDDx` 形式で、`YYYYMMDD` を repo 全体のバージョンの日付部分と揃えます。  
 同じ日付内の更新は、`みくく` 側では `a`, `b`, `c` ... と suffix を進め、repo 全体のバージョンでは対応する `N` を `1`, `2`, `3` ... と進めます。
 
-バージョン更新時は、次の両方を確認します。
+あわせて `skills/igapyon-miku-scm/scripts/miku-scm-run.mjs` と `skills/igapyon-github-writer/scripts/github-writer-workflow-manifest.mjs` の `PRODUCT_VERSION` も同じ値へ更新します。これらは各skillの `--version` 応答に使う連動値です。
+
+バージョン更新時は、次の値が揃っていることを確認します。
 
 - root の `pom.xml`
   - 例: `<version>1.20260604.1</version>`
 - `skills/igapyon-mikuku-agent/references/VERSION.md`
   - 例: `Version: 20260604a`
+- `skills/igapyon-miku-scm/scripts/miku-scm-run.mjs` と `skills/igapyon-github-writer/scripts/github-writer-workflow-manifest.mjs`
+  - 例: `PRODUCT_VERSION = "1.20260604.1"`
 - `mvn clean package` で生成される release archive 名
   - 例: `target/igapyon-agent-skills-1.20260604.1.zip`
 
 `みくく` 側だけを更新したい場合でも、repo 全体の保守更新として扱うなら `pom.xml` も同じ日付に更新します。逆に、repo 全体のリリースや保守更新ではない一時的な確認だけなら、バージョンを更新しません。
 
-`mvn generate-resources` や `mvn clean package` では、`pom.xml` の `1.YYYYMMDD.N` と `skills/igapyon-mikuku-agent/references/VERSION.md` の `YYYYMMDDx` が対応していることを `validate` phase で確認します。たとえば `1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
+`mvn validate`、`mvn generate-resources`、`mvn clean package` では、root版、`みくく` の日付・suffix、2つのskill runnerの `PRODUCT_VERSION` が対応していることを確認します。たとえば `1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
 
 ## 記事公開の優先順位
 
@@ -297,6 +301,8 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 
   daybook repository の activity・schedule・task・day-plan の追加、更新、一覧、生成確認と、同梱された GitHub Actions 通知 workflow の生成・更新向け。`miku-daybook` または `igapyon-miku-daybook` の明示、または daybook の記録管理・通知 workflow 作成が明確な場合に利用する。Git操作やGitHubへの実行・投稿は、別途明示された場合だけ扱う。
 
+  taskの日付項目の変更と利用者側のデータ移行については、[daybook taskの日付項目の移行](#daybook-taskの日付項目の移行)を参照してください。
+
 - `igapyon-mikuku-agent`
 
   日本語キャラクター agent `みくく` として応答するための会話スタイル向け。明示的に指定した場合に利用する。
@@ -312,6 +318,22 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 - `igapyon-skill-compactor`
 
   肥大化した Agent Skill の token-efficiency 設計、分割、参照化、蒸留、チェックリスト化、tool 化判断向け。明示的に指定した場合、または Agent Skill の compact / slim / token bloat reduction が明確な場合に利用する。
+
+## daybook taskの日付項目の移行
+
+2026-10-05、このリポジトリの `igapyon-miku-daybook` source に予定期間の日付項目と移行用の読み取り処理を実装しました。現在のroot versionは `1.20261005.1` ですが、まだリリースされていません。対象daybookのデータ移行前に、利用中のスキルとdaybook側の `scripts/day-plan.mjs` / `scripts/generate-day-plan.mjs` の両方が新しい項目に対応していることを確認してください。
+
+新しいtaskでは、包含的な予定期間を `planned_start_date` と `planned_end_date` で表します。1日だけの予定は同じ日付を使い、実際の完了は従来どおり `status` と `completed` で記録します。
+
+| 旧項目・情報 | 新しい扱い |
+| --- | --- |
+| `planned_date` | `planned_start_date` へ移行 |
+| `due` | 意味を確認して `planned_end_date` の候補へ移行。実際の締切情報は本文・履歴にも保持 |
+| `due_month` / `planned_week` | そのまま保持し、日付へ推測変換しない |
+
+旧仕様にあった期限キーは `due` で、`due_date` ではありません。day-plan生成処理は移行中に旧2項目を別名として読み取りますが、taskファイルを自動変更しません。新旧項目が両方あり値が異なる記録は生成時にエラーとして示します。
+
+利用者が行う具体的な確認、バックアップ、既存taskの編集、別出力先でのday-plan確認については、配布スキルの [task date migration guide](skills/igapyon-miku-daybook/references/task-date-migration.md) を参照してください。対象daybookのデータとスクリプトの変更は、利用者が更新版を導入した後に別途行います。
 
 ## index.json の更新
 

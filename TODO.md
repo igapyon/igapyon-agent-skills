@@ -1,5 +1,15 @@
 # TODO
 
+## igapyon-miku-daybook 予定開始日・予定終了日への移行（2026-10-05）
+
+状態：このリポジトリのスキル・同梱day-plan生成処理・利用者向け文書への実装を完了。リリース・ローカル配備・対象daybookの実データ移行は未実施。
+
+- 新規taskの期間項目を inclusive な `planned_start_date` / `planned_end_date` に統一し、仮の日付を記録・説明する運用、一覧表示、day-plan表示を更新した。
+- 同梱生成処理は旧 `planned_date` / `due` を読み取り時に対応する新項目へ正規化する。新旧が不一致ならエラーにし、task markdown自体は変更しない。日付形式、日付順、期間途中の表示、日程要確認を扱うよう実装した。
+- 利用者向け手順は `README.md` と `skills/igapyon-miku-daybook/references/task-date-migration.md` に記録した。task全件確認、バックアップ、個別編集、仮日付・週次task・締切情報の扱い、別出力先での確認を案内している。
+- 本作業ではテストを実行していない。対象daybookの記録・スクリプトを移行する場合は、利用者側へ対応版を導入した後、上記ガイドに沿って別工程で実施する。
+- `mvn generate-resources` でindexを再生成し、`git diff --check` と変更差分を確認した。commit、push、リリース、Codex配備、対象daybookの書き換えはこの作業に含めない。
+
 ## igapyon-mikuku-agent 記事執筆・グラレコ機能の改善計画（2026-09-21）
 
 状態：実装済み（2026-09-21）。計画後の実装依頼を受け、スキル本文・スクリプト・テンプレート・生成インデックスを更新し、対象スクリプトの回帰テストと `quick_validate.py` を実行した。実画像の内容・キャラクター同一性の目視確認は、画像生成を伴う後続作業として分離している。
