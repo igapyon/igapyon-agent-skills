@@ -26,7 +26,11 @@ jobs:
       - name: Build release archive
         run: mvn clean package
 
+      - name: Check release archive contents
+        run: node scripts/check-release-archive.mjs target/igapyon-agent-skills-*.zip
+
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
-          files: target/*.zip
+          files: target/igapyon-agent-skills-*.zip
+          fail_on_unmatched_files: true

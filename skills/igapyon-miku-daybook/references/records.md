@@ -54,6 +54,7 @@ priority: 5
 created: YYYY-MM-DD
 planned_start_date: YYYY-MM-DD
 planned_end_date: YYYY-MM-DD
+planned_dates_status: confirmed # confirmed or provisional
 planned_action: "作業内容"
 planned_week: YYYY-MM-DD
 due_month: YYYY-MM
@@ -65,7 +66,9 @@ completed: YYYY-MM-DD
 
 New ordinary tasks require `planned_start_date` and `planned_end_date`. They form an inclusive planned work period; a one-day task uses the same value for both. Require valid `YYYY-MM-DD` dates and `planned_start_date <= planned_end_date`. The end date is a planned finish date, not the actual completion date or necessarily an external deadline. Record actual completion with `status: done` and `completed`. If a user supplied a firm deadline, preserve its meaning, source, and modifiers in the task body; do not imply that the planned end is the deadline unless that is what the user intends. `planned_action` describes the intended work and does not imply it must occur on every day in the period.
 
-When dates are not specified for a new ordinary task, use Asia/Tokyo today as the provisional start and end date. If the user supplies only a start date, use it for both ends until adjusted. If the user supplies only an end date, use the earlier of today and that date as the provisional start. Never change a date the user specified. Identify each provisional value and its basis in the task body/history and in the response. `planned_week` is the Monday of a coarse work-week plan; it does not replace either required date on a new ordinary task.
+For a new ordinary task, write both planned endpoints and `planned_dates_status`. Use `confirmed` only when both endpoints are explicit or the user confirms the complete period. If either endpoint is filled by an assumption, use `provisional`, even when the resulting period is one day. When dates are not specified, use Asia/Tokyo today as the provisional start and end date. If the user supplies only a start date, use it for both ends until adjusted. If the user supplies only an end date, use the earlier of today and that date as the provisional start. Never change a date the user specified. Identify each provisional value, the complete provisional period, and its basis in the task body/history and in the response. `planned_week` is the Monday of a coarse work-week plan; it does not replace either required date on a new ordinary task.
+
+`planned_dates_status` must be a scalar YAML string, either `confirmed` or `provisional`, and requires both valid planned endpoints. `confirmed` describes confidence in the planned period, not task completion. An unbounded weekly recurring rule without a planned period must not carry this field. Existing records without the field keep their legacy behavior; do not add or infer statuses by bulk-editing existing tasks. When a user changes only one endpoint and has not confirmed the resulting full period, keep the period provisional. A user may confirm the current values without changing them.
 
 An ongoing weekly recurring rule with no natural finish date is exempt from the required period. Keep its next dated instance in `next_occurrence` and a schedule record. Do not give the rule a fabricated end date. If the user supplies a finite period for the recurring rule itself, preserve it separately from occurrence dates.
 
@@ -130,4 +133,4 @@ For a task-list request, display this header and one row per selected task:
 ID / Priority / Status / Planned start / Planned end / Title
 ```
 
-`Priority` is `priority`, or `5` when omitted. Sort dated tasks by ascending priority, planned end date, planned start date, then full task ID. Put tasks with incomplete planned periods after dated tasks, sorted by priority and ID, and mark them `日程要確認`. Read existing records across all year/month directories. For weekly tasks, also show `Next` from `next_occurrence`; do not substitute it for either end of the task's planned period or use it as a sort key. By default list active tasks across all year/month directories. Apply a date window only when the user asks for a window or asks for a day-plan.
+`Priority` is `priority`, or `5` when omitted. Sort confirmed or legacy dated tasks by ascending priority, planned end date, planned start date, then full task ID. Put provisional tasks and tasks with incomplete planned periods in the `日程要確認` group after dated tasks, sorted by priority and ID. Read existing records across all year/month directories. For weekly tasks, also show `Next` from `next_occurrence`; do not substitute it for either end of the task's planned period or use it as a sort key. By default list active tasks across all year/month directories. Apply a date window only when the user asks for a window or asks for a day-plan.

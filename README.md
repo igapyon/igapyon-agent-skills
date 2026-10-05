@@ -371,15 +371,14 @@ mvn clean package
 
 生成物は `target/igapyon-agent-skills-<version>.zip` です。
 
-archive には `README.md`、`INSTALL.md`、`LICENSE`、`pom.xml`、`.mvn/`、`lib/`、
-`src/assembly/`、`skills/`、`scripts/`、`EXTERNAL_SKILLS.lock` を含めます。
-利用者は archive を展開し、`INSTALL.md` の手順で利用する skill 名を指定して自分の
-Codex skills directory へ同期します。
+archive には `skills/`、配布用の `README.md` と `INSTALL.md`、`LICENSE`、
+`EXTERNAL_SKILLS.lock` を含めます。ビルド用ソースはリポジトリとGitHubの標準ソース
+アーカイブから参照し、このRelease assetは選択したスキルをCodex skills directoryへ
+導入するための配布物として扱います。
 
 release archive には、この repo の `skills/` に加えて、外部管理の miku-soft 系 skill も同梱します。
 外部 skill は `mvn package` の `prepare-package` フェーズで `target/release-staging/skills/` に取得し、archive 化します。
-生成した `EXTERNAL_SKILLS.lock` に repository、ref、skill 名を記録します。展開済み archive から同じ POM で再 package する場合は、lock と一致する同梱済み外部 skill を再利用します。
-release staging に全 skill をそろえた後、同梱した index generator で staging 内の `index.json` を一括更新し、外部 skill も含めた archive 内の discovery index を整合させます。
+生成した `EXTERNAL_SKILLS.lock` に repository、ref、skill 名を記録します。外部skillも含む全skillをstagingにそろえた後、リポジトリに同梱したindex generatorでstaging内の `index.json` を再生成し、archive内のdiscovery indexを整合させます。
 取得元は `pom.xml` の `external.*` properties で固定します。
 
 同梱する外部 skill は次の通りです。
@@ -396,8 +395,9 @@ release staging に全 skill をそろえた後、同梱した index generator �
 - `miku-score-skills` `v0.6.1`: `skills/igapyon-miku-score/`
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
-生成された zip を GitHub Release asset として添付します。archive 内の `index.json` は
-package 処理で再生成されます。
+生成されたzipの内容を検査してからGitHub Release assetとして添付します。archive内の
+`index.json` はpackage処理で再生成されます。配布zipからMaven packageを再実行する構成
+ではありません。
 
 ## 厳選 text bundle
 

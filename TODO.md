@@ -1,5 +1,473 @@
 # TODO
 
+## GitHub Issue受信・daybook取り込み（Luna向け実装計画・実装済み）
+
+登録日：2026-10-06。状態：2026-10-06の実装指示に基づくローカル実装・fixture検証を完了。実GitHub操作、skill配備、commit/pushは未実施。
+
+ユーザー指定により、この実装計画はigapyon-agent-skillsのTODO.mdで管理する。daybookのTODO.mdや月別taskへ追加しない。
+
+- 詳細仕様の正本：[daybook-issue-import.md](../daybook/docs/plans/daybook-issue-import.md)。第6節に入力接続表、第12節にresult schemaと遷移表、第13節にコメント→close手順を記載。
+- 再開時の入口：[HANDOFF.md](HANDOFF.md)。本節の新しい合意を優先し、下方の過去作業から範囲を広げない。
+- 対象skill：`skills/igapyon-miku-daybook/`。下記scriptsはdaybook側を指し、配布bundleはこのskillの`assets/daybook/`。
+- 以降の実Issue取得・コメント投稿・closeとskill配備は別途の明示依頼がある場合だけ行う。今回の実装では実GitHub操作・認証・skill配備・commit/pushを行っていない。
+
+### 計画段階で完了したこと
+
+- [x] 仕様、入力JSON、関数、CLI、ファイル配置、実装順序、検証ケースを詳細計画書へ記録した。
+- [x] miku-scmのIssue取得・コメント投稿・closeがghに依存することを既存コード・referenceで確認した。
+- [x] 「ghはIssue連携では必須、daybook全体では任意依存」という方針を確定した。
+- [x] レビューで判明した入力接続の不足とresult再開状態を、下記の固定仕様へ反映した。
+- [x] 利用者と「ローカル取り込み→結果コメントの検証済み投稿→Issue close」を合意した。取り込み後の本文変更検出は初版から外した。
+- [x] TODOとHANDOFFのチェックリストを実装結果・検証結果へ更新した。
+
+### 実装する動作と範囲
+
+- 指定された時だけIssueを受信する。readyラベル、毎朝受信、通常操作への付随処理を追加しない。
+- GitHub読取・コメント投稿・closeにはmiku-scmの既存固定helper／runnerを使う。miku-scmソースや固定command surface、既存通知workflowを変更しない。
+- エージェントが意味判断とGitHub操作を担当し、Node.jsはローカルJSON検証・プレビュー・記録作成・再開状態を担当する。新しいnpm依存やGitHubクライアントを作らない。
+- ghなしではIssue連携の3機能をdisabled／GH_NOT_FOUNDと案内する。通常の記録、日程表、通知、取得済みJSONを使うfixture処理は動作する。gh確認は明示的なIssue連携の入口だけ。
+- taskの日付補完はplanned_dates_status: provisionalと理由を残し、日程表の「日程要確認」にだけ表示する。外部期限を作業予定日に流用しない。
+- Issue URL＋record key＋import_idで二重取り込みを防ぐ。初期igapyon/daybookのDaily Briefing #3とPRは除外する。他repoに#3を自動適用しない。
+- 取り込みが完了し、結果コメントがposted／already-postedとなったIssueをreason=completedでcloseする。これは取り込み受付の完了であり、daybookのtask完了ではない。
+- コメント・closeの実操作には既存miku-scmのpreflight、実本文／close操作の承認、handoff、attempt回復規則を適用する。取得だけ・候補だけ・計画だけでは投稿・closeしない。
+- close失敗時はclose待ちを保持し、再開はcloseだけ行う。既にclosedならalready-closed。再オープンされた取り込み済みIssueはalready-importedと報告し、記録やコメントを再生成・自動再closeしない。
+- source_hashは同一runのprepare→applyとclose前確認に使う。取り込み後の本文変更検出・継続同期は実装しない。
+- 実装検証は一時directoryと架空fixtureだけ。実Issueの取得・投稿・close、gh導入／ログイン、commit・push・PR・マージ、skill配備はこの実装計画のfixture検証に含めない。
+
+### 固定仕様1：既存helperからsource.jsonへの接続
+
+詳細計画書第6節の表をそのまま実装・referenceへ反映する。入力の例だけに存在するfieldを、実取得できたことにしない。
+
+| 項目 | 決定した扱い |
+| --- | --- |
+| repo／number／title／body／url／state／updated_at | helper payloadのrepository／issueから取得。html_url→url、state→小文字。要求repo・番号・URLの一致と更新日時を検証 |
+| PR判定 | URLの/issues/<number>を検証してfalseとする。/pull/は拒否。不明なpathや別repoは入力エラー |
+| Issue created_at | 現行helperにはないのでnull。普通taskは作成可能。相対日付の根拠に必要な場合だけneeds-info。updated_atを代用しない |
+| コメントID | comment.urlの#issuecomment-<number>から十進文字列として得る。rawのopaque IDを整数化・復号しない |
+| コメント作者・日時 | author.login、createdAt／updatedAtを対応させる。欠落はnull。本文は保持し、日時欠落でもhashへ含める |
+| 取得範囲 | comments_scope: helper-returned。成功応答のcomments配列だけを使う。全件取得の証明がないcomments_complete=trueを作らない。判断に必要な履歴不足はneeds-info |
+| receipt_author_logins | 正規結果と認める作者の設定。初期igapyon/daybookでは["igapyon"]、別repoは利用者指定（未指定[]）。現在の認証アカウントを推定しない |
+| 作者不明・未設定のreceipt | 有効markerがあっても作者を検証できなければUNVERIFIED_RECEIPTで確認待ち。再取り込み・再投稿しない |
+
+この取得範囲の限界をpreviewとreferenceに記載する。取得失敗を空配列・成功sourceで隠さない。
+
+### 固定仕様2：result.jsonと再開
+
+詳細計画書第12節のschemaを正本とし、writeのissue_numbersからIssue別write_pathsを構成する。resultはplan.jsonと同じrun directoryへ保存し、comment-result／close-resultは両方を照合する。共有activityへの追記を1 writeへまとめても、依存する各Issueの完了を判定できるようにする。
+
+| 状態 | 初期値・遷移・再開条件 |
+| --- | --- |
+| write.status／local_status | queued／prepared→written／local-written。I/O失敗はpartial。未適用分だけ再開 |
+| comment.status | blocked→pending→sending→posted／failed／uncertain。ghなしはpending-gh。最新の同一receiptを確認した時だけalready-postedへ回復 |
+| close.status | blocked→pending→closing→closed／failed／uncertain。投稿検証前はblocked。ghなしはpending-gh。最新closed確認でalready-closedへ回復 |
+| result.status | 未適用writeありはprepared／partial、ローカル全完了・remote待ちはlocal-written、全対象の投稿・close検証済みはcomplete |
+
+- 再applyは既存resultを読み、schema・repo_root・plan_id・import_id・path/hashを照合する。posted／uncertain／closed等を初期化しない。退行はINVALID_RESULT_TRANSITION。
+- 書込完了直後・result更新前の停止はafter_hashと同一出典を確認してwrittenへ回復する。後の利用者編集はLOCAL_CONFLICTで保持する。
+- result紛失時はローカル状態だけ回復し、comment=uncertain／close=blockedとしてremote確認を求める。投稿済みと推定したり自動再送しない。
+- source再読取は未適用writeがある場合に必須。部分適用後のSOURCE_CHANGEDは既存記録を保持して確認待ちにする。全適用済みの再applyはcloseによるstate変更で停止しない。
+- comment／closeのsending・closing・uncertainからの再開は最新読取から始め、miku-scmが禁止するattemptを再利用しない。close失敗後はコメントを再投稿しない。
+
+### ISSUE-00：実装開始時の確認と入力接続fixture
+
+前提：実装開始の指示。詳細：計画書第2・4・6節。
+
+- [x] daybookとskill正本の規則・README・変更状態を読む。配備コピーを正本にせず、利用者変更を保持する。
+- [x] 両repoを編集できる実装環境を用意する。miku-scmソースと既存通知workflowを変更対象へ追加しない。
+- [x] raw helper payloadとrunner包装の架空fixtureを各1件作り、上表どおりsourceへ正規化する。包装keyはrunnerの現行契約を確認し、GitHub取得APIを再設計しない。
+- [x] created_at欠落、opaqueコメントID、updatedAt欠落、作者欠落、取得失敗、PR URL、未知作者receiptのケースを先に固定する。
+- [x] 成功した空commentsと取得失敗を区別し、helper-returnedの取得範囲・意味判断の確認待ちをreferenceへ書く。
+- [x] 成功、ghなし、already-imported、needs-info、取得失敗、コメント待ち、close待ちの挙動をfixture・CLI・referenceへ反映する。
+
+完了条件：現行helperの取得可能fieldだけで正常fixtureがsourceを満たし、不足情報を捏造しない。
+
+### ISSUE-A：現行生成処理とテストの整合
+
+依存：ISSUE-00。対象：scripts/day-plan.test.mjsと対応bundle。詳細：計画書第16節・段階A。
+
+- [x] daybookとskill bundleのテストを比較し、旧records.dueTasks期待を現行nearEndTasks等へ揃える。旧キーalias検証は保持する。
+- [x] 予定期間・priority・schedule状態・canonical配置・日付範囲・リンクのテストを揃え、現行生成処理のテストを実行する。
+- [x] テストを削除して整合したことにせず、結果をHANDOFFへ記録する。
+
+完了条件：新機能を加える前の現行生成契約がfixtureで検証できる。
+
+### ISSUE-B：暫定予定期間を機械で識別する
+
+依存：ISSUE-A。対象：scripts/day-plan.mjsと対応テスト。詳細：計画書第8・9節。
+
+- [x] planned_dates_statusをconfirmed／provisionalのscalar stringとしてrawFrontMatterで検証する。新項目のある普通taskには有効な両端を要求する。
+- [x] 既存の項目なし・旧キーalias・無期限weeklyの互換性を保持する。
+- [x] provisionalをneedsDateReviewへ含め、datedTasks・plannedWeekTasksから除外する。dateReviewLineへ暫定期間、due_month／planned_weekの補足を表示する。
+- [x] 当日・翌日・7日後も日程要確認だけに出ること、confirmed変更、done／cancelled、不正型・値を検証する。
+
+完了条件：暫定期間が偽の期間超過を生まない。既存全taskを自動移行しない。
+
+### ISSUE-C：入力検証、日付補完、記録とコメントの生成
+
+依存：ISSUE-B。対象：新規scripts/issue-import.mjsと対応テスト。詳細：計画書第6〜8・10・13〜15節。
+
+- [x] validateIssueSource／validateImportManifestを入力接続表に沿って実装し、schema、repo／URL／番号、key、型別項目を検証する。
+- [x] deriveTaskDatesを実装する。両端なしは取り込み日、開始のみは両端同日、終了のみはmin(取り込み日,終了)を開始にし、補完理由を残す。
+- [x] 外部期限を作業予定日に流用しない。schedule／activityの実日付や相対日付の基準が不明ならneeds-info。
+- [x] marker＋構造化参照＋receipt_author_loginsによる正規receipt検証、UNVERIFIED_RECEIPT、source_hash／import_idの安定計算を実装する。
+- [x] task／scheduleのMarkdownとactivity出典ブロック、結果コメントを生成する。状態checkbox、priority、ID／配置、出典、履歴を一致させる。
+- [x] schedule／activityのrecord参照idはfilename stemにする。task例だけで完了せず、全3種の正常fixtureを作る。
+- [x] コメントへローカル反映・暫定日付・受付完了closeを明記する。未公開blobリンクやtask完了の断定をしない。
+
+完了条件：確定JSONから一意の記録とコメントが作れる。自然言語・ネットワーク処理をNode.jsへ追加しない。
+
+### ISSUE-D：出典検索、採番、prepare
+
+依存：ISSUE-C。対象：issue-import.mjsと対応テスト。詳細：計画書第10〜12節。
+
+- [x] canonical task・scheduleとactivity専用ブロックからURL＋keyを検索し、done／cancelledも重複判定する。
+- [x] SOURCE_CONFLICT、remote-only、already-imported、link-existingを判定する。取り込み後の本文変更検出を追加しない。
+- [x] taskを現物＋対象作成月のローカルGit履歴から採番し、削除済み番号・未追跡・複数taskの順序・99999超過・Git失敗を検証する。fetchしない。
+- [x] plan.json／preview.mdを生成し、各writeへpath／issue_numbers／before_hash／after_hash／全文を保存する。
+- [x] 同日activityの追記を1 writeへまとめ、既存文章と改行を保持する。
+- [x] previewへ予定日、補完理由、関連付け先、確認事項、コメント本文、投稿後のclose予定と取得範囲を示す。
+
+完了条件：prepareは作業資料だけを出力し、正本記録を書き換えない。
+
+### ISSUE-E：apply、result、CLI、再開
+
+依存：ISSUE-D。対象：issue-import.mjs、新規import-issues.mjsと両テスト。詳細：計画書第4・12〜15節。
+
+- [x] detectIssueCapabilitiesを実装する。ghのPATH存在をファイル検査だけで確認し、issue_reception／issue_comment_posting／issue_closureを返す。ghなしはdisabled・終了コード0。
+- [x] capabilities／prepare／apply／comment-result／close-resultの5 CLI、help、未知引数、schema、終了コードを実装する。Node.jsからremote操作しない。
+- [x] 初回・未適用writeのsource再確認、plan改変検知、全writeの事前hash確認、排他lock、canonical path／symlink検証を実装する。
+- [x] resultを第12節schemaで作り、再実行時は同じplan・repoとの照合後に読込む。既存remote状態を初期化しない。
+- [x] 排他新規作成、一時file＋rename、writeごとのresult原子更新、shared activityのIssue別完了判定を実装する。
+- [x] mid-write、書込完了・result更新前の停止、result紛失、後の手編集、部分適用後のsource変更をfixtureで検証する。
+- [x] comment-result／close-resultもrepo lockを使い、許可遷移・前提・対象URL・handoff／attempt参照を検証する。不正な退行はINVALID_RESULT_TRANSITION。
+- [x] posted／uncertain／closed後の再applyで状態が残ること、未投稿時にcloseできないこと、close失敗でローカル・投稿成功を巻き戻さないことを検証する。
+- [x] 全write完了・remote待ちはlocal-written、全対象の投稿・close検証済みだけcompleteにする。task.statusをcloseで変更しない。
+
+完了条件：ローカル適用、コメントだけの再開、closeだけの再開を独立して扱い、二重作成・自動再送を防ぐ。
+
+### ISSUE-F：skill操作手順とREADME
+
+依存：ISSUE-E。対象：daybook README、skill正本SKILL.mdとreferences。詳細：計画書第4・6・7・9・13・16節。
+
+- [x] references/issue-import.mdにcapabilities→miku-scm読取→source→意味判断→manifest→prepare→再読取→apply→comment preflight／承認／投稿検証→comment-result→close preflight／承認／検証→close-resultを記載する。
+- [x] 通常は投稿検証後の最新状態からclose preflightを作る。ordered batchを明示利用する場合だけ既存handoff.batch.applyを使い、独自の承認・再送経路を作らない。
+- [x] miku-scm所定のcomment draft保存先、helperのattempt再利用禁止、ghなし、unknown receipt、close待ち・成否不明からの再開を架空例で示す。
+- [x] 明示的Issue取り込みだけの起動条件、readyラベル不要、#3／PR除外、取り込み後のclose、通常操作でgh確認しないことをSKILL.mdへ記載する。
+- [x] planned_dates_status、出典、一覧の日程要確認、利用者確認後のconfirmed更新をrecords.md／operations.md／READMEへ記載する。
+- [x] source取得範囲、未コミットのローカル記録、GitHub反映、取り込み受付close、実作業完了を区別して説明する。
+- [x] 現行の「週次保守は明示依頼と指定対象だけ」を維持する。Issue取り込みで無関係なweekly保守を起動せず、daybook READMEの旧自動繰り越し説明もこの規則へ揃える。
+- [x] task／schedule／activity、投稿待ち、close待ち、already-closed、再オープンの架空例で手順を通し確認する。
+
+完了条件：Lunaが新たなGitHub取得・投稿・closeの仕組みを設計せず、既存miku-scmとローカルCLIを接続できる。
+
+### ISSUE-G：bundle整合・最終検証
+
+依存：ISSUE-F。対象：skill正本assets/daybookとindex、daybook。詳細：計画書第16〜18節。
+
+- [x] 新規・変更スクリプトとテストをassets/daybookへ一致させる。miku-scmや通知workflowを変更しない。daybook専用READMEをbundleへ無条件コピーしない。
+- [x] 新referenceをskill index.jsonへ既定手順で登録する。
+- [x] fixture検証を行い、daybookとbundleのtest suiteを実行する。
+- [x] 通常記録・週次ルール・通知workflow・利用者変更が保持されていることを確認する。
+- [x] 配備の明示指示はなかったため、skill同期・配備は行っていない。
+- [x] 差分、空白、リンクを確認し、実装状態と検証結果をHANDOFFへ記録する。
+
+完了条件：daybookと配布bundleが一致し、fixture検証と操作手順が揃う。実Issue受信・投稿・closeは後の導入確認依頼で行う。
+
+### 実装時の検証コマンド
+
+実装で実行したfixture検証。daybook側とskill正本のbundle側の結果を記録する。
+
+```sh
+node --test scripts/day-plan.test.mjs
+node --test scripts/issue-import.test.mjs scripts/import-issues.test.mjs
+npm test
+git diff --check
+```
+
+架空helper payloadとmiku-scmの操作結果をfixtureで使った。実通信・認証・投稿・close、miku-scm自体の自己テストは行っていない。
+
+### 将来の検討として保持するもの
+
+- 取り込み済みIssueの本文変更検出、コメント・ラベルからの状態／予定期間の継続同期。
+- daybook編集内容をGitHub Issueへ自動反映する双方向同期。
+- 複数Issueの統合、削除やdaybook作業完了とのclose連動、公開範囲の拡張。
+- 日次通知Issueのコメントをtask操作の入口として使う。
+
+## daybookの週次タスク自動保守を明示依頼に限定する計画（Luna向け、2026-10-06）
+
+状態：実装済み（2026-10-06、Codex）。SKILL・operations・日付移行ガイドを更新し、daybook indexを再生成した。週次保守は明示依頼と指定範囲に限定した。独立したLuna実行によるfixture動作確認は未実施。
+
+目的：通常の記録編集やデータ移行に、無関係な週次タスクの調査・旧形式補完・予定作成・次回日付更新を付随させない。週次登録と明示的な繰り越しの機能は維持し、起動条件と対象範囲を限定する。
+
+調査時点の原因：
+
+- `skills/igapyon-miku-daybook/SKILL.md` のActivation and boundariesに、すべてのrecord-writing requestで期限到来済みの全active weekly taskを保守する指示がある。
+- `references/operations.md` のMaintain a weekly recurring taskには、すべてのwritable requestで旧形式の週次項目を補完し、その後全対象を繰り越す指示がある。対象がなくても確認が発生し、対象があれば別タスク・予定・履歴の変更まで行える。
+- この処理はAgent Skillの指示によるもの。背景で動くschedulerではなく、今回も新しいschedulerや繰り越しruntimeを追加しない。
+- day-plan生成で元のtask/scheduleを変更しない規則はすでにある。この規則は維持する。
+
+### 0. 実装前の確認と対象ファイル
+
+- [x] 実装依頼を受けた後、`git status --short --branch` と対象の現内容を確認する。既存のRelease ZIP計画や他のユーザー変更を保持する。
+- [x] Agent Skill更新に必要な `skill-creator` の指示を確認し、適用時はユーザーへ案内する。今回の目的に必要な範囲で使う。
+- [x] 次のファイルを読み、起動条件とデータ規則を区別する。
+
+| ファイル | 対応 |
+| --- | --- |
+| `skills/igapyon-miku-daybook/SKILL.md` | 全書き込み時の週次保守を削除し、明示依頼と対象範囲を定義 |
+| `skills/igapyon-miku-daybook/references/operations.md` | 週次登録・明示的保守・通常編集の手順を一致させる |
+| `skills/igapyon-miku-daybook/references/task-date-migration.md` | 移行が週次補完・繰り越しを起動しないことを明記 |
+| `skills/igapyon-miku-daybook/references/records.md` | 読み取り確認。スキーマと週次の表現は維持し、起動条件に矛盾する箇所が実際にあればその説明だけ修正 |
+| `skills/igapyon-miku-daybook/index.json` | 文書変更後に既存手順で再生成 |
+
+- [x] 既存の `assets/daybook/scripts/`、通知workflow、POM、他スキルは原則として変更しない。指示の起動条件を変えるために新しいCLI・バックグラウンド処理・全体走査ヘルパーを追加しない。
+
+### 1. 起動条件と変更範囲を固定する
+
+- [x] 下表をSKILLとoperationsの共通仕様にする。
+
+| ユーザーの依頼 | 許可する処理 | 週次保守の扱い |
+| --- | --- | --- |
+| 普通のtask追加・更新・完了 | 指定taskと、その編集に直接必要な整合性確認 | 起動しない |
+| activity追記・schedule編集・添付保存 | 指定記録と直接関連する情報 | 起動しない |
+| 既存週次taskの優先度・本文編集 | 指定フィールドと直接関連する情報 | そのtask自体でも自動繰り越ししない |
+| 指定週次taskの終了・特定回の中止 | 指定された終了・中止と直接必要な状態・リンク整合 | 次回を自動作成しない |
+| 明示的な週次task新規登録 | そのtask、既知の初回schedule、相互リンク | 他taskは調べない |
+| 「task Aの週次予定を繰り越して」 | Aと次回候補に直接関連するschedule | Aだけを保守 |
+| 「全週次タスクを繰り越して」 | 全active weekly taskの対象判定と必要なschedule | 明示された全体範囲で保守 |
+| task一覧・説明・day-plan生成 | 表示に必要な読み取り。day-plan生成はsnapshotのみ書き込み | 元記録の補完・繰り越しを起動しない |
+| task日付項目の移行 | 指定された移行範囲の分類・日付キー編集・検証 | 週次の分類は可能。次回日付・予定を自動更新しない |
+
+- [x] 「週次taskである」「今日または過去のnext_occurrenceがある」だけでは保守を起動しない。登録済みのrecurrence指定は、別依頼でそのtaskを繰り越す恒久的な許可として扱わない。
+- [x] 全体処理はユーザーが全週次taskの保守を依頼した場合だけにする。曖昧な「整理して」、普通のtask編集、「daybook更新」から全体保守を推測しない。保守を求めていることは明確でも対象が不明な場合だけ、対象を確認する。
+- [x] 通常操作では、無関係な旧週次taskのnext_occurrence初期化、関連schedule探索、繰り越し、追加入力の質問、保守提案を自動で付け足さない。
+- [x] 必要な読み取りは維持する。新規taskのID採番・重複確認、指定記録の特定、一覧の全件取得、移行依頼の対象全件確認、day-planの生成用読み取りを「全体走査禁止」として止めない。止めるのは別目的の週次保守の追加走査である。
+
+### 2. SKILLの指示を更新する
+
+- [x] Activation and boundariesの `during any record-writing request` と、全active weekly taskを常時保守する指示を置き換える。新規週次登録の範囲と、明示的な週次保守の範囲を分けて書く。
+- [x] 置換文の意味は次に揃える。英語は周囲の文体に合わせて整えてよい。
+
+> Weekly recurrence rollover is a separate explicitly requested operation. Maintain only the requested tasks; process all active weekly tasks only when the user explicitly requests that scope. Ordinary record edits and migrations must not trigger recurrence-field initialization, an additional weekly-task scan, or rollover.
+
+- [x] Core workflowの分類に明示的なweekly maintenanceを追加し、通常編集・新規週次登録・週次保守のどれかを最初に判定するよう案内する。
+- [x] 週次taskの通常編集から週次保守へ暗黙に移らないこと、新規登録はそのtaskと初回scheduleに限定することをCore workflowにも反映する。
+- [x] 読み取り専用操作とday-plan生成が元記録を変更しない説明、およびAfter editingの依頼対象の整合性確認は維持する。
+
+### 3. operationsと移行ガイドを一致させる
+
+- [x] operationsのMaintain a weekly recurring taskを、新規登録と明示的な保守として読めるよう整理する。
+- [x] `During any writable daybook record request`、`inspect all active weekly tasks`、`Apply this to all eligible weekly tasks during the writable operation` の全体起動指示を削除または明示依頼限定の説明に置き換える。SKILLだけ直してoperationsに旧ルールを残さない。
+- [x] 明示的な保守では、先にユーザー指定の終了・中止を適用し、その後に依頼範囲のactive taskだけを対象にする。終了済みtaskを繰り越さない。
+- [x] 旧週次taskのrecurrence項目初期化も、明示的な登録・保守の対象内だけに限定する。既知の次回日付・明確にリンクされたscheduleがない場合は対象を変更せず、そのtaskについてだけ必要情報を確認する。
+- [x] 繰り越しアルゴリズムは維持する。Asia/Tokyoの日付、7日単位、過去回を新規作成しないこと、schedule再利用、中止回の保持とskip、重複防止、相互リンク、history記録を変えない。
+- [x] operationsのAdd/Update task、Add activity、Add/Update schedule、Finishに週次全体保守を呼ぶ説明が残っていないか確認する。
+- [x] read-only操作で、たまたま全週次保守の調査や通知が増える説明も除く。依頼された一覧のNext表示や、明示された質問への回答は維持する。
+- [x] task-date-migration.mdに、移行時は既存のrecurrence/next_occurrenceとscheduleを保持し、移行依頼だけで週次初期化・繰り越し・次回schedule作成を行わないと明記する。曖昧な旧日付の意味を、移行対象の記録について確認する手順は維持する。
+- [x] records.mdの週次スキーマは維持する。週次ルールはtask、日付ごとの回はscheduleという表現や、無期限ルールに予定終了日を捏造しない規則を変えない。
+
+### 4. 指示の検証と動作確認を分けて行う
+
+- [x] まずSKILLと参照資料を静的に読み合わせ、通常書き込みを起点にした全体保守の指示が残っていないこと、明示保守の説明が相互に矛盾しないことを確認する。文章の単純な文字列テストだけをAgentの動作確認として報告しない。
+- [ ] 実行ログを取れるAgent環境で確認できる場合は、独立した一時fixtureを作り、以下の依頼を個別に実行する。対象daybookの実データ、実際のCodex配備、Issue・通知送信には触れない。基準日をAsia/Tokyoの2026-10-06として明示し、実時計の進みに依存させない。
+- [ ] fixtureに、通常task X、期限到来済み週次A/B、週次と明記されているがnext_occurrenceが未確定の旧task C、候補schedule、activityを含める。Aはnext_occurrence=2026-10-04、Bも期限到来済みとし、Aだけの処理と全体処理を区別できるようにする。記録は既存スキーマに従い、安定した予定詳細と相互リンクを用意する。
+- [ ] 各ケースで変更前後の内容と、読んだファイル・ツール呼び出し・最終応答を確認する。fixtureで無関係な読み取りを隠すために、週次taskを置かないケースだけで検証しない。
+
+| ケース | 期待する結果 |
+| --- | --- |
+| activityに1件追記 | activityだけ変更。A/B/Cの保守調査・更新・不足情報質問なし |
+| Xの優先度変更・完了 | Xだけ変更。週次保守なし |
+| Aの優先度変更 | Aの指定項目だけ変更。next_occurrence・scheduleを繰り越さない |
+| Aのルール自体を終了 | Aを終了。A/Bの次回を新規作成しない |
+| 週次Dを初回日付付きで新規登録 | Dと初回scheduleだけ作成。A/B/Cは保持 |
+| Aだけの繰り越し依頼 | Aの次回を2026-10-11へ。B/Cは保持し、不足情報質問も追加しない |
+| Aの次回候補に同一scheduleあり | 既存scheduleを再利用し、重複作成なし |
+| Aの2026-10-11回がcancelled | 中止回を保持し、明示保守内で次の候補2026-10-18へ進む |
+| 全週次taskの繰り越し依頼 | 全指定範囲の対象を処理。Cの日付が不明ならCは保持し必要情報を確認 |
+| task一覧・day-plan生成 | 表示またはsnapshotのみ。元task/scheduleの内容が完全に維持される |
+| task日付キー移行 | 移行対象のキー・必要な履歴だけ変更。週次のnext_occurrenceとscheduleは保持 |
+
+- [x] Agent実行環境が用意できない場合は、静的確認と上記の未実行ケースを区別して記録する。モデルの実動作を確認済みとしない。この確認のためだけに外部サービス契約や新しい試験基盤を導入しない。
+- [x] 今回runtimeを変更しない限り、day-plan生成の実装テストを増やしたり週次処理をruntimeへ移したりしない。
+
+確認結果：静的な指示の読み合わせ、`quick_validate.py`、index再生成、`git diff --check` を実施した。独立したLuna実行・fixture動作確認はこの環境では行っていないため、表のケースを実動作確認済みとは扱わない。runtime・day-plan実装・実データは変更していない。
+
+### 5. index再生成と完了記録
+
+- [x] 文書更新後、既存の `mvn generate-resources` でindexを再生成する。daybook以外のindexに差分が出たら理由を確認し、他のユーザー変更を巻き戻さない。
+- [x] `git diff --check`、`git status --short`、対象ファイルのdiffを確認する。予定した起動条件変更以外のスキーマ・runtime・他スキル変更を含めない。
+- [x] 実施済み項目だけチェックし、この節に静的確認・実際のAgent確認・未実行ケースの結果を記録する。Release ZIP計画の実装状況は後続の独立した節で記録する。
+- [x] ユーザーへ、通常編集の付随週次保守がなくなったこと、週次繰り越しは明示依頼と指定対象に限ること、既存の週次登録・繰り越し処理自体は維持したことを報告する。
+- [x] 実際のdaybookデータ移行、Codex配備、版の更新、commit/push、タグ・Release操作は別途の依頼とする。ローカルRelease ZIP生成は、下記のRelease ZIP計画の範囲で実施した。
+
+## Release ZIPをスキル配布用に整理する実装計画（Luna向け、2026-10-05）
+
+状態：実装済み（2026-10-06、Codex）。最終ZIPをローカル生成・検査済み。配備、commit/push、タグ作成、GitHub Release公開は未実施。
+
+目的：カスタムRelease ZIPを、導入するスキル一式と配布用の案内・ライセンス・外部スキルの出典情報に絞る。ビルド用ソースはリポジトリとGitHub標準のソースアーカイブから参照する。
+
+### 0. 固定する仕様と作業範囲
+
+- [x] 実装開始時に `git status --short --branch` を実行し、既存の変更を保持する。必要ならこの節を読み直し、過去のGOAL/HANDOFFにある別作業を今回の目的に混ぜない。
+- [x] 次の配布構成を実装する。ZIP名と展開ルート名は現行形式を維持し、`-skills` などのsuffixを追加しない。
+
+```text
+target/igapyon-agent-skills-<version>.zip
+└── igapyon-agent-skills-<version>/
+    ├── skills/
+    ├── README.md
+    ├── INSTALL.md
+    ├── LICENSE
+    └── EXTERNAL_SKILLS.lock
+```
+
+- [x] 現在の内部15スキルと外部10スキルをすべて含める。リポジトリ直下の `skills/` だけを直接ZIP化せず、外部スキルもそろえた `target/release-staging/skills/` を使う。件数を実装に固定せず、内部ディレクトリとPOMの指定から求める。
+- [x] スキル内部の `references/`、`runtime/`、`scripts/`、`agents/`、`assets/`、ライセンス、テスト、fixture、例は丸ごと保持する。特にdaybookの `assets/daybook/.github/workflows/day-plan-notify.yml` を除外しない。
+- [x] 除外する名前は `.DS_Store`、`node_modules`、`.git` とする。ドットファイル全般や `.github` を除外しない。一般的なgitignoreルールをコピーに適用しない。配布に必要なJAR/MJS/TGZなどを誤って落とさないため。
+- [x] 外部スキルのrepo/ref/skillName、既存スキルの動作、ルートの同期スクリプト、厳選text bundleの仕様は変更しない。版の更新、commit、push、タグ作成、Release公開、実際のCodex配備は今回の範囲に含めない。
+
+調査時点の現状：
+
+- root POMは `1.20261005.2`。既存ZIPとrelease stagingは古い `1.20260922.1` である。検証には後続実装後に生成したZIPを使う。
+- staging生成スクリプトは現在、README/INSTALL/LICENSEに加えてPOM/.mvn/lib/scripts/src/assemblyをコピーしている。
+- stagingのindex再生成は、配布先にコピーした `lib/miku-indexgen-1.6.2.jar` を使用している。
+- 現在のINSTALLは、ZIPに同梱した `scripts/sync-codex-skill.sh` の存在を前提としている。
+- daybookの `node_modules/` はリポジトリ側に存在するローカル生成物で、調査時点ではCodex配備先にはない。以前の説明は差分の向きを取り違えていた。現行の `cp -R` をそのまま使うと、次のZIPに混入する可能性がある。
+
+### 1. 変更するファイルを確認する
+
+- [x] 次のファイルを実装前に読む。
+
+| ファイル | 実施内容 |
+| --- | --- |
+| `scripts/prepare-release-staging.sh` | 配布内容に限定したstaging作成、スキルコピー時の除外、ビルド元のJARによるindex生成 |
+| `src/assembly/release.xml` | ZIP収録パスの許可リストと除外ルール |
+| `src/assembly/README.md`（新規） | 配布物向けの短いREADME |
+| `INSTALL.md` | 同梱ヘルパー不要の導入・更新・差分確認手順 |
+| `README.md` | Release archive節と配布物からの再packageに関する説明の更新 |
+| `scripts/check-release-archive.mjs`（新規） | ZIPの構成・スキル一覧・ロック・indexを検査するCLI |
+| `.github/workflows/release-archive.yml` | ビルド後、アップロード前のZIP検査 |
+
+- [x] 依存関係の確認用に `pom.xml`、`scripts/sync-codex-skill.sh`、`scripts/build-text-bundle-selection.sh` も読む。これらは原則として変更しない。
+
+### 2. staging生成を変更する
+
+対象：`scripts/prepare-release-staging.sh`。
+
+- [x] staging初期化、外部checkout用の `target/external/` 作成、外部引数repo/ref/skillName三つ組の検証を保持する。削除対象のパスを今回の変更で広げない。
+- [x] stagingにはルートと `skills/` だけを作成する。空の `scripts/` や `src/` を作成しない。
+- [x] `README.md` のコピー元を `$BASE_DIR/src/assembly/README.md` に変更し、stagingの `README.md` にコピーする。
+- [x] `INSTALL.md` と `LICENSE` のコピーは保持する。`pom.xml`、`.mvn/`、`lib/`、`scripts/`、`src/assembly/` のコピーを削除する。
+- [x] 内部スキルのコピーを `rsync -a` に変更する。`--exclude='.DS_Store'`、`--exclude='node_modules'`、`--exclude='.git'` を指定し、`$BASE_DIR/skills/` の内容を `$STAGING_DIR/skills/` にコピーする。末尾スラッシュを付けて `skills/skills/` を作らない。
+- [x] 外部スキルにも同じ除外ルールを使う。スキルごとの配布先を作り、checkout内の `skills/<skillName>/` の内容をstagingの `skills/<skillName>/` にコピーする。checkoutのルート全体をコピーしない。
+- [x] 既存の固定ref取得、取得したスキルの存在確認、同名スキルの衝突検出、locked provenance一致時の再利用、三つ組のlock出力を保持する。
+- [x] 全スキルのコピーと除外を終えた後、次のコマンドでstagingのindexを再生成する。JARをstagingにコピーしない。
+
+```sh
+java -jar "$BASE_DIR/lib/miku-indexgen-1.6.2.jar" --input-parent-directory "$STAGING_DIR/skills"
+```
+
+- [x] index生成後にindex対象ファイルを削除する順序にしない。不要ファイルを除外済みのディレクトリからindexを作り、参照先と配布内容を一致させる。
+
+### 3. assemblyの収録リストを変更する
+
+対象：`src/assembly/release.xml`。
+
+- [x] `<include>**</include>` を削除し、`skills/**`、`README.md`、`INSTALL.md`、`LICENSE`、`EXTERNAL_SKILLS.lock` の5項目だけを含める。
+- [x] 除外パターンに `**/.DS_Store`、`**/node_modules/**`、`**/.git/**` を指定する。不要ディレクトリの空エントリもZIPに残らないことを後の確認スクリプトで確かめる。
+- [x] `includeBaseDirectory`、`baseDirectory`、POMの `finalName`、`appendAssemblyId`、package実行フェーズは維持する。
+- [x] スキル内部の `scripts/` や `lib/` は収録する。配布ルートのビルド用ディレクトリとの違いはパス階層で判断する。
+
+### 4. 配布用READMEとINSTALLを変更する
+
+- [x] 新規 `src/assembly/README.md` に、スキル配布物であること、5項目の内容一覧、INSTALLへの相対リンク、EXTERNAL_SKILLS.lockの役割、ソースリポジトリへのリンクを記載する。件数・版・外部ref一覧を重複して固定記載しない。
+- [x] `INSTALL.md` のContentsを新しい5項目に揃える。展開後のルートから実行する手順であることを明記する。
+- [x] 導入先の解決には `SKILL_CODEX_HOME=${CODEX_HOME:-"$HOME/.codex"}` を使用する。`HOME`、`CODEX_HOME` 自体を代入し直さない。任意の導入先を使う例では `SKILL_CODEX_HOME=/absolute/path/to/codex-home` とする。
+- [x] 選択するスキルの例は `SKILL_NAME=igapyon-mikuku-agent` とする。名前を別のスキルへ変更して繰り返せるようにする。ソースの `skills/$SKILL_NAME/SKILL.md` が存在することを、同期先の作成より先に確認する。
+- [x] INSTALLの主手順を既存Manual Fallbackを元にした `rsync -a --delete --exclude='.DS_Store'` にする。選択した1スキルだけを同期する末尾スラッシュ付きのコピー元・コピー先を示す。不要なインストール済みファイルが削除される更新方式であることを説明する。
+- [x] dry-runは `rsync -nrlci --delete --exclude='.DS_Store'` を使う。macOS rsyncのmtimeのみを表す `.f..T....` 行を既存ヘルパー同様に除外し、残る出力が空なら内容差分なしと説明する。`rsync` の終了コード0だけを「同期済み」の判定にしない。
+- [x] インストール後の `SKILL.md` 存在確認と、Codexホストの再読み込みを記載する。
+- [x] 配布ZIPに存在しなくなる同期ヘルパー、generated-index検査、Mavenビルド用ファイルの実行例をINSTALLから削除する。リポジトリの同期ヘルパー本体は保持する。
+- [x] root `README.md` のRelease archive節を新構成に変更する。リポジトリ上の `mvn clean package` と外部スキルの固定ref取得・index再生成は維持する。配布ZIPにPOMが含まれ、展開物から再packageできるという記述は削除する。
+- [x] root READMEのリポジトリ利用者向けローカル同期・厳選text bundle案内は保持する。
+
+### 5. ZIP確認CLIを追加する
+
+対象：新規 `scripts/check-release-archive.mjs`。npm依存は追加しない。
+
+- [x] CLIはZIPパス1件だけを受け取る。引数0件・2件以上・ファイルなしはusageまたは原因を表示して非ゼロで終了する。シェルのglobが複数の古いZIPに展開された場合も失敗させる。
+- [x] Node標準モジュールと外部 `unzip` で実装する。外部コマンドは `spawnSync` 等へ引数配列で渡し、パスを連結したshell文字列として実行しない。
+- [x] 検証に使うリポジトリ位置を `import.meta.url` から求め、root `pom.xml` を読む。ZIPパスは呼び出し側の作業ディレクトリから解決する。
+- [x] 現POMのproject artifactId/versionと `external.*.repo/ref/skillName` を読み取る。必要項目がない、外部三つ組が不完全、名前が重複する場合はエラーにする。Maven/pluginのversionをproject versionとして採用しない。
+- [x] 内部スキルはroot `skills/` の直下ディレクトリで、その直下に `SKILL.md` があるものだけを列挙する。fixtureなどの入れ子のSKILL.mdを独立スキルとして数えない。
+- [x] `unzip -Z1` でエントリ一覧、`unzip -tqq` で破損を確認する。展開前に、ルートが `<artifactId>-<version>/` だけであること、絶対パスや `..` を含むパスがないことを確認する。
+- [x] ルートには仕様の5項目だけがあることを確認する。README/INSTALL/LICENSE/lockは実ファイルとして必須とする。各パス要素に `.DS_Store`、`node_modules`、`.git` があれば、空ディレクトリだけの場合もエラーにする。
+- [x] `fs.mkdtemp` と `os.tmpdir()` で作った専用一時ディレクトリに展開する。検査後は自分で作った一時ディレクトリだけを `finally` で片付ける。既存のtarget・ユーザー配備先を変更しない。
+- [x] ZIPの `skills/` 直下名が、内部スキル一覧とPOM指定の外部スキル一覧の和集合に完全一致することを確認する。欠落・余分なスキルは名前付きでエラー表示する。
+- [x] `EXTERNAL_SKILLS.lock` はタブ区切りrepo/ref/skillNameの三つ組として読む。POMの外部三つ組と順序に依存せず比較し、欠落・余分・重複・不一致をエラーにする。
+- [x] 各スキルの直下に `SKILL.md` と `index.json` があることを確認する。SKILLのfront matterのnameがディレクトリ名と一致することも確認する。
+- [x] indexの実形式は `{ generator, generation, basePath, files: [...] }` である。JSONをparseし、`files` の各 `path` がスキル内の実ファイルを参照していることを確認する。JSON全体を配列と仮定しない。`files` は全runtimeファイルを列挙するものではないため、未掲載のJAR/MJS/画像をエラーにしない。
+- [x] 成功時はZIP名・内部/外部/合計スキル数を表示し0で終了する。失敗時はどのパス・スキル・lock項目が原因か表示し非ゼロで終了する。
+
+### 6. Release workflowに確認を接続する
+
+対象：`.github/workflows/release-archive.yml`。
+
+- [x] `mvn clean package` の直後、Upload release assetより前に、次のstepを追加する。
+
+```sh
+node scripts/check-release-archive.mjs target/igapyon-agent-skills-*.zip
+```
+
+- [x] アップロード指定の `target/*.zip` を `target/igapyon-agent-skills-*.zip` に限定する。`fail_on_unmatched_files: true` を設定する。
+- [x] 現行のtagイベント、権限、Java設定、Actionの版は変更しない。Node/rsync/unzipが実行環境で利用できるか確認し、不足が実際に判明した場合にだけその依存の準備を追加する。
+- [x] 確認stepが失敗したらアップロードstepへ進まない通常の依存関係を維持する。
+
+### 7. 実装後の検証
+
+実際のHOME/.codex/skillsや外部サービスには書き込まない。検証先は専用一時ディレクトリとする。検証用に変更するZIPは生成された配布ZIPのコピーを使用する。
+
+- [x] `sh -n scripts/prepare-release-staging.sh` と `node --check scripts/check-release-archive.mjs` を実行する。
+- [x] リポジトリルートで次を実行する。外部取得にネットワークが必要でsandbox制限に失敗した場合は、環境の承認手順で同じ必要コマンドを再実行する。外部refを別版に置き換えて回避しない。
+
+```sh
+mvn clean package
+node scripts/check-release-archive.mjs target/igapyon-agent-skills-*.zip
+```
+
+- [x] 調査時点のPOMのままなら、生成ZIPは `target/igapyon-agent-skills-1.20261005.2.zip`、スキルは内部15＋外部10＝25件となる。実装時にユーザーが版・スキルを変更していた場合は、そのPOMとソース一覧を正本にする。
+- [x] 展開したZIPとrelease stagingのファイル内容が一致することを確認する。内部スキルの元ディレクトリ、外部checkout内のスキルとも、指定の除外ファイルと再生成indexを除いた配布対象の内容が欠落・改変されていないことを比較する。内容比較に `diff -qr -x .DS_Store -x node_modules -x .git -x index.json` を使ってよい。
+- [x] daybookの通知workflow、day-plan scripts、SCM runner、外部スキルのruntime・スキル内ライセンスが残っていることを確認する。ルートにビルド用scripts/libがないことと、スキル内部の同名ディレクトリがあることを区別する。
+- [x] ZIP確認CLIの異常検出を、以下の独立したケースで確認する。各ケースの終了コードと原因表示を記録する。
+
+| ケース | 作り方 | 期待結果 |
+| --- | --- | --- |
+| 正常 | 生成したZIPをそのまま渡す | 成功 |
+| 引数誤り | 引数なし、および同じZIPを2引数で渡す | 失敗 |
+| ZIP破損 | 一時ファイルに不正なZIPデータを入れて渡す | 失敗 |
+| 必須文書欠落 | ZIPのコピーから `<root>/INSTALL.md` を削除 | 失敗 |
+| スキル欠落 | ZIPのコピーから外部スキル1件のディレクトリ全体を削除 | 失敗 |
+| 不要ファイル混入 | 展開コピーに `skills/<name>/node_modules/probe.txt` を作り、同じルート名で再ZIP化 | 失敗 |
+| ビルド用ファイル混入 | 展開コピーのルートに `pom.xml` を加え、再ZIP化 | 失敗 |
+| lock不一致 | 展開コピーのlockのrefを1件だけ別値に変更して再ZIP化 | 失敗 |
+| index参照切れ | indexのfilesに存在しないpathを1件追加して再ZIP化 | 失敗 |
+
+- [x] ZIP削除編集には `zip -d`、展開コピーの再ZIP化には `zip -r` を使ってよい。すべて一時領域のコピーに対して行い、targetの配布ZIPと取得済みcheckoutは変更しない。
+- [x] 展開済みZIPだけをコピー元として、INSTALLの導入手順を一時的な導入先へ実行する。リポジトリの同期ヘルパーを代わりに使わない。新規導入後にスキルの内容が一致することを確認する。
+- [x] 同じ一時導入先の選択スキル内に余剰ファイルを作り、再同期で削除されることを確認する。別スキルのマーカーファイルは残り、選択したスキルだけが更新されることも確認する。
+- [x] INSTALLのdry-runについて、同期直後はmtimeのみを除いた出力が空になり、ファイルを意図的に変更すると内容差分が表示されることを確認する。
+- [x] `scripts/build-text-bundle-selection.sh` が参照するstaging内のmiku-text-bundle runtimeが保持されていることを確認する。この変更だけを理由に厳選bundle全体を再生成しない。
+- [x] `git diff --check` と `git status --short` を実行し、変更ファイルと差分を確認する。Mavenが再生成したsource側indexに差分がある場合は理由を確認し、無関係な生成差分を黙って混ぜたりユーザー変更を巻き戻したりしない。
+
+完了結果：`target/igapyon-agent-skills-1.20261005.2.zip` を生成。展開ルート直下は `skills/`、`README.md`、`INSTALL.md`、`LICENSE`、`EXTERNAL_SKILLS.lock` のみ。内部15・外部10の計25スキルを収録した。`mvn clean package`、正常系とCLI異常系（引数・パス、破損、必須ファイル・スキル欠落、禁止物・ビルド用ファイル混入、lock/index不一致、必須READMEのディレクトリ置換）、配布元との内容比較、一時 `CODEX_HOME` へのINSTALL・更新・差分確認を実施した。GitHub Actions自体の実行と独立Luna動作試験は行っていない。
+
+### 8. 完了記録と引き渡し
+
+- [x] 実際に終えた項目だけチェックする。検証未実行・失敗・環境不足は結果を明記し、成功扱いにしない。
+- [x] この節の状態を「実装済み」に更新し、生成ZIP名、ルートの収録項目、スキル数、実行した確認、未解決事項を短く記録する。
+- [x] 変更したファイルと、ZIPがスキル配布物に変わったこと、導入手順がrsyncに変わったことをユーザーに報告する。
+- [x] 成果物はローカルでレビュー可能な状態で渡す。実際の配備、commit/push、タグ・Release操作へは自動で進まない。
+
 ## igapyon-miku-daybook 予定開始日・予定終了日への移行（2026-10-05）
 
 状態：このリポジトリのスキル・同梱day-plan生成処理・利用者向け文書への実装を完了。リリース・ローカル配備・対象daybookの実データ移行は未実施。

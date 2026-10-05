@@ -3,12 +3,16 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":7511,"description":"Use for managing an igapyon daybook repository's activity, schedule, task, and day-plan records, or for generating and updating its bundled GitHub Actions notification workflow. Do not use for generic TODO lists, public diary writing, or unrelated Git o...","summary":"igapyon-miku-daybook"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":9008,"description":"Use for managing an igapyon daybook repository's activity, schedule, task, and day-plan records; explicitly requested GitHub Issue intake; or its bundled GitHub Actions notification workflow. Do not use for generic TODO lists, public diary writing, or u...","summary":"igapyon-miku-daybook"},
+  {"name":"README.md","path":"assets/daybook/node_modules/yaml/README.md","ext":"md","dir":"assets/daybook/node_modules/yaml","size":6266,"summary":"YAML <a href=\"https://www.npmjs.com/package/yaml\"><img align=\"right\" src=\"https://badge.fury.io/js/yaml.svg\" title=\"npm package\" /></a>"},
+  {"name":"package.json","path":"assets/daybook/node_modules/yaml/browser/package.json","ext":"json","dir":"assets/daybook/node_modules/yaml/browser","size":23},
+  {"name":"package.json","path":"assets/daybook/node_modules/yaml/package.json","ext":"json","dir":"assets/daybook/node_modules/yaml","size":3254},
   {"name":"package-lock.json","path":"assets/daybook/package-lock.json","ext":"json","dir":"assets/daybook","size":668},
   {"name":"package.json","path":"assets/daybook/package.json","ext":"json","dir":"assets/daybook","size":187},
+  {"name":"issue-import.md","path":"references/issue-import.md","ext":"md","dir":"references","size":17896,"summary":"Import GitHub Issues into daybook"},
   {"name":"notification.md","path":"references/notification.md","ext":"md","dir":"references","size":4684,"summary":"Daybook notification workflow"},
-  {"name":"operations.md","path":"references/operations.md","ext":"md","dir":"references","size":13442,"summary":"Daybook operations"},
-  {"name":"records.md","path":"references/records.md","ext":"md","dir":"references","size":8688,"summary":"Daybook record contract"},
-  {"name":"task-date-migration.md","path":"references/task-date-migration.md","ext":"md","dir":"references","size":5339,"summary":"Migrate task dates to a planned period"}
+  {"name":"operations.md","path":"references/operations.md","ext":"md","dir":"references","size":16411,"summary":"Daybook operations"},
+  {"name":"records.md","path":"references/records.md","ext":"md","dir":"references","size":9683,"summary":"Daybook record contract"},
+  {"name":"task-date-migration.md","path":"references/task-date-migration.md","ext":"md","dir":"references","size":5837,"summary":"Migrate task dates to a planned period"}
  ]
 }

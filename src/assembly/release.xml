@@ -13,10 +13,16 @@
       <directory>${project.build.directory}/release-staging</directory>
       <outputDirectory>/</outputDirectory>
       <includes>
-        <include>**</include>
+        <include>skills/**</include>
+        <include>README.md</include>
+        <include>INSTALL.md</include>
+        <include>LICENSE</include>
+        <include>EXTERNAL_SKILLS.lock</include>
       </includes>
       <excludes>
         <exclude>**/.DS_Store</exclude>
+        <exclude>**/node_modules/**</exclude>
+        <exclude>**/.git/**</exclude>
       </excludes>
     </fileSet>
   </fileSets>
