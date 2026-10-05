@@ -20,10 +20,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/pr-writing.md",
     "contract_test": "tests/github-writer-evidence.test.mjs",
-    "runner_sha256": "f0659fcdeed9b8f713b571899b75e66d539d6bf55743a196b2240774ba696d45",
+    "runner_sha256": "102d2fc1f30cb5343edd7791d986cbd606522336bc70ac2f62c9a18f719ebe7a",
     "normative_spec_sha256": "98eb5c4fb5111f6ebf2d025327fba31f4270c6d1c57468547642dc47d6097327",
     "contract_test_sha256": "72390b105a184dc9d2d770ab212304e606cf90c5f1fd0b3628d2f6b703aa33ad",
-    "contract_pair_sha256": "6b89bde96982295539e9fe7d9f91447736c9eb343d835a2f730eb8afd7480ab1"
+    "contract_pair_sha256": "d26065db9824d1733a6d9cc5f940341571968a654919df374c75b6bcfa481064"
   },
   {
     "id": "release.evidence",
@@ -42,10 +42,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/release-writing.md",
     "contract_test": "tests/github-writer-evidence.test.mjs",
-    "runner_sha256": "f0659fcdeed9b8f713b571899b75e66d539d6bf55743a196b2240774ba696d45",
+    "runner_sha256": "102d2fc1f30cb5343edd7791d986cbd606522336bc70ac2f62c9a18f719ebe7a",
     "normative_spec_sha256": "0169d894b046f35689e4d3de82b4ef86c3f045938ed586d34f123b0815e5e705",
     "contract_test_sha256": "72390b105a184dc9d2d770ab212304e606cf90c5f1fd0b3628d2f6b703aa33ad",
-    "contract_pair_sha256": "8764945c50f3f3e7b553e2f1e0db44f293d091b86dbfa0fcfbbc5b67413bf4cd"
+    "contract_pair_sha256": "f081a0b526e1cb5ac24890d4fa4bffc8a8be4214dbe810c8e5bd9ee1524c8e3d"
   },
   {
     "id": "about.evidence",
@@ -64,10 +64,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/about-writing.md",
     "contract_test": "tests/github-writer-evidence.test.mjs",
-    "runner_sha256": "f0659fcdeed9b8f713b571899b75e66d539d6bf55743a196b2240774ba696d45",
+    "runner_sha256": "102d2fc1f30cb5343edd7791d986cbd606522336bc70ac2f62c9a18f719ebe7a",
     "normative_spec_sha256": "489d4a9655ac98d6654c7cc4f42742c551eb5f5c9fc44e55f5a4c09b9f9bba43",
     "contract_test_sha256": "72390b105a184dc9d2d770ab212304e606cf90c5f1fd0b3628d2f6b703aa33ad",
-    "contract_pair_sha256": "626b0503db9935344af62b87d65cb4405b5605c8309bbcf5be006c21a628d8b9"
+    "contract_pair_sha256": "c803fa364f4eb19cf450854800becb131d2731e6cd0bba307cf22bed7827d86d"
   },
   {
     "id": "draft.validate-and-save",
@@ -86,10 +86,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/github-writing-rules.md",
     "contract_test": "tests/github-writer-evidence.test.mjs",
-    "runner_sha256": "ffb7b5711eb869f5e73b4cc41ae18c0063a501ba72a77e9fbb03ecfdbb6ebe67",
+    "runner_sha256": "9443e33bb7fc53c44aa012eb701f59733486505bfec6c1e578da89c53cf4365a",
     "normative_spec_sha256": "c3ef001357d05025891b3851c52d6c6af2f6660996d318b48e743b7222fe5696",
     "contract_test_sha256": "72390b105a184dc9d2d770ab212304e606cf90c5f1fd0b3628d2f6b703aa33ad",
-    "contract_pair_sha256": "8f213311c7be820742613686d146b6a05dcf1a5d2d48f073eee68c514b4f8864"
+    "contract_pair_sha256": "256c37ce89130e5055306ab842e02ec1ee7cb6f407995e7710440cbc3062e519"
   },
   {
     "id": "branch.status",
@@ -108,10 +108,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/branch-status.md",
     "contract_test": "tests/github-writer-platform.test.mjs",
-    "runner_sha256": "f0659fcdeed9b8f713b571899b75e66d539d6bf55743a196b2240774ba696d45",
+    "runner_sha256": "102d2fc1f30cb5343edd7791d986cbd606522336bc70ac2f62c9a18f719ebe7a",
     "normative_spec_sha256": "27f7f8f1f10a78746d7a1be5f7382070721d4f9988138cbbe3e2670476558c5f",
     "contract_test_sha256": "ee79d7366c0f87a0454f485967ecceeb78902399efff37df67704247d8423444",
-    "contract_pair_sha256": "bc118c7f2f0f157fb33259d485bbafe54ba533f595b0a5288b357a6d10e9e1b2"
+    "contract_pair_sha256": "84707ef69d1de48cce9509dc97b83a34c30ae0bf45809278530c8b6f5163a927"
   },
   {
     "id": "backup.preflight",
@@ -130,10 +130,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/backup-branch.md",
     "contract_test": "tests/github-writer-operation.test.mjs",
-    "runner_sha256": "ffb7b5711eb869f5e73b4cc41ae18c0063a501ba72a77e9fbb03ecfdbb6ebe67",
+    "runner_sha256": "9443e33bb7fc53c44aa012eb701f59733486505bfec6c1e578da89c53cf4365a",
     "normative_spec_sha256": "95000e072a749cd587be5256dedafe07d40f15bc3f74a01ec974cb4968ae0be3",
     "contract_test_sha256": "4bf274758d94e87b8d88fe417eabed4cbbddb6cd319882f32107f3011af49123",
-    "contract_pair_sha256": "53af2ab9986c00940bda4c92975ed94ec449be8f7e744e72db9bf571069dc557"
+    "contract_pair_sha256": "aa563ce2af538e11be7acbf4154a9fdd87f23cbc7c7cbe4e5e5f1c049785b38a"
   },
   {
     "id": "backup.apply",
@@ -152,10 +152,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/backup-branch.md",
     "contract_test": "tests/github-writer-operation.test.mjs",
-    "runner_sha256": "ffb7b5711eb869f5e73b4cc41ae18c0063a501ba72a77e9fbb03ecfdbb6ebe67",
+    "runner_sha256": "9443e33bb7fc53c44aa012eb701f59733486505bfec6c1e578da89c53cf4365a",
     "normative_spec_sha256": "95000e072a749cd587be5256dedafe07d40f15bc3f74a01ec974cb4968ae0be3",
     "contract_test_sha256": "4bf274758d94e87b8d88fe417eabed4cbbddb6cd319882f32107f3011af49123",
-    "contract_pair_sha256": "fb288d9135a0b330d554cef2f573c5bc7a5811579c9ad03fd26c341b6edbe4e7"
+    "contract_pair_sha256": "7ec9e97ae7558b9fc0733dcf335deb3488a4035fadf62a13eea0c3d3cea9358f"
   },
   {
     "id": "pr.recommit.preflight",
@@ -174,10 +174,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/pr-soft-reset-recommit.md",
     "contract_test": "tests/github-writer-operation.test.mjs",
-    "runner_sha256": "ffb7b5711eb869f5e73b4cc41ae18c0063a501ba72a77e9fbb03ecfdbb6ebe67",
+    "runner_sha256": "9443e33bb7fc53c44aa012eb701f59733486505bfec6c1e578da89c53cf4365a",
     "normative_spec_sha256": "4baf129f38df33643863fc7ae6f2b3ef857ff4ecbdd169c1c2cb6555d31aa67c",
     "contract_test_sha256": "4bf274758d94e87b8d88fe417eabed4cbbddb6cd319882f32107f3011af49123",
-    "contract_pair_sha256": "3af890530e4a10330b89bae5884f76de3f7f0f0e4dc4313f574b476a2ad81cc9"
+    "contract_pair_sha256": "426f781cd47267d8468151ea8278f016cf7ac96038bbc1155b3011467babf53b"
   },
   {
     "id": "pr.recommit.apply",
@@ -196,10 +196,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/pr-soft-reset-recommit.md",
     "contract_test": "tests/github-writer-operation.test.mjs",
-    "runner_sha256": "ffb7b5711eb869f5e73b4cc41ae18c0063a501ba72a77e9fbb03ecfdbb6ebe67",
+    "runner_sha256": "9443e33bb7fc53c44aa012eb701f59733486505bfec6c1e578da89c53cf4365a",
     "normative_spec_sha256": "4baf129f38df33643863fc7ae6f2b3ef857ff4ecbdd169c1c2cb6555d31aa67c",
     "contract_test_sha256": "4bf274758d94e87b8d88fe417eabed4cbbddb6cd319882f32107f3011af49123",
-    "contract_pair_sha256": "813ed3013cf8e312b9655c7f14aaa1d1badaa153284cae5bc9d933b1e1697d73"
+    "contract_pair_sha256": "c1807962663322f443d493af4234489944026ce866f1942c3bc88b4deadee13f"
   },
   {
     "id": "approval.handoff.list",
@@ -217,10 +217,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/deterministic-runner.md",
     "contract_test": "tests/github-writer-handoff.test.mjs",
-    "runner_sha256": "4d3d85d5cf9b22bf95dbf633d76736513587fae2b32e3446882f03045823e94b",
+    "runner_sha256": "8c863df96117e451da44e79fcff071923e5360f079579c73b7618af7e56c3541",
     "normative_spec_sha256": "1215787eac5b6f0250c03c73943273cbdae0dfa601e893ca6ed9aa1bd67760c8",
     "contract_test_sha256": "8474adc1cbf21282557a358ee05a7f57cd76443bf498e832538b6334f5442f33",
-    "contract_pair_sha256": "60823ce5ce0f4e7cb358267af20748995f762e521680138d50b3350a379884d4"
+    "contract_pair_sha256": "108afcff8b201e63f5070b84341a135f422c8a4dfa4d1b5b8ecac1a1465226b8"
   },
   {
     "id": "approval.handoff.apply",
@@ -238,10 +238,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/deterministic-runner.md",
     "contract_test": "tests/github-writer-handoff.test.mjs",
-    "runner_sha256": "4d3d85d5cf9b22bf95dbf633d76736513587fae2b32e3446882f03045823e94b",
+    "runner_sha256": "8c863df96117e451da44e79fcff071923e5360f079579c73b7618af7e56c3541",
     "normative_spec_sha256": "1215787eac5b6f0250c03c73943273cbdae0dfa601e893ca6ed9aa1bd67760c8",
     "contract_test_sha256": "8474adc1cbf21282557a358ee05a7f57cd76443bf498e832538b6334f5442f33",
-    "contract_pair_sha256": "129f033e4090702e82cac1e5c58a02581cb256d7fcc42f176e3d3d7d0886cf8f"
+    "contract_pair_sha256": "3fd358dc93c0292346a58f91a8136381093634f6ce832d4c44d21bb83929010e"
   },
   {
     "id": "approval.handoff.dismiss",
@@ -259,10 +259,10 @@ export const WORKFLOW_CONTRACTS = Object.freeze([
     ],
     "normative_spec": "references/deterministic-runner.md",
     "contract_test": "tests/github-writer-handoff.test.mjs",
-    "runner_sha256": "4d3d85d5cf9b22bf95dbf633d76736513587fae2b32e3446882f03045823e94b",
+    "runner_sha256": "8c863df96117e451da44e79fcff071923e5360f079579c73b7618af7e56c3541",
     "normative_spec_sha256": "1215787eac5b6f0250c03c73943273cbdae0dfa601e893ca6ed9aa1bd67760c8",
     "contract_test_sha256": "8474adc1cbf21282557a358ee05a7f57cd76443bf498e832538b6334f5442f33",
-    "contract_pair_sha256": "5c84f2c7f9ac442d95a3b9e5d68ae2567108b11ecdb1f9cac3c5ceacb917afa0"
+    "contract_pair_sha256": "78c2b520b77959faad441f26d4b084c2a12909ebb84e48df0c11e5f4425077b5"
   }
 ]);
 
