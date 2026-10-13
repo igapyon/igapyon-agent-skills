@@ -72,6 +72,3 @@ while [ "$#" -gt 0 ]; do
     "$STAGING_DIR/skills/$EXTERNAL_SKILL_NAME"
   printf '%s\n' "$LOCK_ENTRY" >> "$STAGING_EXTERNAL_LOCK"
 done
-
-java -jar "$BASE_DIR/lib/miku-indexgen-1.6.2.jar" \
-  --input-parent-directory "$STAGING_DIR/skills"

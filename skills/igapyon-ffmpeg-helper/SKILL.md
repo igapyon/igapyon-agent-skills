@@ -68,9 +68,8 @@ Use these process files as reusable command building blocks:
 - [references/process/still-image-youtube-video.md](references/process/still-image-youtube-video.md)
 - [references/process/youtube-manual-upload.md](references/process/youtube-manual-upload.md)
 
-Use `index.json` as the discovery index when you need to confirm available
-reference files, but treat `SKILL.md` and files under `references/` as the
-source of truth.
+The links above are the task-specific entry points. If another reference is
+needed, inspect or search the relevant `references/` directory.
 
 For the reasoning behind the current YouTube output defaults, see
 [references/decisions/youtube-output-policy.md](references/decisions/youtube-output-policy.md).

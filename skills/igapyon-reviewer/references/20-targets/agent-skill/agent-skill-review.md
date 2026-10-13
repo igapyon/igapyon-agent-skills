@@ -131,30 +131,28 @@ unverified assumptions about APIs, file paths, commands, dependencies,
 configuration, environment, versions, security requirements, or acceptance
 criteria.
 
-## `index.json` Checks
+## Index Policy Checks
 
-For igapyon-managed Agent Skills, `index.json` is required.
+An Agent Skill does not need a generated root `index.json` by default. First
+check the target repository's declared policy and actual consumers. A missing
+index is acceptable when the target has not adopted one.
 
-Check whether:
+When the target has adopted an index, check whether:
 
-- the skill directory contains `index.json`
-- `index.json` is generated from current files, normally by `miku-indexgen`
-- `miku-indexgen` is configured to scan the intended skill files and does not
-  miss important `references/`, templates, assets, helper files, or metadata
-- `SKILL.md` explicitly says to use `index.json` as a discovery index when
-  confirming bundled reference files, assets, or helper files
-- `SKILL.md` treats itself and files under `references/` as the source of truth
-- newly added, removed, or renamed references are reflected in `index.json`
-- entries contain meaningful discovery information, such as useful `name`,
-  `path`, `ext`, directory, size, and a summary that helps agents decide whether
-  to open the file
-- Markdown files have clear titles or first headings so generated summaries are
-  meaningful rather than generic or misleading
-- `index.json` does not contain local absolute paths, placeholders, or
-  unrelated files
-- `index.json` is not merely present; it is useful for choosing the next
-  reference without opening every file
-- installable bundles include `index.json`
+- the declared index exists and is generated from current files, normally by
+  `miku-indexgen`
+- the generator scans the intended skill files and does not miss required
+  references, templates, assets, helper files, or metadata
+- `SKILL.md` identifies the index's actual use and treats source files as the
+  authority for rules and facts
+- entries contain useful discovery metadata and help the declared consumer
+- Markdown titles and headings make any generated summaries accurate
+- the index has no local absolute paths, placeholders, or unrelated files
+- the package includes the index required by its declared policy
+
+When the target has not adopted an index, check whether direct links, a useful
+topic guide, or scoped file search makes the required materials reachable.
+Do not recommend an index solely because a skill contains multiple references.
 
 ## Reference and Asset Checks
 
@@ -163,9 +161,8 @@ Check whether:
 - long rules and examples live under `references/`
 - reference file names are specific and stable
 - `SKILL.md` links directly to important references
-- reference files under `references/` are reachable from `SKILL.md` directly,
-  through `index.json`, or through an intermediate index Markdown file such as
-  `references/INDEX.md`
+- reference files under `references/` are reachable through task-specific
+  links, a useful topic guide, scoped search, or an adopted index
 - deeply nested references are avoided unless the structure is justified
 - reusable templates live under `references/templates/` when concrete examples,
   output skeletons, prompt fragments, checklist formats, article sections,
@@ -191,10 +188,10 @@ For Agent Skills that do not bundle an MCP server, CLI runtime, Java jar, Node
 skills: their main value is bundled instructions, references, examples,
 templates, domain notes, review criteria, or writing guidance.
 
-For reference-only skills, `index.json` is still useful as a generated file
-inventory, but it may not be enough when the skill contains many references.
-When there are many reference files, nested folders, or multiple subdomains,
-check whether there is an intermediate summary or navigation Markdown file.
+For reference-only skills, judge the route from actual work patterns. A
+generated inventory can be useful when it contributes meaningful metadata, but
+file count alone does not require one. When topic selection is difficult,
+check whether a short explanation-based navigation file would help.
 
 Use [read-only-skill-content-format-review.md](./read-only-skill-content-format-review.md)
 when the main question is whether the skill's bundled knowledge should be stored
@@ -210,7 +207,7 @@ Common names for this intermediate file include:
 
 Check whether the intermediate summary:
 
-- is reachable from `SKILL.md` directly or through `index.json`
+- is reachable from `SKILL.md` directly or through another documented route
 - explains the major reference groups and when to read each one
 - summarizes enough information that an agent can choose the right detailed
   reference without loading every file
@@ -222,11 +219,11 @@ Flag issues when:
 
 - a reference-only skill has many references but no human-readable overview or
   summary Markdown
-- `index.json` exists but only lists files and does not help agents decide what
-  to read next
+- a generated inventory duplicates direct routes without helping agents decide
+  what to read next
 - references are organized into several subdomains but no map explains the
   relationship
-- the overview is stale compared with `index.json` or the actual references
+- the overview is stale compared with the actual references
 
 Do not require an intermediate summary for a very small skill with only a few
 obvious reference files. Require it when reference selection itself becomes a
@@ -241,7 +238,7 @@ Actively compare against sibling sources when they can clarify:
 
 - activation wording
 - `SKILL.md` lean entrypoint shape
-- `index.json` handling
+- index policy and handling when an index is adopted
 - reference organization
 - template placement
 - CLI runtime discovery
@@ -309,8 +306,8 @@ Check whether:
 - every meaningful `references/**/*.md`, `references/**/*.json`, template, or
   helper reference is reachable from `SKILL.md`
 - reachability may be direct links from `SKILL.md`
-- reachability may be through `index.json` when `SKILL.md` tells agents to use
-  it as a discovery index
+- reachability may be through an adopted index when `SKILL.md` explains its
+  task-relevant use
 - reachability may be through an intermediate Markdown index such as
   `references/INDEX.md`, if `SKILL.md` links to that index
 - reference indexes accurately describe when to read each file
@@ -319,10 +316,9 @@ Check whether:
 
 Flag issues when:
 
-- files under `references/` are not discoverable from `SKILL.md`,
-  `index.json`, or a linked intermediate index
+- files under `references/` are not discoverable through task links, a useful
+  topic guide, scoped search, or an adopted index
 - `references/INDEX.md` exists but `SKILL.md` does not point to it
-- `index.json` exists but `SKILL.md` does not say to use it for discovery
 - reference files are bundled but no workflow explains why they exist
 - stale reference files remain in the bundle and may confuse agents
 
@@ -347,7 +343,7 @@ Flag issues when:
 - a skill repeatedly describes a format in prose where a template would be more
   stable
 - copyable examples contain hidden assumptions or unclear placeholders
-- templates exist but are not discoverable from `SKILL.md`, `index.json`, or a
+- templates exist but are not discoverable from `SKILL.md` or a
   directly linked reference
 - generated output could accidentally retain placeholder text
 
@@ -464,7 +460,7 @@ When packaging or release is in scope, check:
 
 - bundle includes `SKILL.md`
 - bundle includes required `references/`
-- bundle includes `index.json`
+- bundle includes `index.json` when the target has adopted one
 - bundle includes required assets, helpers, and runtimes
 - bundle excludes development-only files, tests, caches, `.DS_Store`,
   `node_modules`, and `workplace/`
@@ -478,15 +474,15 @@ Use these severity levels:
 - High: skill activation is too broad and likely to trigger unexpectedly.
 - High: required runtime, reference, asset, or `SKILL.md` file is missing from
   an installable skill bundle.
-- Medium: `index.json` is missing, stale, or not referenced from `SKILL.md`.
+- Medium: an adopted `index.json` is missing, stale, or not validated.
 - Medium: `SKILL.md` is too large or contains detailed rules that should live in
   `references/`.
-- Medium: important references exist but are not discoverable from `SKILL.md`
-  or `index.json`.
+- Medium: important references exist but are not discoverable from `SKILL.md`,
+  a useful topic guide, or scoped search.
 - Medium: relevant sibling skill or product convention was not checked before
   introducing a divergent Agent Skill structure.
 - Medium: `references/` contains orphaned or unreachable files not discoverable
-  from `SKILL.md`, `index.json`, or a linked intermediate index.
+  through task links, a useful topic guide, or scoped search.
 - Medium: skill uses `../...` or other cross-skill relative paths to read
   another skill's internal files.
 - Medium: reusable examples or output shapes should be templates under
@@ -516,7 +512,7 @@ When material, add only these lens-specific assessment notes:
 ```text
 Activation policy: explicit / broad / unclear
 SKILL.md shape: lean / too large / unclear
-index.json: current / stale / missing / not checked
+index.json: adopted and current / adopted but stale or missing / not adopted / not checked
 Bundle readiness: ready / partial / risky / not checked
 ```
 

@@ -54,8 +54,8 @@ Bundled starter templates are available under `assets/agent-skills/`:
 - `tests/release-bundle-contents.test.mjs`
   - Verifies required skill files are included and development-only files are
     excluded from the release zip.
-  - Verifies `skills/<skill-name>/index.json` is included as the mandatory
-    generated discovery artifact.
+  - Verifies files that are required by the skill's declared bundle policy;
+    include an adopted index only when that skill uses one.
 - `tests/isolated-bundle-smoke.test.mjs`
   - Copies the generated bundle to a temporary directory and verifies the
     installed bundle shape.
@@ -80,9 +80,8 @@ Bundled starter templates are available under `assets/agent-skills/`:
     skill directory. The template does not use the literal `SKILL.md` filename
     inside this repository so Codex skill discovery will not load it as a real
     installed skill.
-  - After copying the skeleton, generate `skills/<skill-name>/index.json`
-    with `miku-indexgen`; do not maintain a fixed handwritten template for
-    this generated file.
+  - Decide whether a generated inventory has a concrete consumer and selection
+    value. Generate it with `miku-indexgen` only when the skill adopts one.
 
 After copying these templates, place `templates/skill/` at
 `skills/<skill-name>/`, then replace `__REPO_NAME__`, `__SKILL_NAME__`,
@@ -128,9 +127,9 @@ Action majors are available.
 1. Read [activation-policy.md](activation-policy.md) for strict activation behavior.
 2. Read [architecture-rules.md](architecture-rules.md).
 3. Read the Agent Skills basic document.
-4. For each existing skill, read `skills/<skill-name>/index.json` first when it exists, then use it to choose the specific bundled reference files to open.
-5. Inspect the upstream product README, runtime artifacts, CLI/API contracts, existing skill files, references, assets, tests, README, docs, TODO, and generated indexes.
-6. For new creation, inspect existing `-skills` sister application checkouts under `workplace/` for the same maturity pattern, especially `SKILL.md`, `index.json`, `runtime/`, `lib/`, `scripts/`, `tests/`, `.github/workflows/`, `references/runtime/`, and bundle output. If no checkout is available, write down that absence and the closest public or documented reference before designing files.
+4. Follow task-specific links from each `SKILL.md`. For an unknown reference, inspect or search the relevant directory; read an adopted index only when it helps the current task.
+5. Inspect the upstream product README, runtime artifacts, CLI/API contracts, existing skill files, references, assets, tests, README, docs, TODO, and generated outputs declared by the repository.
+6. For new creation, inspect existing `-skills` sister application checkouts under `workplace/` for the same maturity pattern, especially `SKILL.md`, `runtime/`, `lib/`, `scripts/`, `tests/`, `.github/workflows/`, `references/runtime/`, and bundle output. Consider an index only where that sister skill has an identified use. If no checkout is available, write down that absence and the closest public or documented reference before designing files.
 7. For new creation, before scaffolding or initial file design, summarize which sister project was used, which maturity pattern it represents, and which concrete repository-shape decisions were adopted or rejected.
 
 ## Checklist
@@ -146,18 +145,18 @@ Action majors are available.
 9. Decide the implementation maturity pattern: handoff-only, CLI-backed, or CLI plus MCP-backed.
 10. Fix repository/package/release zip naming separately from the installed Agent Skill name, `SKILL.md` frontmatter `name`, archive directory, and runtime directory.
 11. For new `-skills` repositories, create `build:bundle` and `build:bundle:zip` from the initial skeleton stage.
-12. Treat `skills/<skill-name>/index.json` as a mandatory generated discovery artifact by default for miku-soft Agent Skills.
+12. Decide whether this skill should adopt a generated `index.json`; record its consumer, selection benefit, producer, update trigger, and validation. Do not require it by default.
 13. Put required skill helpers under `skills/<skill-name>/lib/`, not root-level `lib/`, unless the repository explicitly owns a separate root tool.
 14. Describe runtime artifact lookup, artifact roles, diagnostics, and handoff points when relevant.
 15. Keep backend policy strict: `*-only` policies must not silently fallback, and `handoff-only` must not execute runtime operations.
-16. Verify bundle contents include `SKILL.md`, `index.json`, required references, required skill files, and runtime artifacts while excluding development-only files.
-17. Add structure or validation tests that fail when `skills/<skill-name>/index.json` is missing.
+16. Verify bundle contents against the required references, skill files, runtime artifacts, and any adopted generated index while excluding development-only files.
+17. Test the declared index policy: an adopted index must be present and current; a skill without one must still pass structure and bundle checks.
 18. Add isolated bundle smoke when the skill depends on runtime artifacts.
 19. Treat the sister-reference summary as required implementation context for new creation work.
 20. Use sister projects as shape references only; do not copy `workplace/` contents into the target repository wholesale.
 21. Add the local GitHub Actions release asset workflow from the starter template by default, or record the explicit reason for omitting it.
 22. Keep `engines.node`, the Node.js 20/24 CI matrix, the Node.js 24 release build, and Node 24-aware Action majors as separate but synchronized contracts.
-23. After adding or changing `SKILL.md`, references, assets, or other bundled skill files, regenerate `skills/<skill-name>/index.json` with `miku-indexgen --refresh-index skills/<skill-name>/index.json` or the repository's documented equivalent, then update validation output.
+23. After bundled files change, regenerate an adopted `skills/<skill-name>/index.json` with `miku-indexgen --refresh-index skills/<skill-name>/index.json` or the repository's documented equivalent. Do not create or refresh an index for a skill that has not adopted one.
 
 ## Skill-only Product Convention
 
@@ -184,8 +183,8 @@ package already provides that future surface.
 ### Repository and Bundle Shape
 
 - Keep the product source of truth in `skills/<skill-name>/`, including
-  `SKILL.md`, references, deterministic helpers when required, and generated
-  `index.json`.
+  `SKILL.md`, references, and deterministic helpers when required. Include a
+  generated `index.json` only when the skill adopts one.
 - Keep `workplace/` and local Codex deployment copies out of Git. Provide a
   documented, named synchronization command for the user deployment target.
 - Use `package.json` only when it contributes reproducible test, index, or
@@ -195,8 +194,9 @@ package already provides that future surface.
   asset when no runtime exists. State `Skill-only` explicitly in the README or
   product documentation so this omission is intentional.
 - A release ZIP is optional. When distributed, it must contain the installable
-  `skills/<skill-name>/` tree and its generated `index.json`, not a user-local
-  `.codex` directory or development `workplace/` data.
+  `skills/<skill-name>/` tree and its required files, including an adopted
+  `index.json` when applicable, not a user-local `.codex` directory or
+  development `workplace/` data.
 
 ### Versioning, Verification, and Maintenance
 
@@ -204,8 +204,8 @@ package already provides that future surface.
   any coupled Skill version source. Keep those sources aligned before commit.
 - Test deterministic helper behavior and the structural bundle shape. A
   runtime smoke test is not required for a Skill-only product.
-- Regenerate every affected `index.json` after changing bundled content, then
-  run the repository's documented index and version-alignment checks.
+- Regenerate affected adopted indexes after changing their inputs, then run
+  the repository's documented generated-file and version-alignment checks.
 - Preserve the same Issue, PR, Release, and human-approval boundaries as
   other miku-soft products. A local user synchronization is deployment support,
   not GitHub publication, tag creation, or Release publication.
@@ -228,7 +228,7 @@ fall back to another runtime.
 ### Creation and Maintenance Checklist
 
 1. Declare the product as Skill-only and identify the installed skill name.
-2. Create or verify `SKILL.md`, detailed references, and generated `index.json`.
+2. Create or verify `SKILL.md`, detailed references, and any adopted generated index.
 3. Document the supported Codex deployment/synchronization command and keep
    that destination outside repository tracking.
 4. Add focused tests for bundled helpers and structural checks for required

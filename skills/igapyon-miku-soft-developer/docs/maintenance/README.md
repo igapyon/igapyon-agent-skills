@@ -81,7 +81,7 @@ When a proposal is approved:
 
 1. update the owning file under references/ or assets/;
 2. retain compatibility stubs when an old public path has consumers;
-3. regenerate index.json;
+3. regenerate an index only when the target skill has adopted one;
 4. run focused documentation, starter, and workflow verification; and
 5. update the dated audit status and repository-root TODO/HANDOFF records.
 

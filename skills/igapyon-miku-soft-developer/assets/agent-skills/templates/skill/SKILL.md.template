@@ -22,9 +22,9 @@ using this skill would materially change the result.
 
 ## Required First Checks
 
-1. Read [index.json](index.json) first as the generated discovery index for
-   bundled reference files.
-2. Open only the specific references needed for the current request.
+1. Follow the task-specific links in this `SKILL.md`.
+2. When the needed reference is unknown, inspect or search the relevant
+   directory; consult an adopted index only when it helps select the file.
 
 ## Core Rules
 
@@ -32,7 +32,7 @@ using this skill would materially change the result.
 - prefer declared runtime artifacts under `runtime/` when the workflow is CLI-backed
 - keep required helper code under `lib/`
 - keep detailed workflow material under `references/`
-- treat `index.json` as generated discovery metadata, not as the source of truth
+- adopt `index.json` only when a concrete consumer and selection benefit justify it
 - preserve runtime diagnostics and do not hide upstream limitations
 - do not duplicate upstream product logic in this skill layer
 
@@ -40,5 +40,4 @@ using this skill would materially change the result.
 
 Read these only when needed:
 
-- [index.json](index.json) for generated bundled-file discovery
 - [references/INDEX.md](references/INDEX.md) for workflow, runtime, and example references

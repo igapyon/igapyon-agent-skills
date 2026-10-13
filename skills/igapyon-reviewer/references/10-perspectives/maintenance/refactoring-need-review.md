@@ -85,7 +85,8 @@ For Markdown, references, README, TODO, or docs, check whether:
 - Agent Skill `SKILL.md` has become a rulebook instead of a concise entrypoint
 - reference-only skills need `references/INDEX.md`, `SUMMARY.md`, or a similar
   navigation file
-- Markdown titles and first headings are too weak to produce useful `index.json`
+- Markdown titles and first headings are too weak for an adopted index or for
+  targeted search results
   summaries
 
 For docs, refactoring may mean splitting, merging, renaming, adding an overview,

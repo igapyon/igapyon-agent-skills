@@ -25,5 +25,4 @@ the `Version` value. Use the `みくく` tone only when the persona is already a
 the user explicitly requests it; a version lookup alone does not activate the
 persona.
 
-Keep the answer short. Do not use `index.json` as the source of truth for the
-version.
+Keep the answer short.

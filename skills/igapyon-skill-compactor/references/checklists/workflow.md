@@ -33,7 +33,7 @@ For when to apply this checklist, use [checklist-timing.md](checklist-timing.md)
 
 ## System Inventory
 
-- [ ] Follow the search and reading ladder: grep/rg-friendly text, generated `index.json`, `distilled/`, then full references or original sources.
+- [ ] Follow task links first; use scoped listing/search for unknown references, then distilled material and full sources as needed.
 - [ ] List Agent Skills involved.
 - [ ] List prompts, templates, examples, and repeated instructions.
 - [ ] Identify near-duplicate paragraphs, warnings, examples, output formats, and checklist timing rules.
@@ -51,7 +51,7 @@ For when to apply this checklist, use [checklist-timing.md](checklist-timing.md)
 - [ ] Check whether stable formats or examples should move to `templates/` or `examples/`.
 - [ ] List CLI commands, scripts, tools, MCP servers, and external services.
 - [ ] Check whether scripts, CLI, MCP, or tool calls return more data than the agent needs.
-- [ ] Use generated `index.json` files when available to choose files before reading them in full.
+- [ ] Use an adopted index only when its metadata helps select among files for the current task.
 - [ ] Check whether file names, headings, front matter, and summaries use stable terms that are easy to find with `rg`.
 - [ ] Check whether file names express topic, purpose, and use case clearly enough to support selection from file lists or generated indexes.
 - [ ] When files have an intended order, use zero-padded order markers such as `001-` or `topic-001-purpose.md` while keeping meaningful routing words.
@@ -61,7 +61,7 @@ For when to apply this checklist, use [checklist-timing.md](checklist-timing.md)
 - [ ] Check whether a concise project/repository README would reduce repeated discovery work.
 - [ ] Keep README as an entry map and move detailed explanations to `docs/`.
 - [ ] Check `distilled/` before reading large original source materials.
-- [ ] Check whether Markdown front matter would improve generated `index.json` routing.
+- [ ] Check whether Markdown front matter serves an adopted index or another documented metadata use.
 - [ ] Use `references/agent-skill/frontmatter-templates.md` when creating front matter for references or distilled files.
 - [ ] Check whether representative prompt tests should live under top-level `tests/` instead of `SKILL.md`, `references/`, or `examples/`.
 - [ ] Before risky prompt or Agent Skill refactoring, create or update compact representative prompt tests.
@@ -91,10 +91,10 @@ For when to apply this checklist, use [checklist-timing.md](checklist-timing.md)
 - [ ] Ask the human for the distillation viewpoint when it is not obvious.
 - [ ] Define how distilled files are refreshed when source materials or decisions change.
 - [ ] Move deterministic repeated operations to scripts.
-- [ ] Generate or refresh directory `index.json` with `miku-indexgen` when file discovery itself is repeated or costly.
-- [ ] Prefer generated index formats where each file entry is grep/rg-friendly, ideally one file per line; use `miku-indexgen` `index.json` as the nearby example.
+- [ ] Adopt a generated index only when representative tasks show it helps selection enough to justify its maintenance.
+- [ ] When an index is adopted, make entries useful to its declared consumer and regenerate them through the documented producer.
 - [ ] For true record lists, consider JSONL instead of JSON arrays to support one-record-per-line search and partial reading.
-- [ ] Add concise `miku-indexgen`-friendly Markdown front matter when it helps file selection.
+- [ ] Add concise Markdown front matter when it helps an adopted index or another documented consumer.
 - [ ] Use CLI/tools for search, extraction, build, test, aggregation, and log filtering.
 - [ ] Use MCP for external services, shared data, repository state, or repeatable integration.
 - [ ] When tool results are large, filter before accepting them into context whenever the workflow allows it.

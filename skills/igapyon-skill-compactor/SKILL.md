@@ -90,11 +90,13 @@ When a condition below matches, read the named reference before deciding or
 answering. Resolve every relative reference against the directory containing
 this loaded `SKILL.md`, never against the target workspace or current working
 directory. Do not substitute memory or the core loop for that required read.
-Use a known direct route without reading `index.json`. Use
-[index.json](index.json) only to discover an unknown Markdown or JSON resource;
-it is not a complete Skill file inventory or a task-to-resource router. Reach
-the runner and case files through `tests/INDEX.md`, and reach agent metadata
-directly through `agents/openai.yaml` when maintaining integration metadata.
+Follow the named direct routes for known tasks. When a needed resource is
+unknown, inspect or search the relevant directory. Consult an index only when
+the target declares one and its metadata helps with the current task; do not
+assume that every skill has an index or create one solely because there are
+multiple references. Reach runner and case files through `tests/INDEX.md`, and
+reach agent metadata directly through `agents/openai.yaml` when maintaining
+integration metadata.
 
 - [references/agent-skill/compaction-workflow.md](references/agent-skill/compaction-workflow.md):
   read for substantial edits, architecture, splitting, toolization, MCP, or

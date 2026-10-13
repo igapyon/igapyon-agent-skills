@@ -57,8 +57,9 @@ During review mode:
 ## Reference Navigation
 
 Use [references/INDEX.md](references/INDEX.md) as the primary navigation map.
-Use [index.json](index.json) as the generated discovery index when confirming
-which bundled reference files are available.
+When another reference is needed, inspect or search its directory. For a review
+target, check its declared index policy; an index is optional unless that target
+has adopted one.
 
 Treat `SKILL.md`, [references/INDEX.md](references/INDEX.md), and files under
 `references/` as the source of truth.

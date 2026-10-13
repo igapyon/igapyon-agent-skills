@@ -136,7 +136,7 @@ Qiita 記事を新規作成・更新する場合は、`skills/igapyon-qiita-writ
 - `references/mikuproject/`
 - `references/mikuscore/`
 
-索引が必要なときは `index.json` を使って、関連しそうな記事を探します。
+記事候補は対象directoryのファイル名・本文検索で探します。複数の記事群を見渡す際は、暫定保持中の[index.json](index.json)のpath・directory・title（ある場合）・summaryも必要に応じて利用できます。summaryは先頭見出しなどから生成した短い情報で、記事内容の要約とは限りません。保持価値の比較は未完了なので、選択した記事の原文で内容を確認します。
 
 CLI リファレンス記事を書く場合は、次の pattern を先に参照します。
 

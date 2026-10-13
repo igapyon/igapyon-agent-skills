@@ -64,7 +64,7 @@ Use these mode-specific references:
 - [references/backup-branch.md](references/backup-branch.md) for creating a local backup branch at the current `HEAD`
 - [references/branch-status.md](references/branch-status.md) for current branch status reporting before GitHub writing work
 
-Use `index.json` as the discovery index when you need to confirm the available bundled reference files, but treat `SKILL.md` and files under `references/` as the source of truth.
+Use the task-specific links above. If another reference is needed, inspect or search `references/`; treat `SKILL.md` and the reference files as the source of truth.
 
 Keep this `SKILL.md` lean. Put detailed commands, output shapes, and mode-specific rules under `references/`.
 

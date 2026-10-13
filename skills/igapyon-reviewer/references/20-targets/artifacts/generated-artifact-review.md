@@ -22,8 +22,8 @@ Check whether:
 - generated files are distinguishable from source files
 - README, CONTRIBUTING, or architecture docs explain which files are generated
 - generation commands are documented and still work
-- generated indexes such as `index.json` are regenerated when references,
-  skills, assets, or docs change
+- adopted generated indexes such as `index.json` are regenerated when their
+  indexed inputs change
 - single-file HTML, bundled `.mjs`, jars, zips, and release assets are built
   from current source
 - generated artifacts do not contain placeholders, local absolute paths,
@@ -52,15 +52,14 @@ For igapyon-managed Agent Skills, use
 [agent-skill-review.md](../agent-skill/agent-skill-review.md) for the full Agent Skill review.
 In this generated-artifact review, check only the generated-file aspect:
 
-- `index.json` was regenerated after adding, removing, or renaming references,
-  assets, helper files, or other bundled skill files
-- `miku-indexgen` or equivalent index generation is configured to scan the
-  intended locations and file types
+- an adopted `index.json` was regenerated after changing its declared inputs
+- index generation is configured only for the intended, adopted use case
 - generated `index.json` does not contain local paths, placeholders, stale
   entries, or unrelated files
 - generated `index.json` contains meaningful discovery information, not only a
   formally valid but low-signal file list
-- generated `index.json` is included when the skill is bundled or installed
+- an adopted generated `index.json` is included when the skill is bundled or
+  installed
 
 ## Commit and Release Checks
 
@@ -83,10 +82,8 @@ Use these severity levels:
   source.
 - High: generated artifact includes secrets, local paths, private files, or
   unintended workspace contents.
-- Medium: source changed but required generated files or indexes were not
-  regenerated.
-- Medium: Agent Skill `index.json` is stale after reference, asset, or helper
-  file changes.
+- Medium: source changed but required generated files were not regenerated.
+- Medium: an adopted Agent Skill `index.json` is stale after its inputs change.
 - Medium: generated files are committed without clear source-of-truth or
   regeneration rules.
 - Medium: release staging can pick up stale artifacts from previous builds.

@@ -12,11 +12,10 @@
 - skill の具体ルール、例、長めの手順は `references/` 配下に置く
 - Note 記事 Markdown は、姉妹リポジトリ `../mikuku-articles/` を正本として管理する
 - Qiita 記事 Markdown は、`skills/igapyon-qiita-writer/references/` を正本として管理する
-- skill を新規作成・更新した後は、`SKILL.md` が必要な `references/` を案内していること、必要に応じて `index.json` を参照することを確認する
+- skill の参照資料の探索方針は [reference discovery policy](docs/policies/reference-discovery.md) に従う。`index.json` は共通必須成果物にしない
 - repo 全体の運用ルールはこの `README.md` に書く
 - 作業メモは repo 直下の `TODO.md` に集約する
 - AI agent 作業を再開する前は、`GOAL.md`、`TODO.md`、`DECISIONS.md`、`HANDOFF.md` を確認する
-- skill ごとの `index.json` は `miku-indexgen` で生成する
 - ローカル作業用に `workplace/` を置き、`workplace/.gitkeep` だけを Git 管理下に入れる
 - Java / Maven 開発では `.mvn/jvm.config` を repo に含める
 
@@ -159,7 +158,7 @@ skill を利用する際は、`SKILL.md` を入口とし、具体ルール、例
 `SKILL.md` には発火条件、基本フロー、参照先の案内を中心に置き、詳細は `references/` 側を利用する方針です。
 
 `skill-creator` などで skill を作成した直後は、必要な具体ルールを `SKILL.md` に詰め込みすぎず、`references/` へ分離します。  
-また、参照資料の全体像を探す必要がある skill では、`SKILL.md` に `index.json` を discovery index として使う旨を明記します。
+既知の資料へは`SKILL.md`から直接案内し、未知の資料は対象範囲を絞ったファイル一覧・名前検索・本文検索で探します。indexを採用する場合は、用途と保守方法を[全体方針](docs/policies/reference-discovery.md)とbuild設定に記録します。
 
 Note / Qiita 記事 Markdown は、媒体ごとの正本置き場で管理します。
 
@@ -335,21 +334,23 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 
 利用者が行う具体的な確認、バックアップ、既存taskの編集、別出力先でのday-plan確認については、配布スキルの [task date migration guide](skills/igapyon-miku-daybook/references/task-date-migration.md) を参照してください。対象daybookのデータとスクリプトの変更は、利用者が更新版を導入した後に別途行います。
 
-## index.json の更新
+## 採用したindex.jsonの更新
 
-各 skill の `index.json` を更新する場合は、次のコマンドで `skills/` 配下をまとめて再生成します。
+`config/skill-index-policy.json`に採用と記録した内部skillだけを、次のコマンドで再生成します。
 
 ```sh
 mvn generate-resources
 ```
 
-ビルド全体とあわせて更新する場合は、次のコマンドでも `index.json` を更新できます。
+現在、内部skillでは`igapyon-qiita-writer`の記事選択用indexを比較評価待ちとして暫定保持しています。有用性を確認済みという判断ではありません。ほかのskill rootに`index.json`を置く場合は、先に全体方針に照らして採用理由とconsumerを決めてください。
+
+リリース用packageの中でも、採用対象だけを再生成します。
 
 ```sh
 mvn clean package
 ```
 
-生成された `index.json` は、skill と一緒にコミットします。
+採用した生成物は、正規のgeneratorで更新し、skillと一緒にコミットします。未採用indexはbuildやstagingで自動生成しません。
 
 生成後の drift 確認は次を実行します。
 
@@ -357,9 +358,7 @@ mvn clean package
 sh scripts/check-generated-indexes.sh
 ```
 
-この drift 確認は、タグ作成前のローカル確認や通常の開発フローで利用します。
-release workflow は `mvn clean package` で archive 内の `index.json` を再生成するため、
-commit 済み index との差分だけを理由に release を停止しません。
+この確認は、タグ作成前のローカル確認や通常の開発フローで利用します。採用したindexのdriftと、未宣言のskill root indexを検出します。
 
 ## Release archive
 
@@ -378,7 +377,7 @@ archive には `skills/`、配布用の `README.md` と `INSTALL.md`、`LICENSE`
 
 release archive には、この repo の `skills/` に加えて、外部管理の miku-soft 系 skill も同梱します。
 外部 skill は `mvn package` の `prepare-package` フェーズで `target/release-staging/skills/` に取得し、archive 化します。
-生成した `EXTERNAL_SKILLS.lock` に repository、ref、skill 名を記録します。外部skillも含む全skillをstagingにそろえた後、リポジトリに同梱したindex generatorでstaging内の `index.json` を再生成し、archive内のdiscovery indexを整合させます。
+生成した `EXTERNAL_SKILLS.lock` にrepository、ref、skill名を記録します。各skillの採用状態に沿ってsourceから配布します。stagingでは全skillのindexを再生成しません。現在の外部pinに含まれるlegacy indexは各sourceが提供する内容を検査し、source移行後に新refへ切り替えます。
 取得元は `pom.xml` の `external.*` properties で固定します。
 
 同梱する外部 skill は次の通りです。
@@ -395,9 +394,8 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 - `miku-score-skills` `v0.6.1`: `skills/igapyon-miku-score/`
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
-生成されたzipの内容を検査してからGitHub Release assetとして添付します。archive内の
-`index.json` はpackage処理で再生成されます。配布zipからMaven packageを再実行する構成
-ではありません。
+生成されたzipの内容を検査してからGitHub Release assetとして添付します。archiveのindex要件は採用状態に従い、未採用indexをpackage処理で生成しません。配布zipからMaven packageを再実行する構成ではありません。
+archive検査では、内部15 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内で14 skillの代表参照経路も確認します。外部10 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
 
 ## 厳選 text bundle
 

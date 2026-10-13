@@ -67,8 +67,9 @@ Review completion across these dimensions:
 - sibling reference use: related miku-soft or nearby sibling projects are
   consulted when they would make implementation or review safer, faster, or
   more consistent
-- Agent Skill readiness: igapyon-managed skills include generated `index.json`
-  and `SKILL.md` references it as a discovery index
+- Agent Skill readiness: references are reachable through task-specific links,
+  scoped discovery, or a useful topic guide; any adopted index is current and
+  used according to its declared purpose
 - Agent Skill maintainability: `SKILL.md` stays lean and delegates detailed
   rules, examples, and long workflows to `references/`
 - CLI-backed Agent Skill readiness: bundled or expected CLI runtimes are
@@ -88,8 +89,8 @@ Check these points:
 - limitations, non-goals, and known constraints are visible when relevant
 - release artifact roles are clear, such as CLI, Web App, jar, package, bundle,
   source archive, docs, or installer
-- Agent Skill usage guidance includes `index.json` when the project is an
-  igapyon-managed skill
+- Agent Skill usage guidance describes the actual reference route; include an
+  index only when the skill has adopted one
 - Agent Skill `SKILL.md` is a concise entrypoint rather than a large rulebook,
   with detailed material discoverable under `references/`
 - CLI-backed Agent Skill instructions explain how supported operations call the
@@ -233,8 +234,8 @@ Check whether tests are enough for the claimed completion state:
 - tests run through documented commands
 - CI or local verification commands are described clearly
 
-For Agent Skills, check whether `index.json` generation is part of the normal
-verification or release process when references, assets, or helper files change.
+For Agent Skills, check whether an adopted `index.json` generation is part of
+the normal verification or release process when its indexed inputs change.
 For CLI-backed Agent Skills, check whether the bundled or expected CLI has
 `--help` and `--version` smoke checks and whether the skill's operation mapping
 matches the CLI contract.
@@ -303,8 +304,8 @@ Use these severity levels:
 - High: version, tag, runtime output, package metadata, or release asset names
   can diverge without failure.
 - High: primary workflows lack any meaningful test or smoke coverage.
-- Medium: igapyon-managed Agent Skill is missing generated `index.json`, or
-  `SKILL.md` does not reference it as a discovery index.
+- Medium: an adopted Agent Skill `index.json` is missing, stale, or not checked.
+  Missing index alone is not a finding when the skill has not adopted one.
 - Medium: Agent Skill `SKILL.md` contains detailed rules or long workflows that
   should be split into `references/`, making the skill harder to maintain.
 - Medium: CLI-backed Agent Skill does not clearly document runtime discovery,
