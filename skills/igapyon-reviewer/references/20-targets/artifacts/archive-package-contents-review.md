@@ -37,7 +37,7 @@ Check whether the archive or package includes the files needed for its role:
 - source artifacts, source archives, source jars, or documented source URLs for
   redistributed OSS binaries when license obligations or project convention
   require them
-- `index.json` for igapyon-managed Agent Skill packages
+- `index.json` when the Agent Skill package has adopted a generated inventory
 - examples or docs that are intentionally part of the distribution
 - required assets, templates, references, schemas, or runtime support files
 
@@ -75,8 +75,8 @@ Check whether artifact contents match the documented role:
 - jar contains expected classes, metadata, and license/notice files
 - skill bundle includes `SKILL.md`, needed references, assets, helper files, and
   runtime artifacts if required
-- igapyon-managed skill bundle includes `index.json`, and `SKILL.md` references
-  it as a discovery index
+- an adopted skill inventory is present and has the consumer and validation
+  described by the target repository
 - Web App release asset includes the intended generated HTML and assets, not
   source-only placeholders
 - CLI runtime asset includes the intended executable file and version metadata
@@ -147,8 +147,9 @@ Use these severity levels:
   private data, or unintended private local files.
 - High: required runtime artifact, `SKILL.md`, license, notice, metadata, or
   primary deliverable is missing from a distributable artifact.
-- High: igapyon-managed Agent Skill package is missing `index.json` or the
-  bundled `SKILL.md` does not tell agents to use it as a discovery index.
+- Medium: an adopted Agent Skill inventory is missing, stale, or inconsistent
+  with its declared consumer. Missing inventory alone is not a finding when the
+  package has not adopted one.
 - High: artifact includes broad development directories such as `node_modules`,
   `workplace/`, `.git/`, local caches, or stale release staging contents.
 - High: artifact role is mislabeled, such as source archive treated as runtime

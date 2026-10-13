@@ -5,6 +5,9 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { assertIndexPresence, readSkillIndexPolicy } from "./skill-index-policy.mjs";
+import { assertSkillFilesMatchSource } from "./release-archive-files.mjs";
+import { assertRepresentativeRoutes } from "./skill-reference-routes.mjs";
 
 const projectRoot = fileURLToPath(new URL("..", import.meta.url));
 const allowedRootFiles = new Set([
@@ -73,7 +76,8 @@ function readProjectMetadata() {
     fail("No external skills are configured in pom.xml");
   }
 
-  return { artifactId, version, externalSkills };
+  const policy = readSkillIndexPolicy(projectRoot);
+  return { artifactId, version, externalSkills, policy };
 }
 
 function listInternalSkills() {
@@ -134,7 +138,10 @@ function validateIndex(skillName, skillDir) {
     fail(skillName + "/index.json must contain a files array");
   }
 
-  const basePath = typeof index.basePath === "string" ? index.basePath : ".";
+  if (index.basePath !== undefined && typeof index.basePath !== "string") {
+    fail(skillName + "/index.json basePath must be a string");
+  }
+  const basePath = index.basePath ?? ".";
   const realSkillDir = fs.realpathSync(skillDir);
   for (const entry of index.files) {
     if (!entry || typeof entry.path !== "string" || entry.path.length === 0) {
@@ -161,14 +168,17 @@ function validateIndex(skillName, skillDir) {
   }
 }
 
-function validateSkill(skillName, skillRoot) {
+function validateSkill(skillName, skillRoot, indexIsAdopted) {
   const skillDir = path.join(skillRoot, skillName);
   const skillFile = path.join(skillDir, "SKILL.md");
-  const indexFile = path.join(skillDir, "index.json");
-  for (const required of [skillFile, indexFile]) {
-    if (!fs.existsSync(required) || !fs.statSync(required).isFile()) {
-      fail(skillName + " is missing " + path.basename(required));
-    }
+  if (!fs.existsSync(skillFile) || !fs.statSync(skillFile).isFile()) {
+    fail(skillName + " is missing SKILL.md");
+  }
+  let hasIndex;
+  try {
+    hasIndex = assertIndexPresence(skillName, skillDir, indexIsAdopted);
+  } catch (error) {
+    fail(error.message);
   }
 
   const skillText = fs.readFileSync(skillFile, "utf8");
@@ -177,11 +187,11 @@ function validateSkill(skillName, skillRoot) {
   if (!nameLine || nameLine[1] !== skillName) {
     fail(skillName + "/SKILL.md name does not match its directory");
   }
-  validateIndex(skillName, skillDir);
+  if (hasIndex) validateIndex(skillName, skillDir);
 }
 
 function validateArchive(archivePath) {
-  const { artifactId, version, externalSkills } = readProjectMetadata();
+  const { artifactId, version, externalSkills, policy } = readProjectMetadata();
   const expectedRoot = artifactId + "-" + version;
   const listing = runUnzip(["-Z1", archivePath]);
   const entries = listing.split(/\r?\n/).filter((entry) => entry.length > 0);
@@ -280,15 +290,38 @@ function validateArchive(archivePath) {
     const lockPath = path.join(archiveRoot, "EXTERNAL_SKILLS.lock");
     validateExternalLock(fs.readFileSync(lockPath, "utf8"), externalSkills);
 
+    const internalIndexes = new Set(policy.internal.map((entry) => entry.skill));
+    const externalIndexes = new Map(policy.external.map((entry) => [entry.skill, entry.disposition !== "remove"]));
+
+    let sourceChecked = 0;
+    let representativeRouteCount = 0;
     for (const skillName of expectedNames) {
-      validateSkill(skillName, skillRoot);
+      const indexIsAdopted = internalNames.has(skillName)
+        ? internalIndexes.has(skillName)
+        : externalIndexes.get(skillName);
+      validateSkill(skillName, skillRoot, indexIsAdopted);
+      if (internalNames.has(skillName)) {
+        assertSkillFilesMatchSource({
+          skillName,
+          sourceSkillDir: path.join(projectRoot, "skills", skillName),
+          archiveSkillDir: path.join(skillRoot, skillName),
+        });
+        sourceChecked++;
+        const routes = assertRepresentativeRoutes({
+          skillName,
+          skillDir: path.join(skillRoot, skillName),
+        });
+        if (routes.checked) representativeRouteCount++;
+      }
     }
 
     console.log(
       "Release archive is valid: " + path.basename(archivePath) +
       " (internal=" + internalSkills.length +
       ", external=" + externalSkills.length +
-      ", total=" + expectedNames.size + ")"
+      ", total=" + expectedNames.size +
+      ", source-checked=" + sourceChecked +
+      ", representative-routes=" + representativeRouteCount + ")"
     );
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });

@@ -73,8 +73,7 @@ scope.
 When the user asks for the version of `みくく`, read
 [references/VERSION.md](references/VERSION.md) and answer with that value. Use
 the `みくく` tone only when the persona is already active or the user explicitly
-requests it; a version lookup alone is a Meta request. Do not use `index.json`
-as the version source of truth.
+requests it; a version lookup alone is a Meta request.
 
 ## Article Writing
 
@@ -180,8 +179,8 @@ Additional image assets:
 
 Article-oriented visual assets are available under [assets/article/](assets/article/) when an article title image or article section image is needed.
 
-Treat `index.json` as a generated discovery index, not the source of truth for
-representative image choice or asset semantics.
+Use the representative image and additional asset links above for image
+selection. When another asset is needed, inspect the relevant asset directory.
 
 ## References
 

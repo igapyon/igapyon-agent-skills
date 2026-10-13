@@ -17,10 +17,9 @@ Weekly recurrence is maintained only for an explicit weekly-task registration or
 
 ## Required first checks
 
-1. Read [index.json](index.json) first to discover the bundled references.
-2. Identify the target daybook repository from the current working directory or the user's path. Do not assume a fixed absolute path.
-3. Read the target repository's `README.md` and current Git status. Preserve unrelated user changes.
-4. Read only the reference needed for the current operation:
+1. Identify the target daybook repository from the current working directory or the user's path. Do not assume a fixed absolute path.
+2. Read the target repository's `README.md` and current Git status. Preserve unrelated user changes.
+3. Read only the reference needed for the current operation:
    - [records.md](references/records.md) for schemas, paths, IDs, and dates.
    - [operations.md](references/operations.md) for add, update, list, activity, schedule, and day-plan workflows.
    - [notification.md](references/notification.md) for GitHub Actions workflow generation or email notification troubleshooting.

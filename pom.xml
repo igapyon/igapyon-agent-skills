@@ -68,18 +68,15 @@
             </configuration>
           </execution>
           <execution>
-            <id>generate-skill-indexes</id>
+            <id>generate-adopted-skill-indexes</id>
             <phase>generate-resources</phase>
             <goals>
               <goal>exec</goal>
             </goals>
             <configuration>
-              <executable>java</executable>
+              <executable>node</executable>
               <arguments>
-                <argument>-jar</argument>
-                <argument>${project.basedir}/lib/miku-indexgen-1.6.2.jar</argument>
-                <argument>--input-parent-directory</argument>
-                <argument>${project.basedir}/skills</argument>
+                <argument>${project.basedir}/scripts/generate-skill-indexes.mjs</argument>
               </arguments>
             </configuration>
           </execution>

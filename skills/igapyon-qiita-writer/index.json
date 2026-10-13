@@ -3,7 +3,7 @@
  "generation": {"schemaVersion":1,"inputPath":".","markdownOutput":false,"recursive":true,"includeExtensions":["md","json"],"inputEncoding":"utf8","outputEncoding":"utf8","includeGeneratorMetadata":true},
  "basePath": ".",
  "files": [
-  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":8857,"description":"Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-like technical Markdown with front matter/tags or Note metadata. If the user only as...","summary":"igapyon-qiita-writer"},
+  {"name":"SKILL.md","path":"SKILL.md","ext":"md","dir":"","size":9232,"description":"Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-like technical Markdown with front matter/tags or Note metadata. If the user only as...","summary":"igapyon-qiita-writer"},
   {"name":"20260428-general.md","path":"references/general/20260428-general.md","ext":"md","dir":"references/general","size":19508,"summary":"生成AIとの総会話時間が、自然言語プログラミングの感覚を育てている話"},
   {"name":"20260429-general.md","path":"references/general/20260429-general.md","ext":"md","dir":"references/general","size":13301,"summary":"知識ベース型 Agent Skills は、静的 Markdown だけでも育てられる（SKILL.md + references/ 設計）"},
   {"name":"20260430-general-ai-dev-docs-workplace.md","path":"references/general/20260430-general-ai-dev-docs-workplace.md","ext":"md","dir":"references/general","size":20003,"summary":"[miku-soft] 生成AI駆動開発における README / docs / TODO / workplace の使い分け"},

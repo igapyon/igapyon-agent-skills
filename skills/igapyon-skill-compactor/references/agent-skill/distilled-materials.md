@@ -38,8 +38,8 @@ explicit in the user's request.
 
 After creating distilled material, keep it maintainable:
 
-- link it from `SKILL.md`, a reference file, or `index.json`-discoverable
-  navigation
+- link it from `SKILL.md` or a relevant topic guide; an adopted index may also
+  list it when that serves a documented consumer
 - refresh it when source material changes
 - refresh it when human decisions change the intended viewpoint
 - do not use `distilled/` as a dumping ground for arbitrary notes

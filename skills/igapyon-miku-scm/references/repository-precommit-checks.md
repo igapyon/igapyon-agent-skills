@@ -6,14 +6,14 @@ Run repository-declared consistency checks after staging the intended content an
 
 Inspect the repository's tracked manifests and documentation for a commit-time consistency command. Prefer an explicit repository declaration over a guessed generic build.
 
-For an npm repository, inspect `package.json.scripts`. When both of these conditions are present, `npm run check:index` is mandatory:
+For an npm repository, inspect `package.json.scripts` and any documented generated-artifact policy. Run a check when the repository declares it for the current target. For an adopted skill inventory, `npm run check:index` is required when:
 
 - `package.json.mikuIndex.required` is `true`
 - `package.json.scripts.check:index` exists
 
-This detects a stale generated `index.json`, including a file-set or indexed-size mismatch, before the commit reaches CI.
+This detects a stale generated `index.json`, including a file-set or indexed-size mismatch, before the commit reaches CI. A repository that has not adopted a skill inventory does not need to add `check:index`.
 
-If `mikuIndex.required` is `true` but `check:index` is absent, look for the repository-documented index alignment command. If no authoritative command can be resolved, stop before committing and report the missing check instead of guessing a generator command.
+If `mikuIndex.required` is `true` but `check:index` is absent, look for the repository-documented index alignment command. If no authoritative command can be resolved, stop before committing and report the missing check instead of guessing a generator command. A missing index in a repository that does not declare one is not a failed check.
 
 Apply the same pattern to other explicitly declared commit-time alignment checks, such as coupled-version validation or generated-file freshness checks, when the repository documents them.
 

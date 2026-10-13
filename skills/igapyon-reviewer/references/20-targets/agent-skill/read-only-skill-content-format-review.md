@@ -61,7 +61,7 @@ XML is usually better only when:
 
 Do not choose JSON or JSONL merely because the data is "structured". If the
 content is mostly human/agent guidance, Markdown is often the better primary
-format, with `index.json` serving as generated discovery metadata.
+format. Add an `index.json` only when its discovery metadata has a concrete use.
 
 ## Source Document Conversion Checks
 
@@ -76,8 +76,8 @@ Flag issues when:
 
 - source office documents are bundled without an agent-readable converted form
 - converted Markdown loses important headings, tables, examples, or context
-- the converted files are not discoverable from `SKILL.md`, `references/INDEX.md`,
-  or `index.json`
+- the converted files are not discoverable from `SKILL.md`, a topic guide,
+  scoped search, or an adopted `index.json`
 - regenerated converted files are stale compared with the source documents
 
 ## Index and Auxiliary Data Checks

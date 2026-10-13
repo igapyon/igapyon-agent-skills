@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "internal": [
+    {
+      "skill": "igapyon-qiita-writer",
+      "indexPath": "index.json",
+      "reason": "Temporarily retained pending representative article-selection comparisons with direct links and scoped search. Selection benefit has not yet been demonstrated.",
+      "consumer": "skills/igapyon-qiita-writer/SKILL.md",
+      "evidence": "docs/maintenance/index-json-migration-inventory.md#qiita-provisional-retention"
+    }
+  ],
+  "external": [
+    {"repo":"https://github.com/igapyon/miku-indexgen-skills.git","ref":"v1.6.2","skill":"igapyon-miku-indexgen","disposition":"legacy","reason":"Pinned source still requires its own inventory; preserve generated-index product behavior.","evidence":"docs/maintenance/index-json-migration-inventory.md","nextAction":"Migrate source skill, bundle checks, and release ref."},
+    {"repo":"https://github.com/igapyon/miku-text-bundle-skills.git","ref":"v1.6.0","skill":"igapyon-miku-text-bundle","disposition":"legacy","reason":"Pinned source still requires its own inventory.","evidence":"docs/maintenance/index-json-migration-inventory.md","nextAction":"Migrate source skill, validator, bundle checks, and release ref."},
+    {"repo":"https://github.com/igapyon/miku-repo-bundle-skills.git","ref":"v0.5.0.1","skill":"igapyon-miku-repo-bundle","disposition":"legacy","reason":"Pinned source still requires its own inventory; preserve product-generated bundle indexes.","evidence":"docs/maintenance/index-json-migration-inventory.md","nextAction":"Migrate source skill and bundle checks, then publish a new ref."},
+    {"repo":"https://github.com/igapyon/miku-text-file-ops-skills.git","ref":"v0.5.0","skill":"igapyon-miku-text-file-ops","disposition":"legacy","reason":"Pinned source bundler and tests still require its own inventory.","evidence":"docs/maintenance/index-json-migration-inventory.md","nextAction":"Migrate source skill, bundler, tests, and release ref."},
+    {"repo":"https://github.com/igapyon/miku-prompt-lint-skills.git","ref":"v0.5.0","skill":"igapyon-miku-prompt-lint","disposition":"legacy","reason":"Pinned release bundle tests still require the currently optional inventory.","evidence":"docs/maintenance/index-json-migration-inventory.md","nextAction":"Migrate source bundle tests and publish a new ref."},
+    {"repo":"https://github.com/igapyon/miku-ai-assistant-builder-skills.git","ref":"v0.13.0","skill":"igapyon-miku-ai-assistant-builder","disposition":"legacy","reason":"Pinned source contract and release tests still require its own inventory.","evidence":"docs/maintenance/index-json-migration-inventory.md","nextAction":"Migrate source contract, bundle tests, and release ref."},
+    {"repo":"https://github.com/igapyon/miku-ms-office-skills.git","ref":"v0.7.1","skill":"igapyon-miku-ms-office","disposition":"legacy","reason":"Pinned source contract, release tests, and runtime inventory checks still require its own inventory.","evidence":"docs/maintenance/index-json-migration-inventory.md","nextAction":"Migrate source contract, bundle tests, and release ref."},
+    {"repo":"https://github.com/igapyon/miku-json2xlsx-skills.git","ref":"v0.5.0","skill":"igapyon-miku-json2xlsx","disposition":"legacy","reason":"Pinned source contract and release tests still require its own inventory.","evidence":"docs/maintenance/index-json-migration-inventory.md","nextAction":"Migrate source contract, bundle tests, and release ref."},
+    {"repo":"https://github.com/igapyon/miku-project-skills.git","ref":"v0.12.4","skill":"igapyon-miku-project","disposition":"legacy","reason":"Pinned source, bundler, and tests still require its own inventory.","evidence":"docs/maintenance/index-json-migration-inventory.md","nextAction":"Migrate source skill, bundler, tests, and release ref."},
+    {"repo":"https://github.com/igapyon/miku-score-skills.git","ref":"v0.6.1","skill":"igapyon-miku-score","disposition":"legacy","reason":"Pinned source and isolated-bundle checks still require its own inventory.","evidence":"docs/maintenance/index-json-migration-inventory.md","nextAction":"Migrate source skill, bundle checks, and release ref."}
+  ]
+}

@@ -26,8 +26,8 @@ sources:
 
 # Front Matter Templates
 
-Use these templates and examples when adding Markdown front matter to improve
-generated `index.json` routing. Keep values concise and practical.
+Use these templates when an adopted `index.json` or another documented
+consumer benefits from Markdown front matter. Keep values concise and practical.
 
 ## Templates
 
@@ -57,7 +57,8 @@ For distilled Markdown, include at least:
 - Use spaces for YAML indentation.
 - Prefer short scalar fields and simple string arrays.
 - Keep `description` under 256 UTF-16 code units.
-- Use practical `topics` that help agents choose files from `index.json`.
+- Use practical `topics` when an adopted index or another documented consumer
+  uses them to select files.
 - Use `created` for original creation date and `updated` for material content updates.
-- Do not update `updated` for purely mechanical `index.json` refreshes.
+- Do not update `updated` for a purely mechanical refresh of generated metadata.
 - Use `sources` when provenance helps maintain distilled or derived documents.

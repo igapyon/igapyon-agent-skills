@@ -524,4 +524,3 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/validate-run-dir.mjs" -
 - 記事の文体調整が必要な場合は、先に [article-writing.md](article-writing.md) を参照します。
 - グラレコ向け整理では、要約だけでなく、構造、対比、役割分担、流れ、循環を抽出します。
 - 画像生成AI用プロンプトでは、みくく描画プロンプトパスを描画プロンプトとして明示します。
-- `index.json` は生成物です。更新が必要な場合は手編集せず、`miku-indexgen` で再生成します。

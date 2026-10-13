@@ -93,18 +93,16 @@ igapyon-mikuku-agent を使って、みくくとしてこの設計を一緒に�
 ├─ references/       # 判断基準と用途別 workflow
 ├─ templates/        # 記事の再利用可能な構造
 ├─ examples/         # 文体・出力例
-├─ assets/           # キャラクター画像と記事画像
-└─ index.json        # 自動生成された discovery index
+└─ assets/           # キャラクター画像と記事画像
 ```
 
 - character 設定と workflow の正本は `SKILL.md`、`references/`、`templates/`、
-  `examples/`、`assets/` です。`index.json` は手編集しません。
+  `examples/`、`assets/` です。
 - Note 記事 Markdown の正本は、repository ルートから見た
   `../mikuku-articles/` です。この skill 内の記事は文体・構成の参照用コピーです。
 - 定型フッターは
   [`templates/article-footer-sections-template.md`](templates/article-footer-sections-template.md)
   を一つの再利用元として保守します。
-- source の更新後は repository ルートで `mvn generate-resources` を実行し、生成された
-  `index.json` を source と一緒にコミットします。
+- 参照資料は用途別のリンクから読み、未知の資料は対象directoryの一覧や本文検索で探します。
 - ローカル配備との差分は
   `sh scripts/sync-codex-skill.sh --check igapyon-mikuku-agent` で確認します。

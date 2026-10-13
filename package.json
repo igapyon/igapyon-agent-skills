@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:skill-index-policy": "node --test scripts/skill-index-policy.test.mjs scripts/release-archive-files.test.mjs scripts/skill-index-policy.integration.test.mjs scripts/skill-reference-routing.test.mjs",
     "benchmark:github-writer": "node skills/igapyon-github-writer/scripts/github-writer-benchmark.mjs",
     "test:github-writer": "node skills/igapyon-github-writer/scripts/github-writer-test-suite.mjs --full",
     "test:github-writer:fast": "node skills/igapyon-github-writer/scripts/github-writer-test-suite.mjs --fast",

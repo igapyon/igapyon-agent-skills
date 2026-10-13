@@ -159,8 +159,9 @@ reformatting only for taste.
 
 ## Agent Skill `index.json` Checks
 
-For igapyon-managed Agent Skills, generated `index.json` should normally be
-easy to search by file name, path, extension, and summary.
+For an Agent Skill that has adopted a generated `index.json`, check that it is
+easy to search by the fields its declared consumer uses. A skill does not need
+to adopt one by default.
 
 Check whether:
 
@@ -178,9 +179,9 @@ Check whether:
 - generated output is stable and not hand-edited
 - JSON, compact JSON, or JSONL is chosen intentionally for the generator's
   access pattern
-- `SKILL.md` tells agents to use `index.json` as a discovery index when needed
-- a large reference-only skill has an intermediate Markdown overview when
-  `index.json` alone is not enough to choose the right reference
+- `SKILL.md` explains the actual use when an index is adopted
+- direct task links or a topic guide provide a useful route when no index is
+  adopted or when an index alone does not help choose the right reference
 
 ## Severity Guidance
 
@@ -196,8 +197,8 @@ Use these severity levels:
   whether the format is JSON or JSONL.
 - Medium: JSON formatting prevents effective line-oriented search for files,
   records, versions, IDs, or summaries that agents need to find.
-- Medium: `index.json` is present but lacks meaningful summaries or misses files
-  that agents need for discovery.
+- Medium: an adopted `index.json` lacks meaningful summaries or omits files its
+  declared consumer needs.
 - Medium: JSON is minified into one line even though it is committed for review,
   diffing, or agent discovery.
 - Medium: repeated records are expanded across many lines, making grep hits lose

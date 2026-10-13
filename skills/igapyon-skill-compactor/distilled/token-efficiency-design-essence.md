@@ -72,7 +72,8 @@ Refresh this file when:
 - current product rules around cached input or reasoning/output accounting need
   a new caveat
 
-Do not refresh this file for purely mechanical `index.json` regeneration.
+Refresh this file only when the curated design guidance changes, not after a
+mechanical generated-index update.
 
 ## Core Thesis
 
@@ -135,10 +136,10 @@ or targeted references instead of reading the bulk set by default.
 
 Before reading full source material, use the smallest useful discovery layer:
 
-1. grep/rg-friendly names, headings, front matter, summaries
-2. generated `index.json`
-3. `distilled/`
-4. references
+1. direct task links and clear names/headings
+2. scoped listing or targeted search for unknown files
+3. an adopted `index.json` when its metadata helps choose among files
+4. `distilled/` and then the smallest relevant references
 5. original source material
 
 This keeps file discovery and source reading from becoming repeated context
@@ -190,8 +191,8 @@ Design for cache-friendliness by:
 - keeping changing per-run input after stable context
 
 Start with file-native organization before building heavier retrieval systems.
-Markdown, front matter, directory structure, generated `index.json`, templates,
-examples, and distilled files are often enough for Agent Skill-scale context
+Markdown, front matter, directory structure, selectively adopted `index.json`,
+templates, examples, and distilled files are often enough for Agent Skill-scale context
 engineering. These artifacts can later become input to RAG or database-backed
 retrieval if the workflow outgrows file-based navigation.
 

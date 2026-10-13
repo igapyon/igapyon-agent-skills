@@ -133,9 +133,9 @@ materials when repeated runtime work needs the essence, not the original source.
 representative quality and boundary signals. `tests/` should carry validation
 prompts, not runtime instructions.
 
-This separation is not mere tidiness. It makes the reading path explicit:
-discover with `index.json`, search with `rg`, check distilled material, then
-read full references only when needed.
+This separation makes the reading path explicit: follow known links, search
+the relevant directory when the needed file is unknown, check distilled
+material when useful, then read full references only when needed.
 
 Meaning placement also controls update cost. A checklist copied into five
 places will drift. A single checklist under `references/checklists/` can be
@@ -148,11 +148,12 @@ agent to read the full article again.
 
 A token-efficient agent should not read everything first.
 
-The intended ladder is:
+Use this order where it fits the task:
 
-1. Use file names, headings, front matter, and `index.json` to find likely
-   material.
-2. Use `rg` or another targeted search when the needed term is known.
+1. Follow the known task-specific links.
+2. Use file names, headings, front matter, scoped listing, or targeted search
+   to find a reference when its path is unknown. Consult an adopted index only
+   when it contributes useful selection metadata.
 3. Read `distilled/` when a curated summary may answer the question.
 4. Read the smallest relevant reference file.
 5. Read original source material only when the smaller layers are insufficient.
@@ -229,8 +230,8 @@ with less reading and still produce the same intended behavior.
 ## Directory Map
 
 - `SKILL.md`: activation gate, compact workflow, and reference navigation.
-- `index.json`: generated discovery index from `miku-indexgen`; refresh it,
-  do not edit it by hand.
+- `index.json`: optional generated discovery metadata when the skill has a
+  recorded use for it; regenerate adopted indexes and do not hand-edit them.
 - `references/system/`: broad philosophy and token-efficiency techniques.
 - `references/agent-skill/`: concrete Agent Skill compaction workflow and
   maintenance rules.
@@ -297,5 +298,5 @@ developing an intentionally unsynchronized source tree.
 - Prefer `##` and `###` headings, content-expressive file names, and
   grep/rg-friendly wording.
 - Prefer JSONL for true prompt-test record lists.
-- Refresh `index.json` after adding, removing, or renaming skill files.
+- Refresh an adopted `index.json` after changing files included in its scan.
 - Run the skill validator after structural changes.

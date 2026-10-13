@@ -35,7 +35,7 @@ Use [references/direct-child-repo-uncommitted-repositories.md](references/direct
 Use files under [references/template/](references/template/) when creating or updating root convention documents such as `CONTRIBUTING.md`, `CONTRIBUTORS.md`, or `THIRD_PARTY_NOTICES.md`.
 Do not leave template placeholders such as `PROJECT_NAME`, `NAME_OR_HANDLE`, or `DEPENDENCY_NAME` in committed files. If required information is unknown, either defer creating the file or create a minimal accurate document without placeholder text.
 
-Use `index.json` when you need to discover the available bundled files, but treat `SKILL.md` and files under `references/` as the source of truth.
+Use the task-specific links above. If another bundled file is needed, inspect or search the relevant directory; treat `SKILL.md` and the reference files as the source of truth.
 
 Keep this `SKILL.md` lean. Put detailed conventions and examples in `references/` unless they are required to decide whether the skill should run.
 
