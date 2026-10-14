@@ -384,10 +384,10 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 
 - `miku-indexgen-skills` `v1.6.2`: `skills/igapyon-miku-indexgen/`
 - `miku-text-bundle-skills` `v1.6.0`: `skills/igapyon-miku-text-bundle/`
-- `miku-repo-bundle-skills` `v0.5.0.1` (experimental): `skills/igapyon-miku-repo-bundle/`
-- `miku-text-file-ops-skills` `v0.5.0`: `skills/igapyon-miku-text-file-ops/`
-- `miku-prompt-lint-skills` `v0.5.0`: `skills/igapyon-miku-prompt-lint/`
-- `miku-ai-assistant-builder-skills` `v0.13.0`: `skills/igapyon-miku-ai-assistant-builder/`
+- `miku-repo-bundle-skills` `v0.6.0` (experimental): `skills/igapyon-miku-repo-bundle/`
+- `miku-text-file-ops-skills` `v0.6.0`: `skills/igapyon-miku-text-file-ops/`
+- `miku-prompt-lint-skills` `v0.6.0`: `skills/igapyon-miku-prompt-lint/`
+- `miku-ai-assistant-builder-skills` `v0.14.0`: `skills/igapyon-miku-ai-assistant-builder/`
 - `miku-ms-office-skills` `v0.7.1`: `skills/igapyon-miku-ms-office/`
 - `miku-json2xlsx-skills` `v0.5.0`: `skills/igapyon-miku-json2xlsx/`
 - `miku-project-skills` `v0.12.4`: `skills/igapyon-miku-project/`
@@ -396,6 +396,32 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
 生成されたzipの内容を検査してからGitHub Release assetとして添付します。archiveのindex要件は採用状態に従い、未採用indexをpackage処理で生成しません。配布zipからMaven packageを再実行する構成ではありません。
 archive検査では、内部15 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内で14 skillの代表参照経路も確認します。外部10 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
+
+## 同梱スキル・ライブラリの更新確認と取り込み
+
+このリポジトリで「同梱スキルの更新を確認して」「同梱ライブラリの更新状況をチェックして」
+などと依頼された場合は、上流の更新確認、更新がある取得元の設定反映、配布 ZIP の生成・検査までを
+依頼の範囲として扱います。更新がなければ、その確認結果を報告します。
+利用者が「調査だけ」「変更不要」などと明示した場合は、その指定に従います。
+
+1. 現在のブランチと作業ツリー、`pom.xml` の `external.*` properties、
+   `config/skill-index-policy.json` の対応する pin を確認します。
+2. 同梱対象の各上流リポジトリについて、既定ブランチの最新 HEAD と現在の pin を照合し、
+   コミットとファイルの差分、確認できる最新 Release・版情報を調べます。
+   この repo の取得元は既定ブランチの確認時点の最新コミットを使い、40桁の SHA で固定します。
+3. HEAD が pin と異なる対象は、`pom.xml` と `config/skill-index-policy.json` を同じ SHA へ更新します。
+   バージョン番号だけの更新や、同梱ファイルの内容が変わらない merge による HEAD 更新も取り込み対象です。
+   README の版表記は、確認できた最新 Release・版情報に合わせます。
+4. 設定を更新したら `mvn package` で staging と配布 ZIP を生成し、
+   生成された `EXTERNAL_SKILLS.lock` が更新後の pin を記録していることを確認します。
+   続いて `node scripts/check-release-archive.mjs target/igapyon-agent-skills-<version>.zip`
+   を実行します。`<version>` は現在の `pom.xml` のプロジェクト版に置き換えます。
+5. `git diff --check` と関連差分・作業ツリーを確認し、更新した同梱対象、確認時点、
+   生成 ZIP、検証結果を報告します。取り込みと検証が完了してから、同梱対象を最新化したと報告します。
+
+この手順では、依頼時に確認した最新コミットを固定して取り込みます。
+親リポジトリのバージョン更新、commit、push、tag、Release 公開、ローカル skill 配備は、
+それぞれの利用者指示と対応する運用ルールに従います。
 
 ## 厳選 text bundle
 
