@@ -12,34 +12,34 @@
 
   <properties>
     <external.miku-indexgen-skills.repo>https://github.com/igapyon/miku-indexgen-skills.git</external.miku-indexgen-skills.repo>
-    <external.miku-indexgen-skills.ref>v1.6.2</external.miku-indexgen-skills.ref>
+    <external.miku-indexgen-skills.ref>1bf6ce8506583a1ac101614a27671a6b7005e122</external.miku-indexgen-skills.ref>
     <external.miku-indexgen-skills.skillName>igapyon-miku-indexgen</external.miku-indexgen-skills.skillName>
     <external.miku-text-bundle-skills.repo>https://github.com/igapyon/miku-text-bundle-skills.git</external.miku-text-bundle-skills.repo>
-    <external.miku-text-bundle-skills.ref>v1.6.0</external.miku-text-bundle-skills.ref>
+    <external.miku-text-bundle-skills.ref>6b5b8e00383d8e22bada7bf8d2c503c99c2f9838</external.miku-text-bundle-skills.ref>
     <external.miku-text-bundle-skills.skillName>igapyon-miku-text-bundle</external.miku-text-bundle-skills.skillName>
     <external.miku-repo-bundle-skills.repo>https://github.com/igapyon/miku-repo-bundle-skills.git</external.miku-repo-bundle-skills.repo>
-    <external.miku-repo-bundle-skills.ref>v0.5.0.1</external.miku-repo-bundle-skills.ref>
+    <external.miku-repo-bundle-skills.ref>ccfe1d57754623ec3ae7eb60eb89b28cb339a98a</external.miku-repo-bundle-skills.ref>
     <external.miku-repo-bundle-skills.skillName>igapyon-miku-repo-bundle</external.miku-repo-bundle-skills.skillName>
     <external.miku-text-file-ops-skills.repo>https://github.com/igapyon/miku-text-file-ops-skills.git</external.miku-text-file-ops-skills.repo>
-    <external.miku-text-file-ops-skills.ref>v0.5.0</external.miku-text-file-ops-skills.ref>
+    <external.miku-text-file-ops-skills.ref>461af935838ede6d96d9767570d139dcf41af75c</external.miku-text-file-ops-skills.ref>
     <external.miku-text-file-ops-skills.skillName>igapyon-miku-text-file-ops</external.miku-text-file-ops-skills.skillName>
     <external.miku-prompt-lint-skills.repo>https://github.com/igapyon/miku-prompt-lint-skills.git</external.miku-prompt-lint-skills.repo>
-    <external.miku-prompt-lint-skills.ref>v0.5.0</external.miku-prompt-lint-skills.ref>
+    <external.miku-prompt-lint-skills.ref>f040a3a9627e2537d08bcf9b91de65768e334c8f</external.miku-prompt-lint-skills.ref>
     <external.miku-prompt-lint-skills.skillName>igapyon-miku-prompt-lint</external.miku-prompt-lint-skills.skillName>
     <external.miku-ai-assistant-builder-skills.repo>https://github.com/igapyon/miku-ai-assistant-builder-skills.git</external.miku-ai-assistant-builder-skills.repo>
-    <external.miku-ai-assistant-builder-skills.ref>v0.13.0</external.miku-ai-assistant-builder-skills.ref>
+    <external.miku-ai-assistant-builder-skills.ref>861eebfd788bbb3934558d8b11cc831247b1688c</external.miku-ai-assistant-builder-skills.ref>
     <external.miku-ai-assistant-builder-skills.skillName>igapyon-miku-ai-assistant-builder</external.miku-ai-assistant-builder-skills.skillName>
     <external.miku-ms-office-skills.repo>https://github.com/igapyon/miku-ms-office-skills.git</external.miku-ms-office-skills.repo>
-    <external.miku-ms-office-skills.ref>v0.7.1</external.miku-ms-office-skills.ref>
+    <external.miku-ms-office-skills.ref>97b6a2bfe9f5b2d1a308bb53a8967b04032a2af2</external.miku-ms-office-skills.ref>
     <external.miku-ms-office-skills.skillName>igapyon-miku-ms-office</external.miku-ms-office-skills.skillName>
     <external.miku-json2xlsx-skills.repo>https://github.com/igapyon/miku-json2xlsx-skills.git</external.miku-json2xlsx-skills.repo>
-    <external.miku-json2xlsx-skills.ref>v0.5.0</external.miku-json2xlsx-skills.ref>
+    <external.miku-json2xlsx-skills.ref>870bc32b30762d1e1f9df325122da9163728eea2</external.miku-json2xlsx-skills.ref>
     <external.miku-json2xlsx-skills.skillName>igapyon-miku-json2xlsx</external.miku-json2xlsx-skills.skillName>
     <external.miku-project-skills.repo>https://github.com/igapyon/miku-project-skills.git</external.miku-project-skills.repo>
-    <external.miku-project-skills.ref>v0.12.4</external.miku-project-skills.ref>
+    <external.miku-project-skills.ref>ae2b629b27d1f0805b7626957a02d2aaea506967</external.miku-project-skills.ref>
     <external.miku-project-skills.skillName>igapyon-miku-project</external.miku-project-skills.skillName>
     <external.miku-score-skills.repo>https://github.com/igapyon/miku-score-skills.git</external.miku-score-skills.repo>
-    <external.miku-score-skills.ref>v0.6.1</external.miku-score-skills.ref>
+    <external.miku-score-skills.ref>6abdda090d88ad9a036089e6e39ba415d9e79bc7</external.miku-score-skills.ref>
     <external.miku-score-skills.skillName>igapyon-miku-score</external.miku-score-skills.skillName>
   </properties>
 

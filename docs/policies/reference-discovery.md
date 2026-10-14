@@ -14,7 +14,7 @@ An index may be retained when an actual program consumes its schema, a constrain
 
 Several reference files, a historic convention, or a build check that only exists to require the index are not sufficient reasons by themselves. A skill without an adopted index must still be buildable, distributable, and usable.
 
-When evidence is insufficient during migration, record the decision as pending and the next evaluation in the maintenance inventory. Temporary retention keeps the existing artifact validated; it does not establish a selection benefit. Qiita's current inventory is in this state.
+When evidence is insufficient during migration, record the decision as pending and the next evaluation in the maintenance inventory. Temporary retention keeps the existing artifact validated; it does not establish a selection benefit. The Qiita writer now retains its index for optional cross-topic article discovery based on the representative comparison recorded in the maintenance inventory.
 
 ## Product output is a separate decision
 
