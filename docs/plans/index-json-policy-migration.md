@@ -4,7 +4,7 @@
 
 2026-10-11の再自己レビューで、index未採用の内部skillの参照・画像が配布ZIPから欠けても検査を通る問題を確認した。追加の[配布ZIP補修計画](release-archive-source-verification.md)を作成し、後続の実装指示に従ってroot内部15 skillのsource照合、ZIP展開先の14代表route確認、異常系testを実装した。実測結果と外部照合の境界は計画書およびmaintenance inventoryに記録した。
 
-初回依頼は詳細計画のみだった。後続の実装指示で内部方針・build・14件の内部index削除、外部10source repoのindex依存除去を実施した。自己レビュー後はsource由来のZIP検査と実ZIPの異常系検査を補い、参照の静的到達確認とモデル行動の評価を区別する。Qiitaは比較評価待ちの暫定保持。外部変更は未commitで、root pinsは新ref未発行のためlegacyのまま。Qiitaの最終判断、Luna想定の代表task比較、外部新ref統合後の最終root package検証は未完了。利用者repoのcommit/push、tag、Release、配備は未実施。最新状態はTODO.mdとHANDOFF.mdを参照する。
+初回依頼は詳細計画のみだった。後続の実装指示で内部方針・build・14件の内部index削除、外部10source repoのindex依存除去を実施した。自己レビュー後はsource由来のZIP検査と実ZIPの異常系検査を補い、静的参照到達性とモデルの選択行動を別に評価した。QiitaのLuna比較では、indexが記事overviewとtopic bankの識別を助けたため、任意のcross-topic discovery用途で保持する。10外部repoの移行commitをSHAでrootへpinし、root policy suite、package、ZIP検査も成功した。外部sourceとrootのGitHub反映には、利用者指定のmiku-scm draft recommit push方式を使う。Release・tag・配備は本taskの対象外。最新状態はTODO.mdとHANDOFF.mdを参照する。
 
 ## 1. 目的と今回の境界
 
@@ -12,7 +12,7 @@ igapyon-agent-skillsとそのmiku-soft関連規約では、スキルの参照資
 
 利用者が最近のフロンティアモデルで感じている効果の低下やデメリットを、今回の見直しの動機とする。全モデル・全用途でindexの効果がないと一般化しない。参照情報の重複、古い一覧への誘導、初回読取の増加、生成・検査の保守負担を減らし、必要な原資料へ直接到達できる構成にする。
 
-後続の実装指示に基づき、方針文を正本へ反映し、root build・検査経路を変更した。Qiitaの記事集合用indexを暫定保持し、内部14件の補助indexを削除した。外部10 source repoでもskill inventory依存を除去し、各repoの既存build/testを通した。変更はローカルworktreeにあり未commit。現行のroot pinsは旧refのため外部indexをlegacyとして扱う。新refの統合後に行うpackage検証とLuna想定の代表task比較は未完了で、commit/push、tag、Release、配備も行っていない。詳細な状態はTODO.md、HANDOFF.md、maintenance inventoryを参照する。
+後続の実装指示に基づき、方針文、root build・検査経路を更新し、内部14件の補助indexを削除した。Qiita indexはLunaの代表task比較で記事overviewとtopic bankの選択を助けた証拠に基づき、任意のcross-topic discovery用に保持する。独立した外部10 repositoryは3つの並行作業列で移行し、各sourceのbuild/testとmiku-scm draft recommit pushを完了した。新しいrefをrootへSHA pinし、root policy suite、Maven package、実ZIP検査を完了した。Release、tag、配備は今回の対象外。詳細な状態と検証証拠はTODO.md、HANDOFF.md、maintenance inventoryを参照する。
 
 ## 2. 実装時に採用する全体方針
 
@@ -257,7 +257,7 @@ SCMの`references/repository-precommit-checks.md`では、repoが宣言した生
 
 ### IDX-05：残り9外部skillの移行
 
-前提：各sourceの編集権限、IDX-00・01。独立repoは1件ずつ処理する。
+前提：各sourceの編集権限、IDX-00・01。同じrepository内では変更・検証・反映を順序どおりに進め、独立repository間は並行処理できる。実施時は3作業列に分け、root pin更新を後段にまとめた。
 
 1. 自身のindexのconsumerと生成・bundle検査を確認し、内部と同じ基準で判断。
 2. removeなら本文→producer/validator→単独bundle→明示削除の順に変更する。
@@ -308,7 +308,7 @@ indexを使用する経路と、直接参照・限定検索の経路それぞれ
 
 ## 8. 実装時の検証表
 
-以下は実装の検証要件。実装後の自己レビューで不足していた実ZIP・生成経路・静的参照到達性のtestsを補った。各commandと結果はmaintenance inventory、TODO、HANDOFFに記録する。モデル行動と保持価値の比較は別の未完了項目として残す。
+以下は実装の検証要件。実装後の自己レビューで不足していた実ZIP・生成経路・静的参照到達性のtestsを補った。各commandと結果はmaintenance inventory、TODO、HANDOFFに記録する。Qiitaの保持価値は同一snapshotを使ったLunaの3代表task比較で判断し、測定していないtoken/timeや他skillへの一般化は行わない。
 
 | ケース | 期待結果 |
 | --- | --- |

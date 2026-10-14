@@ -2,7 +2,7 @@
 
 ## 配布ZIPのsource照合補修（2026-10-11・ローカル実装済み）
 
-利用者の実装指示に従い、正本：[release-archive-source-verification.md](docs/plans/release-archive-source-verification.md)のZIP-00〜05をroot repoへ反映した。内部sourceから配布対象を決め、ZIP展開先の集合・型・内容と照合し、14代表参照も展開先で確認する。変更はローカルで未commit。
+利用者の実装指示に従い、正本：[release-archive-source-verification.md](docs/plans/release-archive-source-verification.md)のZIP-00〜05をroot repoへ反映した。内部sourceから配布対象を決め、ZIP展開先の集合・型・内容と照合し、14代表参照も展開先で確認する。この補修はindex.json移行と同じroot SCM反映に含める。
 
 - [x] ZIP-00：既存差分・58件の基準を確認。fixtureのsourceとZIPを揃え、ZIP欠落の故障testを追加。
 - [x] ZIP-01：source/展開先の集合・型・生バイト内容を照合するhelperとunit testsを実装。
@@ -11,24 +11,24 @@
 - [x] ZIP-04：既存suite、package後checker、実packageと一時ZIP故障コピーを確認。
 - [x] ZIP-05：README・inventory・計画書・TODO/HANDOFFを実行結果と適用範囲へ更新。
 
-検証：`npm run test:skill-index-policy`は77/77成功。`mvn package`が成功し、checkerはinternal=15、external=10、source-checked=15、representative-routes=14で実ZIPを受理。実ZIP一時コピーからMikukuのVERSION.mdまたは代表画像を削除、あるいはarticle-writing.mdの内容を変更すると各々exit 1で拒否した。`git diff --check`も成功。外部10件の全ファイルsource照合、Qiitaの保持判断、Luna比較、新ref統合は親計画の未完として残す。commit/push・Release・配備は未実施。
+検証：`npm run test:skill-index-policy`は77/77成功。`mvn package`が成功し、checkerはinternal=15、external=10、source-checked=15、representative-routes=14で実ZIPを受理。実ZIP一時コピーからMikukuのVERSION.mdまたは代表画像を削除、あるいはarticle-writing.mdの内容を変更すると各々exit 1で拒否した。`git diff --check`も成功。外部10件の全ファイルsource-to-ZIP比較は現行checkerの対象外で、full-SHA lock/ref/index検査で扱う。Qiita保持判断、Luna比較、新ref統合は完了し、結果は親計画のinventoryへ記録した。GitHub反映にはmiku-scm draft recommit push方式を使用する。Release・配備は対象外。
 
-## index.json任意化の実装（2026-10-10・進行中）
+## index.json任意化の実装（2026-10-10〜2026-10-14・完了）
 
 利用者は当初Luna想定の詳細計画のみを依頼し、その後、計画に従う実装を明示指示した。正本：[index-json-policy-migration.md](docs/plans/index-json-policy-migration.md)。
 
-- [ ] IDX-00：内部15skill・外部10skillの調査済み。内部14件のremoveと外部10件のlegacyは確定。Qiitaは比較評価待ちの暫定保持で、最終判断は未完了。
+- [x] IDX-00：内部15skill・外部10skillを調査し、内部14件のremove、Qiitaのretain、外部10件のremoveを根拠付きで確定。
 - [x] IDX-01：全体方針、miku-soft規約、starter、reviewer/compactor/SCMの規則を更新。
 - [x] IDX-02：宣言対象だけを生成・検査するpolicyとbuild経路へ変更。実ZIPの正常・異常系、ゼロ・複数生成、policy拒否、生成差分検査も確認。
-- [ ] IDX-03：内部14件の補助index削除と参照経路修正は実装済み。単独配置14skillの静的到達確認とindexなしstarter検査は成功。モデルが代表作業で適切な参照を選ぶ確認は未実施。
+- [x] IDX-03：内部14件の補助index削除と参照経路修正を実施。単独配置14skillの静的到達確認とindexなしstarter検査が成功。Qiitaの保持候補についてLunaで同一snapshot・3代表taskを比較し、結果をinventoryへ記録。
 - [x] IDX-04：miku-indexgen source skill・build/testsを移行。生成CLIのNode/Java smokeと既存8 testsを維持。
 - [x] IDX-05：残り9外部skill sourceを移行し、各repoのnpm build/testを実行。公開やpin更新は別工程。
-- [ ] IDX-06：新refを統合し、source/staging/ZIPで復活しないことと保持対象を検証。
-- [ ] IDX-07：参照到達性・保持価値を評価し、結果と未完を引き継ぐ。
+- [x] IDX-06：外部10件をfull SHAでpinし、source/staging/ZIPで不要なinventoryが復活しないこととQiita retain indexを検証。
+- [x] IDX-07：Luna比較、保持判断、検証結果と残る範囲をinventory・HANDOFFへ記録。GitHub反映はmiku-scm draft recommit push方式を使用。Release・tag・配備は対象外。
 
-内部14件のindex削除と内部policy/build変更を実施済み。自己レビュー後、policy・実ZIP・生成経路・単独参照到達性・starterの検査を58件へ拡充した。`mvn clean package`は成功。外部source10repoの追跡差分は74 path（旧記録73は誤り）で、10repoすべてで既存build/testが成功済み（text-file-opsはWindows専用test 1件skip）。今回修正したprompt-lintはsource 10件＋bundle 6件、AI builderはsource 34件＋bundle 5件を再検証し、source由来の期待集合でZIP欠落を検出した。新しい検査はRelease workflowにも追加した。root pinsは旧refのままlegacy。Qiitaの保持価値、Luna想定の代表task比較、新refの統合・最終package確認は未完了。利用者repoのcommit/push、tag、Release、配備は未実施。下方の別作業はこの移行の実行範囲に含めない。
+内部14件のindex削除と内部policy/build変更を実施済み。自己レビュー後、policy・実ZIP・生成経路・単独参照到達性・starterの検査を拡充した。独立した外部source 10repoを3作業列で並行移行し、各repoの既存build/testとmiku-scm draft recommit pushを完了。外部10件の変更は74 source path。text-file-opsはWindows専用test 1件をskip。prompt-lintはsource 10件＋bundle 6件、AI builderはsource 34件＋bundle 5件を再検証し、source由来の期待集合でZIP欠落を検出した。rootでは外部10件をfull SHAでpinし、`npm run test:skill-index-policy` 77/77、`mvn -f pom.xml clean package`、実ZIP checker（internal=15、external=10、source-checked=15、representative-routes=14）が成功。Qiita indexはLuna比較でoverviewとtopic bankの選択を助けたため、任意のcross-topic discovery用にretain。GitHub反映にはmiku-scm draft recommit pushを使用し、Release・tag・配備は行わない。下方の別作業はこの移行の実行範囲に含めない。
 
-自己レビュー修正後の最終検証：root suite 58/58成功、ZIP検査は内部15・旧pin外部10の計25 skillで成功。sourceには残した参照をbundleとZIPの両方から除く再現では、prompt-lintとAI builderの検査がともにexit 1で拒否した。証拠はmaintenance inventoryのVerification節へ記録した。
+自己レビュー修正後の最終検証：root suite 58/58成功、ZIP検査は内部15・旧pin外部10の計25 skillで成功。sourceには残した参照をbundleとZIPの両方から除く再現では、prompt-lintとAI builderの検査がともにexit 1で拒否した。2026-10-14の新ref統合後も、policy suite 77/77、clean package、実ZIP checkerが成功した。証拠はmaintenance inventoryのVerification節へ記録した。
 
 ## GitHub Issue受信・daybook取り込み（Luna向け実装計画・実装済み）
 

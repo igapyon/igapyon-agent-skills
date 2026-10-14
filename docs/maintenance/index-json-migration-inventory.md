@@ -1,12 +1,12 @@
 # index.json migration inventory
 
-Status: local source changes for IDX-00 through IDX-05 are implemented. Qiita's retention decision is pending a representative-task comparison; the root build temporarily maintains its existing index. Static reference-route checks are separate from model behavior evaluation. All ten external source worktrees have uncommitted index-optional changes; their existing builds/tests pass. Root pins remain `legacy` because they still point to published revisions that include the old skill inventories. A later release/ref update and root package verification are required before these rows can leave legacy status. No changes have been committed or published.
+Status: IDX-00 through IDX-07 are implemented. Fourteen internal inventories were removed; the Qiita writer inventory is retained for optional cross-topic discovery based on the Luna comparison below. All ten external source changes are pinned by immutable commit SHA with `remove` dispositions. The root policy suite, package, and release archive checker pass against those pins. The source commits were pushed through the task's miku-scm workflow; no Release or skill deployment was performed.
 
 ## Second self-review and archive repair (2026-10-11)
 
 The second self-review found that the root archive checker accepted an index-free internal skill when a reference or asset was absent from the ZIP. Removing Mikuku's `references/VERSION.md` or representative image from a temporary copy of the actual ZIP produced exit 0. The source-only route suite passed independently of those archive omissions. The original ZIP contained both files.
 
-The [archive repair plan](../plans/release-archive-source-verification.md) was implemented locally after the user authorized execution. The checker now compares all internal skill files against source and checks representative routes in the extracted ZIP. The verification results and scope are recorded below. External ref integration and model/Qiita evaluations remain pending.
+The [archive repair plan](../plans/release-archive-source-verification.md) was implemented after the user authorized execution. The checker compares all internal skill files against source and checks representative routes in the extracted ZIP. The verification results and scope are recorded below.
 
 ## Internal skills
 
@@ -23,24 +23,26 @@ The [archive repair plan](../plans/release-archive-source-verification.md) was i
 | `igapyon-miku-soft-developer` | remove | SKILL already gives direct workflow routes; change the shared standard and starter first. |
 | `igapyon-mikuku-agent` | remove | Preserve VERSION.md, images, and dated articles; remove only its generated root inventory. |
 | `igapyon-note-writer` | remove | Confirm direct route to canonical article and metadata guidance. |
-| `igapyon-qiita-writer` | pending (temporarily retained) | Existing paths, directories, titles, and first-heading summaries may help cross-topic article discovery. Benefit over scoped search is unmeasured; see the explicit provisional decision below. |
+| `igapyon-qiita-writer` | retain | Luna's representative comparison found that the index surfaced the application-architecture overview and distinguished it from its companion topic bank; consult it optionally for cross-topic discovery. |
 | `igapyon-repo-conventions` | remove | SKILL contains core rules and links to detailed references; generic inventory is optional discovery only. |
 | `igapyon-reviewer` | remove | Authored `references/INDEX.md` gives topic-level routes; update review criteria to make root index optional. |
 | `igapyon-skill-compactor` | remove | Known direct routes exist; update guidance so target indexes are opt-in rather than assumed. |
 
-The root build regenerates and validates the one temporarily retained internal index. All other internal root indexes must be absent after IDX-03. Historical examples, product schemas, user data, and JSON files below reference directories are not covered by this table.
+The root build regenerates and validates the one retained internal index. All other internal root indexes are absent. Historical examples, product schemas, user data, and JSON files below reference directories are not covered by this table.
 
-## Qiita provisional retention
+## Qiita retention evaluation
 
 - Path: `skills/igapyon-qiita-writer/index.json`.
-- Decision: pending; temporarily retained to allow comparison against the current snapshot. No measured discovery or context-cost advantage is claimed.
-- Consumer and purpose: the article writer may consult paths, directories, and titles when choosing examples across article groups. SKILL.md now makes this optional and starts known-topic tasks with scoped search.
+- Decision: retain for optional broad article discovery. It is not a default first read.
+- Consumer and purpose: the article writer may consult paths, directories, and title-like summaries when choosing articles across topic groups or distinguishing a full article from its topic bank. SKILL.md makes this optional and starts known-topic tasks with scoped search.
 - Observed contents: 42 entries including SKILL.md and templates. There are no `topics` or `tags` fields. Ten summaries are the generic headings `はじめに` or `掲載先情報`; these do not summarize article meaning.
 - Producer: bundled `lib/miku-indexgen-1.6.2.jar`, selected by `scripts/generate-skill-indexes.mjs`; run `mvn generate-resources` at the repository root.
 - Update trigger: additions, removals, renames, or changes to the included Markdown/JSON files or their metadata.
 - Validation: the declared-generation tests, generated-index check after regeneration/commit, and release archive JSON/path checks. These check artifact integrity, not usefulness.
 - Maintenance owner: the igapyon-agent-skills repository maintainer.
-- Next evaluation: compare the same source snapshot with and without index use for (1) locating a known CLI template, (2) choosing an article for an unfamiliar architecture topic, and (3) confirming original text when a dated example conflicts with current policy. Record selected sources, mistakes, redundant reads, steps, and any measurable token/time use. The planned Luna behavioral comparison has not run. Resolve the decision as retain or remove from that evidence.
+- Luna comparison (2026-10-14): three identical representative tasks were run against the same snapshot with and without index use. For the known CLI-template task, both routes reached `templates/patterns/cli-reference-pattern.md`; the index did not change the choice and added one opened file. For the architecture-in-the-AI-era task, index use selected the full article `references/general/20260430-general.md` and identified `20260430-miku-soft-architecture-topic-bank.md` as a topic bank. Without index use, the model selected the related but less direct `20260502-general-repository-engineering.md` and did not inspect the architecture overview, so it missed the overview/topic-bank distinction requested by the task. For the dated-example/current-policy conflict, both routes reached `references/general/20260429-general.md` and `docs/policies/reference-discovery.md`; index use did not change the result.
+- Efficiency and limits: the no-index run reported nine search/read invocations and six unique files across all tasks. The index-enabled run did not report a comparable aggregate invocation count. Neither run exposed token or elapsed-time measurements. The comparison supports a narrow selection benefit for optional cross-topic discovery; it does not establish general token or time savings. Generic summaries and the lack of topic/tag fields remain index quality limitations.
+- Decision: retain the index as an optional discovery aid for cross-topic article selection. Keep direct links and scoped search as the normal route for known topics, and do not require an index-first read.
 
 ## Verification after self-review
 
@@ -60,7 +62,7 @@ Verified on 2026-10-10:
 | Original omission reproduction in isolated copies | Both verifiers now fail with exit 1 when a source reference is absent from both bundle and ZIP. Tested `references/repository/checkpoints.md` for prompt-lint and `references/instructions/01-input-fields.md` for AI builder. |
 | Qiita `quick_validate.py` | Skill frontmatter/naming validation passes. |
 
-Release CI now runs the expanded policy/reference suite before packaging. Model-level representative-task comparisons remain unperformed; the static route and artifact checks above do not close that item.
+Release CI now runs the expanded policy/reference suite before packaging. At this 2026-10-11 checkpoint, model-level representative-task comparisons had not yet run; the later Qiita evaluation is recorded above under the 2026-10-14 retention evaluation.
 
 ## Verification after archive repair (2026-10-11)
 
@@ -74,21 +76,45 @@ The root checker now derives each internal skill's expected file set from `skill
 | Real-ZIP temporary-copy faults | Removing `references/VERSION.md` or `assets/mikuku/mikuku01.png`, and changing `references/article-writing.md`, each failed with exit 1 and the affected relative path. Source and original ZIP were preserved. |
 | `git diff --check` | Passed. |
 
-The new source-to-archive byte comparison covers the 15 root-internal skills. The 10 external skills still receive the existing lock/index checks but are not included in this new full-file source comparison; their new-ref integration remains part of IDX-06. The 14 route checks establish static reachability in the extracted files, not model selection quality. Qiita retention and Luna representative-task evaluation remain open.
+The new source-to-archive byte comparison covers the 15 root-internal skills. External skills receive the lock and adopted-index checks but are not included in this new full-file source comparison. The 14 route checks establish static reachability in the extracted files; the separate Qiita comparison above evaluates model selection for the retained discovery index.
+
+## External ref integration and final root verification (2026-10-14)
+
+All ten migrated external commits were pinned by full SHA in `pom.xml` and `config/skill-index-policy.json`, with `remove` dispositions. `scripts/prepare-release-staging.sh` fetches the exact SHA, checks out detached, and verifies the resolved commit before staging. The Maven package fetched all ten pins and generated `target/igapyon-agent-skills-1.20261006.1.zip`; `EXTERNAL_SKILLS.lock` records the same refs. The archive checker accepted the package with `internal=15`, `external=10`, `source-checked=15`, and `representative-routes=14`.
+
+| External repository | Pinned commit | Build/test evidence |
+| --- | --- | --- |
+| `miku-indexgen-skills` | `1bf6ce8506583a1ac101614a27671a6b7005e122` | npm test 8/8; Node/Java product generation checks retained. |
+| `miku-text-bundle-skills` | `6b5b8e00383d8e22bada7bf8d2c503c99c2f9838` | npm test 9/9. |
+| `miku-repo-bundle-skills` | `ccfe1d57754623ec3ae7eb60eb89b28cb339a98a` | npm test 6/6; product-generated indexes retained. |
+| `miku-text-file-ops-skills` | `461af935838ede6d96d9767570d139dcf41af75c` | 34 tests passed; one Windows-only test skipped. |
+| `miku-prompt-lint-skills` | `f040a3a9627e2537d08bcf9b91de65768e334c8f` | Source tests 10/10; bundle/ZIP tests 6/6. |
+| `miku-ai-assistant-builder-skills` | `861eebfd788bbb3934558d8b11cc831247b1688c` | Source tests 34/34; bundle/ZIP tests 5/5; reproducibility check passed. |
+| `miku-ms-office-skills` | `97b6a2bfe9f5b2d1a308bb53a8967b04032a2af2` | npm test 9/9; build passed. |
+| `miku-json2xlsx-skills` | `870bc32b30762d1e1f9df325122da9163728eea2` | npm test 10/10; bundle, runtime, and ZIP checks passed. |
+| `miku-project-skills` | `ae2b629b27d1f0805b7626957a02d2aaea506967` | Build passed; 41/41 tests and release ZIP checks passed. |
+| `miku-score-skills` | `6abdda090d88ad9a036089e6e39ba415d9e79bc7` | Build passed; upstream tests 693/693; isolated bundle smoke and release ZIP passed. |
+
+| Root command / artifact | Result |
+| --- | --- |
+| `npm run test:skill-index-policy` | 77/77 pass with the SHA pins. |
+| `mvn -f pom.xml clean package` | BUILD SUCCESS; all ten exact commits fetched and staged. |
+| `node scripts/check-release-archive.mjs target/igapyon-agent-skills-1.20261006.1.zip` | Valid: internal=15, external=10, source-checked=15, representative-routes=14. |
+| `sh -n scripts/prepare-release-staging.sh` and `git diff --check` | Passed. |
 
 ## External pinned skills
 
 | Repository | Ref | Skill | State | Next action |
 | --- | --- | --- | --- | --- |
-| `miku-indexgen-skills` | `v1.6.2` | `igapyon-miku-indexgen` | legacy (source changed; build passed) | Preserve index generation outputs and runtime tests; obtain a new source ref before updating the root pin. |
-| `miku-text-bundle-skills` | `v1.6.0` | `igapyon-miku-text-bundle` | legacy (source changed; build passed) | Root inventory removed; publish a migrated ref before updating the root pin. |
-| `miku-repo-bundle-skills` | `v0.5.0.1` | `igapyon-miku-repo-bundle` | legacy (source changed; build passed) | Preserve generated text-bundle indexes and class-index inputs; obtain a new ref before updating the root pin. |
-| `miku-text-file-ops-skills` | `v0.5.0` | `igapyon-miku-text-file-ops` | legacy (source changed; build passed) | Root inventory removed; the Windows-only test is skipped on this host. Obtain a new ref before updating the pin. |
-| `miku-prompt-lint-skills` | `v0.5.0` | `igapyon-miku-prompt-lint` | legacy (source changed; build passed) | Root inventory contract and freshness verifier removed; obtain a new ref before updating the pin. |
-| `miku-ai-assistant-builder-skills` | `v0.13.0` | `igapyon-miku-ai-assistant-builder` | legacy (source changed; build passed) | Preserve task-produced `knowledge-index.md`; obtain a new ref before updating the root pin. |
-| `miku-ms-office-skills` | `v0.7.1` | `igapyon-miku-ms-office` | legacy (source changed; build passed) | Runtime bundle checks now assert runtime files directly; obtain a new ref before updating the pin. |
-| `miku-json2xlsx-skills` | `v0.5.0` | `igapyon-miku-json2xlsx` | legacy (source changed; build passed) | Preserve JSON/JSONL conversion contracts; obtain a new ref before updating the pin. |
-| `miku-project-skills` | `v0.12.4` | `igapyon-miku-project` | legacy (source changed; build passed) | Root inventory requirements removed; obtain a new ref before updating the pin. |
-| `miku-score-skills` | `v0.6.1` | `igapyon-miku-score` | legacy (source changed; tests passed) | Preserve score assets; obtain a new ref before updating the pin. |
+| `miku-indexgen-skills` | `1bf6ce8506583a1ac101614a27671a6b7005e122` | `igapyon-miku-indexgen` | remove | Exact migrated commit pinned and included in the verified archive; product index generation remains. |
+| `miku-text-bundle-skills` | `6b5b8e00383d8e22bada7bf8d2c503c99c2f9838` | `igapyon-miku-text-bundle` | remove | Exact migrated commit pinned and included in the verified archive. |
+| `miku-repo-bundle-skills` | `ccfe1d57754623ec3ae7eb60eb89b28cb339a98a` | `igapyon-miku-repo-bundle` | remove | Exact migrated commit pinned; generated text-bundle indexes and class-index inputs remain. |
+| `miku-text-file-ops-skills` | `461af935838ede6d96d9767570d139dcf41af75c` | `igapyon-miku-text-file-ops` | remove | Exact migrated commit pinned and included; one Windows-only test is skipped on this host. |
+| `miku-prompt-lint-skills` | `f040a3a9627e2537d08bcf9b91de65768e334c8f` | `igapyon-miku-prompt-lint` | remove | Exact migrated commit pinned; bundle/ZIP source checks passed. |
+| `miku-ai-assistant-builder-skills` | `861eebfd788bbb3934558d8b11cc831247b1688c` | `igapyon-miku-ai-assistant-builder` | remove | Exact migrated commit pinned; task-produced `knowledge-index.md` remains. |
+| `miku-ms-office-skills` | `97b6a2bfe9f5b2d1a308bb53a8967b04032a2af2` | `igapyon-miku-ms-office` | remove | Exact migrated commit pinned; runtime bundle checks passed. |
+| `miku-json2xlsx-skills` | `870bc32b30762d1e1f9df325122da9163728eea2` | `igapyon-miku-json2xlsx` | remove | Exact migrated commit pinned; JSON/JSONL conversion contracts remain. |
+| `miku-project-skills` | `ae2b629b27d1f0805b7626957a02d2aaea506967` | `igapyon-miku-project` | remove | Exact migrated commit pinned and included in the verified archive. |
+| `miku-score-skills` | `6abdda090d88ad9a036089e6e39ba415d9e79bc7` | `igapyon-miku-score` | remove | Exact migrated commit pinned; score runtime/assets remain. |
 
-The current legacy state is intentionally strict: the root does not regenerate external indexes, but the current pins still supply the prior indexed source bundle. Change a row to `remove` only when the root points to a new source ref whose archive omits the root inventory and whose release checks pass.
+The migrated pins are immutable commit SHAs. The root does not regenerate external indexes; every `remove` pin supplies a source bundle without the skill-root inventory. Product-generated indexes, runtime data, schemas, and user-facing outputs remain governed by their own contracts.

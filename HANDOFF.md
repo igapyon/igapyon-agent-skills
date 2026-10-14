@@ -22,18 +22,18 @@ Keep it concise. Do not use this as a full work log or a replacement for `TODO.m
 - `scripts/release-archive-files.mjs`が内部skillのsourceとZIP展開先を、相対path・通常file型・size・SHA-256で照合する。`.DS_Store`、`node_modules`、`.git`は従来の配布規則どおりsource側で除外する。
 - 14代表参照routeを`skill-reference-routes.mjs`へ共通化し、source単独testとZIP展開先の両方から確認する。root内部15 skillだけを全file照合する。外部10 skillは現行pinに対するlock/index検査を維持する。
 - 検証：`npm run test:skill-index-policy` 77/77 pass、`mvn package` BUILD SUCCESS、archive checkerはinternal=15 / external=10 / source-checked=15 / representative-routes=14。実ZIP一時コピーでVERSION.md・代表画像の欠落、同サイズ内容変更をそれぞれexit 1で検出。`git diff --check`成功。
-- 作業差分はローカルで未commit。source照合は外部10件に未適用。外部新ref統合、Qiita保持判断、Luna比較は親移行計画の未完。commit/push、Release、配備なし。
+- 外部10件の新ref統合後も、source-to-ZIP全file比較の対象はroot内部15件。外部10件はfull-SHA lock/ref/index検査と実ZIP package確認を通過している。Qiita比較とroot package検証は親移行計画で完了。Release・配備は行わない。
 
 ## 親計画：index.json方針移行の実装（2026-10-10）
 
 利用者は当初Luna想定の詳細計画を依頼し、その後、計画に従う実装を明示指示した。計画正本は[index-json-policy-migration.md](docs/plans/index-json-policy-migration.md)、task一覧と進捗は[TODO.md](TODO.md)冒頭。
 
 - 方針：index.jsonを全skill共通の必須・先読前提から外し、具体的なconsumerと維持価値があるもの、製品出力は残す。新しい全件INDEX.mdへの置換も必須にしない。
-- 内部14件の補助indexを削除。Qiitaは保持価値の比較が未完了のため、1件を暫定保持する。indexにtopics/tagsはなく、summaryには先頭見出しのような一般的な文字列もある。保持価値を実証済みとは扱わない。
+- 内部14件の補助indexを削除。Qiita indexはLunaの3代表task比較で、アプリケーションarchitecture記事のoverviewとtopic bankを区別しやすくしたため、任意のcross-topic discovery用途でretain。known-topic taskの既定経路は直接参照・scoped searchのまま。indexにtopics/tagsはなく、一般的なsummaryもある。token/time削減は測定していない。
 - 自己レビュー後、実ZIPの欠落・混入・不正path・symlink・lock検査、ゼロ/複数生成、policy拒否、生成差分、単独配置14skillの静的参照到達性、indexなしstarterの検査を58件へ拡充。モデルの選択行動やtoken削減を測った検査ではない。Release workflowでもこのsuiteを実行する。
 - `mvn clean package`成功。外部10repoの追跡差分は74 source path（以前の73は誤り）。既存build/testは全repoで成功済み、今回変更したprompt-lintは10 source＋6 bundle tests、AI builderは34 source＋5 bundle testsを再検証。両repoのZIP検査はsourceから期待集合を作り、bundleとZIPで同じ参照が抜けた場合も検出する。text-file-opsのWindows専用test 1件はskip。
-- 外部source変更は各worktreeに未commitで存在する。移行済み新refが未発行なのでroot pinsは旧refのままlegacy。IDX-00のQiita判断、IDX-03のモデル実作業確認、IDX-06の新ref統合、IDX-07のLuna想定比較は未完了。詳細はmaintenance inventoryを参照する。
-- 利用者repoのcommit/push、tag、Release、skill配備は未実施。miku-indexgenの製品生成機能、mikuku画像・記事・version正本、他製品JSON、配布provenanceを維持する。外部の旧refを加工せず、source修正と新ref統合を区別する。
+- 外部10source repositoryは3作業列で並行移行し、各repoの既存build/test確認後にmiku-scm draft recommit pushを実行した。root pinsとpolicy dispositionを新しいfull SHAへ更新し、policy suite 77/77、`mvn clean package`、実ZIP checker（internal=15、external=10、source-checked=15、representative-routes=14）が成功。全refとrepo別test数はmaintenance inventoryに記録。
+- IDX-00〜07の作業・記録・検証は完了。miku-indexgenの製品生成機能、mikuku画像・記事・version正本、他製品JSON、配布provenanceを維持。利用者指定のmiku-scm draft recommit push方式でGitHub反映を進める。Release、tag、skill配備は対象外。
 
 下方には過去の別作業の状態が残っている。そこにあるbranch・未commit・優先作業の記述を、この移行の現在状態として扱わない。
 

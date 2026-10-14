@@ -60,7 +60,17 @@ while [ "$#" -gt 0 ]; do
     exit 1
   fi
 
-  git clone --depth 1 --branch "$EXTERNAL_REF" "$EXTERNAL_REPO_URL" "$EXTERNAL_WORK_DIR"
+  git init "$EXTERNAL_WORK_DIR"
+  git -C "$EXTERNAL_WORK_DIR" fetch --depth 1 "$EXTERNAL_REPO_URL" "$EXTERNAL_REF"
+  git -C "$EXTERNAL_WORK_DIR" checkout --detach FETCH_HEAD
+
+  if printf "%s" "$EXTERNAL_REF" | grep -Eq "^[0-9a-fA-F]{40}$"; then
+    RESOLVED_EXTERNAL_REF=$(git -C "$EXTERNAL_WORK_DIR" rev-parse HEAD)
+    if [ "$RESOLVED_EXTERNAL_REF" != "$EXTERNAL_REF" ]; then
+      echo "Resolved external ref does not match pinned commit: $EXTERNAL_SKILL_NAME ($RESOLVED_EXTERNAL_REF != $EXTERNAL_REF)" >&2
+      exit 1
+    fi
+  fi
 
   if [ ! -d "$EXTERNAL_WORK_DIR/skills/$EXTERNAL_SKILL_NAME" ]; then
     echo "External skill not found: skills/$EXTERNAL_SKILL_NAME" >&2
