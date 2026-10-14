@@ -57,6 +57,7 @@ async function scenario(t, { existingRemoteBranch = false } = {}) {
   const repo = path.join(temporary, "repo");
   execFileSync("git", ["init", "--bare", remote], { stdio: "ignore" });
   execFileSync("git", ["init", repo], { stdio: "ignore" });
+  git(repo, "config", "core.autocrlf", "false");
   git(repo, "config", "user.name", "Test User");
   git(repo, "config", "user.email", "test@example.invalid");
   await writeFile(path.join(repo, "README.md"), "base\n", "utf8");

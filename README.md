@@ -47,6 +47,10 @@ repo 全体のバージョンを更新するときは、日付部分に合わせ
 
 `mvn validate`、`mvn generate-resources`、`mvn clean package` では、root版、`みくく` の日付・suffix、2つのskill runnerの `PRODUCT_VERSION` が対応していることを確認します。たとえば `1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
 
+## 複数 OS でのテスト
+
+miku-scm と GitHub Writer は、GitHub Actions で macOS と Windows の両方に対してテストを実行します。Windows の改行コードの違いを見つけた実例と、この構成の価値を [複数 OS でテストする価値](docs/maintenance/github-actions-cross-platform-testing.md) に記録しています。
+
 ## 記事公開の優先順位
 
 技術記事は、まず Note 向けの記事として作成・公開することを優先します。
