@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v10";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v11";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -312,6 +312,13 @@ function appendRecommitPush(lines, result) {
   }
 }
 
+function appendCarryover(lines, carryover) {
+  lines.push(`Carryover stash: ${displayValue(carryover.stash_sha)}`);
+  lines.push(`Stash retained: ${carryover.stash_retained === null ? "unknown" : carryover.stash_retained ? "yes" : "no"}`);
+  lines.push(`Restore status: ${displayValue(carryover.restore_status)}`);
+  lines.push(`Working tree: ${displayValue(carryover.working_tree, "unknown")}`);
+}
+
 function appendPostMergeNextWork(lines, result) {
   lines.push(`Previous branch: ${displayValue(result.previous_branch)}`);
   lines.push(`Remote: ${displayValue(result.remote)}`);
@@ -325,6 +332,7 @@ function appendPostMergeNextWork(lines, result) {
   lines.push(`Next work branch: ${displayValue(result.next_branch)}`);
   lines.push(`Final branch: ${displayValue(result.final_branch)}`);
   lines.push(`Post-create comparison: ${displayValue(result.comparison)}`);
+  if (result.carryover) appendCarryover(lines, result.carryover);
   lines.push(`Tag mutation: ${result.tag_mutation ? "yes" : "no"}`);
   lines.push(`Release mutation: ${result.release_mutation ? "yes" : "no"}`);
 }
@@ -428,6 +436,13 @@ export function renderHumanOutput({
     lines.push(`Classification: ${displayValue(error.classification, "unknown")}`);
     if (error.code) lines.push(`Code: ${error.code}`);
     lines.push(`Message: ${displayValue(error.message, "unknown error")}`);
+    if (workflow === "repository.post-merge.next-work" && error.recovery) {
+      lines.push(`Stopped stage: ${displayValue(error.recovery.stage)}`);
+      lines.push(`Previous branch: ${displayValue(error.recovery.previous_branch)}`);
+      lines.push(`Next work branch: ${displayValue(error.recovery.next_branch)}`);
+      lines.push(`Final branch: ${displayValue(error.recovery.final_branch, "unknown")}`);
+      appendCarryover(lines, error.recovery);
+    }
     if (error.bad_argument) lines.push(`Bad argument: ${error.bad_argument}`);
     lines.push(`Mutation invoked: ${mutationInvoked === null ? "unknown" : mutationInvoked ? "yes" : "no"}`);
     lines.push(`Retryability: ${displayValue(error.retryability, "review-required")}`);

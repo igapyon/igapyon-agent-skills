@@ -181,13 +181,40 @@ Do not present local tag creation and push as the default continuation. Normally
 
 ## Next Work Branch After PR Completion
 
-The fixed helper `scripts/post-merge-next-work.mjs --confirmed-merged --apply` is the authoritative one-command implementation of this workflow. It requires a clean `-done` branch, fetches the base, performs the advisory exact-tag check, creates the prescribed next branch, and verifies `0 0`. Do not run a separate `git switch -c` when this helper is available.
+The fixed helper `scripts/post-merge-next-work.mjs --confirmed-merged --apply` is the authoritative one-command implementation of this workflow. It requires a `-done` branch with no staged changes, fetches the base, performs the advisory exact-tag check, creates the prescribed next branch, and verifies `0 0`. It also carries remaining unstaged changes and untracked files through a retained stash as described below. Do not run a separate `git switch -c` when this helper is available.
 
 Run this workflow when the human explicitly reports that the Pull Request was merged. Treat a clear report such as `GitHubでマージした`, `PRをマージした`, or `マージ完了` as both confirmation of the merge and authorization to refresh the base and create the next work branch; do not require a second instruction to create it. Do not infer merge completion from local Git state, push output, or branch naming. Do not create the next work branch immediately after push or local `-done` rename while the PR is still open or its merge is unconfirmed.
 
 Interpret a local branch name ending in `-done` only as an operational marker that the post-recommit publication sequence probably reached the rename performed after push. It does not prove that a Pull Request was created or merged. Never use `-done` alone to decide that PR work is complete; require the human's explicit statement that the PR was merged before running this workflow.
 
 Treat a `-done` branch as frozen: do not add new work, stage changes, create commits, or run PR Soft Reset Recommit on it. After receiving the human's merge report, refresh the base, run the non-blocking recommended-tag check below, and create the next work branch before continuing. If the prior PR was not merged but a correction is required, stop and require an explicitly designed recovery path instead of silently continuing on `-done`.
+
+### Carry Remaining Unstaged Work To The Next Branch
+
+The explicit merge-completion request also authorizes preserving existing
+unstaged changes and untracked files and carrying them to the next branch:
+
+1. Validate the branch, empty index, base, and unique next-branch name before
+   stashing. Stop before stash or branch creation when these checks fail.
+2. If changes remain, use `git stash push --include-untracked --message
+   <workflow-message>` and record the new stash's exact commit SHA. Check
+   that a new stash was created and that the worktree and index are clean.
+   Ignored files are outside the stash scope; staged changes are a blocker.
+3. Create the normal next branch from the refreshed base, and verify its
+   branch, HEAD, clean worktree and index, and exact `0 0` commit alignment.
+4. Restore with `git stash apply <recorded-stash-sha>`, without `--index`.
+   Verify the expected branch and HEAD, empty index, and retained stash. A
+   dirty worktree after successful restoration is expected. `0 0` describes
+   commit alignment with the base, not the absence of uncommitted work.
+5. Retain the stash even after successful restoration. Report its SHA,
+   retention, restore status, and final worktree state. Do not pop or drop
+   it, select an older stash, or automatically retry a failed mutation.
+
+On stash, branch-creation, or restore failure, preserve the current state and
+report the stopped stage, final branch, new stash SHA when available, and
+whether it is retained. A restore conflict may leave conflict entries and
+partially restored files on the new branch; keep those and the stash for
+human-directed recovery. Do not reset or switch back automatically.
 
 When `--base` is omitted, first infer the base from a current branch that
 matches the prescribed `<base>-tiga<MMDD><hour-code><minute-codes>-done`
