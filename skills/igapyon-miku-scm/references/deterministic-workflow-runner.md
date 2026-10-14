@@ -86,8 +86,12 @@ not hashes, prove behavior.
 `repository.post-merge.next-work` has no separate preflight artifact because
 the human's explicit merge report is its operation-specific approval. It still
 requires both `--confirmed-merged` and `--apply`; the delegate revalidates the
-clean frozen branch, refreshes the base, checks the recommended tag, creates
-the next branch, and verifies exact `0 0` alignment in one invocation.
+frozen branch and empty index, refreshes the base, checks the recommended tag,
+creates the next branch, and verifies exact `0 0` alignment in one invocation.
+Remaining unstaged changes and untracked files are stashed before branch
+creation and restored on the new branch using the created stash's exact SHA.
+The stash is retained after success or failure. Failure results record the
+stopped stage, final branch, and stash recovery details; they never retry.
 
 `work.commit` is likewise one local apply invocation. The exact
 `miku-scm git add commit` request authorizes its fixed speed-first scope:

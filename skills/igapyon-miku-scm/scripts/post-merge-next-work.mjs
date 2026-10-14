@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -36,8 +36,6 @@ function runner(cwd, args, allowFailure = false) {
     err: (r.stderr || "").trim(),
   };
 }
-function text(root, args) { return runner(root, args).out; }
-function clean(root) { if (text(root, ["status", "--porcelain"])) throw new Error("Working tree or index is dirty"); }
 export function workBranchName(base, date = new Date()) {
   const parts = jstDateParts(date);
   const abc = (n) => String.fromCharCode(97 + n);
@@ -86,45 +84,116 @@ export function classifyTagLookup(recommendedTag, lookup, baseCommit) {
 
 export async function run(options, dependencies = {}) {
   const git = dependencies.git ?? runner;
-  const root = git(options.repo, ["rev-parse", "--show-toplevel"]).out;
-  const before = git(root, ["branch", "--show-current"]).out;
-  if (!before.endsWith("-done")) throw new Error("Current branch must end in -done");
-  if (git(root, ["status", "--porcelain"]).out) throw new Error("Working tree or index is dirty");
-  const nameBase = baseFromDoneBranch(before);
-  const head = git(root, ["rev-parse", "HEAD"]).out;
-  git(root, ["fetch", options.remote]);
-  if (git(root, ["branch", "--show-current"]).out !== before || git(root, ["rev-parse", "HEAD"]).out !== head || git(root, ["status", "--porcelain"]).out) throw new Error("Local state changed during fetch");
-  const base = options.base || nameBase || baseFromRemoteHead(root, options.remote, git);
-  if (!base || !NAME.test(base)) throw new Error("Base branch is unresolved; pass --base");
-  const remoteBase = `${options.remote}/${base}`;
-  const baseCommit = git(root, ["rev-parse", remoteBase]).out;
-  const next = workBranchName(base, dependencies.now ? dependencies.now() : new Date());
-  if (git(root, ["show-ref", "--verify", "--quiet", `refs/heads/${next}`], true).ok) throw new Error(`Next work branch already exists: ${next}`);
-  const info = await version(root, baseCommit, git);
-  const tagLookup = info.tag === "unresolved"
-    ? null
-    : git(root, ["ls-remote", "--tags", options.remote, `refs/tags/${info.tag}`, `refs/tags/${info.tag}^{}`], true);
-  const tagResult = classifyTagLookup(info.tag, tagLookup, baseCommit);
-  git(root, ["switch", "-c", next, remoteBase]);
-  const comparison = git(root, ["rev-list", "--left-right", "--count", `HEAD...${remoteBase}`]).out.replace(/\s+/g, " ");
-  if (git(root, ["branch", "--show-current"]).out !== next || git(root, ["rev-parse", "HEAD"]).out !== baseCommit || comparison !== "0 0" || git(root, ["status", "--porcelain"]).out) throw new Error("Post-create verification failed");
-  return {
-    status: "created",
-    previous_branch: before,
-    remote: options.remote,
-    base,
-    base_commit: baseCommit,
-    version: info.value,
-    version_source: info.source,
-    recommended_tag: info.tag,
-    ...tagResult,
-    next_branch: next,
-    final_branch: next,
-    comparison,
-    tag_mutation: false,
-    release_mutation: false,
-    human_handoff: `Next work branch is ready: ${next}`,
-  };
+  let root;
+  let before;
+  let next;
+  let stage = "inspect";
+  let mutationInvoked = false;
+  let stashSha = null;
+  let restoreStatus = "not-started";
+  try {
+    root = git(options.repo, ["rev-parse", "--show-toplevel"]).out;
+    before = git(root, ["branch", "--show-current"]).out;
+    if (!before.endsWith("-done")) throw new Error("Current branch must end in -done");
+    const initialStatus = git(root, ["status", "--porcelain"]).out;
+    const staged = () => git(root, ["diff", "--cached", "--name-only", "--no-ext-diff", "--no-textconv"]).out;
+    if (initialStatus && staged()) throw new Error("Index is dirty; staged changes are outside the unstaged carryover workflow");
+    const nameBase = baseFromDoneBranch(before);
+    const head = git(root, ["rev-parse", "HEAD"]).out;
+    stage = "fetch";
+    git(root, ["fetch", options.remote]);
+    if (git(root, ["branch", "--show-current"]).out !== before || git(root, ["rev-parse", "HEAD"]).out !== head || git(root, ["status", "--porcelain"]).out !== initialStatus) throw new Error("Local state changed during fetch");
+    const base = options.base || nameBase || baseFromRemoteHead(root, options.remote, git);
+    if (!base || !NAME.test(base)) throw new Error("Base branch is unresolved; pass --base");
+    const remoteBase = `${options.remote}/${base}`;
+    const baseCommit = git(root, ["rev-parse", remoteBase]).out;
+    next = workBranchName(base, dependencies.now ? dependencies.now() : new Date());
+    if (git(root, ["show-ref", "--verify", "--quiet", `refs/heads/${next}`], true).ok) throw new Error(`Next work branch already exists: ${next}`);
+    const info = await version(root, baseCommit, git);
+    const tagLookup = info.tag === "unresolved"
+      ? null
+      : git(root, ["ls-remote", "--tags", options.remote, `refs/tags/${info.tag}`, `refs/tags/${info.tag}^{}`], true);
+    const tagResult = classifyTagLookup(info.tag, tagLookup, baseCommit);
+    if (git(root, ["branch", "--show-current"]).out !== before || git(root, ["rev-parse", "HEAD"]).out !== head || git(root, ["status", "--porcelain"]).out !== initialStatus) throw new Error("Local state changed before branch creation");
+    if (initialStatus) {
+      if (staged()) throw new Error("Index is dirty; staged changes are outside the unstaged carryover workflow");
+      stage = "stash-create";
+      const stashMessage = `miku-scm post-merge: ${before} -> ${next} (${randomUUID()})`;
+      mutationInvoked = true;
+      const saved = git(root, ["stash", "push", "--include-untracked", "--message", stashMessage], true);
+      const stashes = git(root, ["stash", "list", "--format=%H%x00%gs"], true);
+      if (stashes.ok) {
+        const created = stashes.out.split("\n").find((line) => line.endsWith(`\0On ${before}: ${stashMessage}`));
+        if (created) stashSha = created.split("\0")[0];
+      }
+      if (!saved.ok || !stashSha) throw new Error(`Carryover stash creation failed: ${saved.err || saved.out || "no new stash was created"}`);
+      if (git(root, ["status", "--porcelain"]).out) throw new Error("Working tree or index is dirty after stash creation");
+    }
+    stage = "branch-create";
+    mutationInvoked = true;
+    git(root, ["switch", "-c", next, remoteBase]);
+    stage = "branch-verify";
+    const comparison = git(root, ["rev-list", "--left-right", "--count", `HEAD...${remoteBase}`]).out.replace(/\s+/g, " ");
+    if (git(root, ["branch", "--show-current"]).out !== next || git(root, ["rev-parse", "HEAD"]).out !== baseCommit || comparison !== "0 0" || git(root, ["status", "--porcelain"]).out) throw new Error("Post-create verification failed");
+    let carryover;
+    if (stashSha) {
+      stage = "stash-apply";
+      restoreStatus = "failed";
+      const restored = git(root, ["stash", "apply", stashSha], true);
+      if (!restored.ok) throw new Error(`Carryover stash apply failed: ${restored.err || restored.out}`);
+      restoreStatus = "applied";
+      stage = "restore-verify";
+      if (git(root, ["branch", "--show-current"]).out !== next || git(root, ["rev-parse", "HEAD"]).out !== baseCommit || staged()) throw new Error("Carryover restore verification failed");
+      if (!git(root, ["stash", "list", "--format=%H"]).out.split("\n").includes(stashSha)) throw new Error("Carryover stash is no longer retained");
+      restoreStatus = "restored";
+      carryover = {
+        stash_sha: stashSha,
+        stash_retained: true,
+        restore_status: restoreStatus,
+        working_tree: git(root, ["status", "--porcelain"]).out ? "dirty" : "clean",
+      };
+    }
+    return {
+      status: "created",
+      previous_branch: before,
+      remote: options.remote,
+      base,
+      base_commit: baseCommit,
+      version: info.value,
+      version_source: info.source,
+      recommended_tag: info.tag,
+      ...tagResult,
+      next_branch: next,
+      final_branch: next,
+      comparison,
+      tag_mutation: false,
+      release_mutation: false,
+      ...(carryover ? { carryover } : {}),
+      human_handoff: `Next work branch is ready: ${next}`,
+    };
+  } catch (caught) {
+    const error = caught instanceof Error ? caught : new Error(String(caught));
+    error.mutationInvoked = mutationInvoked;
+    if (mutationInvoked) {
+      const inspect = (args) => {
+        try { return git(root, args, true); } catch { return { ok: false, out: "" }; }
+      };
+      const current = inspect(["branch", "--show-current"]);
+      const status = inspect(["status", "--porcelain"]);
+      const stashes = stashSha ? inspect(["stash", "list", "--format=%H"]) : null;
+      error.recovery = {
+        stage,
+        previous_branch: before,
+        next_branch: next,
+        final_branch: current.ok ? current.out : null,
+        stash_sha: stashSha,
+        stash_retained: stashSha ? (stashes.ok ? stashes.out.split("\n").includes(stashSha) : null) : null,
+        restore_status: restoreStatus,
+        working_tree: status.ok ? (status.out ? "dirty" : "clean") : "unknown",
+      };
+    }
+    throw error;
+  }
 }
 export async function cli(argv = process.argv.slice(2)) { const o = parseArgs(argv); if (o.help) return; process.stdout.write(`${JSON.stringify(await run(o), null, 2)}\n`); }
-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) cli().catch((e) => { process.stderr.write(`${JSON.stringify({ status: "error", message: e.message })}\n`); process.exitCode = 1; });
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) cli().catch((e) => { process.stderr.write(`${JSON.stringify({ status: "error", message: e.message, mutation_invoked: e.mutationInvoked, ...(e.recovery ? { recovery: e.recovery } : {}) })}\n`); process.exitCode = 1; });

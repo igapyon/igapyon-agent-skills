@@ -5,14 +5,14 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20261015.1</version>
+  <version>1.20261015.3</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
 
   <properties>
     <external.miku-indexgen-skills.repo>https://github.com/igapyon/miku-indexgen-skills.git</external.miku-indexgen-skills.repo>
-    <external.miku-indexgen-skills.ref>f972c12a3df7ba3d28a9857ed429f29acd6a09ac</external.miku-indexgen-skills.ref>
+    <external.miku-indexgen-skills.ref>cc6578a2aea71aea71955398231e249a96561e29</external.miku-indexgen-skills.ref>
     <external.miku-indexgen-skills.skillName>igapyon-miku-indexgen</external.miku-indexgen-skills.skillName>
     <external.miku-text-bundle-skills.repo>https://github.com/igapyon/miku-text-bundle-skills.git</external.miku-text-bundle-skills.repo>
     <external.miku-text-bundle-skills.ref>4fbe80c649f084fd6dbff1ca0944adda6892cbe7</external.miku-text-bundle-skills.ref>

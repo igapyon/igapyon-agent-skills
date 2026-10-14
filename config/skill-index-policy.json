@@ -10,7 +10,7 @@
     }
   ],
   "external": [
-    {"repo":"https://github.com/igapyon/miku-indexgen-skills.git","ref":"f972c12a3df7ba3d28a9857ed429f29acd6a09ac","skill":"igapyon-miku-indexgen","disposition":"remove","reason":"Migrated source ref omits the skill inventory and retains product index generation.","evidence":"docs/maintenance/index-json-migration-inventory.md"},
+    {"repo":"https://github.com/igapyon/miku-indexgen-skills.git","ref":"cc6578a2aea71aea71955398231e249a96561e29","skill":"igapyon-miku-indexgen","disposition":"remove","reason":"Migrated source ref omits the skill inventory and retains product index generation.","evidence":"docs/maintenance/index-json-migration-inventory.md"},
     {"repo":"https://github.com/igapyon/miku-text-bundle-skills.git","ref":"4fbe80c649f084fd6dbff1ca0944adda6892cbe7","skill":"igapyon-miku-text-bundle","disposition":"remove","reason":"Migrated source ref removes the skill inventory dependency while retaining the product workflow.","evidence":"docs/maintenance/index-json-migration-inventory.md"},
     {"repo":"https://github.com/igapyon/miku-repo-bundle-skills.git","ref":"f2bf8522f8ec87ff261bbe4d0ebf1d6a790c9089","skill":"igapyon-miku-repo-bundle","disposition":"remove","reason":"Migrated source ref removes the skill inventory while preserving product-generated indexes.","evidence":"docs/maintenance/index-json-migration-inventory.md"},
     {"repo":"https://github.com/igapyon/miku-text-file-ops-skills.git","ref":"cd270f0736c9a7b5760a6a2b28942e6ddb1c5692","skill":"igapyon-miku-text-file-ops","disposition":"remove","reason":"Migrated source ref removes the skill inventory requirement.","evidence":"docs/maintenance/index-json-migration-inventory.md"},

@@ -20,10 +20,39 @@ and deterministic READONLY, preflight, and apply workflows.
 If no concrete SCM task is given, acknowledge activation and ask what is wanted.
 Do not inspect the repository or load detailed references yet.
 
-In this Skill, `draft` means composing and saving the Pull Request title and
-body as a text file. `draft recommit push` writes that text, uses it for the
-recommit, and pushes the branch; it does not create or merge a Pull Request on
-GitHub. The older `pr recommit push` spelling remains a compatible alias.
+## Normal Work Flow
+
+The usual sequence is:
+
+1. `miku-scm git add commit`: run `work.commit --apply` to stage and commit
+   the current changes.
+2. `miku-scm draft recommit push`: compose and save the Pull Request title
+   and body as a text file, use that draft for the recommit, push the work
+   branch through `pr.recommit.push`, and rename the local branch with
+   `-done`.
+3. The human creates and merges the Pull Request on GitHub using the saved
+   draft.
+4. `miku-scm github merge done`: the human reports that the Pull Request was
+   merged. Run `repository.post-merge.next-work --confirmed-merged --apply`
+   to refresh the base, check the recommended tag, and create and switch to
+   the next work branch.
+
+Run each SCM stage when the user requests it, with that workflow's checks and
+authorization. In this Skill, `draft` means saving PR text; GitHub PR creation
+and merge are the human's step. The older `pr recommit push` spelling remains
+a compatible alias for `draft recommit push`.
+
+### Unstaged Work Remaining After Merge
+
+When `miku-scm github merge done` is requested on a `-done` branch with
+unstaged changes or untracked files, use the same
+`repository.post-merge.next-work --confirmed-merged --apply` workflow. It
+stashes those changes with `--include-untracked`, creates the next branch
+from the refreshed base, and restores them with `stash apply` using the exact
+SHA of the stash it created. Restored changes remain unstaged. Retain that
+stash after success as well as failure; use the reported SHA for recovery.
+Staged changes remain a blocker. On a failure, report the stopped stage,
+current branch, and retained stash; preserve the partial state for recovery.
 
 ## Runtime Kernel
 
