@@ -11,6 +11,7 @@
   <name>igapyon-agent-skills</name>
 
   <properties>
+    <project.build.outputTimestamp>2020-01-01T00:00:00Z</project.build.outputTimestamp>
     <external.miku-indexgen-skills.repo>https://github.com/igapyon/miku-indexgen-skills.git</external.miku-indexgen-skills.repo>
     <external.miku-indexgen-skills.ref>cc6578a2aea71aea71955398231e249a96561e29</external.miku-indexgen-skills.ref>
     <external.miku-indexgen-skills.skillName>igapyon-miku-indexgen</external.miku-indexgen-skills.skillName>

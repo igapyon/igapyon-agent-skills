@@ -1,5 +1,31 @@
 # TODO
 
+## daybook：URLから関連 task を探す（2026-10-15・source 実装済み）
+
+計画・実装記録：[daybook-url-task-lookup.md](docs/plans/daybook-url-task-lookup.md)。利用者の後続指示に従い source skill を実装した。URLと task の関連確認を明示された場合だけ内容を読み、全年月の task から候補と理由を返す。探索だけでは記録を変更せず、記録まで依頼された場合は既存の編集範囲を適用する。
+
+- [x] URL-00：Git 状態と既存の記録規則を確認。
+- [x] URL-01：URL関連探索の reference を追加。
+- [x] URL-02：SKILL.md と operations.md の入口を接続。
+- [x] URL-03：README の利用例を追加。
+- [x] URL-04：U1〜U14 を静的照合。skill validator と `git diff --check` が成功。
+- [x] URL-05：実装・確認結果と未実施のモデル挙動確認を記録。
+
+モデル／tool mock による挙動確認、実 daybook への適用、skill 配備、version 更新、commit／push は未実施。
+
+## daybook スキルのレビュー指摘修正（2026-10-15・実装済み）
+
+利用者の後続指示に従い、正本：[daybook-skill-review-fixes.md](docs/plans/daybook-skill-review-fixes.md)のDBR-00〜05を原本へ反映した。task 更新の範囲と完了根拠を分ける規則を統一し、Issue 取り込み CLI の前提・不足ファイル導入・依存関係確認・競合時停止を文書化した。MIT教材の参照と既存の task／activities 分担を保った。
+
+- [x] DBR-00：実際の Git 状態と既存差分を確認し、README・SKILL.md・operations.md の記録モデル変更を保持。
+- [x] DBR-01：完了判定の正本を operations.md に追加し、SKILL.md・records.md・Add an activity から参照。
+- [x] DBR-02：Issue CLI の3 helper、`yaml`、npm／lockfile、`--help`、capabilities、miku-scm の準備順と競合時停止を記載。
+- [x] DBR-03：SKILL.md、notification.md、README の入口を共通手順へ接続。
+- [x] DBR-04：C1〜C8を静的照合。一時 fixture S1/S3/S5/S6 成功。S2/S4 は CLI 読込確認まで成功したが、`npm install --offline` は registry cache 不足（`ENOTCACHED`）で失敗し、`yaml` の導入・lock 更新は未検証。`quick_validate.py` と `git diff --check` は成功。
+- [x] DBR-05：この TODO、HANDOFF、計画書に変更・検証結果を反映。
+
+実 daybook、GitHub、配備先、version、commit/push は変更していない。S2/S4 の npm 依存取得と lock 更新はネットワーク利用可能な環境での確認事項。
+
 ## 配布ZIPのsource照合補修（2026-10-11・ローカル実装済み）
 
 利用者の実装指示に従い、正本：[release-archive-source-verification.md](docs/plans/release-archive-source-verification.md)のZIP-00〜05をroot repoへ反映した。内部sourceから配布対象を決め、ZIP展開先の集合・型・内容と照合し、14代表参照も展開先で確認する。この補修はindex.json移行と同じroot SCM反映に含める。

@@ -24,6 +24,8 @@ For an explicit request to create or update this workflow, use [assets/daybook](
 
 The bundle is self-contained. It does not require the source daybook repository or a network-fetched script at runtime. Preserve an existing target repository's package scripts and dependencies when integrating it. Set `DAYBOOK_ISSUE_NUMBER` and `DAYBOOK_NOTIFY_ENABLED` as repository variables. Optionally set `DAYBOOK_MENTION` to the account mention that should receive notifications; if it is unset or empty, no account is mentioned. Do not copy the source repository's Issue number or account-specific values without checking the target.
 
+This list is the notification workflow bundle only. Do not copy Issue-intake helpers as part of notification setup. If Issue intake is separately requested, follow the local prerequisite and integration steps in [issue-import.md](issue-import.md#1-check-local-cli-prerequisites-and-prepare-the-intake-files).
+
 ## Configuration
 
 Read the target repository's workflow and README to find the current fixed Issue. The existing configuration uses repository variables named `DAYBOOK_ISSUE_NUMBER` and `DAYBOOK_NOTIFY_ENABLED`. Do not copy an Issue number, account name, or notification target into another daybook without checking its configuration.
