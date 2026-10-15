@@ -11,9 +11,44 @@ Use this procedure only when the user explicitly asks to import one or more GitH
 - Comment posting and close are part of a requested full intake only after the existing miku-scm preflight and human approval. A read-only inspection or candidate request ends before these steps.
 - Do not commit, push, open a PR, or merge as part of intake. An intake close means that the request was recorded locally; it does not mean the underlying task is complete.
 
-## 1. Check Issue-intake capability
+## 1. Check local CLI prerequisites and prepare the intake files
 
-From the daybook repository root, run:
+Run this preparation only after an explicit Issue-intake request. Ordinary daybook operations do not need these scripts or the `yaml` package.
+
+Start at the target daybook repository root. Read its `README.md`, check its Git status, and inspect its `scripts/`, package manifest, lockfile, and dependency setup. Confirm Node.js is available with `node --version`. Do not assume that the installed skill directory and target repository are the same location.
+
+The source bundle is the `assets/daybook/` directory next to the `SKILL.md` that was actually loaded for this request. Use that directory as the source for the bundled files below. The bundled notification workflow currently uses Node.js 24; this intake procedure does not introduce a new minimum Node version.
+
+| Prerequisite | Check or source |
+| --- | --- |
+| Node.js | `node --version`; use the target repository's supported runtime. No new minimum is set here. |
+| `scripts/import-issues.mjs` | CLI entry point; bundle source `assets/daybook/scripts/import-issues.mjs`. |
+| `scripts/issue-import.mjs` | CLI core; imports the shared module and `yaml`; bundle source `assets/daybook/scripts/issue-import.mjs`. |
+| `scripts/day-plan.mjs` | Shared parsing and day-plan module; bundle source `assets/daybook/scripts/day-plan.mjs`. |
+| `yaml` | From the target root, check `node --input-type=module -e "await import('yaml')"`. The bundle's `package.json` declares `yaml: ^2.8.1`. |
+| miku-scm | Required for remote Issue reads, comments, and closes. Locate its installed skill and runner through that skill's own instructions/configuration. |
+
+Check all three target files. Add a missing file from the same bundle. If a target file already matches its bundle counterpart, leave it untouched. If it differs, compare the file and its callers; preserve target-specific behavior. If compatibility cannot be established, stop before replacing it and report the exact conflicting path and behavior that needs a decision. Never overwrite an existing customized `day-plan.mjs` merely because the intake CLI needs it.
+
+The intake core imports `yaml`; the bundle declares `yaml: ^2.8.1`. From the target repository root, check whether `yaml` can be imported by Node with `node --input-type=module -e "await import('yaml')"`, and whether the target dependency manager declares and installs it. If import succeeds and the target's dependency setup is already consistent, leave the manifest and lockfile unchanged. Otherwise:
+
+- For an npm-managed target with `package.json`, add only the compatible `yaml` dependency while preserving existing scripts and dependencies, then update the matching lockfile with npm. If the target already declares a conflicting `yaml` range, do not upgrade or downgrade it silently; report the conflict.
+- For an npm-managed target without `package.json`, create only the minimal private ESM package definition needed by these `.mjs` scripts and `yaml`, then generate its lockfile. Do not copy the notification bundle's package name, test script, workflow files, or other dependencies for Issue intake.
+- If the repository uses another package manager, follow its existing manifest and lockfile policy. If that policy cannot express or install the required dependency without conflict, stop and report the specific conflict rather than introducing a second package manager.
+
+When the manifest and lockfile already match an installed configuration, use that repository's normal clean-install command if `yaml` is missing from `node_modules` (for npm, `npm ci`). When adding the dependency to an npm-managed package, use npm to update both the manifest and lockfile (for example, `npm install yaml@^2.8.1`). Inspect the resulting diff and keep only the `yaml` addition and its required lock entries; if npm rewrites unrelated dependencies and you cannot reconcile those changes safely, stop and report the conflict. Inspect Git status before installing, and preserve pre-existing edits.
+
+After the helpers and dependencies are ready, from the target repository root run:
+
+```sh
+node scripts/import-issues.mjs --help
+```
+
+This verifies that the CLI and its imports load and only displays local help. A missing script or `yaml` import failure is a local setup error, not `GH_NOT_FOUND`. After help loads, locate the miku-scm skill and runner from the installed miku-scm skill instructions/configuration; do not guess a fixed absolute path. If miku-scm or its runner is unavailable, stop the remote Issue flow and report that local record management remains available. Do not replace it with direct `gh` or API calls. If the runner is available, continue to the capability check below.
+
+## 2. Check Issue-intake capability
+
+Only after the local setup and successful `--help`, from the daybook repository root run:
 
 ```sh
 node scripts/import-issues.mjs capabilities
@@ -21,9 +56,9 @@ node scripts/import-issues.mjs capabilities
 
 This checks whether `gh` is an executable on `PATH`; it does not execute it or test authentication. If the output says `GH_NOT_FOUND`, Issue reception, comment posting, and close are disabled. Say so and stop the remote flow. Do not turn an old cache into a fresh read. Ordinary daybook operations remain available. If `gh` exists, authentication and network failures are still reported by miku-scm when its fixed workflow runs.
 
-Do not run this check on startup, for a normal record update, or for a read-only list unless the user explicitly asks for Issue intake.
+Do not run this check on startup, for a normal record update, or for a read-only list unless the user explicitly asks for Issue intake. If the local CLI cannot load, resolve or report that local error before interpreting capability results.
 
-## 2. Read only the requested Issues with miku-scm
+## 3. Read only the requested Issues with miku-scm
 
 Use the installed miku-scm runner and the target repository's configured path. For one named Issue:
 
@@ -81,7 +116,7 @@ Write one normalized `source.json` in a new, ignored run directory such as `work
 
 Each comment has `id`, `url`, `author_login`, `created_at`, `updated_at`, and `body`. Keep comment IDs as strings even when they exceed JavaScript's safe integer range. If a relative date can only be interpreted from Issue creation time, mark that Issue `needs-info`; the helper does not provide that time.
 
-## 3. Interpret Issues and write the manifest
+## 4. Interpret Issues and write the manifest
 
 The Agent reads the Issue content and returned comments. The local program does not interpret prose. Make one manifest decision per source Issue:
 
@@ -120,7 +155,7 @@ For an existing matching task or schedule, use `action: "link-existing"` with a 
 
 Do not put Issue-provided text inside a daybook source marker. The program rejects reserved marker text in record content and generates its own provenance markers.
 
-## 4. Prepare and review the local plan
+## 5. Prepare and review the local plan
 
 Use the same run directory for source, manifest, plan, preview, result, and comment drafts:
 
@@ -136,7 +171,7 @@ Review `preview.md` and `plan.json` before apply. Confirm every Issue outcome; e
 
 `prepare` only writes run artifacts; it must not change canonical daybook records. The task sequence comes from current files and local Git history without fetching. The plan stores the complete intended writes and before/after hashes. Do not hand-edit the plan. A changed plan fails its digest check.
 
-## 5. Refresh evidence and apply locally
+## 6. Refresh evidence and apply locally
 
 If any planned write is not already applied, read each `create` Issue again with miku-scm, normalize those successful individual reads using the same rules, and save the refresh as `refresh-source.json`. Do not apply from a stale or failed read. Then run:
 
@@ -154,7 +189,7 @@ If apply returns `PARTIAL_WRITE`, retain all completed files and the same run. D
 
 `plan.json` and `result.json` are run-local recovery data under ignored `workplace/`; they are not the daybook record source of truth. Do not start a new run to retry a partial application. If `result.json` is lost while planned files exist, applying can recover local writes from exact after hashes and source markers, but the comment becomes `uncertain`. Read GitHub before any remote recovery; never infer that a comment was or was not posted.
 
-## 6. Post and verify the receipt with miku-scm
+## 7. Post and verify the receipt with miku-scm
 
 The daybook CLI never posts. If `gh` is missing, record `pending-gh` with `reason: GH_NOT_FOUND` and stop. Otherwise, for each fully local-written Issue:
 
@@ -181,7 +216,7 @@ node scripts/import-issues.mjs comment-result --repo-root . \
 
 Do not put an Issue into `posted` from a successful process exit alone; use miku-scm's verified result and exact returned URL.
 
-## 7. Close intake only after verified comment
+## 8. Close intake only after verified comment
 
 Do not close a `needs-info`, skipped, excluded, already-imported, failed, pending, or uncertain comment. After `posted` or `already-posted` is saved:
 
@@ -202,7 +237,7 @@ node scripts/import-issues.mjs close-result --repo-root . \
 
 Use `pending-gh` with `reason: GH_NOT_FOUND` when gh becomes unavailable after local apply. Keep the saved comment and local records. On a later explicitly requested resume, read current GitHub state first. Resume comment and close independently; never repeat a comment merely because close is pending, and never retry an uncertain mutation automatically. If the Issue is later reopened after this run completed, report it as already imported; do not restart the run or close it again.
 
-## 8. Status and errors
+## 9. Status and errors
 
 The durable status is `result.json`:
 

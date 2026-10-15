@@ -304,6 +304,8 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 
   daybook repository の activity・schedule・task・day-plan の追加、更新、一覧、生成確認と、同梱された GitHub Actions 通知 workflow の生成・更新向け。`miku-daybook` または `igapyon-miku-daybook` の明示、または daybook の記録管理・通知 workflow 作成が明確な場合に利用する。Git操作やGitHubへの実行・投稿は、別途明示された場合だけ扱う。
 
+  task に最新状態、activities に試行錯誤と判断の経緯を残す方針と、その参考にした MIT OpenCourseWare の教材については、[daybookの記録モデルと参考資料](#daybookの記録モデルと参考資料)を参照してください。
+
   taskの日付項目の変更と利用者側のデータ移行については、[daybook taskの日付項目の移行](#daybook-taskの日付項目の移行)を参照してください。
 
 - `igapyon-mikuku-agent`
@@ -321,6 +323,37 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 - `igapyon-skill-compactor`
 
   肥大化した Agent Skill の token-efficiency 設計、分割、参照化、蒸留、チェックリスト化、tool 化判断向け。明示的に指定した場合、または Agent Skill の compact / slim / token bloat reduction が明確な場合に利用する。
+
+## daybookの記録モデルと参考資料
+
+`igapyon-miku-daybook` の task と activities の役割整理では、MIT OpenCourseWare の [Guidelines for Keeping a Laboratory Notebook](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/b4c64ac11fc0a68466af7e025e29bf3e_lab_notebook.pdf) を参考にしています。これは [7.16 Experimental Molecular Biology: Biotechnology II（Spring 2005）](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/) の公開教材です。
+
+daybook では、課題管理に研究ノートと意思決定記録を組み合わせ、次のように役割を割り付けます。
+
+- **task**：仕事ごとの目的、現在の結論・採用方針、最新状態、未解決事項、次の行動を管理します。重要な変更の短い履歴と、関連する活動へのリンクを含めます。
+- **activities**：日付ごとに、取り組んだこと、試した方法、うまくいかなかったこと、検討した案、判断理由、その時点の到達点を記録します。結論が出なかった検討も活動です。読みやすい量の試行錯誤は同じ項目に収め、長い詳細は資料へ分けてリンクします。
+
+教材の記録要素と、スキルの編集規則・既存ファイル構成の対応は次のとおりです。
+
+| 教材の記録要素 | daybookでの対応 |
+| --- | --- |
+| 日付・題名 | `activities/activity-YYYYMMDD.md` 内に、一つの作業や出来事を一項目として記録 |
+| 目的 | task に継続する目的を置き、activities にその日に取り組んだ目的を必要に応じて記載 |
+| 方法・手順と変更 | activities に試した方法と変更の経緯を記録し、参照した手順や資料へリンク |
+| 観察・結果 | activities に実行結果、失敗、不確かな結果を記録 |
+| 考察・結論 | activities に当時の判断と理由を残し、task に現在採用している結論を反映 |
+| 次にすること | activities にその時点の残課題を残し、task の次の行動を更新 |
+| データや資料の添付 | 既存の `attachments/<record-key>/` に資料を置き、記録から相対リンク |
+
+この分担は [SKILL.md](skills/igapyon-miku-daybook/SKILL.md) と [operations.md](skills/igapyon-miku-daybook/references/operations.md#task-and-activity-responsibilities) のエージェント向け編集指示として実装しています。本文に経緯や理由を記述し、既存の task ID と相対リンクで関連づけます。方針が変わったときは task を最新化し、以前の activities は当時の経緯として保持します。記録内容は会話や確認できた結果に基づいてまとめます。
+
+task を最新状態として別管理すること、優先度・進捗・予定期間の管理、Markdown 記録間のリンクは daybook 側で加えた設計です。day-plan は task と schedule から既存の生成スクリプトが作る予定のスナップショットであり、教材にある週次の振り返りを自動化するものではありません。
+
+GitHub Issue を daybook に取り込む場合のローカル CLI の前提確認と導入手順は、[Issue 取り込み手順](skills/igapyon-miku-daybook/references/issue-import.md#1-check-local-cli-prerequisites-and-prepare-the-intake-files)を参照してください。
+
+### URLから関連する task を探す
+
+「このURL、関連する task があるかな？」と頼むと、URLの内容を読み、daybook 内の候補と関連する理由を探します。URLを読む・要約するだけの依頼から task の探索や記録変更は始めません。記録も希望する場合は、「関連 task を探して、この資料を task に紐づけ、今日の活動にも調べた経緯を記録して」のように依頼してください。手順は[URLと関連 task の確認](skills/igapyon-miku-daybook/references/url-task-lookup.md)を参照してください。
 
 ## daybook taskの日付項目の移行
 
@@ -373,6 +406,8 @@ mvn clean package
 ```
 
 生成物は `target/igapyon-agent-skills-<version>.zip` です。
+
+再現性を保つため、ZIP内の全エントリの更新日時は `2020-01-01 00:00:00 UTC` に固定します。
 
 archive には `skills/`、配布用の `README.md` と `INSTALL.md`、`LICENSE`、
 `EXTERNAL_SKILLS.lock` を含めます。ビルド用ソースはリポジトリとGitHubの標準ソース

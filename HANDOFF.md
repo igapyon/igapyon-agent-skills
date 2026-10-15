@@ -15,6 +15,26 @@ update_when:
 This file summarizes the current working state for the next human or AI agent.
 Keep it concise. Do not use this as a full work log or a replacement for `TODO.md` and `DECISIONS.md`.
 
+## 最新指示：daybook のURL関連 task 探索を実装（2026-10-15）
+
+利用者の後続指示に従い、[daybook-url-task-lookup.md](docs/plans/daybook-url-task-lookup.md) の URL-00〜05 を source skill に実装した。
+
+- 振る舞い：関連確認を明示されたとき URL を読み、全年月の task から候補と根拠を返す。URL単独提示や要約依頼では task 探索をしない。
+- 変更：`skills/igapyon-miku-daybook/SKILL.md`、新規 `references/url-task-lookup.md`、`references/operations.md`、root `README.md`、TODO、HANDOFF、計画書。
+- 確認：U1〜U14 を静的照合。`quick_validate.py` は `Skill is valid!`、`git diff --check` は成功。モデル／tool mock による実行確認はしていない。
+- 実 daybook の更新、配備、version 更新、commit／push は未実施。
+
+## 直前の作業：daybook レビュー指摘の修正を実装（2026-10-15）
+
+利用者の指示に従い、[daybook-skill-review-fixes.md](docs/plans/daybook-skill-review-fixes.md)のDBR-00〜05を実装した。task 編集の範囲と完了根拠を operations.md に集約し、Issue 取り込み CLI のローカル前提と導入経路を追加した。MIT 出典・task／activities 分担を含む既存差分を保持。
+
+- 変更：root README、daybook SKILL.md、operations.md、records.md、issue-import.md、notification.md、TODO.md、HANDOFF.md、計画書。
+- 検証：S1/S3/S5/S6 は成功。S2/S4 は `--help` とエラー分類を確認したが、`npm install --offline` は ENOTCACHED のため依存取得と lock 更新が未検証。詳細は計画書。
+- `quick_validate.py` は `Skill is valid!`、`git diff --check` は成功。C1〜C8 は規則へ静的照合。
+- 実 daybook、GitHub、スキル配備、version 更新、commit/push は未実施。現在の変更はローカル差分。
+
+下方は過去の別作業。今回の指示として再開しない。
+
 ## 最新指示：配布ZIPのsource照合補修を実装（2026-10-11）
 
 利用者の実装指示に従い、[release-archive-source-verification.md](docs/plans/release-archive-source-verification.md)のZIP-00〜05をroot repoに実装した。詳細なtaskと検証記録は[TODO.md](TODO.md)冒頭。

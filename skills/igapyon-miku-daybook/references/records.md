@@ -41,6 +41,8 @@ Use these statuses:
 
 Keep the single checked state in the body aligned with front matter. A partially completed checklist is not itself proof that the task is done.
 
+Apply the request-scope and completion-evidence rules in [Task completion and scope](operations.md#task-completion-and-scope) before changing a task to `done`. The checklist and `completed` date must remain consistent with that rule; do not infer completion from an activity report alone.
+
 ## Front matter
 
 All dates use `YYYY-MM-DD`. Use quoted strings for times such as `start: "19:00"`.

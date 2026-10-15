@@ -2,6 +2,33 @@
 
 Read this reference for an add, update, list, activity, schedule, or day-plan request. Use the target repository's README and current files as the final local contract.
 
+## Task and activity responsibilities
+
+Keep a task focused on its current purpose, latest conclusion or adopted approach, status, unresolved issues, and next actions. A brief dated history can explain material changes. Keep the work leading to those changes in dated activities: attempted approaches, observations, unsuccessful or inconclusive trials, options considered, and decision reasons. A task follows one work item across dates; an activity records what happened on a date, including investigations that have not reached a conclusion or do not need a task.
+
+When both task and activity updates are in scope and a later decision changes the approach, update the task's current summary and record the new decision and reasons in the corresponding activity. Preserve earlier activities as accounts of what was tried and understood at the time. Correct factual errors explicitly so the correction remains distinguishable from a later change of approach. Use full task IDs and relative links to connect related records; when both records are being updated, link the task's brief history to the activity and the activity back to the task.
+
+This division is implemented through the Agent's Markdown editing instructions and the existing record paths and links. The day-plan generator reads task and schedule fields to produce its snapshot; it does not reconstruct task state from activity prose. Apply the division within the requested recordkeeping scope; it does not start background logging or add an activity to every task-only edit.
+
+## Task completion and scope
+
+Decide separately whether a task edit is within the request and whether the task is complete. Both conditions are required before changing a task to `done`:
+
+1. **Scope:** the user's current request and conversation clearly include updating that task. An explicit request to update a task is sufficient scope; no special phrase is required.
+2. **Completion evidence:** the user explicitly says the task is complete, or the reported result clearly satisfies every completion condition already recorded for that task.
+
+Apply only the record types the request covers. “Record this in activities” updates the activity only; it does not add a task edit. A task-only update does not add an activity automatically. If both are requested, update each and link them. When the task update is in scope but completion evidence is incomplete, record the supported progress and remaining condition, and keep the task active. If the task or the applicable completion condition is unclear, ask only about that ambiguity. When the task update is in scope and the evidence establishes completion, mark it done without an extra approval step.
+
+An activity report, a closed GitHub Issue, or a planned date that has passed is not by itself completion evidence. Do not infer completion from a partially checked checklist. For a weekly recurring task, completing one occurrence does not complete the recurring rule and does not trigger rollover.
+
+When completion is established, keep `status: done` and the body's single checked state aligned. Set `completed` to the actual completion date when it is known; do not substitute `planned_end_date` or the date of a later report. Preserve a correct existing `completed` date. If the date is unknown and the target record's schema requires it, ask rather than guessing. Keep the task ID, filename, and creation-month directory unchanged. Preserve earlier activities as historical records; distinguish a later decision from a factual correction.
+
+Examples:
+
+- “今日、参加費を振り込んだ。activities に記録して” → add the activity only; leave the task unchanged.
+- “振込が済んだので、この task の状態と今日の活動を更新して” → update both and link them. If payment is its only completion condition, mark the task done; if receipt confirmation is also required, keep it active and note what remains.
+- “task-202610-00001 を完了にして。今日振り込んだ” → update that task as done, align its checked state and actual completion date, and do not create an activity unless requested.
+
 ## Add a task
 
 1. Search all `YYYY/YYYYMM/tasks/task-*.md` files and recent Git history for the intended task or its ID.
@@ -74,7 +101,9 @@ Do not infer attendance, ticket purchase, registration, or a rehearsal role from
 
 Use the Asia/Tokyo calendar date unless the user gives another date. Create the day's `activities/activity-YYYYMMDD.md` if it does not exist; otherwise append under `## やったこと` or the existing equivalent section. Keep a single coherent event together when its place, activity, and instrument belong to one event. For example, an afternoon ensemble at a named venue while playing violin is one activity item.
 
-When the user says work was done, record the fact. Do not mark the related task `done` unless completion was explicitly stated or the task's full checklist and completion condition are unambiguous.
+For work or investigation, include the purpose, approaches tried and changed, observations and results, conclusions and their reasons, remaining questions, and next actions when known. Ground the account in reported work, the conversation, and visible results; do not invent attempts, outcomes, alternatives, or motivations. Recording an inconclusive investigation is valid. Keep trial-and-error history in the same activity item while it remains readable; move lengthy supporting detail to a linked document or attachment when it obscures the account. Choose the detail needed to understand or resume the work rather than a fixed length or mandatory set of headings for every activity.
+
+When the user says work was done, record the fact. Activity-only requests update the activity only. Update a related task only when task editing is in scope under [Task completion and scope](#task-completion-and-scope), and apply that section's completion evidence rule.
 
 ## Task list
 
@@ -88,9 +117,13 @@ ID / Priority / Status / Planned start / Planned end / Title
 
 Do not edit files for a list request. Report provisional and incomplete periods as needing date review, then wait for an update request.
 
+## Find tasks related to a URL
+
+Use [url-task-lookup.md](url-task-lookup.md) only when the user explicitly asks to check or find existing daybook tasks related to a URL. The procedure reads the source and searches task records across all year/month directories, then reports candidates with reasons. URL presentation, reading, or summarization alone does not trigger the lookup. Treat lookup as read-only unless the user also requests a record update.
+
 ## Explicitly import GitHub Issues
 
-Issue intake is not part of an ordinary record update or Issue read. Use [issue-import.md](issue-import.md) only when the user explicitly requests that named Issue(s), or a clearly specified repository backlog, be imported into this daybook. At that entry point, run `node scripts/import-issues.mjs capabilities`. If `gh` is missing, report Issue intake, comment posting, and intake close as disabled; continue ordinary daybook work normally.
+Issue intake is not part of an ordinary record update or Issue read. Use [issue-import.md](issue-import.md) only when the user explicitly requests that named Issue(s), or a clearly specified repository backlog, be imported into this daybook. Follow its local CLI prerequisite and setup steps before running `node scripts/import-issues.mjs capabilities`; perform only the local preparation needed for the explicitly requested intake. If `gh` is missing, report Issue intake, comment posting, and intake close as disabled; continue ordinary daybook work normally.
 
 The Agent reads Issues and comments through the existing miku-scm `github.issue.read` workflow, interprets their meaning, writes the local source and manifest fixtures, and asks the local CLI to prepare and apply only the reviewed record changes. The CLI has no network or LLM behavior. Do not treat a failed read as an empty comment list, do not claim the helper returned full comment history, exclude Daily Briefing Issue #3, and reject Pull Requests.
 
