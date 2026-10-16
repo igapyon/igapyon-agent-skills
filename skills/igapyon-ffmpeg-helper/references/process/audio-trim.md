@@ -93,7 +93,7 @@ Recommended pattern:
 ```text
 <recording-id>-partN_trim.wav
 <recording-id>-partN_gain-meta.json
-<recording-id>-partN_gain-hires-tp0p5-plain.wav
+<recording-id>-partN_gain-f32-tp0p5-plain.wav
 <recording-id>-partN_gain-verify-meta.json
 <recording-id>-partN-youtube.mp4
 ```
@@ -102,7 +102,7 @@ Example:
 
 ```text
 260503_113659-part1_trim.wav
-260503_113659-part1_gain-hires-tp0p5-plain.wav
+260503_113659-part1_gain-f32-tp0p5-plain.wav
 260503_113659-part1-youtube.mp4
 ```
 
@@ -155,6 +155,11 @@ When the user returns a cut memo:
 
 ## Command
 
+Inspect the source codec, sample rate, and channels with `ffprobe`. For the
+H4essential PCM 32-bit float source, use `-c:a pcm_f32le` and preserve its sample
+rate. No `-ar` is needed for these trim commands. Do not insert a 192 kHz or
+44.1 kHz conversion while trimming.
+
 For leading and trailing margin cuts, prefer:
 
 ```sh
@@ -179,12 +184,9 @@ For no-trim staging, use a clear staged output name:
 ffmpeg -i "input.WAV" -c:a pcm_f32le "workplace/ffmpeg-helper-260114_160901/01_trim.wav"
 ```
 
-If the source is not 32-bit float WAV or the user wants a simpler command, omit
-the explicit codec and let FFmpeg choose an appropriate WAV format:
-
-```sh
-ffmpeg -i "input.WAV" -ss 00:01:23 -to 00:12:34 "workplace/ffmpeg-helper-260114_160901/01_trim.wav"
-```
+For another PCM source format, choose an explicit PCM codec that preserves its
+precision and keep its source sample rate. Do not omit the codec for a simpler
+command: FFmpeg's default WAV encoder can reduce the source bit depth.
 
 ## Notes
 
