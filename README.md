@@ -288,7 +288,7 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 
 - `igapyon-ffmpeg-helper`
 
-  H4essential のオーケストラ録音から、切り出し、単純ゲイン調整、必要なら結合、静止画付き YouTube 用動画作成までの個人用 FFmpeg ワークフロー向け。明示的に指定した場合に利用する。
+  H4essential のオーケストラ録音から、元のサンプルレート・32-bit float を保つ切り出しと単純ゲイン調整、必要なら結合、マスターから直接 AAC 化する静止画付き YouTube 用動画作成までの個人用 FFmpeg ワークフロー向け。明示的に指定した場合に利用する。
 
 - `igapyon-agent-state-management`
 

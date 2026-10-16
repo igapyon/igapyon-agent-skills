@@ -24,11 +24,23 @@ In real use, processing starts after one or more recording folders such as
 4. Prefer H4essential track-name awareness over treating every WAV as equal.
 5. Show the detected candidates and ask the user to confirm the track choice and
    order before proceeding when multiple plausible files exist.
+6. Inspect the selected files' PCM codec, sample rate, sample format, and channel
+   layout with `ffprobe`. Save the result once the job directory is initialized.
+   Carry the actual source rate through trimming and the adjusted master;
+   retain PCM 32-bit float for H4essential float sources.
 
 Useful discovery command:
 
 ```sh
 find "<input-dir>" -type f \( -iname '*.WAV' -o -iname '*.wav' \)
+```
+
+After selecting a file and initializing its job directory with
+[workspace-and-command-log.md](workspace-and-command-log.md), record its format
+before trimming, for example:
+
+```sh
+ffprobe -v error -show_entries format=duration:stream=codec_name,sample_fmt,sample_rate,channels,channel_layout,bits_per_sample,bits_per_raw_sample -of json "260114_160901/260114_160901_TrMic.WAV" > "workplace/ffmpeg-helper-260114_160901/01_source-info.json"
 ```
 
 ## Track Names

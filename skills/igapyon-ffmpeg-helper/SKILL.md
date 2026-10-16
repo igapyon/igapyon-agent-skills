@@ -49,7 +49,7 @@ When more workflows are added, choose the closest workflow from
 For the first-cut workflow, confirm the route once at the start:
 
 ```text
-H4essentialのオーケストラ録音から、切り出し、loudnorm JSON測定、-0.5 dBTPピーク基準の単純ゲイン仕上げ、必要なら結合、静止画付きYouTube用動画作成まで進めますか？
+H4essentialのオーケストラ録音から、切り出し、loudnorm JSON測定、元のサンプルレート・32-bit floatを保った-0.5 dBTPピーク基準の単純ゲイン仕上げ、必要なら結合、静止画付きYouTube用動画作成まで進めますか？
 ```
 
 After the route is confirmed, keep moving and ask only for the missing input
@@ -100,9 +100,13 @@ Unless the user explicitly changes the first-cut workflow:
   the finish command.
 - Target peak is `-0.5 dBTP`.
 - Do not use compression.
-- Let the user choose hi-res or lo-res output for the finish command; default
-  to hi-res when the user does not specify.
-- Tell the user that hi-res intermediate WAV files will be larger.
+- Inspect the selected source's sample rate, PCM format, and channels with
+  `ffprobe`. For H4essential PCM 32-bit float input, keep the source sample rate
+  and `pcm_f32le` through trimming and the adjusted WAV master by default.
+- Create delivery files directly from that master. Convert to 48 kHz when
+  encoding the YouTube AAC audio; avoid a 192 kHz or 44.1 kHz intermediate.
+- Create hi-res or lo-res PCM copies only when requested, following
+  [delivery-variants.md](references/process/delivery-variants.md).
 - For multiple WAVs, trim and gain-adjust each selected WAV first, then
   concatenate.
 - Retain the selected adjusted WAV as a separately named master; do not replace
@@ -111,6 +115,8 @@ Unless the user explicitly changes the first-cut workflow:
   Drive-friendly file, create a requested delivery variant after preserving the
   master.
 - End at a YouTube-uploadable video file.
+- Verify the final file's duration, audio format, reported bitrate, and decoded
+  true peak. The WAV master's peak alone does not verify the AAC output.
 - Upload manually through the YouTube Studio Web UI.
 - Do not introduce YouTube API upload, OAuth, scheduled publishing, or metadata
   automation unless the user explicitly asks to expand the skill.

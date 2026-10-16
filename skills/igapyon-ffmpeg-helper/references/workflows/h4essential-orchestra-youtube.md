@@ -5,12 +5,14 @@ Use this workflow for the first-cut `igapyon-ffmpeg-helper` route:
 ```text
 H4essential orchestra recording folders
   -> select WAV tracks
-  -> trim unnecessary portions
+  -> inspect source sample rate and PCM format
+  -> trim unnecessary portions at the source sample rate
   -> measurement phase with loudnorm JSON
-  -> finishing phase with volume-only gain to target peak -0.5 dBTP
-  -> optionally concatenate adjusted files
+  -> volume-only gain to target peak -0.5 dBTP, retaining native-rate float WAV
+  -> optionally concatenate matching adjusted files by copy
   -> retain adjusted WAV as master
-  -> combine still image + audio into a YouTube-uploadable video
+  -> combine still image + master, converting directly to 48 kHz AAC in MP4
+  -> verify final duration, audio format, bitrate, and decoded true peak
   -> optionally create a mobile/Drive share copy
   -> manual upload in YouTube Studio
 ```
@@ -54,7 +56,7 @@ install or expose it in `PATH`.
 Confirm the route once at the beginning:
 
 ```text
-H4essentialのオーケストラ録音から、切り出し、loudnorm JSON測定、-0.5 dBTPピーク基準の単純ゲイン仕上げ、必要なら結合、静止画付きYouTube用動画作成まで進めますか？
+H4essentialのオーケストラ録音から、切り出し、loudnorm JSON測定、元のサンプルレート・32-bit floatを保った-0.5 dBTPピーク基準の単純ゲイン仕上げ、必要なら結合、静止画付きYouTube用動画作成まで進めますか？
 ```
 
 After confirmation, ask only for missing inputs needed for the next command.
@@ -82,7 +84,8 @@ Classify the request into one mode:
 - No trim needed: skip trim, or stage the source into the job directory if a
   staged file is useful for consistent later commands.
 - Already adjusted: skip gain adjustment and start from concat or video
-  creation.
+  creation. Inspect the existing master's format and avoid applying gain again;
+  changing its format cannot restore information lost in earlier processing.
 - Still-image-only missing: help create or locate the still image if the user
   asks, otherwise request the still image path. Prefer a user-provided image,
   a simple title card, or generated artwork when explicitly requested.
@@ -92,9 +95,9 @@ Classify the request into one mode:
 - YouTube upload format: prefer MP4/H.264/AAC by default for official
   recommendation alignment. Offer the local-html-tools-style MKV route only
   when the user explicitly wants to preserve WAV audio with `-c:a copy`.
-- Delivery variants: retain the adjusted WAV as master, then create only the
-  requested variants. Use MP4 for YouTube and AAC/M4A for Android, iPhone, or
-  lightweight Drive sharing. Follow
+- Delivery variants: retain the native-rate adjusted WAV as master, then create
+  each requested variant directly from it. Use MP4 for YouTube, AAC/M4A for
+  mobile sharing, and hi-res or lo-res PCM copies only when requested. Follow
   [../process/delivery-variants.md](../process/delivery-variants.md).
 
 ## Process Order
@@ -122,12 +125,12 @@ workplace/ffmpeg-helper-260114_160901/
   commands.log
   01_trim.wav
   01_gain-meta.json
-  01_gain-lores-tp0p5-plain.wav
+  01_gain-f32-tp0p5-plain.wav
   02_trim.wav
   02_gain-meta.json
-  02_gain-lores-tp0p5-plain.wav
+  02_gain-f32-tp0p5-plain.wav
   concat_list.txt
-  merged_gain-lores-tp0p5-plain.wav
+  merged_gain-f32-tp0p5-plain.wav
   260114_160901-merged-youtube.mp4
 ```
 
@@ -138,7 +141,7 @@ workplace/ffmpeg-helper-260114_160901/
   commands.log
   01_trim.wav
   01_gain-meta.json
-  01_gain-lores-tp0p5-plain.wav
+  01_gain-f32-tp0p5-plain.wav
   260114_160901-youtube.mp4
   260114_160901_share-aac384.m4a
 ```
@@ -160,15 +163,16 @@ For this workflow:
 - Target peak: `-0.5 dBTP`.
 - Do not use compression.
 - Do not use loudness normalization for finishing.
-- Let the user choose hi-res or lo-res output. If the user does not specify,
-  use hi-res:
-  - hi-res: 192 kHz / 24-bit WAV.
-  - lo-res: 44.1 kHz / 16-bit WAV.
-- Tell the user that hi-res intermediate WAV files will be larger.
-- When the user explicitly asks to retain a 32-bit float source, preserve the
-  source sample rate and PCM 32-bit float in a separately named master.
+- For H4essential PCM 32-bit float input, keep the actual source sample rate
+  and float representation through trimming and the adjusted WAV master.
+- Encode the YouTube audio directly from that master to 48 kHz AAC. Do not
+  insert a 192 kHz / 24-bit or 44.1 kHz / 16-bit intermediate.
+- Keep hi-res and lo-res PCM copies as requested delivery variants; retain the
+  native-rate master for later encodes.
+- Check the decoded AAC peak as well as the WAV peak, and report the final
+  file's actual audio format, duration, and bitrate.
 - Create a lossy M4A only as an additional requested delivery variant.
-- For multiple WAV files, normalize each trimmed file before concatenation.
+- For multiple WAV files, gain-adjust each trimmed file before concatenation.
 
 This is a practical workflow choice to preserve the natural sound of the
 orchestra recording. Future workflows may use different policies.

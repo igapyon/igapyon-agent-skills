@@ -132,15 +132,35 @@ simple peak-based gain:
 - no compression
 - no loudness normalization in the finishing pass
 
-When the user does not choose output resolution for the intermediate WAV, use
-hi-res by default:
+Preserve the measured source sample rate and PCM 32-bit float in H4essential
+trimmed files and adjusted WAV masters by default. For a 96 kHz float source,
+the standard route is:
 
 ```text
-192 kHz / 24-bit WAV
+96 kHz / 32-bit float source
+  -> trim and fixed gain at 96 kHz / 32-bit float
+  -> retain adjusted master
+  -> encode directly to 48 kHz AAC-LC for MP4
 ```
 
-Tell the user that hi-res intermediate WAV files will be larger. The final
-default YouTube MP4 still converts the prepared WAV audio to AAC-LC.
+Use the actual source rate; `96 kHz` is an example. Saving the adjusted float
+master retains a reusable archive without adding an intermediate sample-rate
+or integer-bit-depth conversion. Apply gain only when creating that master.
+
+The former default created a 192 kHz / 24-bit intermediate. Upsampling does
+not add source information, and its later conversion to 48 kHz introduces
+unnecessary processing. The current route avoids that conversion and the
+intermediate float-to-integer quantization. This is a workflow simplification,
+not a guarantee of an audible improvement or a claim that 192 kHz is harmful.
+Both routes encode to AAC once; the reduced steps are PCM transformations.
+
+Create 192 kHz / 24-bit or 44.1 kHz / 16-bit copies only when requested as
+separate delivery files. Generate MP4 and M4A directly from the retained master.
+Matching masters can be concatenated by stream copy. Mixed formats require an
+explicit common working format, as described in the concat runbook.
+
+Verify both the master and decoded final AAC true peak. Report the nominal
+bitrate request separately from the final file's reported bitrate.
 
 ## Image Philosophy
 

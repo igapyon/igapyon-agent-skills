@@ -14,46 +14,38 @@ but only the volume-only route is used for finishing.
 - Do not use limiting.
 - Do not use loudness normalization in the finishing command.
 - If `input_tp` is already above `-0.5 dBTP`, apply negative gain.
-- Let the user choose hi-res or lo-res output for the finishing command; default
-  to hi-res when the user does not specify.
-- Tell the user that hi-res intermediate WAV files will be larger.
+- For H4essential PCM 32-bit float input, preserve the source sample rate and
+  PCM 32-bit float in the adjusted master by default.
+- Make delivery copies directly from that master; see
+  [delivery-variants.md](delivery-variants.md) for requested PCM or AAC copies.
 
-## Output Resolution Choice
+## Master Format
 
-Use these output settings:
+Read the selected or trimmed WAV's format before choosing output options:
 
-```text
-hi-res:
-  -ar 192000
-  -sample_fmt s32
-  -c:a pcm_s24le
-
-lo-res:
-  -ar 44100
-  -sample_fmt s16
-  -c:a pcm_s16le
+```sh
+ffprobe -v error -show_entries stream=codec_name,sample_fmt,sample_rate,channels -of json "workplace/ffmpeg-helper-260114_160901/01_trim.wav"
 ```
 
-### Source-Preserving 32-bit Float Master
-
-When the input is PCM 32-bit float and the user explicitly asks to retain that
-format, make a separately named master at the source sample rate with
-`-sample_fmt flt -c:a pcm_f32le`. For example, a 96 kHz source remains 96 kHz:
+For PCM 32-bit float input, use `-sample_fmt flt -c:a pcm_f32le` and the measured
+source sample rate. For example, a 96 kHz source remains 96 kHz:
 
 ```text
 -ar 96000 -sample_fmt flt -c:a pcm_f32le
 ```
 
-Do not substitute the 192 kHz / 24-bit hi-res setting for an explicit
-32-bit-float-preservation request. See
-[delivery-variants.md](delivery-variants.md) when the user also needs smaller
-or mobile-friendly copies.
+Use the actual rate instead of assuming every source is 96 kHz. Keeping this
+rate and float format avoids an unnecessary resampling or integer-PCM
+quantization step before delivery. The intended gain adjustment still changes
+sample values; format preservation does not mean an unmodified recording.
 
-If the user does not choose, use hi-res and mention that the intermediate WAV
-file will be larger. For the default YouTube MP4 video creation step, the
-prepared WAV audio is converted to AAC. If the user explicitly asks for the
-source-preserving MKV route, the prepared WAV audio can be copied with
-`-c:a copy`.
+For another source PCM format, inspect its precision and choose an explicit
+PCM codec that preserves it. Do not rely on FFmpeg's default WAV encoder.
+
+The YouTube step converts the master directly to 48 kHz AAC. A requested
+192 kHz / 24-bit or 44.1 kHz / 16-bit copy is a separate delivery variant,
+not the standard input for another encode. An explicitly requested MKV route
+can copy the prepared master audio with `-c:a copy`.
 
 ## Phase 1: Measurement
 
@@ -71,6 +63,11 @@ Before generating a finishing command, verify that the measurement output
 contains a parseable JSON object and a numeric `input_tp`. If `input_tp` is
 missing or not numeric, stop and inspect the measurement output instead of
 guessing a gain value.
+
+Use the `input_*` fields to describe the source. The `output_*` fields and
+`normalization_type` describe loudnorm's output sent to `null`; that processed
+audio is discarded. A `dynamic` value here does not mean the saved WAV master
+has undergone dynamic normalization.
 
 ## User-Facing Note for Low Peaks
 
@@ -106,17 +103,14 @@ Examples:
 Generate a `volume=XdB` command. Do not add compression, limiting, or loudnorm
 normalization.
 
-Lo-res output:
+Default master for a measured 96 kHz PCM 32-bit float source:
 
 ```sh
-ffmpeg -i "workplace/ffmpeg-helper-260114_160901/01_trim.wav" -af "volume=+6.8dB" -ar 44100 -sample_fmt s16 -c:a pcm_s16le "workplace/ffmpeg-helper-260114_160901/01_gain-lores-tp0p5-plain.wav"
+ffmpeg -i "workplace/ffmpeg-helper-260114_160901/01_trim.wav" -af "volume=+6.8dB" -ar 96000 -sample_fmt flt -c:a pcm_f32le "workplace/ffmpeg-helper-260114_160901/01_gain-f32-tp0p5-plain.wav"
 ```
 
-Hi-res output:
-
-```sh
-ffmpeg -i "workplace/ffmpeg-helper-260114_160901/01_trim.wav" -af "volume=+6.8dB" -ar 192000 -sample_fmt s32 -c:a pcm_s24le "workplace/ffmpeg-helper-260114_160901/01_gain-hires-tp0p5-plain.wav"
-```
+Replace `96000` with the measured source rate. Apply the gain once; later
+delivery commands read this adjusted master without adding the gain again.
 
 For multiple WAVs, repeat both phases separately for each trimmed WAV before
 concatenation.
@@ -129,11 +123,14 @@ directory's `commands.log`.
 After finishing, run a verification measurement on the gain-adjusted output.
 This is not another processing pass; it only confirms the resulting peak.
 
-Lo-res example:
+Measure the adjusted master:
 
 ```sh
-ffmpeg -hide_banner -i "workplace/ffmpeg-helper-260114_160901/01_gain-lores-tp0p5-plain.wav" -af loudnorm=print_format=json -f null - > "workplace/ffmpeg-helper-260114_160901/01_gain-verify-meta.json" 2>&1
+ffmpeg -hide_banner -i "workplace/ffmpeg-helper-260114_160901/01_gain-f32-tp0p5-plain.wav" -af loudnorm=print_format=json -f null - > "workplace/ffmpeg-helper-260114_160901/01_gain-verify-meta.json" 2>&1
 ```
+
+Also use `ffprobe` to confirm the saved master retains the source sample rate,
+channel count, and `pcm_f32le` codec for float sources.
 
 Check that the verification output contains a numeric `input_tp` close to the
 target. If the value is materially different from `-0.5 dBTP`, report it and
