@@ -7,6 +7,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const ISSUE_CLOSE_APPLY_CONTRACT = workflowContractById().get("github.issue.close.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -203,6 +204,23 @@ async function readAttempt(file) {
   return record;
 }
 
+function priorAttemptError(record) {
+  return new Error(
+    `This close operation already has a ${record.status} attempt. Do not retry it.`,
+  );
+}
+
+function isRecoverableAttempt(record) {
+  return record?.status === "conflict" || record?.status === "not-applied";
+}
+
+async function archiveRecoverableAttempt(file, record) {
+  if (!isRecoverableAttempt(record)) throw priorAttemptError(record);
+  const archive = `${file}.${record.status}-${Date.now()}-${randomUUID()}.json`;
+  await rename(file, archive);
+  return archive;
+}
+
 async function claimAttempt(file, record) {
   await mkdir(path.dirname(file), { recursive: true });
   let handle;
@@ -212,8 +230,7 @@ async function claimAttempt(file, record) {
     await handle.sync();
   } catch (error) {
     if (error?.code === "EEXIST") {
-      const existing = await readAttempt(file);
-      throw new Error(`This close operation already has a ${existing.status} attempt. Do not retry it.`);
+      throw priorAttemptError(await readAttempt(file));
     }
     throw error;
   } finally {
@@ -300,14 +317,15 @@ export async function runIssueClose(options, dependencies = {}) {
   const digest = operationSha256(options);
   const attempt = attemptPath(root, options.repository, options.issueNumber, digest);
   const prior = await readAttempt(attempt);
-  if (prior) throw new Error(`This close operation already has a ${prior.status} attempt. Do not retry it.`);
+  if (prior && !isRecoverableAttempt(prior)) throw priorAttemptError(prior);
   const common = {
     repository: options.repository,
     issue_number: options.issueNumber,
     reason: options.reason,
     duplicate_of: options.duplicateOf || null,
     operation_sha256: digest,
-    attempt_record: path.relative(root, attempt),
+    attempt_record: relativeOperationalPath(root, attempt),
+    recovering_safe_attempt: Boolean(prior),
     planned_gh_arguments: ghArguments(options),
   };
 
@@ -347,7 +365,7 @@ export async function runIssueClose(options, dependencies = {}) {
     throw new Error("Reviewed close operation changed");
   }
   const pending = {
-    schema_version: 1,
+    schema_version: 2,
     status: "pending",
     repository: options.repository,
     issue_number: options.issueNumber,
@@ -361,6 +379,10 @@ export async function runIssueClose(options, dependencies = {}) {
     reviewed_updated_at: options.expectedUpdatedAt,
     attempt_started_at: new Date().toISOString(),
   };
+  if (prior) {
+    const archived = await archiveRecoverableAttempt(attempt, prior);
+    pending.recovered_from_attempt = relativeOperationalPath(root, archived);
+  }
   await claimAttempt(attempt, pending);
   let current;
   try {
@@ -384,6 +406,7 @@ export async function runIssueClose(options, dependencies = {}) {
     const record = {
       ...pending,
       status: "conflict",
+      stage: "target-conflict",
       observed_state: current.state,
       observed_body_sha256: sha256(current.body),
       observed_updated_at: current.updatedAt,

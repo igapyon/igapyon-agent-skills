@@ -423,15 +423,16 @@ Markdown 表に向く情報:
 
 ## 表現傾向の観測資料
 
-既存のみくく担当記事に出ている定型句、ためらい表現、断定の弱め方、未来・禁則事項・部室・観測者などの比喩の使いどころを確認したい場合は、[references/mikuku-expression-survey-20260707.md](mikuku-expression-survey-20260707.md) を補助資料として参照します。
+既存のみくく担当記事に出ている定型句、ためらい表現、断定の弱め方、未来・禁則事項・部室・観測者などの比喩の使いどころを確認したい場合は、[references/mikuku-expression-survey.md](mikuku-expression-survey.md) を補助資料として参照します。
 
-この資料は、2026-07-07 時点の `mikuku-articles` から抽出した観測メモです。固定ルールではありません。文体を機械的に寄せるためではなく、既存記事でどの表現がどの程度の濃度で使われているか、強い表現をどこで控えるべきかを判断するために使います。
+この資料は、2026-07-31 時点の `mikuku-articles` から抽出した観測メモです。固定ルールではありません。文体を機械的に寄せるためではなく、既存記事でどの表現がどの程度の濃度で使われているか、強い表現をどこで控えるべきかを判断するために使います。
 
 特に、次のような作業で有効です。
 
 - 新規記事の冒頭や結びで、みくく調の濃度を決める
 - 技術エッセイで、ためらい、照れ、観測、留保をどの程度残すか判断する
 - リファレンス記事で、みくく成分を入口と出口へ絞るか判断する
+- 開発日誌とリファレンス記事のどちらを選ぶか、または分けて書くか判断する
 - `未来のことは…`、`禁則事項です♪`、`長門さん`、`部室` などの強い表現を使うべき場面か確認する
 - みくく自己レビューで、文章が平均的な技術記事へ寄りすぎていないか確認する
 
@@ -481,6 +482,8 @@ Qiita の場合でも、硬い技術文体へ寄せすぎません。Note の場
 みくく担当記事で `関連する記事`、`想定読者`、`使用ツール` などを付ける場合は、[templates/article-footer-sections-template.md](../templates/article-footer-sections-template.md) を共通の再利用元として使います。
 
 Note 記事全体の雛形が必要な場合は、通常記事向けの [templates/note-general-article-template.md](../templates/note-general-article-template.md)、またはリファレンス記事向けの [templates/note-reference-article-template.md](../templates/note-reference-article-template.md) を使います。両方ともフッター本文を重複保持せず、`article-footer-sections-template.md` の placeholder を記事 package に合わせて解決します。
+
+グラレコ画像のリンクは、生成しただけでは本文へ挿入しません。画像を保存・構造検証した状態は `image-generated`、内容確認を終えた状態は `image-checked` として区別し、`image-checked` の採用画像だけを記事へ任意で挿入します。画像がないセクションは、リンクなしで自然に読める本文にしてください。公開記事への反映は [graphic-recording/publish-generated-images-to-article.md](graphic-recording/publish-generated-images-to-article.md) の手順に従います。
 
 これらのセクションは、記事本文と本文後補足の後ろへ置きます。`## おわりに` は本文の締めとして扱います。`## 生成AI向け情報` のような本文後補足がある場合は、その後ろからフッターを始めます。
 

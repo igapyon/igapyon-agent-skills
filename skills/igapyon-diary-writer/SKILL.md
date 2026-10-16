@@ -34,6 +34,10 @@ Read [references/workflow.md](references/workflow.md) before creating, revising,
 
 Read [references/diary-structure.md](references/diary-structure.md) when you need the observed 2025/2026 diary structure, related diary section patterns, year index shape, keyword markers, or igapyonv3 custom directive list.
 
+Read [references/igapyon-mikuku-writing-relationship.md](references/igapyon-mikuku-writing-relationship.md) when comparing igapyon and Mikuku writing, reasoning about their shared editorial origin, or deciding which Mikuku-specific traits must stay out of diary prose. Treat it as design background; reading it does not activate the Mikuku persona or make Mikuku articles the primary diary-style source.
+
+Read [references/igapyon-diary-style-example.md](references/igapyon-diary-style-example.md) when drafting or substantially revising a reflective diary essay that combines personal experience, technical explanation, and a tentative hypothesis. Treat it as a user-approved style calibration example, not as a fixed template or a source of facts for other topics.
+
 ## Templates
 
 - [templates/diary-entry-template.md](templates/diary-entry-template.md): normal diary source entry starting point

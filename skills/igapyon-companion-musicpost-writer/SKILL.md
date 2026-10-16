@@ -83,7 +83,7 @@ description: Use only when the user explicitly asks for igapyon-companion-musicp
 - 文体や言い回しの細かな指針が必要なときは [references/style-guide.md](references/style-guide.md) を読む
 - とくにクラシック音楽寄りの投稿、楽器まわりの感触や選択ログを扱うときは、`style-guide.md` のクラシック寄り文体メモを優先して参照する
 - 構成パターンや段落設計、締め方の例が必要なときは [references/structure-patterns.md](references/structure-patterns.md) を読む
-- 参照資料の全体像を確認したいときは `index.json` を使って、必要な `references/` ファイルを探す
+- 別の参照資料が必要なときは `references/` 内のファイル名を確認し、必要な語が分かっていれば本文検索で探す
 - どちらも必要ない場合は、この `SKILL.md` の指針だけで進める
 
 ## 応答パターン

@@ -1,8 +1,7 @@
 # igapyon-reviewer Reference Index
 
 Use this file as the human-readable navigation map for `igapyon-reviewer`.
-Use `../index.json` as the generated discovery index when file inventory,
-paths, sizes, or summaries need to be checked mechanically.
+When a reference is not listed here, inspect or search the relevant directory.
 
 ## Start Here
 
@@ -106,7 +105,7 @@ user explicitly asks for miku-soft / igapyon conventions.
 - Agent Skill conventions:
   [Agent Skill Review](20-targets/agent-skill/agent-skill-review.md),
   [Read-Only Skill Content Format Review](20-targets/agent-skill/read-only-skill-content-format-review.md)
-- `index.json` generation and discovery quality:
+- target index policy, and generation/discovery quality when adopted:
   [Agent Skill Review](20-targets/agent-skill/agent-skill-review.md),
   [JSON Agent Grepability Review](20-targets/structured-data/json-agent-grepability-review.md),
   [Generated Artifact Review](20-targets/artifacts/generated-artifact-review.md)

@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
-import { copyFile, open, readFile, stat, writeFile } from "node:fs/promises";
+import { copyFile, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-
-const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+import { validatePngBuffer } from "./png-validation.mjs";
 
 const usage = `Usage:
   node copy-section-image.mjs --run-dir <run-output-dir> --section <NNN> --src <image-path> [--overwrite]
@@ -58,19 +57,7 @@ async function assertNonEmptyPng(filePath, fileStat) {
   if (fileStat.size === 0) {
     throw new Error(`Source image is empty: ${filePath}`);
   }
-
-  const header = Buffer.alloc(pngSignature.length);
-  const file = await open(filePath, "r");
-  let bytesRead;
-  try {
-    ({ bytesRead } = await file.read(header, 0, header.length, 0));
-  } finally {
-    await file.close();
-  }
-
-  if (bytesRead !== pngSignature.length || !header.equals(pngSignature)) {
-    throw new Error(`Source image does not have a valid PNG signature: ${filePath}`);
-  }
+  validatePngBuffer(await readFile(filePath));
 }
 
 function updateTodo(todo, section) {

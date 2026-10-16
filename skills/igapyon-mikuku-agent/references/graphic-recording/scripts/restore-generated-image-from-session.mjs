@@ -2,8 +2,7 @@
 
 import { readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-
-const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+import { validatePngBuffer } from "./png-validation.mjs";
 
 const usage = `Usage:
   node restore-generated-image-from-session.mjs --session-jsonl <session.jsonl> --after-line <N> --out <image-path> [--overwrite]
@@ -101,9 +100,7 @@ function decodePngBase64(value) {
     throw new Error("Selected image_generation_end.payload.result is empty.");
   }
   const image = Buffer.from(normalized, "base64");
-  if (image.length < pngSignature.length || !image.subarray(0, pngSignature.length).equals(pngSignature)) {
-    throw new Error("Decoded payload is not a PNG image.");
-  }
+  validatePngBuffer(image);
   return image;
 }
 

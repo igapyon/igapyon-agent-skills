@@ -8,7 +8,7 @@ import {
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v4");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v11");
 });
 
 test("every workflow uses English fixed output wording", () => {
@@ -89,6 +89,110 @@ test("Issue create preflight output contains complete review identifiers", () =>
   assert.match(output, new RegExp(`Draft SHA-256: ${"a".repeat(64)}`));
   assert.match(output, /Remote mutation: not invoked/);
   assert.match(output, /miku-scm approve/);
+});
+
+test("handoff recovery output exposes exact commands and dismissal state", () => {
+  const listed = renderHumanOutput({
+    workflow: "github.issue.handoff.list",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "listed",
+    mutationInvoked: false,
+    result: {
+      status: "listed",
+      pending_count: 1,
+      handoffs: [{
+        id: "20260816003919398-c119ac32-29cb-4f58-ad70-550b907faf95",
+        short_id: "550b907faf95",
+        apply_workflow: "github.issue.update.apply",
+        repository: "a/b",
+        issue: 7,
+        title: "Update title",
+        created_at: "2026-08-02T00:00:00Z",
+      }],
+    },
+  });
+  assert.match(listed, /Pending handoff count: 1/);
+  assert.match(listed, /Approval suffix: 550b907faf95/);
+  assert.match(listed, /Approve command: miku-scm approve 550b907faf95/);
+  assert.match(listed, /Dismiss command: miku-scm dismiss 550b907faf95/);
+  assert.match(listed, /Mutation invoked: no/);
+
+  const dismissed = renderHumanOutput({
+    workflow: "github.issue.handoff.dismiss",
+    status: "success",
+    approvalGate: "apply",
+    delegateStatus: "dismissed",
+    mutationInvoked: true,
+    result: {
+      status: "dismissed",
+      handoff: {
+        id: "handoff-7",
+        status: "not-applied",
+        path: "workplace/miku-scm/handoffs/handoff-7.json",
+      },
+    },
+  });
+  assert.match(dismissed, /^\[SUCCESS\] GitHub Issue approval handoff dismissal/);
+  assert.match(dismissed, /Handoff status: not-applied/);
+  assert.match(dismissed, /Mutation invoked: yes/);
+});
+
+test("handoff batch output preserves conflict diagnostics for a partial stop", () => {
+  const output = renderHumanOutput({
+    workflow: "github.issue.handoff.batch.apply",
+    status: "partial",
+    approvalGate: "apply",
+    delegateStatus: "partial",
+    mutationInvoked: true,
+    result: {
+      status: "partial",
+      batch_status: "partial-conflict",
+      requested_count: 3,
+      processed_count: 2,
+      applied_count: 1,
+      stopped_handoff: "handoff-2",
+      stopped_status: "conflict",
+      remaining_handoffs: ["handoff-3"],
+      results: [
+        {
+          status: "applied",
+          handoff: { id: "handoff-1" },
+          apply_workflow: "github.issue.comment.apply",
+        },
+        {
+          status: "conflict",
+          handoff: { id: "handoff-2" },
+          apply_workflow: "github.issue.close.apply",
+          apply_result: {
+            status: "conflict",
+            delegate_result: {
+              stage: "target-conflict",
+              reviewed_updated_at: "2026-08-01T00:00:00Z",
+              observed_updated_at: "2026-08-02T00:00:00Z",
+            },
+          },
+          dependency_refresh: {
+            status: "refreshed",
+            refreshed_options: ["--expected-updated-at"],
+          },
+        },
+      ],
+    },
+  });
+
+  assert.match(output, /^\[PARTIAL\] GitHub Issue approval handoff batch apply/);
+  assert.match(output, /Step 1: handoff-1 \| github.issue.comment.apply \| applied/);
+  assert.match(output, /Step 2: handoff-2 \| github.issue.close.apply \| conflict/);
+  assert.match(output, /Step 2 dependency refresh: refreshed/);
+  assert.match(output, /Step 2 refreshed options: --expected-updated-at/);
+  assert.match(output, /Stopped handoff: handoff-2/);
+  assert.match(output, /Stopped apply status: conflict/);
+  assert.match(output, /Stopped stage: target-conflict/);
+  assert.match(output, /Reviewed updated at: 2026-08-01T00:00:00Z/);
+  assert.match(output, /Observed updated at: 2026-08-02T00:00:00Z/);
+  assert.match(output, /Remaining handoff: handoff-3/);
+  assert.match(output, /Mutation invoked: yes/);
 });
 
 test("Issue create apply output reports verification without rewording the body", () => {
@@ -208,6 +312,44 @@ Mutation invoked: yes
 `);
 });
 
+test("PR recommit push output combines local rewrite and publication handoff", () => {
+  const output = renderHumanOutput({
+    workflow: "pr.recommit.push",
+    status: "success",
+    approvalGate: "apply",
+    delegateStatus: "published",
+    mutationInvoked: true,
+    result: {
+      status: "published",
+      repository: "igapyon-agent-skills",
+      branch: "devel-test",
+      base: "origin/devel",
+      backup_branch: "backup/2026-08-10-2100",
+      pr_draft: "workplace/miku-scm/pr-drafts/pr-devel-test.md",
+      new_head: "a".repeat(40),
+      pushed_branch: "devel-test",
+      final_branch: "devel-test-done",
+      comparison: "0 0",
+      repository_url: "https://github.com/igapyon/igapyon-agent-skills",
+      pr_lookup: "confirmed-none",
+      pr_creation_url: "https://github.com/igapyon/igapyon-agent-skills/pull/new/devel-test",
+      version: "1.20260810.1",
+      recommended_tag: "v20260810a",
+      human_handoff: "Create the PR and tag through GitHub.",
+    },
+  });
+
+  assert.match(output, /^\[SUCCESS\] Draft recommit push$/m);
+  assert.match(output, /^Backup branch: backup\/2026-08-10-2100$/m);
+  assert.match(output, new RegExp(`^New HEAD: ${"a".repeat(40)}$`, "m"));
+  assert.match(output, /^Pushed branch: devel-test$/m);
+  assert.match(output, /^Final branch: devel-test-done$/m);
+  assert.match(output, /^Draft file: workplace\/miku-scm\/pr-drafts\/pr-devel-test\.md$/m);
+  assert.match(output, /^Pull Request creation: not performed$/m);
+  assert.match(output, /^Recommended tag: v20260810a$/m);
+  assert.match(output.trimEnd(), /PR text draft saved; Pull Request and tag operations remain in GitHub\.$/);
+});
+
 test("post-merge next-work output is complete and ends with the fixed handoff", () => {
   const output = renderHumanOutput({
     workflow: "repository.post-merge.next-work",
@@ -305,6 +447,67 @@ Mutation invoked: yes
 Create the PR and tag through GitHub.
 `);
   assert.doesNotMatch(output, /[ぁ-んァ-ヶ一-龠]/);
+});
+
+test("work commit output reports the one-shot local result and non-blocking version notice", () => {
+  const output = renderHumanOutput({
+    workflow: "work.commit",
+    status: "success",
+    approvalGate: "apply",
+    delegateStatus: "committed",
+    mutationInvoked: true,
+    result: {
+      status: "committed",
+      repository: "igapyon-agent-skills",
+      branch: "devel-test",
+      head_before: "a".repeat(40),
+      head: "b".repeat(40),
+      commit_message: "Update work",
+      message_source: "supplied",
+      paths: ["README.md", "feature.txt"],
+      checks: ["mvn validate"],
+      version_notice: {
+        version: "1.20260810.2",
+        coupled_version: "20260810b",
+        recommended_tag: "v20260810b",
+        increment_status: "increment_not_observed",
+      },
+      working_tree_clean: true,
+    },
+  });
+
+  assert.match(output, /^\[SUCCESS\] Work commit$/m);
+  assert.match(output, /^Commit message: Update work$/m);
+  assert.match(output, /^Commit message source: supplied$/m);
+  assert.match(output, /^Committed path count: 2$/m);
+  assert.match(output, /^Pre-commit checks: mvn validate$/m);
+  assert.match(output, /^Version notice: 1\.20260810\.2$/m);
+  assert.match(output, /^Version increment: increment_not_observed$/m);
+  assert.match(output, /^Version increment reminder: not observed; this is non-blocking\.$/m);
+  assert.match(output, /^Working tree: clean$/m);
+  assert.match(output, /Mutation invoked: yes/);
+});
+
+test("work commit output warns when a done branch blocks the commit", () => {
+  const output = renderHumanOutput({
+    workflow: "work.commit",
+    status: "not-applied",
+    approvalGate: "apply",
+    delegateStatus: "not-applied",
+    mutationInvoked: false,
+    result: {
+      status: "not-applied",
+      repository: "igapyon-agent-skills",
+      branch: "devel-test-done",
+      reason: "Current branch is frozen (-done)",
+      warning: "The current branch ends with -done. Switch to an active work branch before committing.",
+      mutation_invoked: false,
+    },
+  });
+
+  assert.match(output, /^\[NOT APPLIED\] Work commit$/m);
+  assert.match(output, /^Warning: .*ends with -done.*$/m);
+  assert.match(output, /^Mutation invoked: no$/m);
 });
 
 test("PR publication reports unresolved values without guessing", () => {

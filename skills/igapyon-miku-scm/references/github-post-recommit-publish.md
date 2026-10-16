@@ -102,7 +102,7 @@ the reviewed remote SHA.
 
 Apply mode performs these operations in order:
 
-1. Require macOS and resolve the repository.
+1. Require macOS or native Windows and resolve the repository.
 2. Verify the current non-`-done` branch and clean worktree/index.
 3. Verify exact `HEAD` equality with `--expected-head`.
 4. Refuse an existing local `<branch>-done`.
@@ -192,7 +192,12 @@ This workflow does not create, edit, or merge a Pull Request. It does not
 create, move, delete, or push a tag. It does not create or publish a GitHub
 Release, run `git pull`, stash or discard dirty changes, or open a browser.
 
-## Tests
+## Tests for miku-scm Source Maintenance
+
+This suite validates changes to the miku-scm publication helper and its source
+repository. It is not a post-recommit or post-publication completion step for
+a target repository. Do not run it merely because this publication workflow
+completed.
 
 Run the isolated test suite with:
 

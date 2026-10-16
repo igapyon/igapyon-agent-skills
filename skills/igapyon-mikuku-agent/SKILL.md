@@ -73,8 +73,7 @@ scope.
 When the user asks for the version of `みくく`, read
 [references/VERSION.md](references/VERSION.md) and answer with that value. Use
 the `みくく` tone only when the persona is already active or the user explicitly
-requests it; a version lookup alone is a Meta request. Do not use `index.json`
-as the version source of truth.
+requests it; a version lookup alone is a Meta request.
 
 ## Article Writing
 
@@ -85,7 +84,7 @@ structure. Preserve the `みくく` flavor; do not polish technical essays into
 neutral prose.
 
 For expression-density checks, tone calibration, or Mikuku article self-review,
-use [references/mikuku-expression-survey-20260707.md](references/mikuku-expression-survey-20260707.md)
+use [references/mikuku-expression-survey.md](references/mikuku-expression-survey.md)
 as an optional observation-based supplement. It is not a mandatory core prompt
 and should not be used to mechanically force every article into the same
 phrasing.
@@ -121,6 +120,13 @@ When creating graphic recording material, text drafts, or image-generation
 prompts for a `みくく` article explainer, read and apply
 [references/graphic-recording.md](references/graphic-recording.md) in the
 current turn and follow its execution gate.
+
+The graphic-recording workflow uses
+[references/graphic-recording/style-contract.md](references/graphic-recording/style-contract.md)
+as its shared visual contract. For whole-article images, run the prompt audit
+described in that workflow before image generation; do not silently trade away
+the article-specific diagram, Mikuku presence, or speech bubble for a
+model-specific visual reinterpretation.
 
 When applying generated images from `workplace/<RUN_ID>-graphic-recording/` to
 a published `mikuku-articles` article directory, read
@@ -173,18 +179,22 @@ Additional image assets:
 
 Article-oriented visual assets are available under [assets/article/](assets/article/) when an article title image or article section image is needed.
 
-Treat `index.json` as a generated discovery index, not the source of truth for
-representative image choice or asset semantics.
+Use the representative image and additional asset links above for image
+selection. When another asset is needed, inspect the relevant asset directory.
 
 ## References
 
 - [references/VERSION.md](references/VERSION.md): source of truth for the `みくく` version response.
 - [references/mikuku-prompt.md](references/mikuku-prompt.md): full `みくく` character prompt and sample dialogue.
 - [references/article-writing.md](references/article-writing.md): article writing reference for `みくく` authored articles.
-- [references/mikuku-expression-survey-20260707.md](references/mikuku-expression-survey-20260707.md): observation-based survey of `みくく` expressions in existing `mikuku-articles`, used as an optional supplement for tone density and self-review.
+- [references/mikuku-expression-survey.md](references/mikuku-expression-survey.md): observation-based survey of `みくく` expressions in existing `mikuku-articles`, used as an optional supplement for tone density and self-review.
 - [references/text-characteristics-classification.md](references/text-characteristics-classification.md): text characteristics classification reference for Mikuku-oriented article types and their `律・らしさ`.
 - [references/graphic-recording.md](references/graphic-recording.md): graphic recording workflow entry for `みくく` article explainers.
+- [references/graphic-recording/style-contract.md](references/graphic-recording/style-contract.md): shared visual contract separating stable style from article-specific diagram design.
+- [references/graphic-recording/model-comparison.md](references/graphic-recording/model-comparison.md): same-prompt comparison sheet for separating prompt-generation and image-generation model effects.
+- [references/graphic-recording/scripts/audit-graphic-recording-prompt.mjs](references/graphic-recording/scripts/audit-graphic-recording-prompt.mjs): deterministic pre-generation audit for whole-article prompt preservation and contradictions.
 - [references/graphic-recording/publish-generated-images-to-article.md](references/graphic-recording/publish-generated-images-to-article.md): procedure for applying generated graphic recording images to published `mikuku-articles` article directories.
+- [references/graphic-recording/scripts/apply-generated-images-to-article.mjs](references/graphic-recording/scripts/apply-generated-images-to-article.mjs): dry-run-first helper for validating and applying selected generated images to an article.
 - [references/codex-local-token-usage.md](references/codex-local-token-usage.md): OpenAI Codex CLI-only local token usage investigation prompt and caveats.
 - [references/png-to-svg-line-mask-experimental.md](references/png-to-svg-line-mask-experimental.md): experimental WIP prompt for PNG-to-SVG black-and-white line mask creation, linework SVG tracing, and inferred construction guides.
 - [examples/png2svg/miku-soft/](examples/png2svg/miku-soft/): worked PNG-to-SVG example with source material, STEP-1 line mask, STEP-2 linework SVG, and an inferred face-outline guide layer.

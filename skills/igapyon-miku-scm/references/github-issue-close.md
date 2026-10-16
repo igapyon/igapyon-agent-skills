@@ -17,6 +17,10 @@ Use [scripts/github-issue-close.mjs](../scripts/github-issue-close.mjs).
 Do not assemble or invoke `gh` independently. Do not add a closing comment in
 this command. Use the separately approved
 Issue-comment workflow when a comment is needed. Reopen is outside this scope.
+An ordered approval-handoff batch may run that separately reviewed comment
+first and then dependency-refresh this close operation under
+[approval-handoff.md](approval-handoff.md); it still invokes two distinct fixed
+helpers and never adds a comment to `gh issue close`.
 
 Its fixed READONLY command is `gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,stateReason,updatedAt`; it is distinct from the one close mutation.
 
@@ -39,6 +43,13 @@ Apply requires the reviewed operation digest, target body digest, `updated_at`,
 and reviewed apply workflow contract pair digest. Persist `pending`, retrieve
 the target again, and record
 `conflict` without `gh` if it is no longer Open or the reviewed state changed.
+
+A `conflict` or pre-mutation `not-applied` attempt proves that `gh issue close`
+was not invoked. A later preflight may therefore read and display the latest
+Open Issue state. After a new human approval, apply archives the prior safe
+attempt record and claims a new `pending` record before revalidation. Preserve
+the archived record path in the new attempt. A `pending`, `closed`, or
+`unresolved` attempt remains a hard stop and must never be retried or replaced.
 
 Invoke `gh issue close` once. Then retrieve the target with fixed READONLY `gh issue view` and bounded retries. Require `closed` plus the selected state reason. A pre-mutation read failure is `not-applied`; never retry the mutation.
 

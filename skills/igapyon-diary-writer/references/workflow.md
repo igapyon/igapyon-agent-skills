@@ -42,8 +42,9 @@ Common patterns:
 
 - Start content sections with `## ` headings.
 - Keep the first meaningful `## ` heading suitable as the entry title because `igapyonv3` title parsing relies on it.
-- Use `<@lastmodified date="YYYY-MM-DD"/>` when an entry needs an explicit last-modified marker.
+- Set `<@lastmodified date="YYYY-MM-DD"/>` to the actual local date when the source is changed, not automatically to the diary entry date. Use another date only when the user explicitly requests it. Apply this rule to every changed source, including an older entry changed only to add a reciprocal link.
 - Use `## 関連する日記` or `### 関連する日記` with `<@linkdiary date="YYYY-MM-DD" />` for related diary links when applicable.
+- When entries have a strong direct relationship, such as the same instrument or project or a clear planning-to-result sequence, add reciprocal `<@linkdiary ... />` entries to the related existing sources. Treat this as a judgment rule, not a universal requirement; do not add reverse links for weak or merely topical relationships.
 - Preserve existing directives, keyword links, memo links, and local navigation conventions.
 - Do not edit generated `.md`, `.html.md`, `.html`, Atom, index, or keyword files unless the user explicitly asks or generation produces them.
 
@@ -57,6 +58,23 @@ Write as igapyon's diary, not as Mikuku.
 - Do not add Mikuku markers, virtual character phrasing, or Note article voice.
 - Do not invent events, dates, URLs, releases, results, or personal observations.
 - If source facts are missing, ask briefly or mark the gap as unresolved.
+
+### Style Source Priority
+
+When style sources or editorial signals differ, apply them in this order:
+
+1. The user's instructions and corrections in the current conversation
+2. The canonical diary source currently being edited
+3. Existing diary entries close to the target in time, topic, and format
+4. A user-approved style calibration example whose intended use matches the target
+5. Other existing diary entries written by igapyon
+6. AI-assisted entries not explicitly approved as style calibration examples
+7. Comparison material about the relationship between igapyon and Mikuku writing
+
+Use this priority for style and editorial judgment, not to import facts from one entry into
+another. Treat explicit approval as a style calibration example separately from ordinary
+AI-assisted writing. Classify an AI-assisted entry without explicit calibration approval under
+item 6 even when it is close to the target in time, topic, or format.
 
 ## Verification
 

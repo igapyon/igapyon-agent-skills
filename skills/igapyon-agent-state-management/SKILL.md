@@ -22,6 +22,7 @@ This skill intentionally uses hard triggers. Use it only for the frontmatter
 description triggers. Useful user-facing phrases:
 
 - `igapyon 状態管理`
+- `igapyon agent 状態管理`
 - `igapyon 作業状態`
 - `igapyon 作業再開`
 - `igapyon goal`
@@ -32,7 +33,7 @@ description triggers. Useful user-facing phrases:
 When answering "what skills are available?", describe this as the skill for
 `igapyon 状態管理` and `igapyon 作業再開`.
 
-Use [index.json](index.json) before reading multiple references.
+For known tasks, follow the named reference links below. When the needed file is not known, list or search only the relevant reference directory.
 
 ## Core Workflow
 

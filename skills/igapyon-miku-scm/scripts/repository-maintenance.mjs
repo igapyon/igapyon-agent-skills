@@ -6,6 +6,9 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
+import { dateFromJstParts } from "./miku-scm-jst-time.mjs";
+import { normalizeOperationalPath, relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 
 const MAINTENANCE_APPLY_CONTRACT = workflowContractById().get("repository.maintenance.apply");
@@ -119,6 +122,13 @@ function gitText(git, root, args, options) {
   return git(root, args, options).stdout.trim();
 }
 
+export function repositoryPathsEqual(left, right, pathApi = path) {
+  const leftResolved = pathApi.resolve(String(left));
+  const rightResolved = pathApi.resolve(String(right));
+  if (pathApi.sep === "\\") return leftResolved.toLowerCase() === rightResolved.toLowerCase();
+  return leftResolved === rightResolved;
+}
+
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -170,9 +180,8 @@ export function parseBackupName(name) {
   const minute = Number(minuteText);
   const sequence = sequenceText ? Number(sequenceText) : 1;
   if (sequence < 1 || (sequenceText && sequence === 1)) return null;
-  const created = new Date(year, month - 1, day, hour, minute, 0, 0);
-  if (created.getFullYear() !== year || created.getMonth() !== month - 1
-    || created.getDate() !== day || created.getHours() !== hour || created.getMinutes() !== minute) return null;
+  const created = dateFromJstParts({ year, month, day, hour, minute });
+  if (!created) return null;
   return { created, created_at: created.toISOString(), sequence };
 }
 
@@ -447,7 +456,7 @@ export async function saveMaintenancePlan(diagnosis, dependencies = {}) {
   return {
     ...diagnosis,
     status: "plan-saved",
-    plan_path: path.relative(diagnosis.repository, file),
+    plan_path: relativeOperationalPath(diagnosis.repository, file),
     plan_sha256: digest,
     deletion_candidates: plan.candidates,
   };
@@ -461,7 +470,8 @@ async function loadPlan(options) {
   const content = await readFile(file, "utf8");
   if (sha256(content) !== options.expectedPlanSha256.toLowerCase()) throw new Error("Maintenance plan SHA-256 changed");
   const plan = JSON.parse(content);
-  if (plan?.schema_version !== 1 || plan.repository !== root || !REMOTE.test(plan.remote)
+  if (plan?.schema_version !== 1 || typeof plan.repository !== "string" || !repositoryPathsEqual(plan.repository, root)
+    || !REMOTE.test(plan.remote)
     || !Array.isArray(plan.candidates) || plan.candidates.some((candidate) => !SHA.test(candidate?.object || "")
       || !validBranchName(candidate?.branch) || candidate?.ref !== `refs/heads/${candidate.branch}`
       || !["done", "backup"].includes(candidate?.kind)
@@ -570,11 +580,11 @@ export async function applyMaintenancePlan(options, dependencies = {}) {
     return {
       status: "applied",
       repository: loaded.root,
-      plan_path: options.applyPlan,
+      plan_path: normalizeOperationalPath(options.applyPlan),
       plan_sha256: options.expectedPlanSha256.toLowerCase(),
       deleted: loaded.plan.candidates,
       recovery,
-      attempt_record: path.relative(loaded.root, attemptFile),
+      attempt_record: relativeOperationalPath(loaded.root, attemptFile),
     };
   } catch (error) {
     await writeAttempt(attemptFile, {

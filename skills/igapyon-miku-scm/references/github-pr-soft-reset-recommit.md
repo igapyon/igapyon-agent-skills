@@ -1,10 +1,10 @@
 # PR Soft Reset Recommit
 
-Use this workflow only when the user explicitly asks to rebuild local commits by soft-resetting to a base and recommitting with a saved PR draft as the commit message.
+Use this workflow only when the user explicitly asks to rebuild local commits by soft-resetting to a base and recommitting with PR-derived text as the commit message. A bare `recommit` request implicitly includes PR writing for the complete `<base>..HEAD` range; the user does not need to say `PR` separately.
 
 This is not `git commit --amend`. It resets `HEAD` back to a confirmed base while preserving the index and working tree, then creates a new commit from the preserved changes.
 
-This mode changes local Git history. Do not run it automatically after drafting PR text. Do not run it for generic commit summaries or ordinary PR drafting.
+This mode changes local Git history. An ordinary PR request with two or more commits should be guided toward this workflow, but do not perform the history rewrite automatically after drafting PR text. Do not run it for generic commit summaries. Preserve the explicit review gate before apply.
 
 This workflow automates the local-only history rewrite through the
 deterministic runner when the user explicitly asks for PR Soft Reset
@@ -34,7 +34,7 @@ Do not invoke a free-form Git sequence around the runner.
 - `git fetch origin` is allowed only to refresh local remote-tracking information.
 - Do not ask the version-increment reminder again merely because this workflow will replace an already confirmed commit. Reuse a valid same-session version check under [version-increment-confirmation.md](version-increment-confirmation.md) after re-reading the version sources and rerunning their alignment check. Ask again if the content to recommit changed after the confirmation.
 - `git reset --soft <base>` rewrites `HEAD` while preserving index and working tree changes. Treat it as a history-rewrite operation and mention that clearly before running it.
-- Resolve the base from local Git before asking the user. Accept the current branch upstream only when it is not the remote counterpart of the current feature branch. Otherwise prefer the base encoded by a prescribed `<base>-tiga...` branch name, then local `origin/HEAD`, then local `origin/devel`. Ask for `--base` when the result is ambiguous.
+- Resolve the base from local Git before asking the user. The optional `--remote` value defaults to `origin` and fixes one remote namespace for the entire resolution. Accept the current branch upstream only when it belongs to that selected remote and is not the remote counterpart of the current feature branch. Otherwise prefer the base encoded by a prescribed `<base>-tiga...` branch name under that remote, then local `<remote>/HEAD`, then local `<remote>/devel`. Ask for `--base` when the result is ambiguous.
 - Require the resolved base to be an ancestor of `HEAD`, require at least one commit in `<base>..HEAD`, and refuse a branch ending in `-done`. Enforce these checks both in the documented workflow and inside the helper immediately before apply mode.
 
 ## Inputs
@@ -48,7 +48,7 @@ The PR draft file must contain the inner Markdown draft, without the outer `~~~~
 
 In this mode, the PR draft must be based on the exact `<base>..HEAD` range shown by preflight. It must cover every material change group in `Commits To Collapse` and `Diff Stat`; a draft based only on the latest commit is invalid when multiple commits will be collapsed.
 
-If there is no saved PR draft file, stop this workflow and first create or save the PR draft through PR mode. Do not use `mktemp`, inline heredoc, or `cat <<EOF` as a fallback.
+If a bare `recommit` request has no saved matching PR draft, treat PR mode as implicit: collect `writing.pr.prepare` evidence for exactly `<base>..HEAD`, draft and save the PR text, and then continue to recommit preflight in the same conversational workflow. Do not stop merely to ask the user to request PR writing separately. Do not use `mktemp`, inline heredoc, or `cat <<EOF` as a fallback. Draft creation still does not authorize the local history rewrite.
 
 ## PR Draft Resolution
 
@@ -66,6 +66,7 @@ If `PR_DRAFT` is already known, pass it explicitly:
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   pr.recommit.preflight \
+  --remote origin \
   --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md
 ```
 
@@ -117,6 +118,7 @@ After that, apply the local-only rewrite with one fixed runner call:
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   pr.recommit.apply \
+  --remote origin \
   --base origin/devel \
   --pr-draft workplace/miku-scm/pr-drafts/pr-devel-YYYYMMDDHHMM.md \
   --apply
@@ -132,6 +134,15 @@ The runner and its helper delegate will:
 - report the new `HEAD` and final `git status -sb`
 
 The helper refuses `--apply` when there are existing uncommitted changes unless `--allow-dirty` is also passed. Use `--allow-dirty` only when the user has explicitly confirmed that those uncommitted changes are intentional and should participate in the recommit context.
+
+## Verification Boundary
+
+The runner's preflight, immediate revalidation, new `HEAD`, and final Git
+status are the workflow verification for a target-repository recommit. Do not
+run miku-scm's source test suite or contract drift check merely because this
+workflow completed. Run only relevant target-project tests that the user
+requested or the target repository documents, and keep their results separate
+from miku-scm source-maintenance verification.
 
 If Node is unavailable or the helper fails before changing history, use this manual shape:
 

@@ -4,6 +4,8 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+
 const DEFAULT_MAX_AGE_MINUTES = 10;
 
 function usage() {
@@ -102,7 +104,7 @@ async function writeJsonAtomic(file, value) {
 }
 
 function report(status, dataFile, metadata) {
-  const relativeDataFile = path.relative(repositoryRoot(), dataFile);
+  const relativeDataFile = relativeOperationalPath(repositoryRoot(), dataFile);
   process.stdout.write(`${JSON.stringify({
     status,
     cache: relativeDataFile,

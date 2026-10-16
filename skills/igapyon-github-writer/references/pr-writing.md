@@ -11,13 +11,13 @@ After `igapyon-github-writer` is active, enter PR mode for similar wording such 
 ## Target Rules
 
 - If the user asks for PR text without a commit ID, commit range, branch comparison, or explicit working-tree target, run `pr.evidence` without `--target`.
-- Use the runner-resolved latest commit as the single commit PR target.
-- Interpret that default as `<resolved-commit>^..<resolved-commit>` for the change content, and inspect the single commit `<resolved-commit>`.
+- The runner first resolves a distinct upstream for the current branch, then `origin/HEAD`, then `origin/devel`. When the branch is one commit ahead, use that one commit. When it is two or more commits ahead, use the complete `<base>..HEAD` range and set `recommit_recommended: true` in the evidence target.
+- If no usable base exists, the runner falls back to the latest single commit and reports that the base was unresolved.
 - This default means committed history only. Do not include uncommitted working-tree changes unless the user explicitly asks for them.
 - If the user says `対象コミット <commit> における変更内容`, draft from exactly that commit.
 - Do not include parent commits, child commits, additional ranges, or the current working tree unless the user explicitly asks for them.
 - If the user gives a commit range, use that range exactly after applying the shared target-resolution rules.
-- If the PR target cannot be resolved from the request, ask for the commit, range, or branch comparison before drafting.
+- If the PR target cannot be resolved from the request and the runner cannot provide its documented fallback, ask for the commit, range, or branch comparison before drafting.
 
 ## Canonical Request Pattern
 

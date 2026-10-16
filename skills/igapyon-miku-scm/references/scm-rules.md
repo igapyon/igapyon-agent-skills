@@ -91,9 +91,16 @@ After the human confirms that the Pull Request was merged, treat that confirmati
 
 ## PR Soft Reset Recommit Delegation
 
-- Treat `pr soft reset recommit` and `pr reset recommit` as explicit requests to run the PR Soft Reset Recommit workflow built into `igapyon-miku-scm`.
+- Treat bare `recommit`, `pr recommit`, `pr soft reset recommit`, and `pr reset recommit` as explicit requests to run the PR Soft Reset Recommit workflow built into `igapyon-miku-scm`. Bare `recommit` implicitly includes PR writing; do not require a separate PR request.
+- Treat the exact request `draft recommit push` as the distinct one-shot local
+  rewrite and conditional-publication workflow in
+  [github-pr-recommit-push.md](github-pr-recommit-push.md). The older `pr
+  recommit push` spelling remains a compatible alias. Here `draft` means the
+  saved Pull Request title and body text; the workflow does not create or merge
+  a Pull Request. The exact compound request authorizes the fixed remote
+  transition after the reviewed draft is available.
 - Use [github-writing-rules.md](github-writing-rules.md), [github-pr-writing.md](github-pr-writing.md), [github-pr-soft-reset-recommit.md](github-pr-soft-reset-recommit.md), and [github-backup-branch.md](github-backup-branch.md) for PR draft composition, backup-branch creation, soft reset, and recommit behavior. Use the bundled `scripts/pr-soft-reset-recommit-preflight.mjs`; do not invoke `igapyon-github-writer`.
-- Resolve the reset base before drafting. In this mode, override the generic latest-single-commit PR default and draft from the exact `<base>..HEAD` commit range that the helper will collapse. Inspect every commit and the complete diff for that range.
+- Resolve the reset base before drafting and use the exact `<base>..HEAD` commit range that the helper will collapse. Inspect every commit and the complete diff for that range. For ordinary PR writing without an explicit target, use the same range by default when it contains two or more commits; keep an exactly one-commit branch as a single-commit PR.
 - Before apply mode, compare the saved draft with `Commits To Collapse` and `Diff Stat`; require the title and body to cover every material change group in the collapsed range. If the draft covers a different scope, regenerate it before rewriting history.
 - Do not invalidate a verified same-session version check merely because this workflow starts. This includes a completed increment and an explicit no-increment confirmation for the same content. Re-read the version sources, rerun their alignment check, and confirm that the recommit content has not changed; when they still match the session record, continue without the version reminder.
 - Before delegating, require a clean working tree and run `git fetch origin` so the reset base is not resolved from stale remote-tracking information.
@@ -115,7 +122,23 @@ git log -1 | head -n 20
 - Run this post-check only after successful recommit. If recommit fails, report the failure instead of presenting the previous commit log as the new result.
 - Do not push or create a Pull Request as part of this delegated workflow.
 
-## Human-Approved Post-Recommit Publication On macOS
+## One-Shot PR Recommit Push On macOS or Windows
+
+Use the fixed `pr.recommit.push` runner workflow after the reviewed PR draft is
+available. It validates the local candidate and fixes the remote branch state
+before backup. After backup succeeds, it continues through recommit,
+publication-plan creation, exact-lease or new-branch push, post-push equality,
+and `-done` rename without another conversational approval.
+
+If the remote expectation changes after recommit, it returns `partial` before
+a remote mutation and leaves the ordinary work branch checked out. Do not retry
+or force-push automatically. Use the reported backup and candidate HEAD for a
+separately authorized recovery.
+
+Current apply support covers macOS and native Windows. Linux, WSL-as-Linux, and
+other platforms stop before backup; retain that guard for unsupported platforms.
+
+## Human-Approved Post-Recommit Publication On macOS or Windows
 
 After a successful PR Soft Reset Recommit and the required `git log -1 | head -n 20` display, stop and wait for the human to inspect the commit log.
 
@@ -123,7 +146,7 @@ Use [github-post-recommit-publish.md](github-post-recommit-publish.md) and the b
 
 Proceed only when all of these conditions hold:
 
-- the environment is macOS
+- the environment is macOS or native Windows
 - the working tree is clean
 - the human explicitly says the displayed commit is OK and authorizes publication
 - the target `<current-branch>-done` local branch does not already exist
@@ -158,13 +181,50 @@ Do not present local tag creation and push as the default continuation. Normally
 
 ## Next Work Branch After PR Completion
 
-The fixed helper `scripts/post-merge-next-work.mjs --confirmed-merged --apply` is the authoritative one-command implementation of this workflow. It requires a clean `-done` branch, fetches the base, performs the advisory exact-tag check, creates the prescribed next branch, and verifies `0 0`. Do not run a separate `git switch -c` when this helper is available.
+The fixed helper `scripts/post-merge-next-work.mjs --confirmed-merged --apply` is the authoritative one-command implementation of this workflow. It requires a `-done` branch with no staged changes, fetches the base, performs the advisory exact-tag check, creates the prescribed next branch, and verifies `0 0`. It also carries remaining unstaged changes and untracked files through a retained stash as described below. Do not run a separate `git switch -c` when this helper is available.
 
 Run this workflow when the human explicitly reports that the Pull Request was merged. Treat a clear report such as `GitHubでマージした`, `PRをマージした`, or `マージ完了` as both confirmation of the merge and authorization to refresh the base and create the next work branch; do not require a second instruction to create it. Do not infer merge completion from local Git state, push output, or branch naming. Do not create the next work branch immediately after push or local `-done` rename while the PR is still open or its merge is unconfirmed.
 
 Interpret a local branch name ending in `-done` only as an operational marker that the post-recommit publication sequence probably reached the rename performed after push. It does not prove that a Pull Request was created or merged. Never use `-done` alone to decide that PR work is complete; require the human's explicit statement that the PR was merged before running this workflow.
 
 Treat a `-done` branch as frozen: do not add new work, stage changes, create commits, or run PR Soft Reset Recommit on it. After receiving the human's merge report, refresh the base, run the non-blocking recommended-tag check below, and create the next work branch before continuing. If the prior PR was not merged but a correction is required, stop and require an explicitly designed recovery path instead of silently continuing on `-done`.
+
+### Carry Remaining Unstaged Work To The Next Branch
+
+The explicit merge-completion request also authorizes preserving existing
+unstaged changes and untracked files and carrying them to the next branch:
+
+1. Validate the branch, empty index, base, and unique next-branch name before
+   stashing. Stop before stash or branch creation when these checks fail.
+2. If changes remain, use `git stash push --include-untracked --message
+   <workflow-message>` and record the new stash's exact commit SHA. Check
+   that a new stash was created and that the worktree and index are clean.
+   Ignored files are outside the stash scope; staged changes are a blocker.
+3. Create the normal next branch from the refreshed base, and verify its
+   branch, HEAD, clean worktree and index, and exact `0 0` commit alignment.
+4. Restore with `git stash apply <recorded-stash-sha>`, without `--index`.
+   Verify the expected branch and HEAD, empty index, and retained stash. A
+   dirty worktree after successful restoration is expected. `0 0` describes
+   commit alignment with the base, not the absence of uncommitted work.
+5. Retain the stash even after successful restoration. Report its SHA,
+   retention, restore status, and final worktree state. Do not pop or drop
+   it, select an older stash, or automatically retry a failed mutation.
+
+On stash, branch-creation, or restore failure, preserve the current state and
+report the stopped stage, final branch, new stash SHA when available, and
+whether it is retained. A restore conflict may leave conflict entries and
+partially restored files on the new branch; keep those and the stash for
+human-directed recovery. Do not reset or switch back automatically.
+
+When `--base` is omitted, first infer the base from a current branch that
+matches the prescribed `<base>-tiga<MMDD><hour-code><minute-codes>-done`
+shape. For a legacy or otherwise non-prescribed `-done` branch such as
+`tiga0501xea-done`, fetch the selected remote and resolve its remote-tracking
+`HEAD`, such as `origin/HEAD -> origin/devel`, as the base. Never treat the
+feature branch's upstream (for example `origin/tiga0501xea`) or the full local
+`-done` name as the next-work base. If neither the prescribed name nor the
+selected remote's `HEAD` resolves a valid base, stop and require an explicit
+`--base` without creating a branch.
 
 ### Non-Blocking Recommended Tag Check
 
@@ -212,14 +272,16 @@ Use these naming rules:
 
 - `<base>` is the base branch name, such as `devel`.
 - `tiga` identifies the user.
-- `<MMDD>` is the local month and day, such as `0718` for July 18.
+- `<MMDD>` is the `Asia/Tokyo` (JST) month and day, such as `0718` for July 18.
 - Encode hour `0` through `23` with one zero-origin alphabet character: `a=0`, `b=1`, through `x=23`.
 - Encode the two decimal minute digits separately with zero-origin alphabet characters: `a=0`, `b=1`, through `j=9`.
 - Therefore minute `00` is `aa`, minute `45` is `ef`, and minute `59` is `fj`.
 
 For example, `devel-tiga0718tef` means base `devel`, user `tiga`, July 18, 19:45.
 
-After resolving a unique branch name from the current local date and time, fetch the base, perform the non-blocking recommended-tag check, then run:
+After resolving a unique branch name from the current `Asia/Tokyo` (JST) date
+and time, fetch the base, perform the non-blocking recommended-tag check, then
+run:
 
 ```sh
 git switch -c devel-tiga0718tef origin/devel
@@ -236,10 +298,19 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 4. Verify the resulting diff against the base before publication.
 5. Publish the new remote branch with `git push -u origin HEAD`; do not force-push it.
 
+For a hosted-CI correction before the prior PR is merged, use the same recovery
+shape after explicit human authorization. Preserve the frozen `-done` HEAD with
+a local backup, create the new work branch from the refreshed base, carry
+forward the reviewed unmerged PR content, then add only the CI correction.
+Never edit, recommit, or force-push the frozen branch or its already-published
+remote branch. Re-run the platform-independent regression tests before the new
+branch is published.
+
 ## Initial Safety Rules
 
 - Inspect before changing.
-- Before `git add` or `git commit`, apply the mandatory human confirmation gate in [version-increment-confirmation.md](version-increment-confirmation.md).
+- Route exact `miku-scm git add commit` to the fixed [work-commit.md](work-commit.md) runner. Its version notice is non-blocking; do not recreate a human confirmation gate or a sequence of ordinary Git commands around it.
+- The legacy ordinary `git add` or `git commit` path retains [version-increment-confirmation.md](version-increment-confirmation.md) until it is replaced by `work.commit`.
 - After staging and immediately before `git commit`, run the repository-declared consistency gates in [repository-precommit-checks.md](repository-precommit-checks.md). Do not commit after a failed or invalidated check.
 - Resolve the exact repository, branch, remote, commit, tag, release, and version target needed for the request.
 - Preserve unrelated working-tree changes.
@@ -277,7 +348,7 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 - Permit only one `gh issue comment <number> --repo <owner/repo> --body-file <temporary-file>` call using the complete reviewed comment draft.
 - Require approval after displaying the exact Issue state, complete comment, draft digest, Issue snapshot digest, `updated_at`, and planned command.
 - Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt` for the reviewed Issue snapshot and `gh api --method GET repos/<owner/repo>/issues/comments/<comment-id>` for post-comment verification. Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body. A pre-mutation READONLY failure is `not-applied`; bounded READONLY verification retries must never repeat the mutation.
-- Do not edit or delete comments, use interactive or browser modes, or combine a comment with another mutation.
+- Do not edit or delete comments, use interactive or browser modes, or combine a comment with another mutation in one helper or `gh` command. The exact ordered handoff batch may orchestrate separately reviewed helpers and dependency-refresh only the allowlisted snapshot expectations in [approval-handoff.md](approval-handoff.md).
 
 ## Human-Approved Existing Issue Label Update
 
@@ -294,6 +365,7 @@ For follow-up work accidentally committed after the previous PR content, prefer 
 - For `duplicate`, require and display one different, fixed-`gh issue view` verified target Issue and fix its reviewed snapshot digest through apply. Reject a duplicate target for other reasons.
 - Require approval after displaying the complete current Issue, reason, duplicate target when applicable, operation digest, body digest, `updated_at`, and planned command.
 - Use fixed READONLY `gh issue view --json number,url,title,body,state,stateReason,updatedAt` from preflight through verification. Persist `pending`, detect a non-Open or changed Issue as `conflict`, and verify the closed state and reason. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
+- Permit a fresh close preflight after a recorded `conflict` or pre-mutation `not-applied`. A newly approved apply archives that safe no-mutation record before claiming a new attempt. Never archive, replace, or retry a `pending`, `closed`, or `unresolved` attempt.
 - Do not add a closing comment in the close command and do not permit reopen under this workflow.
 
 ## Planned Rule Areas

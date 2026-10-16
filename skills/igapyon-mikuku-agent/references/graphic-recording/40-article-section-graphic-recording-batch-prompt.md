@@ -94,6 +94,8 @@ front matter や公開管理用メタデータは、`TODO.md` の画像生成対
 - `## 想定読者`
 - `## 使用ツール`
 - `## 関連リンク`
+- `## 参考`
+- `## 参考リンク`
 
 これらの見出しは、関連導線、著者情報、想定読者、使用ツール、関連リンクなどの補足情報です。
 `TODO.md` の画像生成対象セクションに入れず、既に抽出済みの再実行で見つけた場合は `image-skipped: footer-section` として扱い、`image-prompt.md` の作成や画像生成は行わないでください。
@@ -157,6 +159,8 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 再実行時に `TODO.md` が既に存在する場合も、未初期化の対象セクションがあれば、先に不足している `sections/<NNN>/` と `section-source.md` を補完してください。
 その後で、`section-text.md` または `image-prompt.md` が不足しているセクションだけを処理してください。
 
+再実行では、既存の `section-source.md`、`section-text.md`、`image-prompt.md`、`graphic-recording.png`、および `TODO.md` の状態を保持してください。既存セクションの本文または見出しが元記事と変わっている場合は、既存の実行ディレクトリを強制更新せず、新しい `{{RUN_OUTPUT_DIR}}` でやり直してください。既存の進捗を消す `--force` 再初期化は行わないでください。
+
 ---
 
 # TODO.md
@@ -184,7 +188,8 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 - 40番では最初に全セクションの `sections/<番号>/` と `section-source.md` を一括作成する
 - 40番では初期化完了後、各セクションで `section-text.md` を作り、`compose-section-image-prompts.mjs` で `image-prompt.md` を作る
 - 画像生成は50番で実行し、成功したら TODO を `image-generated` に更新する
-- 速度優先運用では50番は `image-generation-report.md` や `copy-generated-image.md` を作らず、画像コピーと `TODO.md` 更新だけで進む
+- 速度優先運用では50番は `image-generation-report.md` や `copy-generated-image.md` を作らず、構造検証済み画像のコピーと `TODO.md` 更新だけで進む
+- `image-generated` は保存と構造検証が完了した状態、`image-checked` は人間または画像確認工程で内容を確認した状態を表す。記事へ反映できるのは `image-checked` の画像だけとする
 ```
 
 再実行時に `TODO.md` が既に存在する場合は、`image-pending`、`image-prompt-missing`、または40番の再作成が必要な項目だけを処理してください。
@@ -261,6 +266,10 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 `section-text.md` は単なる短い要約ではなく、画像生成AIがセクションの意味、関係、配置を判断するための描画設計用の中間成果物です。
 数個の平坦な箇条書きと漠然とした「図」の一文だけで終了しないでください。
 
+記事全体画像と同じく、共通の描画品質は [style-contract.md](style-contract.md) の
+`mikuku-graphic-recording-v1` に従います。セクション固有の主図は変えてよいですが、
+みくくの存在感、吹き出し、暖色の手描き技術グラレコという共通条件を黙って外さないでください。
+
 原則として、次の構造を使ってください。
 
 ```markdown
@@ -278,6 +287,11 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 
 - 表、ASCII図、または関係を示す箇条書きを最低1つ
 
+## 図解構造
+
+- layout-family: flow | cards | comparison | layers | decision | cycle | custom
+- primary-relation: セクションの中心に置く関係、流れ、または対比
+
 ## グラレコ構図案
 
 - 左:
@@ -290,6 +304,16 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 
 - 記事本文に明記された事実だけを使う
 - 記事にないモデル名、数値、評価、生成環境などを補わない
+
+## 共通スタイル契約
+
+- style-profile: mikuku-graphic-recording-v1
+- 横長 3:2、左・中央・右の3領域、主図を最大化
+- みくくは説明役として読める大きさで1人、短い吹き出しを1つ、物を持たない
+
+## 変更（deviation）
+
+- none
 ```
 
 構造を選ぶときは、セクションの内容に最も合う関係を具体化してください。
@@ -303,6 +327,7 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/split-article-sections.
 
 `グラレコ構図案` では、少なくとも3つの画面領域、みくくの位置または視線、吹き出しの短い実文を指定してください。
 画像生成AIが記事本文を読み直さなくても、何をどこへ描くか判断できる具体性を持たせてください。
+`図解構造` の `layout-family` と `primary-relation` は、セクション用 `image-prompt.md` にも保持します。
 
 セクションが非常に短く、いずれかの項目に根拠のある内容を置けない場合は、記事にない情報で水増しせず、その項目に `該当なし` と理由を短く記載してください。
 正確性メモは画像内へ描く文言ではなく、生成時の事実確認用メモとして扱います。
@@ -330,7 +355,8 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/compose-section-image-p
 node "{{SKILL_DIR}}/references/graphic-recording/scripts/compose-section-image-prompts.mjs" --run-dir "{{RUN_OUTPUT_DIR}}" --mikuku-prompt "{{MIKUKU_PROMPT_PATH}}"
 ```
 
-このスクリプトは、`section-text.md` の本文、`{{MIKUKU_PROMPT_PATH}}` の本文、同一性維持ルール、横長グラレコ画像の固定方針を合成し、`image-prompt.md` を作成します。
+このスクリプトは、`section-text.md` の本文、`{{MIKUKU_PROMPT_PATH}}` の本文、同一性維持ルール、
+`style-contract.md` の固定方針を合成し、`image-prompt.md` を作成します。
 既存の `image-prompt.md` は、`--overwrite` を指定しない限り上書きしません。
 
 保存先:

@@ -23,7 +23,9 @@ Use this branch name pattern by default:
 backup/<YYYY-MM-DD-HHMM>
 ```
 
-Use local time for the timestamp. If the user provides a branch name, use it only when it is under `backup/` and is a valid Git branch name.
+Use `Asia/Tokyo` (JST) for the timestamp, independent of the host operating
+system timezone. If the user provides a branch name, use it only when it is
+under `backup/` and is a valid Git branch name.
 
 ## Evidence Commands
 

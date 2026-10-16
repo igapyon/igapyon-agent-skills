@@ -104,15 +104,20 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
     "github.issue.label.apply",
     "github.issue.close.preflight",
     "github.issue.close.apply",
+    "github.issue.handoff.list",
     "github.issue.handoff.apply",
+    "github.issue.handoff.batch.apply",
+    "github.issue.handoff.dismiss",
     "repository.maintenance.diagnose",
     "repository.maintenance.plan",
     "repository.maintenance.apply",
     "repository.post-merge.next-work",
+    "work.commit",
     "pr.publish.preflight",
     "pr.publish.apply",
     "pr.recommit.preflight",
     "pr.recommit.apply",
+    "pr.recommit.push",
     "version.status",
     "version.increment.validate",
     "writing.issue.prepare",
@@ -125,7 +130,7 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
 });
 
 test("manifest exposes complete AI-readable CLI help contracts", () => {
-  assert.equal(WORKFLOW_MANIFEST.length, 28);
+  assert.equal(WORKFLOW_MANIFEST.length, 33);
   for (const workflow of WORKFLOW_MANIFEST) {
     assert.equal(typeof workflow.cli.summary, "string", workflow.id);
     assert.ok(workflow.cli.summary.length > 0, workflow.id);
@@ -396,7 +401,7 @@ test("Issue preflight delegates label and parent checks and returns reviewed app
   assert.equal(result.status, "success");
   assert.equal(result.delegate_status, "preflight-ok");
   assert.match(result.human_output, /^\[READY FOR APPROVAL\] GitHub Issue create/);
-  assert.match(result.human_output, /Approval command: reply with exactly `miku-scm approve` in chat/);
+  assert.match(result.human_output, /Approval command: reply with exactly `miku-scm approve preflight-ok` in chat/);
   assert.equal(result.result.handoff.status, "pending");
   assert.match(result.result.handoff.immutable_sha256, /^[0-9a-f]{64}$/);
   assert.equal(result.result.parent_issue.number, 2);
@@ -407,6 +412,40 @@ test("Issue preflight delegates label and parent checks and returns reviewed app
   const plan = JSON.parse(await readFile(path.join(root, "runs", "preflight-ok", "plan.json"), "utf8"));
   assert.equal(plan.approval_gate, "preflight");
   assert.equal(plan.mutation_invocation_allowed, false);
+});
+
+test("an internal dependency preflight records its run without creating another handoff", async (t) => {
+  const root = await workspace(t);
+  const draftDirectory = path.join(root, "workplace", "miku-scm", "issue-comments");
+  await mkdir(draftDirectory, { recursive: true });
+  const draft = "workplace/miku-scm/issue-comments/issue-18-comment-202607271401.md";
+  await writeFile(path.join(root, draft), "Dependent batch comment\n", "utf8");
+  const issue = {
+    number: 18,
+    url: "https://github.com/a/b/issues/18",
+    title: "Issue 18",
+    body: "Body",
+    state: "OPEN",
+    labels: [],
+    updatedAt: "2026-07-27T13:00:00Z",
+  };
+
+  const result = await runWorkflow("github.issue.comment.preflight", [
+    "--repo", "a/b", "--issue", "18", "--draft", draft,
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "dependency-preflight",
+    now: () => new Date("2026-07-27T14:00:00Z"),
+    saveIssueApprovalHandoff: false,
+    issueCommentDependencies: { readIssue: async () => issue },
+  });
+
+  assert.equal(result.status, "success");
+  assert.equal(result.result.status, "preflight-ok");
+  assert.equal(Object.hasOwn(result.result, "handoff"), false);
+  assert.equal(existsSync(path.join(root, "workplace", "miku-scm", "handoffs")), false);
+  assert.equal(existsSync(path.join(root, "runs", "dependency-preflight", "result.json")), true);
 });
 
 test("Issue handoff apply forwards the single reviewed argument set", async (t) => {
@@ -453,6 +492,164 @@ test("Issue handoff apply forwards the single reviewed argument set", async (t) 
   assert.equal(applied.status, "success");
   assert.equal(applied.delegate_status, "applied");
   assert.match(applied.human_output, /Approval handoff: handoff-preflight \(applied\)/);
+});
+
+test("Issue handoff recovery lists, selects, and dismisses exact pending IDs", async (t) => {
+  const root = await workspace(t);
+  const draftDirectory = path.join(root, "workplace", "miku-scm", "new-issues");
+  await mkdir(draftDirectory, { recursive: true });
+  const draft = "workplace/miku-scm/new-issues/issue-new-202607271405.md";
+  await writeFile(path.join(root, draft), "Runner recovery\n\nBody\n", "utf8");
+
+  for (const runId of ["handoff-first", "handoff-second"]) {
+    await runWorkflow("github.issue.create.preflight", [
+      "--repo", "a/b", "--draft", draft,
+    ], {
+      cwd: root,
+      artifactRoot: path.join(root, "runs"),
+      runId,
+      now: () => new Date("2026-07-27T14:02:00Z"),
+      issueCreateDependencies: { readLabels: async () => [] },
+    });
+  }
+
+  const listed = await runWorkflow("github.issue.handoff.list", [], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "handoff-list",
+    now: () => new Date("2026-07-27T14:03:00Z"),
+  });
+  assert.equal(listed.result.pending_count, 2);
+  assert.deepEqual(
+    listed.result.handoffs.map(({ id }) => id),
+    ["handoff-first", "handoff-second"],
+  );
+  assert.match(listed.human_output, /miku-scm approve handoff-second/);
+  assert.match(listed.human_output, /miku-scm dismiss handoff-first/);
+
+  const calls = [];
+  const applied = await runWorkflow("github.issue.handoff.apply", [
+    "--handoff", "handoff-second", "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "handoff-selected-apply",
+    now: () => new Date("2026-07-27T14:04:00Z"),
+    handoffRunApply: async (workflow, args) => {
+      calls.push({ workflow, args });
+      return {
+        status: "success",
+        run_id: "nested-selected-apply",
+        mutation_invoked: true,
+        human_output: "[SUCCESS] GitHub Issue create\n",
+      };
+    },
+  });
+  assert.equal(applied.result.handoff.id, "handoff-second");
+  assert.equal(calls.length, 1);
+
+  const dismissed = await runWorkflow("github.issue.handoff.dismiss", [
+    "--handoff", "handoff-first", "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "handoff-dismiss",
+    now: () => new Date("2026-07-27T14:05:00Z"),
+  });
+  assert.equal(dismissed.status, "success");
+  assert.equal(dismissed.delegate_status, "dismissed");
+  assert.equal(dismissed.mutation_invoked, true);
+  assert.equal(dismissed.result.handoff.status, "not-applied");
+
+  const empty = await runWorkflow("github.issue.handoff.list", [], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "handoff-list-empty",
+    now: () => new Date("2026-07-27T14:06:00Z"),
+  });
+  assert.equal(empty.result.pending_count, 0);
+});
+
+test("handoff selection stops are recorded as not-applied before mutation", async (t) => {
+  const root = await workspace(t);
+  let invoked = false;
+
+  const result = await runWorkflow("github.issue.handoff.apply", [
+    "--handoff", "missing-handoff", "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "handoff-missing",
+    handoffRunApply: async () => { invoked = true; },
+  });
+
+  assert.equal(result.status, "not-applied");
+  assert.equal(result.mutation_invoked, false);
+  assert.equal(invoked, false);
+  assert.match(result.error.message, /not found/);
+});
+
+test("Issue handoff batch preserves order and reports a partial stop", async (t) => {
+  const root = await workspace(t);
+  const draftDirectory = path.join(root, "workplace", "miku-scm", "new-issues");
+  await mkdir(draftDirectory, { recursive: true });
+  const draft = "workplace/miku-scm/new-issues/issue-new-202607271406.md";
+  await writeFile(path.join(root, draft), "Runner batch\n\nBody\n", "utf8");
+
+  for (const runId of ["batch-first", "batch-second", "batch-third"]) {
+    await runWorkflow("github.issue.create.preflight", [
+      "--repo", "a/b", "--draft", draft,
+    ], {
+      cwd: root,
+      artifactRoot: path.join(root, "runs"),
+      runId,
+      now: () => new Date("2026-07-27T14:07:00Z"),
+      issueCreateDependencies: { readLabels: async () => [] },
+    });
+  }
+
+  let calls = 0;
+  const result = await runWorkflow("github.issue.handoff.batch.apply", [
+    "--handoff", "batch-second",
+    "--handoff", "batch-first",
+    "--handoff", "batch-third",
+    "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "batch-run",
+    now: () => new Date("2026-07-27T14:08:00Z"),
+    handoffRunApply: async () => {
+      calls += 1;
+      return calls === 1
+        ? {
+          status: "success",
+          run_id: "nested-batch-first",
+          mutation_invoked: true,
+          human_output: "[SUCCESS] GitHub Issue create\n",
+        }
+        : {
+          status: "not-applied",
+          run_id: "nested-batch-second",
+          mutation_invoked: false,
+          human_output: "[NOT APPLIED] GitHub Issue create\n",
+        };
+    },
+  });
+
+  assert.equal(result.status, "partial");
+  assert.equal(result.delegate_status, "partial");
+  assert.equal(result.mutation_invoked, true);
+  assert.equal(calls, 2);
+  assert.deepEqual(
+    result.result.results.map(({ handoff }) => handoff.id),
+    ["batch-second", "batch-first"],
+  );
+  assert.deepEqual(result.result.remaining_handoffs, ["batch-third"]);
+  assert.match(result.human_output, /^\[PARTIAL\] GitHub Issue approval handoff batch apply/);
+  assert.match(result.human_output, /Remaining handoff: batch-third/);
+  const plan = JSON.parse(await readFile(path.join(root, "runs", "batch-run", "plan.json"), "utf8"));
+  assert.deepEqual(plan.ordered_handoffs, ["batch-second", "batch-first", "batch-third"]);
 });
 
 test("migrated Issue mutations return contract-fixed apply arguments", async (t) => {
@@ -593,6 +790,9 @@ test("post-merge workflow keeps merge confirmation and apply inside one fixed ru
     if (command === "status --porcelain") return { ok: true, out: "" };
     if (command === "rev-parse HEAD") return { ok: true, out: head };
     if (command === "fetch origin") return { ok: true, out: "" };
+    if (command === "symbolic-ref --quiet --short refs/remotes/origin/HEAD") {
+      return { ok: true, out: "origin/devel" };
+    }
     if (command === "rev-parse origin/devel") return { ok: true, out: baseHead };
     if (command === "show-ref --verify --quiet refs/heads/devel-tiga0727weg") {
       return { ok: false, out: "" };
@@ -684,6 +884,29 @@ test("post-merge workflow keeps merge confirmation and apply inside one fixed ru
   assert.equal(lookupFailed.result.tag_target, null);
   assert.match(lookupFailed.human_output, /^Tag status: lookup-failed$/m);
   assert.match(lookupFailed.human_output, /^Final branch: devel-tiga0727weg$/m);
+
+  branch = "tiga0501xea-done";
+  head = "a".repeat(40);
+  tagLookupResult = { ok: true, out: `${baseHead}\trefs/tags/v20260727c` };
+  const legacyDoneBranch = await runWorkflow("repository.post-merge.next-work", [
+    "--repo", root,
+    "--confirmed-merged",
+    "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "post-merge-legacy-done-branch",
+    now: () => new Date("2026-07-27T22:46:00+09:00"),
+    postMergeDependencies: {
+      git,
+      now: () => new Date("2026-07-27T22:46:00+09:00"),
+    },
+  });
+  assert.equal(legacyDoneBranch.status, "success");
+  assert.equal(legacyDoneBranch.result.base, "devel");
+  assert.equal(legacyDoneBranch.result.final_branch, "devel-tiga0727weg");
+  assert.match(legacyDoneBranch.human_output, /^Previous branch: tiga0501xea-done$/m);
+  assert.ok(calls.some((args) => args.join(" ") === "symbolic-ref --quiet --short refs/remotes/origin/HEAD"));
 });
 
 test("publication runner keeps saved preflight and reviewed-plan apply separate", async (t) => {
@@ -893,6 +1116,116 @@ test("local apply failure after a known mutation is unresolved", async (t) => {
   });
   assert.equal(result.status, "unresolved");
   assert.equal(result.mutation_invoked, true);
+});
+
+test("recommit push runner requires one explicit apply request and returns one combined result", async (t) => {
+  const root = await workspace(t);
+  const calls = [];
+  const result = await runWorkflow("pr.recommit.push", [
+    "--repo", root,
+    "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "recommit-push",
+    recommitPushExecute: async (options) => {
+      calls.push(options);
+      return {
+        status: "published",
+        mode: "apply",
+        repository: "test-repository",
+        branch: "devel-test",
+        base: "origin/devel",
+        backup_branch: "backup/2026-07-28-2200",
+        pr_draft: options.prDraft,
+        new_head: "b".repeat(40),
+        pushed_branch: "devel-test",
+        final_branch: "devel-test-done",
+        comparison: "0 0",
+        repository_url: "https://github.com/example/test-repository",
+        pr_lookup: "confirmed-none",
+        pr_creation_url: "https://github.com/example/test-repository/pull/new/devel-test",
+        version: "1.20260728.1",
+        recommended_tag: "v20260728a",
+        human_handoff: "Create the PR and tag through GitHub.",
+      };
+    },
+  });
+  assert.equal(result.status, "success");
+  assert.equal(result.delegate_status, "published");
+  assert.equal(result.mutation_invoked, true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].base, "");
+  assert.equal(calls[0].prDraft, "");
+  assert.match(result.human_output, /^\[SUCCESS\] Draft recommit push$/m);
+  assert.match(result.human_output, /^Pull Request creation: not performed$/m);
+  assert.match(result.human_output, /^Final branch: devel-test-done$/m);
+
+  const rejected = await runWorkflow("pr.recommit.push", [
+    "--repo", root,
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "recommit-push-rejected",
+    recommitPushExecute: () => {
+      throw new Error("must not execute");
+    },
+  });
+  assert.equal(rejected.status, "not-applied");
+  assert.match(rejected.error.message, /requires --apply/);
+  assert.equal(rejected.mutation_invoked, false);
+});
+
+test("work commit runner keeps one explicit apply boundary and returns the fixed result", async (t) => {
+  const root = await workspace(t);
+  const calls = [];
+  const result = await runWorkflow("work.commit", [
+    "--repo", root,
+    "--message", "Commit current work",
+    "--apply",
+  ], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "work-commit",
+    workCommitExecute: async (options) => {
+      calls.push(options);
+      return {
+        status: "committed",
+        repository: "test-repository",
+        branch: "devel-test",
+        head_before: "a".repeat(40),
+        head: "b".repeat(40),
+        commit_message: options.message,
+        paths: ["README.md"],
+        checks: ["mvn validate"],
+        version_notice: {
+          version: "1.20260728.1",
+          coupled_version: "20260728a",
+          recommended_tag: "v20260728a",
+          alignment: "aligned",
+        },
+        working_tree_clean: true,
+      };
+    },
+  });
+  assert.equal(result.status, "success");
+  assert.equal(result.delegate_status, "committed");
+  assert.equal(result.mutation_invoked, true);
+  assert.equal(calls.length, 1);
+  assert.match(result.human_output, /^\[SUCCESS\] Work commit$/m);
+  assert.match(result.human_output, /^Working tree: clean$/m);
+
+  const rejected = await runWorkflow("work.commit", ["--repo", root], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "work-commit-rejected",
+    workCommitExecute: () => {
+      throw new Error("must not execute");
+    },
+  });
+  assert.equal(rejected.status, "not-applied");
+  assert.match(rejected.error.message, /requires --apply/);
+  assert.equal(rejected.mutation_invoked, false);
 });
 
 test("version runner separates status from explicit increment validation", async (t) => {

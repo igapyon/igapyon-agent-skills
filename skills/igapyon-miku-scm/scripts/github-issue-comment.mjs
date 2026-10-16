@@ -17,6 +17,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const ISSUE_COMMENT_APPLY_CONTRACT = workflowContractById().get("github.issue.comment.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -134,7 +135,7 @@ async function resolveDraft(options) {
   return {
     root,
     draft,
-    relativeDraft: path.relative(root, draft),
+    relativeDraft: relativeOperationalPath(root, draft),
     body,
     digest: sha256(body),
   };
@@ -354,7 +355,7 @@ export async function runIssueComment(options, dependencies = {}) {
     draft: draft.relativeDraft,
     draft_sha256: draft.digest,
     comment_body: draft.body,
-    attempt_record: path.relative(draft.root, attempt),
+    attempt_record: relativeOperationalPath(draft.root, attempt),
     planned_gh_arguments: [
       "issue", "comment", String(options.issueNumber),
       "--repo", options.repository,

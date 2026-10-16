@@ -7,6 +7,8 @@
 - run-output-dir:
 - workplace-gitignored: yes | no | not-a-git-repo
 - prompts-read:
+- style-profile: mikuku-graphic-recording-v1
+- style-reference:
 - article-path:
 - mikuku-prompt:
 - mikuku-prompt-exists: yes | no
@@ -19,6 +21,15 @@
 - session-event-line:
 - text-prompt-generation: available | unavailable
 - character-prompt-embedded: yes | no
+- prompt-generator-model:
+- image-generator-model:
+- prompt-sha256:
+- prompt-audit-path:
+- prompt-audit-status: not-run | pass | pass-with-warnings | fail
+- prompt-audit-omissions:
+- prompt-deviations: none | recorded
+- model-comparison-path:
+- model-comparison-status: not-requested | pending | recorded
 - copy-instruction-created: yes | no
 - whole-article-default-candidates: 1
 - whole-article-variation-limit: 3

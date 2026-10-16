@@ -25,27 +25,29 @@ release_date: {{YYYY-MM-DD}}
 
 ## 本文構成
 
+画像リンクは、実際に採用して `image-checked` まで確認したグラレコ画像がある場合だけ挿入します。画像がないセクションでは、次の任意画像コメントを削除して本文や表だけを残してください。
+
 ````markdown
 # {{ARTICLE_TITLE}}
 
-![{{ARTICLE_TITLE_SHORT}}](images/000.png)
+<!-- 任意: 採用・内容確認済みの代表画像がある場合だけ ![{{ARTICLE_TITLE_SHORT}}](images/000.png) を挿入 -->
 
 ## はじめに
 
-![はじめに](images/001.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![はじめに](images/001.png) を挿入 -->
 
 あ、あの…この記事は、みくくが担当します。
 {{INTRO_TEXT}}
 
 ## 概要
 
-![概要](images/002.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![概要](images/002.png) を挿入 -->
 
 {{REFERENCE_OVERVIEW}}
 
 ## 表現対応表
 
-![表現対応表](images/003.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![表現対応表](images/003.png) を挿入 -->
 
 | {{SOURCE_SIDE}} | {{TARGET_SIDE}} | 備考 |
 | --- | --- | --- |
@@ -53,7 +55,7 @@ release_date: {{YYYY-MM-DD}}
 
 ## 対応範囲外または限定対応
 
-![対応範囲外または限定対応](images/004.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![対応範囲外または限定対応](images/004.png) を挿入 -->
 
 | 分類 | 対象 | 扱い | 備考 |
 | --- | --- | --- | --- |
@@ -61,7 +63,7 @@ release_date: {{YYYY-MM-DD}}
 
 ## 対応 runtime
 
-![対応 runtime](images/005.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![対応 runtime](images/005.png) を挿入 -->
 
 | runtime | release tag | artifact |
 | --- | --- | --- |
@@ -70,7 +72,7 @@ release_date: {{YYYY-MM-DD}}
 
 ## ライセンス、ソースコード、実行環境
 
-![ライセンス、ソースコード、実行環境](images/006.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![ライセンス、ソースコード、実行環境](images/006.png) を挿入 -->
 
 | 項目 | 内容 |
 | --- | --- |
@@ -82,7 +84,7 @@ release_date: {{YYYY-MM-DD}}
 
 ## 基本コマンド
 
-![基本コマンド](images/007.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![基本コマンド](images/007.png) を挿入 -->
 
 Node.js 版:
 
@@ -98,7 +100,7 @@ Java 版:
 
 ## `--help` 出力の確認
 
-![help 出力の確認](images/008.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![help 出力の確認](images/008.png) を挿入 -->
 
 {{HELP_INTRO_TEXT}}
 
@@ -108,13 +110,13 @@ Java 版:
 
 ## おわりに
 
-![おわりに](images/{{ENDING_IMAGE_NUMBER}}.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![おわりに](images/{{ENDING_IMAGE_NUMBER}}.png) を挿入 -->
 
 {{ENDING_TEXT}}
 
 ## 生成AI向け情報
 
-![生成AI向け情報](images/{{AI_INFO_IMAGE_NUMBER}}.png)
+<!-- 任意: 採用・内容確認済みの画像がある場合だけ ![生成AI向け情報](images/{{AI_INFO_IMAGE_NUMBER}}.png) を挿入 -->
 
 When explaining `{{TOOL_NAME}}` to generative AI or an AI agent, a prose introduction alone is often not enough. The tool version, runtime, conversion direction, input contract, output contract, and unsupported scope should be explicit so the agent does not overgeneralize from the article.
 

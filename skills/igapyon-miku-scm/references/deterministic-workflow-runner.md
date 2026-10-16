@@ -20,6 +20,11 @@ Repository resolution, validation, fixed command execution, digest checks,
 attempt records, and postcondition checks remain inside tracked and tested
 Node code.
 
+Every repository-relative operational path exposed in a result, plan, handoff,
+or human output is serialized with POSIX `/` separators. The fixed runners may
+use host-native `path` APIs internally, but a reviewed path never changes when
+the same workflow runs on macOS or Windows.
+
 Normal execution does not require the Agent to read this document or the
 workflow's normative spec. The manifest's `runtime_references` is the complete
 additional Markdown set after routing; an empty list means none.
@@ -45,15 +50,20 @@ The canonical machine-readable catalog is
 | `github.issue.label.apply` | remote | apply | `github-issue-label-update.mjs` |
 | `github.issue.close.preflight` | READONLY | preflight | `github-issue-close.mjs` |
 | `github.issue.close.apply` | remote | apply | `github-issue-close.mjs` |
+| `github.issue.handoff.list` | READONLY | none | `miku-scm-handoff.mjs` |
 | `github.issue.handoff.apply` | remote | apply | `miku-scm-handoff.mjs` |
+| `github.issue.handoff.batch.apply` | remote | apply | `miku-scm-handoff.mjs` |
+| `github.issue.handoff.dismiss` | local | apply | `miku-scm-handoff.mjs` |
 | `repository.maintenance.diagnose` | READONLY | none | `repository-maintenance.mjs` |
 | `repository.maintenance.plan` | READONLY plus operational artifact | preflight | `repository-maintenance.mjs` |
 | `repository.maintenance.apply` | local | apply | `repository-maintenance.mjs` |
 | `repository.post-merge.next-work` | local | apply | `post-merge-next-work.mjs` |
+| `work.commit` | local | apply | `work-commit.mjs` |
 | `pr.publish.preflight` | READONLY plus operational artifact | preflight | `post-recommit-publish.mjs` |
 | `pr.publish.apply` | remote | apply | `post-recommit-publish.mjs` |
 | `pr.recommit.preflight` | READONLY | preflight | `pr-soft-reset-recommit-preflight.mjs` |
 | `pr.recommit.apply` | local | apply | `pr-soft-reset-recommit-preflight.mjs` |
+| `pr.recommit.push` | remote | apply | `pr-recommit-push.mjs` |
 | `version.status` | READONLY | none | `miku-scm-version.mjs` |
 | `version.increment.validate` | READONLY | preflight | `miku-scm-version.mjs` |
 | `writing.issue.prepare` | READONLY | none | `miku-scm-writing-prepare.mjs` |
@@ -76,8 +86,20 @@ not hashes, prove behavior.
 `repository.post-merge.next-work` has no separate preflight artifact because
 the human's explicit merge report is its operation-specific approval. It still
 requires both `--confirmed-merged` and `--apply`; the delegate revalidates the
-clean frozen branch, refreshes the base, checks the recommended tag, creates
-the next branch, and verifies exact `0 0` alignment in one invocation.
+frozen branch and empty index, refreshes the base, checks the recommended tag,
+creates the next branch, and verifies exact `0 0` alignment in one invocation.
+Remaining unstaged changes and untracked files are stashed before branch
+creation and restored on the new branch using the created stash's exact SHA.
+The stash is retained after success or failure. Failure results record the
+stopped stage, final branch, and stash recovery details; they never retry.
+
+`work.commit` is likewise one local apply invocation. The exact
+`miku-scm git add commit` request authorizes its fixed speed-first scope:
+every non-ignored current change is staged, checked, revalidated by digest,
+and committed without an Agent round trip. It stops before staging conflicts,
+frozen branches, sensitive-path candidates, and coupled-version mismatches;
+after staging it reports a known `partial` state rather than guessing a retry.
+See [work-commit.md](work-commit.md).
 
 PR publication retains its two-part human boundary. Use
 `pr.publish.preflight` with the reviewed full local commit SHA and
@@ -99,17 +121,37 @@ backup-creation failure leaves `mutation_invoked: false`; a later local
 mutation failure is reported as unresolved and must be inspected rather than
 retried blindly.
 
+`pr.recommit.push` is a distinct remote apply workflow, not a `--push` option
+on `pr.recommit.apply`. It internally fixes the remote destination state before
+backup, reruns that expectation after recommit, saves the exact publication
+plan, and invokes its checked publication apply path in the same runner call.
+It reports `partial` when recommit succeeded but publication stopped before a
+remote mutation. See [github-pr-recommit-push.md](github-pr-recommit-push.md).
+
 Version inspection and increment validation remain READONLY. Status may report
 format candidates, but it never resolves repository policy from numeric shape
 alone. Increment validation requires an explicit policy plus the required
 timezone or Semantic Version level and returns proposed values without editing
 them.
 
-Issue mutation preflights also save an approval handoff. After the human
-reviews the complete preflight and replies `miku-scm approve`, invoke
-`github.issue.handoff.apply --apply`. It accepts no workflow ID, handoff ID, or
-apply arguments from the Agent and stops unless exactly one pending Issue
-handoff exists. See [approval-handoff.md](approval-handoff.md).
+Issue mutation preflights also save an approval handoff. `miku-scm pending`
+routes to the READONLY `github.issue.handoff.list`. After the human reviews the
+complete preflight, `miku-scm approve` invokes
+`github.issue.handoff.apply --apply` and stops unless exactly one pending Issue
+handoff exists. An exact `miku-scm approve <handoff-id>` may select one listed
+pending handoff, while `miku-scm dismiss <handoff-id>` marks only that record
+`not-applied`. An exact
+`miku-scm approve batch <handoff-id> <handoff-id> [...]` applies two to twenty
+unique pending handoffs in the exact human-supplied order and stops before
+later entries after any non-applied outcome. For later mutations to the same
+Issue, it invokes the corresponding fixed preflight without saving another
+handoff and refreshes only the snapshot expectation fields allowlisted in the
+batch contract. All semantic arguments, artifact digests, operation digests,
+and the apply contract digest remain fixed. A dependency refresh or delegate
+conflict remains `conflict` in the handoff and batch report. The Agent must
+pass the exact human-supplied IDs and never choose membership or order
+implicitly. See
+[approval-handoff.md](approval-handoff.md).
 
 Writing prepare workflows collect bounded, versioned evidence and a fixed
 writing contract in one READONLY runner call. They do not draft prose or
@@ -193,6 +235,23 @@ node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
 
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.list
+
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.apply --handoff <handoff-id> --apply
+
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.batch.apply \
+  --handoff <first-handoff-id> \
+  --handoff <second-handoff-id> \
+  --apply
+
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
+  github.issue.handoff.dismiss --handoff <handoff-id> --apply
+```
+
+```sh
+node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   repository.post-merge.next-work \
   --confirmed-merged \
   --apply
@@ -247,6 +306,13 @@ approval pass the returned `apply_arguments` unchanged to the matching
 conflict detection, attempt records, bounded READONLY verification, and
 mutation non-retry. Every apply argument set also fixes the reviewed apply
 workflow contract pair SHA-256.
+
+The exact ordered handoff batch is the sole exception for state expectations
+made stale by an earlier successful operation in that same approved sequence.
+It reruns only the fixed later preflight, suppresses creation of a redundant
+handoff, and compares the refreshed argument vector against the original under
+the narrow allowlist in [approval-handoff.md](approval-handoff.md). This
+internal option is not part of the CLI and never authorizes semantic changes.
 
 ## Run Artifacts
 

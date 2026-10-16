@@ -6,7 +6,7 @@ This mode reports repository evidence. It does not draft PR text, release notes,
 
 ## Safety Rules
 
-- Do not run `git fetch`, `git pull`, `git push`, `gh pr create`, or any remote-changing command unless the user explicitly asks.
+- Never run `gh`, `git fetch`, `git pull`, `git push`, or any network or remote-changing command in this skill.
 - Do not create branches, commits, tags, releases, issues, or pull requests.
 - Do not modify files.
 - Use local Git evidence only.
@@ -34,12 +34,8 @@ is a successful result with null counts.
 
 For tag output, show only the newest three `tag*` tags and newest three `v*` tags in the report. If either pattern has no matches, report that clearly.
 
-When an upstream exists, inspect the ahead / behind commits only when useful:
-
-```sh
-git log --oneline --decorate @{u}..HEAD
-git log --oneline --decorate HEAD..@{u}
-```
+When an upstream exists, use the runner's returned ahead / behind counts and
+recent local commits. Do not reconstruct additional Git inspection commands.
 
 ## Report Shape
 

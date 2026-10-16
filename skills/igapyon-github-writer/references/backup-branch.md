@@ -9,7 +9,7 @@ This workflow creates a local branch that points at the current `HEAD`. It does 
 - Require an explicit user request before creating a standalone backup branch.
 - In PR Soft Reset Recommit mode, create the backup branch immediately before `git reset --soft`.
 - Inspect `git status -sb` and the current `HEAD` before creating the backup branch.
-- Do not run `git fetch`, `git pull`, `git push`, `gh pr create`, or any remote-changing command in this workflow.
+- Never run `gh`, `git fetch`, `git pull`, `git push`, or any network or remote-changing command in this skill.
 - Do not create tags, releases, issues, pull requests, commits, or non-backup branches.
 - If the working tree or index has changes, report that the backup branch preserves only committed history at `HEAD`.
 - Do not overwrite an existing backup branch. If the generated name exists, add a numeric suffix such as `-2`.
@@ -36,15 +36,18 @@ node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json ba
 An explicit name can be supplied with `--backup-name backup/<name>`. Review the
 returned branch, `HEAD`, dirty flag, `plan_path`, and `plan_sha256`.
 
-After the user-approved apply step, consume the plan exactly once:
+The preflight also creates an immutable pending approval handoff. After a later
+explicit approval, consume that handoff exactly once:
 
 ```text
-node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json backup.apply --plan <plan_path> --expected-plan-sha256 <plan_sha256>
+node skills/igapyon-github-writer/scripts/github-writer-run.mjs --format json approval.handoff.apply --apply
 ```
 
-The runner verifies that the repository state and plan digest are unchanged,
-creates the branch with argument-array Git execution, verifies the target, and
-records the attempt. Never retry the same plan.
+Use `--handoff <full-id>` only when there is more than one pending handoff. The
+runner verifies that the repository state and plan digest are unchanged, creates
+the branch with argument-array Git execution, verifies that it resolves to the
+reviewed `HEAD`, and records the attempt. Never retry the same plan. Cancel a
+pending request only with `approval.handoff.dismiss --handoff <full-id> --apply`.
 
 If the generated name already exists, choose the next available suffix:
 

@@ -6,8 +6,12 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
+import { jstDashedTimestamp } from "./miku-scm-jst-time.mjs";
+import { createGitCommandRunner } from "./miku-scm-command-runner.mjs";
+import { isPathWithin, relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+
 export const usage = `Usage:
-  node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs [--base <base>] [--pr-draft <path>] [--repo <path>] [--apply] [--allow-dirty]
+  node skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs [--base <base>] [--pr-draft <path>] [--repo <path>] [--remote <name>] [--apply] [--allow-dirty]
 
 By default this is a read-only helper. It resolves PR draft candidates, backup
 branch names, and Git evidence for PR Soft Reset Recommit mode.
@@ -20,7 +24,7 @@ With --apply, it performs the local-only rewrite:
 It never pushes, creates PRs, merges PRs, or changes remotes.`;
 
 export function parseArgs(argv, cwd = process.cwd()) {
-  const args = { repo: cwd, base: "", prDraft: "" };
+  const args = { repo: cwd, remote: "origin", base: "", prDraft: "" };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") {
@@ -31,6 +35,8 @@ export function parseArgs(argv, cwd = process.cwd()) {
       args.prDraft = argv[++i] ?? "";
     } else if (arg === "--repo") {
       args.repo = argv[++i] ?? "";
+    } else if (arg === "--remote") {
+      args.remote = argv[++i] ?? "";
     } else if (arg === "--apply") {
       args.apply = true;
     } else if (arg === "--allow-dirty") {
@@ -39,25 +45,18 @@ export function parseArgs(argv, cwd = process.cwd()) {
       throw new Error(`Unknown argument: ${arg}`);
     }
   }
+  if (!args.help && !/^[A-Za-z0-9._-]+$/.test(args.remote)) {
+    throw new Error("--remote must be a Git remote name");
+  }
   return args;
 }
 
 function git(repo, args, options = {}) {
-  const result = spawnSync("git", args, {
-    cwd: repo,
-    encoding: "utf8",
-    input: options.input,
-    maxBuffer: 20 * 1024 * 1024,
-  });
-  if (result.status !== 0 && !options.allowFailure) {
-    const message = (result.stderr || result.stdout || "").trim();
-    throw new Error(`git ${args.join(" ")} failed${message ? `: ${message}` : ""}`);
-  }
-  return {
-    ok: result.status === 0,
-    stdout: (result.stdout || "").trimEnd(),
-    stderr: (result.stderr || "").trimEnd(),
-  };
+  const result = createGitCommandRunner({
+    platform: options.platform ?? process.platform,
+    spawn: options.spawn ?? spawnSync,
+  })(repo, args, options);
+  return { ...result, stdout: result.stdout.trimEnd(), stderr: result.stderr.trimEnd() };
 }
 
 function remoteBranchIsCurrentFeature(upstream, branch) {
@@ -67,40 +66,46 @@ function remoteBranchIsCurrentFeature(upstream, branch) {
   return slash >= 0 && normalized.slice(slash + 1) === branch;
 }
 
-function prescribedBaseCandidate(branch) {
+function prescribedBaseCandidate(branch, remote) {
   const match = branch.match(/^(.*)-tiga\d{4}[a-x][a-j][a-j]$/);
-  return match?.[1] ? `origin/${match[1]}` : "";
+  return match?.[1] ? `${remote}/${match[1]}` : "";
+}
+
+function remoteFromTrackingRef(value) {
+  const normalized = String(value).replace(/^refs\/remotes\//, "");
+  return normalized.split("/", 1)[0] || "";
 }
 
 function refExists(root, ref, runGit = git) {
   return runGit(root, ["rev-parse", "--verify", "--quiet", ref], { allowFailure: true }).ok;
 }
 
-function resolveDefaultBase(root, branch, runGit = git) {
+function resolveDefaultBase(root, branch, remote, runGit = git) {
   const upstream = runGit(root, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], {
     allowFailure: true,
   });
-  if (upstream.ok && upstream.stdout && !remoteBranchIsCurrentFeature(upstream.stdout, branch)) {
+  if (upstream.ok && upstream.stdout && remoteFromTrackingRef(upstream.stdout) === remote
+    && !remoteBranchIsCurrentFeature(upstream.stdout, branch)) {
     return { base: upstream.stdout, source: "current branch upstream" };
   }
 
-  const prescribedBase = prescribedBaseCandidate(branch);
+  const prescribedBase = prescribedBaseCandidate(branch, remote);
   if (prescribedBase && refExists(root, prescribedBase, runGit)) {
     return { base: prescribedBase, source: "base encoded by current work-branch name" };
   }
 
-  const remoteHead = runGit(root, ["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"], {
+  const remoteHead = runGit(root, ["symbolic-ref", "--quiet", `refs/remotes/${remote}/HEAD`], {
     allowFailure: true,
   });
   if (remoteHead.ok && remoteHead.stdout.startsWith("refs/remotes/")) {
     return {
       base: remoteHead.stdout.replace(/^refs\/remotes\//, ""),
-      source: "local origin/HEAD",
+      source: `local ${remote}/HEAD`,
     };
   }
 
-  if (refExists(root, "origin/devel", runGit)) {
-    return { base: "origin/devel", source: "local origin/devel fallback" };
+  if (refExists(root, `${remote}/devel`, runGit)) {
+    return { base: `${remote}/devel`, source: `local ${remote}/devel fallback` };
   }
 
   return { base: "", source: "unresolved" };
@@ -116,20 +121,6 @@ function slugBranch(branch) {
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function ymdhm(date) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return [
-    date.getFullYear(),
-    "-",
-    pad(date.getMonth() + 1),
-    "-",
-    pad(date.getDate()),
-    "-",
-    pad(date.getHours()),
-    pad(date.getMinutes()),
-  ].join("");
 }
 
 export function findDrafts(root, branch) {
@@ -156,7 +147,7 @@ export function findDrafts(root, branch) {
       const absolute = path.join(fullDir, name);
       const st = statSync(absolute);
       drafts.push({
-        rel: path.relative(root, absolute),
+        rel: relativeOperationalPath(root, absolute),
         priority,
         timestamp: match[1],
         mtimeMs: st.mtimeMs,
@@ -176,7 +167,7 @@ export function findDrafts(root, branch) {
 }
 
 function chooseBackup(existingBranches, now = new Date()) {
-  const base = `backup/${ymdhm(now)}`;
+  const base = `backup/${jstDashedTimestamp(now)}`;
   const existing = new Set(
     existingBranches
       .split("\n")
@@ -213,19 +204,21 @@ function asFailure(error, mutationInvoked) {
 }
 
 export function runRecommit(args, dependencies = {}) {
-  const runGit = dependencies.git ?? git;
+  const runGit = dependencies.git ?? ((repo, gitArgs, options = {}) => git(repo, gitArgs, {
+    ...options,
+    platform: dependencies.platform ?? process.platform,
+  }));
   const now = dependencies.now ? dependencies.now() : new Date();
+  const remote = args.remote ?? "origin";
   let mutationInvoked = false;
   try {
     const root = runGit(args.repo, ["rev-parse", "--show-toplevel"]).stdout;
     const resolvedRoot = path.resolve(root);
-    const rootPrefix = `${resolvedRoot}${path.sep}`;
-    const realRootPrefix = `${realpathSync(root)}${path.sep}`;
     const explicitDraftAbs = args.prDraft ? path.resolve(root, args.prDraft) : "";
-    const explicitDraftSafe = !args.prDraft || explicitDraftAbs.startsWith(rootPrefix);
+    const explicitDraftSafe = !args.prDraft || isPathWithin(resolvedRoot, explicitDraftAbs);
     const explicitDraftExists = explicitDraftSafe && existsSync(explicitDraftAbs);
     const explicitDraftRealSafe = !explicitDraftExists
-      || realpathSync(explicitDraftAbs).startsWith(realRootPrefix);
+      || isPathWithin(realpathSync(root), realpathSync(explicitDraftAbs));
     if (args.apply && args.prDraft && (!explicitDraftSafe || !explicitDraftRealSafe)) {
       throw new Error("PR draft must stay inside the repository");
     }
@@ -236,9 +229,9 @@ export function runRecommit(args, dependencies = {}) {
     const branch = runGit(root, ["branch", "--show-current"], { allowFailure: true }).stdout;
     const resolvedBase = args.base
       ? { base: args.base, source: "explicit --base" }
-      : resolveDefaultBase(root, branch, runGit);
+      : resolveDefaultBase(root, branch, remote, runGit);
     if (!resolvedBase.base) {
-      throw new Error("Could not resolve base from --base, current branch upstream, local origin/HEAD, or origin/devel.");
+      throw new Error(`Could not resolve base from --base, current ${remote} branch upstream, local ${remote}/HEAD, or ${remote}/devel.`);
     }
     const status = runGit(root, ["status", "-sb"]).stdout;
     const headSummary = runGit(root, ["log", "--oneline", "--decorate", "-1"]).stdout;
@@ -260,13 +253,13 @@ export function runRecommit(args, dependencies = {}) {
 
     const { slug, drafts } = findDrafts(root, branch);
     const explicitDraft = args.prDraft && explicitDraftSafe
-      ? path.relative(root, explicitDraftAbs)
+      ? relativeOperationalPath(root, explicitDraftAbs)
       : "";
     const resolvedDraft = args.prDraft ? explicitDraft : drafts[0]?.rel || "";
     const resolvedDraftAbs = resolvedDraft ? path.resolve(root, resolvedDraft) : "";
     const draftExists = resolvedDraftAbs ? existsSync(resolvedDraftAbs) : false;
     const realDraftSafe = !draftExists
-      || realpathSync(resolvedDraftAbs).startsWith(realRootPrefix);
+      || isPathWithin(realpathSync(root), realpathSync(resolvedDraftAbs));
     const draftSafe = explicitDraftSafe && realDraftSafe;
     const draftContent = draftExists && draftSafe ? readFileSync(resolvedDraftAbs) : null;
     const draftSha256 = draftContent ? digest(draftContent) : "";
@@ -292,6 +285,7 @@ export function runRecommit(args, dependencies = {}) {
       mode: args.apply ? "apply" : "preflight",
       readonly: !args.apply,
       repository: path.basename(root),
+      remote,
       base: resolvedBase.base,
       base_source: resolvedBase.source,
       base_commit: baseCommit || null,
@@ -315,7 +309,7 @@ export function runRecommit(args, dependencies = {}) {
       draft_candidates: drafts.slice(0, 10).map(({ rel, timestamp }) => ({ path: rel, timestamp })),
       blockers,
       apply_arguments: resolvedDraft && baseOk
-        ? ["--base", resolvedBase.base, "--pr-draft", resolvedDraft, "--apply"]
+        ? ["--remote", remote, "--base", resolvedBase.base, "--pr-draft", resolvedDraft, "--apply"]
         : [],
       mutation_invoked: false,
     };
@@ -338,6 +332,10 @@ export function runRecommit(args, dependencies = {}) {
 
     runGit(root, ["branch", backup, "HEAD"]);
     mutationInvoked = true;
+    const backupHead = runGit(root, ["rev-parse", backup]).stdout;
+    if (backupHead !== applyHead) {
+      throw new Error("Backup branch does not point to the reviewed pre-reset HEAD");
+    }
     runGit(root, ["reset", "--soft", baseCommit]);
     runGit(root, ["commit", "-F", "-"], { input: applyDraftContent });
 
@@ -368,6 +366,7 @@ ${result.mode === "apply"
 ## Resolved Inputs
 
 - base: \`${result.base}\` (${result.base_exists ? "exists" : "not found"})
+- base resolution remote: \`${result.remote}\`
 - base source: ${result.base_source}
 - base commit: \`${result.base_commit || "unresolved"}\`
 - HEAD commit: \`${result.head}\`

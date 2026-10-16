@@ -12,10 +12,10 @@
 - skill の具体ルール、例、長めの手順は `references/` 配下に置く
 - Note 記事 Markdown は、姉妹リポジトリ `../mikuku-articles/` を正本として管理する
 - Qiita 記事 Markdown は、`skills/igapyon-qiita-writer/references/` を正本として管理する
-- skill を新規作成・更新した後は、`SKILL.md` が必要な `references/` を案内していること、必要に応じて `index.json` を参照することを確認する
+- skill の参照資料の探索方針は [reference discovery policy](docs/policies/reference-discovery.md) に従う。`index.json` は共通必須成果物にしない
 - repo 全体の運用ルールはこの `README.md` に書く
 - 作業メモは repo 直下の `TODO.md` に集約する
-- skill ごとの `index.json` は `miku-indexgen` で生成する
+- AI agent 作業を再開する前は、`GOAL.md`、`TODO.md`、`DECISIONS.md`、`HANDOFF.md` を確認する
 - ローカル作業用に `workplace/` を置き、`workplace/.gitkeep` だけを Git 管理下に入れる
 - Java / Maven 開発では `.mvn/jvm.config` を repo に含める
 
@@ -30,18 +30,26 @@ repo 全体のバージョンを更新するときは、日付部分に合わせ
 `みくく` のバージョンは `YYYYMMDDx` 形式で、`YYYYMMDD` を repo 全体のバージョンの日付部分と揃えます。  
 同じ日付内の更新は、`みくく` 側では `a`, `b`, `c` ... と suffix を進め、repo 全体のバージョンでは対応する `N` を `1`, `2`, `3` ... と進めます。
 
-バージョン更新時は、次の両方を確認します。
+あわせて `skills/igapyon-miku-scm/scripts/miku-scm-run.mjs` と `skills/igapyon-github-writer/scripts/github-writer-workflow-manifest.mjs` の `PRODUCT_VERSION` も同じ値へ更新します。これらは各skillの `--version` 応答に使う連動値です。
+
+バージョン更新時は、次の値が揃っていることを確認します。
 
 - root の `pom.xml`
   - 例: `<version>1.20260604.1</version>`
 - `skills/igapyon-mikuku-agent/references/VERSION.md`
   - 例: `Version: 20260604a`
+- `skills/igapyon-miku-scm/scripts/miku-scm-run.mjs` と `skills/igapyon-github-writer/scripts/github-writer-workflow-manifest.mjs`
+  - 例: `PRODUCT_VERSION = "1.20260604.1"`
 - `mvn clean package` で生成される release archive 名
   - 例: `target/igapyon-agent-skills-1.20260604.1.zip`
 
 `みくく` 側だけを更新したい場合でも、repo 全体の保守更新として扱うなら `pom.xml` も同じ日付に更新します。逆に、repo 全体のリリースや保守更新ではない一時的な確認だけなら、バージョンを更新しません。
 
-`mvn generate-resources` や `mvn clean package` では、`pom.xml` の `1.YYYYMMDD.N` と `skills/igapyon-mikuku-agent/references/VERSION.md` の `YYYYMMDDx` が対応していることを `validate` phase で確認します。たとえば `1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
+`mvn validate`、`mvn generate-resources`、`mvn clean package` では、root版、`みくく` の日付・suffix、2つのskill runnerの `PRODUCT_VERSION` が対応していることを確認します。たとえば `1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
+
+## 複数 OS でのテスト
+
+miku-scm と GitHub Writer は、GitHub Actions で macOS と Windows の両方に対してテストを実行します。Windows の改行コードの違いを見つけた実例と、この構成の価値を [複数 OS でテストする価値](docs/maintenance/github-actions-cross-platform-testing.md) に記録しています。
 
 ## 記事公開の優先順位
 
@@ -154,7 +162,7 @@ skill を利用する際は、`SKILL.md` を入口とし、具体ルール、例
 `SKILL.md` には発火条件、基本フロー、参照先の案内を中心に置き、詳細は `references/` 側を利用する方針です。
 
 `skill-creator` などで skill を作成した直後は、必要な具体ルールを `SKILL.md` に詰め込みすぎず、`references/` へ分離します。  
-また、参照資料の全体像を探す必要がある skill では、`SKILL.md` に `index.json` を discovery index として使う旨を明記します。
+既知の資料へは`SKILL.md`から直接案内し、未知の資料は対象範囲を絞ったファイル一覧・名前検索・本文検索で探します。indexを採用する場合は、用途と保守方法を[全体方針](docs/policies/reference-discovery.md)とbuild設定に記録します。
 
 Note / Qiita 記事 Markdown は、媒体ごとの正本置き場で管理します。
 
@@ -230,6 +238,7 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 │  │  └─ templates/
 │  ├─ igapyon-miku-soft-developer/
 │  │  ├─ SKILL.md
+│  │  ├─ docs/
 │  │  └─ references/
 │  ├─ igapyon-mikuku-agent/
 │  │  ├─ SKILL.md
@@ -279,7 +288,7 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 
 - `igapyon-ffmpeg-helper`
 
-  H4essential のオーケストラ録音から、切り出し、単純ゲイン調整、必要なら結合、静止画付き YouTube 用動画作成までの個人用 FFmpeg ワークフロー向け。明示的に指定した場合に利用する。
+  H4essential のオーケストラ録音から、元のサンプルレート・32-bit float を保つ切り出しと単純ゲイン調整、必要なら結合、マスターから直接 AAC 化する静止画付き YouTube 用動画作成までの個人用 FFmpeg ワークフロー向け。明示的に指定した場合に利用する。
 
 - `igapyon-agent-state-management`
 
@@ -290,6 +299,14 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 - `igapyon-miku-soft-developer`
 
   miku-soft project の新規作成・既存保守ワークフロー向け。skill の利用を明示的に指定した場合のみ利用し、miku-soft 作成・保守の相談だけでは存在案内に留める。
+
+- `igapyon-miku-daybook`
+
+  daybook repository の activity・schedule・task・day-plan の追加、更新、一覧、生成確認と、同梱された GitHub Actions 通知 workflow の生成・更新向け。`miku-daybook` または `igapyon-miku-daybook` の明示、または daybook の記録管理・通知 workflow 作成が明確な場合に利用する。Git操作やGitHubへの実行・投稿は、別途明示された場合だけ扱う。
+
+  task に最新状態、activities に試行錯誤と判断の経緯を残す方針と、その参考にした MIT OpenCourseWare の教材については、[daybookの記録モデルと参考資料](#daybookの記録モデルと参考資料)を参照してください。
+
+  taskの日付項目の変更と利用者側のデータ移行については、[daybook taskの日付項目の移行](#daybook-taskの日付項目の移行)を参照してください。
 
 - `igapyon-mikuku-agent`
 
@@ -307,21 +324,70 @@ Note 正本側では、`../mikuku-articles/` に 1 セットとして保持し�
 
   肥大化した Agent Skill の token-efficiency 設計、分割、参照化、蒸留、チェックリスト化、tool 化判断向け。明示的に指定した場合、または Agent Skill の compact / slim / token bloat reduction が明確な場合に利用する。
 
-## index.json の更新
+## daybookの記録モデルと参考資料
 
-各 skill の `index.json` を更新する場合は、次のコマンドで `skills/` 配下をまとめて再生成します。
+`igapyon-miku-daybook` の task と activities の役割整理では、MIT OpenCourseWare の [Guidelines for Keeping a Laboratory Notebook](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/b4c64ac11fc0a68466af7e025e29bf3e_lab_notebook.pdf) を参考にしています。これは [7.16 Experimental Molecular Biology: Biotechnology II（Spring 2005）](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/) の公開教材です。
+
+daybook では、課題管理に研究ノートと意思決定記録を組み合わせ、次のように役割を割り付けます。
+
+- **task**：仕事ごとの目的、現在の結論・採用方針、最新状態、未解決事項、次の行動を管理します。重要な変更の短い履歴と、関連する活動へのリンクを含めます。
+- **activities**：日付ごとに、取り組んだこと、試した方法、うまくいかなかったこと、検討した案、判断理由、その時点の到達点を記録します。結論が出なかった検討も活動です。読みやすい量の試行錯誤は同じ項目に収め、長い詳細は資料へ分けてリンクします。
+
+教材の記録要素と、スキルの編集規則・既存ファイル構成の対応は次のとおりです。
+
+| 教材の記録要素 | daybookでの対応 |
+| --- | --- |
+| 日付・題名 | `activities/activity-YYYYMMDD.md` 内に、一つの作業や出来事を一項目として記録 |
+| 目的 | task に継続する目的を置き、activities にその日に取り組んだ目的を必要に応じて記載 |
+| 方法・手順と変更 | activities に試した方法と変更の経緯を記録し、参照した手順や資料へリンク |
+| 観察・結果 | activities に実行結果、失敗、不確かな結果を記録 |
+| 考察・結論 | activities に当時の判断と理由を残し、task に現在採用している結論を反映 |
+| 次にすること | activities にその時点の残課題を残し、task の次の行動を更新 |
+| データや資料の添付 | 既存の `attachments/<record-key>/` に資料を置き、記録から相対リンク |
+
+この分担は [SKILL.md](skills/igapyon-miku-daybook/SKILL.md) と [operations.md](skills/igapyon-miku-daybook/references/operations.md#task-and-activity-responsibilities) のエージェント向け編集指示として実装しています。本文に経緯や理由を記述し、既存の task ID と相対リンクで関連づけます。方針が変わったときは task を最新化し、以前の activities は当時の経緯として保持します。記録内容は会話や確認できた結果に基づいてまとめます。
+
+task を最新状態として別管理すること、優先度・進捗・予定期間の管理、Markdown 記録間のリンクは daybook 側で加えた設計です。day-plan は task と schedule から既存の生成スクリプトが作る予定のスナップショットであり、教材にある週次の振り返りを自動化するものではありません。
+
+GitHub Issue を daybook に取り込む場合のローカル CLI の前提確認と導入手順は、[Issue 取り込み手順](skills/igapyon-miku-daybook/references/issue-import.md#1-check-local-cli-prerequisites-and-prepare-the-intake-files)を参照してください。
+
+### URLから関連する task を探す
+
+「このURL、関連する task があるかな？」と頼むと、URLの内容を読み、daybook 内の候補と関連する理由を探します。URLを読む・要約するだけの依頼から task の探索や記録変更は始めません。記録も希望する場合は、「関連 task を探して、この資料を task に紐づけ、今日の活動にも調べた経緯を記録して」のように依頼してください。手順は[URLと関連 task の確認](skills/igapyon-miku-daybook/references/url-task-lookup.md)を参照してください。
+
+## daybook taskの日付項目の移行
+
+2026-10-05、このリポジトリの `igapyon-miku-daybook` source に予定期間の日付項目と移行用の読み取り処理を実装しました。現在のroot versionは `1.20261005.1` ですが、まだリリースされていません。対象daybookのデータ移行前に、利用中のスキルとdaybook側の `scripts/day-plan.mjs` / `scripts/generate-day-plan.mjs` の両方が新しい項目に対応していることを確認してください。
+
+新しいtaskでは、包含的な予定期間を `planned_start_date` と `planned_end_date` で表します。1日だけの予定は同じ日付を使い、実際の完了は従来どおり `status` と `completed` で記録します。
+
+| 旧項目・情報 | 新しい扱い |
+| --- | --- |
+| `planned_date` | `planned_start_date` へ移行 |
+| `due` | 意味を確認して `planned_end_date` の候補へ移行。実際の締切情報は本文・履歴にも保持 |
+| `due_month` / `planned_week` | そのまま保持し、日付へ推測変換しない |
+
+旧仕様にあった期限キーは `due` で、`due_date` ではありません。day-plan生成処理は移行中に旧2項目を別名として読み取りますが、taskファイルを自動変更しません。新旧項目が両方あり値が異なる記録は生成時にエラーとして示します。
+
+利用者が行う具体的な確認、バックアップ、既存taskの編集、別出力先でのday-plan確認については、配布スキルの [task date migration guide](skills/igapyon-miku-daybook/references/task-date-migration.md) を参照してください。対象daybookのデータとスクリプトの変更は、利用者が更新版を導入した後に別途行います。
+
+## 採用したindex.jsonの更新
+
+`config/skill-index-policy.json`に採用と記録した内部skillだけを、次のコマンドで再生成します。
 
 ```sh
 mvn generate-resources
 ```
 
-ビルド全体とあわせて更新する場合は、次のコマンドでも `index.json` を更新できます。
+現在、内部skillでは`igapyon-qiita-writer`の記事選択用indexを比較評価待ちとして暫定保持しています。有用性を確認済みという判断ではありません。ほかのskill rootに`index.json`を置く場合は、先に全体方針に照らして採用理由とconsumerを決めてください。
+
+リリース用packageの中でも、採用対象だけを再生成します。
 
 ```sh
 mvn clean package
 ```
 
-生成された `index.json` は、skill と一緒にコミットします。
+採用した生成物は、正規のgeneratorで更新し、skillと一緒にコミットします。未採用indexはbuildやstagingで自動生成しません。
 
 生成後の drift 確認は次を実行します。
 
@@ -329,9 +395,7 @@ mvn clean package
 sh scripts/check-generated-indexes.sh
 ```
 
-この drift 確認は、タグ作成前のローカル確認や通常の開発フローで利用します。
-release workflow は `mvn clean package` で archive 内の `index.json` を再生成するため、
-commit 済み index との差分だけを理由に release を停止しません。
+この確認は、タグ作成前のローカル確認や通常の開発フローで利用します。採用したindexのdriftと、未宣言のskill root indexを検出します。
 
 ## Release archive
 
@@ -343,33 +407,60 @@ mvn clean package
 
 生成物は `target/igapyon-agent-skills-<version>.zip` です。
 
-archive には `README.md`、`INSTALL.md`、`LICENSE`、`pom.xml`、`.mvn/`、`lib/`、
-`src/assembly/`、`skills/`、`scripts/`、`EXTERNAL_SKILLS.lock` を含めます。
-利用者は archive を展開し、`INSTALL.md` の手順で利用する skill 名を指定して自分の
-Codex skills directory へ同期します。
+再現性を保つため、ZIP内の全エントリの更新日時は `2020-01-01 00:00:00 UTC` に固定します。
+
+archive には `skills/`、配布用の `README.md` と `INSTALL.md`、`LICENSE`、
+`EXTERNAL_SKILLS.lock` を含めます。ビルド用ソースはリポジトリとGitHubの標準ソース
+アーカイブから参照し、このRelease assetは選択したスキルをCodex skills directoryへ
+導入するための配布物として扱います。
 
 release archive には、この repo の `skills/` に加えて、外部管理の miku-soft 系 skill も同梱します。
 外部 skill は `mvn package` の `prepare-package` フェーズで `target/release-staging/skills/` に取得し、archive 化します。
-生成した `EXTERNAL_SKILLS.lock` に repository、ref、skill 名を記録します。展開済み archive から同じ POM で再 package する場合は、lock と一致する同梱済み外部 skill を再利用します。
-release staging に全 skill をそろえた後、同梱した index generator で staging 内の `index.json` を一括更新し、外部 skill も含めた archive 内の discovery index を整合させます。
+生成した `EXTERNAL_SKILLS.lock` にrepository、ref、skill名を記録します。各skillの採用状態に沿ってsourceから配布します。stagingでは全skillのindexを再生成しません。現在の外部pinに含まれるlegacy indexは各sourceが提供する内容を検査し、source移行後に新refへ切り替えます。
 取得元は `pom.xml` の `external.*` properties で固定します。
 
 同梱する外部 skill は次の通りです。
 
-- `miku-indexgen-skills` `v1.6.2`: `skills/igapyon-miku-indexgen/`
+- `miku-indexgen-skills` `v1.7.1`: `skills/igapyon-miku-indexgen/`
 - `miku-text-bundle-skills` `v1.6.0`: `skills/igapyon-miku-text-bundle/`
-- `miku-repo-bundle-skills` `v0.5.0.1` (experimental): `skills/igapyon-miku-repo-bundle/`
-- `miku-text-file-ops-skills` `v0.4.2`: `skills/igapyon-miku-text-file-ops/`
-- `miku-prompt-lint-skills` `v0.5.0`: `skills/igapyon-miku-prompt-lint/`
-- `miku-ai-assistant-builder-skills` `v0.13.0`: `skills/igapyon-miku-ai-assistant-builder/`
+- `miku-repo-bundle-skills` `v0.6.0` (experimental): `skills/igapyon-miku-repo-bundle/`
+- `miku-text-file-ops-skills` `v0.6.0`: `skills/igapyon-miku-text-file-ops/`
+- `miku-prompt-lint-skills` `v0.6.0`: `skills/igapyon-miku-prompt-lint/`
+- `miku-ai-assistant-builder-skills` `v0.14.0`: `skills/igapyon-miku-ai-assistant-builder/`
 - `miku-ms-office-skills` `v0.7.1`: `skills/igapyon-miku-ms-office/`
 - `miku-json2xlsx-skills` `v0.5.0`: `skills/igapyon-miku-json2xlsx/`
-- `mikuproject-skills` `v0.8.1.1`: `skills/mikuproject/`
-- `mikuscore-skills` `v0.1.0`: `skills/mikuscore/`
+- `miku-project-skills` `v0.12.4`: `skills/igapyon-miku-project/`
+- `miku-score-skills` `v0.6.1`: `skills/igapyon-miku-score/`
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
-生成された zip を GitHub Release asset として添付します。archive 内の `index.json` は
-package 処理で再生成されます。
+生成されたzipの内容を検査してからGitHub Release assetとして添付します。archiveのindex要件は採用状態に従い、未採用indexをpackage処理で生成しません。配布zipからMaven packageを再実行する構成ではありません。
+archive検査では、内部15 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内で14 skillの代表参照経路も確認します。外部10 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
+
+## 同梱スキル・ライブラリの更新確認と取り込み
+
+このリポジトリで「同梱スキルの更新を確認して」「同梱ライブラリの更新状況をチェックして」
+などと依頼された場合は、上流の更新確認、更新がある取得元の設定反映、配布 ZIP の生成・検査までを
+依頼の範囲として扱います。更新がなければ、その確認結果を報告します。
+利用者が「調査だけ」「変更不要」などと明示した場合は、その指定に従います。
+
+1. 現在のブランチと作業ツリー、`pom.xml` の `external.*` properties、
+   `config/skill-index-policy.json` の対応する pin を確認します。
+2. 同梱対象の各上流リポジトリについて、既定ブランチの最新 HEAD と現在の pin を照合し、
+   コミットとファイルの差分、確認できる最新 Release・版情報を調べます。
+   この repo の取得元は既定ブランチの確認時点の最新コミットを使い、40桁の SHA で固定します。
+3. HEAD が pin と異なる対象は、`pom.xml` と `config/skill-index-policy.json` を同じ SHA へ更新します。
+   バージョン番号だけの更新や、同梱ファイルの内容が変わらない merge による HEAD 更新も取り込み対象です。
+   README の版表記は、確認できた最新 Release・版情報に合わせます。
+4. 設定を更新したら `mvn package` で staging と配布 ZIP を生成し、
+   生成された `EXTERNAL_SKILLS.lock` が更新後の pin を記録していることを確認します。
+   続いて `node scripts/check-release-archive.mjs target/igapyon-agent-skills-<version>.zip`
+   を実行します。`<version>` は現在の `pom.xml` のプロジェクト版に置き換えます。
+5. `git diff --check` と関連差分・作業ツリーを確認し、更新した同梱対象、確認時点、
+   生成 ZIP、検証結果を報告します。取り込みと検証が完了してから、同梱対象を最新化したと報告します。
+
+この手順では、依頼時に確認した最新コミットを固定して取り込みます。
+親リポジトリのバージョン更新、commit、push、tag、Release 公開、ローカル skill 配備は、
+それぞれの利用者指示と対応する運用ルールに従います。
 
 ## 厳選 text bundle
 

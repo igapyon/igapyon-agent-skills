@@ -41,16 +41,15 @@ For when to apply this checklist, use [checklist-timing.md](checklist-timing.md)
 
 ## References
 
-- [ ] Follow the search and reading ladder: grep/rg-friendly text, generated `index.json`, `distilled/`, then full references or original sources.
+- [ ] Follow task links first; use scoped listing or search for unknown references, then distilled material and full sources as needed.
 - [ ] Put broad workflow and token-efficiency design references under `references/system/` when they are not Agent Skill-specific.
 - [ ] Put concrete Agent Skill maintenance workflows under `references/agent-skill/`.
-- [ ] Use generated `index.json` as a file inventory before reading many reference files.
-- [ ] Treat very large Markdown reference files as a warning signal and check whether they should be split by viewpoint, distilled, indexed, archived, or converted to line-oriented records.
-- [ ] Reference `index.json` from `SKILL.md` when the skill has multiple references or assets.
-- [ ] Refresh generated `index.json` with `miku-indexgen`; do not edit it by hand.
-- [ ] Prefer grep/rg-friendly generated indexes where each file entry is easy to inspect as a single line; use `miku-indexgen` `index.json` as the nearby example.
+- [ ] Consider an index only when its consumer and selection value are clear; multiple references alone are not sufficient.
+- [ ] Treat very large Markdown references as a signal to consider splitting, distilling, selectively indexing, archiving, or converting them to line-oriented records.
+- [ ] If the skill adopts an index, document its consumer and update route in `SKILL.md` or repository policy.
+- [ ] Regenerate adopted indexes with `miku-indexgen`; do not edit them by hand.
 - [ ] For generated or maintained record lists, consider JSONL when line-oriented search and partial reading matter.
-- [ ] Add concise Markdown front matter to references when it improves generated index summaries or routing.
+- [ ] Add concise Markdown front matter when it improves an adopted index or another documented metadata use.
 - [ ] Keep front matter concise enough for routing; do not turn metadata into a second body.
 - [ ] Use grep/rg-friendly file names, headings, and literal task terms in references and distilled files.
 - [ ] Use file names that express content, purpose, and use case; avoid vague names like `notes.md`, `misc.md`, or generic `prompt.md` when a specific name would route better.
@@ -87,7 +86,7 @@ For when to apply this checklist, use [checklist-timing.md](checklist-timing.md)
 - [ ] Add clear "when to read" rules for every reference.
 - [ ] Avoid duplicating the same rule in `SKILL.md` and references.
 - [ ] Avoid deep reference chains; link references directly from `SKILL.md`.
-- [ ] Avoid Agent Skill-local README files unless the user explicitly requires them; prefer `SKILL.md`, `index.json`, and organized resources.
+- [ ] Avoid Agent Skill-local README files unless the user explicitly requires them; prefer `SKILL.md` and organized resources.
 - [ ] If an Agent Skill-local README is explicitly useful, keep it human-facing and avoid copying its background prose into `SKILL.md`.
 - [ ] Move retained but obsolete skill materials to `archive/` rather than leaving them in normal reference paths.
 

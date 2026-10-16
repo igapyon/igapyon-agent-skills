@@ -1,5 +1,823 @@
 # TODO
 
+## daybook：URLから関連 task を探す（2026-10-15・source 実装済み）
+
+計画・実装記録：[daybook-url-task-lookup.md](docs/plans/daybook-url-task-lookup.md)。利用者の後続指示に従い source skill を実装した。URLと task の関連確認を明示された場合だけ内容を読み、全年月の task から候補と理由を返す。探索だけでは記録を変更せず、記録まで依頼された場合は既存の編集範囲を適用する。
+
+- [x] URL-00：Git 状態と既存の記録規則を確認。
+- [x] URL-01：URL関連探索の reference を追加。
+- [x] URL-02：SKILL.md と operations.md の入口を接続。
+- [x] URL-03：README の利用例を追加。
+- [x] URL-04：U1〜U14 を静的照合。skill validator と `git diff --check` が成功。
+- [x] URL-05：実装・確認結果と未実施のモデル挙動確認を記録。
+
+モデル／tool mock による挙動確認、実 daybook への適用、skill 配備、version 更新、commit／push は未実施。
+
+## daybook スキルのレビュー指摘修正（2026-10-15・実装済み）
+
+利用者の後続指示に従い、正本：[daybook-skill-review-fixes.md](docs/plans/daybook-skill-review-fixes.md)のDBR-00〜05を原本へ反映した。task 更新の範囲と完了根拠を分ける規則を統一し、Issue 取り込み CLI の前提・不足ファイル導入・依存関係確認・競合時停止を文書化した。MIT教材の参照と既存の task／activities 分担を保った。
+
+- [x] DBR-00：実際の Git 状態と既存差分を確認し、README・SKILL.md・operations.md の記録モデル変更を保持。
+- [x] DBR-01：完了判定の正本を operations.md に追加し、SKILL.md・records.md・Add an activity から参照。
+- [x] DBR-02：Issue CLI の3 helper、`yaml`、npm／lockfile、`--help`、capabilities、miku-scm の準備順と競合時停止を記載。
+- [x] DBR-03：SKILL.md、notification.md、README の入口を共通手順へ接続。
+- [x] DBR-04：C1〜C8を静的照合。一時 fixture S1/S3/S5/S6 成功。S2/S4 は CLI 読込確認まで成功したが、`npm install --offline` は registry cache 不足（`ENOTCACHED`）で失敗し、`yaml` の導入・lock 更新は未検証。`quick_validate.py` と `git diff --check` は成功。
+- [x] DBR-05：この TODO、HANDOFF、計画書に変更・検証結果を反映。
+
+実 daybook、GitHub、配備先、version、commit/push は変更していない。S2/S4 の npm 依存取得と lock 更新はネットワーク利用可能な環境での確認事項。
+
+## 配布ZIPのsource照合補修（2026-10-11・ローカル実装済み）
+
+利用者の実装指示に従い、正本：[release-archive-source-verification.md](docs/plans/release-archive-source-verification.md)のZIP-00〜05をroot repoへ反映した。内部sourceから配布対象を決め、ZIP展開先の集合・型・内容と照合し、14代表参照も展開先で確認する。この補修はindex.json移行と同じroot SCM反映に含める。
+
+- [x] ZIP-00：既存差分・58件の基準を確認。fixtureのsourceとZIPを揃え、ZIP欠落の故障testを追加。
+- [x] ZIP-01：source/展開先の集合・型・生バイト内容を照合するhelperとunit testsを実装。
+- [x] ZIP-02：内部全skillのarchive検査へ組み込み、参照・画像・helper・stage/ZIP同時欠落等の異常系を追加。
+- [x] ZIP-03：既存14代表経路を共通化し、ZIP展開先でも確認。source単独・starter検査を維持。
+- [x] ZIP-04：既存suite、package後checker、実packageと一時ZIP故障コピーを確認。
+- [x] ZIP-05：README・inventory・計画書・TODO/HANDOFFを実行結果と適用範囲へ更新。
+
+検証：`npm run test:skill-index-policy`は77/77成功。`mvn package`が成功し、checkerはinternal=15、external=10、source-checked=15、representative-routes=14で実ZIPを受理。実ZIP一時コピーからMikukuのVERSION.mdまたは代表画像を削除、あるいはarticle-writing.mdの内容を変更すると各々exit 1で拒否した。`git diff --check`も成功。外部10件の全ファイルsource-to-ZIP比較は現行checkerの対象外で、full-SHA lock/ref/index検査で扱う。Qiita保持判断、Luna比較、新ref統合は完了し、結果は親計画のinventoryへ記録した。GitHub反映にはmiku-scm draft recommit push方式を使用する。Release・配備は対象外。
+
+## index.json任意化の実装（2026-10-10〜2026-10-14・完了）
+
+利用者は当初Luna想定の詳細計画のみを依頼し、その後、計画に従う実装を明示指示した。正本：[index-json-policy-migration.md](docs/plans/index-json-policy-migration.md)。
+
+- [x] IDX-00：内部15skill・外部10skillを調査し、内部14件のremove、Qiitaのretain、外部10件のremoveを根拠付きで確定。
+- [x] IDX-01：全体方針、miku-soft規約、starter、reviewer/compactor/SCMの規則を更新。
+- [x] IDX-02：宣言対象だけを生成・検査するpolicyとbuild経路へ変更。実ZIPの正常・異常系、ゼロ・複数生成、policy拒否、生成差分検査も確認。
+- [x] IDX-03：内部14件の補助index削除と参照経路修正を実施。単独配置14skillの静的到達確認とindexなしstarter検査が成功。Qiitaの保持候補についてLunaで同一snapshot・3代表taskを比較し、結果をinventoryへ記録。
+- [x] IDX-04：miku-indexgen source skill・build/testsを移行。生成CLIのNode/Java smokeと既存8 testsを維持。
+- [x] IDX-05：残り9外部skill sourceを移行し、各repoのnpm build/testを実行。公開やpin更新は別工程。
+- [x] IDX-06：外部10件をfull SHAでpinし、source/staging/ZIPで不要なinventoryが復活しないこととQiita retain indexを検証。
+- [x] IDX-07：Luna比較、保持判断、検証結果と残る範囲をinventory・HANDOFFへ記録。GitHub反映はmiku-scm draft recommit push方式を使用。Release・tag・配備は対象外。
+
+内部14件のindex削除と内部policy/build変更を実施済み。自己レビュー後、policy・実ZIP・生成経路・単独参照到達性・starterの検査を拡充した。独立した外部source 10repoを3作業列で並行移行し、各repoの既存build/testとmiku-scm draft recommit pushを完了。外部10件の変更は74 source path。text-file-opsはWindows専用test 1件をskip。prompt-lintはsource 10件＋bundle 6件、AI builderはsource 34件＋bundle 5件を再検証し、source由来の期待集合でZIP欠落を検出した。rootでは外部10件をfull SHAでpinし、`npm run test:skill-index-policy` 77/77、`mvn -f pom.xml clean package`、実ZIP checker（internal=15、external=10、source-checked=15、representative-routes=14）が成功。Qiita indexはLuna比較でoverviewとtopic bankの選択を助けたため、任意のcross-topic discovery用にretain。GitHub反映にはmiku-scm draft recommit pushを使用し、Release・tag・配備は行わない。下方の別作業はこの移行の実行範囲に含めない。
+
+自己レビュー修正後の最終検証：root suite 58/58成功、ZIP検査は内部15・旧pin外部10の計25 skillで成功。sourceには残した参照をbundleとZIPの両方から除く再現では、prompt-lintとAI builderの検査がともにexit 1で拒否した。2026-10-14の新ref統合後も、policy suite 77/77、clean package、実ZIP checkerが成功した。証拠はmaintenance inventoryのVerification節へ記録した。
+
+## GitHub Issue受信・daybook取り込み（Luna向け実装計画・実装済み）
+
+登録日：2026-10-06。状態：2026-10-06の実装指示に基づくローカル実装・fixture検証を完了。実GitHub操作、skill配備、commit/pushは未実施。
+
+ユーザー指定により、この実装計画はigapyon-agent-skillsのTODO.mdで管理する。daybookのTODO.mdや月別taskへ追加しない。
+
+- 詳細仕様の正本：[daybook-issue-import.md](../daybook/docs/plans/daybook-issue-import.md)。第6節に入力接続表、第12節にresult schemaと遷移表、第13節にコメント→close手順を記載。
+- 再開時の入口：[HANDOFF.md](HANDOFF.md)。本節の新しい合意を優先し、下方の過去作業から範囲を広げない。
+- 対象skill：`skills/igapyon-miku-daybook/`。下記scriptsはdaybook側を指し、配布bundleはこのskillの`assets/daybook/`。
+- 以降の実Issue取得・コメント投稿・closeとskill配備は別途の明示依頼がある場合だけ行う。今回の実装では実GitHub操作・認証・skill配備・commit/pushを行っていない。
+
+### 計画段階で完了したこと
+
+- [x] 仕様、入力JSON、関数、CLI、ファイル配置、実装順序、検証ケースを詳細計画書へ記録した。
+- [x] miku-scmのIssue取得・コメント投稿・closeがghに依存することを既存コード・referenceで確認した。
+- [x] 「ghはIssue連携では必須、daybook全体では任意依存」という方針を確定した。
+- [x] レビューで判明した入力接続の不足とresult再開状態を、下記の固定仕様へ反映した。
+- [x] 利用者と「ローカル取り込み→結果コメントの検証済み投稿→Issue close」を合意した。取り込み後の本文変更検出は初版から外した。
+- [x] TODOとHANDOFFのチェックリストを実装結果・検証結果へ更新した。
+
+### 実装する動作と範囲
+
+- 指定された時だけIssueを受信する。readyラベル、毎朝受信、通常操作への付随処理を追加しない。
+- GitHub読取・コメント投稿・closeにはmiku-scmの既存固定helper／runnerを使う。miku-scmソースや固定command surface、既存通知workflowを変更しない。
+- エージェントが意味判断とGitHub操作を担当し、Node.jsはローカルJSON検証・プレビュー・記録作成・再開状態を担当する。新しいnpm依存やGitHubクライアントを作らない。
+- ghなしではIssue連携の3機能をdisabled／GH_NOT_FOUNDと案内する。通常の記録、日程表、通知、取得済みJSONを使うfixture処理は動作する。gh確認は明示的なIssue連携の入口だけ。
+- taskの日付補完はplanned_dates_status: provisionalと理由を残し、日程表の「日程要確認」にだけ表示する。外部期限を作業予定日に流用しない。
+- Issue URL＋record key＋import_idで二重取り込みを防ぐ。初期igapyon/daybookのDaily Briefing #3とPRは除外する。他repoに#3を自動適用しない。
+- 取り込みが完了し、結果コメントがposted／already-postedとなったIssueをreason=completedでcloseする。これは取り込み受付の完了であり、daybookのtask完了ではない。
+- コメント・closeの実操作には既存miku-scmのpreflight、実本文／close操作の承認、handoff、attempt回復規則を適用する。取得だけ・候補だけ・計画だけでは投稿・closeしない。
+- close失敗時はclose待ちを保持し、再開はcloseだけ行う。既にclosedならalready-closed。再オープンされた取り込み済みIssueはalready-importedと報告し、記録やコメントを再生成・自動再closeしない。
+- source_hashは同一runのprepare→applyとclose前確認に使う。取り込み後の本文変更検出・継続同期は実装しない。
+- 実装検証は一時directoryと架空fixtureだけ。実Issueの取得・投稿・close、gh導入／ログイン、commit・push・PR・マージ、skill配備はこの実装計画のfixture検証に含めない。
+
+### 固定仕様1：既存helperからsource.jsonへの接続
+
+詳細計画書第6節の表をそのまま実装・referenceへ反映する。入力の例だけに存在するfieldを、実取得できたことにしない。
+
+| 項目 | 決定した扱い |
+| --- | --- |
+| repo／number／title／body／url／state／updated_at | helper payloadのrepository／issueから取得。html_url→url、state→小文字。要求repo・番号・URLの一致と更新日時を検証 |
+| PR判定 | URLの/issues/<number>を検証してfalseとする。/pull/は拒否。不明なpathや別repoは入力エラー |
+| Issue created_at | 現行helperにはないのでnull。普通taskは作成可能。相対日付の根拠に必要な場合だけneeds-info。updated_atを代用しない |
+| コメントID | comment.urlの#issuecomment-<number>から十進文字列として得る。rawのopaque IDを整数化・復号しない |
+| コメント作者・日時 | author.login、createdAt／updatedAtを対応させる。欠落はnull。本文は保持し、日時欠落でもhashへ含める |
+| 取得範囲 | comments_scope: helper-returned。成功応答のcomments配列だけを使う。全件取得の証明がないcomments_complete=trueを作らない。判断に必要な履歴不足はneeds-info |
+| receipt_author_logins | 正規結果と認める作者の設定。初期igapyon/daybookでは["igapyon"]、別repoは利用者指定（未指定[]）。現在の認証アカウントを推定しない |
+| 作者不明・未設定のreceipt | 有効markerがあっても作者を検証できなければUNVERIFIED_RECEIPTで確認待ち。再取り込み・再投稿しない |
+
+この取得範囲の限界をpreviewとreferenceに記載する。取得失敗を空配列・成功sourceで隠さない。
+
+### 固定仕様2：result.jsonと再開
+
+詳細計画書第12節のschemaを正本とし、writeのissue_numbersからIssue別write_pathsを構成する。resultはplan.jsonと同じrun directoryへ保存し、comment-result／close-resultは両方を照合する。共有activityへの追記を1 writeへまとめても、依存する各Issueの完了を判定できるようにする。
+
+| 状態 | 初期値・遷移・再開条件 |
+| --- | --- |
+| write.status／local_status | queued／prepared→written／local-written。I/O失敗はpartial。未適用分だけ再開 |
+| comment.status | blocked→pending→sending→posted／failed／uncertain。ghなしはpending-gh。最新の同一receiptを確認した時だけalready-postedへ回復 |
+| close.status | blocked→pending→closing→closed／failed／uncertain。投稿検証前はblocked。ghなしはpending-gh。最新closed確認でalready-closedへ回復 |
+| result.status | 未適用writeありはprepared／partial、ローカル全完了・remote待ちはlocal-written、全対象の投稿・close検証済みはcomplete |
+
+- 再applyは既存resultを読み、schema・repo_root・plan_id・import_id・path/hashを照合する。posted／uncertain／closed等を初期化しない。退行はINVALID_RESULT_TRANSITION。
+- 書込完了直後・result更新前の停止はafter_hashと同一出典を確認してwrittenへ回復する。後の利用者編集はLOCAL_CONFLICTで保持する。
+- result紛失時はローカル状態だけ回復し、comment=uncertain／close=blockedとしてremote確認を求める。投稿済みと推定したり自動再送しない。
+- source再読取は未適用writeがある場合に必須。部分適用後のSOURCE_CHANGEDは既存記録を保持して確認待ちにする。全適用済みの再applyはcloseによるstate変更で停止しない。
+- comment／closeのsending・closing・uncertainからの再開は最新読取から始め、miku-scmが禁止するattemptを再利用しない。close失敗後はコメントを再投稿しない。
+
+### ISSUE-00：実装開始時の確認と入力接続fixture
+
+前提：実装開始の指示。詳細：計画書第2・4・6節。
+
+- [x] daybookとskill正本の規則・README・変更状態を読む。配備コピーを正本にせず、利用者変更を保持する。
+- [x] 両repoを編集できる実装環境を用意する。miku-scmソースと既存通知workflowを変更対象へ追加しない。
+- [x] raw helper payloadとrunner包装の架空fixtureを各1件作り、上表どおりsourceへ正規化する。包装keyはrunnerの現行契約を確認し、GitHub取得APIを再設計しない。
+- [x] created_at欠落、opaqueコメントID、updatedAt欠落、作者欠落、取得失敗、PR URL、未知作者receiptのケースを先に固定する。
+- [x] 成功した空commentsと取得失敗を区別し、helper-returnedの取得範囲・意味判断の確認待ちをreferenceへ書く。
+- [x] 成功、ghなし、already-imported、needs-info、取得失敗、コメント待ち、close待ちの挙動をfixture・CLI・referenceへ反映する。
+
+完了条件：現行helperの取得可能fieldだけで正常fixtureがsourceを満たし、不足情報を捏造しない。
+
+### ISSUE-A：現行生成処理とテストの整合
+
+依存：ISSUE-00。対象：scripts/day-plan.test.mjsと対応bundle。詳細：計画書第16節・段階A。
+
+- [x] daybookとskill bundleのテストを比較し、旧records.dueTasks期待を現行nearEndTasks等へ揃える。旧キーalias検証は保持する。
+- [x] 予定期間・priority・schedule状態・canonical配置・日付範囲・リンクのテストを揃え、現行生成処理のテストを実行する。
+- [x] テストを削除して整合したことにせず、結果をHANDOFFへ記録する。
+
+完了条件：新機能を加える前の現行生成契約がfixtureで検証できる。
+
+### ISSUE-B：暫定予定期間を機械で識別する
+
+依存：ISSUE-A。対象：scripts/day-plan.mjsと対応テスト。詳細：計画書第8・9節。
+
+- [x] planned_dates_statusをconfirmed／provisionalのscalar stringとしてrawFrontMatterで検証する。新項目のある普通taskには有効な両端を要求する。
+- [x] 既存の項目なし・旧キーalias・無期限weeklyの互換性を保持する。
+- [x] provisionalをneedsDateReviewへ含め、datedTasks・plannedWeekTasksから除外する。dateReviewLineへ暫定期間、due_month／planned_weekの補足を表示する。
+- [x] 当日・翌日・7日後も日程要確認だけに出ること、confirmed変更、done／cancelled、不正型・値を検証する。
+
+完了条件：暫定期間が偽の期間超過を生まない。既存全taskを自動移行しない。
+
+### ISSUE-C：入力検証、日付補完、記録とコメントの生成
+
+依存：ISSUE-B。対象：新規scripts/issue-import.mjsと対応テスト。詳細：計画書第6〜8・10・13〜15節。
+
+- [x] validateIssueSource／validateImportManifestを入力接続表に沿って実装し、schema、repo／URL／番号、key、型別項目を検証する。
+- [x] deriveTaskDatesを実装する。両端なしは取り込み日、開始のみは両端同日、終了のみはmin(取り込み日,終了)を開始にし、補完理由を残す。
+- [x] 外部期限を作業予定日に流用しない。schedule／activityの実日付や相対日付の基準が不明ならneeds-info。
+- [x] marker＋構造化参照＋receipt_author_loginsによる正規receipt検証、UNVERIFIED_RECEIPT、source_hash／import_idの安定計算を実装する。
+- [x] task／scheduleのMarkdownとactivity出典ブロック、結果コメントを生成する。状態checkbox、priority、ID／配置、出典、履歴を一致させる。
+- [x] schedule／activityのrecord参照idはfilename stemにする。task例だけで完了せず、全3種の正常fixtureを作る。
+- [x] コメントへローカル反映・暫定日付・受付完了closeを明記する。未公開blobリンクやtask完了の断定をしない。
+
+完了条件：確定JSONから一意の記録とコメントが作れる。自然言語・ネットワーク処理をNode.jsへ追加しない。
+
+### ISSUE-D：出典検索、採番、prepare
+
+依存：ISSUE-C。対象：issue-import.mjsと対応テスト。詳細：計画書第10〜12節。
+
+- [x] canonical task・scheduleとactivity専用ブロックからURL＋keyを検索し、done／cancelledも重複判定する。
+- [x] SOURCE_CONFLICT、remote-only、already-imported、link-existingを判定する。取り込み後の本文変更検出を追加しない。
+- [x] taskを現物＋対象作成月のローカルGit履歴から採番し、削除済み番号・未追跡・複数taskの順序・99999超過・Git失敗を検証する。fetchしない。
+- [x] plan.json／preview.mdを生成し、各writeへpath／issue_numbers／before_hash／after_hash／全文を保存する。
+- [x] 同日activityの追記を1 writeへまとめ、既存文章と改行を保持する。
+- [x] previewへ予定日、補完理由、関連付け先、確認事項、コメント本文、投稿後のclose予定と取得範囲を示す。
+
+完了条件：prepareは作業資料だけを出力し、正本記録を書き換えない。
+
+### ISSUE-E：apply、result、CLI、再開
+
+依存：ISSUE-D。対象：issue-import.mjs、新規import-issues.mjsと両テスト。詳細：計画書第4・12〜15節。
+
+- [x] detectIssueCapabilitiesを実装する。ghのPATH存在をファイル検査だけで確認し、issue_reception／issue_comment_posting／issue_closureを返す。ghなしはdisabled・終了コード0。
+- [x] capabilities／prepare／apply／comment-result／close-resultの5 CLI、help、未知引数、schema、終了コードを実装する。Node.jsからremote操作しない。
+- [x] 初回・未適用writeのsource再確認、plan改変検知、全writeの事前hash確認、排他lock、canonical path／symlink検証を実装する。
+- [x] resultを第12節schemaで作り、再実行時は同じplan・repoとの照合後に読込む。既存remote状態を初期化しない。
+- [x] 排他新規作成、一時file＋rename、writeごとのresult原子更新、shared activityのIssue別完了判定を実装する。
+- [x] mid-write、書込完了・result更新前の停止、result紛失、後の手編集、部分適用後のsource変更をfixtureで検証する。
+- [x] comment-result／close-resultもrepo lockを使い、許可遷移・前提・対象URL・handoff／attempt参照を検証する。不正な退行はINVALID_RESULT_TRANSITION。
+- [x] posted／uncertain／closed後の再applyで状態が残ること、未投稿時にcloseできないこと、close失敗でローカル・投稿成功を巻き戻さないことを検証する。
+- [x] 全write完了・remote待ちはlocal-written、全対象の投稿・close検証済みだけcompleteにする。task.statusをcloseで変更しない。
+
+完了条件：ローカル適用、コメントだけの再開、closeだけの再開を独立して扱い、二重作成・自動再送を防ぐ。
+
+### ISSUE-F：skill操作手順とREADME
+
+依存：ISSUE-E。対象：daybook README、skill正本SKILL.mdとreferences。詳細：計画書第4・6・7・9・13・16節。
+
+- [x] references/issue-import.mdにcapabilities→miku-scm読取→source→意味判断→manifest→prepare→再読取→apply→comment preflight／承認／投稿検証→comment-result→close preflight／承認／検証→close-resultを記載する。
+- [x] 通常は投稿検証後の最新状態からclose preflightを作る。ordered batchを明示利用する場合だけ既存handoff.batch.applyを使い、独自の承認・再送経路を作らない。
+- [x] miku-scm所定のcomment draft保存先、helperのattempt再利用禁止、ghなし、unknown receipt、close待ち・成否不明からの再開を架空例で示す。
+- [x] 明示的Issue取り込みだけの起動条件、readyラベル不要、#3／PR除外、取り込み後のclose、通常操作でgh確認しないことをSKILL.mdへ記載する。
+- [x] planned_dates_status、出典、一覧の日程要確認、利用者確認後のconfirmed更新をrecords.md／operations.md／READMEへ記載する。
+- [x] source取得範囲、未コミットのローカル記録、GitHub反映、取り込み受付close、実作業完了を区別して説明する。
+- [x] 現行の「週次保守は明示依頼と指定対象だけ」を維持する。Issue取り込みで無関係なweekly保守を起動せず、daybook READMEの旧自動繰り越し説明もこの規則へ揃える。
+- [x] task／schedule／activity、投稿待ち、close待ち、already-closed、再オープンの架空例で手順を通し確認する。
+
+完了条件：Lunaが新たなGitHub取得・投稿・closeの仕組みを設計せず、既存miku-scmとローカルCLIを接続できる。
+
+### ISSUE-G：bundle整合・最終検証
+
+依存：ISSUE-F。対象：skill正本assets/daybookとindex、daybook。詳細：計画書第16〜18節。
+
+- [x] 新規・変更スクリプトとテストをassets/daybookへ一致させる。miku-scmや通知workflowを変更しない。daybook専用READMEをbundleへ無条件コピーしない。
+- [x] 新referenceをskill index.jsonへ既定手順で登録する。
+- [x] fixture検証を行い、daybookとbundleのtest suiteを実行する。
+- [x] 通常記録・週次ルール・通知workflow・利用者変更が保持されていることを確認する。
+- [x] 配備の明示指示はなかったため、skill同期・配備は行っていない。
+- [x] 差分、空白、リンクを確認し、実装状態と検証結果をHANDOFFへ記録する。
+
+完了条件：daybookと配布bundleが一致し、fixture検証と操作手順が揃う。実Issue受信・投稿・closeは後の導入確認依頼で行う。
+
+### 実装時の検証コマンド
+
+実装で実行したfixture検証。daybook側とskill正本のbundle側の結果を記録する。
+
+```sh
+node --test scripts/day-plan.test.mjs
+node --test scripts/issue-import.test.mjs scripts/import-issues.test.mjs
+npm test
+git diff --check
+```
+
+架空helper payloadとmiku-scmの操作結果をfixtureで使った。実通信・認証・投稿・close、miku-scm自体の自己テストは行っていない。
+
+### 将来の検討として保持するもの
+
+- 取り込み済みIssueの本文変更検出、コメント・ラベルからの状態／予定期間の継続同期。
+- daybook編集内容をGitHub Issueへ自動反映する双方向同期。
+- 複数Issueの統合、削除やdaybook作業完了とのclose連動、公開範囲の拡張。
+- 日次通知Issueのコメントをtask操作の入口として使う。
+
+## daybookの週次タスク自動保守を明示依頼に限定する計画（Luna向け、2026-10-06）
+
+状態：実装済み（2026-10-06、Codex）。SKILL・operations・日付移行ガイドを更新し、daybook indexを再生成した。週次保守は明示依頼と指定範囲に限定した。独立したLuna実行によるfixture動作確認は未実施。
+
+目的：通常の記録編集やデータ移行に、無関係な週次タスクの調査・旧形式補完・予定作成・次回日付更新を付随させない。週次登録と明示的な繰り越しの機能は維持し、起動条件と対象範囲を限定する。
+
+調査時点の原因：
+
+- `skills/igapyon-miku-daybook/SKILL.md` のActivation and boundariesに、すべてのrecord-writing requestで期限到来済みの全active weekly taskを保守する指示がある。
+- `references/operations.md` のMaintain a weekly recurring taskには、すべてのwritable requestで旧形式の週次項目を補完し、その後全対象を繰り越す指示がある。対象がなくても確認が発生し、対象があれば別タスク・予定・履歴の変更まで行える。
+- この処理はAgent Skillの指示によるもの。背景で動くschedulerではなく、今回も新しいschedulerや繰り越しruntimeを追加しない。
+- day-plan生成で元のtask/scheduleを変更しない規則はすでにある。この規則は維持する。
+
+### 0. 実装前の確認と対象ファイル
+
+- [x] 実装依頼を受けた後、`git status --short --branch` と対象の現内容を確認する。既存のRelease ZIP計画や他のユーザー変更を保持する。
+- [x] Agent Skill更新に必要な `skill-creator` の指示を確認し、適用時はユーザーへ案内する。今回の目的に必要な範囲で使う。
+- [x] 次のファイルを読み、起動条件とデータ規則を区別する。
+
+| ファイル | 対応 |
+| --- | --- |
+| `skills/igapyon-miku-daybook/SKILL.md` | 全書き込み時の週次保守を削除し、明示依頼と対象範囲を定義 |
+| `skills/igapyon-miku-daybook/references/operations.md` | 週次登録・明示的保守・通常編集の手順を一致させる |
+| `skills/igapyon-miku-daybook/references/task-date-migration.md` | 移行が週次補完・繰り越しを起動しないことを明記 |
+| `skills/igapyon-miku-daybook/references/records.md` | 読み取り確認。スキーマと週次の表現は維持し、起動条件に矛盾する箇所が実際にあればその説明だけ修正 |
+| `skills/igapyon-miku-daybook/index.json` | 文書変更後に既存手順で再生成 |
+
+- [x] 既存の `assets/daybook/scripts/`、通知workflow、POM、他スキルは原則として変更しない。指示の起動条件を変えるために新しいCLI・バックグラウンド処理・全体走査ヘルパーを追加しない。
+
+### 1. 起動条件と変更範囲を固定する
+
+- [x] 下表をSKILLとoperationsの共通仕様にする。
+
+| ユーザーの依頼 | 許可する処理 | 週次保守の扱い |
+| --- | --- | --- |
+| 普通のtask追加・更新・完了 | 指定taskと、その編集に直接必要な整合性確認 | 起動しない |
+| activity追記・schedule編集・添付保存 | 指定記録と直接関連する情報 | 起動しない |
+| 既存週次taskの優先度・本文編集 | 指定フィールドと直接関連する情報 | そのtask自体でも自動繰り越ししない |
+| 指定週次taskの終了・特定回の中止 | 指定された終了・中止と直接必要な状態・リンク整合 | 次回を自動作成しない |
+| 明示的な週次task新規登録 | そのtask、既知の初回schedule、相互リンク | 他taskは調べない |
+| 「task Aの週次予定を繰り越して」 | Aと次回候補に直接関連するschedule | Aだけを保守 |
+| 「全週次タスクを繰り越して」 | 全active weekly taskの対象判定と必要なschedule | 明示された全体範囲で保守 |
+| task一覧・説明・day-plan生成 | 表示に必要な読み取り。day-plan生成はsnapshotのみ書き込み | 元記録の補完・繰り越しを起動しない |
+| task日付項目の移行 | 指定された移行範囲の分類・日付キー編集・検証 | 週次の分類は可能。次回日付・予定を自動更新しない |
+
+- [x] 「週次taskである」「今日または過去のnext_occurrenceがある」だけでは保守を起動しない。登録済みのrecurrence指定は、別依頼でそのtaskを繰り越す恒久的な許可として扱わない。
+- [x] 全体処理はユーザーが全週次taskの保守を依頼した場合だけにする。曖昧な「整理して」、普通のtask編集、「daybook更新」から全体保守を推測しない。保守を求めていることは明確でも対象が不明な場合だけ、対象を確認する。
+- [x] 通常操作では、無関係な旧週次taskのnext_occurrence初期化、関連schedule探索、繰り越し、追加入力の質問、保守提案を自動で付け足さない。
+- [x] 必要な読み取りは維持する。新規taskのID採番・重複確認、指定記録の特定、一覧の全件取得、移行依頼の対象全件確認、day-planの生成用読み取りを「全体走査禁止」として止めない。止めるのは別目的の週次保守の追加走査である。
+
+### 2. SKILLの指示を更新する
+
+- [x] Activation and boundariesの `during any record-writing request` と、全active weekly taskを常時保守する指示を置き換える。新規週次登録の範囲と、明示的な週次保守の範囲を分けて書く。
+- [x] 置換文の意味は次に揃える。英語は周囲の文体に合わせて整えてよい。
+
+> Weekly recurrence rollover is a separate explicitly requested operation. Maintain only the requested tasks; process all active weekly tasks only when the user explicitly requests that scope. Ordinary record edits and migrations must not trigger recurrence-field initialization, an additional weekly-task scan, or rollover.
+
+- [x] Core workflowの分類に明示的なweekly maintenanceを追加し、通常編集・新規週次登録・週次保守のどれかを最初に判定するよう案内する。
+- [x] 週次taskの通常編集から週次保守へ暗黙に移らないこと、新規登録はそのtaskと初回scheduleに限定することをCore workflowにも反映する。
+- [x] 読み取り専用操作とday-plan生成が元記録を変更しない説明、およびAfter editingの依頼対象の整合性確認は維持する。
+
+### 3. operationsと移行ガイドを一致させる
+
+- [x] operationsのMaintain a weekly recurring taskを、新規登録と明示的な保守として読めるよう整理する。
+- [x] `During any writable daybook record request`、`inspect all active weekly tasks`、`Apply this to all eligible weekly tasks during the writable operation` の全体起動指示を削除または明示依頼限定の説明に置き換える。SKILLだけ直してoperationsに旧ルールを残さない。
+- [x] 明示的な保守では、先にユーザー指定の終了・中止を適用し、その後に依頼範囲のactive taskだけを対象にする。終了済みtaskを繰り越さない。
+- [x] 旧週次taskのrecurrence項目初期化も、明示的な登録・保守の対象内だけに限定する。既知の次回日付・明確にリンクされたscheduleがない場合は対象を変更せず、そのtaskについてだけ必要情報を確認する。
+- [x] 繰り越しアルゴリズムは維持する。Asia/Tokyoの日付、7日単位、過去回を新規作成しないこと、schedule再利用、中止回の保持とskip、重複防止、相互リンク、history記録を変えない。
+- [x] operationsのAdd/Update task、Add activity、Add/Update schedule、Finishに週次全体保守を呼ぶ説明が残っていないか確認する。
+- [x] read-only操作で、たまたま全週次保守の調査や通知が増える説明も除く。依頼された一覧のNext表示や、明示された質問への回答は維持する。
+- [x] task-date-migration.mdに、移行時は既存のrecurrence/next_occurrenceとscheduleを保持し、移行依頼だけで週次初期化・繰り越し・次回schedule作成を行わないと明記する。曖昧な旧日付の意味を、移行対象の記録について確認する手順は維持する。
+- [x] records.mdの週次スキーマは維持する。週次ルールはtask、日付ごとの回はscheduleという表現や、無期限ルールに予定終了日を捏造しない規則を変えない。
+
+### 4. 指示の検証と動作確認を分けて行う
+
+- [x] まずSKILLと参照資料を静的に読み合わせ、通常書き込みを起点にした全体保守の指示が残っていないこと、明示保守の説明が相互に矛盾しないことを確認する。文章の単純な文字列テストだけをAgentの動作確認として報告しない。
+- [ ] 実行ログを取れるAgent環境で確認できる場合は、独立した一時fixtureを作り、以下の依頼を個別に実行する。対象daybookの実データ、実際のCodex配備、Issue・通知送信には触れない。基準日をAsia/Tokyoの2026-10-06として明示し、実時計の進みに依存させない。
+- [ ] fixtureに、通常task X、期限到来済み週次A/B、週次と明記されているがnext_occurrenceが未確定の旧task C、候補schedule、activityを含める。Aはnext_occurrence=2026-10-04、Bも期限到来済みとし、Aだけの処理と全体処理を区別できるようにする。記録は既存スキーマに従い、安定した予定詳細と相互リンクを用意する。
+- [ ] 各ケースで変更前後の内容と、読んだファイル・ツール呼び出し・最終応答を確認する。fixtureで無関係な読み取りを隠すために、週次taskを置かないケースだけで検証しない。
+
+| ケース | 期待する結果 |
+| --- | --- |
+| activityに1件追記 | activityだけ変更。A/B/Cの保守調査・更新・不足情報質問なし |
+| Xの優先度変更・完了 | Xだけ変更。週次保守なし |
+| Aの優先度変更 | Aの指定項目だけ変更。next_occurrence・scheduleを繰り越さない |
+| Aのルール自体を終了 | Aを終了。A/Bの次回を新規作成しない |
+| 週次Dを初回日付付きで新規登録 | Dと初回scheduleだけ作成。A/B/Cは保持 |
+| Aだけの繰り越し依頼 | Aの次回を2026-10-11へ。B/Cは保持し、不足情報質問も追加しない |
+| Aの次回候補に同一scheduleあり | 既存scheduleを再利用し、重複作成なし |
+| Aの2026-10-11回がcancelled | 中止回を保持し、明示保守内で次の候補2026-10-18へ進む |
+| 全週次taskの繰り越し依頼 | 全指定範囲の対象を処理。Cの日付が不明ならCは保持し必要情報を確認 |
+| task一覧・day-plan生成 | 表示またはsnapshotのみ。元task/scheduleの内容が完全に維持される |
+| task日付キー移行 | 移行対象のキー・必要な履歴だけ変更。週次のnext_occurrenceとscheduleは保持 |
+
+- [x] Agent実行環境が用意できない場合は、静的確認と上記の未実行ケースを区別して記録する。モデルの実動作を確認済みとしない。この確認のためだけに外部サービス契約や新しい試験基盤を導入しない。
+- [x] 今回runtimeを変更しない限り、day-plan生成の実装テストを増やしたり週次処理をruntimeへ移したりしない。
+
+確認結果：静的な指示の読み合わせ、`quick_validate.py`、index再生成、`git diff --check` を実施した。独立したLuna実行・fixture動作確認はこの環境では行っていないため、表のケースを実動作確認済みとは扱わない。runtime・day-plan実装・実データは変更していない。
+
+### 5. index再生成と完了記録
+
+- [x] 文書更新後、既存の `mvn generate-resources` でindexを再生成する。daybook以外のindexに差分が出たら理由を確認し、他のユーザー変更を巻き戻さない。
+- [x] `git diff --check`、`git status --short`、対象ファイルのdiffを確認する。予定した起動条件変更以外のスキーマ・runtime・他スキル変更を含めない。
+- [x] 実施済み項目だけチェックし、この節に静的確認・実際のAgent確認・未実行ケースの結果を記録する。Release ZIP計画の実装状況は後続の独立した節で記録する。
+- [x] ユーザーへ、通常編集の付随週次保守がなくなったこと、週次繰り越しは明示依頼と指定対象に限ること、既存の週次登録・繰り越し処理自体は維持したことを報告する。
+- [x] 実際のdaybookデータ移行、Codex配備、版の更新、commit/push、タグ・Release操作は別途の依頼とする。ローカルRelease ZIP生成は、下記のRelease ZIP計画の範囲で実施した。
+
+## Release ZIPをスキル配布用に整理する実装計画（Luna向け、2026-10-05）
+
+状態：実装済み（2026-10-06、Codex）。最終ZIPをローカル生成・検査済み。配備、commit/push、タグ作成、GitHub Release公開は未実施。
+
+目的：カスタムRelease ZIPを、導入するスキル一式と配布用の案内・ライセンス・外部スキルの出典情報に絞る。ビルド用ソースはリポジトリとGitHub標準のソースアーカイブから参照する。
+
+### 0. 固定する仕様と作業範囲
+
+- [x] 実装開始時に `git status --short --branch` を実行し、既存の変更を保持する。必要ならこの節を読み直し、過去のGOAL/HANDOFFにある別作業を今回の目的に混ぜない。
+- [x] 次の配布構成を実装する。ZIP名と展開ルート名は現行形式を維持し、`-skills` などのsuffixを追加しない。
+
+```text
+target/igapyon-agent-skills-<version>.zip
+└── igapyon-agent-skills-<version>/
+    ├── skills/
+    ├── README.md
+    ├── INSTALL.md
+    ├── LICENSE
+    └── EXTERNAL_SKILLS.lock
+```
+
+- [x] 現在の内部15スキルと外部10スキルをすべて含める。リポジトリ直下の `skills/` だけを直接ZIP化せず、外部スキルもそろえた `target/release-staging/skills/` を使う。件数を実装に固定せず、内部ディレクトリとPOMの指定から求める。
+- [x] スキル内部の `references/`、`runtime/`、`scripts/`、`agents/`、`assets/`、ライセンス、テスト、fixture、例は丸ごと保持する。特にdaybookの `assets/daybook/.github/workflows/day-plan-notify.yml` を除外しない。
+- [x] 除外する名前は `.DS_Store`、`node_modules`、`.git` とする。ドットファイル全般や `.github` を除外しない。一般的なgitignoreルールをコピーに適用しない。配布に必要なJAR/MJS/TGZなどを誤って落とさないため。
+- [x] 外部スキルのrepo/ref/skillName、既存スキルの動作、ルートの同期スクリプト、厳選text bundleの仕様は変更しない。版の更新、commit、push、タグ作成、Release公開、実際のCodex配備は今回の範囲に含めない。
+
+調査時点の現状：
+
+- root POMは `1.20261005.2`。既存ZIPとrelease stagingは古い `1.20260922.1` である。検証には後続実装後に生成したZIPを使う。
+- staging生成スクリプトは現在、README/INSTALL/LICENSEに加えてPOM/.mvn/lib/scripts/src/assemblyをコピーしている。
+- stagingのindex再生成は、配布先にコピーした `lib/miku-indexgen-1.6.2.jar` を使用している。
+- 現在のINSTALLは、ZIPに同梱した `scripts/sync-codex-skill.sh` の存在を前提としている。
+- daybookの `node_modules/` はリポジトリ側に存在するローカル生成物で、調査時点ではCodex配備先にはない。以前の説明は差分の向きを取り違えていた。現行の `cp -R` をそのまま使うと、次のZIPに混入する可能性がある。
+
+### 1. 変更するファイルを確認する
+
+- [x] 次のファイルを実装前に読む。
+
+| ファイル | 実施内容 |
+| --- | --- |
+| `scripts/prepare-release-staging.sh` | 配布内容に限定したstaging作成、スキルコピー時の除外、ビルド元のJARによるindex生成 |
+| `src/assembly/release.xml` | ZIP収録パスの許可リストと除外ルール |
+| `src/assembly/README.md`（新規） | 配布物向けの短いREADME |
+| `INSTALL.md` | 同梱ヘルパー不要の導入・更新・差分確認手順 |
+| `README.md` | Release archive節と配布物からの再packageに関する説明の更新 |
+| `scripts/check-release-archive.mjs`（新規） | ZIPの構成・スキル一覧・ロック・indexを検査するCLI |
+| `.github/workflows/release-archive.yml` | ビルド後、アップロード前のZIP検査 |
+
+- [x] 依存関係の確認用に `pom.xml`、`scripts/sync-codex-skill.sh`、`scripts/build-text-bundle-selection.sh` も読む。これらは原則として変更しない。
+
+### 2. staging生成を変更する
+
+対象：`scripts/prepare-release-staging.sh`。
+
+- [x] staging初期化、外部checkout用の `target/external/` 作成、外部引数repo/ref/skillName三つ組の検証を保持する。削除対象のパスを今回の変更で広げない。
+- [x] stagingにはルートと `skills/` だけを作成する。空の `scripts/` や `src/` を作成しない。
+- [x] `README.md` のコピー元を `$BASE_DIR/src/assembly/README.md` に変更し、stagingの `README.md` にコピーする。
+- [x] `INSTALL.md` と `LICENSE` のコピーは保持する。`pom.xml`、`.mvn/`、`lib/`、`scripts/`、`src/assembly/` のコピーを削除する。
+- [x] 内部スキルのコピーを `rsync -a` に変更する。`--exclude='.DS_Store'`、`--exclude='node_modules'`、`--exclude='.git'` を指定し、`$BASE_DIR/skills/` の内容を `$STAGING_DIR/skills/` にコピーする。末尾スラッシュを付けて `skills/skills/` を作らない。
+- [x] 外部スキルにも同じ除外ルールを使う。スキルごとの配布先を作り、checkout内の `skills/<skillName>/` の内容をstagingの `skills/<skillName>/` にコピーする。checkoutのルート全体をコピーしない。
+- [x] 既存の固定ref取得、取得したスキルの存在確認、同名スキルの衝突検出、locked provenance一致時の再利用、三つ組のlock出力を保持する。
+- [x] 全スキルのコピーと除外を終えた後、次のコマンドでstagingのindexを再生成する。JARをstagingにコピーしない。
+
+```sh
+java -jar "$BASE_DIR/lib/miku-indexgen-1.6.2.jar" --input-parent-directory "$STAGING_DIR/skills"
+```
+
+- [x] index生成後にindex対象ファイルを削除する順序にしない。不要ファイルを除外済みのディレクトリからindexを作り、参照先と配布内容を一致させる。
+
+### 3. assemblyの収録リストを変更する
+
+対象：`src/assembly/release.xml`。
+
+- [x] `<include>**</include>` を削除し、`skills/**`、`README.md`、`INSTALL.md`、`LICENSE`、`EXTERNAL_SKILLS.lock` の5項目だけを含める。
+- [x] 除外パターンに `**/.DS_Store`、`**/node_modules/**`、`**/.git/**` を指定する。不要ディレクトリの空エントリもZIPに残らないことを後の確認スクリプトで確かめる。
+- [x] `includeBaseDirectory`、`baseDirectory`、POMの `finalName`、`appendAssemblyId`、package実行フェーズは維持する。
+- [x] スキル内部の `scripts/` や `lib/` は収録する。配布ルートのビルド用ディレクトリとの違いはパス階層で判断する。
+
+### 4. 配布用READMEとINSTALLを変更する
+
+- [x] 新規 `src/assembly/README.md` に、スキル配布物であること、5項目の内容一覧、INSTALLへの相対リンク、EXTERNAL_SKILLS.lockの役割、ソースリポジトリへのリンクを記載する。件数・版・外部ref一覧を重複して固定記載しない。
+- [x] `INSTALL.md` のContentsを新しい5項目に揃える。展開後のルートから実行する手順であることを明記する。
+- [x] 導入先の解決には `SKILL_CODEX_HOME=${CODEX_HOME:-"$HOME/.codex"}` を使用する。`HOME`、`CODEX_HOME` 自体を代入し直さない。任意の導入先を使う例では `SKILL_CODEX_HOME=/absolute/path/to/codex-home` とする。
+- [x] 選択するスキルの例は `SKILL_NAME=igapyon-mikuku-agent` とする。名前を別のスキルへ変更して繰り返せるようにする。ソースの `skills/$SKILL_NAME/SKILL.md` が存在することを、同期先の作成より先に確認する。
+- [x] INSTALLの主手順を既存Manual Fallbackを元にした `rsync -a --delete --exclude='.DS_Store'` にする。選択した1スキルだけを同期する末尾スラッシュ付きのコピー元・コピー先を示す。不要なインストール済みファイルが削除される更新方式であることを説明する。
+- [x] dry-runは `rsync -nrlci --delete --exclude='.DS_Store'` を使う。macOS rsyncのmtimeのみを表す `.f..T....` 行を既存ヘルパー同様に除外し、残る出力が空なら内容差分なしと説明する。`rsync` の終了コード0だけを「同期済み」の判定にしない。
+- [x] インストール後の `SKILL.md` 存在確認と、Codexホストの再読み込みを記載する。
+- [x] 配布ZIPに存在しなくなる同期ヘルパー、generated-index検査、Mavenビルド用ファイルの実行例をINSTALLから削除する。リポジトリの同期ヘルパー本体は保持する。
+- [x] root `README.md` のRelease archive節を新構成に変更する。リポジトリ上の `mvn clean package` と外部スキルの固定ref取得・index再生成は維持する。配布ZIPにPOMが含まれ、展開物から再packageできるという記述は削除する。
+- [x] root READMEのリポジトリ利用者向けローカル同期・厳選text bundle案内は保持する。
+
+### 5. ZIP確認CLIを追加する
+
+対象：新規 `scripts/check-release-archive.mjs`。npm依存は追加しない。
+
+- [x] CLIはZIPパス1件だけを受け取る。引数0件・2件以上・ファイルなしはusageまたは原因を表示して非ゼロで終了する。シェルのglobが複数の古いZIPに展開された場合も失敗させる。
+- [x] Node標準モジュールと外部 `unzip` で実装する。外部コマンドは `spawnSync` 等へ引数配列で渡し、パスを連結したshell文字列として実行しない。
+- [x] 検証に使うリポジトリ位置を `import.meta.url` から求め、root `pom.xml` を読む。ZIPパスは呼び出し側の作業ディレクトリから解決する。
+- [x] 現POMのproject artifactId/versionと `external.*.repo/ref/skillName` を読み取る。必要項目がない、外部三つ組が不完全、名前が重複する場合はエラーにする。Maven/pluginのversionをproject versionとして採用しない。
+- [x] 内部スキルはroot `skills/` の直下ディレクトリで、その直下に `SKILL.md` があるものだけを列挙する。fixtureなどの入れ子のSKILL.mdを独立スキルとして数えない。
+- [x] `unzip -Z1` でエントリ一覧、`unzip -tqq` で破損を確認する。展開前に、ルートが `<artifactId>-<version>/` だけであること、絶対パスや `..` を含むパスがないことを確認する。
+- [x] ルートには仕様の5項目だけがあることを確認する。README/INSTALL/LICENSE/lockは実ファイルとして必須とする。各パス要素に `.DS_Store`、`node_modules`、`.git` があれば、空ディレクトリだけの場合もエラーにする。
+- [x] `fs.mkdtemp` と `os.tmpdir()` で作った専用一時ディレクトリに展開する。検査後は自分で作った一時ディレクトリだけを `finally` で片付ける。既存のtarget・ユーザー配備先を変更しない。
+- [x] ZIPの `skills/` 直下名が、内部スキル一覧とPOM指定の外部スキル一覧の和集合に完全一致することを確認する。欠落・余分なスキルは名前付きでエラー表示する。
+- [x] `EXTERNAL_SKILLS.lock` はタブ区切りrepo/ref/skillNameの三つ組として読む。POMの外部三つ組と順序に依存せず比較し、欠落・余分・重複・不一致をエラーにする。
+- [x] 各スキルの直下に `SKILL.md` と `index.json` があることを確認する。SKILLのfront matterのnameがディレクトリ名と一致することも確認する。
+- [x] indexの実形式は `{ generator, generation, basePath, files: [...] }` である。JSONをparseし、`files` の各 `path` がスキル内の実ファイルを参照していることを確認する。JSON全体を配列と仮定しない。`files` は全runtimeファイルを列挙するものではないため、未掲載のJAR/MJS/画像をエラーにしない。
+- [x] 成功時はZIP名・内部/外部/合計スキル数を表示し0で終了する。失敗時はどのパス・スキル・lock項目が原因か表示し非ゼロで終了する。
+
+### 6. Release workflowに確認を接続する
+
+対象：`.github/workflows/release-archive.yml`。
+
+- [x] `mvn clean package` の直後、Upload release assetより前に、次のstepを追加する。
+
+```sh
+node scripts/check-release-archive.mjs target/igapyon-agent-skills-*.zip
+```
+
+- [x] アップロード指定の `target/*.zip` を `target/igapyon-agent-skills-*.zip` に限定する。`fail_on_unmatched_files: true` を設定する。
+- [x] 現行のtagイベント、権限、Java設定、Actionの版は変更しない。Node/rsync/unzipが実行環境で利用できるか確認し、不足が実際に判明した場合にだけその依存の準備を追加する。
+- [x] 確認stepが失敗したらアップロードstepへ進まない通常の依存関係を維持する。
+
+### 7. 実装後の検証
+
+実際のHOME/.codex/skillsや外部サービスには書き込まない。検証先は専用一時ディレクトリとする。検証用に変更するZIPは生成された配布ZIPのコピーを使用する。
+
+- [x] `sh -n scripts/prepare-release-staging.sh` と `node --check scripts/check-release-archive.mjs` を実行する。
+- [x] リポジトリルートで次を実行する。外部取得にネットワークが必要でsandbox制限に失敗した場合は、環境の承認手順で同じ必要コマンドを再実行する。外部refを別版に置き換えて回避しない。
+
+```sh
+mvn clean package
+node scripts/check-release-archive.mjs target/igapyon-agent-skills-*.zip
+```
+
+- [x] 調査時点のPOMのままなら、生成ZIPは `target/igapyon-agent-skills-1.20261005.2.zip`、スキルは内部15＋外部10＝25件となる。実装時にユーザーが版・スキルを変更していた場合は、そのPOMとソース一覧を正本にする。
+- [x] 展開したZIPとrelease stagingのファイル内容が一致することを確認する。内部スキルの元ディレクトリ、外部checkout内のスキルとも、指定の除外ファイルと再生成indexを除いた配布対象の内容が欠落・改変されていないことを比較する。内容比較に `diff -qr -x .DS_Store -x node_modules -x .git -x index.json` を使ってよい。
+- [x] daybookの通知workflow、day-plan scripts、SCM runner、外部スキルのruntime・スキル内ライセンスが残っていることを確認する。ルートにビルド用scripts/libがないことと、スキル内部の同名ディレクトリがあることを区別する。
+- [x] ZIP確認CLIの異常検出を、以下の独立したケースで確認する。各ケースの終了コードと原因表示を記録する。
+
+| ケース | 作り方 | 期待結果 |
+| --- | --- | --- |
+| 正常 | 生成したZIPをそのまま渡す | 成功 |
+| 引数誤り | 引数なし、および同じZIPを2引数で渡す | 失敗 |
+| ZIP破損 | 一時ファイルに不正なZIPデータを入れて渡す | 失敗 |
+| 必須文書欠落 | ZIPのコピーから `<root>/INSTALL.md` を削除 | 失敗 |
+| スキル欠落 | ZIPのコピーから外部スキル1件のディレクトリ全体を削除 | 失敗 |
+| 不要ファイル混入 | 展開コピーに `skills/<name>/node_modules/probe.txt` を作り、同じルート名で再ZIP化 | 失敗 |
+| ビルド用ファイル混入 | 展開コピーのルートに `pom.xml` を加え、再ZIP化 | 失敗 |
+| lock不一致 | 展開コピーのlockのrefを1件だけ別値に変更して再ZIP化 | 失敗 |
+| index参照切れ | indexのfilesに存在しないpathを1件追加して再ZIP化 | 失敗 |
+
+- [x] ZIP削除編集には `zip -d`、展開コピーの再ZIP化には `zip -r` を使ってよい。すべて一時領域のコピーに対して行い、targetの配布ZIPと取得済みcheckoutは変更しない。
+- [x] 展開済みZIPだけをコピー元として、INSTALLの導入手順を一時的な導入先へ実行する。リポジトリの同期ヘルパーを代わりに使わない。新規導入後にスキルの内容が一致することを確認する。
+- [x] 同じ一時導入先の選択スキル内に余剰ファイルを作り、再同期で削除されることを確認する。別スキルのマーカーファイルは残り、選択したスキルだけが更新されることも確認する。
+- [x] INSTALLのdry-runについて、同期直後はmtimeのみを除いた出力が空になり、ファイルを意図的に変更すると内容差分が表示されることを確認する。
+- [x] `scripts/build-text-bundle-selection.sh` が参照するstaging内のmiku-text-bundle runtimeが保持されていることを確認する。この変更だけを理由に厳選bundle全体を再生成しない。
+- [x] `git diff --check` と `git status --short` を実行し、変更ファイルと差分を確認する。Mavenが再生成したsource側indexに差分がある場合は理由を確認し、無関係な生成差分を黙って混ぜたりユーザー変更を巻き戻したりしない。
+
+完了結果：`target/igapyon-agent-skills-1.20261005.2.zip` を生成。展開ルート直下は `skills/`、`README.md`、`INSTALL.md`、`LICENSE`、`EXTERNAL_SKILLS.lock` のみ。内部15・外部10の計25スキルを収録した。`mvn clean package`、正常系とCLI異常系（引数・パス、破損、必須ファイル・スキル欠落、禁止物・ビルド用ファイル混入、lock/index不一致、必須READMEのディレクトリ置換）、配布元との内容比較、一時 `CODEX_HOME` へのINSTALL・更新・差分確認を実施した。GitHub Actions自体の実行と独立Luna動作試験は行っていない。
+
+### 8. 完了記録と引き渡し
+
+- [x] 実際に終えた項目だけチェックする。検証未実行・失敗・環境不足は結果を明記し、成功扱いにしない。
+- [x] この節の状態を「実装済み」に更新し、生成ZIP名、ルートの収録項目、スキル数、実行した確認、未解決事項を短く記録する。
+- [x] 変更したファイルと、ZIPがスキル配布物に変わったこと、導入手順がrsyncに変わったことをユーザーに報告する。
+- [x] 成果物はローカルでレビュー可能な状態で渡す。実際の配備、commit/push、タグ・Release操作へは自動で進まない。
+
+## igapyon-miku-daybook 予定開始日・予定終了日への移行（2026-10-05）
+
+状態：このリポジトリのスキル・同梱day-plan生成処理・利用者向け文書への実装を完了。リリース・ローカル配備・対象daybookの実データ移行は未実施。
+
+- 新規taskの期間項目を inclusive な `planned_start_date` / `planned_end_date` に統一し、仮の日付を記録・説明する運用、一覧表示、day-plan表示を更新した。
+- 同梱生成処理は旧 `planned_date` / `due` を読み取り時に対応する新項目へ正規化する。新旧が不一致ならエラーにし、task markdown自体は変更しない。日付形式、日付順、期間途中の表示、日程要確認を扱うよう実装した。
+- 利用者向け手順は `README.md` と `skills/igapyon-miku-daybook/references/task-date-migration.md` に記録した。task全件確認、バックアップ、個別編集、仮日付・週次task・締切情報の扱い、別出力先での確認を案内している。
+- 本作業ではテストを実行していない。対象daybookの記録・スクリプトを移行する場合は、利用者側へ対応版を導入した後、上記ガイドに沿って別工程で実施する。
+- `mvn generate-resources` でindexを再生成し、`git diff --check` と変更差分を確認した。commit、push、リリース、Codex配備、対象daybookの書き換えはこの作業に含めない。
+
+## igapyon-mikuku-agent 記事執筆・グラレコ機能の改善計画（2026-09-21）
+
+状態：実装済み（2026-09-21）。計画後の実装依頼を受け、スキル本文・スクリプト・テンプレート・生成インデックスを更新し、対象スクリプトの回帰テストと `quick_validate.py` を実行した。実画像の内容・キャラクター同一性の目視確認は、画像生成を伴う後続作業として分離している。
+
+目的：`mikuku-articles` の記事執筆、グラレコの生成・再開・検品、記事への画像反映が、同じ入出力と状態定義でつながるようにする。みくくの文体、技術エッセイとリファレンスの使い分け、Note記事の正本管理は維持する。
+
+レビュー記録：`workplace/mikuku-article-review-20260921/report.md`。この記録はGit管理外のため、対応に必要な指摘と完了条件は以下にも記載する。レビュー時の基準コミットは `eb2be827f30dcea111982dd7bdb15f4f1c3f6bbc`。過去の `igapyon-mikuku-agent グラレコ作業ディレクトリ整理` 節は完了履歴として残す。
+
+### 0. 指摘と対応順序
+
+| 順序 | 指摘 | 対応 |
+| --- | --- | --- |
+| 1 | R1：生成側にない `export-images/` と全画像の存在を公開反映が要求する | 通常の生成出力を直接受け取り、モードと反映対象を明確にする |
+| 2 | R2：長いコードフェンス内の見出しを章として抽出する／R8：参考リンクも生成対象になる | Markdown境界とフッター判定を修正する |
+| 3 | R3：再初期化で進行済みTODOを保持できない／R4：検品済み画像の欠落を検証が見逃す | 再開処理と状態別の必要成果物を統一する |
+| 4 | R5：PNGヘッダーだけで生成済みとなり、公開前検品も必須でない | ファイル検証と採用前の内容検品を接続する |
+| 5 | R6：フッター共通画像の扱いが衝突する／R7：記事テンプレートが全章画像を前提にする | 画像リンクを条件付きにし、共通画像を保持する |
+| 6 | 上記すべて | 記事作成から画像反映までの代表ケースを通して確認する |
+
+### 1. 実装開始時の確認と共通方針
+
+- [x] 実装開始時のブランチと差分を確認し、既存変更を保持する。`-done` ブランチでスキルを変更しない。
+- [x] `skill-creator` の指示を確認してからスキルを更新する。対象スキルの `SKILL.md`、README、`references/article-writing.md`、`references/graphic-recording.md`、関連する10〜60番・公開反映手順・テンプレート・スクリプトを現在の内容で確認する。
+- [x] 生成のみの依頼では元記事を変更しない。記事への画像反映は `--apply` を明示した別工程とし、dry-run では元記事を変更しない。
+- [x] 記事本文のみ、代表画像のみ、章画像のみ、代表画像と章画像、選択した章だけの各ケースについて、作成物と完了条件を定義する。画像種別未指定時の既定は代表画像1枚を維持する。
+- [x] 既存の実行ディレクトリとCLIの利用箇所を確認する。全記事の移行、生成基盤の全面刷新、無関係なwriterスキルの変更はこの改善に含めない。
+
+### 2. 生成結果から記事反映への引き渡し（R1）
+
+対象：`references/graphic-recording.md`、`references/graphic-recording/publish-generated-images-to-article.md`、必要な30・40・50・60番の引き渡し記述。
+
+- [x] 公開反映の標準入力を `RUN_OUTPUT_DIR` とする。代表画像は `graphic-recording.png`、章画像は `sections/<NNN>/graphic-recording.png` を基本とし、必須の `export-images/` 集約工程は廃止する。反映時の直接コピーは dry-run/apply ヘルパーに限定する。
+- [x] 代表画像のみでは章画像を要求せず、章画像のみでは代表画像を要求しない。選択章だけの反映でも、対象外の未生成画像を補うための追加生成はしない。
+- [x] 反映前に、対象記事・見出し・採用する実ファイル・コピー先・挿入または置換位置を `article-image-placement-plan.md` に記録する。代表画像の採用記録と章の検品結果を参照し、未検品画像を採用済みとしない。
+- [x] 記事本文や見出しが生成時から変わっている場合は、元の `section-source.md` と現在の記事を照合する。章番号だけで一致とみなさない。
+- [x] 旧 `export-images/` を標準入力として要求せず、現在の直接出力構成を正本とする。過去成果物の自動推測は行わない。
+- [x] 新規一式の画像は代表 `000.png`、本文章 `001.png` 以降の規則を維持する。一部差し替えでは既存の対応とファイル名を尊重し、対象外の画像を一括採番し直さない。
+
+### 3. 章分割と対象判定（R2・R8）
+
+対象：`references/graphic-recording/scripts/split-article-sections.mjs`、40番、グラレコ入口、公開反映手順。
+
+- [x] コードフェンスの開始記号と長さを保持し、同じ記号で開始時以上の長さを持つ正しい閉じフェンスだけで終了する。内部の短いフェンスやコード行を終了とみなさない。
+- [x] コードブロック中の `##` を章として扱わず、実際の章本文を欠落・混入なく切り出す。既存のYAML/TOML front matter除外と `###` 以下を章本文へ含める動作も確認する。
+- [x] `article-writing.md` のフッター定義に画像対象判定を揃える。`参考リンク` を除外し、既存の `参考` 表記も用途に沿って扱う。`生成AI向け情報` はフッターと混同せず、現在の本文後補足としての扱いを維持する。
+- [x] 複数スクリプトで必要となるフッター・状態定義は小さな共通モジュールへまとめ、手順書にも対応する定義を示す。汎用的なワークフロー基盤への拡張は行わない。
+- [x] 本文対象がない場合は、対象0件と明示する。章画像のみの依頼を代表画像生成へ置き換えない。
+
+### 4. 再開・検品状態・再生成（R3・R4）
+
+対象：分割・コピー・検証・プロンプト合成スクリプト、40・50・60番、run-stateテンプレート。
+
+- [x] 初期作成と再開を分ける。再開では既存TODOを読み、同じ章の進行状態・既存画像・作成済みプロンプトを保持して不足ファイルだけを補う。既存内容との不整合は、書き込み前に確認する。
+- [x] 既存章が同一で末尾に章が追加された場合は、完了済み状態を保って新しい章を追加できるようにする。途中への章挿入、並べ替え、既存章本文の変更で対応が崩れる場合は新しい実行ディレクトリを使う。
+- [x] `--force` を進行済みTODOのリセットによる再開手段にしない。通常の再開と上書きを区別し、古い画像へ新しい章本文を結び付けない。
+- [x] 章の進行状態は引き続きTODOを正本とする。`image-pending`、`image-generated`、`image-checked`、再生成推奨、欠落、スキップ、失敗等の状態を手順書・検証で共有する。
+- [x] `image-generated` と `image-checked` の画像欠落・破損はいずれも検証エラーにする。生成待ちの画像未作成は正常な未完了として区別し、完了扱いにしない。
+- [x] 再生成時は `--overwrite` を明示し、検品・反映前に採用版を確認する。生成結果の候補をファイル名順や更新日時だけで推測しない。
+- [x] コピー成功・TODO更新失敗のような部分完了は、保存済み画像とTODO状態を検証して復旧できるようにする。保存済み画像を見落として追加生成しない。
+
+### 5. ファイル検証と採用前の画像検品（R5）
+
+対象：`copy-section-image.mjs`、`restore-generated-image-from-session.mjs`、`validate-run-dir.mjs`、30・50・60番、公開反映手順。
+
+- [x] PNGの8バイトシグネチャ確認だけでは合格にしない。依存追加なしで、PNGチャンク、CRC、IDAT展開、スキャンライン長を検証する小さな共通検証器を同梱した。
+- [x] 0バイト、シグネチャのみ、途中切断、壊れた画像データを拒否する。読み込み・構造検証可能な画像だけをコピーし、成功後に生成済みへ更新する。復元とコピーで同じ検証基準を使う。
+- [x] 速度優先の連続生成を保ち、採用・記事反映の前にまとめて検品する。代表画像と章画像を `image-checked` の採用ゲートへ接続した。
+- [x] 生成済み・検品済み・採用画像の違いを明確にする。生成だけの成果物は未検品として扱い、公開採用には検品結果を要求する。
+- [x] 不採用・再生成の判断は既存の検品レポートと生成回数上限に従い、検品を理由に自動再生成しない。
+
+### 6. 記事テンプレートと既存画像の保持（R6・R7）
+
+対象：`references/article-writing.md`、通常記事・リファレンス記事・共通フッターのテンプレート、公開反映手順。
+
+- [x] 本文の画像リンクを任意の挿入箇所として定義する。本文のみ・代表画像のみ・章画像ありの各場合で、採用済みの実画像がある箇所だけリンクを挿入する。未生成画像の予定は `article-image-placement-plan.md` へ記録する。
+- [x] 本文グラレコの数字連番規則と、共通フッター画像の既存パスを区別する。「補足セクションには画像を入れない」は、新規の本文グラレコ生成・配置を対象とすることを明記する。
+- [x] 関連記事・執筆担当・使用ツールの共通画像、既存の図・写真・外部画像を保持する。画像反映ヘルパーは既存のローカルリンクを再利用し、対象外の画像を検証・削除しない。
+- [x] 未解決placeholder、存在しない画像参照、二重挿入を最終チェックへ含める。記事本文、front matter、URL、文体を画像生成の都合で書き換えない。
+
+### 7. 受入検証と完了条件
+
+対象スキルには専用テスト入口がないため、今回の不具合を確認できるNodeのテストと小さなfixtureを対象スキル配下に追加した。実際の画像生成を自動テストの前提にしていない。
+
+| ケース | 合格条件 |
+| --- | --- |
+| 代表画像のみ／章画像のみ／両方 | 通常の実行出力から対応する画像だけを反映でき、`export-images/` や未依頼画像を要求しない |
+| 3個・4個のバッククォート、チルダ、閉じられていないフェンス | コード内の見出しを抽出せず、章本文の切り出しが正しい |
+| front matter、参考リンク、フッターだけの記事 | メタデータ・フッターを生成対象にしない。対象0件を正しく扱う |
+| 同じ記事で再実行／末尾章の追加 | 完了済みの状態・画像・プロンプトが変わらず、不足分だけを追加する |
+| 章の挿入・順序変更・本文変更 | 古い章画像を別の章や変更後の本文へ黙って流用しない |
+| 検品済み画像の欠落／正常な検品済み画像 | 前者は検証失敗、後者は不要な警告なし |
+| 0バイト・ヘッダーのみ・途中切断・データ破損・正常PNG | 不正画像は生成済みにならず、正常PNGは保存できる |
+| コピー後のTODO更新失敗 | 部分完了と保存済み画像を識別し、再生成せず復旧できる |
+| 再生成・採用版変更 | 旧画像を保持し、検品・反映が採用された実ファイルを参照する |
+| 本文のみ／代表画像だけの記事作成 | 存在しない章画像へのリンクを残さない |
+| 共通フッター画像あり／一部画像差し替え | 対象外の画像・リンク・本文を保持し、二重挿入しない |
+
+- [x] 実装した専用テストを実行し、上記の不具合再現と通常ケースを確認する。テスト用記事・画像は一時ディレクトリ内で扱い、`mikuku-articles` 正本へ書き込まない。
+- [x] SKILL.mdから、記事執筆・代表画像・章画像・検品・反映・再開の参照先を辿れることを確認する。プロンプトの文字列一致テストだけで、エージェントの動作を確認済みとしない。
+- [ ] 実画像の品質確認は、既存または後続依頼で生成した画像を用いる手動確認として分けて記録する。自動テストで日本語描画やキャラクター同一性まで検証済みとしない。
+- [x] スキル変更後はREADMEの規則に従って `mvn generate-resources` でindexを再生成し、対象スキルの生成差分を確認する。無関係な生成差分は混入していない。
+- [x] 最後に `git diff --check`、`git status --short`、対象差分を確認し、完了した項目だけチェックする。commit、push、ローカル配備、バージョン更新、Noteへの投稿は別の依頼範囲として扱う。
+
+## igapyon-miku-scm 指示の明確化計画（Luna向け・2026-09-14）
+
+目的：GPT-5.6 Luna が会話履歴なしで、文面作成・recommit・pushの範囲、コミット対象、結果出力を一意に判断できるようにする。対象は `skills/igapyon-miku-scm/`。実装と自動検証は完了し、Lunaの独立セッション検証だけ未実施。
+
+### 0. 合意済みの仕様
+
+- 正式な利用者向けコマンドを `miku-scm draft recommit push` とする。スキルが選択済みの会話では `draft recommit push` と呼べる。旧 `miku-scm pr recommit push` / `pr recommit push` は同じ動作の互換別名として残す。
+- `draft` はPR用タイトル・本文をテキストファイルに保存すること。その文面でrecommitし、Gitブランチをpushする。GitHub上のPull Requestの作成・mergeは含まない。既存のPR作成URLの案内はPR作成そのものではない。
+- 上記複合コマンドの明示依頼は、下書きの準備、ローカル履歴の書き換え、ブランチのpushを一連の処理として許可する。正常に進んでいる途中で追加承認を挟まない。裸の `recommit` / `pr recommit` にはpushの許可を付与しない。
+- `miku-scm git add commit` の対象は、通常の非ignore変更のすべて。Agentが今回の話題と無関係だと判断した変更も、通常の変更ならstage対象から除外しない。既存の競合・機微パス・`-done`ブランチ等の停止条件は維持する。
+- 機械的ワークフローの最終応答は固定出力だけで完了する。Agentによる前置き、要約、補足、別の完了報告を追加しない。調査済み・変更済み・未完了の情報が必要なら固定出力側で担う。文章を作文するwriting工程とは区別する。
+
+### 1. 実装開始時の確認
+
+- [x] Git状態と、この節に関連する既存TODOを確認し、既存の変更・履歴を保持する。実装対象の `SKILL.md` と必要なreferenceを読む。スキル変更時は利用環境の `skill-creator` の指示も確認する。
+- [x] `rg` で対象スキル内の `pr recommit push`、`human_output`、`Report inspected`、`Preserve unrelated`、stage対象の説明を検索する。既存のmanifest・CLI help・規範reference・テストの対応を把握する。
+- [x] 主な確認先は `SKILL.md`、`scripts/miku-scm-workflow-manifest.mjs`、`scripts/miku-scm-cli-contracts.mjs`、`scripts/miku-scm-human-output.mjs`、`references/github-pr-recommit-push.md`、`references/scm-rules.md`、`references/work-commit.md`、`references/deterministic-workflow-runner.md`。実際の参照関係に沿って関連箇所も確認する。
+
+### 2. コマンド名と承認範囲をそろえる
+
+- [x] `SKILL.md` の発火条件とRuntime Kernelで、新名称を正規の入口、旧名称を互換別名として明記する。両者を既存の内部workflow ID `pr.recommit.push` に振り分ける。内部ID・スクリプト名・artifact schemaの改名は今回不要。
+- [x] manifestのtriggers、CLI help、実行例、現行規範referenceの利用者向け表記を整合させる。旧名称を全削除せず、互換経路を検証可能にする。過去の完了記録は改名しない。
+- [x] 入口に「PR用タイトル・本文をファイルに保存 → その文面でrecommit → ブランチをpush」と書き、GitHub上のPR作成を含まないことを明記する。`公開` / `published` が現れる説明では、ブランチのpushとPR作成を混同させない。既存の機械ステータス値は保持する。
+- [x] 共通承認ルールに、明示されたこの複合コマンドは一連の処理を許可することを記す。他workflowへ無制限に承認を引き継ぐ意味にせず、既存の単体recommit・Issue承認等の境界を保持する。
+- [x] 既存の分岐を維持する：最初にREADONLY preflightを1回実行し、下書き欠落だけなら `writing.pr.prepare` → 作文・保存 → 固定push runnerへ進む。下書きがありblockerなしなら既存の再利用経路を使う。他のblockerでは停止する。backup、digest、lease、失敗時の自動再試行禁止を維持する。
+
+### 3. コミット対象と固定出力を明確にする
+
+- [x] `SKILL.md` の `Preserve unrelated changes` を、既存内容の破棄・巻き戻しを避ける指示として整理する。`work.commit` では通常の非ignore変更すべてを含めることを明記し、Agentによるファイル選別や追加確認を誘発しない。
+- [x] `references/work-commit.md` と実装の固定 `git add --all` が合意済み仕様に一致することを確認する。このルールを、clean worktreeを要求するrecommit/pushや他の操作へ拡張しない。
+- [x] `SKILL.md` の固定出力返却と `Report inspected, changed, and pending work` の関係を一本化する。機械的処理ではrunnerが返した `human_output` をそのまま最終応答に使い、Agentによる追加報告を要求しない。
+- [x] 成功・停止・partial・unresolved・承認待ちの既存固定出力を確認する。必要な実行状況・次の操作が欠落した `draft recommit push` のrendererを修正し、Agentの補足で埋めない。途中のJSON出力利用は維持する。
+
+### 4. 受入検証と完了条件
+
+- [x] 新名称と旧名称が同じ内部workflowへ到達することを確認する。下書き欠落のみの場合と既存下書きがある場合を検証し、いずれもPR作成APIや `gh pr create` を実行しないこと、正常経路で追加承認を挟まないことを確認する。`npm run test:miku-scm:full` の `pr-recommit-push` shardで確認した。
+- [x] 裸の `recommit` / `pr recommit` がpushへ流れず、既存のローカル書き換えの承認境界を維持することを確認する。別のblockerがある場合は下書き作成やmutationへ進まないことも確認する。
+- [x] 一時Git repoで、現在の話題に関係する変更と別の通常変更、追加・削除・未追跡ファイル、ignore対象を用意する。`work.commit` が通常の非ignore変更をすべてstageし、ignore対象を新規追加せず、既存の停止条件を維持することを確認する。既存の `work-commit` test群で確認した。
+- [x] 機械的処理の最終応答が固定出力と一致し、挨拶・言い換え・追記がないことを確認する。既存テストを優先し、単なる指示文の文字列一致だけでモデルの動作を検証済みとしない。
+- [x] `references/runtime-and-test-suites.md` に従い、反復中は `npm run test:miku-scm:fast`、スキル実装変更の引き渡し前には `npm run test:miku-scm:full` を実行する。契約対象を変更した場合は `node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs` で再生成し、同コマンドの `--check` で確認する。index等の生成物は既存の生成手順に従う。
+- [ ] Lunaを利用できる場合は、会話履歴なしの独立セッションで上記の代表経路を検証する。架空のrepo情報とtool応答、または隔離されたfixtureを用い、実GitHubへのpush・PR作成は行わない。実際のモデル識別子、実行環境、入力、呼び出し記録、最終出力、結果を記録する。現環境ではGPT-5.6 Lunaを独立実行する手段がないため未実施。
+- [x] `git diff --check` と関連diffを確認し、この節の実施済み項目だけチェックする。実装・自動テスト・Luna実行検証を分けて結果を記録する。この計画の実施だけを根拠にcommit/pushや配備を行わない。
+
+### 5. 別途検討する既知の論点
+
+- [ ] 既存PR下書きの「matching」がブランチ名・最新ファイルの選択に留まり、現在のbase・HEADとの対応を保証していない点を調査する。下書きと対象コミットを結び付ける案、既存下書きの移行、欠落・不一致時の扱いを別途提案する。今回の名称・指示整理に便乗してartifact契約や下書き再利用動作を変更しない。
+
+## daybook Issue通知を1日1回にする計画（Luna向け・2026-09-15）
+
+目的：GitHub Actionsからdaybookの固定Issueへ投稿し、GitHubの通知メールで知らせる頻度を1日1回にする。`igapyon-miku-daybook`で通知workflowの生成・設定変更を依頼された場合も、この設定を既定として書く。実装とローカル検証は完了した。daybookの既定ブランチへの反映、スキル配備、実運用での再確認は未実施。
+
+### 0. 方針と完了の意味
+
+- 利用者の合意：指定時刻どおりの実行は求めず、1日1回のお知らせでよい。既存の1日3回通知仕様を変更する。この節は下の2026-09-14作成計画にある通知頻度・重複判定の旧仕様に優先する。
+- 実装方針：cronを1本に減らす。時刻は新たな指定がないため、既存の朝枠 `0 21 * * *`（06:00 JST）を維持し、昼・夕方枠を削除する。06:00は起動の目安であり配信期限ではない。3枠を残して日付で抑制する方式は今回採用しない。
+- 通知単位はAsia/Tokyoの対象日。同じ日付へのIssue投稿は最大1件とし、定時実行・再実行・手動の本投稿で共通の重複判定を使う。手動の対象日指定は維持する。メールの到着回数・到着時刻や、毎日必ず起動することまでは保証しない。
+- 日付省略時は実際に処理する時点のJST当日を使う現行仕様を維持する。遅延で日付が変わった場合も当日分を生成し、前日分を自動補送しない。
+
+### 1. 実装開始時に読むもの
+
+- [x] 両repoのREADME・Git状態・適用される作業指示を確認する。daybookは今回の環境では `../daybook/`。実行環境が異なる場合は実際の対象repoを特定する。未コミット変更は保持する。
+- [x] daybook側の `.github/workflows/day-plan-notify.yml`、`scripts/post-day-plan.mjs`と対応テスト、`scripts/generate-day-plan.mjs`、`README.md`を読む。GitHub側の既定ブランチ・workflow・変数を必要に応じて読み取り確認する。前回確認値は既定ブランチ `devel`、通知有効 `true`、Issue番号 `3`。
+- [x] スキル側の `skills/igapyon-miku-daybook/SKILL.md`、`index.json`、`references/notification.md`を読む。スキル実装変更時は `skill-creator` の指示を参照する。
+
+### 2. daybook本体の実装
+
+- [x] workflowのscheduleを `0 21 * * *` の1本にし、コメントとREADMEを「毎日1回、06:00 JST目安」に揃える。通知有効フラグ、Issue番号、最小権限、artifact、手動dry-run、生成物をcommitしない運用を維持する。
+- [x] `post-day-plan.mjs`の投稿済み判定を日付単位へ変更する。新規マーカーは `<!-- daybook-briefing:YYYY-MM-DD -->` とし、同じ対象日の既存Botコメントがあれば投稿をスキップする。
+- [x] 移行互換：旧日付のみマーカー、および旧 `:manual` / `:0 21 * * *` / `:0 3 * * *` / `:0 9 * * *` 付きマーカーを同じ日付の投稿済み記録として認識する。別日付や人間のコメントで誤って抑制しない。既存コメントは削除・編集しない。
+- [x] 実行枠が不要になったworkflowの `DAYBOOK_RUN_SLOT`・`--slot` と投稿側の引数・help・テストを整合させる。CLIの既存利用箇所を検索し、互換のため引数を受け続ける場合も投稿回数には影響させない。既存のconcurrencyと投稿応答不明時の再照会処理を維持する。
+- [x] READMEに日付単位の重複抑制、手動本投稿も同じ制約、dry-runは投稿しないこと、遅延時の日付の扱いを書く。Issue投稿成功とメール受信確認を分ける。
+
+### 3. 実行可能なworkflow・スクリプトをスキルへ同梱する
+
+- 利用者の追加指示：daybook側にある実際のYAMLと生成・投稿スクリプトを配布するスキルへ同梱する。説明や最小YAML例だけでは完了としない。この指示は下の初版計画にある「指示・参照資料を中心にする」範囲を拡張する。
+- [x] 配置先を `skills/igapyon-miku-daybook/assets/daybook/` とし、対象repoへ配置する構造を保持する。`.github/workflows/day-plan-notify.yml`、`scripts/generate-day-plan.mjs`、`scripts/post-day-plan.mjs`、両者がimportする `scripts/day-plan.mjs` を実ファイルとして同梱する。第2節で1日1回へ修正した実装を取り込み、別実装を作文しない。
+- [x] 実行に必要な `package.json` と対応する `package-lock.json` を同梱し、Node.js 24・ES modules・`yaml`依存・`npm ci`が揃うようにする。packageに記載するコマンドの参照先はすべて含める。通知に不要なindex生成コマンド等を残して欠落スクリプトを参照しない。`node_modules`、個人の記録、生成物、認証情報は同梱しない。
+- [x] 同梱元のdaybookのコミットと取り込み時の差分を記録する。通知先の個人名固定など配布に必要な汎用化は明示し、設定可能なメンション先をworkflowと投稿スクリプトで整合させる。daybookで利用中の通知先は維持し、新規配置時には対象repoの通知先を設定する。同梱元の基準コミットは `b994d0b` とし、1日1回化の未コミット差分をdaybookとassetに同期した。
+- [x] 保守手順をreferenceに書く。daybookの実装を更新した際は同梱版との差分を確認して同期し、意図した設定差を除き処理内容とテストを揃える。利用時に元の `../daybook/` やネットワークからスクリプトを取得する前提にしない。
+
+- [x] `references/notification.md`のCurrent design・重複判定・設定例を更新する。通知workflowを生成する依頼では「cronは1日1回、既定は `0 21 * * *`、JST対象日で重複抑制」を採用することを明記する。日付抑制には投稿スクリプト側の実装も必要であり、YAMLだけで完成と扱わない。
+- [x] `SKILL.md`の発火条件と参照導線に、daybook通知workflowの明示的な生成・設定変更依頼を含める。notification referenceに同梱asset一覧と配置手順を書く。生成依頼ではassetを対象repoへコピーして必要な設定を調整する。既存workflow・スクリプト・packageファイルがあれば差分を確認して統合し、既存の依存やnpm scriptsを上書きで失わない。通常の記録管理の依頼で通知workflowを自動生成しない。
+- [x] ユーザーが別の頻度・時刻を明示した場合は最新指示を優先する。既存repoの状況説明だけなら実際のworkflowを読み、既定値で現状を上書きして説明しない。Issue番号や個人アカウントを他repoへ固定コピーしない。
+- [x] スキル内の現行説明に旧3回通知・日付＋実行枠の規範が残っていないことを確認する。必要なindexは既存の生成手順で更新する。
+
+### 4. 受入検証
+
+- [x] daybookの既存テストを更新・実行する。同日で定時→再実行、定時→手動、手動→定時はいずれも追加投稿なし。翌日は新規投稿できることをGitHub APIのモックで確認する。
+- [x] 旧日付のみ・旧manual・旧cronの各マーカーからの移行、別日付・人間コメントの除外、dry-runでAPI書き込みなし、投稿応答不明時の再照会で二重投稿を避ける経路を確認する。
+- [x] workflowのcronが1本でJST換算が06:00になること、README・スキル設定例と一致することを確認する。day-plan抽出範囲とリンク生成の既存テストも通す。
+- [ ] スキルの生成確認は架空repoで行う。「daybookの通知workflowを作って」から1日1回設定と日付単位の投稿抑制が得られること、説明だけの依頼ではファイル更新しないことを確認する。文字列一致の検査だけで動作検証済みとしない。
+- [x] 同梱ファイルだけを空の一時repoへ配置し、架空のtask・scheduleを用意して `npm ci` → day-plan生成 → 投稿スクリプトの `--dry-run` を実行する。元のdaybookへの参照なしで完結し、設定した通知先と有効なリンクを出力することを確認する。投稿の重複抑制は同梱版にもAPIモックのテストを適用する。
+- [ ] 既存package・独自workflowを持つfixtureへの配置でも既存設定を保持することを確認する。配布archiveを生成・展開し、隠しディレクトリ `.github/workflows/`、3つの実装スクリプト、packageとlockが欠落なく含まれること、展開したassetから同じ動作確認ができることを検証する。
+- [x] スキルの `quick_validate.py`、関連生成物の検証、両repoの `git diff --check` を実施する。実施結果をこの節に追記し、完了した項目だけチェックする。skill validation、Mavenによるindex生成、両repoのdiff check、本体8テスト、asset単独8テスト・生成・投稿dry-runが成功した。
+
+### 5. 引き渡し・運用反映
+
+- [x] 変更ファイル、採用cron、日付判定、旧マーカー互換、テスト結果を報告する。ローカル実装完了、スキル配備、既定ブランチへの反映、実Issue投稿、メール受信確認の状態を分けて記録する。
+- [ ] 運用反映の依頼を受けたら、daybookの変更を既定ブランチへ反映し、スキルを所定の手順で配備する。今回の計画記録だけを根拠にcommit/push・merge・workflow dispatch・Issue投稿は行わない。
+- [ ] 反映後は定時実行の履歴とIssueコメントを読み取り確認する。同日の再実行は追加通知を生まないことを確認し、メール受信は利用者側の結果を記録する。定刻に未実行であることだけを実装不良や完了済みの根拠にしない。
+
+## igapyon-miku-daybook 作成計画（Luna向け・2026-09-14）
+
+目的：daybookのtask・schedule・activity・day-planを、自然文の依頼から一貫したルールで管理できるスキルを作る。基本実装は完了し、受入検証・配備・commit/pushを残す。既存の他スキルの作業計画と未コミット変更は保持する。
+
+実装済み：`SKILL.md`、3つのreference、`agents/openai.yaml`、生成`index.json`、READMEのskill一覧を追加した。`quick_validate.py`、`mvn generate-resources`、`git diff --check`は成功。forward test、Codex配備、commit/pushは未実施。
+
+### 0. 作成先と初版の範囲
+
+- [x] 正式名、ディレクトリ名、front matterの`name`を`igapyon-miku-daybook`で統一する。呼び出し用の短縮名は`miku-daybook`。`miku-daybook-skills`は将来独立リポジトリを作る場合の候補名であり、今回はリポジトリを新設しない。
+- [x] 作成先は`skills/igapyon-miku-daybook/`。対象データは姉妹リポジトリ`../daybook/`。実行時はユーザー指定の対象パスを優先し、READMEと記録構成を確認する。ユーザー固有の絶対パスをスキルへ埋め込まない。
+- [x] 初版は指示・参照資料を中心にする。通常のMarkdown編集はAgentが行い、day-planの機械的生成はdaybook側の既存スクリプトを使う。新規CLI、MCPサーバー、Office変換、独立した通知システムは作らない。
+- [x] Issueとtaskの双方向同期は検討段階のまま対象外とする。通常の記録依頼をcommit・push・Issue投稿・メール送信の依頼と扱わない。明示されたGit操作は利用可能なmiku-scmへ引き継ぐ。
+
+### 1. 実装開始時の確認
+
+- [x] このリポジトリのREADME、GOAL、TODO、DECISIONS、HANDOFFとGit状態を読み、今回の作業と既存SCM改善作業を区別する。`-done`ブランチや未コミット変更がある場合、適用される作業ブランチの運用に従い、既存変更を巻き込まない。
+- [x] `../daybook/README.md`を運用ルールの正本として読む。全年月の記録配置を確認し、task・schedule・activity・day-planの代表例を読む。月ごとの一覧だけから全件と判断しない。
+- [x] `../daybook/scripts/day-plan.mjs`、`generate-day-plan.mjs`、`post-day-plan.mjs`と対応テスト、package.json、`.github/workflows/day-plan-notify.yml`を確認する。現在の機能と未実装機能を区別する。
+- [x] スキル作成環境の`skill-creator`を参照する。既存の`igapyon-diary-writer`は別リポジトリの公開日記用なので、名前と発火条件を混同しない。
+
+### 2. 成果物を作る
+
+- [ ] `SKILL.md`：目的、対象repoの決定、発火条件、操作の振り分け、正本の優先順、編集後の確認を短く記載する。descriptionでは正式名・短縮名による依頼、および対象がdaybookと明確な記録管理を扱う。一般的なTODO相談や別のdiary管理を無条件で引き受けない。スキル自体の命名相談・説明・作成は管理操作と区別する。
+- [ ] `references/records.md`：配置、命名、採番、front matter、状態、日付解釈、リンク更新、4種類の最小記録例を書く。例は架空のものにし、実在の領収書・口座・メール本文などをコピーしない。
+- [ ] `references/operations.md`：task追加・更新・一覧、scheduleの追加・訂正、activityの追記、day-plan生成の手順と完了判定を書く。以下の仕様と受入ケースを反映する。
+- [ ] `references/notification.md`：既存ActionsとIssue通知の仕組み、設定箇所、実行履歴→投稿結果→メール受信の切り分けを書く。通知相談時だけ読む参照先とし、毎回読み込ませない。
+- [ ] `SKILL.md`から各referenceを読む条件を明記する。daybook READMEと説明が食い違う場合はユーザーの最新指示を優先し、現行README・実装を確認して差異を報告する。個人のタスク本文や変更されやすい設定値をスキルの固定仕様として持たない。
+- [ ] UI metadataを作る場合はskill-creatorの`references/openai_yaml.md`を読んで整合させる。単に既存スキルが明示呼び出し中心だからという理由で、非表示につながるdiscovery設定を追加しない。
+
+### 3. 記録の配置・データ契約
+
+- [ ] `YYYY/YYYYMM/activities/activity-YYYYMMDD.md`は活動日ごとに1ファイル。`schedules/schedule-YYYYMMDD-name.md`は予定1件につき1ファイル。`tasks/task-YYYYMM-NNNNN-name.md`はタスク1件につき1ファイル。`day-plan/day-plan-YYYYMMDD.md`は対象日のスナップショット。
+- [ ] taskは作成月に置き続け、scheduleは開催月、activityは活動月、day-planは対象月に置く。9月作成の10月期限taskを10月へ移動しない。予定の開催月変更ではファイル移動と参照元リンク修正を行う。
+- [ ] taskのIDは`task-YYYYMM-NNNNN`。月内5桁連番を既存ファイルとGit履歴の使用済み最大値から採番する。削除・欠番の再利用、既存IDの詰め直しをしない。履歴が不足して最大値を確定できなければ、その不足を明示する。
+- [ ] task必須項目は`type/id/status/created`。任意項目は`planned_date/planned_action/planned_week/due/due_month/completed`。activityは`type/date`、scheduleは`type/date`と必要な`start/end/doors`、day-planは`type/date/generated`を使う。日付は`YYYY-MM-DD`、時刻は引用符付き文字列。
+- [ ] `todo/in_progress/done/cancelled`と本文の状態チェック欄を一致させる。元ネタ作成、送付、資料完成などの部分進捗を区別し、報告された工程だけをチェックする。完了日はユーザーの報告と対象日に基づく。
+- [ ] 今日・明日はAsia/Tokyoで解釈し、対象日を出力する。年の省略は会話の対象年に基づく。月しかない期限は`due_month`に保存し、勝手に月末へ変換しない。EODや午前中などの指定は本文にも残し、時刻を推測しない。
+
+### 4. 操作ごとの手順
+
+- [ ] task追加：「TODO追加」であっても具体的な作業なら個別taskへ登録する。アイデア段階の検討はTODOへ置く。既存の同じ作業を確認してから新規採番し、ユーザーがまとめると指定した内訳は1件のチェックリストにする。
+- [ ] task更新：IDで対象を特定し、状態・着手日・期限・本文の該当箇所を整合させる。短いIDが複数月で一致する場合は月やタイトルで特定する。作成日とIDを変更しない。
+- [ ] task一覧：列を`ID / Status / Start / Due / Title`にする。Startは`planned_date`、Dueは`due`、なければ`due_month`、未設定は`—`。原則全年月から未完了を表示し、完了を含む指定にも対応する。複数月の場合は完全なIDを表示する。7日間制限は通常のタスク一覧へ適用しない。
+- [ ] schedule追加・変更：開催日、時刻、会場、参加状況、元資料へのリンクを記録する。同日でも別イベントは別ファイル。参加取消し・別公演への変更では関連準備taskとリンクを確認し、購入済みと申込済みを混同しない。
+- [ ] activity追記：その日の既存ファイルに実施事実を追記する。一つの出来事の場所・楽器・内容を一つの項目にまとめる。タスク作業の記録依頼ならIDまたは相対リンクを付ける。task完了を推測しない。
+- [ ] 入力メールやイベント資料：必要な要点と元URLを記録し、原文と要約を区別する。貼り付け済み内容で足りる記録では外部アクセスを前提にしない。URLだけの依頼で内容を取得できない場合は、不明項目を創作しない。
+- [ ] 編集後：YAML、IDとファイル名、日付、チェック欄、相対リンク、Git差分を確認する。変更したファイルと要点を短く伝える。一覧の依頼だけでデータ修正しない。
+
+### 5. day-planと通知の扱い
+
+- [ ] 対象日から+6日までの7日間を扱う。未完了taskの当日`planned_date`を今日の実施項目、範囲内`due`を近い期限、未来の`planned_date`を近々の実施予定、範囲内scheduleを近々の予定、期間が重なる`planned_week`を実施予定週として表示する。
+- [ ] 完了・中止、期限超過だけのtask、期限未定だけのtask、対象日+7日以降だけの情報は現行day-planには含めない。月期限を日付期限に補完しない。この抽出は生成AIなしで動くことを説明する。
+- [ ] repoルートで`node scripts/generate-day-plan.mjs --date YYYY-MM-DD --output-root workplace/generated`を利用する。手書きday-planを自動で上書きせず、ユーザーが正式配置への作成を依頼した場合だけ配置・リンクを確認する。生成物よりtask/scheduleを正本とする。
+- [ ] Actionsは現在JST 06:00/12:00/18:00、UTC cronは`0 21 * * *`、`0 3 * * *`、`0 9 * * *`。READMEとworkflowから実行時に再確認する。既定ブランチへの反映が必要で、実行・配送の定刻保証はしない。
+- [ ] 通知設定はRepository variablesの`DAYBOOK_ISSUE_NUMBER`と`DAYBOOK_NOTIFY_ENABLED`。現行Issue #3やメンション先を他repoへ決め打ちしない。コメントの重複判定は日付＋実行枠、手動はmanual。生成成功、Issue投稿成功、メール受信成功を分けて報告する。
+
+### 6. 既知の差異を実装判断に反映する
+
+- [ ] task 00014の`planned_date: 2026-09-30`は実装完了目標として登録されており、READMEのStart＝着手日と意味がずれる。初版ではこの登録例を一般化しない。実装完了目標と最終移行期限は本文で区別し、既存データの修正・マイルストーン項目追加は別の変更として扱う。
+- [ ] task 00003は依頼に「9/15 EOD」があるが現行front matterは日付のみ。新しい記録では本文にEODを保存する。既存データの修正はスキル作成に便乗して実行しない。
+- [ ] `loadRecords`はrepo全体を再帰探索しており、検証用のtasks/schedulesがworkplace等にあると拾う可能性がある。正式な記録範囲を確認し、受入fixtureはdaybookの外に作る。探索範囲のコード修正が必要ならdaybook側の別タスクとして記録する。
+
+### 7. 受入検証
+
+- [ ] 仮データの一時Gitリポジトリを作り、読み取り用の正本と編集結果を比較する。実タスク、実Issue、実メールを検証で変更しない。
+- [ ] 9月に10/31期限taskを追加→9月tasksへ保存。10月scheduleを追加→10月schedulesへ保存。削除済み00002と現存00003を含む履歴→00004以降へ採番。月間重複IDでは対象を誤更新しない。
+- [ ] 「9/14着手、9/18期限」→StartとDueを分離。「9/15 EOD」→日付と本文修飾を保持。「10月まで」→月期限として扱う。実装目標と移行期限を着手日に混ぜない。
+- [ ] 「ドラフト送付済み」→部分進捗のみ更新。「今日のactivityにも」→当日に追記。「午後、会場で合奏、バイオリン」→一つの活動項目。「一覧」→5列、未設定`—`、月跨ぎ表示、ファイル変更なし。
+- [ ] day-planは対象日と+6日を含み、+7日と完了・中止を除外。月末・年末の範囲、予定週の重なり、相対リンク、既存の手書きday-plan保持を確認する。既存テストを使える部分は再利用し、スキルの文言一致だけのテストを量産しない。
+- [ ] 「このスキル名は妥当？」、公開diaryの執筆、単なる一般TODO相談でdaybookの変更を始めないことを確認する。スキル単体の記録操作とSCM・外部通知の依頼を区別できることを確認する。
+- [ ] `skill-creator`の`quick_validate.py`でスキルを検証する。全referenceの導線、未置換テンプレート、個人情報混入、絶対パスの固定、未実装機能の断定がないことを確認する。
+
+### 8. 登録と完了条件
+
+- [ ] このrepoのREADMEのスキル一覧に名前・用途を追記する。indexが必要な箇所は既存の`miku-indexgen`手順で生成し、手書きしない。関係のないスキルや外部skill lockを更新しない。
+- [ ] `git diff --check`と受入検証の結果をこの節に残し、実施済みだけチェックする。スキル作成完了とCodexへの配備、commit/push、通知実機確認は別々に報告する。
+- [ ] 配備を依頼された場合は`sh scripts/sync-codex-skill.sh igapyon-miku-daybook`と`--check`を使う。配備先への書き込み権限と既存差分を確認する。
+- [ ] 完了条件：Lunaが会話履歴なしでSKILL.mdから必要なreferenceを選べ、追加・期限更新・部分進捗・活動記録・5列一覧・7日間day-plan生成を正しく実行できる。仕様上の差異と未実装事項を完成済みとして扱わない。
+
+
 - [ ] 必要性が明確になったら writer skill を追加する
 - [ ] skill 配布先が必要になったら mirror 方針を決める
 - [ ] UI metadata が必要になったら skill 用の `agents/openai.yaml` を検討する
@@ -138,6 +956,956 @@ Update this section while working. Do not rewrite unrelated TODO items.
 
 ### Tasks
 
+- [ ] miku-scm Windows 11 publication 対応
+  - [詳細実装計画](WINDOWS11-PUSH-PLAN.md) の W00 → W09 を順番に処理する。
+  - 2026-09-12: 共通 runner、path containment、publication/recommit の `win32` 経路を実装済み。
+    native Windows 11 smoke と hosted CI 実行結果は未取得。進捗と検証結果の正本は上記計画。
+
+- [x] [Completed: igapyon-github-writer 固定Runner改善]
+  `igapyon-miku-scm`の最新固定Runnerから、安全性、PR対象解決、大差分耐性、
+  AI Agent関与削減、承認handoff、CLI自己記述性、性能計測を取り込む。以下の
+  Step 0からStep 8までを順番に実行し、各Stepのfocused test成功後に次へ進む。
+
+  - 作業境界:
+    - `igapyon-github-writer`の既存境界を維持し、`gh`、network access、remote
+      mutation、push、PR作成、tag、Release、Issue操作を追加しない。
+    - このTODOの記録と実装は、ユーザーの明示指示なしに`git commit`、`git push`、
+      `~/.codex/skills`への同期を許可しない。
+    - 既存の未コミット差分を保持する。対象外fileをrestore、reset、削除、formatしない。
+    - 未実装の将来挙動を現在のnormative referenceへ先行記載しない。各StepでRunner、
+      manifest、normative reference、contract testを一つのversioned bundleとして更新する。
+    - 生成物`skills/igapyon-github-writer/scripts/github-writer-workflow-contract-lock.mjs`と
+      `skills/igapyon-github-writer/references/workflow-contracts.md`は手編集しない。
+    - Mechanical workflowのGit command列、結果分類、次操作判断をAI Agentへ戻さない。
+      Writing workflowだけがbounded evidenceから一度の文章生成を許可する。
+
+  - 2026-08-12の確認済み基準:
+    - branchは`devel-tiga0812pfi`で`origin/devel`を追跡している。
+    - `npm run test:github-writer`は16件成功、workflow contract drift checkは9件成功、
+      Skill validationと`git diff --check`は成功している。
+    - `references/deterministic-runner.md`には、manifest、Runner、normative MD、
+      contract test、generated lock、run recordsを一つのbundleとして扱う共通契約を
+      追加済みで、`index.json`はそのsize変更を反映している。両変更は未コミットである。
+    - 対象外の既存変更として`pom.xml`、`skills/igapyon-miku-scm/scripts/miku-scm-run.mjs`、
+      `skills/igapyon-mikuku-agent/references/VERSION.md`がある。これらを変更しない。
+    - github-writerのworkflow contractは9件で、shared runtime sources、normative spec、
+      contract testのSHA-256をpairへ含む。このmiku-scmより強い契約を維持する。
+
+  - [x] [Step 0 / P0: baselineと差分境界を固定] 実装開始前の再現可能な基準を保存する。
+    - `git status -sb`、`git diff --stat`、github-writer対象diffを確認し、対象外差分を記録する。
+    - 次を実行し、失敗があれば新規実装へ進まず、このStepへ失敗test名と原因を追記する。
+      1. `npm run test:github-writer`
+      2. `node skills/igapyon-github-writer/scripts/github-writer-workflow-contracts.mjs --check`
+      3. `python3 /Users/igapyon/.codex/skills/.system/skill-creator/scripts/quick_validate.py
+         skills/igapyon-github-writer`
+    - 現行Runnerのworkflow listと各workflow helpをJSONで保存せずに検査し、workflow ID、
+      required flags、mutation level、approval gate、network境界の基準をtestへ固定する。
+    - 完了条件: branch、変更file、9 workflow、test件数、contract状態をこの項目だけから
+      再現できる。
+    - 2026-08-12: `devel-tiga0812pfi`で、対象外の既存変更（`pom.xml`、miku-scm runner、
+      mikuku VERSION）を保持したまま開始した。開始時はgithub-writer 9 workflow／16 testで
+      contract driftなし。実装後は12 workflow／32 testとなり、baselineとの差はこの項目と
+      各Stepの完了記録から追跡できる。
+
+  - [x] [Step 1 / P0: recommitのbackup完全性と`-done`凍結]
+    soft resetより前の最後の安全境界をRunner内で保証する。
+    - 変更対象:
+      - `skills/igapyon-github-writer/scripts/github-writer-operations.mjs`
+      - `skills/igapyon-github-writer/references/pr-soft-reset-recommit.md`
+      - `skills/igapyon-github-writer/tests/github-writer-operation.test.mjs`
+      - workflow contract生成物
+    - preflightとapply再検証の両方で、空branch、detached HEAD、末尾`-done` branchを拒否する。
+      `-done` branchではplan、backup、reset、commitを作成しない。
+    - `git branch <backup> HEAD`成功直後に
+      `git rev-parse --verify refs/heads/<backup>^{commit}`を実行し、結果がreviewed
+      pre-reset HEADと完全一致することを確認する。一致前に`git reset --soft`を呼ばない。
+    - backup commandを呼んだ後の検証失敗は自動retryしない。attempt recordをnon-retryableで
+      残し、HEAD、index、worktreeを変更せず、mutation stateを推測でsafeにしない。
+    - 必須test:
+      - backup branchが旧HEADを指す正常case。
+      - injected Git runnerがbackupを別commitへ解決するcaseで、resetとcommitが0回、HEAD不変。
+      - `-done` branchのpreflight/applyがplanまたはmutation前に停止するcase。
+      - backup名競合とbackup command failureで既存のnon-retry契約が維持されるcase。
+    - 完了条件: `node --test skills/igapyon-github-writer/tests/github-writer-operation.test.mjs`
+      が成功し、backup実体の検証なしにresetへ到達する経路が存在しない。
+    - 2026-08-12: backup作成後に`refs/heads/<backup>^{commit}`を検証し、reviewed HEADと
+      不一致ならreset前に停止するよう実装した。preflight／apply両方で`-done` branchを
+      拒否し、backup mismatch、apply時凍結、正常recommitのfocused testを確認した。
+
+  - [x] [Step 2 / P0: PR既定対象を完全なbranch範囲へ変更]
+    PR本文が最新1commitだけを誤って説明する品質劣化を防ぐ。
+    - 変更対象:
+      - `skills/igapyon-github-writer/scripts/github-writer-evidence.mjs`
+      - `skills/igapyon-github-writer/SKILL.md`
+      - `skills/igapyon-github-writer/references/pr-writing.md`
+      - `skills/igapyon-github-writer/tests/github-writer-evidence.test.mjs`
+      - manifest、help、workflow contract生成物
+    - explicit commitまたはrangeは現在どおり最優先し、一切拡張しない。
+    - `pr.evidence`で`--target`省略時は、現在branchとHEADを一度取得し、baseを次の順に
+      local Gitだけで解決する。
+      1. 現在feature branch自身のremote counterpartではないdistinct upstream。
+      2. local `origin/HEAD`。
+      3. local `origin/devel`。
+    - baseがHEADのancestorであることを確認し、`<base-commit>..HEAD`のcommit数を数える。
+      - 0件: PR対象なしとしてsafe stop。
+      - 1件: 現在どおりsingle-commit evidence。
+      - 2件以上: log、diff、changed filesを完全な`<base-commit>..HEAD`から取得し、
+        `recommit_recommended: true`を返す。
+      - base未解決: 現行互換としてlatest single commitへfallbackし、
+        `resolution: default-latest-single-commit-base-unresolved`を明示する。
+    - evidenceへ`base`、`base_source`、`base_commit`、`ahead_commit_count`、
+      `resolved_log_target`、`resolved_diff_target`を含め、SHA-256算出対象にする。
+    - 必須test: explicit single/range、base未解決fallback、1commit ahead、2commit ahead、
+      base非ancestor、0commit、feature counterpart upstream除外をtemp repositoryで確認する。
+    - 完了条件: target省略時に複数commitのPR内容が欠落せず、明示targetの意味が変わらない。
+    - 2026-08-12: target省略時にdistinct upstream、`origin/HEAD`、`origin/devel`をlocal
+      Gitだけで順に解決し、1 commitはsingle、2 commits以上はbase-to-HEAD rangeにした。
+      fallback、matching upstream除外、0件、非ancestor、explicit single/rangeをfixtureで確認した。
+
+  - [x] [Step 3 / P0: 大差分、textconv、bounded診断]
+    Git出力の大きさやrepository固有rendererで固定Runnerが停止しないようにする。
+    - 変更対象:
+      - `skills/igapyon-github-writer/scripts/github-writer-core.mjs`
+      - `skills/igapyon-github-writer/scripts/github-writer-evidence.mjs`
+      - `skills/igapyon-github-writer/references/github-writing-rules.md`
+      - `skills/igapyon-github-writer/references/deterministic-runner.md`
+      - evidence/platform/policy testsとworkflow contract生成物
+    - evidence用のすべての`git diff`へ`--no-ext-diff --no-textconv --no-renames`を固定し、
+      repository-local external diffとtextconvを実行しない。引数順もcontract testで固定する。
+    - `spawnSync`のGit capture上限を暫定的に64 MiBへ統一する。patch本文は従来どおり
+      120,000文字で切り詰め、structured resultへ全diffを載せない。
+    - Git失敗messageへraw stdoutを連結しない。exit code、signal、spawn error code、
+      stdout byte数、stdout SHA-256、bounded stderrだけを返す。secret候補とfile内容を出さない。
+    - changed filesとdiff statにも明示上限と`*_truncated` fieldを設け、result bytesが
+      repository sizeへ無制限に比例しないようにする。
+    - 必須test:
+      - `.gitattributes`のtextconvが失敗するfixtureでも内部diffだけでevidenceが成功する。
+      - 24 MiBを超える実Git patchでRunnerがbuffer failureにならず、patchが120,000文字以下、
+        `patch_truncated: true`となる。
+      - 大きなstdoutを伴うGit failureでraw本文がresultへ現れず、診断sizeがboundedとなる。
+      - macOSとWindowsで同じLF正規化、digest、truncation contractとなる。
+    - 完了条件: 大差分をAI Agentへ返さず、固定Runner内で安全に要約可能なevidenceへ変換する。
+    - 2026-08-12: Git captureを64 MiBへ統一し、evidenceの全diffを
+      `--no-ext-diff --no-textconv --no-renames`で固定した。25 MiB実diff、失敗するtextconv、
+      bounded failure diagnostic、patch/file-list/stat truncationをfocused testで確認した。
+
+  - [x] [Step 4 / P1: thin prompt routerと固定human output]
+    Mechanical workflowの前後でAI Agentが読む・考える量を削減する。
+    - 変更対象:
+      - `skills/igapyon-github-writer/SKILL.md`
+      - workflow manifest、help、evidence、output modules
+      - `references/deterministic-runner.md`、`references/runtime-and-observability.md`
+      - CLI、evidence、human-output testsとworkflow contract生成物
+    - manifestへ`runtime_references`と`design_references`を分離して追加する。通常の
+      Mechanical workflowは`runtime_references: []`とし、Agentが詳細MDを毎回読まない。
+    - writing evidenceは、language、audience、output shape、source rule、unsupported claims、
+      generation passesを含むversioned `writing_contract`を返す。Agentはこのcontractと
+      bounded evidenceだけから一度作文する。
+    - Mechanical workflowでは構造化fieldを次の固定workflowへ渡す必要がない限り
+      `--format human`を使い、Runnerの`human_output`を逐語的に返す。Agentは要約、補完、
+      次操作の推測を行わない。
+    - `human_output_schema_version`を追加し、success、ready-for-approval、not-applied、
+      conflict、partial、unresolvedを固定英語で区別する。入力由来の日本語は翻訳しない。
+    - snapshot testで各workflow classのhuman outputを完全一致検証する。不足表示は
+      Agent補完ではなくRunnerとsnapshotを修正する。
+    - 必須test: normal mechanical pathのruntime reference file数が`SKILL.md`だけとなり、
+      writingはexpected model pass 1、mechanicalはrunner後0を宣言する。
+    - 完了条件: 通常のbranch status、backup結果、recommit結果をAgentの再要約なしで報告できる。
+    - 2026-08-12: `SKILL.md`をfixed runner優先の薄いrouterへ縮め、manifestの
+      `runtime_references: []`とdesign referencesを分離した。human output schemaと
+      success/ready-for-approval/not-applied/conflict/unresolvedのsnapshot testを追加した。
+
+  - [x] [Step 5 / P1: local approval handoff]
+    承認後にAgentがplan path、digest、apply引数を再構成しないようにする。
+    - 変更対象:
+      - 新規のfocused handoff moduleとtest（`scripts/`と`tests/`配下）
+      - `github-writer-run.mjs`、manifest、help、output、observability
+      - `SKILL.md`、`references/deterministic-runner.md`、backup/recommit references
+      - workflow contract生成物
+    - `backup.preflight`と`pr.recommit.preflight`の成功時に、apply workflow、plan path、
+      plan SHA-256、repository identity、contract pair、created time、`pending` stateを持つ
+      immutable handoffを`workplace/github-writer/handoffs/`へatomic保存する。
+    - 固定workflow IDを`approval.handoff.list`、`approval.handoff.apply`、
+      `approval.handoff.dismiss`とする。remote workflowとbatch applyは追加しない。
+    - exact `igapyon-github-writer approve`はpendingがちょうど1件の場合だけ適用する。
+      exact `approve <handoff-id>`と`dismiss <handoff-id>`は完全なIDだけを受け付ける。
+      AgentはIDを推測、短縮、自動選択しない。
+    - applyはhandoff内の固定argument vectorを復元し、semantic inputとcontract pairを変更しない。
+      attempt開始前にpendingから`applying`へ一度だけ遷移し、成功、not-applied、conflict、
+      unresolvedを保存する。unresolvedを自動retryしない。
+    - 必須test: pending 0/1/複数、exact ID、unknown/abbreviated ID、dismiss、contract drift、
+      plan digest drift、apply success、mutation後failure、二重apply拒否を確認する。
+    - 完了条件: 人間承認後のAgent tool callがhandoff apply一回だけで、plan引数再構成がない。
+    - 2026-08-12: `approval.handoff.list`／`apply`／`dismiss`を追加した。preflightから
+      exact plan identityとapply contractをsealed handoffへ保存し、0/1/複数pending、full ID、
+      dismiss、contract／plan digest drift、double apply、unignored operational outputを確認した。
+
+  - [x] [Step 6 / P1: CLI、manifest、状態分類を自己記述化]
+    CLI contractとRunner実装の二重定義を減らす。
+    - manifest option schemaへrequired、conditional required、choices、repeatability、
+      min/max occurrences、default、network access、operational artifactsを記録する。
+      generic parserはこのschemaでsyntaxを検証し、workflow固有の意味検証だけをdelegateへ残す。
+    - `operational` mutation levelをhelpのsafety vocabularyへ正式追加し、domain mutationなしで
+      plan/draft/run recordを書く状態として定義する。readonly/local/remoteとの違いを固定する。
+    - `--version`をmetadata-only pathとして追加する。root `pom.xml`をsource時の権威とし、
+      installed Skill用にRunnerへ同じversionを埋め込み、alignment testでdriftを拒否する。
+    - unknown workflow、invalid format、unknown option、missing/duplicate optionへstable CLI error
+      schema、error code、bad argument、bounded suggestions、exact help commandを返す。
+    - help/list/version/parse failureはdelegate、Git、network、run artifact writeを行わない。
+    - `contract_sources`へhelpと新しいshared runtime moduleを漏れなく追加し、CLI contract変更で
+      old apply planがfail closedとなることをtestする。
+    - 完了条件: manifestから全workflow helpを機械生成でき、parser/help/manifest drift testが通る。
+    - 2026-08-12: manifest option schemaからgeneric parserとhelpを生成し、`--version`、stable
+      parse error code、choices、required/repeatable検証、metadata-only contractを実装した。
+      root `pom.xml`とのversion alignment testも追加した。
+
+  - [x] [Step 7 / P1: 性能とAI関与の回帰計測]
+    固定Runner化の効果を時間だけでなくcontextとAgent境界でも計測する。
+    - `github-writer-benchmark.mjs`を、remote-free temp fixtureを使う次の3 scenarioへ拡張する。
+      - mechanical: `branch.status`
+      - writing: `pr.evidence`
+      - approval: `pr.recommit.preflight`
+    - 各scenarioでcold processとwarm same-processのp50/p95/min/max、samples、failure rate、
+      structured result bytes、human output bytes、runtime reference file数/bytes、
+      expected Agent tool calls、expected model invocations after runnerを出力する。
+    - writingだけmodel pass 1、mechanical/approvalはrunner後0とする。token実測値が無い環境では
+      推定せず`null`を返す。
+    - `--iterations`、`--warmup`、optional `--max-warm-p50-ms`、`--save`を固定optionとして追加し、
+      saved artifactは`workplace/github-writer/benchmarks/`へatomic保存する。
+    - macOS/Windows CIでは各platform自身のbaselineとして記録し、共通absolute thresholdを
+      強制しない。fixtureはGitHubへ接続せず、remote mutationを実行しない。
+    - 完了条件: context削減とrunner後AI関与数をStep 0 baselineと同じdimensionで比較できる。
+    - 2026-08-12: isolated local fixture上のmechanical/writing/approval benchmarkを実装した。
+      cold/warm p50/p95/min/max、failure rate、result/human bytes、runtime reference、null token
+      metric、expected Agent/model callsをJSONで出し、optional warm-p50 gateとatomic保存に対応した。
+
+  - [x] [Step 8 / P0: bundle整合、全体検証、配備判断]
+    全Step完了後に一度だけ最終同期を行う。
+    - `SKILL.md`は薄いrouterに限定し、詳細を既存の
+      `deterministic-runner.md`、`pr-writing.md`、`pr-soft-reset-recommit.md`、
+      `github-writing-rules.md`、`runtime-and-observability.md`へ責任別に配置する。
+      新規MDは既存文書と責任が重複しない場合だけ追加する。
+    - 各workflowについてmanifest、Runner/shared sources、first normative reference、
+      contract test、generated lock/table、result envelope/run recordsが一致することを確認する。
+    - 次を記載順に実行し、一つでも失敗したら配備へ進まない。
+      1. 各Stepのfocused tests。
+      2. `npm run test:github-writer`。
+      3. `node skills/igapyon-github-writer/scripts/github-writer-workflow-contracts.mjs`。
+      4. `node skills/igapyon-github-writer/scripts/github-writer-workflow-contracts.mjs --check`。
+      5. `mvn generate-resources`またはgithub-writerの`index.json`だけをrefreshする。
+      6. `python3 /Users/igapyon/.codex/skills/.system/skill-creator/scripts/quick_validate.py
+         skills/igapyon-github-writer`。
+      7. `git diff --check`、`git status -sb`、対象fileの`git diff`。
+      8. GitHub ActionsのmacOS/Windows matrix。
+    - hosted CI未実施はローカル成功と区別して未完了のまま残す。
+    - source検証後も、ユーザーの明示指示なしに`~/.codex/skills`へ同期しない。
+      同期指示があった場合だけ`sh scripts/sync-codex-skill.sh igapyon-github-writer`と
+      `--check`を実行する。
+    - 最終報告へbranch、変更file、focused/full test件数、contract数、Skill validation、
+      macOS/Windows CI、同期、commit/pushの有無、残余リスクを記載する。
+    - 完了条件: 既存のno-`gh`/no-network/no-remote境界を維持し、安全性とPR品質を上げ、
+      Mechanical workflowの通常経路を一回の固定Runner呼出しと逐語human outputへ縮める。
+    - 2026-08-12: workflow contractを12件へ再生成し、`npm run test:github-writer`（32 pass）、
+      contract drift check、`mvn generate-resources`、Skill validation、`git diff --check`を成功
+      させた。sourceの`index.json`は更新済み。hosted macOS/Windows CI、commit、push、
+      `~/.codex/skills`同期はユーザー指示がないため未実施であり、実装の未完了ではない。
+
+- [ ] [Current priority: miku-scm `work.commit` staged diff failure]
+  stage済みの正当な変更を固定runnerがcommit前に`partial`として停止し、巨大な
+  `git diff --cached` stdoutを結果へ含める不具合を再現して修正する。以下のStep 0から
+  Step 4までを順番に実行し、focused testが成功してから次へ進む。
+  - 作業境界:
+    - この項目の記録だけでは`git commit`、`git push`、Skill配備先への同期、失敗した
+      target repositoryでのcommit再実行を許可しない。
+    - `git diff`の終了コード1を全Git commandで正常扱いしない。Git公式仕様上、差分を
+      1で表すのは`--exit-code`または`--quiet`を指定した場合である。
+    - 現行のstaged path一覧とstaged content fingerprintのcheck前後比較、および
+      checkがworktreeを変更した場合の停止規則を維持する。
+    - 既存の未コミット差分と対象外fileを保持し、自動unstage、restore、retryを行わない。
+  - 2026-08-11の確認済み状態:
+    - sourceとinstalled Skillの`work-commit.mjs`は一致している。
+    - source repositoryは`devel-tiga0811abi`、`origin/devel`との差分なし、worktree clean。
+    - staged fingerprint取得は`git diff --cached --binary --full-index --no-ext-diff`を
+      check前後に実行するが、`--no-textconv`を指定していない。
+    - 提供された失敗記録ではstage後に停止し、HEADは不変、変更はstage済み、
+      `git diff --cached --check`は成功していた。runner出力には大量のdiff本文が混入した。
+    - Git公式仕様では`git diff`はtextconvを既定で有効にするため、repository固有の
+      textconv driverが第一候補である。ただし再現test成功前は確定原因としない。
+
+  - [x] [Step 0 / P0: 再現を固定] 現行runnerの失敗条件をtestで再現する。
+    - 変更対象: `skills/igapyon-miku-scm/tests/work-commit.test.mjs`。
+    - temp Git repositoryへ、事前stage済みのmodified、added、renamed、binary pathを用意する。
+    - repository-local `.gitattributes`とdiff/textconv fixture、または同等の決定的な
+      injected Git runnerを使い、`--no-textconv`が無いstaged fingerprint取得だけが
+      diff本文をstdoutへ出して非0終了する条件を作る。
+    - 修正前は`status: partial`、`stage: stage`、HEAD不変、index保持となることを確認する。
+    - 再現できない場合は推測で終了コード1を許容せず、run artifactから実command、
+      exit code、signal、spawn error code、stderr、stdout byte数を取得できる診断testを先に作る。
+    - 完了条件: 失敗を一つのfocused testで安定再現し、原因となるcommandを一意に示せる。
+    - 2026-08-11: 事前stage済みのmodified、added、renamed、binary pathを作るfixtureで、
+      textconv相当のstaged fingerprint失敗を注入した。修正前は`partial/stage`、HEAD不変、
+      index保持となることをfocused testで確認した。
+
+  - [x] [Step 1 / P0: staged fingerprintを内部diffへ固定] textconvを実行せずcommitまで進める。
+    - 変更対象: `skills/igapyon-miku-scm/scripts/work-commit.mjs`とfocused test。
+    - check前後の二つの
+      `git diff --cached --binary --full-index --no-ext-diff`へ`--no-textconv`を追加する。
+    - staged path取得、digestのSHA-256、check前後のpath/digest一致条件、commit後のclean確認は
+      変更しない。
+    - status 1はglobalに許容しない。`--no-textconv`適用後も非0ならGit失敗として安全停止する。
+    - 必須test:
+      - Step 0のfixtureが一回の`work.commit`でcommitされ、HEADが一回だけ進み、treeがcleanになる。
+      - 通常のtext、rename、binary変更でstaged digestがcheck前後一致する。
+      - 本当のGit失敗はcommitせず`partial`を返し、indexを保持する。
+    - 完了条件: 正当なstage済み変更ではAI Agentへ戻らずcommitまで完走する。
+    - 2026-08-11: check前後のbinary staged diffへ`--no-textconv`を追加した。
+      injected textconv fixtureはcommitへ到達し、mixed changesを含むtreeがcleanとなることを確認した。
+
+  - [x] [Step 2 / P1: 失敗診断をboundedにする] diff本文をrunner結果へ埋め込まない。
+    - Git subprocess失敗へexit code、signal、spawn error code、bounded stderr、stdout byte数、
+      stdout SHA-256を記録する。raw stdoutはエラーmessageへ連結しない。
+    - secret候補やstaged file内容を診断へ出さない既存境界を維持する。
+    - testでは大きなstdoutを返す失敗を注入し、結果サイズが入力diffサイズに比例せず、
+      exit codeとdigestだけで識別できることをassertする。
+    - public result schemaを変更する場合だけhuman outputとcontract versionを更新する。
+    - 2026-08-11: Git失敗messageへexit code、signal、spawn error code、stdout byte数、
+      stdout SHA-256、bounded stderrを追加した。110,000 byteのdiff stdoutを注入するtestで、
+      raw staged diffがmessageへ含まれないことを確認した。public result schemaは変更していない。
+
+  - [x] [Step 3 / P1: normative contract更新] 実装と文書を一致させる。
+    - `skills/igapyon-miku-scm/references/work-commit.md`へ、staged fingerprintが
+      `--no-ext-diff --no-textconv`でrepository固有rendererを無効化することを記載する。
+    - `node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs`で生成物を更新し、
+      同commandの`--check`でdriftが無いことを確認する。生成物は手編集しない。
+    - 2026-08-11: `work-commit.md`へ`--no-ext-diff --no-textconv`とbounded failure diagnosticを
+      記録し、workflow contract生成とdrift checkの両方が成功した。
+
+  - [ ] [Step 4 / P0: 全体検証と配備判断] macOSとWindows 11の回帰を確認する。
+    - 次の順で実行する:
+      1. `node --test skills/igapyon-miku-scm/tests/work-commit.test.mjs`
+      2. `npm run test:miku-scm:fast`
+      3. workflow contract regenerationと`--check`
+      4. `npm run test:miku-scm:full`
+      5. `mvn generate-resources`
+      6. Skill `quick_validate.py`
+      7. `git diff --check`、`git status -sb`、対象diff確認
+    - GitHub ActionsのmacOS/Windows matrixで、Step 0の回帰testと既存fixed npm/Maven checkを
+      成功させる。hosted CI未実施ならローカル成功と明確に区別して残す。
+    - source検証後も、ユーザーの明示指示なしに`~/.codex/skills`へ同期しない。
+    - 最終報告へ変更file、再現原因、focused/fast/full件数、contract/Skill検証、
+      macOS/Windows CI状態、未commit・未同期状態を記載する。
+    - 2026-08-11: focused 30件、fast 160件、full 258件、Maven generate-resources、
+      Skill validationはすべて成功した。hosted macOS/Windows CIと`~/.codex/skills`同期は
+      この作業では未実施のまま残す。
+
+- [ ] [Current priority: miku-scm 高速化の自己レビュー対応] 以下のStep 0から
+  Step 8までを番号順に実行する。後続Stepを先行実装しない。各Stepのfocused testが
+  成功してから次へ進み、失敗時はそのStep内で修正する。
+  - 作業規則:
+    - この項目の実装中は、ユーザーが明示するまで`git commit`、`git push`、PR作成、
+      merge、tag、Release作成を実行しない。
+    - 既存の未コミット差分を保持する。対象外fileをrestore、削除、formatしない。
+    - runnerはGit/GitHubの機械的処理だけを担当する。PR本文生成のようなAI判断を
+      Node.js runnerへ移さない。
+    - 失敗時に自動でunstage、restore、retryしない。HEADと作業treeをそのまま残し、
+      `stage`、`blockers`、`next_action`を構造化結果へ返す。
+  - 現在の基準状態（2026-08-10）:
+    - branchは`devel-tiga0810vdc`、`origin/devel`より2コミット先行。
+    - `work.commit`のone-shot化は実装済み。base・draft自動解決のsource修正は
+      未コミットで、ユーザー用`~/.codex/skills/igapyon-miku-scm`へ同期済み。
+    - fast suite 128件、full suite 226件、workflow contract drift check、
+      `mvn generate-resources`、Skill validationは成功済み。
+    - 現在branchのread-only recommit preflightはbaseを`origin/devel`へ解決するが、
+      branch-matching PR draftは存在しない。
+
+  - [x] [Step 0: 作業開始時の再確認] 既存差分とテスト基準を記録する。
+    - `git status -sb`と`git diff --stat`を実行し、上記基準状態との差をこの項目へ追記する。
+    - `npm run test:miku-scm:fast`を一度実行する。失敗した場合は新規実装へ進まず、
+      失敗test名と既存差分との関係を記録する。
+    - 完了条件: 作業開始時のbranch、ahead/behind、変更file、fast suite件数と結果が
+      この項目から再現できる。
+    - 2026-08-10: `devel-tiga0810vdc`、`origin/devel`より2コミット先行、既存の
+      miku-scm source変更と`TODO.md`変更を確認した。`npm run test:miku-scm:fast`は
+      128件成功、0件失敗（約4.5秒）。
+
+  - [x] [Step 1 / P0: commit直前のtree不変性] checkがworktreeを変更したら
+    commit前に停止する。
+    - 変更対象:
+      - `skills/igapyon-miku-scm/scripts/work-commit.mjs`
+      - `skills/igapyon-miku-scm/tests/work-commit.test.mjs`
+      - 結果schemaを変更した場合のみ、CLI contract、manifest、human outputも更新する。
+    - 実装仕様:
+      - 現在の「staged path一覧」と「staged diff digest」のcheck前後比較を維持する。
+      - 全check成功後、`git commit`の直前に次の二条件を追加確認する。
+        1. `git diff --name-only -z --no-renames --`の結果が空である。
+        2. `git ls-files --others --exclude-standard -z`の結果が空である。
+      - どちらかが空でなければcommitを実行せず、`status: partial`、
+        `stage: post-check-verify`、変更path、`next_action`を返す。
+      - check失敗時と同様に自動unstage、restore、retryを行わない。
+    - 必須test:
+      - injected checkがstage済みtracked fileをさらに変更するfixture。
+      - injected checkが非ignoreのuntracked fileを生成するfixture。
+      - 両fixtureでHEADが開始時と同じ、commit件数が不変、元のstage内容が残り、
+        結果が`partial/post-check-verify`であることをassertする。
+      - 正常fixtureでは従来どおり一回だけcommitされることをassertする。
+    - 完了条件:
+      - `node --test skills/igapyon-miku-scm/tests/work-commit.test.mjs`が成功する。
+      - checkが作った差分を黙ってcommitしたり、commit後に`partial`報告したりしない。
+    - 2026-08-10: staged path/digest再照合後にunstaged tracked pathsとnon-ignored
+      untracked pathsを検査する処理を実装した。tracked変更・untracked生成の2 fixtureで
+      HEAD不変、stage保持、`partial/post-check-verify`を確認。focused test 10件、
+      fast suite 130件、contract regeneration/drift checkはすべて成功。
+
+  - [x] [Step 2 / P0: exact `miku-scm pr recommit push`] PR draftが無い通常経路も、
+    一つのユーザーturnで完走させる。
+    - 変更対象:
+      - `skills/igapyon-miku-scm/SKILL.md`
+      - `skills/igapyon-miku-scm/references/github-pr-recommit-push.md`
+      - `skills/igapyon-miku-scm/tests/miku-scm-pr-routing.test.mjs`
+      - `skills/igapyon-miku-scm/tests/pr-recommit-push.test.mjs`
+      - AI文章生成はSkill routingに残し、AIを呼ぶ新規Node.js runnerは作らない。
+    - exact phraseの処理順を次で固定する:
+      1. `pr.recommit.preflight --repo <repo>`をREADONLYで一回実行する。
+      2. `PR draft is unresolved or missing`以外のblockerが一つでもあれば停止し、
+         draft生成、backup、reset、commit、pushを実行しない。
+      3. matching draftがあり他のblockerが無ければ、preflightが返したbaseとdraftを渡して
+         `pr.recommit.push --apply`を直ちに一回実行する。
+      4. matching draftが無く、唯一のblockerがdraft不在なら、
+         `writing.pr.prepare --repo <repo> --target <resolved-base>..HEAD`を一回実行する。
+      5. Agentはprepare結果だけを根拠にPR本文を一度生成し、返却された
+         `suggested_draft_path`へ保存する。別pathを発明しない。
+      6. 保存直後、同じturnでresolved baseと保存pathを渡した
+         `pr.recommit.push --apply`を一回実行する。追加承認を求めない。
+    - 承認境界:
+      - ユーザーのexact phraseに含まれる`push`を、backup branch作成、recommit、
+        conditional pushの承認とみなす。
+      - runner内部はbackup成功後、recommit、push、remote comparison `0 0`、draftの
+        `-done` renameまでAI Agentへ戻さず進める。
+      - `-done`は廃止しない。rename失敗はsuccessにせず`partial`で返す。
+    - 必須test:
+      - routing testで上記1〜6の順序、追加承認なし、AI生成がSkill層であることをassertする。
+      - temp repositoryで「既存draftあり → backup → recommit → push → `0 0` →
+        `-done`」を実行する。
+      - draft不在でrunnerを直接呼んだtestはGitを変更せず`not-applied`を返す。
+        exact phraseのSkill routingだけがprepareとdraft生成を補う。
+      - 最新branch-matching draftが既存候補から決定的に選ばれること、他blockerあり、
+        prepare失敗の各caseでmutation前に停止する。
+    - 完了条件:
+      - `node --test skills/igapyon-miku-scm/tests/miku-scm-pr-routing.test.mjs`
+        および`node --test skills/igapyon-miku-scm/tests/pr-recommit-push.test.mjs`が成功する。
+      - exact phraseを一度指示すれば、唯一の不足がdraftである通常caseは追加の
+        ユーザー入力なしにpushと`-done`まで到達する。
+    - 2026-08-10: exact phraseのroutingをREADONLY preflight起点へ変更した。
+      missing draftだけがblockerなら、`writing.pr.prepare`で`<base>..HEAD`のevidenceを
+      一度取得し、返却pathへdraftを保存して同一turnのfixed pushへ戻る。runner直接呼出しの
+      draft不足は従来どおりnon-mutating `not-applied`。focused test 10件、fast suite
+      132件、contract regeneration/drift checkは成功。
+
+  - [x] [Step 3 / P1: remoteとbaseの一貫性] `--remote`で選ばれたremoteだけを
+    base解決とpushに使用する。
+    - 変更対象:
+      - `skills/igapyon-miku-scm/scripts/pr-soft-reset-recommit-preflight.mjs`
+      - `skills/igapyon-miku-scm/scripts/pr-recommit-push.mjs`
+      - `skills/igapyon-miku-scm/scripts/miku-scm-cli-contracts.mjs`
+      - 関連するrecommit/push test、manifest、normative reference。
+    - 実装仕様:
+      - standalone `pr.recommit.preflight`と`pr.recommit.apply`へoptional
+        `--remote <name>`を追加し、defaultを`origin`とする。
+      - base resolverは順に`<remote>/HEAD`、`<remote>/devel`、既存branch規約候補を
+        同じ`<remote>/` namespaceだけで評価する。内部で`origin`をhard-codeしない。
+      - `pr.recommit.push`は同じremote値をpreflight、apply、push、post-push comparisonへ
+        必ず渡す。
+      - base未解決、remote不存在、remote名不正はbackup作成前に`not-applied`で停止する。
+    - 必須test:
+      - `origin/HEAD`と`upstream/HEAD`が異なるtemp fixtureを作る。
+      - `--remote upstream`でreset base、lease確認、push先、comparisonがすべて
+        `upstream`となり、`origin`が一度も採用されないことをassertする。
+      - `--remote`省略時は従来どおり`origin`となることをassertする。
+    - 完了条件: focused recommit/push testsと`npm run test:miku-scm:fast`が成功する。
+    - 2026-08-10: recommit preflight/applyへ`--remote`（default `origin`）を追加し、
+      upstream解決、branch名規約、`<remote>/HEAD`、`<remote>/devel`を選択remote内だけで
+      評価するよう修正した。origin/upstreamのHEADが異なる実Git fixtureで、`--remote
+      upstream`のbase/reset/push/comparisonがupstreamへ揃いoriginへbranchを作らないことを
+      確認。focused tests 44件、fast suite 134件、contract regeneration/drift checkは成功。
+
+  - [x] [Step 4 / P1: version increment notice] version increment忘れを通知するが、
+    commitの必須条件にはしない。
+    - 変更対象:
+      - `skills/igapyon-miku-scm/scripts/work-commit.mjs`
+      - `skills/igapyon-miku-scm/scripts/miku-scm-human-output.mjs`
+      - `skills/igapyon-miku-scm/tests/work-commit.test.mjs`
+      - `skills/igapyon-miku-scm/tests/miku-scm-human-output.test.mjs`
+      - `skills/igapyon-miku-scm/references/work-commit.md`
+    - 判定sourceを`pom.xml`と
+      `skills/igapyon-mikuku-agent/references/VERSION.md`の二つに固定する。
+    - 構造化結果へ`version_notice`を追加し、値を次で固定する。
+      - どちらかのsourceがchanged pathsにある: `increment_observed`。
+      - versionは解決できたが両sourceともchanged pathsにない: `increment_not_observed`。
+      - versionを解決できないrepository: `not_applicable`。
+    - `increment_not_observed`はwarningだけを表示してcommitを続行する。
+      二sourceのversion不一致だけは従来どおりblocking errorとする。
+    - 必須testはversion-only、version更新を含む通常変更、version更新を含まない通常変更、
+      version source無し、二source不一致の5caseとする。
+    - 完了条件: JSONとhuman outputの両方で状態を区別でき、increment忘れだけでは
+      exit code非0にもcommit中止にもならない。
+    - 2026-08-10: `version_notice.increment_status`へ`increment_observed`、
+      `increment_not_observed`、`not_applicable`を実装し、human outputで非blocking reminderを
+      明示した。version-only、通常変更+version、通常変更のみ、version source無し、coupled
+      mismatchの5caseを追加。focused tests 30件、fast suite 138件、contract regeneration/
+      drift checkは成功。
+
+  - [x] [Step 5 / P1: commit message] 既知の作業内容がある場合はgeneric messageを
+    使用しない。
+    - 変更対象:
+      - `skills/igapyon-miku-scm/SKILL.md`
+      - `skills/igapyon-miku-scm/scripts/work-commit.mjs`
+      - `skills/igapyon-miku-scm/tests/miku-scm-pr-routing.test.mjs`または専用routing test
+      - `skills/igapyon-miku-scm/tests/work-commit.test.mjs`
+    - Skill routing規則:
+      - 直前の作業依頼または現在のTODO見出しから、一行で具体化できる場合は
+        `work.commit --message <具体的な一行>`を必ず渡す。
+      - version sourceだけの変更では`バージョンを<version>へ更新`を使用する。
+      - 作業内容を特定できず`--message`も無い場合だけ`作業内容を更新`を許可する。
+    - runner結果へ`message_source`を追加し、値を`supplied`、`version_fallback`、
+      `generic_fallback`の三つに固定する。runnerに曖昧なtask context推定を実装しない。
+    - 必須test:
+      - `--message`指定、version-only、省略時genericの各source値をassertする。
+      - Skill routing testで既知の作業名が`--message`へ渡されることをassertする。
+    - 完了条件: 既知の作業内容がある通常経路で`作業内容を更新`が選ばれない。
+    - 2026-08-10: `message_source`を`supplied`、`version_fallback`、
+      `generic_fallback`へ固定し、human outputにも表示した。Skill routingは現在request/
+      TODO見出しから具体的タイトルが得られる場合に`--message`を必須化。focused tests 32件、
+      fast suite 140件、contract regeneration/drift checkは成功。
+
+  - [x] [Step 6 / P2: sensitive path guard] `git add --all`の前に固定denylistで停止する。
+    - 変更対象は`work-commit.mjs`、`work-commit.test.mjs`、`work-commit.md`とする。
+    - path basenameに対するdenylistを次で固定する。
+      - exact: `.env`、`.npmrc`、`.netrc`、`.pypirc`、`id_rsa`、`id_dsa`、
+        `id_ecdsa`、`id_ed25519`。
+      - prefix: `.env.`。
+      - regex: `^(secret|secrets|credential|credentials|token|tokens)([._-].*)?$`
+        （大文字小文字を無視）。
+      - extension: `.pem`、`.p12`、`.pfx`、`.key`（大文字小文字を無視）。
+    - 検出はstage前に行い、該当pathだけを返す。file内容は読まず、stdout/stderrへ
+      secret内容を出さない。private-key headerの内容scanはこの実装範囲に含めない。
+    - 必須test:
+      - 各denylist categoryを最低一件ずつ検出する。
+      - `tokenizer.mjs`、`secretary.md`、`monkey.txt`をfalse positiveにしない。
+      - 検出時にindexとHEADが不変であることをassertする。
+    - 完了条件: denylist判定がmacOS、Linux、Windows path separatorで同じ結果になる。
+    - 2026-08-10: exact `.env`/`.npmrc`/`.netrc`/`.pypirc`/private-key basename、`.env.`
+      prefix、secret/credential/token regex、key extensionのfixed denylistを実装した。各categoryの
+      9 caseでstage/HEAD不変を確認し、`tokenizer.mjs`、`secretary.md`、`monkey.txt`のfalse
+      positiveを防止。focused test 26件、fast suite 151件、contract regeneration/drift checkは成功。
+
+  - [ ] [Step 7 / P1: native Windows 11] `work.commit`の実process起動をWindowsで検証する。
+    - platform adapterは`work-commit.mjs`から分離したmoduleへ置き、任意command文字列を
+      受け取るAPIを作らない。
+    - Windowsでは内部allowlistにある`npm.cmd`と`mvn.cmd`だけを
+      `process.env.ComSpec || "cmd.exe"`経由で起動する。macOS/Linuxは実行fileとargvを
+      shellなしで直接起動する。
+    - adapter testでexit code、stdout、stderr、missing executableを確認する。
+      command名の文字列変換だけのtestで完了扱いにしない。
+    - GitHub Actionsへ`windows-latest` jobを追加し、temp Git repositoryでstage/commit、
+      固定npm check、固定Maven checkを実行する。Nodeは24、Javaは17を使用する。
+    - `pr.recommit.push`のpublicationはこのStepに含めず、既存macOS-only guardを維持する。
+    - 完了条件: local focused tests、macOS job、Windows jobがすべて成功する。
+    - 2026-08-10: common platform adapterと`miku-scm-contract.yml` matrix jobを追加した。
+      Windowsではallowlist固定の`npm.cmd run check:index`または`mvn.cmd validate`だけを
+      `ComSpec /d /s /c`で起動し、任意command文字列を拒否する。exit/stdout/stderr/ENOENTを
+      adapter testで、actual Git stage/commit + npm + Maven checkをmacOS local testで確認した。
+      local focused tests 29件、fast suite 154件、contract regeneration/drift checkは成功。
+      macOS/Windows hosted CI jobの初回成功は、PRまたはdevel push後にこの項目を`[x]`へ更新する。
+    - 2026-08-10: hosted CIの初回実行で、UTC hostがbackup名とnext-work branch名を
+      JST期待値と異なる時刻で生成する4件の失敗を検出した。未マージの`-done` branchは
+      `backup/2026-08-10-2330`へ退避し、`origin/devel`から
+      `devel-tiga0810xda`を作成して既存PR内容を引き継いだ。共通JST時刻module、
+      regression test、macOS/Windows再検証をこのStep内で実施する。
+    - 2026-08-10: Windows hosted CIで`test:github-writer`のworkflow contract driftを
+      検出した。Windows checkoutのCRLFをsource digestとgenerated lock比較へそのまま
+      入れていたためであり、LF正規化とCRLF注入testを追加して回復branchで再検証する。
+
+  - [x] [Step 8 / P2: contract、全文書、配備の最終同期] 実装完了後に一度だけ行う。
+    - 変更に合わせて`SKILL.md`、normative references、CLI contracts、workflow manifest、
+      testsを更新する。生成物
+      `scripts/miku-scm-workflow-contract-lock.mjs`と
+      `references/workflow-contracts.md`は手編集しない。
+    - 次のcommandを記載順に実行し、一つでも失敗したら同期へ進まない。
+      1. 各Stepに記載したfocused tests。
+      2. `npm run test:miku-scm:fast`。
+      3. `node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs`。
+      4. `node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs --check`。
+      5. `npm run test:miku-scm:full`。
+      6. `mvn generate-resources`。
+      7. `python3 /Users/igapyon/.codex/skills/.system/skill-creator/scripts/quick_validate.py
+         skills/igapyon-miku-scm`。
+      8. `git diff --check`、`git status -sb`、対象fileの`git diff`。
+    - 全確認成功後だけ、
+      `sh scripts/sync-codex-skill.sh igapyon-miku-scm`でユーザー用Skillへ同期し、
+      `sh scripts/sync-codex-skill.sh --check igapyon-miku-scm`がexit code 0となることを確認する。
+    - 最終報告へbranch、ahead/behind、変更file、test件数、同期結果、未commitであること、
+      次に実行可能なexact commandを記載する。
+    - 完了条件: sourceとinstalled Skillが一致し、全test/validationが成功し、
+      ユーザーが明示しない限りcommit/pushは行われていない。
+    - 2026-08-10: workflow contractsを再生成してdrift無しを確認。fast suite 154件、
+      full suite 252件、`mvn generate-resources`、`quick_validate.py`、`git diff --check`が
+      成功した。`sh scripts/sync-codex-skill.sh igapyon-miku-scm`と`--check`でinstalled
+      Skillとの一致を確認。branchは`devel-tiga0810vdc`、`origin/devel`より2 commits先行。
+      この実装によるcommit/pushは未実行。Step 7のhosted Windows CI初回成功だけは外部実行待ち。
+
+- [ ] [Current priority: miku-scm Work Cycle] Decide whether version commit
+  `27a2ed7` is published as a standalone PR or kept as the first commit of the
+  miku-scm implementation PR.
+- [ ] [Current priority: miku-scm Work Cycle] Implement the approved redesign
+  in small slices from
+  `skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md`.
+  - [x] Add the explicit `pr recommit push` transition and its fixed runner
+    contract, retaining exact remote expectations, `force-with-lease`,
+    post-push comparison, and the `-done` rename guard.
+    - 2026-08-10: macOS fixed runner and success, remote-conflict,
+      backup-integrity, and unsupported-platform tests are complete. Windows
+      publication remains a safe pre-backup stop until the shared adapter
+      migration is implemented. Fast suite: 117; full suite: 215.
+  - Move expected fixed checks into the runner while retaining a human pause
+    for actual safety boundaries and failed validation.
+  - Keep version reminders non-blocking and isolate macOS/Windows differences
+    behind adapters; do not require `rg`.
+  - Run the miku-scm fast suite while iterating. Before handoff, run its full
+    suite and regenerate/check contracts whenever their inputs change.
+
+### Deferred / existing task record
+
+- [ ] Validate and improve the miku-soft type-specific reference system.
+  - Scope:
+    - `skills/igapyon-miku-soft-developer/references/[0-9][0-9]-*.md`
+    - `skills/igapyon-miku-soft-developer/references/miku-soft-basic/`
+    - `skills/igapyon-miku-soft-developer/references/review/`
+    - local sibling miku-soft repositories used as read-only implementation evidence
+  - [x] Inventory the current numbered workflow and basic-design files.
+  - [x] Establish that the current numbering mixes product layers with methods
+    and migrations: `10/11/20/21/40/50` are product layers, `30` is a
+    conversion method, and `31/32` are separation workflows.
+  - [x] Select the preferred target direction: retain stable product-layer
+    numbers and separate `layers/`, `workflows/`, `methods/`, `migrations/`,
+    `review/`, `profiles/`, `catalog/`, and `baselines/` as document roles.
+    - Use typed IDs such as `L10`, `W-L10`, method `M-L10-L20`, and migration
+      `G-L10-L10+L11`; do not allocate layer numbers to ordinary documents.
+    - Treat `00` as ecosystem overview/concept work, not as a product layer.
+  - [x] Decide not to rename files before the content-validity audit; preserve
+    old paths with small compatibility stubs when migration is eventually approved.
+  - [x] Define the claim-evidence matrix contract.
+    - Identity: `claim_id`, audit date, source Git revision, source path,
+      section heading, and line anchor at the audited revision.
+    - Classification: document role (`layer`, `workflow`, `method`,
+      `migration`, or `review`), target layer or transition, claim summary,
+      normative strength (`must`, `should`, `may`, current-state statement, or
+      example), and temporal stability (`stable` or `time-sensitive`).
+    - Evidence: required evidence scope, inspected repository revisions,
+      implementation observations, counterexamples or exceptions, applicable
+      primary-source observations, and verification commands or tests.
+    - Result: verdict, confidence, rationale, proposed document action, and any
+      product-owner decision still required.
+    - Verdict vocabulary: valid, conditionally valid, target-state guidance,
+      stale, conflicting, or evidence-insufficient.
+    - A `must` needs a safety, interoperability, compatibility, or operational
+      invariant and a testable check or explicit manual gate. Otherwise consider
+      downgrading it to `should` or documenting its condition.
+    - A statement about the normal or prevalent repository shape needs observed
+      implementation evidence. A desired future shape that is not prevalent
+      must be labeled target-state guidance instead of current practice.
+  - [ ] Extract auditable claims from the numbered basic-design, workflow,
+    migration, and review documents without treating every recommendation as a
+    statement of current implementation prevalence.
+    - Expanded matrix created at
+      `workplace/miku-soft-reference-audit/claim-matrix.md` with 23 claims
+      covering numbering/routing consequences, release policy, Node runtime
+      and Actions baselines, Java/Maven layout and compiler compatibility,
+      straight-conversion traceability, Agent Skills maturity, MCP authority,
+      starter assets, discovery-index scope, and path compatibility.
+    - Confirmed high-confidence conflicts: layer 10 and Java release-trigger
+      defaults, release review guidance, straight-conversion multi-module Maven
+      allowance, and Java 8 compatibility versus source/target-only compilation.
+    - Confirmed initial high-confidence stale statements: current
+      `miku-xlsx2md-java` multi-module shape and the dated layer 10 repository
+      scope list. Node.js 20 is also stale as the maintained starter minimum
+      because the official lifecycle lists it EOL since 2026-03-24.
+    - Continue extraction before treating the pilot set as complete.
+  - [x] Refresh the local-only sibling repository inventory and classify the
+    first-pass candidates by naming layer.
+    - Checked 2026-07-31 without fetch or sibling-repository mutation.
+    - 56 direct sibling candidates: 21 suffixless/support candidates, 3 Web,
+      14 Java, 3 Java Maven, 14 Agent Skills, and 1 MCP.
+    - The suffix-based count is discovery input, not final product
+      classification; `miku-soft-catalog`, `mikuku-articles`, and similar
+      support/content repositories must not be silently treated as layer 10.
+    - All 56 candidates are local Git repositories. One candidate,
+      `miku-readfile-skills`, had two pre-existing worktree entries and is not a
+      primary pilot target; preserve those unrelated changes.
+  - [x] Select representative, recent, historical-combined, and exceptional
+    repositories for the pilot and contrast sets.
+    - End-to-end CLI family: `miku-indexgen` (`10/20/21/40`).
+    - Web and Maven separation family: `miku-xlsx2md` (`10/11/20/21`).
+    - Recent main/Web/Java family: `miku-md2docx` (`10/11/20`).
+    - Layer 11 coverage: inspect all three separated Web repositories
+      (`miku-docx2md-web`, `miku-md2docx-web`, `miku-xlsx2md-web`).
+    - Layer 21 and migration 31 coverage: inspect all three Java Maven
+      repositories because the population is only three.
+    - Java exception: `miku-javaclass2json-java` has no suffixless layer 10
+      companion and tests whether upstream-main assumptions are too absolute.
+    - Agent Skills contrasts: `miku-indexgen-skills` for runtime-backed shape,
+      `miku-text-file-ops-skills` for a recent shape,
+      `miku-ms-office-skills` for aggregate Skill-only shape, and
+      `miku-media-proc-skills` for a minimal/reference-oriented shape.
+    - Historical combined and MCP evidence: `mikuproject` and its Java, Skills,
+      and sole local MCP companions; use `mikuscore` and `miku-abc-player` as
+      additional combined/Web-centered contrasts where needed.
+    - Layer 50 remains evidence-limited because only `mikuproject-mcp` is
+      locally available; do not generalize prevalence from one implementation.
+  - [x] Complete the full-read pilot for `00`, `10`, `11`, `20`, `21`, and
+    `30`, then perform the first scaling pass for `40` and `50`.
+    - Full-read completed for all eight basic design documents and all current
+      top-level numbered workflows.
+    - Initial implementation evidence gathered for the selected main, Web,
+      Java, Java Maven, Agent Skills, and MCP repositories without fetch or
+      mutation.
+    - The sole local MCP implementation supports feasibility evidence but not
+      ecosystem-prevalence claims.
+  - [ ] Check document-to-document consistency: architecture router, basic
+    design, execution workflow, migration workflow, review note, templates,
+    and generated discovery index.
+  - [ ] Check implementation fit against sibling repositories without changing
+    or fetching them during the initial local-only pass.
+  - [x] Audit GitHub Actions across sibling repositories before proposing
+    cross-repository normalization.
+    - The completed local read-only scope covers 57 direct workflows in 47
+      sibling repositories. It now has a profile map, W01–W57 machine-readable
+      inventory, exception/control register, producer/consumer evidence, and
+      proposed serial backlog. Policy approval and implementation are separate
+      remaining tasks.
+    - Detailed plan:
+      `workplace/miku-soft-reference-audit/github-actions-audit-plan.md`.
+    - [x] Complete the first read-only static inventory.
+      - 47 of 56 direct sibling candidates have direct workflows: 57 files,
+        consisting of 10 CI and 47 release-oriented workflows.
+      - The files use 11 workflow filenames and have 54 distinct exact
+        contents; only two exact-copy groups cover five files.
+      - Initial differences include release events, checkout/ref rules, Action
+        generations and pinning, Node/Java roles, permissions, version checks,
+        smoke gates, timeout/concurrency controls, and artifact staging.
+      - Treat these counts as observations, not findings; repository naming is
+        only a discovery hint and workflow absence is not automatically a defect.
+    - [ ] Complete the Node.js 20-to-22/24 baseline decision and migration
+      inventory as a dedicated part of the workflow audit.
+      - The first literal scan found Node 20 on a `node-version` line in 29
+        direct sibling workflow files, Node 22 in 3, and Node 24 in 14; counts
+        overlap where a matrix names more than one version.
+      - Thirteen inspected top-level sibling `package.json` files declare an
+        `engines.node` range: 3 use `>=18.19.1`, 5 use `>=20`, 3 use `>=22`,
+        and 2 use `>=24 <25`. Confirm applicability before calling older ranges
+        defects.
+      - The developer references still express Node 20 assumptions in the
+        layer 10 and layer 40 workflows, layer 40 basic design, Agent Skills
+        and Web `package.json` starters, and the Agent Skills CI starter.
+      - Evaluate the preferred maintained default: product minimum `>=22`, CI
+        build/test on 22 and 24, release artifact build on 24, and smoke the
+        released runtime on 22 as well when `>=22` compatibility is claimed.
+      - Evaluate Node 24-only as an explicit product profile or exception, not
+        as an accidental consequence of using Node 24 for release builds.
+      - Keep product runtime, dependency-install/build runtime, release-build
+        runtime, released-artifact runtime, and the internal runtime of
+        JavaScript Actions as separate inventory fields and decisions.
+      - Decide the migration treatment for existing Node 20 claims: remove
+        them from maintained verification, retain only an explicitly
+        unsupported compatibility note where useful, or document a bounded
+        repository-specific exception with an end condition.
+      - Wave C completed the 15-item reference/starter change register. The
+        candidate policy is now reviewable as separate product, CI, release
+        host, final-artifact smoke, compiler target, and Action-runtime fields;
+        the actual public-support decision remains pending.
+    - [ ] Audit and design a canonical release-artifact contract by product
+      profile, taking the strongest existing patterns from sibling workflows.
+      - Initial workflow signals: 13 files stage/copy `.mjs`, 14 stage/copy
+        `.jar`, 15 refer to `sources*.tgz`, 10 refer to Skill bundle `.zip`, 3
+        use Web asset staging, and 2 use `npm pack`. These categories can
+        overlap and do not yet prove that the artifacts have the same role.
+      - Only 3 release workflows currently upload `.zip.sha256` sidecars. Audit
+        whether every user-downloadable custom asset should receive a SHA-256
+        sidecar or whether a multi-file `SHA256SUMS` manifest is preferable.
+      - Define distinct roles and required/optional sets for CLI module,
+        standalone runtime module, curated source archive, executable Java jar,
+        Java sources jar, library bundle, npm package tarball, Agent Skill zip,
+        and Web assets. Do not confuse GitHub-generated source archives with a
+        custom build-ready `*-sources.tgz`.
+      - Define one staged-artifact lifecycle: build with repository scripts,
+        verify contents and behavior, copy into a clean `release-assets/`
+        directory using final release names, calculate and verify checksums
+        from those final bytes, then upload only the declared files.
+      - Decide filename grammar and the relationship among package/POM version,
+        release tag version including accepted dot suffixes, artifact role,
+        extension, and checksum filename.
+      - Treat the Release page as a user-facing distribution surface and add a
+        filename-UX review, not just a filesystem validity check.
+        - Evaluate the preferred miku custom-asset grammar
+          `<release-family>[-<role>][-<platform>-<arch>]-<release-version>.<ext>`.
+          The release version omits the tag's leading `v` and normally appears
+          immediately before the meaningful extension.
+        - Keep lowercase kebab-case, one canonical public artifact identity,
+          and a controlled role vocabulary such as `runtime`, `sources`,
+          `index`, and `manifest`; prohibit accidental synonyms and internal
+          directory terms such as `target`, `dist`, or `bundle` in public names.
+        - Preserve full parent filenames for companions, for example
+          `<asset>.sha256` and `<asset>.mjs.map`, unless one approved aggregate
+          `SHA256SUMS` policy is selected.
+        - Produce sorted sample Release asset lists for Node, Java, Web, Agent
+          Skill, MCP/npm, and library profiles and review their readability as
+          a set before adopting the grammar.
+        - Compare custom miku naming with ecosystem-owned names from `npm pack`
+          and Maven classifiers. Record narrow exceptions rather than making an
+          npm or Maven artifact misleading merely for textual uniformity.
+        - Scan producer scripts, Web runtime downloaders, Agent Skill runtime
+          resolvers, documentation, published articles, and direct Release URLs
+          before renaming. Existing `*-runtime-<version>.mjs` and
+          `*-sources-<version>.*` patterns already have consumers.
+        - Treat published historical asset names as immutable. Decide whether
+          future-name migration requires consumer-first updates, a bounded dual
+          publication release, or retention of the established grammar.
+      - Evaluate a machine-readable release manifest recording source tag and
+        commit, product/base/release versions, artifact role, filename, size,
+        and SHA-256; avoid inventing it if sidecars and profile metadata already
+        provide a simpler sufficient contract.
+      - Require deterministic archive inputs, ordering, timestamps, metadata,
+        and a repeated-build digest check for profiles claiming reproducible
+        archives. Record that SHA-256 proves byte integrity, not publisher
+        authenticity.
+      - Compare broad `release-assets/*` upload globs with explicit paths or a
+        verified manifest. A clean staged directory plus an exact expected-file
+        check is required before a wildcard can be considered safe.
+      - Use current implementations as focused exemplars: reproducible Skill
+        zip/checksum/content tests, explicit Node CLI/runtime/source staging,
+        Java build plus minimum-runtime smoke, npm pack surface verification,
+        and Web staging. Extract the useful controls rather than copying one
+        whole workflow into every repository.
+      - Produce an artifact-role matrix, naming/checksum decision, exemplar
+        map, sorted Release-page fixtures, consumer compatibility map,
+        exceptions, and per-repository migration items before changing release
+        assets.
+      - Wave C confirmed producer/consumer constraints. In particular,
+        miku-ms-office-core versioned .mjs/.map has at least seven direct
+        vendor/import consumers, while its current verifier lists only three;
+        no producer-only filename migration is safe.
+    - [x] Run the read-only GitHub Actions audit in parallel subagent waves.
+      - With four total execution slots, use one coordinator and up to three
+        independent audit workers at a time.
+      - Wave A: Node 20-to-22/24 role inventory; release-artifact and filename
+        producer/consumer inventory; workflow event/ref/authority structure
+        inventory.
+      - Wave B: normalized structural and contract clustering; artifact
+        profile/checksum/reproducibility proposal; Node profile and migration
+        proposal.
+      - Each worker reads sibling repositories only and writes a uniquely named
+        report under `workplace/miku-soft-reference-audit/`; no two workers edit
+        a central plan, state file, or product workflow concurrently.
+      - The coordinator validates evidence, resolves cross-report conflicts,
+        updates the shared audit matrix and state files, and decides whether a
+        proposed finding is ready for user review.
+      - After approval, pilot actual workflow changes one representative
+        repository/profile at a time. Do not parallelize mutations that share
+        templates, consumer contracts, release names, or external GitHub state.
+      - [x] Wave A completed on 2026-07-31 with separate reports for Node
+        baseline, artifact/name consumers, and workflow contracts:
+        `wave-a-node-baseline.md`, `wave-a-artifact-naming.md`, and
+        `wave-a-workflow-contracts.md` under
+        `workplace/miku-soft-reference-audit/`.
+      - [x] Wave B completed on 2026-07-31: normalized all 57 direct
+        workflows into 11 Release and 4 CI profile proposals, prepared the
+        Node 22/24 and artifact-contract proposals, and drafted the P0-P3
+        backlog. The coordinator integration is
+        `wave-b-integration.md`; the supporting reports are
+        `wave-b-workflow-profiles.md`, `wave-b-node-migration.md`, and
+        `wave-b-artifact-contract.md`.
+      - [x] Wave C completed on 2026-07-31: W01–W57 workflow inventory,
+        producer/consumer register, exception/control register, and the
+        15-item developer reference/starter Node register are integrated in
+        wave-c-integration.md. This was read-only evidence work.
+      - [x] Promote the durable audit result into the shipped skill under
+        `skills/igapyon-miku-soft-developer/docs/maintenance/`. Keep raw
+        worker reports in ignored `workplace/`, while the tracked copy owns
+        the decision packet, numbering plan, Actions profile plan, and backlog.
+      - [x] Define routine maintenance adoption and the urgent/narrow skip
+        path in `docs/maintenance/adoption-workflow.md`, then route the
+        normative maintenance checklist and durable backlog to it.
+      - [x] Add the no-specific-change maintenance branch: for a known target
+        repository, select and complete a bounded slice of one or more
+        compatible, approved, locally verifiable improvements instead of
+        stopping because no defect was named.
+    - [x] Produce a machine-readable row per workflow with repository revision,
+      pre-existing worktree state, product/profile confidence, event and ref
+      contract, permissions, toolchains, install/build/test commands, version
+      checks, artifact roles, upload behavior, and verification gaps.
+      - wave-c-workflow-inventory.md contains the 13-column W01–W57 TSV; the
+        inventory's direct workflow list and row count were cross-checked.
+    - [x] Cluster the inventory by exact content, normalized structure, and
+      contract fingerprint so product literals do not masquerade as design
+      differences and visually similar YAML does not hide semantic conflicts.
+      - Wave B maps every direct workflow to one of 11 Release or 4 CI
+        profile candidates and records contract conflicts, parameters,
+        exceptions, and evidence gaps in
+        `canonical-workflow-profiles.md` and
+        `wave-b-workflow-profiles.md`.
+    - [ ] Classify every material difference as intended profile, repository
+      parameter, supported policy option, historical drift, contract conflict,
+      missing control, explicit exception, or evidence-insufficient.
+    - [ ] Validate a small canonical profile set for Node CI/CLI release, Web
+      assets, Java runtime, Java Maven plugin, Agent Skill, MCP, and library
+      workflows; keep product runtime, Action-internal runtime, and build
+      runtime as separate concepts.
+    - [ ] Define shared invariants for least authority, trigger/ref/version/tag
+      alignment, reproducible dependency installation, staged and verified
+      artifacts, smoke gates, rerun behavior, and release concurrency.
+    - [ ] Compare copied templates, versioned reusable workflows, thin local
+      wrappers, and generated local workflows only after structural clusters
+      are known; record the chosen ownership and versioning model.
+    - [ ] Create an exception registry and a P0-P3 per-repository migration
+      backlog, then pilot one representative repository per approved profile
+      before any family-wide rollout.
+      - [x] The evidence-backed registry and proposed backlog are recorded in
+        wave-c-exception-control-register.md and migration-backlog.md.
+      - [ ] Obtain policy decisions and run only the first explicitly approved
+        serial pilot; do not treat the backlog as a bulk-edit instruction.
+    - Keep all sibling repositories read-only in this phase. Fetch, workflow
+      dispatch, release, push, and sibling edits require separate authorization.
+  - [x] Complete the first dated primary-source pass for supported Node.js
+    versions, GitHub Actions majors, Maven/Java compiler assumptions, and MCP
+    protocol guidance.
+    - Checked 2026-07-31 against official Node.js lifecycle pages, official
+      GitHub Action repositories, Apache Maven Compiler Plugin documentation,
+      JUnit documentation, and MCP specification revision 2025-11-25.
+    - Keep future rechecks in dated baseline documents rather than copying
+      current versions into every layer document.
+  - [ ] Classify each finding as valid, conditionally valid, target-state
+    guidance, stale, conflicting, or evidence-insufficient.
+    - Evaluate four axes independently before assigning the final verdict:
+      internal consistency, implementation fit, design rationale/testability,
+      and temporal currency.
+    - Record sample coverage and counterevidence; absence of a layer is not a
+      defect until the reference states that the layer is required for that
+      product shape.
+  - [x] Prepare a content revision proposal and a separate path-migration map;
+    do not mix semantic edits and bulk moves into one unreviewable change.
+    - Structure and typed identifier design:
+      `workplace/miku-soft-reference-audit/target-structure.md`.
+    - Decision gates, phased change sets, and verification matrix:
+      `workplace/miku-soft-reference-audit/revision-plan.md`.
+    - A read-only scan found 38 files across 25 sibling repositories naming
+      current paths, so additive canonical paths and compatibility stubs are
+      required; sibling link changes remain a separate authorized SCM phase.
+  - [ ] Obtain product-owner decisions for release defaults, Node minimum,
+    artifact roles/naming/checksums, Java compatibility mechanics, and the
+    typed taxonomy before semantic edits.
+  - [ ] Obtain user approval before broad document moves or compatibility-stub removal.
+  - [ ] Apply approved changes, regenerate affected `index.json` files, run
+    focused checks and the relevant Maven verification, then review Git status
+    and the final diff for unrelated changes.
 - [x] Initialize lightweight AI agent state files for this repository.
 - [x] Fix installed Codex skill visibility issues found on 2026-06-23.
   - Affected source skills in this repository:
@@ -595,6 +2363,11 @@ prompt test が成功しても実動作が保証されたとは扱わず、肥�
   - `actions/checkout@v6`、`actions/setup-node@v6`、
     `actions/setup-java@v5`、`softprops/action-gh-release@v3` は
     Node.js 24対応世代として現行方針と整合している
+  - この項目の棚卸し、役割分離、判断基準、移行順序は
+    `## AI Agent Current Tasks` の GitHub Actions 監査と
+    `workplace/miku-soft-reference-audit/github-actions-audit-plan.md` を正本とする
+  - ReleaseをNode.js 24で一度だけ構築し、対応下限を`>=22`とする成果物は
+    Node.js 22でもsmokeする案を検証する
 - [x] `skills/igapyon-miku-soft-developer/references/review/node-cli.md` に、他の review note と同じ `Severity Guidance` と `Review Output` を追加するか検討する
 - [x] `skills/igapyon-miku-soft-developer/references/review/` の入口として、各 review note の使い分けを説明する `README.md` または index 的な案内を追加するか検討する
 - [x] `skills/igapyon-miku-soft-developer/references/review/` 以下の review note 全体を整理し、ファイル粒度、見出し構成、分類条件、`Severity Guidance`、`Review Output` の揃い方を確認する
@@ -634,14 +2407,10 @@ prompt test が成功しても実動作が保証されたとは扱わず、肥�
   - 正式 skill 名: `igapyon-miku-text-file-ops`
   - 同梱先: `skills/igapyon-miku-text-file-ops/`
   - 互換 trigger: `miku-text-file-ops`, `miku-text-file-ops-skills`
-- [ ] `mikuproject-skills` も同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリに `igapyon-` prefix を付ける方針へ移行する
-  - 現状の同梱先: `skills/mikuproject/`
-  - 移行候補: `skills/igapyon-mikuproject/`
-  - 互換 trigger として `mikuproject` は維持する
-- [ ] `mikuscore-skills` も同梱時の正式 skill 名、`SKILL.md` frontmatter `name`、展開後ディレクトリに `igapyon-` prefix を付ける方針へ移行する
-  - 現状の同梱先: `skills/mikuscore/`
-  - 移行候補: `skills/igapyon-mikuscore/`
-  - 互換 trigger として `mikuscore` は維持する
+- [x] `miku-project-skills` `v0.12.4` を、正式 skill 名 `igapyon-miku-project` として release archive に同梱する
+  - 同梱先: `skills/igapyon-miku-project/`
+- [x] `miku-score-skills` `v0.6.1` を、正式 skill 名 `igapyon-miku-score` として release archive に同梱する
+  - 同梱先: `skills/igapyon-miku-score/`
 
 ## miku-soft アーキテクチャ考察メモ
 

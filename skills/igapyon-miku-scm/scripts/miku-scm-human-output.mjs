@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v4";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v11";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -14,14 +14,20 @@ const WORKFLOW_TITLES = Object.freeze({
   "github.issue.label.apply": "GitHub Issue label update",
   "github.issue.close.preflight": "GitHub Issue close",
   "github.issue.close.apply": "GitHub Issue close",
+  "github.issue.handoff.list": "GitHub Issue approval handoff list",
+  "github.issue.handoff.apply": "GitHub Issue approval handoff apply",
+  "github.issue.handoff.batch.apply": "GitHub Issue approval handoff batch apply",
+  "github.issue.handoff.dismiss": "GitHub Issue approval handoff dismissal",
   "repository.maintenance.diagnose": "Repository maintenance diagnosis",
   "repository.maintenance.plan": "Repository maintenance plan",
   "repository.maintenance.apply": "Repository maintenance",
   "repository.post-merge.next-work": "Post-merge next-work preparation",
+  "work.commit": "Work commit",
   "pr.publish.preflight": "PR publication",
   "pr.publish.apply": "PR publication",
   "pr.recommit.preflight": "PR recommit",
   "pr.recommit.apply": "PR recommit",
+  "pr.recommit.push": "Draft recommit push",
   "version.status": "Version status",
   "version.increment.validate": "Version increment validation",
   "writing.issue.prepare": "Issue writing evidence",
@@ -50,6 +56,7 @@ function labelsValue(labels) {
 }
 
 function resultHeader({ status, approvalGate, delegateStatus }) {
+  if (status === "partial") return "PARTIAL";
   if (status === "conflict") return "CONFLICT";
   if (status === "unresolved") return "UNRESOLVED";
   if (status === "not-applied") return "NOT APPLIED";
@@ -124,9 +131,90 @@ function appendIssueOperation(lines, workflow, result) {
   }
   if (workflow.endsWith(".preflight") && result.apply_arguments) {
     lines.push("Remote mutation: not invoked");
-    if (result.handoff) lines.push(`Approval ID: ${result.handoff.id}`);
-    lines.push("Approval command: reply with exactly `miku-scm approve` in chat");
+    if (result.handoff) {
+      lines.push(`Approval ID: ${result.handoff.id}`);
+      if (result.handoff.short_id) lines.push(`Approval suffix: ${result.handoff.short_id}`);
+    }
+    const approval = result.handoff
+      ? `miku-scm approve ${result.handoff.short_id ?? result.handoff.id}`
+      : "miku-scm approve";
+    lines.push(`Approval command: reply with exactly \`${approval}\` in chat`);
   }
+}
+
+function appendHandoffList(lines, result) {
+  const handoffs = Array.isArray(result.handoffs) ? result.handoffs : [];
+  lines.push(`Pending handoff count: ${result.pending_count ?? handoffs.length}`);
+  for (const handoff of handoffs) {
+    lines.push(`Handoff ID: ${displayValue(handoff.id)}`);
+    if (handoff.short_id) lines.push(`Approval suffix: ${displayValue(handoff.short_id)}`);
+    lines.push(`Apply workflow: ${displayValue(handoff.apply_workflow)}`);
+    lines.push(`Repository: ${displayValue(handoff.repository)}`);
+    if (handoff.issue) lines.push(`Issue: #${handoff.issue}`);
+    if (handoff.title) lines.push(`Title: ${displayValue(handoff.title)}`);
+    if (handoff.draft) lines.push(`Draft: ${displayValue(handoff.draft)}`);
+    lines.push(`Created at: ${displayValue(handoff.created_at)}`);
+    const selector = handoff.short_id ?? handoff.id;
+    lines.push(`Approve command: miku-scm approve ${displayValue(selector)}`);
+    lines.push(`Dismiss command: miku-scm dismiss ${displayValue(selector)}`);
+  }
+  if (handoffs.length > 1) {
+    lines.push("Batch approval format: miku-scm approve batch <handoff-selector> <handoff-selector> [...]");
+  }
+}
+
+function appendHandoffBatch(lines, result) {
+  const results = Array.isArray(result.results) ? result.results : [];
+  lines.push(`Batch status: ${displayValue(result.batch_status ?? result.status)}`);
+  lines.push(`Requested handoff count: ${result.requested_count ?? 0}`);
+  lines.push(`Processed handoff count: ${result.processed_count ?? results.length}`);
+  lines.push(`Applied handoff count: ${result.applied_count ?? 0}`);
+  for (let index = 0; index < results.length; index += 1) {
+    const entry = results[index];
+    lines.push(
+      `Step ${index + 1}: ${displayValue(entry.handoff?.id)}`
+      + ` | ${displayValue(entry.apply_workflow)}`
+      + ` | ${displayValue(entry.status)}`,
+    );
+    if (entry.dependency_refresh) {
+      lines.push(
+        `Step ${index + 1} dependency refresh: `
+        + `${displayValue(entry.dependency_refresh.status)}`,
+      );
+      const options = Array.isArray(entry.dependency_refresh.refreshed_options)
+        ? entry.dependency_refresh.refreshed_options
+        : [];
+      if (options.length > 0) {
+        lines.push(`Step ${index + 1} refreshed options: ${options.map(oneLine).join(", ")}`);
+      }
+    }
+  }
+  if (result.stopped_handoff) {
+    lines.push(`Stopped handoff: ${displayValue(result.stopped_handoff)}`);
+    lines.push(`Stopped status: ${displayValue(result.stopped_status)}`);
+    const stopped = results.find((entry) => entry.handoff?.id === result.stopped_handoff);
+    const delegate = stopped?.apply_result?.delegate_result;
+    if (stopped?.apply_result?.status) {
+      lines.push(`Stopped apply status: ${displayValue(stopped.apply_result.status)}`);
+    }
+    if (delegate?.stage) lines.push(`Stopped stage: ${displayValue(delegate.stage)}`);
+    if (delegate?.reviewed_updated_at) {
+      lines.push(`Reviewed updated at: ${displayValue(delegate.reviewed_updated_at)}`);
+    }
+    if (delegate?.observed_updated_at) {
+      lines.push(`Observed updated at: ${displayValue(delegate.observed_updated_at)}`);
+    }
+  }
+  if (result.stop_reason) lines.push(`Stop reason: ${displayValue(result.stop_reason)}`);
+  const remaining = Array.isArray(result.remaining_handoffs) ? result.remaining_handoffs : [];
+  lines.push(`Remaining handoff count: ${remaining.length}`);
+  for (const handoff of remaining) lines.push(`Remaining handoff: ${displayValue(handoff)}`);
+}
+
+function appendHandoffDismiss(lines, result) {
+  lines.push(`Handoff ID: ${displayValue(result.handoff?.id)}`);
+  lines.push(`Handoff status: ${displayValue(result.handoff?.status)}`);
+  lines.push(`Handoff path: ${displayValue(result.handoff?.path)}`);
 }
 
 function appendGeneric(lines, result) {
@@ -193,6 +281,44 @@ function appendPublication(lines, result) {
   if (result.plan_sha256) lines.push(`Plan SHA-256: ${displayValue(result.plan_sha256)}`);
 }
 
+function appendRecommitPush(lines, result) {
+  lines.push(`Repository: ${displayValue(result.repository)}`);
+  lines.push(`Branch: ${displayValue(result.branch)}`);
+  lines.push(`Delegate status: ${displayValue(result.status)}`);
+  lines.push(`Base: ${displayValue(result.base)}`);
+  if (result.base_commit) lines.push(`Base commit: ${displayValue(result.base_commit)}`);
+  lines.push(`Backup branch: ${displayValue(result.backup_branch)}`);
+  lines.push(`Draft file: ${displayValue(result.pr_draft)}`);
+  if (result.pr_draft_sha256) lines.push(`Draft SHA-256: ${displayValue(result.pr_draft_sha256)}`);
+  if (Number.isSafeInteger(result.commits_to_collapse)) {
+    lines.push(`Commits to collapse: ${result.commits_to_collapse}`);
+  }
+  if (result.new_head) lines.push(`New HEAD: ${displayValue(result.new_head)}`);
+  if (result.status === "published") {
+    lines.push(`Pushed branch: ${displayValue(result.pushed_branch)}`);
+    lines.push(`Final branch: ${displayValue(result.final_branch)}`);
+    lines.push(`Post-push comparison: ${displayValue(result.comparison)}`);
+    lines.push(`Repository URL: ${displayValue(result.repository_url, "unresolved")}`);
+    lines.push("Pull Request creation: not performed");
+    lines.push(`Pull Request lookup: ${displayValue(result.pr_lookup, "unresolved")}`);
+    if (result.pr_url) lines.push(`Pull Request URL: ${displayValue(result.pr_url)}`);
+    else lines.push(`Pull Request creation URL: ${displayValue(result.pr_creation_url, "unresolved")}`);
+    lines.push(`Version: ${displayValue(result.version, "unresolved")}`);
+    lines.push(`Recommended tag: ${displayValue(result.recommended_tag, "unresolved")}`);
+  } else if (result.publication) {
+    lines.push(`Publication status: ${displayValue(result.publication.status)}`);
+    lines.push(`Publication stage: ${displayValue(result.publication.stage)}`);
+    lines.push(`Publication detail: ${displayValue(result.publication.message)}`);
+  }
+}
+
+function appendCarryover(lines, carryover) {
+  lines.push(`Carryover stash: ${displayValue(carryover.stash_sha)}`);
+  lines.push(`Stash retained: ${carryover.stash_retained === null ? "unknown" : carryover.stash_retained ? "yes" : "no"}`);
+  lines.push(`Restore status: ${displayValue(carryover.restore_status)}`);
+  lines.push(`Working tree: ${displayValue(carryover.working_tree, "unknown")}`);
+}
+
 function appendPostMergeNextWork(lines, result) {
   lines.push(`Previous branch: ${displayValue(result.previous_branch)}`);
   lines.push(`Remote: ${displayValue(result.remote)}`);
@@ -206,8 +332,35 @@ function appendPostMergeNextWork(lines, result) {
   lines.push(`Next work branch: ${displayValue(result.next_branch)}`);
   lines.push(`Final branch: ${displayValue(result.final_branch)}`);
   lines.push(`Post-create comparison: ${displayValue(result.comparison)}`);
+  if (result.carryover) appendCarryover(lines, result.carryover);
   lines.push(`Tag mutation: ${result.tag_mutation ? "yes" : "no"}`);
   lines.push(`Release mutation: ${result.release_mutation ? "yes" : "no"}`);
+}
+
+function appendWorkCommit(lines, result) {
+  lines.push(`Repository: ${displayValue(result.repository)}`);
+  lines.push(`Branch: ${displayValue(result.branch)}`);
+  lines.push(`Delegate status: ${displayValue(result.status)}`);
+  if (result.head_before) lines.push(`Previous HEAD: ${displayValue(result.head_before)}`);
+  if (result.head) lines.push(`New HEAD: ${displayValue(result.head)}`);
+  if (result.commit_message) lines.push(`Commit message: ${oneLine(result.commit_message)}`);
+  if (result.message_source) lines.push(`Commit message source: ${displayValue(result.message_source)}`);
+  if (Array.isArray(result.paths)) lines.push(`Committed path count: ${result.paths.length}`);
+  if (Array.isArray(result.checks)) lines.push(`Pre-commit checks: ${result.checks.length ? result.checks.join(", ") : "none"}`);
+  if (result.version_notice) {
+    lines.push(`Version notice: ${displayValue(result.version_notice.version, "unresolved")}`);
+    lines.push(`Coupled version: ${displayValue(result.version_notice.coupled_version, "not-applicable")}`);
+    lines.push(`Recommended tag: ${displayValue(result.version_notice.recommended_tag, "unresolved")}`);
+    lines.push(`Version increment: ${displayValue(result.version_notice.increment_status, "not_applicable")}`);
+    if (result.version_notice.increment_status === "increment_not_observed") {
+      lines.push("Version increment reminder: not observed; this is non-blocking.");
+    }
+  }
+  if (Object.hasOwn(result, "working_tree_clean")) lines.push(`Working tree: ${result.working_tree_clean ? "clean" : "dirty"}`);
+  if (result.stage) lines.push(`Stopped stage: ${displayValue(result.stage)}`);
+  if (result.warning) lines.push(`Warning: ${displayValue(result.warning)}`);
+  if (result.reason) lines.push(`Reason: ${displayValue(result.reason)}`);
+  if (result.message) lines.push(`Detail: ${displayValue(result.message)}`);
 }
 
 function pathLikeAbsolute(value) {
@@ -283,6 +436,13 @@ export function renderHumanOutput({
     lines.push(`Classification: ${displayValue(error.classification, "unknown")}`);
     if (error.code) lines.push(`Code: ${error.code}`);
     lines.push(`Message: ${displayValue(error.message, "unknown error")}`);
+    if (workflow === "repository.post-merge.next-work" && error.recovery) {
+      lines.push(`Stopped stage: ${displayValue(error.recovery.stage)}`);
+      lines.push(`Previous branch: ${displayValue(error.recovery.previous_branch)}`);
+      lines.push(`Next work branch: ${displayValue(error.recovery.next_branch)}`);
+      lines.push(`Final branch: ${displayValue(error.recovery.final_branch, "unknown")}`);
+      appendCarryover(lines, error.recovery);
+    }
     if (error.bad_argument) lines.push(`Bad argument: ${error.bad_argument}`);
     lines.push(`Mutation invoked: ${mutationInvoked === null ? "unknown" : mutationInvoked ? "yes" : "no"}`);
     lines.push(`Retryability: ${displayValue(error.retryability, "review-required")}`);
@@ -294,8 +454,16 @@ export function renderHumanOutput({
     appendRepositoryStatus(lines, result ?? {});
   } else if (workflow === "repository.post-merge.next-work") {
     appendPostMergeNextWork(lines, result ?? {});
+  } else if (workflow === "work.commit") {
+    appendWorkCommit(lines, result ?? {});
   } else if (workflow === "github.issue.read") {
     appendIssueRead(lines, result ?? {});
+  } else if (workflow === "github.issue.handoff.list") {
+    appendHandoffList(lines, result ?? {});
+  } else if (workflow === "github.issue.handoff.batch.apply") {
+    appendHandoffBatch(lines, result ?? {});
+  } else if (workflow === "github.issue.handoff.dismiss") {
+    appendHandoffDismiss(lines, result ?? {});
   } else if (workflow.startsWith("github.issue.")) {
     appendIssueOperation(lines, workflow, result ?? {});
   } else if (workflow.startsWith("version.")) {
@@ -304,16 +472,20 @@ export function renderHumanOutput({
     appendWriting(lines, result ?? {});
   } else if (workflow === "pr.publish.apply") {
     appendPublication(lines, result ?? {});
+  } else if (workflow === "pr.recommit.push") {
+    appendRecommitPush(lines, result ?? {});
   } else if (workflow.startsWith("pr.recommit.")) {
     appendRecommit(lines, result ?? {});
   } else {
     appendGeneric(lines, result ?? {});
   }
   lines.push(`Mutation invoked: ${mutationInvoked === null ? "unknown" : mutationInvoked ? "yes" : "no"}`);
-  if ((workflow === "pr.publish.apply" || workflow === "repository.post-merge.next-work")
+  if ((workflow === "pr.publish.apply" || workflow === "pr.recommit.push" || workflow === "repository.post-merge.next-work")
     && result?.human_handoff) {
     lines.push("");
-    lines.push(displayValue(result.human_handoff));
+    lines.push(workflow === "pr.recommit.push"
+      ? "PR text draft saved; Pull Request and tag operations remain in GitHub."
+      : displayValue(result.human_handoff));
   }
   return `${lines.join("\n")}\n`;
 }

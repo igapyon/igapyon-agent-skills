@@ -1,0 +1,3 @@
+interface:
+  display_name: "igapyon miku daybook"
+  short_description: "Manage daybook records and GitHub Actions notifications"

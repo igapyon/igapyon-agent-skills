@@ -1,68 +1,101 @@
 # Install
 
-This archive contains igapyon's Agent Skills.
+This archive contains complete Agent Skill directories under `skills/`.
+Install one skill at a time from the extracted archive root.
 
-## Contents
+## Install or Update One Skill
 
-- `skills/`: Agent Skill source directories
-- `scripts/`: deterministic skill sync, generated-index checks, and build helpers
-- `EXTERNAL_SKILLS.lock`: pinned provenance for bundled external skills
-- `README.md`: repository overview and operating rules
-- `LICENSE`: license information
-- `pom.xml`, `.mvn/`, `lib/`, and `src/assembly/`: runnable build metadata and local index generator
+Choose a name from the `skills/` directory and set it below. The example
+installs `igapyon-mikuku-agent`. The destination defaults to `$CODEX_HOME` when
+set, or `$HOME/.codex`.
 
-## Install Or Update One Skill
+~~~sh
+SKILL_NAME=igapyon-mikuku-agent
+SKILL_CODEX_HOME=${CODEX_HOME:-"$HOME/.codex"}
+SKILL_SOURCE_DIR="skills/$SKILL_NAME"
+SKILL_DEST_PARENT="$SKILL_CODEX_HOME/skills"
+SKILL_DEST_DIR="$SKILL_DEST_PARENT/$SKILL_NAME"
 
-Run the sync helper from the repository or extracted archive root. It uses
-`$CODEX_HOME/skills`; when `CODEX_HOME` is unset, it defaults to
-`$HOME/.codex`.
+case "$SKILL_NAME" in
+  ""|-*|*-|*--*|*[!a-z0-9-]*)
+    echo "Invalid skill name: $SKILL_NAME" >&2
+    exit 1
+    ;;
+esac
 
-```sh
-sh scripts/sync-codex-skill.sh igapyon-mikuku-agent
-```
+if [ "${#SKILL_NAME}" -gt 64 ]; then
+  echo "Skill name is too long: $SKILL_NAME" >&2
+  exit 1
+fi
 
-The command mirrors only the named `skills/<skill-name>/` directory. Files no
-longer present in the source are removed from that skill's installed directory,
-and `.DS_Store` files are excluded. Repeat the command with another skill name
-to install or update that skill.
+if [ ! -d "$SKILL_SOURCE_DIR" ] || [ ! -f "$SKILL_SOURCE_DIR/SKILL.md" ] || [ -L "$SKILL_SOURCE_DIR" ]; then
+  echo "Skill source not found: $SKILL_SOURCE_DIR" >&2
+  exit 1
+fi
 
-To target a different Codex home:
+case "$SKILL_CODEX_HOME" in
+  /*) ;;
+  *)
+    echo "SKILL_CODEX_HOME must be an absolute path" >&2
+    exit 1
+    ;;
+esac
 
-```sh
-CODEX_HOME=/path/to/codex-home sh scripts/sync-codex-skill.sh igapyon-mikuku-agent
-```
+if ! command -v rsync >/dev/null 2>&1; then
+  echo "rsync is required" >&2
+  exit 1
+fi
+
+if [ -L "$SKILL_DEST_PARENT" ]; then
+  echo "Skills destination must not be a symbolic link" >&2
+  exit 1
+fi
+mkdir -p "$SKILL_DEST_PARENT"
+if [ -L "$SKILL_DEST_DIR" ]; then
+  echo "Skill destination must not be a symbolic link" >&2
+  exit 1
+fi
+
+mkdir -p "$SKILL_DEST_DIR"
+rsync -a --delete --exclude='.DS_Store' "$SKILL_SOURCE_DIR/" "$SKILL_DEST_DIR/"
+~~~
+
+This mirrors the selected skill directory. Files previously installed there
+but absent from the archive copy are removed. Other installed skills are not
+changed.
+
+To install a different skill, set `SKILL_NAME` to its directory name under
+`skills/` and rerun the commands.
+
+For a custom Codex home, replace the `SKILL_CODEX_HOME` assignment with an
+absolute path, for example `SKILL_CODEX_HOME=/absolute/path/to/codex-home`.
 
 ## Check For Drift
 
-Check an installed skill without changing it:
+Run this from the extracted archive root after setting `SKILL_NAME`,
+`SKILL_CODEX_HOME`, `SKILL_SOURCE_DIR`, and `SKILL_DEST_DIR` as above. It
+compares without changing the installation. An empty filtered result means
+the file contents and directory entries match.
 
-```sh
-sh scripts/sync-codex-skill.sh --check igapyon-mikuku-agent
-```
+~~~sh
+DRIFT_FILE=$(mktemp "${TMPDIR:-/tmp}/skill-drift.XXXXXX")
+trap 'rm -f "$DRIFT_FILE"' EXIT HUP INT TERM
+rsync -nrlci --delete --exclude='.DS_Store' "$SKILL_SOURCE_DIR/" "$SKILL_DEST_DIR/" >"$DRIFT_FILE"
+if awk '$1 != ".f..T...." { print; found=1 } END { exit !found }' "$DRIFT_FILE"; then
+  echo "Installed skill differs from source."
+else
+  echo "No content drift."
+fi
+~~~
 
-The check exits successfully only when file contents, additions, and removals
-match the repository source. It does not compare filesystem timestamps.
-
-## Manual Fallback
-
-If the helper is unavailable, use `rsync` with the same exact-mirror behavior.
-Set the two variables explicitly before running it.
-
-```sh
-SKILL_NAME=igapyon-mikuku-agent
-CODEX_HOME=${CODEX_HOME:-"$HOME/.codex"}
-mkdir -p "$CODEX_HOME/skills/$SKILL_NAME"
-rsync -a --delete --delete-excluded --exclude='.DS_Store' \
-  "skills/$SKILL_NAME/" "$CODEX_HOME/skills/$SKILL_NAME/"
-```
+The filter ignores the mtime-only `.f..T....` line emitted by macOS rsync
+2.6. An rsync error still stops the check.
 
 ## Reload And Verify
 
-Reload the Codex host application after syncing. Then verify the expected skill
-directory and run the non-writing drift check:
+Reload the Codex host application after syncing. Then verify the selected
+skill's entry point:
 
-```sh
-CODEX_HOME=${CODEX_HOME:-"$HOME/.codex"}
-test -f "$CODEX_HOME/skills/igapyon-mikuku-agent/SKILL.md"
-sh scripts/sync-codex-skill.sh --check igapyon-mikuku-agent
-```
+~~~sh
+test -f "$SKILL_DEST_DIR/SKILL.md"
+~~~

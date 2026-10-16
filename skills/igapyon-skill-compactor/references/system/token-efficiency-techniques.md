@@ -26,18 +26,16 @@ Centralizing checklist timing is also a token-efficiency technique: repeated
 "before implementation", "during implementation", and "after implementation"
 instructions stay in one reference instead of being copied into every checklist.
 
-Generated file indexes are also a token-efficiency technique. Use `miku-indexgen`
-to create or refresh `index.json` for skills with multiple references so agents
-can choose files from summaries before reading full contents.
+Generated file indexes can help when their summaries or metadata improve a
+repeated selection task. Several references by themselves are not a reason to
+add an index. First compare it with task-specific links and scoped listing or
+search, then record the consumer and maintenance path if adopting it.
 
-Search-friendly generated index formatting is also a token-efficiency
-technique. A compact `index.json` where each file entry fits on one line is
-easy to inspect with `rg`, `grep`, or line-oriented reads, reducing the need to
-load the whole index or full source files.
+When a generated index is adopted, search-friendly formatting can make its
+entries easier to inspect without reading the whole file.
 
-The generated `index.json` produced by `miku-indexgen` is the nearby reference
-example: it keeps each file entry compact and line-searchable while retaining
-metadata useful for file selection.
+The generated `index.json` produced by `miku-indexgen` is an example format for
+that optional use; it is not a required artifact for every skill.
 
 For true record lists, consider JSONL instead of a JSON array. JSONL keeps one
 record per line, which is easier to search, stream, sample, split, and inspect
@@ -76,10 +74,10 @@ when they inspect file lists, generated indexes, or command output. Design
 ordered file names so the natural filesystem order is the intended navigation
 order, not something the agent has to infer from prose.
 
-Use a search and reading ladder: grep/rg-friendly text first, generated
-`index.json` for compact file discovery, `distilled/` for curated runtime
-meaning, and full references or original sources only when the smaller layers
-are insufficient.
+Follow direct task links first. For unknown files, use scoped listing or search;
+consult an adopted `index.json` only when it helps select among the results.
+Read `distilled/` for curated runtime meaning and full references or original
+sources only when the smaller layers are insufficient.
 
 Purpose narrowing is also a token-efficiency technique. Before reading,
 rewriting, or compacting, reduce "everything" to the smallest useful decision
@@ -142,11 +140,10 @@ stable context is expected to be cache-friendly or discounted compared with
 fresh per-run prompt text. Report it as an expected runtime-efficiency benefit,
 not as a precise token or billing calculation.
 
-Markdown front matter for `miku-indexgen` is also a token-efficiency technique.
-Add concise `title`, `description`, and practical `topics` to reference
-Markdown when they improve generated `index.json` routing. Good front matter
-lets agents choose the right file from index summaries instead of reading many
-full Markdown files. Use [../agent-skill/frontmatter-templates.md](../agent-skill/frontmatter-templates.md)
+Markdown front matter for `miku-indexgen` can improve selection when an index
+has an adopted consumer. Add concise `title`, `description`, and practical
+`topics` only when they serve that use or another documented metadata use. Use
+[../agent-skill/frontmatter-templates.md](../agent-skill/frontmatter-templates.md)
 for samples and templates.
 
 Keep routing metadata concise. Overlong `description`, `category`, `topics`, or
@@ -323,8 +320,8 @@ rules without forcing broad repository exploration.
 Keep the distinction clear:
 
 - project/repository README: useful when it prevents repeated discovery work
-- Agent Skill-local README: usually avoid; use `SKILL.md`, `index.json`,
-  `references/`, `templates/`, `examples/`, and `distilled/` instead
+- Agent Skill-local README: usually avoid; use `SKILL.md`, `references/`,
+  `templates/`, `examples/`, and `distilled/` instead
 - explicitly useful Agent Skill-local README: acceptable as a human-facing entry
   map for background, philosophy, directory layout, and maintenance workflow,
   but do not copy that background into runtime instructions
@@ -350,7 +347,7 @@ too destructive.
 
 File-native organization should usually come before RAG or database-backed
 retrieval for Agent Skill-scale work. Markdown, front matter, directory
-structure, generated `index.json`, distilled files, templates, and examples can
-solve many routing problems with low operational overhead. If the collection
+structure, selectively adopted indexes, distilled files, templates, and
+examples can solve many routing problems with low operational overhead. If the collection
 later outgrows this, the same curated files can become input to RAG, vector
 search, RDBMS-backed lookup, or MCP-backed retrieval.

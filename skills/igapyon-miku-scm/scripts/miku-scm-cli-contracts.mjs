@@ -466,12 +466,26 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       operational_artifacts: ["workplace/miku-scm/issue-close-attempts"],
     },
   ),
+  "github.issue.handoff.list": contract(
+    "List pending reviewed Issue handoffs without exposing apply arguments.",
+    [
+      option("--root", "<path>", "Repository root containing approval handoffs.", {
+        default: "current directory",
+      }),
+    ],
+    [],
+    {
+      operational_artifacts: ["workplace/miku-scm/handoffs"],
+      notes: ["Returns stable IDs, 12-character approval suffixes when available, and review summaries for pending handoffs only."],
+    },
+  ),
   "github.issue.handoff.apply": contract(
-    "Apply the only pending reviewed Issue handoff without reconstructing its arguments.",
+    "Apply one pending reviewed Issue handoff without reconstructing its arguments.",
     [
       option("--root", "<path>", "Repository root containing the pending handoff.", {
         default: "current directory",
       }),
+      option("--handoff", "<handoff-selector>", "Human-supplied full pending ID, or a listed 12-character approval suffix that resolves uniquely."),
       apply,
     ],
     ["--apply"],
@@ -479,7 +493,50 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "Depends on the reviewed Issue apply workflow",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Exactly one pending handoff must exist."],
+      notes: ["Without --handoff, exactly one pending handoff must exist. A suffix must resolve to exactly one pending handoff."],
+    },
+  ),
+  "github.issue.handoff.batch.apply": contract(
+    "Apply an explicit ordered batch of pending reviewed Issue handoffs.",
+    [
+      option("--root", "<path>", "Repository root containing pending handoffs.", {
+        default: "current directory",
+      }),
+      option("--handoff", "<handoff-selector>", "Human-supplied full pending ID, or a uniquely resolving listed suffix, in approved order.", {
+        required: true,
+        repeatable: true,
+        minimum_occurrences: 2,
+        maximum_occurrences: 20,
+      }),
+      apply,
+    ],
+    ["--handoff", "<first-selector>", "--handoff", "<second-selector>", "--apply"],
+    {
+      network_access: "Depends on each reviewed Issue apply workflow",
+      authentication: "existing gh authentication",
+      operational_artifacts: ["workplace/miku-scm/handoffs"],
+      notes: [
+        "Validates every unique pending handoff resolved from the supplied selectors before the first apply.",
+        "Preserves the supplied order and stops before later handoffs after any non-applied result.",
+      ],
+    },
+  ),
+  "github.issue.handoff.dismiss": contract(
+    "Mark one explicitly selected pending Issue handoff as not-applied.",
+    [
+      option("--root", "<path>", "Repository root containing the pending handoff.", {
+        default: "current directory",
+      }),
+      option("--handoff", "<handoff-selector>", "Human-supplied full pending ID, or a listed suffix that resolves uniquely.", {
+        required: true,
+      }),
+      apply,
+    ],
+    ["--handoff", "<handoff-selector>", "--apply"],
+    {
+      network_access: "none",
+      operational_artifacts: ["workplace/miku-scm/handoffs"],
+      notes: ["Changes only the selected pending handoff to not-applied."],
     },
   ),
   "repository.maintenance.diagnose": contract(
@@ -538,7 +595,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     [
       repoPath,
       option("--remote", "<name>", "Git remote name.", { default: "origin" }),
-      option("--base", "<branch>", "Base branch; inferred from the current done branch when omitted."),
+      option("--base", "<branch>", "Base branch; inferred from the current done branch or remote HEAD when omitted."),
       option("--confirmed-merged", "", "Confirm that the PR was merged.", { required: true }),
       apply,
     ],
@@ -547,6 +604,22 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "Git fetch and remote tag read",
       authentication: "existing Git authentication",
       notes: ["Creates and switches to one local branch. This is an apply workflow despite its ID."],
+    },
+  ),
+  "work.commit": contract(
+    "Stage every non-ignored current change, run fixed consistency checks, and create one local commit.",
+    [
+      repoPath,
+      option("--message", "<commit-message>", "Optional reviewed commit message; a deterministic fallback is used when omitted."),
+      apply,
+    ],
+    ["--message", "Update work", "--apply"],
+    {
+      operational_artifacts: ["workplace/miku-scm/runs"],
+      notes: [
+        "Stages all current non-ignored changes; it never pushes, tags, or creates a Release.",
+        "Stops before staging conflicts, frozen -done branches, sensitive-path candidates, and coupled-version mismatches.",
+      ],
     },
   ),
   "pr.publish.preflight": contract(
@@ -595,6 +668,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     "Collect PR draft, branch, base, backup, and commit evidence without rewriting commits.",
     [
       repoPath,
+      option("--remote", "<name>", "Git remote namespace used for automatic base resolution.", { default: "origin" }),
       option("--base", "<git-ref>", "Explicit base ref; otherwise resolve a safe candidate."),
       option("--pr-draft", "<repository-relative-path>", "Reviewed PR draft file."),
     ],
@@ -604,6 +678,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     "Create a backup branch, soft-reset to the reviewed base, and recommit the reviewed draft.",
     [
       repoPath,
+      option("--remote", "<name>", "Git remote namespace used for automatic base resolution.", { default: "origin" }),
       option("--base", "<git-ref>", "Reviewed base ref.", { required: true }),
       option("--pr-draft", "<repository-relative-path>", "Reviewed PR draft file.", {
         required: true,
@@ -612,6 +687,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       apply,
     ],
     [
+      "--remote", "origin",
       "--base", "origin/devel",
       "--pr-draft", "workplace/miku-scm/pr-drafts/<draft>.md",
       "--apply",
@@ -619,6 +695,27 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     {
       operational_artifacts: ["local backup branch and rewritten local commit"],
       notes: ["Never pushes or creates a Pull Request."],
+    },
+  ),
+  "pr.recommit.push": contract(
+    "Resolve the base and reviewed Pull Request text draft, then create a backup, recommit, and conditionally push in one fixed transition.",
+    [
+      repoPath,
+      option("--remote", "<name>", "Git remote name.", { default: "origin" }),
+      option("--base", "<git-ref>", "Optional base override; otherwise resolve the safe current-branch candidate."),
+      option("--pr-draft", "<repository-relative-path>", "Optional reviewed PR draft override; otherwise resolve the latest branch-matching candidate."),
+      apply,
+    ],
+    ["--apply"],
+    {
+      network_access: "Git remote read and one exact-lease or new-branch push",
+      authentication: "existing Git authentication",
+      operational_artifacts: ["local backup branch", "workplace/miku-scm/ok-push"],
+      notes: [
+        "The explicit draft recommit push request authorizes only this exact branch publication; it never creates a Pull Request, tag, or Release.",
+        "No matching reviewed Pull Request text draft stops before backup creation; the runner never invents PR prose.",
+        "Current apply support is macOS and native Windows; other platforms stop before backup creation.",
+      ],
     },
   ),
   "version.status": contract(
@@ -665,12 +762,12 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     },
   ),
   "writing.pr.prepare": contract(
-    "Collect bounded repository evidence for drafting Pull Request prose.",
+    "Collect bounded repository evidence for drafting Pull Request prose; without --target, prefer the complete branch range when two or more commits are ahead of the resolved base.",
     [
       repoPath,
       option("--target", "<git-ref-or-range>", "Optional reviewed comparison target."),
     ],
-    ["--target", "origin/devel...HEAD"],
+    ["--repo", "."],
   ),
   "writing.release.prepare": contract(
     "Collect bounded repository evidence for drafting Release prose.",

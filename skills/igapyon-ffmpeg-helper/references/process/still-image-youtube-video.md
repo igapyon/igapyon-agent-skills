@@ -8,7 +8,7 @@ one audio file.
 Ask for these if missing:
 
 - still image path
-- normalized audio path
+- adjusted WAV master path
 - output video path
 
 The still image may be a jacket, cover, title card, or other manually prepared
@@ -130,6 +130,8 @@ YouTube 公式推奨に寄せるなら MP4/H.264/AAC が無難です。MKV は W
 - Audio codec: AAC-LC.
 - Audio sample rate: 48 kHz.
 - Audio bitrate: 384 kbps for stereo.
+- Audio input: the native-rate adjusted WAV master. Convert directly to 48 kHz
+  AAC here; do not insert a hi-res or lo-res intermediate, or apply gain again.
 - MP4 fast start: include `-movflags +faststart`.
 - Duration: when the audio duration is known, add `-t AUDIO_DURATION` to make
   the MP4 container duration match the audio reliably. Keep `-shortest` as an
@@ -141,14 +143,14 @@ For default YouTube upload workflows, use MP4. First measure the prepared audio
 duration:
 
 ```sh
-ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "workplace/ffmpeg-helper-260114_160901/merged_gain-lores-tp0p5-plain.wav"
+ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "workplace/ffmpeg-helper-260114_160901/merged_gain-f32-tp0p5-plain.wav"
 ```
 
 Then pass that duration with `-t`. For example, if the measured duration is
 `635.000000`:
 
 ```sh
-ffmpeg -loop 1 -framerate 30 -i "cover.png" -i "workplace/ffmpeg-helper-260114_160901/merged_gain-lores-tp0p5-plain.wav" \
+ffmpeg -loop 1 -framerate 30 -i "cover.png" -i "workplace/ffmpeg-helper-260114_160901/merged_gain-f32-tp0p5-plain.wav" \
   -t 635.000000 \
   -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,format=yuv420p" \
   -c:v libx264 -profile:v high -preset medium -tune stillimage -crf 18 -g 15 -bf 2 \
@@ -159,9 +161,10 @@ ffmpeg -loop 1 -framerate 30 -i "cover.png" -i "workplace/ffmpeg-helper-260114_1
 ```
 
 For a single-file workflow, use
-`workplace/ffmpeg-helper-260114_160901/01_gain-lores-tp0p5-plain.wav` instead of
-`workplace/ffmpeg-helper-260114_160901/merged_gain-lores-tp0p5-plain.wav`. For
-hi-res workflows, use the corresponding `*-hires-tp0p5-plain.wav` file.
+`workplace/ffmpeg-helper-260114_160901/01_gain-f32-tp0p5-plain.wav` instead of
+`workplace/ffmpeg-helper-260114_160901/merged_gain-f32-tp0p5-plain.wav`.
+If the source rate is already 48 kHz, no sample-rate change is needed. Retain
+the master after encoding the MP4.
 
 If the user explicitly prefers a lighter static-image video, a lower frame rate
 such as 2 fps is acceptable. In that case, adjust the GOP length to half the
@@ -178,3 +181,28 @@ shows 11:04.50" style mismatch.
 For the source-preserving MKV route, use `-c:a copy` and output `.mkv`.
 
 Log the video creation command to the job directory's `commands.log`.
+
+## Verify the Final MP4
+
+Save the final container and stream information:
+
+```sh
+ffprobe -v error -show_entries format=duration,size:stream=codec_type,codec_name,profile,sample_rate,channels,bit_rate -of json "workplace/ffmpeg-helper-260114_160901/260114_160901-merged-youtube.mp4" > "workplace/ffmpeg-helper-260114_160901/youtube-video-info.json"
+```
+
+Confirm the duration matches the master, the audio is AAC-LC at 48 kHz, and
+the channel count is as intended. Report both the nominal `384k` request and
+the file's reported audio bitrate; the actual average can be lower.
+
+Measure the decoded AAC audio, rather than assuming the master's true peak
+also describes the MP4:
+
+```sh
+ffmpeg -hide_banner -nostats -i "workplace/ffmpeg-helper-260114_160901/260114_160901-merged-youtube.mp4" -map 0:a:0 -vn -af "ebur128=peak=true:framelog=verbose" -f null - > "workplace/ffmpeg-helper-260114_160901/youtube-audio-verify.log" 2>&1
+```
+
+Read the summary's `True peak` section and report its value alongside the WAV
+measurement. Report an unexpected peak before proposing a revised gain; do not
+silently add compression or a limiter. This command only measures the existing
+file and discards its output. For the requested MKV audio-copy route, verify
+the copied PCM format instead of expecting AAC.

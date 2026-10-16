@@ -61,6 +61,8 @@ Preflight is READONLY and uses only the fixed `gh issue view` and, when label ch
 
 Wait for explicit human approval after displaying all of this evidence. Approval authorizes one attempt for only the displayed repository, Issue, draft digest, current body digest, `updated_at`, and apply workflow contract pair. Editing the draft, changing the workflow contract, or observing a changed Issue invalidates that approval.
 
+When this handoff is a later step in one explicitly ordered approval batch for the same Issue, the batch runner may perform the dependency preflight defined in [approval-handoff.md](approval-handoff.md). It may refresh only the state expectations permitted there; the reviewed repository, Issue, draft and operation digests, label operations, and contract pair remain fixed.
+
 ## Apply and Conflict Detection
 
 After explicit approval, use the exact `apply_arguments` returned by preflight:

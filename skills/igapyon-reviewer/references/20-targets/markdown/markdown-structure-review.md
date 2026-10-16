@@ -59,7 +59,7 @@ the title and headings should help an agent decide what to read next. If the
 document has many sections, consider whether an index, summary, or map section
 is needed.
 
-When Markdown is used as input to a generated discovery index such as
+When Markdown is used as input to an adopted discovery index such as
 `index.json`, check whether titles and first headings produce useful generated
 summaries. A valid Markdown file can still be weak for agent discovery if its
 first heading is vague, duplicated across many files, or unrelated to the

@@ -22,9 +22,9 @@ test("PR draft resolution prefers pr-drafts over legacy root files", async (t) =
   const result = findDrafts(root, branch);
   assert.equal(result.slug, branch);
   assert.equal(result.drafts.length, 2);
-  assert.equal(result.drafts[0].rel, path.join("workplace", "miku-scm", "pr-drafts", standardName));
+  assert.equal(result.drafts[0].rel, `workplace/miku-scm/pr-drafts/${standardName}`);
   assert.equal(result.drafts[0].priority, 0);
-  assert.equal(result.drafts[1].rel, path.join("workplace", "miku-scm", legacyName));
+  assert.equal(result.drafts[1].rel, `workplace/miku-scm/${legacyName}`);
   assert.equal(result.drafts[1].priority, 1);
 });
 
@@ -41,6 +41,6 @@ test("PR draft resolution chooses the newest timestamp inside pr-drafts", async 
   await writeFile(path.join(standard, newer), "newer\n", "utf8");
 
   const result = findDrafts(root, branch);
-  assert.equal(result.drafts[0].rel, path.join("workplace", "miku-scm", "pr-drafts", newer));
-  assert.equal(result.drafts[1].rel, path.join("workplace", "miku-scm", "pr-drafts", older));
+  assert.equal(result.drafts[0].rel, `workplace/miku-scm/pr-drafts/${newer}`);
+  assert.equal(result.drafts[1].rel, `workplace/miku-scm/pr-drafts/${older}`);
 });

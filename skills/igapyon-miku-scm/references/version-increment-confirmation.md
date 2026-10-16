@@ -1,6 +1,11 @@
 # Version Increment Check Before Add or Commit
 
-Check for a required version increment before running `git add` or `git commit` under the miku SCM workflow. Do not repeatedly remind the human when a completed increment or an explicit no-increment confirmation remains valid in the same continuous session.
+Check for a required version increment before using the legacy ordinary `git add`
+or `git commit` path under the miku SCM workflow. Do not repeatedly remind the
+human when a completed increment or an explicit no-increment confirmation
+remains valid in the same continuous session. The fixed `work.commit` workflow
+does not use this conversational gate: it records a non-blocking version notice
+and continues unless coupled sources are actually inconsistent.
 
 ## Session Version Check Record
 

@@ -113,7 +113,8 @@ target repository's documented convention or authoritative existing headers.
 For an `igapyon-managed Agent Skill`, check independently of its distribution
 or project family:
 
-- `index.json` is present and referenced from `SKILL.md` as a discovery index
+- a generated `index.json` is required only when the target's own policy adopts
+  it; otherwise check the documented direct or scoped-search route
 - `SKILL.md` stays lean and places detailed material under `references/`
 - no runtime instruction reaches another skill's private files through a
   cross-skill relative path such as `../other-skill/...`

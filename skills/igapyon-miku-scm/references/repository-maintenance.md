@@ -111,9 +111,10 @@ backup/YYYY-MM-DD-HHMM-2
 backup/YYYY-MM-DD-HHMM-3
 ```
 
-Interpret the timestamp in local time. Treat the unsuffixed branch as sequence
-1 and numeric suffixes as later branches in the same minute. Sort by timestamp,
-then by sequence, newest first.
+Interpret the timestamp in `Asia/Tokyo` (JST), independent of the host operating
+system timezone. Treat the unsuffixed branch as sequence 1 and numeric suffixes
+as later branches in the same minute. Sort by timestamp, then by sequence,
+newest first.
 
 Keep the newest three valid backup names regardless of age. Keep every other
 valid backup until its age is strictly greater than 168 hours. Preserve

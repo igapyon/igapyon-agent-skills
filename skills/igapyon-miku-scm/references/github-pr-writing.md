@@ -10,10 +10,11 @@ After `igapyon-miku-scm` is active, enter PR mode for similar wording such as `p
 
 ## Target Rules
 
-- In PR Soft Reset Recommit mode, resolve the reset base first and draft from exactly `<base>..HEAD`, including every commit that the recommit will collapse. Do not use the latest-single-commit default in this mode.
-- If the user asks for PR text without a commit ID, commit range, branch comparison, or explicit working-tree target, first run `git log --oneline --decorate -1` to resolve the current latest commit ID.
-- Use the commit ID shown by that command as the single commit PR target.
-- Interpret that default as `<resolved-commit>^..<resolved-commit>` for the change content, and inspect the single commit `<resolved-commit>`.
+- A bare `recommit` request implicitly requests PR writing for PR Soft Reset Recommit. Resolve the reset base first and draft from exactly `<base>..HEAD`, including every commit that the recommit will collapse. Do not ask the user to specify `PR` separately.
+- If the user asks for PR text without a commit ID, commit range, branch comparison, or explicit working-tree target, resolve the current branch base with the PR Soft Reset Recommit base rules and count `<base>..HEAD`.
+- When the branch is two or more commits ahead, use the complete `<base>..HEAD` range as the PR target and guide the next step toward recommit preflight.
+- When the branch is exactly one commit ahead, use that commit as the single-commit PR target and keep recommit optional unless the user explicitly says `recommit`.
+- When the base cannot be resolved, use the bounded latest-single-commit fallback and disclose the limitation.
 - This default means committed history only. Do not include uncommitted working-tree changes unless the user explicitly asks for them.
 - If the user says `対象コミット <commit> における変更内容`, draft from exactly that commit.
 - Do not include parent commits, child commits, additional ranges, or the current working tree unless the user explicitly asks for them.

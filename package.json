@@ -3,10 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:skill-index-policy": "node --test scripts/skill-index-policy.test.mjs scripts/release-archive-files.test.mjs scripts/skill-index-policy.integration.test.mjs scripts/skill-reference-routing.test.mjs",
     "benchmark:github-writer": "node skills/igapyon-github-writer/scripts/github-writer-benchmark.mjs",
-    "test:github-writer": "node --test skills/igapyon-github-writer/tests/*.test.mjs",
+    "test:github-writer": "node skills/igapyon-github-writer/scripts/github-writer-test-suite.mjs --full",
+    "test:github-writer:fast": "node skills/igapyon-github-writer/scripts/github-writer-test-suite.mjs --fast",
+    "test:github-writer:full": "node skills/igapyon-github-writer/scripts/github-writer-test-suite.mjs --full",
     "test:miku-scm": "node skills/igapyon-miku-scm/scripts/miku-scm-test-suite.mjs --full",
-    "test:miku-scm:fast": "node --test skills/igapyon-miku-scm/tests/miku-scm-*.test.mjs skills/igapyon-miku-scm/tests/github-issue-read.test.mjs skills/igapyon-miku-scm/tests/pr-draft-location.test.mjs",
+    "test:miku-scm:fast": "node --test skills/igapyon-miku-scm/tests/miku-scm-*.test.mjs skills/igapyon-miku-scm/tests/github-issue-read.test.mjs skills/igapyon-miku-scm/tests/pr-draft-location.test.mjs skills/igapyon-miku-scm/tests/pr-recommit-push.test.mjs skills/igapyon-miku-scm/tests/work-commit.test.mjs",
     "test:miku-scm:full": "node skills/igapyon-miku-scm/scripts/miku-scm-test-suite.mjs --full"
   }
 }

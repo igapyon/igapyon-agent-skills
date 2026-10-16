@@ -47,8 +47,8 @@ Prefer a ladder that avoids reading full source material until necessary:
 
 1. Use grep/rg-friendly names, headings, front matter, checklist items, and
    summaries so targeted search can find likely material.
-2. Use generated `index.json` so discovery can often happen in one compact file
-   before searching or reading many files.
+2. When the relevant file is unknown, use scoped listing or targeted search.
+   Consult an adopted generated index only when it adds useful selection data.
 3. Check `distilled/` when a curated runtime summary may already contain the
    needed meaning.
 4. Read references or original source material only when the index and distilled

@@ -17,6 +17,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const ISSUE_UPDATE_APPLY_CONTRACT = workflowContractById().get("github.issue.update.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -243,7 +244,7 @@ async function resolveDraft(options) {
   return {
     root,
     draft,
-    relativeDraft: path.relative(root, draft),
+    relativeDraft: relativeOperationalPath(root, draft),
     content,
     digest: sha256(content),
     ...parseDraft(content),
@@ -585,7 +586,7 @@ export async function runIssueUpdate(options, dependencies = {}) {
     proposed_body_sha256: sha256(draft.body),
     add_labels: options.addLabels,
     remove_labels: options.removeLabels,
-    attempt_record: path.relative(draft.root, operational.attempt),
+    attempt_record: relativeOperationalPath(draft.root, operational.attempt),
     retrying_not_applied_attempt: Boolean(priorAttempt),
   };
 
@@ -658,7 +659,7 @@ export async function runIssueUpdate(options, dependencies = {}) {
       operational.attempt,
       priorAttempt,
     );
-    pendingRecord.recovered_from_attempt = path.relative(
+    pendingRecord.recovered_from_attempt = relativeOperationalPath(
       draft.root,
       archivedNotAppliedAttempt,
     );

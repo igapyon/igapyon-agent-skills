@@ -29,9 +29,13 @@ Read this before making or revisiting decisions, especially when the work seems 
 
 Use this section for reusable decisions about build/test/package/comparison/roundtrip harness execution. Do not paste full failure logs here.
 
-### YYYY-MM-DD: Run package before comparison harness
+When an actual harness decision is made, add an entry in this shape:
 
-- Context: The comparison harness reads generated artifacts from the build output directory.
-- Decision: Build the required artifacts before running the comparison harness.
-- Reason: Running comparison against missing or stale artifacts caused false failures.
-- Next time: Run the package step first, then run the focused comparison command.
+```markdown
+### YYYY-MM-DD: Short decision title
+
+- Context: What failed or what operational risk was found.
+- Decision: The reusable execution decision for this repository.
+- Reason: Why this decision reduces false failures or repeated work.
+- Next time: The recommended command order or harness precaution.
+```
