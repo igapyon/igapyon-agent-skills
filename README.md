@@ -425,7 +425,7 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 - `miku-text-bundle-skills` `v1.6.0`: `skills/igapyon-miku-text-bundle/`
 - `miku-repo-bundle-skills` `v0.6.0` (experimental): `skills/igapyon-miku-repo-bundle/`
 - `miku-text-file-ops-skills` `v0.6.0`: `skills/igapyon-miku-text-file-ops/`
-- `miku-prompt-lint-skills` `v0.6.0`: `skills/igapyon-miku-prompt-lint/`
+- `miku-prompt-lint-skills` `v0.7.0`: `skills/igapyon-miku-prompt-lint/`
 - `miku-ai-assistant-builder-skills` `v0.14.0`: `skills/igapyon-miku-ai-assistant-builder/`
 - `miku-ms-office-skills` `v0.7.3`: `skills/igapyon-miku-ms-office/`
 - `miku-json2xlsx-skills` `v0.5.0`: `skills/igapyon-miku-json2xlsx/`
