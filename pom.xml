@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20261017.2</version>
+  <version>1.20261017.3</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -25,7 +25,7 @@
     <external.miku-text-file-ops-skills.ref>cd270f0736c9a7b5760a6a2b28942e6ddb1c5692</external.miku-text-file-ops-skills.ref>
     <external.miku-text-file-ops-skills.skillName>igapyon-miku-text-file-ops</external.miku-text-file-ops-skills.skillName>
     <external.miku-prompt-lint-skills.repo>https://github.com/igapyon/miku-prompt-lint-skills.git</external.miku-prompt-lint-skills.repo>
-    <external.miku-prompt-lint-skills.ref>86850112fdb173037c5780c984d36d8f7e33bfd7</external.miku-prompt-lint-skills.ref>
+    <external.miku-prompt-lint-skills.ref>2e5bb9e76a56f7bf1a3fde8d196526234d8d0f7f</external.miku-prompt-lint-skills.ref>
     <external.miku-prompt-lint-skills.skillName>igapyon-miku-prompt-lint</external.miku-prompt-lint-skills.skillName>
     <external.miku-ai-assistant-builder-skills.repo>https://github.com/igapyon/miku-ai-assistant-builder-skills.git</external.miku-ai-assistant-builder-skills.repo>
     <external.miku-ai-assistant-builder-skills.ref>cf1f0bbe42ca9ea8af9a1c6f09c2956a85224b80</external.miku-ai-assistant-builder-skills.ref>
