@@ -42,6 +42,10 @@ authorization. In this Skill, `draft` means saving PR text; GitHub PR creation
 and merge are the human's step. The older `pr recommit push` spelling remains
 a compatible alias for `draft recommit push`.
 
+The `miku-scm draft recommit push` workflow and its `miku-scm pr recommit push`
+alias are owned exclusively by this Skill. Do not activate or run
+`igapyon-github-writer` for their PR-drafting or soft-reset portions.
+
 ### Unstaged Work Remaining After Merge
 
 When `miku-scm github merge done` is requested on a `-done` branch with

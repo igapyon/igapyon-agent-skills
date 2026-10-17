@@ -1,13 +1,13 @@
 ---
 name: igapyon-qiita-writer
-description: Use only when the user explicitly asks for igapyon-qiita-writer, asks to create or revise a Japanese Qiita technical article in igapyon style, or clearly requests Qiita-like technical Markdown with front matter/tags or Note metadata. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
+description: Use only when the user explicitly asks to use igapyon-qiita-writer or to create, revise, or prepare metadata for a Japanese Qiita technical article in igapyon style. Generic writing, tags, front matter, and README-to-article requests without Qiita context do not activate it. Note metadata belongs to igapyon-note-writer. If asked about availability, introduce this skill and wait for a request to use it.
 ---
 
 # igapyon-qiita-writer
 
 Qiita 向けの日本語技術記事を作成・整理・改善するための skill です。
 
-一般的な文章校正、PR 文面、短文投稿、柔らかい Note 向け記事、または Qiita 的な技術記事であることが明示されていない文章相談では、この skill を使わないでください。
+Qiita 記事への作業またはこの skill の使用が明示されていない一般的な文章校正、PR 文面、短文投稿、Note 向け記事、文章相談では、この skill を使わないでください。
 Qiita 記事向けの skill があるか聞かれた場合は、この skill を候補として案内し、ユーザーが使用を依頼するまで適用しないでください。
 
 この skill の目的は、文章を単にきれいにすることではありません。  
@@ -31,23 +31,25 @@ Note 記事を書く場面でこの skill を直接の主担当にはしませ�
 
 ## When To Use
 
-次のような依頼では、この skill を使います。
+この skill の使用依頼、または Qiita 記事への明確な作業依頼で開始します。合意済みの Qiita 作業では、毎回スキル名や媒体名を繰り返す必要はありません。「タグを考えて」「front matter を付けて」「README から記事を書いて」だけでは、新たにこの skill を開始しません。
+
+対象が明確な依頼の例:
 
 - 「Qiita 記事にして」
 - 「Qiita 用に整えて」
-- 「タグを考えて」
-- 「front matter を付けて」
-- 「技術記事として構成して」
-- 「README から記事を書いて」
+- 「Qiita 記事用のタグを考えて」
+- 「Qiita 用の front matter を付けて」
+- 「Qiita の技術記事として構成して」
+- 「README から Qiita 記事を書いて」
 - 「この開発ログを Qiita 向けにしたい」
-- `igapyon-qiita-writer` が明示されたとき
+- 「igapyon-qiita-writer を使って」
 
 単なる短文 SNS 投稿、柔らかい Note 向け体験文、音楽寄りの随筆、PR 文面作成では、この skill を無理に使いません。
 
 ## Supplemental Use For Note Articles
 
 Note 記事の正本、保存場所、Note 掲載用属性情報は `igapyon-note-writer` 側の規則に従います。
-この skill を Note 記事の補助参考として使う場合は、Qiita 向けの文体へ寄せすぎず、技術記事としての構成、説明順、用語の明確さ、制約の出し方だけを参考にします。
+ユーザーがこの skill を Note 記事の補助参考として使うよう明示的に依頼した場合は、Qiita 向けの文体へ寄せすぎず、技術記事としての構成、説明順、用語の明確さ、制約の出し方だけを参考にします。Note の掲載情報だけの依頼は、この補助利用を開始しません。
 
 ## Qiita Article Shape
 
@@ -136,7 +138,7 @@ Qiita 記事を新規作成・更新する場合は、`skills/igapyon-qiita-writ
 - `references/mikuproject/`
 - `references/mikuscore/`
 
-記事候補は対象directoryのファイル名・本文検索で探します。複数の記事群を見渡す際は、暫定保持中の[index.json](index.json)のpath・directory・title（ある場合）・summaryも必要に応じて利用できます。summaryは先頭見出しなどから生成した短い情報で、記事内容の要約とは限りません。保持価値の比較は未完了なので、選択した記事の原文で内容を確認します。
+記事候補は対象directoryのファイル名・本文検索や、既知の参照先から探します。複数の記事群を見渡す際は、横断探索用の[index.json](index.json)のpath・directory・title（ある場合）・summaryも任意に利用できます。summaryは先頭見出しなどから生成した短い情報で、記事内容の要約とは限りません。選択した記事の原文で内容を確認してください。
 
 CLI リファレンス記事を書く場合は、次の pattern を先に参照します。
 
