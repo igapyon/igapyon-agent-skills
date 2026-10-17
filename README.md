@@ -1,483 +1,576 @@
 # igapyon-agent-skills
 
-個人用の Agent Skills を管理するためのリポジトリです。
+Agent Skills for turning everyday work into concrete results: readable articles,
+connected task records, reviewable GitHub changes, reusable knowledge files,
+Office document text, project plans, and score or audio deliverables.
 
-日本語の Note / Qiita 記事作成と、技術・音楽投稿の伴走型ライティング支援に使う skill を置いています。
+The release bundle contains **25 skills**: **15 maintained in this repository**
+and **10 bundled from pinned upstream repositories**. Each skill combines
+instructions for an AI agent with the references, templates, assets, or
+executable helpers needed for its workflow. Many writing workflows target
+Japanese content; the catalog explains their purpose in English.
 
-## 方針
+Download the bundle from [GitHub Releases](https://github.com/igapyon/igapyon-agent-skills/releases)
+to choose from all 25 skills. A source checkout contains the 15 internal skill
+directories; external skills are incorporated when the release bundle is built.
 
-- skill は `skills/` 配下に置く
-- 1 skill = 1 directory
-- skill ごとの詳細仕様は各 `SKILL.md` に書く
-- skill の具体ルール、例、長めの手順は `references/` 配下に置く
-- Note 記事 Markdown は、姉妹リポジトリ `../mikuku-articles/` を正本として管理する
-- Qiita 記事 Markdown は、`skills/igapyon-qiita-writer/references/` を正本として管理する
-- skill の参照資料の探索方針は [reference discovery policy](docs/policies/reference-discovery.md) に従う。`index.json` は共通必須成果物にしない
-- repo 全体の運用ルールはこの `README.md` に書く
-- 作業メモは repo 直下の `TODO.md` に集約する
-- AI agent 作業を再開する前は、`GOAL.md`、`TODO.md`、`DECISIONS.md`、`HANDOFF.md` を確認する
-- ローカル作業用に `workplace/` を置き、`workplace/.gitkeep` だけを Git 管理下に入れる
-- Java / Maven 開発では `.mvn/jvm.config` を repo に含める
+## Skill Catalog
 
-## バージョン更新
+Both tables describe the complete set shipped in the release bundle. Use a skill
+name to jump to its detailed explanation, expected results, and example.
 
-この repo 全体のバージョンは、root の `pom.xml` を正本として管理します。
+### Maintained In This Repository (15)
 
-バージョン形式は `1.YYYYMMDD.N` を基本とし、`YYYYMMDD` はその保守更新日、`N` は同じ日付内の更新番号を表します。  
-たとえば 2026-05-21 の最初の保守更新では、repo 全体のバージョンを `1.20260521.1` にします。
-
-repo 全体のバージョンを更新するときは、日付部分に合わせて `skills/igapyon-mikuku-agent/references/VERSION.md` の `Version` も更新します。  
-`みくく` のバージョンは `YYYYMMDDx` 形式で、`YYYYMMDD` を repo 全体のバージョンの日付部分と揃えます。  
-同じ日付内の更新は、`みくく` 側では `a`, `b`, `c` ... と suffix を進め、repo 全体のバージョンでは対応する `N` を `1`, `2`, `3` ... と進めます。
-
-あわせて `skills/igapyon-miku-scm/scripts/miku-scm-run.mjs` と `skills/igapyon-github-writer/scripts/github-writer-workflow-manifest.mjs` の `PRODUCT_VERSION` も同じ値へ更新します。これらは各skillの `--version` 応答に使う連動値です。
-
-バージョン更新時は、次の値が揃っていることを確認します。
-
-- root の `pom.xml`
-  - 例: `<version>1.20260604.1</version>`
-- `skills/igapyon-mikuku-agent/references/VERSION.md`
-  - 例: `Version: 20260604a`
-- `skills/igapyon-miku-scm/scripts/miku-scm-run.mjs` と `skills/igapyon-github-writer/scripts/github-writer-workflow-manifest.mjs`
-  - 例: `PRODUCT_VERSION = "1.20260604.1"`
-- `mvn clean package` で生成される release archive 名
-  - 例: `target/igapyon-agent-skills-1.20260604.1.zip`
-
-`みくく` 側だけを更新したい場合でも、repo 全体の保守更新として扱うなら `pom.xml` も同じ日付に更新します。逆に、repo 全体のリリースや保守更新ではない一時的な確認だけなら、バージョンを更新しません。
-
-`mvn validate`、`mvn generate-resources`、`mvn clean package` では、root版、`みくく` の日付・suffix、2つのskill runnerの `PRODUCT_VERSION` が対応していることを確認します。たとえば `1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
-
-## 複数 OS でのテスト
-
-miku-scm と GitHub Writer は、GitHub Actions で macOS と Windows の両方に対してテストを実行します。Windows の改行コードの違いを見つけた実例と、この構成の価値を [複数 OS でテストする価値](docs/maintenance/github-actions-cross-platform-testing.md) に記録しています。
-
-## 記事公開の優先順位
-
-技術記事は、まず Note 向けの記事として作成・公開することを優先します。
-
-Note では、みくく担当のテック主記事を一次公開記事として扱います。  
-文体は Qiita 寄りの技術記事文体とし、技術内容、使い方、CLI、仕様、手順、コマンド例などをしっかり含めます。
-
-Qiita では、Note のテック主記事をもとに、技術詳細、手順、CLI リファレンス、設定例、コマンド例などをより参照しやすい形で後追い整理します。
-
-従来型の Note 記事も引き続き作成します。  
-こちらはうさぴょん担当とし、Note らしい柔らかい文体で、開発背景、使いどころ、利用イメージ、つまずきや意図などを含めた読み物として整えます。
-
-記事の正本管理は、媒体ごとに分けます。
-
-- Note 向け記事の正本: `../mikuku-articles/`
-  - 公開済み記事: `../mikuku-articles/2026/<MM>/<YYYYMMDD>/`
-  - 未公開記事: `../mikuku-articles/2026/draft/`
-- Qiita 技術記事の正本: `skills/igapyon-qiita-writer/references/`
-
-Qiita 側は投稿頻度や下書き作成数に制限がかかる場合があるため、公開は間隔を空けて行います。  
-Note 記事の下書きや移行中の記事は、`../mikuku-articles/2026/draft/` に平置きで保持し、公開日が決まった段階で日付ディレクトリへ移します。
-
-## 移行期の writer skill 運用
-
-Note 優先運用への移行期は、掲載媒体ではなく記事タイプで writer skill を選びます。
-
-みくく担当の Note テック主記事は、Note 掲載であっても `igapyon-qiita-writer` を使って作成・整理します。  
-これは、文体と情報密度を Qiita 寄りの技術記事として保つためです。
-
-うさぴょん担当の従来型 Note 記事は、`igapyon-note-writer` を使って作成・整理します。  
-こちらは、技術詳細を詰め込みすぎず、背景、感触、読み物としての流れを優先します。
-
-記事ファイルの正本配置は、利用した writer skill ではなく掲載媒体に合わせます。  
-そのため、`igapyon-qiita-writer` で作成した Note テック主記事でも、Note 掲載用の正本は `../mikuku-articles/` に置きます。
-
-## .gitignore の扱い
-
-macOS が生成する `.DS_Store` は Git 管理対象外とするため、repo 側の `.gitignore` に記載します。
-
-`workplace/` は clone した外部リポジトリ、展開した zip、生成物、検証用ファイルなどを置くローカル作業フォルダです。  
-`workplace/` 配下の作業物は Git 管理対象外とし、ディレクトリを維持するための `workplace/.gitkeep` だけを Git 管理下に入れます。
-
-Codex から利用するローカル配備先は `$CODEX_HOME/skills/` です。`CODEX_HOME` が
-未指定の場合は `$HOME/.codex` を使います。この repo では `skills/` 配下を正本として
-管理し、ローカル配備先のコピーは Git 管理対象外とします。Maven の `package`
-フェーズではローカル配備先へ自動コピーしません。
-
-repo 内の `.codex/` は任意のローカル出力用として directory 全体を無視します。
-
-## Codex skill のローカル同期
-
-source とローカル配備先の drift を避けるため、skill 名を一つ指定して同期します。
-
-```sh
-sh scripts/sync-codex-skill.sh igapyon-mikuku-agent
-sh scripts/sync-codex-skill.sh --check igapyon-mikuku-agent
-```
-
-同期は `skills/<skill-name>/` を `$CODEX_HOME/skills/<skill-name>/` へ反映し、source に
-ない配備先ファイルを削除します。`.DS_Store` は同期対象外です。`--check` は変更せずに
-内容差分、追加、削除の有無を確認します。
-
-別の Codex home を使う場合は明示できます。
-
-```sh
-CODEX_HOME=/path/to/codex-home sh scripts/sync-codex-skill.sh igapyon-mikuku-agent
-```
-
-スクリプトは skill 名と source の `SKILL.md` を検証し、repository 内の正本から
-名前の一致する配備先だけを更新します。
-
-## Codex skills 更新後の反映 tips
-
-Codex skills を更新した後、基本は VS Code のウィンドウ再読み込みで有効になります。
-
-コマンドパレットから実行する場合は、次を実行します。
-
-```text
-Developer: Reload Window
-```
-
-macOS の通常操作では、次のショートカットでコマンドパレットを開きます。
-
-```text
-Cmd+Shift+P
-```
-
-その後、`Reload Window` を実行します。
-
-ターミナルから VS Code を操作できる環境では、対象ワークスペースで次のコマンドでも近い動きになります。
-
-```sh
-code -r .
-```
-
-ただし、`code -r .` は同じウィンドウを再利用して開き直す動きです。拡張や Codex 側の状態更新まで確実に反映したい場合は、VS Code 内の `Developer: Reload Window` を使うのが一番確実です。
-
-## Java / Maven の扱い
-
-Java / Maven を使う repo では、実行時の JVM 設定を repo 側で明示するため、`.mvn/jvm.config` を Git 管理下に入れます。
-
-この repo では、ローカル環境での名前解決やネットワーク挙動を安定させるため、IPv4 を優先する JVM オプションを `.mvn/jvm.config` に記載しています。
-
-## references の扱い
-
-各 skill 配下の `references/` は、skill 利用時に参照しやすいように同梱する参考資料です。
-
-skill を利用する際は、`SKILL.md` を入口とし、具体ルール、例、長めの手順、参照記事、テンプレートなどは必要に応じて各 skill 配下の `references/` を読んで適用します。  
-`SKILL.md` には発火条件、基本フロー、参照先の案内を中心に置き、詳細は `references/` 側を利用する方針です。
-
-`skill-creator` などで skill を作成した直後は、必要な具体ルールを `SKILL.md` に詰め込みすぎず、`references/` へ分離します。  
-既知の資料へは`SKILL.md`から直接案内し、未知の資料は対象範囲を絞ったファイル一覧・名前検索・本文検索で探します。indexを採用する場合は、用途と保守方法を[全体方針](docs/policies/reference-discovery.md)とbuild設定に記録します。
-
-Note / Qiita 記事 Markdown は、媒体ごとの正本置き場で管理します。
-
-- Note 記事の正本: `../mikuku-articles/`
-- Qiita 技術記事の正本: `skills/igapyon-qiita-writer/references/`
-
-みくく担当の Note テック主記事は、正本を `../mikuku-articles/` に置きます。  
-一方で、みくく文体の参照例として使うため、公開済みまたは参照価値の高い記事コピーを `skills/igapyon-mikuku-agent/examples/articles/` に同期して置きます。
-
-このコピーは文体・構成の参照用です。記事本文、URL、掲載用属性を更新する場合は、まず Note 正本側を更新し、その後で `igapyon-mikuku-agent` 側の writing example にコピーして同期します。
-
-`../mikuku-articles/2026/draft/` は、日付未確定または未公開の Note 記事を階層なしで置く場所です。  
-公開済み Note 記事は、`../mikuku-articles/2026/<MM>/<YYYYMMDD>/` 配下の記事パッケージとして管理します。
-
-`workplace/*/docs/articles/` やこの repo の旧配置に記事メモや Markdown が残っている場合でも、Note 記事として更新・公開対象にする正本は `../mikuku-articles/` 側です。
-
-## docs/articles 集約状況
-
-記事管理は現在、Qiita 向け記事を `skills/igapyon-qiita-writer/references/`、Note 向け記事を `../mikuku-articles/` に集約し、そこを正本として扱う方針です。
-
-2026-05-06 時点で、`workplace/*/docs/articles/qiita/` 配下の有意な記事本文は、`README.md` と `TEMPLATE.md` を除き、すべて `skills/igapyon-qiita-writer/references/` 側に同一内容で存在することを確認済みです。
-
-対象は次の通りです。
-
-- `miku-abc-player`: 1 件
-- `miku-indexgen`: 1 件
-- `miku-xlsx2md`: 8 件
-- `mikuproject`: 4 件
-- `mikuscore`: 2 件
-
-同じく 2026-05-06 時点で、`workplace/*/docs/articles/note/` 配下の有意な記事本文は、`README.md` と `TEMPLATE.md` を除き、いったん `skills/igapyon-note-writer/references/` 側に同一内容で集約済みであることを確認しました。現在は、公開済み記事を含む Note 正本を `../mikuku-articles/` 側へ移しています。
-
-対象は次の通りです。
-
-- `miku-abc-player`: 1 件
-- `miku-indexgen`: 1 件
-- `miku-xlsx2md`: 3 件
-- `mikuproject`: 3 件
-- `mikuscore`: 2 件
-
-`mikuscore` の記事は、`workplace/docs-articles/mikuscore-devel/` と `workplace/docs-articles/miku-abc-player-devel/vendor/mikuscore/` の両方に重複して存在する場合があります。  
-Note 正本側では、`../mikuku-articles/` に 1 セットとして保持します。
-
-一般記事の Note 下書きは、`../mikuku-articles/2026/draft/` に置きます。
-
-## 構成
-
-```text
-.
-├─ skills/
-│  ├─ igapyon-qiita-writer/
-│  │  ├─ SKILL.md
-│  │  └─ references/
-│  ├─ igapyon-note-writer/
-│  │  ├─ SKILL.md
-│  │  └─ templates/
-│  ├─ igapyon-companion-techpost-writer/
-│  │  └─ SKILL.md
-│  ├─ igapyon-companion-musicpost-writer/
-│  │  └─ SKILL.md
-│  ├─ igapyon-github-writer/
-│  │  ├─ SKILL.md
-│  │  └─ references/
-│  ├─ igapyon-diary-writer/
-│  │  ├─ SKILL.md
-│  │  └─ references/
-│  ├─ igapyon-ffmpeg-helper/
-│  │  ├─ SKILL.md
-│  │  └─ references/
-│  ├─ igapyon-agent-state-management/
-│  │  ├─ SKILL.md
-│  │  ├─ references/
-│  │  └─ templates/
-│  ├─ igapyon-miku-soft-developer/
-│  │  ├─ SKILL.md
-│  │  ├─ docs/
-│  │  └─ references/
-│  ├─ igapyon-mikuku-agent/
-│  │  ├─ SKILL.md
-│  │  ├─ assets/
-│  │  ├─ references/
-│  │  ├─ templates/
-│  │  └─ examples/
-│  ├─ igapyon-repo-conventions/
-│  │  ├─ SKILL.md
-│  │  └─ references/
-│  ├─ igapyon-reviewer/
-│  │  ├─ SKILL.md
-│  │  └─ references/
-│  └─ igapyon-skill-compactor/
-│     ├─ SKILL.md
-│     └─ references/
-├─ pom.xml
-├─ TODO.md
-└─ README.md
-```
-
-## 現在の skill
-
-- `igapyon-qiita-writer`
-
-  Qiita 向けの日本語技術記事の作成、整理、改善向け。明示的に指定した場合、または Qiita 記事化の意図が明確な場合に利用する。
-
-- `igapyon-note-writer`
-
-  Note 向けの日本語記事の作成、整理、改善向け。明示的に指定した場合、または Note 記事化の意図が明確な場合に利用する。
-
-- `igapyon-companion-techpost-writer`
-
-  技術系日本語投稿の伴走、最小整理、全文再構成向け。明示的に指定した場合、または伴走型の最小整理が明確に求められた場合に利用する。
-
-- `igapyon-companion-musicpost-writer`
-
-  音楽系日本語投稿の伴走、最小整理、全文再構成向け。明示的に指定した場合、または伴走型の最小整理が明確に求められた場合に利用する。
-
-- `igapyon-github-writer`
-
-  GitHub PR、GitHub Release、GitHub About に貼る文章の作成向け。明示的に指定した場合に利用する。作文した Markdown は、通常の応答に加えて、ローカルの `workplace/github-writer/` に保存する。`workplace/` がなく `temp/` がある場合のみ `temp/github-writer/` を使い、どちらもなければ `workplace/github-writer/` を作成する。明示指示がある場合に限り、作成済み PR 文面をローカル Git commit message に反映する workflow も扱う。
-
-- `igapyon-diary-writer`
-
-  igapyon diary repository の日記エントリ作成・更新向け。明示的に指定した場合、または diary repository の作業が明確な場合に利用する。
-
-- `igapyon-ffmpeg-helper`
-
-  H4essential のオーケストラ録音から、元のサンプルレート・32-bit float を保つ切り出しと単純ゲイン調整、必要なら結合、マスターから直接 AAC 化する静止画付き YouTube 用動画作成までの個人用 FFmpeg ワークフロー向け。明示的に指定した場合に利用する。
-
-- `igapyon-agent-state-management`
-
-  AI エージェント作業用の `GOAL.md`、`TODO.md`、`DECISIONS.md`、`HANDOFF.md` による軽量な状態管理ファイルの作成・整理・運用向け。発火は `igapyon-agent-state-management` の明示、または `igapyon 状態管理`、`igapyon 作業状態`、`igapyon 作業再開`、`igapyon goal`、`igapyon todo`、`igapyon handoff` などの `igapyon` 付き合言葉を基本とする。`igapyon 作業再開` では、状態管理ファイルを新規作成せず、まず既存の repo 状態、`TODO.md`、`GOAL.md`、`DECISIONS.md`、`HANDOFF.md` などを読んで再開ポイントを整理する。
-
-  名前を思い出せない場合は、`igapyon 状態管理` または `igapyon 作業再開` を合言葉として使う。
-
-- `igapyon-miku-soft-developer`
-
-  miku-soft project の新規作成・既存保守ワークフロー向け。skill の利用を明示的に指定した場合のみ利用し、miku-soft 作成・保守の相談だけでは存在案内に留める。
-
-- `igapyon-miku-daybook`
-
-  daybook repository の activity・schedule・task・day-plan の追加、更新、一覧、生成確認と、同梱された GitHub Actions 通知 workflow の生成・更新向け。`miku-daybook` または `igapyon-miku-daybook` の明示、または daybook の記録管理・通知 workflow 作成が明確な場合に利用する。Git操作やGitHubへの実行・投稿は、別途明示された場合だけ扱う。
-
-  task に最新状態、activities に試行錯誤と判断の経緯を残す方針と、その参考にした MIT OpenCourseWare の教材については、[daybookの記録モデルと参考資料](#daybookの記録モデルと参考資料)を参照してください。
-
-  taskの日付項目の変更と利用者側のデータ移行については、[daybook taskの日付項目の移行](#daybook-taskの日付項目の移行)を参照してください。
-
-- `igapyon-mikuku-agent`
-
-  日本語キャラクター agent `みくく` として応答するための会話スタイル向け。明示的に指定した場合に利用する。
-
-- `igapyon-repo-conventions`
-
-  Git / GitHub repository の `.gitignore`、`workplace/`、`.codex/skills/`、Java / Maven 設定、README 運用ルールの整理向け。明示的に指定した場合に利用する。
-
-- `igapyon-reviewer`
-
-  コード、記事、ドキュメント、UI 文言、CLI 文言などのレビュー向け。明示的に `igapyon-reviewer` の利用を指定した場合に利用する。
-
-- `igapyon-skill-compactor`
-
-  肥大化した Agent Skill の token-efficiency 設計、分割、参照化、蒸留、チェックリスト化、tool 化判断向け。明示的に指定した場合、または Agent Skill の compact / slim / token bloat reduction が明確な場合に利用する。
-
-## daybookの記録モデルと参考資料
-
-`igapyon-miku-daybook` の task と activities の役割整理では、MIT OpenCourseWare の [Guidelines for Keeping a Laboratory Notebook](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/b4c64ac11fc0a68466af7e025e29bf3e_lab_notebook.pdf) を参考にしています。これは [7.16 Experimental Molecular Biology: Biotechnology II（Spring 2005）](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/) の公開教材です。
-
-daybook では、課題管理に研究ノートと意思決定記録を組み合わせ、次のように役割を割り付けます。
-
-- **task**：仕事ごとの目的、現在の結論・採用方針、最新状態、未解決事項、次の行動を管理します。重要な変更の短い履歴と、関連する活動へのリンクを含めます。
-- **activities**：日付ごとに、取り組んだこと、試した方法、うまくいかなかったこと、検討した案、判断理由、その時点の到達点を記録します。結論が出なかった検討も活動です。読みやすい量の試行錯誤は同じ項目に収め、長い詳細は資料へ分けてリンクします。
-
-教材の記録要素と、スキルの編集規則・既存ファイル構成の対応は次のとおりです。
-
-| 教材の記録要素 | daybookでの対応 |
+| Skill | What it helps you achieve |
 | --- | --- |
-| 日付・題名 | `activities/activity-YYYYMMDD.md` 内に、一つの作業や出来事を一項目として記録 |
-| 目的 | task に継続する目的を置き、activities にその日に取り組んだ目的を必要に応じて記載 |
-| 方法・手順と変更 | activities に試した方法と変更の経緯を記録し、参照した手順や資料へリンク |
-| 観察・結果 | activities に実行結果、失敗、不確かな結果を記録 |
-| 考察・結論 | activities に当時の判断と理由を残し、task に現在採用している結論を反映 |
-| 次にすること | activities にその時点の残課題を残し、task の次の行動を更新 |
-| データや資料の添付 | 既存の `attachments/<record-key>/` に資料を置き、記録から相対リンク |
+| [igapyon-agent-state-management](#igapyon-agent-state-management) | Resume repository work with clear goals, decisions, unfinished tasks, and next actions. |
+| [igapyon-companion-musicpost-writer](#igapyon-companion-musicpost-writer) | **Experimental.** Make a Japanese music post easier to read while keeping it recognizably yours. |
+| [igapyon-companion-techpost-writer](#igapyon-companion-techpost-writer) | **Experimental.** Turn rough technical observations into a readable Japanese post while preserving your voice. |
+| [igapyon-diary-writer](#igapyon-diary-writer) | Turn daily notes into diary source ready for igapyon's existing publishing process. |
+| [igapyon-ffmpeg-helper](#igapyon-ffmpeg-helper) | Turn an orchestra recording into a retained WAV master and a YouTube-ready video. |
+| [igapyon-github-writer](#igapyon-github-writer) | Give reviewers a clear explanation of your changes and save a ready-to-use GitHub draft. |
+| [igapyon-miku-daybook](#igapyon-miku-daybook) | Keep current tasks, the reasons behind decisions, and the next work plan connected. |
+| [igapyon-miku-scm](#igapyon-miku-scm) | Carry completed work through a repeatable Git/GitHub cycle with a reviewable PR draft. |
+| [igapyon-miku-soft-developer](#igapyon-miku-soft-developer) | Turn an application idea or maintenance request into a project following miku-soft's design rules. |
+| [igapyon-mikuku-agent](#igapyon-mikuku-agent) | Create Japanese technical essays and explanatory visuals with Mikuku's recognizable voice. |
+| [igapyon-note-writer](#igapyon-note-writer) | **Experimental.** Keep a Note article's publishable Markdown, metadata, and publication state in sync. |
+| [igapyon-qiita-writer](#igapyon-qiita-writer) | **Experimental.** Turn development knowledge into a technical article that readers can understand and try. |
+| [igapyon-repo-conventions](#igapyon-repo-conventions) | Give a repository predictable local-work, configuration, and contribution conventions. |
+| [igapyon-reviewer](#igapyon-reviewer) | Identify concrete issues before merging or publishing, with evidence and a clear fixing order. |
+| [igapyon-skill-compactor](#igapyon-skill-compactor) | Make an Agent Skill easier to load and maintain while checking what behavior is preserved. |
 
-この分担は [SKILL.md](skills/igapyon-miku-daybook/SKILL.md) と [operations.md](skills/igapyon-miku-daybook/references/operations.md#task-and-activity-responsibilities) のエージェント向け編集指示として実装しています。本文に経緯や理由を記述し、既存の task ID と相対リンクで関連づけます。方針が変わったときは task を最新化し、以前の activities は当時の経緯として保持します。記録内容は会話や確認できた結果に基づいてまとめます。
+### Bundled From Upstream Repositories (10)
 
-task を最新状態として別管理すること、優先度・進捗・予定期間の管理、Markdown 記録間のリンクは daybook 側で加えた設計です。day-plan は task と schedule から既存の生成スクリプトが作る予定のスナップショットであり、教材にある週次の振り返りを自動化するものではありません。
-
-GitHub Issue を daybook に取り込む場合のローカル CLI の前提確認と導入手順は、[Issue 取り込み手順](skills/igapyon-miku-daybook/references/issue-import.md#1-check-local-cli-prerequisites-and-prepare-the-intake-files)を参照してください。
-
-### URLから関連する task を探す
-
-「このURL、関連する task があるかな？」と頼むと、URLの内容を読み、daybook 内の候補と関連する理由を探します。URLを読む・要約するだけの依頼から task の探索や記録変更は始めません。記録も希望する場合は、「関連 task を探して、この資料を task に紐づけ、今日の活動にも調べた経緯を記録して」のように依頼してください。手順は[URLと関連 task の確認](skills/igapyon-miku-daybook/references/url-task-lookup.md)を参照してください。
-
-## daybook taskの日付項目の移行
-
-2026-10-05、このリポジトリの `igapyon-miku-daybook` source に予定期間の日付項目と移行用の読み取り処理を実装しました。現在のroot versionは `1.20261005.1` ですが、まだリリースされていません。対象daybookのデータ移行前に、利用中のスキルとdaybook側の `scripts/day-plan.mjs` / `scripts/generate-day-plan.mjs` の両方が新しい項目に対応していることを確認してください。
-
-新しいtaskでは、包含的な予定期間を `planned_start_date` と `planned_end_date` で表します。1日だけの予定は同じ日付を使い、実際の完了は従来どおり `status` と `completed` で記録します。
-
-| 旧項目・情報 | 新しい扱い |
+| Skill | What it helps you achieve |
 | --- | --- |
-| `planned_date` | `planned_start_date` へ移行 |
-| `due` | 意味を確認して `planned_end_date` の候補へ移行。実際の締切情報は本文・履歴にも保持 |
-| `due_month` / `planned_week` | そのまま保持し、日付へ推測変換しない |
+| [igapyon-miku-ai-assistant-builder](#igapyon-miku-ai-assistant-builder) | Turn a mixed folder into reviewable knowledge files and instructions for a Copilot agent or Gemini Gem. |
+| [igapyon-miku-indexgen](#igapyon-miku-indexgen) | Make a directory easier to navigate or consume through a generated file catalog. |
+| [igapyon-miku-json2xlsx](#igapyon-miku-json2xlsx) | Turn JSON records into an inspectable Excel workbook with an explicit account of the data layout. |
+| [igapyon-miku-ms-office](#igapyon-miku-ms-office) | Make Word, Excel, and PowerPoint content available to text-based AI workflows, and prepare basic Office outputs from Markdown. |
+| [igapyon-miku-project](#igapyon-miku-project) | Turn project ideas or existing plans into a structured WBS, revise them through conversation, and share Gantt charts and reports. |
+| [igapyon-miku-prompt-lint](#igapyon-miku-prompt-lint) | Find instruction and context problems that can make an agent choose the wrong task or execute it inconsistently. |
+| [igapyon-miku-repo-bundle](#igapyon-miku-repo-bundle) | Prepare a portable repository reference package with source, documentation, and provenance. |
+| [igapyon-miku-score](#igapyon-miku-score) | Move a score between supported formats, prepare AI-editable score text, and inspect a rendered result. |
+| [igapyon-miku-text-bundle](#igapyon-miku-text-bundle) | Turn a directory of text files into manageable Markdown parts for AI handoff or knowledge preparation. |
+| [igapyon-miku-text-file-ops](#igapyon-miku-text-file-ops) | **Experimental.** Search and edit encoding-sensitive text without silently changing its encoding or line-ending conventions. |
 
-旧仕様にあった期限キーは `due` で、`due_date` ではありません。day-plan生成処理は移行中に旧2項目を別名として読み取りますが、taskファイルを自動変更しません。新旧項目が両方あり値が異なる記録は生成時にエラーとして示します。
+## Get Started
 
-利用者が行う具体的な確認、バックアップ、既存taskの編集、別出力先でのday-plan確認については、配布スキルの [task date migration guide](skills/igapyon-miku-daybook/references/task-date-migration.md) を参照してください。対象daybookのデータとスクリプトの変更は、利用者が更新版を導入した後に別途行います。
+1. Download `igapyon-agent-skills-<version>.zip` from [GitHub Releases](https://github.com/igapyon/igapyon-agent-skills/releases) and extract it.
+2. Choose a skill from the tables above and read its detailed description below.
+3. Follow [INSTALL.md](INSTALL.md) from the extracted archive root to install or update the complete selected `skills/<skill-name>/` directory in your Codex skills directory.
+4. Read the skill's `SKILL.md` for its invocation rules, setup, and required tools, then request the workflow you want to run.
 
-## 採用したindex.jsonの更新
+For example, `Use miku-ms-office to extract this DOCX into Markdown` requests
+Office text extraction, while `Use miku-project to prepare an Excel Gantt for
+this release plan` requests a project-planning deliverable. Use the exact
+activation rules documented by the selected skill.
 
-`config/skill-index-policy.json`に採用と記録した内部skillだけを、次のコマンドで再生成します。
+Some workflows require programs such as Node.js, Java, FFmpeg, or GitHub CLI.
+Supporting references, scripts, runtimes, templates, and assets belong to the
+skill directory and should be copied together during installation.
 
-```sh
-mvn generate-resources
-```
+## Release Bundle Contents
 
-現在、内部skillでは`igapyon-qiita-writer`の記事選択用indexを比較評価待ちとして暫定保持しています。有用性を確認済みという判断ではありません。ほかのskill rootに`index.json`を置く場合は、先に全体方針に照らして採用理由とconsumerを決めてください。
+| Path | Contents |
+| --- | --- |
+| `README.md` | A guide to the 25 skills and how to choose one. |
+| `INSTALL.md` | Installation, update, and drift-check instructions. |
+| `skills/` | Complete installable skill directories, each with a `SKILL.md` entry point. |
+| `EXTERNAL_SKILLS.lock` | The upstream repositories, pinned commit SHAs, and names included in that release bundle. |
+| `LICENSE` | The distribution license; preserve additional licenses and attribution within skills. |
 
-リリース用packageの中でも、採用対象だけを再生成します。
+For Note articles, `igapyon-mikuku-agent` handles the article body, and
+`igapyon-note-writer` supports publishing metadata and canonical article
+management. The documented `miku-scm draft recommit push` workflow belongs to
+`igapyon-miku-scm`.
 
-```sh
-mvn clean package
-```
+## Detailed Skill Descriptions
 
-採用した生成物は、正規のgeneratorで更新し、skillと一緒にコミットします。未採用indexはbuildやstagingで自動生成しません。
+### igapyon-agent-state-management
 
-生成後の drift 確認は次を実行します。
+**When it helps**
 
-```sh
-sh scripts/check-generated-indexes.sh
-```
+A repository task spans several sessions and you need to recover what was decided, what remains open, and where to continue. The result is a small set of shared notes that both you and the next agent can use without reconstructing the entire conversation.
 
-この確認は、タグ作成前のローカル確認や通常の開発フローで利用します。採用したindexのdriftと、未宣言のskill root indexを検出します。
+**What you can achieve**
 
-## Release archive
+- Keep objectives and completion conditions in `GOAL.md`, active tasks and blockers in `TODO.md`, decisions and reasons in `DECISIONS.md`, and the current handoff in `HANDOFF.md`.
+- Resume work by checking those notes against the actual repository state and produce a focused account of the next steps and unresolved decisions.
+- Record reusable build, test, package, and comparison procedures so a later session can follow an established execution decision.
 
-GitHub Release に添付する利用者向け archive は、次のコマンドで作成します。
+**Example:** Use igapyon-agent-state-management to resume this repository, explain what is unfinished, and prepare a handoff for the next session.
 
-```sh
-mvn clean package
-```
+[Full workflow, setup, and invocation rules](skills/igapyon-agent-state-management/SKILL.md).
 
-生成物は `target/igapyon-agent-skills-<version>.zip` です。
+### igapyon-companion-musicpost-writer
 
-再現性を保つため、ZIP内の全エントリの更新日時は `2020-01-01 00:00:00 UTC` に固定します。
+**Status:** Experimental.
 
-archive には `skills/`、配布用の `README.md` と `INSTALL.md`、`LICENSE`、
-`EXTERNAL_SKILLS.lock` を含めます。ビルド用ソースはリポジトリとGitHubの標準ソース
-アーカイブから参照し、このRelease assetは選択したスキルをCodex skills directoryへ
-導入するための配布物として扱います。
+**When it helps**
 
-release archive には、この repo の `skills/` に加えて、外部管理の miku-soft 系 skill も同梱します。
-外部 skill は `mvn package` の `prepare-package` フェーズで `target/release-staging/skills/` に取得し、archive 化します。
-生成した `EXTERNAL_SKILLS.lock` にrepository、ref、skill名を記録します。各skillの採用状態に沿ってsourceから配布します。stagingでは全skillのindexを再生成しません。現在の外部pinに含まれるlegacy indexは各sourceが提供する内容を検査し、source移行後に新refへ切り替えます。
-取得元は `pom.xml` の `external.*` properties で固定します。
+You have impressions from a rehearsal, concert, instrument adjustment, or listening session and want help making them readable while keeping your own expressions and observations. It supports a conversation in which you accept and adjust small changes.
 
-同梱する外部 skill は次の通りです。
+**What you can achieve**
 
-- `miku-indexgen-skills` `v1.7.1`: `skills/igapyon-miku-indexgen/`
-- `miku-text-bundle-skills` `v1.6.0`: `skills/igapyon-miku-text-bundle/`
-- `miku-repo-bundle-skills` `v0.6.0` (experimental): `skills/igapyon-miku-repo-bundle/`
-- `miku-text-file-ops-skills` `v0.6.0`: `skills/igapyon-miku-text-file-ops/`
-- `miku-prompt-lint-skills` `v0.7.0`: `skills/igapyon-miku-prompt-lint/`
-- `miku-ai-assistant-builder-skills` `v0.14.0`: `skills/igapyon-miku-ai-assistant-builder/`
-- `miku-ms-office-skills` `v0.7.3`: `skills/igapyon-miku-ms-office/`
-- `miku-json2xlsx-skills` `v0.5.0`: `skills/igapyon-miku-json2xlsx/`
-- `miku-project-skills` `v0.12.4`: `skills/igapyon-miku-project/`
-- `miku-score-skills` `v0.6.1`: `skills/igapyon-miku-score/`
+- Turn fragments and rough paragraphs into a lightly polished Japanese post about performance, practice, instruments, recordings, or music.
+- Improve wording, paragraph flow, and line breaks while retaining accepted phrasing, parenthetical remarks, and the experience you actually described.
+- Apply focused replacements and assemble the latest full draft when requested. Receive the edited text with a brief comment, making each change easy to assess.
 
-GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
-生成されたzipの内容を検査してからGitHub Release assetとして添付します。archiveのindex要件は採用状態に従い、未採用indexをpackage処理で生成しません。配布zipからMaven packageを再実行する構成ではありません。
-archive検査では、内部15 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内で14 skillの代表参照経路も確認します。外部10 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
+**Example:** Use igapyon-companion-musicpost-writer to polish these violin rehearsal notes, keep my parenthetical remarks, and show the complete post after our revisions.
 
-## 同梱スキル・ライブラリの更新確認と取り込み
+[Full workflow, setup, and invocation rules](skills/igapyon-companion-musicpost-writer/SKILL.md).
 
-このリポジトリで「同梱スキルの更新を確認して」「同梱ライブラリの更新状況をチェックして」
-などと依頼された場合は、上流の更新確認、更新がある取得元の設定反映、配布 ZIP の生成・検査までを
-依頼の範囲として扱います。更新がなければ、その確認結果を報告します。
-利用者が「調査だけ」「変更不要」などと明示した場合は、その指定に従います。
+### igapyon-companion-techpost-writer
 
-1. 現在のブランチと作業ツリー、`pom.xml` の `external.*` properties、
-   `config/skill-index-policy.json` の対応する pin を確認します。
-2. 同梱対象の各上流リポジトリについて、既定ブランチの最新 HEAD と現在の pin を照合し、
-   コミットとファイルの差分、確認できる最新 Release・版情報を調べます。
-   この repo の取得元は既定ブランチの確認時点の最新コミットを使い、40桁の SHA で固定します。
-3. HEAD が pin と異なる対象は、`pom.xml` と `config/skill-index-policy.json` を同じ SHA へ更新します。
-   バージョン番号だけの更新や、同梱ファイルの内容が変わらない merge による HEAD 更新も取り込み対象です。
-   README の版表記は、確認できた最新 Release・版情報に合わせます。
-4. 設定を更新したら `mvn package` で staging と配布 ZIP を生成し、
-   生成された `EXTERNAL_SKILLS.lock` が更新後の pin を記録していることを確認します。
-   続いて `node scripts/check-release-archive.mjs target/igapyon-agent-skills-<version>.zip`
-   を実行します。`<version>` は現在の `pom.xml` のプロジェクト版に置き換えます。
-5. `git diff --check` と関連差分・作業ツリーを確認し、更新した同梱対象、確認時点、
-   生成 ZIP、検証結果を報告します。取り込みと検証が完了してから、同梱対象を最新化したと報告します。
+**Status:** Experimental.
 
-この手順では、依頼時に確認した最新コミットを固定して取り込みます。
-親リポジトリのバージョン更新、commit、push、tag、Release 公開、ローカル skill 配備は、
-それぞれの利用者指示と対応する運用ルールに従います。
+**When it helps**
 
-## 厳選 text bundle
+You have an observation about AI coding, a development experiment, or a personal project and want to publish it in your own words. The workflow helps shape the thought through small edits while retaining the author's level of certainty and personal perspective.
 
-AI へ渡す参照素材や、Web UI インタフェースへ内容をコピー＆ペーストして利用するための軽量な確認用 bundle として、厳選した skill だけを text bundle 化できます。
+**What you can achieve**
 
-```sh
-scripts/build-text-bundle-selection.sh
-```
+- Organize fragments, social posts, blog drafts, and development notes into a coherent reading order.
+- Clarify wording and paragraph boundaries, keeping accepted expressions, parenthetical comments, and the distinction between observations and established facts.
+- Apply requested changes and present the assembled current text, so you can judge the whole post as it develops.
 
-このスクリプトは、release staging 内の `igapyon-miku-text-bundle` runtime を使い、選んだ skill directory だけを `workplace/text-bundle-dist/` に text bundle として出力します。  
-あわせて、取り回しやすい zip として `workplace/igapyon-agent-skills-bundle-selection-<version>.zip` も生成します。
+**Example:** Use igapyon-companion-techpost-writer to turn these notes about an AI coding experiment into a short post, keeping the tentative parts tentative.
 
-現在の厳選対象は次の通りです。
+[Full workflow, setup, and invocation rules](skills/igapyon-companion-techpost-writer/SKILL.md).
 
-- `skills/igapyon-mikuku-agent/`
-- `skills/igapyon-skill-compactor/`
-- `skills/igapyon-agent-state-management/`
-- `skills/igapyon-github-writer/`
+### igapyon-diary-writer
 
-`igapyon-miku-text-bundle` runtime がまだ release staging にない場合は、スクリプト内で `mvn package` を実行して staging を準備します。通常の release archive は利用者向けの skill 配布物であり、この厳選 text bundle はブラウザ上のチャットや Web UI へ貼り付けて使いやすくするための、AI 参照・確認・持ち運び用の小さな補助成果物です。
+**When it helps**
+
+You want events, technical work, release activity, or personal observations recorded in igapyon's own diary. It connects the writing task to the diary's actual file format and processing conventions so the entry fits the existing site.
+
+**What you can achieve**
+
+- Create or revise a diary source entry such as `diary/YYYY/igYYMMDD.src.md` from supplied facts and notes.
+- Apply the diary's date, section, keyword, and directive conventions, using the normal entry and year-index templates where useful.
+- Check how source content relates to generated Markdown, indexes, keywords, and other igapyonv3 processing when an entry's published form needs investigation.
+
+**Scope and prerequisites:** This workflow targets the `diary` repository. Mikuku-authored Note articles use their own article workflow and canonical repository.
+
+**Example:** Use igapyon-diary-writer to record today's release work and what I learned as a diary entry that fits the existing site.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-diary-writer/SKILL.md).
+
+### igapyon-ffmpeg-helper
+
+**When it helps**
+
+You have a copied ZOOM H4essential rehearsal recording and want to preserve a useful master while preparing something people can listen to or watch online. The skill supplies a repeatable sequence from source inspection to checked delivery files.
+
+**What you can achieve**
+
+- Select trim ranges, inspect audio properties, measure peaks, and apply simple gain adjustment while retaining the source sample rate and 32-bit float WAV master by default.
+- Join selected recordings after trimming and adjustment, and create requested listening or sharing variants from the retained master.
+- Combine the audio with a still image to produce a YouTube-ready video, then check duration, audio format, bitrate, and decoded true peak.
+
+**Scope and prerequisites:** FFmpeg must be installed. The normal workflow produces the upload-ready file; YouTube Studio upload is performed manually.
+
+**Example:** Use igapyon-ffmpeg-helper to cut the concert pieces from this rehearsal, retain adjusted WAV masters, and make a still-image video for YouTube.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-ffmpeg-helper/SKILL.md).
+
+### igapyon-github-writer
+
+**When it helps**
+
+The implementation is available in a local repository, but its purpose and effect still need to be explained to another person. The skill turns the relevant commit or branch evidence into text that can be reviewed before being used on GitHub.
+
+**What you can achieve**
+
+- Draft a PR title and body for a commit or branch range, Release notes for a selected range, or About text describing a repository.
+- Save and validate the Markdown draft so the reviewed text remains available for a later publishing step.
+- When explicitly requested through this skill, inspect local branch status, create a backup branch, or rebuild local commits using the reviewed PR text as the commit message.
+
+**Scope and prerequisites:** The skill works with local evidence and drafts. The compound `miku-scm draft recommit push` workflow is handled by `igapyon-miku-scm`.
+
+**Example:** Use github-writer to explain this branch's change to a reviewer who has not seen our conversation, and save the PR draft.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-github-writer/SKILL.md).
+
+### igapyon-miku-daybook
+
+**When it helps**
+
+You need both a current view of your work and a dated account of how you reached it. The daybook separates task state from activity history, then derives a day-plan from the records so you can see what needs attention.
+
+**What you can achieve**
+
+- Create and update tasks, activities, and schedules with priorities, planned periods, current conclusions, next actions, and links to supporting material.
+- Generate day-plan snapshots from those source records, or explicitly check whether a supplied URL relates to an existing task.
+- Bring named GitHub Issues into the documented intake workflow and prepare the bundled GitHub Actions notification workflow when requested.
+
+**Scope and prerequisites:** Markdown records are the source of truth. Issue receipts and closure follow the miku-scm steps; notification delivery requires setup in the target repository.
+
+**Example:** Use igapyon-miku-daybook to record why we changed approach today, update the task's next action, and regenerate today's plan.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-miku-daybook/SKILL.md).
+
+### igapyon-miku-scm
+
+**When it helps**
+
+You want miku-soft's documented source-control process applied consistently, from local work and backups through publication preparation and the next work branch. Fixed runners carry the mechanical steps and checks, while the draft explains the change to a reviewer.
+
+**What you can achieve**
+
+- Prepare GitHub text, make local commits and backups, inspect branches, and perform the documented recommit/push and post-merge transitions.
+- Run supported Issue creation, editing, label, comment, and closure workflows with their required preflight and approval steps.
+- Update date-based or Semantic Versions, check coupled values, maintain repositories, and inspect tags, Releases, and assets.
+
+**Scope and prerequisites:** `draft recommit push` saves the PR text and performs its documented branch-push transition. The human creates and merges the PR on GitHub.
+
+**Example:** Use miku-scm draft recommit push to prepare the completed branch for review, then use the post-merge workflow after the PR has been merged.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-miku-scm/SKILL.md).
+
+### igapyon-miku-soft-developer
+
+**When it helps**
+
+You want to create or maintain a miku-soft project and need its repository shape, product boundaries, and implementation approach to follow the shared design conventions. It connects a concept or requested repair to the relevant project workflow and starter assets.
+
+**What you can achieve**
+
+- Clarify the application concept and repository name, select a project type, and use the corresponding creation workflow.
+- Guide Node.js CLI and web projects, Java/Maven conversion work, Maven-plugin or web separation, Agent Skills, and MCP servers.
+- Inspect an existing project, carry out a bounded maintenance change, and use the relevant build and verification procedures.
+
+**Scope and prerequisites:** Use the skill through an explicit miku-soft developer request. The selected project references define the concrete architecture and implementation rules.
+
+**Example:** Use igapyon-miku-soft-developer to turn this conversion-tool idea into a miku-soft CLI project with the appropriate source and repository structure.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-miku-soft-developer/SKILL.md).
+
+### igapyon-mikuku-agent
+
+**When it helps**
+
+You want to develop an article through a conversation with Mikuku, retaining the character's observations and expression while explaining a technical subject. The same skill can guide the text and visual material used to present that article.
+
+**What you can achieve**
+
+- Write and revise Note technical essays from supplied facts, experiences, and ideas, then check tone, expression density, or text characteristics when requested.
+- Prepare whole-article or section graphic-recording material, use bundled character assets, and guide image generation and integration into the article.
+- Render Markdown tables to PNG, and use the experimental PNG-to-SVG workflow for black-and-white linework with separately identified construction guides.
+
+**Scope and prerequisites:** Activate the requested character or workflow explicitly. Image creation and rendering use the tools available in the execution environment.
+
+**Example:** Use igapyon-mikuku-agent to turn this development experience into a Note essay, then prepare illustrations that explain the main ideas.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-mikuku-agent/SKILL.md).
+
+### igapyon-note-writer
+
+**Status:** Experimental.
+
+**When it helps**
+
+A Mikuku essay is being prepared or updated for Note, and its title, hashtags, canonical file, and public URL need to stay consistent. The skill handles the publishing information around the article so those details remain traceable as the draft changes.
+
+**What you can achieve**
+
+- Prepare Note front matter, title and hashtag proposals, draft/publication status, and confirmed URLs.
+- Create or update the canonical Markdown in `mikuku-articles`, carrying relevant factual changes from another medium while preserving existing publishing data and the author's voice.
+- Check paragraph flow and publication preparation, and route article illustrations or table images to the Mikuku visual workflows.
+
+**Scope and prerequisites:** `igapyon-mikuku-agent` handles the article body and character voice. This skill provides Note-specific management and publishing preparation.
+
+**Example:** Use igapyon-note-writer to prepare the metadata for this finished Mikuku essay and update its canonical file after I provide the published URL.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-note-writer/SKILL.md).
+
+### igapyon-qiita-writer
+
+**Status:** Experimental.
+
+**When it helps**
+
+You have code, a README, or development notes and want readers to grasp the tool's purpose, reproduce its usage, and understand its limits. The skill shapes that material for Qiita's technical-article context.
+
+**What you can achieve**
+
+- Produce an outline or full Japanese article with an appropriate title, tags, and Qiita front matter.
+- Explain what the software achieves, how to use it, important commands and configuration, design decisions, and known limitations in a useful reading order.
+- Use general article, CLI reference, and CLI/Maven-plugin patterns, drawing on the relevant canonical examples found through scoped search or the optional article index.
+
+**Scope and prerequisites:** Note publishing metadata is handled by `igapyon-note-writer`. Supplementary use for a Note article requires an explicit request.
+
+**Example:** Use igapyon-qiita-writer to turn this CLI README into an article that explains the problem it solves and lets readers reproduce the main workflow.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-qiita-writer/SKILL.md).
+
+### igapyon-repo-conventions
+
+**When it helps**
+
+You want a repository to follow igapyon's established operating rules, with a clear place for scratch work and documentation of how the repository is maintained. It helps keep local outputs and repository configuration deliberate.
+
+**What you can achieve**
+
+- Apply ignore rules for `.DS_Store`, local Codex output, and scratch material, and set up the documented `workplace/.gitkeep` arrangement.
+- Maintain Java/Maven JVM settings and explain repository operation rules in the root README.
+- Use contribution and attribution-document templates, or inspect direct child Git repositories for uncommitted work while excluding scratch and vendored directories.
+
+**Example:** Use igapyon-repo-conventions to prepare this repository's ignore rules and local workspace, then document the operating conventions.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-repo-conventions/SKILL.md).
+
+### igapyon-reviewer
+
+**When it helps**
+
+You want to know what could prevent a software or writing artifact from working well for its intended audience. The result is a prioritized report you can act on, with confirmed issues distinguished from uncertain concerns.
+
+**What you can achieve**
+
+- Review code, repositories, packages, Agent Skills, articles, documentation, social posts, and GitHub, UI, or CLI text.
+- Apply the relevant review perspectives for the target's conventions, audience, and stage of work.
+- Receive consolidated findings with severity, file/line references or other evidence, the practical impact, and targeted alternatives where useful.
+
+**Scope and prerequisites:** This is a review workflow. Editing or implementation begins only when explicitly requested as a subsequent phase.
+
+**Example:** Use igapyon-reviewer to identify what would confuse a first-time reader of this README and show the most important fixes first.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-reviewer/SKILL.md).
+
+### igapyon-skill-compactor
+
+**When it helps**
+
+A skill has become large or repetitive and is read often enough that its organization matters. You want a smaller or better-routed instruction set, together with evidence of what changed and which operational requirements remain intact.
+
+**What you can achieve**
+
+- Inventory activation, inputs, outputs, examples, paths, safeguards, and validation requirements before editing.
+- Deduplicate or rewrite instructions, move conditional material into references, and compare the resulting contract with the original.
+- Select conservative, structural, or explicitly agreed summary treatment, then report size/structure changes, critical behavior preserved, accepted loss, and added lookup cost.
+
+**Scope and prerequisites:** The workflow can conclude that no change is justified. General token or time savings require appropriate measurement.
+
+**Example:** Use igapyon-skill-compactor to reduce this frequently read SKILL.md, preserve its workflow boundaries, and report the tradeoffs.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-skill-compactor/SKILL.md).
+
+### igapyon-miku-ai-assistant-builder
+
+**When it helps**
+
+You have documents, notes, source text, and structured data that you want to use as an assistant's knowledge. This beta workflow prepares a deliberate set of input files and instructions, and leaves a repeatable job for future content updates.
+
+**What you can achieve**
+
+- Inventory a selected folder, identify text-bundle and JSON/JSONL conversion candidates, and make room for manually supplied material.
+- Review JSON-to-XLSX mappings, bundle supported text, and prepare the Markdown or DOCX knowledge files appropriate to the selected service.
+- Generate a conversion job, an upload folder, assistant input-field Markdown, and preparation/execution records. Reuse the job when the content changes but the agreed configuration stays fixed.
+
+**Scope and prerequisites:** Targets Microsoft 365 Copilot Agent Builder or Google Gemini Gem Classic. The user reviews and uploads the files with a compatible account. Node.js 22+ is required; the optional Java backend also requires Java 17+.
+
+**Example:** Use miku-ai-assistant-builder to prepare these project documents and JSON records as knowledge for a Gemini Gem, with a job I can rerun next month.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-ai-assistant-builder-skills/blob/cf1f0bbe42ca9ea8af9a1c6f09c2956a85224b80/skills/igapyon-miku-ai-assistant-builder/SKILL.md).
+
+### igapyon-miku-indexgen
+
+**When it helps**
+
+A directory needs a structured inventory for browsing or for a tool that consumes file metadata. The skill creates the catalog from the actual files, allowing it to be regenerated after additions, moves, or edits.
+
+**What you can achieve**
+
+- Create or refresh `index.json` for a selected directory using the supported scan options.
+- Produce optional `index.md` for human browsing, with file paths, metadata, and summaries where the generator supplies them.
+- Regenerate an existing adopted index through the product runtime, keeping the inventory aligned with the directory rather than manually editing generated entries.
+
+**Scope and prerequisites:** Adoption is optional. Generated title-like summaries should be checked against the original document when choosing material.
+
+**Example:** Use miku-indexgen to create JSON and Markdown catalogs of this documentation directory so people and tools can locate its files.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-indexgen-skills/blob/cc6578a2aea71aea71955398231e249a96561e29/skills/igapyon-miku-indexgen/SKILL.md).
+
+### igapyon-miku-json2xlsx
+
+**When it helps**
+
+You have JSON or JSONL that is awkward to review as raw text and want to inspect it in sheets and columns. The beta workflow first exposes the structure and assumptions, then creates a workbook using the chosen mapping.
+
+**What you can achieve**
+
+- Inspect paths, types, arrays, missing/null values, and bounded samples before deciding how the workbook should represent the data.
+- Use automatic mapping for a file input, or review an explicit mapping to control columns and child sheets. Automatic mapping keeps arrays in JSON columns.
+- Receive an XLSX with an English `README` data dictionary and the mapped sheets, plus diagnostics and an optional saved automatic mapping for reuse.
+
+**Scope and prerequisites:** The output target and material assumptions are reviewed before writing; replacement of an existing workbook requires explicit authorization.
+
+**Example:** Use miku-json2xlsx to turn these order records into an Excel workbook, with orders on one sheet and explicitly mapped line items on a child sheet.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-json2xlsx-skills/blob/aab690d54a55022a7366b5325b103a5832d85a99/skills/igapyon-miku-json2xlsx/SKILL.md).
+
+### igapyon-miku-ms-office
+
+**When it helps**
+
+Information you want to analyze is inside Office files. This skill gives the agent a readable Markdown representation that can be searched, compared, summarized, or reused alongside other text. It can reduce the need to manually copy document, table, or slide text into a conversation.
+
+**What you can achieve**
+
+- Extract text from Word documents, Excel workbooks, and PowerPoint presentations into Markdown using the corresponding miku-soft converter.
+- Use the extracted Markdown as the input to the agent's next task: explain a specification, review tabular text, compare terminology across documents, or prepare a summary from slide content.
+- Create experimental DOCX, XLSX, or PPTX outputs from Markdown when you specify the target format, allowing text prepared with the agent to become an Office deliverable.
+- Select the appropriate bundled Node.js or Java converter and preserve its diagnostics. The conversion step runs locally without LLM/API calls.
+
+| Starting material | File you receive | What it enables |
+| --- | --- | --- |
+| A Word specification (`.docx`) | Markdown (`.md`) | Ask the agent to explain requirements, compare passages, or turn the extracted text into another document. |
+| An Excel workbook (`.xlsx`) | Markdown (`.md`) | Inspect the extracted sheets and tables as text that the agent can read and discuss. |
+| A PowerPoint presentation (`.pptx`) | Markdown (`.md`) | Review slide text, compare messages across presentations, or draft a briefing from the extracted material. |
+| Markdown you prepared | Experimental `.docx`, `.xlsx`, or `.pptx` | Share a basic Office-format deliverable, subject to the selected converter's content support. |
+
+**Scope and prerequisites:** Extraction is text-focused. Layout, charts, images, and other visual content have converter-specific limits, and round-trip fidelity is not guaranteed. Summarization and analysis are subsequent agent tasks; the converter produces the text representation.
+
+**Example:** Use miku-ms-office to extract this Word specification and PowerPoint briefing to Markdown, then use the extracted text to compare their terminology and draft a summary.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-ms-office-skills/blob/1b2dbd8ea7e7d7681664a0f12a954b61d8130e17/skills/igapyon-miku-ms-office/SKILL.md).
+
+### igapyon-miku-project
+
+**When it helps**
+
+You want a planning conversation to result in a usable project plan: phases and tasks, their relationships, and a schedule that can be reviewed and shared. The skill works with miku-project's structured plan so different reports can come from the same state instead of being maintained as separate plans.
+
+**What you can achieve**
+
+- Develop a work breakdown structure (WBS) from goals or deliverables, organize phases and tasks, and record the dependencies needed to discuss the order of work.
+- Revise an existing plan through targeted changes: split a large task, adjust the schedule, or change dependencies. Validate changes against the current state and compare the before/after plan.
+- Create reports that make the plan useful to other people, including an Excel WBS/Gantt, schedule images, readable Markdown, or a complete report bundle.
+- Import or export MS Project XML, structural XLSX, and workbook JSON when exchanging or continuing a plan. The editable structural workbook and the presentation-oriented Excel WBS report have distinct roles.
+
+| What you need | What you can produce |
+| --- | --- |
+| A plan to review or share in Excel | A WBS XLSX report, including the documented Excel Gantt workflow. |
+| A schedule image for discussion | Daily or weekly SVG reports, or monthly-calendar SVG entries. |
+| A plan to include in repository documentation | WBS Markdown or Mermaid Gantt text. |
+| A set of presentation/report files | A report-bundle ZIP generated from the current plan. |
+| Data for another edit or compatible tool | Structural workbook XLSX, workbook JSON, or MS Project XML through supported import/export operations. |
+
+**Scope and prerequisites:** The skill helps structure, edit, exchange, and present the plan. The user reviews its business validity and practical feasibility; browser-side visual review remains useful. Available operations follow the selected runtime/backend.
+
+**Example:** Use miku-project to plan a small website release, break it into design, implementation, and testing tasks with dependencies, then produce an Excel Gantt and a weekly SVG for our planning discussion.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-project-skills/blob/2aa84147d11539d77b92a9bd12c9291cc8f9866b/skills/igapyon-miku-project/SKILL.md).
+
+### igapyon-miku-prompt-lint
+
+**When it helps**
+
+A prompt, Agent Skill, or repository instruction set seems ambiguous, overbroad, or hard to follow. This workflow reviews the supplied material for concrete contract and context problems and gives you evidence-based changes to consider.
+
+**What you can achieve**
+
+- Assess the prompt, surrounding context, Agent Skill, and supplied repository/harness material at the levels actually present.
+- Report documented checkpoint and anti-pattern findings with rule identifiers, evidence, practical impact, and suggested corrections.
+- Follow up with focused rewrite guidance or an appropriate prompt skeleton when requested, while leaving unknown requirements visible.
+
+**Scope and prerequisites:** Use the exact skill or product name to invoke it. Missing prerequisites are reported as unassessed rather than inferred.
+
+**Example:** Use miku-prompt-lint to check why this skill activates for unrelated requests and identify the instructions that need tightening.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-prompt-lint-skills/blob/2e5bb9e76a56f7bf1a3fde8d196526234d8d0f7f/skills/igapyon-miku-prompt-lint/SKILL.md).
+
+### igapyon-miku-repo-bundle
+
+**When it helps**
+
+You want to hand a repository's relevant material to an AI workflow or another reader as a coherent set. This experimental assembler organizes the selected source and documentation together with metadata describing what was included.
+
+**What you can achieve**
+
+- Collect repository metadata, source text, repository documents, and selected external documentation in a documented reference-folder layout.
+- Create source/documentation text bundles, a manifest, artifact notes, and checksums, with explicitly selected JAR sidecars or optional class indexes where supported.
+- Receive a reference folder and diagnostics that make its scope and artifact provenance inspectable.
+
+**Scope and prerequisites:** The assembler uses existing selected material. Building a repository and uploading the result to an AI service are separate operations.
+
+**Example:** Use miku-repo-bundle to package this Java project's source, design notes, and selected existing JAR as a reference folder for a separate review.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-repo-bundle-skills/blob/f2bf8522f8ec87ff261bbe4d0ebf1d6a790c9089/skills/igapyon-miku-repo-bundle/SKILL.md).
+
+### igapyon-miku-score
+
+**When it helps**
+
+You want to exchange a score with another tool or an AI workflow and then inspect what the conversion produced. MusicXML is the canonical score source, while ABC is the current full-score text format for AI exchange.
+
+**What you can achieve**
+
+- Run documented routes including ABC/MusicXML exchange, ABC-to-MIDI, MIDI-to-MusicXML, and supported MuseScore conversions.
+- Produce an SVG score preview through the supported render path, helping you inspect the result rather than relying only on raw notation text.
+- Prepare ABC-based AI handoff and report warnings, preservation limits, and conversion loss. Distinguish experimental MEI/LilyPond routes and partial ABC coverage from established operations.
+
+**Scope and prerequisites:** Format coverage follows the bundled specification. It is a conversion/rendering workflow with diagnostics rather than a complete score-engraving editor.
+
+**Example:** Use miku-score to prepare this MusicXML score as ABC for an AI revision, then convert the revised text back and render an SVG for inspection.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-score-skills/blob/f40727cb87df3123ea26e055fe616d421860d423/skills/igapyon-miku-score/SKILL.md).
+
+### igapyon-miku-text-bundle
+
+**When it helps**
+
+You want to pass a collection of files to an AI conversation or knowledge workflow without copying each file individually. The runtime collects and divides the selected text into the documented output parts and their navigation material.
+
+**What you can achieve**
+
+- Create handoff prompt/content/index artifacts, or choose knowledge-source mode for neutral knowledge parts and a separate management index.
+- Control part size, input-file limits, directory and extension exclusions, and UTF-8 or Shift_JIS input handling through supported options.
+- Receive the generated Markdown parts and a report of skipped files and diagnostics, using the bundled Java runtime or documented Node.js fallback.
+
+**Example:** Use miku-text-bundle to prepare this documentation folder as neutral knowledge-source parts with a chosen character limit.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-text-bundle-skills/blob/4fbe80c649f084fd6dbff1ca0944adda6892cbe7/skills/igapyon-miku-text-bundle/SKILL.md).
+
+### igapyon-miku-text-file-ops
+
+**Status:** Experimental.
+
+**When it helps**
+
+A file uses Windows-31J or another non-UTF-8 encoding, a repository mixes encodings, or ordinary text tools produce decode errors or mojibake. The skill uses the product's explicit encoding and update rules for precise local work.
+
+**What you can achieve**
+
+- Search and read text under a selected project root through structured requests to the bundled standalone CLI.
+- Create, update, or delete files according to the runtime's path, patch, and revision semantics.
+- Apply the documented encoding, BOM, and newline policy, including explicit conversion when requested, and report decoding or unsupported-operation diagnostics.
+
+**Scope and prerequisites:** The pinned runtime requires Node.js 22 or newer. Use its launcher and encoding policy for the exact supported operations.
+
+**Example:** Use miku-text-file-ops to find a configuration value in these Windows-31J files and update it while preserving the repository's encoding and line endings.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-text-file-ops-skills/blob/cd270f0736c9a7b5760a6a2b28942e6ddb1c5692/skills/igapyon-miku-text-file-ops/SKILL.md).
+
+## Provenance And Licenses
+
+External skill sources are pinned by full commit SHA in [pom.xml](pom.xml).
+Their detailed workflow links above point to those upstream revisions. Each
+release bundle includes `EXTERNAL_SKILLS.lock` so its external contents can be
+identified independently of later upstream changes.
+
+The root [LICENSE](LICENSE) covers this distribution. Preserve license and
+attribution files included within individual skills.
+
+## Development And Repository Operations
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) (Japanese) for repository layout, version
+alignment, tests and builds, release packaging, upstream updates, local skill
+synchronization, canonical article storage, and daybook record conventions.
+The [reference discovery policy](docs/policies/reference-discovery.md) explains
+how skill references and optional indexes are maintained.
+
+For repository maintenance, follow that developer guide and read the existing
+`GOAL.md`, `TODO.md`, `DECISIONS.md`, and `HANDOFF.md` before resuming work.
