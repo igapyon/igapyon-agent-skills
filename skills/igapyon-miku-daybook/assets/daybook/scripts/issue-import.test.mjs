@@ -17,9 +17,12 @@ import {
   prepareIssueImport,
   recordIssueCloseResult,
   recordIssueCommentResult,
+  sha256,
+  stableStringify,
   validateImportManifest,
   validateIssueSource,
 } from "./issue-import.mjs";
+import { buildDayPlan, loadRecords } from "./day-plan.mjs";
 
 const REPO = "acme/daybook";
 const IMPORT_DATE = "2026-10-06";
@@ -185,6 +188,168 @@ test("task dates distinguish explicit periods from each provisional fallback", (
   assert.throws(() => deriveTaskDates(taskRecord("reversed", { planned_start_date: "2026-10-12", planned_end_date: "2026-10-10" }), IMPORT_DATE), { code: "INVALID_DATE_RANGE" });
 });
 
+test("Backlog task dates keep omitted and partial endpoints without provisional completion", () => {
+  assert.deepEqual(deriveTaskDates(taskRecord("backlog", { planning_state: "backlog" }), IMPORT_DATE), {
+    start: null, end: null, status: null, reasons: [],
+  });
+  assert.deepEqual(deriveTaskDates(taskRecord("backlog-start", {
+    planning_state: "backlog", planned_start_date: "2026-10-20",
+  }), IMPORT_DATE), { start: "2026-10-20", end: null, status: null, reasons: [] });
+  assert.deepEqual(deriveTaskDates(taskRecord("backlog-end", {
+    planning_state: "backlog", planned_end_date: "2026-10-31",
+  }), IMPORT_DATE), { start: null, end: "2026-10-31", status: null, reasons: [] });
+  assert.deepEqual(deriveTaskDates(taskRecord("backlog-period", {
+    planning_state: "backlog", planned_start_date: "2026-10-20", planned_end_date: "2026-10-31",
+  }), IMPORT_DATE), { start: "2026-10-20", end: "2026-10-31", status: "confirmed", reasons: [] });
+  assert.throws(() => deriveTaskDates(taskRecord("backlog-invalid", {
+    planning_state: "backlog", planned_start_date: "2026-10-31", planned_end_date: "2026-10-20",
+  }), IMPORT_DATE), { code: "INVALID_DATE_RANGE" });
+});
+
+test("planning_state is optional for legacy manifests and limited to task creation", () => {
+  const input = source();
+  const legacy = validateImportManifest(manifest([{
+    number: 42, decision: "import", records: [taskRecord("legacy")],
+  }]), input);
+  assert.equal(Object.hasOwn(legacy.issues[0].records[0], "planning_state"), false);
+
+  for (const invalid of [null, "", "planned ", "pending", "Backlog", 1, true, [], {}]) {
+    assert.throws(() => validateImportManifest(manifest([{
+      number: 42, decision: "import", records: [taskRecord("invalid-state", { planning_state: invalid })],
+    }]), input), { code: "INVALID_MANIFEST" });
+  }
+  for (const record of [
+    scheduleRecord("state-on-schedule", { planning_state: "backlog" }),
+    activityRecord("state-on-activity", { planning_state: "backlog" }),
+    { key: "state-on-link", type: "task", action: "link-existing", title: "Existing", target_path: "2026/202610/tasks/task-202610-00001-existing.md", planning_state: "backlog" },
+  ]) {
+    assert.throws(() => validateImportManifest(manifest([{
+      number: 42, decision: "import", records: [record],
+    }]), input), { code: "INVALID_MANIFEST" });
+  }
+});
+
+test("prepare and apply keep Backlog apart from planned work in the generated day-plan", async (t) => {
+  const root = makeRoot(t);
+  const decisions = manifest([{
+    number: 42,
+    decision: "import",
+    records: [
+      taskRecord("backlog", { planning_state: "backlog", priority: 1 }),
+      taskRecord("backlog-period", {
+        planning_state: "backlog",
+        priority: 2,
+        planned_start_date: "2026-10-01",
+        planned_end_date: "2026-12-31",
+        date_evidence: { planned_start_date: "planning note", planned_end_date: "planning note" },
+      }),
+      taskRecord("backlog-start", {
+        planning_state: "backlog",
+        priority: 3,
+        planned_start_date: "2026-10-20",
+        date_evidence: { planned_start_date: "planning note" },
+      }),
+      taskRecord("backlog-end", {
+        planning_state: "backlog",
+        priority: 4,
+        planned_end_date: "2026-10-31",
+        date_evidence: { planned_end_date: "planning note" },
+      }),
+      taskRecord("planned", {
+        priority: 5,
+        planned_start_date: IMPORT_DATE,
+        planned_end_date: IMPORT_DATE,
+        date_evidence: { planned_start_date: "explicit today", planned_end_date: "explicit today" },
+      }),
+    ],
+  }]);
+  const { plan, preview } = prepare(root, source(), decisions);
+  const issuePlan = plan.issues[0];
+  const backlog = issuePlan.records.find((record) => record.key === "backlog");
+  const backlogPeriod = issuePlan.records.find((record) => record.key === "backlog-period");
+  const backlogStart = issuePlan.records.find((record) => record.key === "backlog-start");
+  const backlogEnd = issuePlan.records.find((record) => record.key === "backlog-end");
+  const planned = issuePlan.records.find((record) => record.key === "planned");
+  assert.equal(backlog.planning_state, "backlog");
+  assert.deepEqual(backlog.period, { start: null, end: null, status: null, reasons: [] });
+  assert.equal(backlogPeriod.period.status, "confirmed");
+  assert.deepEqual(backlogStart.period, { start: "2026-10-20", end: null, status: null, reasons: [] });
+  assert.deepEqual(backlogEnd.period, { start: null, end: "2026-10-31", status: null, reasons: [] });
+  assert.equal(planned.planning_state, "planned");
+  assert.equal(planned.period.status, "confirmed");
+  assert.match(issuePlan.comment_body, /計画区分：Backlog/);
+  assert.match(issuePlan.comment_body, /予定期間未設定/);
+  assert.match(issuePlan.comment_body, /参考予定期間：/);
+  assert.match(issuePlan.comment_body, /参考開始：2026-10-20/);
+  assert.match(issuePlan.comment_body, /参考終了：2026-10-31/);
+  assert.doesNotMatch(issuePlan.comment_body, /作業予定日が未確定のため/);
+  assert.match(preview, /Backlog/);
+  assert.match(preview, /予定期間未設定/);
+  assert.doesNotMatch(preview, /undefined|null/);
+  assert.equal(plan.writes.every((write) => !fs.existsSync(path.join(root, ...write.path.split("/")))), true);
+
+  const resultPath = path.join(root, "workplace/issue-import/run-backlog/result.json");
+  const applied = await applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath });
+  assert.equal(applied.status, "local-written");
+  const resumed = await applyIssueImport({ repoRoot: root, plan, resultPath });
+  assert.equal(resumed.status, "local-written");
+  const imported = loadRecords(root).tasks;
+  assert.equal(imported.length, 5);
+  const importedBacklog = imported.find((record) => record.frontMatter.planning_state === "backlog");
+  const importedPlanned = imported.find((record) => record.frontMatter.planning_state === "planned");
+  assert.ok(importedBacklog);
+  assert.ok(importedPlanned);
+  const importedBacklogPeriod = imported.find((record) => record.title === "参加費を支払う"
+    && record.frontMatter.planning_state === "backlog" && record.frontMatter.planned_start_date);
+  assert.ok(importedBacklogPeriod);
+  assert.equal(importedBacklog.frontMatter.planned_start_date, undefined);
+  assert.equal(importedBacklog.frontMatter.planned_end_date, undefined);
+  assert.equal(importedBacklog.frontMatter.planned_dates_status, undefined);
+  assert.equal(importedBacklogPeriod.frontMatter.planned_dates_status, "confirmed");
+  const importedBacklogStart = imported.find((record) => record.frontMatter.planning_state === "backlog"
+    && record.frontMatter.planned_start_date === "2026-10-20");
+  const importedBacklogEnd = imported.find((record) => record.frontMatter.planning_state === "backlog"
+    && record.frontMatter.planned_end_date === "2026-10-31");
+  assert.equal(importedBacklogStart.frontMatter.planned_end_date, undefined);
+  assert.equal(importedBacklogStart.frontMatter.planned_dates_status, undefined);
+  assert.equal(importedBacklogEnd.frontMatter.planned_start_date, undefined);
+  assert.equal(importedBacklogEnd.frontMatter.planned_dates_status, undefined);
+  const dayPlan = buildDayPlan({ repoRoot: root, targetDate: IMPORT_DATE, generatedDate: IMPORT_DATE });
+  assert.deepEqual(dayPlan.records.backlogTasks.map((record) => record.frontMatter.id), [
+    importedBacklog.frontMatter.id, importedBacklogPeriod.frontMatter.id,
+    importedBacklogStart.frontMatter.id, importedBacklogEnd.frontMatter.id,
+  ]);
+  assert.deepEqual(dayPlan.records.todayTasks.map((record) => record.frontMatter.id), [importedPlanned.frontMatter.id]);
+  assert.equal(dayPlan.records.dateReviewTasks.some((record) => record.frontMatter.planning_state === "backlog"), false);
+});
+
+test("a saved schema v1 plan and result without planning_state still apply and resume", async (t) => {
+  const root = makeRoot(t);
+  const { plan } = prepare(root, source(), manifest([{
+    number: 42, decision: "import", records: [taskRecord("legacy")],
+  }]));
+  const taskWrite = plan.writes.find((write) => write.path.includes("/tasks/"));
+  taskWrite.content = taskWrite.content.replace(/^planning_state: planned\n/m, "");
+  taskWrite.after_hash = sha256(taskWrite.content);
+  const taskRecordRef = plan.issues[0].records.find((record) => record.type === "task");
+  delete taskRecordRef.planning_state;
+  plan.issues[0].comment_body = plan.issues[0].comment_body.replace(/^  - 計画区分：今日の作業候補\n/m, "");
+  const { plan_id: ignored, ...planContents } = plan;
+  plan.plan_id = sha256(stableStringify(planContents));
+
+  const runDirectory = path.join(root, "workplace/issue-import/run-legacy-v1");
+  fs.mkdirSync(runDirectory, { recursive: true });
+  fs.writeFileSync(path.join(runDirectory, "plan.json"), `${JSON.stringify(plan, null, 2)}\n`);
+  const resultPath = path.join(runDirectory, "result.json");
+  const first = await applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath });
+  assert.equal(first.status, "local-written");
+  const taskPath = path.join(root, ...taskWrite.path.split("/"));
+  assert.doesNotMatch(fs.readFileSync(taskPath, "utf8"), /^planning_state:/m);
+  const resumed = await applyIssueImport({ repoRoot: root, plan, resultPath });
+  assert.equal(resumed.status, "local-written");
+  assert.doesNotMatch(fs.readFileSync(taskPath, "utf8"), /^planning_state:/m);
+});
+
 test("manifest requires evidence for explicit task, schedule, and activity dates", () => {
   const input = source();
   assert.throws(() => validateImportManifest(manifest([{
@@ -228,6 +393,7 @@ test("prepare generates all three canonical record types and a stable preview wi
   const schedule = plan.writes.find((write) => write.path.includes("/schedules/"));
   const activity = plan.writes.find((write) => write.path.includes("/activities/"));
   assert.match(task.path, /task-202610-00006-pay-fee\.md$/);
+  assert.match(task.content, /planning_state: planned/);
   assert.match(task.content, /planned_dates_status: provisional/);
   assert.match(task.content, /日程要確認/);
   assert.match(schedule.path, /schedule-20261008-issue-42-concert\.md$/);
@@ -295,7 +461,7 @@ test("existing task can be linked without changing its content or completion sta
   const relative = "2026/202610/tasks/task-202610-00010-existing.md";
   const target = path.join(root, relative);
   fs.mkdirSync(path.dirname(target), { recursive: true });
-  const original = "---\ntype: task\nid: task-202610-00010\nstatus: done\npriority: 2\nplanned_start_date: 2026-10-02\nplanned_end_date: 2026-10-03\n---\n\n# Existing work\n\nUser text\n";
+  const original = "---\ntype: task\nid: task-202610-00010\nstatus: done\nplanning_state: backlog\npriority: 2\nplanned_start_date: 2026-10-02\nplanned_end_date: 2026-10-03\n---\n\n# Existing work\n\nUser text\n";
   fs.writeFileSync(target, original);
   const { plan } = prepare(root, source(), manifest([{
     number: 42, decision: "import", records: [{ key: "existing", type: "task", action: "link-existing", title: "Existing work", target_path: relative }],
@@ -303,6 +469,7 @@ test("existing task can be linked without changing its content or completion sta
   assert.equal(plan.writes.length, 1);
   assert.match(plan.writes[0].content, /source_issue_import_id:/);
   assert.match(plan.writes[0].content, /status: done/);
+  assert.match(plan.writes[0].content, /planning_state: backlog/);
   assert.match(plan.writes[0].content, /User text/);
   assert.match(plan.writes[0].content, /既存記録へ関連付けた/);
   assert.equal(fs.readFileSync(target, "utf8"), original);

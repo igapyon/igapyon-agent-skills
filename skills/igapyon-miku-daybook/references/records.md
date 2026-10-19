@@ -4,18 +4,22 @@ This reference defines the file and data rules for the `daybook` repository. Rea
 
 ## Directory and filename rules
 
-Use the month of the relevant date for the directory:
+Dated tasks, activities, schedules, and day-plans live under the relevant `YYYY/YYYYMM/` directory. Waypoints live at the daybook root:
 
 ```text
-YYYY/YYYYMM/
-├── attachments/
-│   ├── task-YYYYMM-NNNNN/
-│   ├── schedule-YYYYMMDD-name/
-│   └── activity-YYYYMMDD/
-├── activities/activity-YYYYMMDD.md
-├── schedules/schedule-YYYYMMDD-name.md
-├── tasks/task-YYYYMM-NNNNN-name.md
-└── day-plan/day-plan-YYYYMMDD.md
+daybook/
+├── YYYY/YYYYMM/
+│   ├── attachments/
+│   │   ├── task-YYYYMM-NNNNN/
+│   │   ├── schedule-YYYYMMDD-name/
+│   │   └── activity-YYYYMMDD/
+│   ├── activities/activity-YYYYMMDD.md
+│   ├── day-plan/day-plan-YYYYMMDD.md
+│   ├── schedules/schedule-YYYYMMDD-name.md
+│   └── tasks/task-YYYYMM-NNNNN-name.md
+└── waypoints/
+    ├── YYYYMMDD-HHMM-topic.md
+    └── YYYYMMDD-HHMM-topic-00001.md
 ```
 
 - An activity belongs to the month in which it happened and normally has one file per day.
@@ -23,6 +27,7 @@ YYYY/YYYYMM/
 - A task belongs permanently to the month in which the task was created. A September-created task for an October event stays under `YYYY/202609/tasks/`.
 - Keep a task in its creation-month `tasks/` directory when it becomes `done` or `cancelled`; update its status in place and do not move it to an archive or closed folder.
 - A day-plan belongs to the target date's month and is a generated snapshot.
+- Waypoints live in the daybook repository root, outside the year/month record directories. They are short resume entries; see [waypoints.md](waypoints.md) for naming, metadata, and update rules.
 - Store supporting files under the same month as their primary record, in `attachments/<record-key>/`. Use the full task ID, or the schedule/activity filename stem, as the record key. Create these directories only when needed.
 - Use lowercase English prefixes and a short English filename suffix. Preserve an existing filename and ID when updating its title or deadline.
 
@@ -41,6 +46,8 @@ Use these statuses:
 
 Keep the single checked state in the body aligned with front matter. A partially completed checklist is not itself proof that the task is done.
 
+Use `planning_state: planned` or `planning_state: backlog` to control whether an active task belongs in date-based work planning or the separate Backlog group. This is independent of `status`: a Backlog task can be `todo` or `in_progress`. New tasks write `planned` unless the user explicitly asks for Backlog. Existing tasks with no `planning_state` are read as `planned`; do not bulk-add the field. Missing dates, low priority, a long period, and `todo` status do not imply Backlog.
+
 Apply the request-scope and completion-evidence rules in [Task completion and scope](operations.md#task-completion-and-scope) before changing a task to `done`. The checklist and `completed` date must remain consistent with that rule; do not infer completion from an activity report alone.
 
 ## Front matter
@@ -52,6 +59,7 @@ All dates use `YYYY-MM-DD`. Use quoted strings for times such as `start: "19:00"
 type: task
 id: task-YYYYMM-NNNNN
 status: todo
+planning_state: planned # planned or backlog
 priority: 5
 created: YYYY-MM-DD
 planned_start_date: YYYY-MM-DD
@@ -66,9 +74,13 @@ completed: YYYY-MM-DD
 
 `priority` is required on newly created task records and is an integer from `1` to `9`: `1` is highest, `5` is normal, and `9` is lowest. Smaller numbers mean higher priority. Use `5` when the user does not specify a priority. Existing task records may omit the field, in which case treat it as `5`.
 
-New ordinary tasks require `planned_start_date` and `planned_end_date`. They form an inclusive planned work period; a one-day task uses the same value for both. Require valid `YYYY-MM-DD` dates and `planned_start_date <= planned_end_date`. The end date is a planned finish date, not the actual completion date or necessarily an external deadline. Record actual completion with `status: done` and `completed`. If a user supplied a firm deadline, preserve its meaning, source, and modifiers in the task body; do not imply that the planned end is the deadline unless that is what the user intends. `planned_action` describes the intended work and does not imply it must occur on every day in the period.
+`planning_state` is required on newly created task records and must be the scalar string `planned` or `backlog`. An omitted value on an existing record is treated as `planned` without rewriting the file. Backlog is a separate planning group, not a task status or completion state.
 
-For a new ordinary task, write both planned endpoints and `planned_dates_status`. Use `confirmed` only when both endpoints are explicit or the user confirms the complete period. If either endpoint is filled by an assumption, use `provisional`, even when the resulting period is one day. When dates are not specified, use Asia/Tokyo today as the provisional start and end date. If the user supplies only a start date, use it for both ends until adjusted. If the user supplies only an end date, use the earlier of today and that date as the provisional start. Never change a date the user specified. Identify each provisional value, the complete provisional period, and its basis in the task body/history and in the response. `planned_week` is the Monday of a coarse work-week plan; it does not replace either required date on a new ordinary task.
+New planned tasks require `planned_start_date` and `planned_end_date`. They form an inclusive planned work period; a one-day task uses the same value for both. Require valid `YYYY-MM-DD` dates and `planned_start_date <= planned_end_date`. The end date is a planned finish date, not the actual completion date or necessarily an external deadline. Record actual completion with `status: done` and `completed`. If a user supplied a firm deadline, preserve its meaning, source, and modifiers in the task body; do not imply that the planned end is the deadline unless that is what the user intends. `planned_action` describes the intended work and does not imply it must occur on every day in the period.
+
+An explicitly classified Backlog task may omit both planned endpoints or keep only the endpoint that is known. Do not fill an omitted Backlog date provisionally. Any supplied dates must still be valid and ordered. If `planned_dates_status` is present, both endpoints are still required. Keep `due_month` and `planned_week` as coarse reference information; neither creates a work date nor changes the planning group. Do not classify a task as Backlog merely because its period is long, it has no dates, it has low priority, or its status is `todo`.
+
+For a new planned task, write both planned endpoints and `planned_dates_status`. Use `confirmed` only when both endpoints are explicit or the user confirms the complete period. If either endpoint is filled by an assumption, use `provisional`, even when the resulting period is one day. When dates are not specified, use Asia/Tokyo today as the provisional start and end date. If the user supplies only a start date, use it for both ends until adjusted. If the user supplies only an end date, use the earlier of today and that date as the provisional start. Never change a date the user specified. Identify each provisional value, the complete provisional period, and its basis in the task body/history and in the response. `planned_week` is the Monday of a coarse work-week plan; it does not replace either required date on a new planned task.
 
 `planned_dates_status` must be a scalar YAML string, either `confirmed` or `provisional`, and requires both valid planned endpoints. `confirmed` describes confidence in the planned period, not task completion. An unbounded weekly recurring rule without a planned period must not carry this field. Existing records without the field keep their legacy behavior; do not add or infer statuses by bulk-editing existing tasks. When a user changes only one endpoint and has not confirmed the resulting full period, keep the period provisional. A user may confirm the current values without changing them.
 
@@ -132,7 +144,7 @@ When a task has implementation milestones or a firm external deadline in additio
 For a task-list request, display this header and one row per selected task:
 
 ```text
-ID / Priority / Status / Planned start / Planned end / Title
+ID / Priority / Status / Planning state / Planned start / Planned end / Title
 ```
 
-`Priority` is `priority`, or `5` when omitted. Sort confirmed or legacy dated tasks by ascending priority, planned end date, planned start date, then full task ID. Put provisional tasks and tasks with incomplete planned periods in the `日程要確認` group after dated tasks, sorted by priority and ID. Read existing records across all year/month directories. For weekly tasks, also show `Next` from `next_occurrence`; do not substitute it for either end of the task's planned period or use it as a sort key. By default list active tasks across all year/month directories. Apply a date window only when the user asks for a window or asks for a day-plan.
+`Planning state` is `planning_state`, or `planned` when omitted. Include planned and Backlog tasks by default, in separate groups. Sort planned confirmed or legacy dated tasks by ascending priority, planned end date, planned start date, then full task ID. Put planned provisional tasks and tasks with incomplete planned periods in the `日程要確認` group after dated tasks, sorted by priority and ID. Sort Backlog by ascending priority and then full task ID; do not date-filter it unless requested. Read existing records across all year/month directories. For weekly tasks, also show `Next` from `next_occurrence`; do not substitute it for either end of the task's planned period or use it as a sort key. By default list active tasks across all year/month directories. Apply a date window only when the user asks for a window or asks for a day-plan.

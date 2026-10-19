@@ -6,6 +6,8 @@ Read this reference only for GitHub Actions workflow generation or update, Daily
 
 The daybook workflow generates a day-plan mechanically and posts it to a configured GitHub Issue once per Asia/Tokyo target date. It includes a mention only when `DAYBOOK_MENTION` is configured with a non-empty value; an unset or empty value adds no mention. It uses `GITHUB_TOKEN`, `contents: read`, and `issues: write`. It does not call a generative AI API. The generated Markdown is an artifact; task and schedule files remain the source of truth.
 
+The current generator includes a separate `Backlog` section after the date-based task sections. The notification renderer converts relative record links throughout the generated Markdown, so both planned-task and Backlog links are commit-pinned in the comment. To enable this in a target repository, install the matching updated generator bundle before relying on the notification; an older `day-plan.mjs` will keep putting date-overlapping Backlog tasks in today's work.
+
 The bundled default schedule is once per day at approximately 06:00 Asia/Tokyo, using the UTC cron `0 21 * * *`. GitHub schedule events are best effort and can be delayed or dropped. Before changing or reporting the target time, read the target repository's `.github/workflows/day-plan-notify.yml` because this value is operational configuration.
 
 The comment marker is date-only: `<!-- daybook-briefing:YYYY-MM-DD -->`. The posting script also recognizes previous date-only and date-plus-slot markers, so migrating an existing Issue does not create another comment for a date that was already posted. A scheduled retry and a manual non-dry-run for the same target date are skipped when a Bot comment for that date exists. A manual dispatch may explicitly set `allow_duplicate: true` to post again; scheduled runs always deduplicate. Dry-runs never post.
@@ -25,6 +27,8 @@ For an explicit request to create or update this workflow, use [assets/daybook](
 The bundle is self-contained. It does not require the source daybook repository or a network-fetched script at runtime. Preserve an existing target repository's package scripts and dependencies when integrating it. Set `DAYBOOK_ISSUE_NUMBER` and `DAYBOOK_NOTIFY_ENABLED` as repository variables. Optionally set `DAYBOOK_MENTION` to the account mention that should receive notifications; if it is unset or empty, no account is mentioned. Do not copy the source repository's Issue number or account-specific values without checking the target.
 
 This list is the notification workflow bundle only. Do not copy Issue-intake helpers as part of notification setup. If Issue intake is separately requested, follow the local prerequisite and integration steps in [issue-import.md](issue-import.md#1-check-local-cli-prerequisites-and-prepare-the-intake-files).
+
+After copying the bundle, run its day-plan tests and generate a representative plan into a staging output root. Confirm that the `Backlog` heading and its relative links are present before updating the target workflow. The posting script's deduplication, marker, permissions, and posting behavior do not change for this section.
 
 ## Configuration
 

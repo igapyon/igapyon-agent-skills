@@ -14,6 +14,7 @@ export const ISSUE_IMPORT_DATA_MARKER = "daybook-issue-import-data:v1";
 const HASH_PATTERN = /^[a-f0-9]{64}$/;
 const RECORD_KEY_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const REPO_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const TASK_PLANNING_STATES = new Set(["planned", "backlog"]);
 const ACTIVITY_MARKER_PATTERN = /^<!-- daybook-issue-record:v1 (\{.*\}) -->$/;
 const ACTIVITY_CLOSE_MARKER = "<!-- /daybook-issue-record:v1 -->";
 const ISSUE_RESULT_STATUSES = new Set([
@@ -311,6 +312,12 @@ function validateRecord(record, issueNumber) {
     || !new Set(["create", "link-existing"]).has(record.action)) {
     fail("INVALID_MANIFEST", "record type or action is unsupported", { issue: issueNumber, key: record.key });
   }
+  if (Object.hasOwn(record, "planning_state")) {
+    if (record.type !== "task" || record.action !== "create"
+      || !TASK_PLANNING_STATES.has(record.planning_state)) {
+      fail("INVALID_MANIFEST", "planning_state is only valid as planned or backlog on a created task", { issue: issueNumber, key: record.key });
+    }
+  }
   if (record.action === "link-existing" && (record.type === "activity" || typeof record.target_path !== "string")) {
     fail("INVALID_MANIFEST", "link-existing requires a task or schedule target_path", { issue: issueNumber, key: record.key });
   }
@@ -424,6 +431,9 @@ export function deriveTaskDates(record, importDate) {
   if (start) validateIsoDate(start, "planned_start_date");
   if (end) validateIsoDate(end, "planned_end_date");
   if (start && end && start > end) fail("INVALID_DATE_RANGE", "planned_start_date must not be after planned_end_date", { key: record.key });
+  if (record.planning_state === "backlog") {
+    return { start, end, status: start && end ? "confirmed" : null, reasons: [] };
+  }
   if (start && end) return { start, end, status: "confirmed", reasons: [] };
   if (!start && !end) return {
     start: importDate,
@@ -450,7 +460,15 @@ function recordReference(record, issueNumber, createdPath) {
   const id = record.type === "task"
     ? recordPath.match(/task-(\d{6}-\d{5})-/)?.[0].slice(0, -1)
     : path.posix.basename(recordPath, ".md");
-  return { key: record.key, type: record.type, id, path: recordPath, issue: issueNumber };
+  return {
+    key: record.key,
+    type: record.type,
+    id,
+    path: recordPath,
+    issue: issueNumber,
+    ...(record.type === "task" && record.action === "create"
+      ? { planning_state: record.planning_state ?? "planned" } : {}),
+  };
 }
 
 function canonicalDirectories(repoRoot) {
@@ -590,23 +608,30 @@ function renderTask(record, context, id, targetPath) {
     type: "task",
     id,
     status: "todo",
+    planning_state: record.planning_state ?? "planned",
     priority: record.priority ?? 5,
     created: context.importDate,
-    planned_start_date: period.start,
-    planned_end_date: period.end,
-    planned_dates_status: period.status,
     planned_action: plannedAction,
     source_issue_number: context.issue.number,
     source_issue_url: context.issue.url,
     source_issue_key: record.key,
     source_issue_import_id: context.importId,
   };
+  if (period.start) fields.planned_start_date = period.start;
+  if (period.end) fields.planned_end_date = period.end;
+  if (period.status) fields.planned_dates_status = period.status;
   if (record.due_month) fields.due_month = record.due_month;
   if (record.deadline_note) fields.deadline_note = record.deadline_note;
   const checklist = record.checklist?.length ? record.checklist.map((item) => `- [ ] ${item}`) : ["- [ ] 作業を進める"];
+  const backlogDateMeaning = period.start && period.end ? "参考予定期間を記録した。"
+    : period.start ? `参考開始日${period.start}を記録した。`
+      : period.end ? `参考終了日${period.end}を記録した。`
+        : "作業予定日は設定していない。";
   const history = period.reasons.length
     ? period.reasons.map((reason) => dateHistory(context.importDate, `${reason}。日程要確認。`, context.issue.number))
-    : [dateHistory(context.importDate, "作業予定期間をIssue本文・コメントに基づき登録した。", context.issue.number)];
+    : [dateHistory(context.importDate, record.planning_state === "backlog"
+      ? `Backlogとして登録した。${backlogDateMeaning}`
+      : "作業予定期間をIssue本文・コメントに基づき登録した。", context.issue.number)];
   const body = [
     "",
     `# ${record.title}`,
@@ -679,11 +704,17 @@ function renderActivityBlock(record, context) {
 function issueReceiptBody(issue, records, importId, repo, importDate) {
   const recordLines = records.map((record) => {
     const period = record.period;
+    const planningState = record.planning_state ?? (period ? "planned" : null);
+    const stateInfo = planningState ? `\n  - 計画区分：${planningState === "backlog" ? "Backlog" : "planned"}` : "";
     const dateInfo = period
-      ? `\n  - 作業予定：${period.start}〜${period.end}${period.status === "provisional" ? "（暫定）" : ""}`
+      ? period.start && period.end
+        ? `\n  - ${planningState === "backlog" ? "参考予定期間" : "作業予定"}：${period.start}〜${period.end}${period.status === "provisional" ? "（暫定）" : ""}`
+        : period.start ? `\n  - ${planningState === "backlog" ? "参考開始" : "作業予定開始"}：${period.start}`
+          : period.end ? `\n  - ${planningState === "backlog" ? "参考終了" : "作業予定終了"}：${period.end}`
+            : planningState === "backlog" ? "\n  - 予定期間未設定" : ""
       : record.date ? `\n  - 日付：${record.date}` : "";
     const reason = period?.reasons.length ? `\n  - ${period.reasons.join(" / ")}` : "";
-    return `- ${record.id}：${markdownEscape(record.title)}\n  - パス：${record.path}${dateInfo}${reason}`;
+    return `- ${record.id}：${markdownEscape(record.title)}\n  - パス：${record.path}${stateInfo}${dateInfo}${reason}`;
   });
   const provisional = records.some((record) => record.period?.status === "provisional");
   const receipt = {
@@ -1025,9 +1056,15 @@ function renderPreview(plan) {
     if (issue.questions?.length) lines.push("- 確認事項：", ...issue.questions.map((question) => `  - ${question}`));
     for (const record of issue.records ?? []) {
       const period = record.period;
-      const date = period ? `${period.start}〜${period.end}${period.status === "provisional" ? "（暫定）" : ""}`
+      const planningState = record.planning_state ?? (period ? "planned" : null);
+      const date = period
+        ? period.start && period.end
+          ? `${planningState === "backlog" ? "参考予定期間 " : ""}${period.start}〜${period.end}${period.status === "provisional" ? "（暫定）" : ""}`
+          : period.start ? `${planningState === "backlog" ? "参考開始 " : "作業予定開始 "}${period.start}`
+            : period.end ? `${planningState === "backlog" ? "参考終了 " : "作業予定終了 "}${period.end}` : "予定期間未設定"
         : record.date ?? "";
-      lines.push(`- ${record.action} ${record.type} ${record.id}：${record.title}${date ? `（${date}）` : ""}`);
+      const state = planningState ? ` / ${planningState === "backlog" ? "Backlog" : "planned"}` : "";
+      lines.push(`- ${record.action} ${record.type} ${record.id}：${record.title}${state}${date ? `（${date}）` : ""}`);
       if (record.period?.reasons?.length) lines.push(...record.period.reasons.map((reason) => `  - ${reason}`));
       lines.push(`  - パス：${record.path}`);
     }
