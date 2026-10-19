@@ -202,7 +202,9 @@ You need both a current view of your work and a dated account of how you reached
 **What you can achieve**
 
 - Create and update tasks, activities, and schedules with priorities, planned periods, current conclusions, next actions, and links to supporting material.
+- Save short Waypoints that resume a task or an independently resumable subtask across sessions.
 - Generate day-plan snapshots from those source records, or explicitly check whether a supplied URL relates to an existing task.
+- Keep date-planned work separate from a dedicated Backlog section; Backlog tasks can remain undated until they are scheduled.
 - Bring named GitHub Issues into the documented intake workflow and prepare the bundled GitHub Actions notification workflow when requested.
 
 **Scope and prerequisites:** Markdown records are the source of truth. Issue receipts and closure follow the miku-scm steps; notification delivery requires setup in the target repository.

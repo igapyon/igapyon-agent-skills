@@ -124,7 +124,7 @@ The Agent reads the Issue content and returned comments. The local program does 
 - `needs-info`: include concrete questions and do not create records or remote actions for that Issue;
 - `skip`: include a reason and do not create records or remote actions for that Issue.
 
-Do not import an Issue whose returned evidence is incomplete for the decision. Mark it `needs-info` when missing comments, dates, or context could change the meaning. For a task, keep external deadlines separate from the work period. Do not use a deadline as the work period. Every explicit task date needs `date_evidence`. An omitted start or end is completed using the current task-date rule and becomes `planned_dates_status: provisional`; preserve the reason in history and the comment. Both explicit endpoints produce `confirmed`. A schedule requires an explicit event date and evidence. An activity requires an explicitly known past date and evidence; never turn an undated past activity into an event on the import date.
+Do not import an Issue whose returned evidence is incomplete for the decision. Mark it `needs-info` when missing comments, dates, or context could change the meaning. For a task, keep external deadlines separate from the work period. Do not use a deadline as the work period. Every explicit task date needs `date_evidence`. `planning_state` is optional on a task with `action: create`: omit it or use `planned` for planned work, and use `backlog` only when the Issue is explicitly being kept for later planning. Omitted state remains compatible with existing manifests and produces a new task with `planning_state: planned`. For planned tasks, an omitted start or end is completed using the current task-date rule and becomes `planned_dates_status: provisional`; preserve the reason in history and the comment. A Backlog task keeps only the supplied endpoints and may have no dates; it does not receive provisional dates or `planned_dates_status` unless both endpoints are supplied. Both explicit endpoints produce `confirmed`. `planning_state` is invalid on schedule, activity, or `link-existing` records. A schedule requires an explicit event date and evidence. An activity requires an explicitly known past date and evidence; never turn an undated past activity into an event on the import date.
 
 Example manifest:
 
@@ -141,6 +141,7 @@ Example manifest:
           "type": "task",
           "action": "create",
           "title": "演奏会参加費を支払う",
+          "planning_state": "planned",
           "content": "参加費3,000円を支払う。",
           "priority": 5,
           "checklist": ["支払方法を確認する", "参加費を支払う"]
@@ -148,6 +149,20 @@ Example manifest:
       ]
     }
   ]
+}
+```
+
+For an Issue that should stay in Backlog without a date assumption, set `planning_state` to `backlog` and omit the planned date fields when none are known:
+
+```json
+{
+  "key": "review-recording-workflow",
+  "type": "task",
+  "action": "create",
+  "title": "録音整理の方法を見直す",
+  "planning_state": "backlog",
+  "content": "現行の整理手順を見直す。",
+  "priority": 5
 }
 ```
 
@@ -167,7 +182,7 @@ node scripts/import-issues.mjs prepare \
   --out-dir workplace/issue-import/20261006-review
 ```
 
-Review `preview.md` and `plan.json` before apply. Confirm every Issue outcome; each record kind, path, task ID, due/work-period distinction, and date evidence; every `provisional` range and reason; duplicate or linked record decisions; each activity append; and the complete comment body including its statement that records are local and the later close only completes intake. Daily Briefing #3 must be `excluded`. `needs-info`, `skip`, already-imported, remote-only, and excluded outcomes must have no write and must not receive an import comment.
+Review `preview.md` and `plan.json` before apply. Confirm every Issue outcome; each record kind, path, task ID, planning state, due/work-period distinction, and date evidence; every planned `provisional` range and reason; that Backlog records have not received invented dates; duplicate or linked record decisions; each activity append; and the complete comment body including its statement that records are local and the later close only completes intake. Daily Briefing #3 must be `excluded`. `needs-info`, `skip`, already-imported, remote-only, and excluded outcomes must have no write and must not receive an import comment.
 
 `prepare` only writes run artifacts; it must not change canonical daybook records. The task sequence comes from current files and local Git history without fetching. The plan stores the complete intended writes and before/after hashes. Do not hand-edit the plan. A changed plan fails its digest check.
 

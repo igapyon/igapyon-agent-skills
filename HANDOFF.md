@@ -15,6 +15,36 @@ update_when:
 This file summarizes the current working state for the next human or AI agent.
 Keep it concise. Do not use this as a full work log or a replacement for `TODO.md` and `DECISIONS.md`.
 
+## 最新作業：Waypointsの仕様とsource実装（2026-10-20）
+
+利用者が`waypoints/`を採用し、保存・再開手順と番号付きサブ作業入口をsource skillへ実装した。[daybook-waypoints.md](docs/plans/daybook-waypoints.md)が仕様記録。task・activitiesを正本とし、Waypointsは短い再開案内と参照を持つ。関連スレッドの担当範囲・確認時点を記録し、スレッドの実行管理はハーネス側の役割。
+
+- 状態：新規メモに`type`、`updated_at`、`status: ready | in_use | closed`を使い、task完了とWaypointの役割終了を区別する。既存のfront matterなしメモは未記録として読む。
+- サブ作業：`YYYYMMDD-HHMM-<topic>-00001.md`形式で個別の再開入口を作る。全体入口は任意。日時はグループ初回作成時、番号は固定識別で並べ替えない。task・計画書を正本とする。
+- 操作方式：再開したセッションが自分で状態を更新する。手順はDaybookスキルに置き、waypoints内READMEやheartbeat等の稼働監視は必須にしない。
+- 自己レビュー修正：既存メモは同じパスで更新し、同名回避は新規作成だけに適用。全体・子メモの相互リンクと追加時の案内更新を手順化し、リンク更新では状態を変えない。
+- 直前の添付テキスト化仕様案は`fc7a4bd`へcommit済み。今回のWaypoints実装はローカル変更で、commit/pushしていない。実daybookデータは変更していない。
+- SCMのローカル再コミットとpushはこれまで未実行。保存済みの古いPR draftには添付仕様案や今回のWaypoints仕様が含まれないため、再開時は実際の対象範囲と依頼を確認する。
+
+## 最新作業：daybookの添付をテキスト中心にする仕様検討（2026-10-20）
+
+[daybook-text-first-attachments.md](docs/plans/daybook-text-first-attachments.md) に仕様案を作成。利用者はGit管理下の容量増加を抑え、画像・音声・動画を原則格納せず、OfficeとPDFはテキスト化を優先する方針を指定した。保存判断、変換/OCRの制約、作業ファイル、個別例外、既存添付の扱いと反映箇所を整理。現行のsource skillの保存指示への反映は後続工程。
+
+- この仕様検討で作成・更新するのは仕様案とTODO/HANDOFF。実daybookの資料・原本・データは変更していない。
+- 直前のBacklog対応と共通版`1.20261019.1`は`f56bccf`へcommit済み。開始時点の`devel-tiga1017lab`は`origin/devel`より1commit先、作業ツリーclean。
+- SCMのPR draftは`workplace/miku-scm/pr-drafts/pr-devel-tiga1017lab-202610191702.md`に保存済みで、ローカル再コミットの承認待ちだった。履歴書き換え・pushは未実行。今回の仕様検討文書はそのcommit/draftに含まれないため、再開時は実際の範囲と状態を確認する。
+
+## 最新作業：day-plan の Backlog 分離を実装（2026-10-19）
+
+[daybook-backlog-separation.md](docs/plans/daybook-backlog-separation.md) のBLG-00〜05を実装。task は `planning_state: planned | backlog` を持ち、既存の省略属性はplanned扱い。日付に依存しないBacklog欄をday-planへ追加し、日付欄から除外した。Backlog作成時は不明日付を補完せず、Issue manifest、preview、receipt、applyにも反映。旧schema v1 plan/resultの適用・再開をfixtureで確認。
+
+- 変更：`skills/igapyon-miku-daybook/assets/daybook/scripts/day-plan.mjs`、`issue-import.mjs` と両テスト、notification renderer test。`SKILL.md`、records/operations/issue-import/notification/date migration references、新規 `task-planning-migration.md`、root `README.md`、`DEVELOPMENT.md`、TODO、計画書を更新。
+- 検証：daybook suite 51/51、`npm run test:skill-index-policy` 77/77。`git diff --check` と文書リンク/範囲照合を実施。
+- 対象repoの既存task分類・記録更新、skill/generator配備、version、commit/push、GitHub通知は未実施。旧taskはplanning_state省略のままplannedとして動作する。
+- 開始時のcheckout：`devel-tiga1017lab` / `b7c992e`。開始時点に計画/TODO/HANDOFFの既存差分があり保持した。再開時は実際のGit状態を優先する。
+
+下方は過去作業の記録。そこに残る「最新指示」、古いbranch、未commitなどを今回の実装開始指示として扱わない。
+
 ## 最新指示：daybook のURL関連 task 探索を実装（2026-10-15）
 
 利用者の後続指示に従い、[daybook-url-task-lookup.md](docs/plans/daybook-url-task-lookup.md) の URL-00〜05 を source skill に実装した。

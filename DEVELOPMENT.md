@@ -259,6 +259,10 @@ daybook では、課題管理に研究ノートと意思決定記録を組み合
 
 task を最新状態として別管理すること、優先度・進捗・予定期間の管理、Markdown 記録間のリンクは daybook 側で加えた設計です。day-plan は task と schedule から既存の生成スクリプトが作る予定のスナップショットであり、教材にある週次の振り返りを自動化するものではありません。
 
+task の `planning_state` は `planned` と `backlog` を分けます。planned の task は従来どおり日付をもとに「今日の作業」などへ表示し、Backlog は専用欄へ表示します。Backlog は進捗 `status` と別の属性で、日付なしでも登録できます。新しい task は `planned` を明記し、既存 task で属性が省略されている場合も planned として読み取ります。未着手や日付なしだけを理由にBacklogへ一括分類しません。
+
+利用者は「録音整理を日付なしのBacklogとして登録して」「Backlogのこのtaskを10月20日に予定して」のように依頼できます。既存taskを予定化する時は同じIDの分類・予定日を更新し、別taskを重複作成しません。既存データを分類するときは、対象daybookのgeneratorを更新した後に明示された記録だけを変更します。手順は [task planning migration guide](skills/igapyon-miku-daybook/references/task-planning-migration.md) を参照してください。
+
 GitHub Issue を daybook に取り込む場合のローカル CLI の前提確認と導入手順は、[Issue 取り込み手順](skills/igapyon-miku-daybook/references/issue-import.md#1-check-local-cli-prerequisites-and-prepare-the-intake-files)を参照してください。
 
 ### URLから関連する task を探す
@@ -279,7 +283,7 @@ GitHub Issue を daybook に取り込む場合のローカル CLI の前提確�
 
 旧仕様にあった期限キーは `due` で、`due_date` ではありません。day-plan生成処理は移行中に旧2項目を別名として読み取りますが、taskファイルを自動変更しません。新旧項目が両方あり値が異なる記録は生成時にエラーとして示します。
 
-利用者が行う具体的な確認、バックアップ、既存taskの編集、別出力先でのday-plan確認については、配布スキルの [task date migration guide](skills/igapyon-miku-daybook/references/task-date-migration.md) を参照してください。対象daybookのデータとスクリプトの変更は、利用者が更新版を導入した後に別途行います。
+利用者が行う具体的な確認、バックアップ、既存taskの編集、別出力先でのday-plan確認については、配布スキルの [task date migration guide](skills/igapyon-miku-daybook/references/task-date-migration.md) を参照してください。planning state の導入・分類手順は [task planning migration guide](skills/igapyon-miku-daybook/references/task-planning-migration.md) にあります。対象daybookのデータとスクリプトの変更は、利用者が更新版を導入した後に別途行います。
 
 ## 採用したindex.jsonの更新
 

@@ -1,6 +1,6 @@
 # Daybook operations
 
-Read this reference for an add, update, list, activity, schedule, or day-plan request. Use the target repository's README and current files as the final local contract.
+Read this reference for an add, update, list, activity, schedule, or day-plan request. For a waypoint request, read [waypoints.md](waypoints.md). Use the target repository's README and current files as the final local contract.
 
 ## Task and activity responsibilities
 
@@ -33,7 +33,7 @@ Examples:
 
 1. Search all `YYYY/YYYYMM/tasks/task-*.md` files and recent Git history for the intended task or its ID.
 2. If it is a concrete action, choose the month of creation and assign the next unused five-digit number in that month. Do not reuse a deleted number or close a gap.
-3. Write front matter with `type`, full `id`, `status: todo`, `created`, `priority`, both planned endpoints, and `planned_dates_status`. Priority is an integer from `1` to `9`, using `5` when unspecified. Use user-provided dates when known. Set the status to `confirmed` only when both endpoints are explicit or the user confirms the complete period. For a one-day task, set both planned dates to the same date; if either value was assumed, mark the result `provisional`. If neither date is specified, provisionally use today's Asia/Tokyo date for both. If only a start is supplied, provisionally set the end to that date; if only an end is supplied, set the start to the earlier of today and that end date. Never replace an explicitly supplied date. Record the complete provisional period and its basis in the body/history and mention it in the response. Do not put a made-up date into an external-deadline field. An unbounded weekly recurring rule is exempt from the planned-period and status fields; use its `next_occurrence` and dated schedules.
+3. Write front matter with `type`, full `id`, `status: todo`, `planning_state`, `created`, and `priority`. Use `planning_state: planned` by default; use `backlog` only when the user asks to defer scheduling or otherwise makes that intent clear. Do not infer Backlog from missing dates, low priority, a long period, or `todo` status. A Backlog task may omit either or both planned endpoints; do not add a provisional date to fill a missing endpoint. If Backlog dates are supplied, preserve them as references and validate their format and order. For a planned task, include both planned endpoints and `planned_dates_status`. Priority is an integer from `1` to `9`, using `5` when unspecified. Use user-provided dates when known. Set the status to `confirmed` only when both endpoints are explicit or the user confirms the complete period. For a one-day task, set both planned dates to the same date; if either value was assumed, mark the result `provisional`. If planned dates are unspecified, provisionally use today's Asia/Tokyo date for both. If only a start is supplied, provisionally set the end to that date; if only an end is supplied, set the start to the earlier of today and that end date. Never replace an explicitly supplied date. Record the complete provisional period and its basis in the body/history and mention it in the response. Do not put a made-up date into an external-deadline field. An unbounded weekly recurring rule is exempt from the planned-period and status fields; use its `next_occurrence` and dated schedules.
 4. Add a Japanese title, concise content, checklist, and history entry. Store supplied email or source links under a related section.
 5. Use one task for work the user explicitly asks to combine; put the components in a checklist.
 
@@ -47,6 +47,7 @@ Update all representations that the request affects:
 
 - status and the one checked state in the body;
 - `priority` when the user changes the task's importance;
+- `planning_state` when the user explicitly moves the task between planned work and Backlog;
 - `planned_start_date` and `planned_end_date` for the inclusive planned work period;
 - `planned_dates_status` when both endpoints have been confirmed, or when a date assumption makes the period provisional;
 - `planned_action` for the work planned within that period;
@@ -54,6 +55,8 @@ Update all representations that the request affects:
 - body and history for time modifiers, milestones, or uncertainty.
 
 Separate a task's planned work period from its actual completion and any firm external deadline. Separate “draft sent” from “presentation complete”. If the user supplies an implementation target and a final migration deadline, retain both with explicit labels.
+
+Changing `planning_state` does not change `status`, task identity, dates, deadlines, weekly schedules, or recurrence. When moving a task to Backlog, preserve existing dates and their confirmed/provisional status; add a short history entry. When moving it back to `planned`, keep any valid dates and status. If a complete work period is still unknown, use the planned-task provisional-date rules above and record their basis. Do not create another task for a classification change.
 
 When the user changes only one endpoint, keep or set `planned_dates_status: provisional` unless the user confirms the full resulting period. When the user confirms the current complete range without changing dates, update the status to `confirmed` and add a history entry. Do not bulk-add this field to existing records. Never put it on an unbounded weekly recurring rule.
 
@@ -107,15 +110,17 @@ When the user says work was done, record the fact. Activity-only requests update
 
 ## Task list
 
-Search every year/month `tasks/` directory. By default include active and unfinished tasks and show:
+Search every year/month `tasks/` directory. By default include active and unfinished tasks in planned and Backlog groups and show:
 
 ```text
-ID / Priority / Status / Planned start / Planned end / Title
+ID / Priority / Status / Planning state / Planned start / Planned end / Title
 ```
 
-`Priority` comes from `priority`, or is `5` when omitted. Sort confirmed or legacy dated tasks by ascending priority, planned end, planned start, then full task ID. Put `provisional` tasks and tasks with an incomplete period in `日程要確認` after them, sorted by priority and ID. `Planned start` and `Planned end` come from `planned_start_date` and `planned_end_date`; display `—` for a missing value. `due_month` remains separate month-only deadline information and does not fill `Planned end`. For a weekly task, add `Next` from `next_occurrence` without changing the meaning of the planned period or using it as a sort key. Include the full `task-YYYYMM-NNNNN` ID so identical short numbers cannot be confused. Include completed or cancelled tasks only when requested.
+`Planning state` is `planned` when omitted on an existing task. `Priority` comes from `priority`, or is `5` when omitted. Sort planned confirmed or legacy dated tasks by ascending priority, planned end, planned start, then full task ID. Put planned `provisional` tasks and tasks with an incomplete period in `日程要確認` after them, sorted by priority and ID. Show Backlog separately, sorted by priority and full task ID without a date window. `Planned start` and `Planned end` come from `planned_start_date` and `planned_end_date`; display `—` for a missing value. `due_month` remains separate month-only deadline information and does not fill `Planned end`. For a weekly task, add `Next` from `next_occurrence` without changing the meaning of the planned period or using it as a sort key. Include the full `task-YYYYMM-NNNNN` ID so identical short numbers cannot be confused. Include completed or cancelled tasks only when requested.
 
 Do not edit files for a list request. Report provisional and incomplete periods as needing date review, then wait for an update request.
+
+When introducing the Backlog group or classifying existing tasks, use [task-planning-migration.md](task-planning-migration.md). It preserves omitted-state compatibility and limits edits to tasks the user identifies.
 
 ## Find tasks related to a URL
 
@@ -140,7 +145,7 @@ node scripts/generate-day-plan.mjs --date YYYY-MM-DD
 
 By default, the generator writes to the canonical path under the target repository root: `YYYY/YYYYMM/day-plan/day-plan-YYYYMMDD.md`. The date defaults to today in Asia/Tokyo when `--date` is omitted. Use `--output-root` only when a separate output directory is explicitly needed, such as the notification workflow's staging directory.
 
-The current implementation selects active tasks from all canonical year/month `tasks/` directories and schedules from canonical year/month `schedules/` directories. It ignores other Markdown files, nested folders, backups, and attachment contents. It checks that task IDs and filenames match their creation-month directory, and checks any supplied `created` month against that directory. Schedule filenames, front matter dates, and event-month directories must agree. Path or schema mismatches stop generation with the offending file path.
+The current implementation selects active tasks from all canonical year/month `tasks/` directories and schedules from canonical year/month `schedules/` directories. It ignores other Markdown files, nested folders, backups, and attachment contents. It treats an omitted legacy `planning_state` as `planned`; an explicit `backlog` task is selected for the separate Backlog section. It checks that task IDs and filenames match their creation-month directory, and checks any supplied `created` month against that directory. Schedule filenames, front matter dates, and event-month directories must agree. Path or schema mismatches stop generation with the offending file path.
 
 It shows active tasks with:
 
@@ -152,10 +157,11 @@ It shows active tasks with:
 - active tasks with `planned_dates_status: provisional` in the date-review section, showing the provisional range;
 - schedules dated in the window as upcoming schedules;
 - `planned_week` periods that overlap the window as planned weeks.
+- active Backlog tasks from all months in their own section, regardless of their dates; Backlog tasks are omitted from all six date-based task groups, including date review and planned weeks.
 
-It excludes `done` and `cancelled` tasks and does not turn `due_month` into a guessed date. Provisional tasks appear only in date review, including when their provisional period contains the target day, and are omitted from date-specific task sections and `planned_week`. An unbounded weekly recurring rule without a planned period is not flagged for date review; its dated schedules represent individual occurrences. It includes schedules with the scalar string `status: scheduled` and legacy schedules with no status, and omits schedules with the scalar string `status: cancelled`. Invalid explicit schedule statuses fail generation. Treat the generated output as a snapshot: generation overwrites the canonical file for that date. Keep lasting notes in the source task or schedule instead of editing the generated day-plan.
+It excludes `done` and `cancelled` tasks and does not turn `due_month` into a guessed date. Planned provisional tasks appear only in date review, including when their provisional period contains the target day, and are omitted from date-specific task sections and `planned_week`. Backlog tasks do not appear in date review, even with incomplete or provisional dates; their dates are shown only as reference information in Backlog. The Backlog section is present with `- なし` when empty. Schedules remain date-based, including schedules linked from a weekly Backlog task. An unbounded weekly recurring rule without a planned period is not flagged for date review; its dated schedules represent individual occurrences. It includes schedules with the scalar string `status: scheduled` and legacy schedules with no status, and omits schedules with the scalar string `status: cancelled`. Invalid explicit schedule statuses fail generation. Treat the generated output as a snapshot: generation overwrites the canonical file for that date. Keep lasting notes in the source task or schedule instead of editing the generated day-plan.
 
-Display each task's priority and planned period in the generated day-plan, treating an omitted legacy priority as `5`. Sort today's tasks by ascending priority, then task ID. In planned-end, planned-start, and planned-week sections, sort by the section's date first, then ascending priority, then task ID. Priority changes ordering only; it does not change which tasks are selected for the plan. The generator rejects a present priority that is not an integer from `1` to `9`.
+Display each planned task's priority and planned period in the date-based sections, treating an omitted legacy priority as `5`. Sort today's tasks by ascending priority, then task ID. In planned-end, planned-start, and planned-week sections, sort by the section's date first, then ascending priority, then task ID. Backlog shows the full task ID, linked title, priority, status, and any saved period, due month, planned week, or weekly next occurrence as reference information; sort it by priority and ID. Priority changes ordering only; it does not change which tasks are selected for the plan. The generator rejects a present priority that is not an integer from `1` to `9` and a present planning state other than `planned` or `backlog`.
 
 After generation, inspect the output for expected inclusions and exclusions, and report its path. Use the existing tests for code behavior; do not add a second generator in the skill.
 

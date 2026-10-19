@@ -103,6 +103,176 @@ test("day-plan selects current work and includes unfinished overdue tasks", () =
   assert.doesNotMatch(plan.markdown, /対象外の予定/);
 });
 
+test("backlog stays out of date-based sections and is listed once in priority and ID order", () => {
+  const root = fixtureRoot();
+  const tasks = path.join(root, "2026/202609/tasks");
+  const add = (sequence, slug, fields, title = slug) => writeRecord(
+    tasks,
+    `task-202609-${String(sequence).padStart(5, "0")}-${slug}.md`,
+    { type: "task", id: `task-202609-${String(sequence).padStart(5, "0")}`, status: "todo", created: "2026-09-01", ...fields },
+    title,
+  );
+  add(20, "today", {
+    planning_state: "backlog", priority: 2,
+    planned_start_date: "2026-09-01", planned_end_date: "2026-12-31",
+    planned_dates_status: "confirmed", planned_action: '"参考アクション"',
+    due_month: '"2026-12"', planned_week: "2026-09-14",
+  }, "長期間のBacklog");
+  add(21, "overdue", { planning_state: "backlog", priority: 1, planned_start_date: "2026-08-01", planned_end_date: "2026-09-10" });
+  add(22, "upcoming", { planning_state: "backlog", priority: 3, planned_start_date: "2026-09-16", planned_end_date: "2026-09-30" });
+  add(23, "start-only", { planning_state: "backlog", planned_start_date: "2026-09-14" });
+  add(24, "end-only", { planning_state: "backlog", planned_end_date: "2026-09-18" });
+  add(25, "provisional", {
+    planning_state: "backlog", planned_start_date: "2026-09-14", planned_end_date: "2026-09-14",
+    planned_dates_status: "provisional",
+  });
+  add(26, "no-dates", { planning_state: "backlog" });
+  add(27, "in-progress", { planning_state: "backlog", status: "in_progress" });
+  add(28, "done", { planning_state: "backlog", status: "done" });
+  add(29, "cancelled", { planning_state: "backlog", status: "cancelled" });
+  add(30, "weekly", { planning_state: "backlog", recurrence: "weekly", next_occurrence: "2026-09-17" });
+  add(31, "same-planned-period", {
+    planning_state: "planned", priority: 4, planned_start_date: "2026-09-01", planned_end_date: "2026-12-31",
+    planned_dates_status: "confirmed",
+  }, "同期間のplanned task");
+  add(32, "outside-window", {
+    planning_state: "backlog", priority: 4, planned_start_date: "2026-10-01", planned_end_date: "2026-10-30",
+    planned_week: "2026-09-14",
+  });
+
+  const oldTasks = path.join(root, "2025/202512/tasks");
+  writeRecord(oldTasks, "task-202512-00003-old-backlog.md", {
+    type: "task", id: "task-202512-00003", status: "todo", planning_state: "backlog", created: "2025-12-01",
+  }, "前年のBacklog");
+  const scheduleDirectory = path.join(root, "2026/202609/schedules");
+  writeRecord(scheduleDirectory, "schedule-20260917-backlog-weekly.md", {
+    type: "schedule", date: "2026-09-17", status: "scheduled",
+  }, "Backlog週次taskのschedule");
+
+  const plan = buildDayPlan({ repoRoot: root, targetDate: "2026-09-14", generatedDate: "2026-09-14" });
+  const backlogIds = plan.records.backlogTasks.map((task) => task.frontMatter.id);
+  assert.deepEqual(backlogIds, [
+    "task-202609-00021", "task-202609-00020", "task-202609-00022", "task-202609-00032", "task-202512-00003",
+    "task-202609-00023", "task-202609-00024", "task-202609-00025", "task-202609-00026",
+    "task-202609-00027", "task-202609-00030",
+  ]);
+  for (const group of [
+    plan.records.todayTasks,
+    plan.records.overdueTasks,
+    plan.records.nearEndTasks,
+    plan.records.upcomingStartTasks,
+    plan.records.dateReviewTasks,
+    plan.records.plannedWeekTasks,
+  ]) {
+    assert.equal(group.some((task) => task.frontMatter.planning_state === "backlog"), false);
+  }
+  assert.equal(plan.records.nearSchedules.some((schedule) => schedule.title === "Backlog週次taskのschedule"), true);
+  assert.equal(plan.records.todayTasks.some((task) => task.frontMatter.id === "task-202609-00031"), true);
+  assert.match(plan.markdown, /## Backlog/);
+  assert.match(plan.markdown, /参考予定期間 2026-09-01〜2026-12-31 \/ 期限月 2026-12 \/ 参考予定週 2026-09-14/);
+  assert.match(plan.markdown, /参考開始 2026-09-14/);
+  assert.match(plan.markdown, /参考終了 2026-09-18/);
+  assert.match(plan.markdown, /予定期間未設定/);
+  assert.match(plan.markdown, /task-202609-00027：\[in-progress\].*状態 in_progress/);
+  assert.match(plan.markdown, /task-202512-00003：\[前年のBacklog\]/);
+  assert.ok(plan.markdown.includes("../../../2025/202512/tasks/task-202512-00003-old-backlog.md"));
+  assert.match(plan.markdown, /次回 2026-09-17/);
+  assert.equal((plan.markdown.match(/長期間のBacklog/g) ?? []).length, 1);
+  assert.doesNotMatch(plan.markdown, /task-202609-00028|task-202609-00029/);
+  assert.doesNotMatch(plan.markdown, /undefined|null/);
+});
+
+test("planning_state defaults to planned and rejects unsupported YAML values", () => {
+  const root = fixtureRoot();
+  const tasks = path.join(root, "2026/202609/tasks");
+  const plan = buildDayPlan({ repoRoot: root, targetDate: "2026-09-14", generatedDate: "2026-09-14" });
+  assert.equal(plan.records.todayTasks.some((task) => task.frontMatter.id === "task-202609-00001"), true);
+  assert.equal(plan.records.backlogTasks.length, 0);
+  assert.match(plan.markdown, /## Backlog\n\n- なし/);
+
+  for (const [index, yamlValue] of ["[]", "{}", "null", "10", "true", '""', '"Backlog"', '"pending"'].entries()) {
+    const sequence = String(60 + index).padStart(5, "0");
+    const filename = `task-202609-${sequence}-invalid-planning-state.md`;
+    fs.writeFileSync(path.join(tasks, filename), [
+      "---", "type: task", `id: task-202609-${sequence}`, "status: todo", "created: 2026-09-01",
+      `planning_state: ${yamlValue}`, "---", "", "# Invalid planning state", "",
+    ].join("\n"));
+    assert.throws(() => loadRecords(root), (error) =>
+      error.message.includes("planning_state must be planned or backlog") && error.message.includes(filename));
+    fs.unlinkSync(path.join(tasks, filename));
+  }
+});
+
+test("backlog keeps date validation and does not duplicate incomplete tasks in date review", () => {
+  const root = fixtureRoot();
+  const tasks = path.join(root, "2026/202609/tasks");
+  const invalid = path.join(tasks, "task-202609-00070-invalid-backlog-date.md");
+  writeRecord(tasks, path.basename(invalid), {
+    type: "task", id: "task-202609-00070", status: "todo", planning_state: "backlog",
+    created: "2026-09-01", planned_start_date: '"not-a-date"',
+  }, "Invalid Backlog date");
+  assert.throws(() => loadRecords(root), /planned_start_date must be YYYY-MM-DD/);
+  fs.unlinkSync(invalid);
+
+  const incompleteStatus = path.join(tasks, "task-202609-00071-incomplete-backlog-status.md");
+  fs.writeFileSync(incompleteStatus, [
+    "---", "type: task", "id: task-202609-00071", "status: todo", "created: 2026-09-01",
+    "planning_state: backlog", "planned_start_date: 2026-09-14", "planned_dates_status: provisional", "---", "", "# Invalid status use", "",
+  ].join("\n"));
+  assert.throws(() => loadRecords(root), /planned_dates_status requires a complete planned period/);
+  fs.unlinkSync(incompleteStatus);
+
+  const conflictingAlias = path.join(tasks, "task-202609-00074-conflicting-backlog-alias.md");
+  writeRecord(tasks, path.basename(conflictingAlias), {
+    type: "task", id: "task-202609-00074", status: "todo", planning_state: "backlog",
+    created: "2026-09-01", planned_start_date: "2026-09-14", planned_date: "2026-09-13",
+  }, "Conflicting Backlog aliases");
+  assert.throws(() => loadRecords(root), /conflicting planned_start_date and legacy planned_date/);
+  fs.unlinkSync(conflictingAlias);
+
+  const incomplete = path.join(tasks, "task-202609-00072-incomplete-backlog.md");
+  writeRecord(tasks, path.basename(incomplete), {
+    type: "task", id: "task-202609-00072", status: "todo", planning_state: "backlog",
+    created: "2026-09-01", planned_start_date: "2026-09-14",
+  }, "Incomplete Backlog");
+  const plan = buildDayPlan({ repoRoot: root, targetDate: "2026-09-14", generatedDate: "2026-09-14" });
+  assert.equal(plan.records.backlogTasks.some((task) => task.frontMatter.id === "task-202609-00072"), true);
+  assert.equal(plan.records.dateReviewTasks.some((task) => task.frontMatter.id === "task-202609-00072"), false);
+  assert.match(plan.markdown, /参考開始 2026-09-14/);
+});
+
+test("backlog-to-planned classification changes the generated section without changing task dates", () => {
+  const root = fixtureRoot();
+  const tasks = path.join(root, "2026/202609/tasks");
+  const filename = "task-202609-00073-move-backlog.md";
+  const filePath = path.join(tasks, filename);
+  const fields = {
+    type: "task", id: "task-202609-00073", status: "todo", planning_state: "backlog",
+    created: "2026-09-01", planned_start_date: "2026-09-14", planned_end_date: "2026-09-14",
+    planned_dates_status: "provisional",
+  };
+  writeRecord(tasks, filename, fields, "Move from backlog");
+  const before = fs.readFileSync(filePath, "utf8");
+  const backlogPlan = buildDayPlan({ repoRoot: root, targetDate: "2026-09-14", generatedDate: "2026-09-14" });
+  assert.equal(backlogPlan.records.backlogTasks.some((task) => task.frontMatter.id === fields.id), true);
+  assert.equal(backlogPlan.records.dateReviewTasks.some((task) => task.frontMatter.id === fields.id), false);
+
+  writeRecord(tasks, filename, { ...fields, planning_state: "planned" }, "Move from backlog");
+  const plannedPlan = buildDayPlan({ repoRoot: root, targetDate: "2026-09-14", generatedDate: "2026-09-14" });
+  assert.equal(plannedPlan.records.backlogTasks.some((task) => task.frontMatter.id === fields.id), false);
+  assert.equal(plannedPlan.records.dateReviewTasks.some((task) => task.frontMatter.id === fields.id), true);
+  assert.match(fs.readFileSync(filePath, "utf8"), /planned_start_date: 2026-09-14/);
+  assert.match(fs.readFileSync(filePath, "utf8"), /planned_dates_status: provisional/);
+  assert.notEqual(fs.readFileSync(filePath, "utf8"), before);
+
+  writeRecord(tasks, filename, {
+    ...fields, planning_state: "planned", planned_dates_status: "confirmed",
+  }, "Move from backlog");
+  const confirmedPlan = buildDayPlan({ repoRoot: root, targetDate: "2026-09-14", generatedDate: "2026-09-14" });
+  assert.equal(confirmedPlan.records.todayTasks.some((task) => task.frontMatter.id === fields.id), true);
+  assert.equal(confirmedPlan.records.dateReviewTasks.some((task) => task.frontMatter.id === fields.id), false);
+});
+
 test("record discovery reads canonical records across months and skips backups and attachments", () => {
   const { tasks, schedules } = loadRecords(fixtureRoot());
   assert.equal(tasks.length, 11);
@@ -289,6 +459,9 @@ test("day-plan output for a date is overwritten on regeneration", () => {
 
 test("CLI uses the canonical default output and honors an output-root override without changing sources", () => {
   const root = fixtureRoot();
+  writeRecord(path.join(root, "2026/202609/tasks"), "task-202609-00080-cli-backlog.md", {
+    type: "task", id: "task-202609-00080", status: "todo", planning_state: "backlog", created: "2026-09-01",
+  }, "CLI Backlog");
   const bundleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const scripts = path.join(root, "scripts");
   fs.mkdirSync(scripts, { recursive: true });
@@ -319,6 +492,8 @@ test("CLI uses the canonical default output and honors an output-root override w
   const canonicalPlan = path.join(fs.realpathSync(root), "2026/202609/day-plan/day-plan-20260914.md");
   assert.equal(defaultRun.stdout.trim(), `Generated ${canonicalPlan}`);
   assert.match(fs.readFileSync(canonicalPlan, "utf8"), /期限超過/);
+  assert.match(fs.readFileSync(canonicalPlan, "utf8"), /## Backlog/);
+  assert.match(fs.readFileSync(canonicalPlan, "utf8"), /CLI Backlog/);
 
   const stagedRoot = path.join(root, "workplace/generated");
   const canonicalBeforeStaging = fs.readFileSync(canonicalPlan, "utf8");

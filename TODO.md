@@ -1,5 +1,38 @@
 # TODO
 
+## daybook：Waypointsの名称・基本方針・source実装（2026-10-20・完了）
+
+仕様記録：[daybook-waypoints.md](docs/plans/daybook-waypoints.md)。ルート`waypoints/`にJSTの作成日時付きの短い再開メモを複数保存する。task・activitiesを正本とし、Git状態は具体的な実行に必要な段階で確認する。関連スレッドは担当範囲と最終確認時点を添えた参照として扱う。
+
+- [x] 名称`waypoints`と、ここまでの合意を文書化。
+- [x] `updated_at`と`status: ready | in_use | closed`を新規waypointのfront matterとして実装。
+- [x] 保存、選択、再開、中断、役割終了時の手順をDaybookスキルへ追加。READMEや稼働監視を必須にしない。
+- [x] サブ作業を独立して再開する番号付きwaypointを実装。共通日時・topicと固定番号を使い、計画・依存関係・進捗はtaskまたは計画書を正本とする。
+- [x] `SKILL.md`、records/operations reference、root READMEに入口・配置・用途を反映。
+- [x] 自己レビュー2件を修正。既存メモの更新と新規作成の同名回避を区別し、全体・子メモの相互リンクと追加時の案内更新を明記。
+- [x] 実daybookの既存データは変更せず、仕様案・TODO・HANDOFFに実装範囲を記録。
+
+## daybook：添付をテキスト中心にする仕様検討（2026-10-20・案作成済み）
+
+仕様案：[daybook-text-first-attachments.md](docs/plans/daybook-text-first-attachments.md)。画像・音声・動画・Office・PDFの原本格納を避け、必要情報と原本参照、必要な本文のテキスト化を優先する。Officeはmiku-ms-office、PDFはローカル文字抽出/OCRを検討し、中間物やbase64の流入、重複保存も防ぐ。
+
+- [x] 現行の添付保存案内と変換側の制約を調査。
+- [x] 保存判断・形式別の扱い・変換制約・個別例外・既存データ・確認例を仕様案へ記録。
+- [ ] 後続の実装指示に基づきsource skillの操作規則と関連説明へ反映。
+
+## daybook：今日の作業と Backlog を分ける（2026-10-19・source実装済み）
+
+計画作成後の実装指示に従い、[daybook-backlog-separation.md](docs/plans/daybook-backlog-separation.md) のBLG-00〜05をsource skillとfixtureへ実装した。task に `planning_state: planned | backlog` を追加。day-plan は今日の作業と `Backlog` を分け、属性省略はplannedとして互換性を維持し、Backlogの日付は補わない。
+
+- [x] BLG-00：実際のGit状態・既存差分・sourceとtestsを確認し、既存作業を保持。
+- [x] BLG-01：reader・選択・Backlog表示とday-planテストを実装。
+- [x] BLG-02：Issue manifest・日付導出・preview/receipt・schema v1再開互換を実装。
+- [x] BLG-03：schema・作成/更新/一覧・移行手順を整合。
+- [x] BLG-04：README/DEVELOPMENT・通知説明とrenderer確認を整合。
+- [x] BLG-05：対象suiteと静的照合を実施し、実績と制約を記録。
+
+確認：daybook suite 51/51、`npm run test:skill-index-policy` 77/77。`git diff --check` と変更ファイル・文書リンクの確認を完了。source/testsと説明文書のみ変更。実daybookデータの分類、配備、version更新、commit/push、GitHub操作は未実施。
+
 ## daybook：URLから関連 task を探す（2026-10-15・source 実装済み）
 
 計画・実装記録：[daybook-url-task-lookup.md](docs/plans/daybook-url-task-lookup.md)。利用者の後続指示に従い source skill を実装した。URLと task の関連確認を明示された場合だけ内容を読み、全年月の task から候補と理由を返す。探索だけでは記録を変更せず、記録まで依頼された場合は既存の編集範囲を適用する。
