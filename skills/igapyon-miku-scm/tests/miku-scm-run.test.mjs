@@ -319,7 +319,7 @@ test("READONLY Issue workflow completes in one runner call with stable artifacts
   assert.match(result.human_output, /Issue: #7/);
   assert.match(result.human_output, /URL: https:\/\/github\.com\/a\/b\/issues\/7/);
   assert.deepEqual(calls, [[
-    "issue", "view", "7", "--repo", "a/b", "--comments",
+    "issue", "view", "7", "--repo", "a/b",
     "--json", "number,state,title,body,url,updatedAt,labels,comments",
   ]]);
   const request = JSON.parse(await readFile(path.join(root, "runs", "readonly-1", "request.json"), "utf8"));

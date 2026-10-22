@@ -39,6 +39,19 @@ Keep product semantics in the product core or upstream runtime artifacts. Treat
 Web Apps, CLI, Java CLI, Agent Skills, and MCP as entrypoints or adapters
 unless the relevant basic document says otherwise.
 
+## Applying References
+
+Use explicit user constraints and the target repository's documented public
+contracts to bound the task. Shared defaults guide new work; they do not by
+themselves authorize a migration of an existing contract. If a shared rule and
+the repository contract disagree, identify the conflict and continue work that
+does not depend on resolving it.
+
+Basic documents own product semantics and layer boundaries. Workflow references
+own execution steps; starter assets are adaptable examples of those workflows.
+Sister repositories provide implementation evidence. Dated audits may contain
+pending proposals, so check their decision status before applying an item.
+
 ## Cross-Runtime Ordering Rule
 
 When a miku-soft product needs deterministic ordering for file paths,

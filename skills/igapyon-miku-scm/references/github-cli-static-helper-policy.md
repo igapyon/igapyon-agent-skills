@@ -29,7 +29,7 @@ Use [../scripts/github-issue-read.mjs](../scripts/github-issue-read.mjs) for gen
 
 ```text
 gh issue list --repo <owner>/<repo> --state <open|closed|all> --limit 1000 --json number,state,title,body,url,updatedAt
-gh issue view <positive-number> --repo <owner>/<repo> --comments --json number,state,title,body,url,updatedAt,labels,comments
+gh issue view <positive-number> --repo <owner>/<repo> --json number,state,title,body,url,updatedAt,labels,comments
 gh label list --repo <owner>/<repo> --limit 1000 --json name,description,color
 ```
 

@@ -96,7 +96,8 @@ Use these terms consistently across review notes:
 
 ## Review Mode
 
-During Review mode, do not edit the target repository unless the user explicitly
-asks to switch from review to maintenance work. Findings should lead the
-response, ordered by severity, with a short classification block before the
-findings when a review note provides one.
+Review-only requests produce findings without repository edits. When the user
+also requests corrections, fix confirmed issues within that scope without
+requiring a separate mode-switch confirmation. Keep proposed policy changes
+distinct from correctness fixes. Findings should lead the response, ordered by
+severity, with a short classification block when a review note provides one.

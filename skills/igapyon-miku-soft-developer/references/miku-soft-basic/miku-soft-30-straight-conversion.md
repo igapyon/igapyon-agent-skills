@@ -103,6 +103,8 @@ Among the items above, the environment premises are fixed in the following sense
 - target Java compatibility
   - Fix the source version and binary target version to `1.8`
   - The actual compiler does not necessarily have to be `JDK 1.8`
+  - On JDK 9 or newer, use `--release 8` to constrain Java SE APIs too;
+    source/target 1.8 alone are insufficient
   - Users may use a newer Java runtime
 - build tool
   - Fix to `Maven`
@@ -519,12 +521,12 @@ Read the strength of individual sentences according to wording such as `fix`, `b
 - Preserve existing tag-push release operation, such as `git push origin vX.Y.Z`, when migrating a sister Java project to the shared release workflow template
 - Do not trigger the shared release workflow from GitHub Release `published` events by default; with `softprops/action-gh-release`, tag push should create or update the GitHub Release and assets, and manual reruns should use `workflow_dispatch`
 - Check that the release tag version matches `pom.xml` `version`, or document any accepted dot-suffix rule such as `v0.5.0.1` for `0.5.0`
-- Set up the build JDK explicitly, normally Temurin Java 21 with Maven cache, before `mvn -B package`; set up Java 8 separately for the packaged runtime smoke test
+- Set up the build JDK explicitly based on Maven and plugin requirements before `mvn -B package`; keep it separate from the Java 8 and newest-LTS packaged-runtime checks
 - Use Maven standard output names as the release workflow copy source by default, such as `target/<artifactId>-<project.version>.jar` and `target/<artifactId>-<project.version>-sources.jar`; if the repository intentionally uses a fixed `<finalName>`, document that and adjust the release workflow copy source explicitly
 - Obtain the Maven project version for release checks with `mvn help:evaluate -Dexpression=project.version -q -DforceStdout` in shared templates, instead of assuming that the first `<version>` tag in `pom.xml` is the project version
 - Obtain the Maven artifactId with `mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout` in shared release workflow templates, so release asset source paths and staged names do not depend on a hard-coded artifactId
 - Stage runtime and source jar assets with versioned names such as `<artifact>-<version>.jar` and `<artifact>-sources-<version>.jar`, and upload only those staged assets to the GitHub Release
-- Run a Java 8 `java -jar ... --version` smoke test against the staged runtime jar before uploading release assets
+- Run `java -jar ... --version` against the staged runtime jar on Java 8 and the newest LTS of the declared distribution before uploading release assets
 - In multi-module repositories, point release asset preparation at the runtime module's `target/` directory, not the aggregator root `target/`; make that target directory an explicit workflow setting such as `RUNTIME_TARGET_DIR`
 - A release workflow may use `softprops/action-gh-release` for tag-push creation or update of GitHub Release assets, with `contents: write` permission and explicit asset overwrite behavior; use `gh release view/create/upload` only when the repository needs more detailed release existence, body, or note control
 - Place the CLI main class at `jp.igapyon.<project>.cli.<Project>Cli`
@@ -535,7 +537,7 @@ Read the strength of individual sentences according to wording such as `fix`, `b
 - Keep CLI command dispatch as simple branching that lets upstream command names be read and traced; do not over-abstract it
 - If creating a distribution zip, include the minimal runtime-user-facing items such as the jar, `README.md`, `LICENSE`, and runtime CLI docs
 - Java main source must observe source / binary `1.8` compatibility, and must not assume newer Java APIs / syntax such as `List.of`, `Map.of`, `record`, `var`, or `Files.readString`
-- Test source should also move toward Java 1.8 assumptions where possible, but final judgment should be checked with Maven compiler settings and CI / runtime environments
+- Test source should also move toward Java 1.8 assumptions where possible. Verify packaged behavior on an actual Java 8 runtime and the newest LTS; Java 8 compiler targeting alone does not verify dependencies or runtime compatibility
 - Java source should have the copyright / SPDX header adopted in that repository
 - Keep the root class as a facade close to the upstream file name, and if the implementation is large, delegate to responsibility classes such as `Public`, `Import`, `Export`, and `Validate`
 - Facade classes should preserve upstream-derived public method names and overloads, and should not expose Java-side helper classes too much to users

@@ -12,7 +12,7 @@ audience:
   - maintainer
   - agent
 created: 2026-07-31
-updated: 2026-07-31
+updated: 2026-10-22
 sources:
   - type: human-input
     role: primary
@@ -25,13 +25,19 @@ sources:
 This directory contains maintainer-facing plans and audit records for
 igapyon-miku-soft-developer itself.
 
-These files are not the normative miku-soft project workflow. Normal project
-creation and maintenance must continue to use SKILL.md and references/. A plan
-moves into references/ or assets/ only after its policy is approved,
-implemented, and verified.
+Dated plans and audits here are evidence, not normative miku-soft product
+rules. Normal project work uses SKILL.md and references/. The
+[maintenance adoption workflow](adoption-workflow.md) is an operational
+workflow explicitly referenced by the maintenance entry point; it applies
+already-approved rules, not pending audit proposals. A proposed product rule
+moves into references/ or assets/ only after approval and verification.
 
 ## Current Dated Work
 
+- [2026-10-22 skill review and correctness repairs](2026-10-22-skill-review.md)
+- [2026-10-22 Luna implementation plan](2026-10-22-luna-implementation-plan.md) — implemented slice and gated follow-ups.
+- [Rule ownership inventory](2026-10-22-rule-ownership.md) — current owners, retained callsite summaries, and deduplication decisions.
+- [Luna execution record](2026-10-22-luna-execution-record.md) — scope, environment, verification results, and remaining gates.
 - [2026-07-31 reference and GitHub Actions audit](2026-07-31-reference-actions-audit/README.md)
 
 ## Routine Adoption

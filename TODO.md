@@ -1660,8 +1660,8 @@ Update this section while working. Do not rewrite unrelated TODO items.
       allowance, and Java 8 compatibility versus source/target-only compilation.
     - Confirmed initial high-confidence stale statements: current
       `miku-xlsx2md-java` multi-module shape and the dated layer 10 repository
-      scope list. Node.js 20 is also stale as the maintained starter minimum
-      because the official lifecycle lists it EOL since 2026-03-24.
+      scope list. Node.js 20 is also stale as the maintained starter minimum;
+      the official release schedule gives its EOL as 2026-04-30.
     - Continue extraction before treating the pilot set as complete.
   - [x] Refresh the local-only sibling repository inventory and classify the
     first-pass candidates by naming layer.
@@ -1727,8 +1727,12 @@ Update this section while working. Do not rewrite unrelated TODO items.
         smoke gates, timeout/concurrency controls, and artifact staging.
       - Treat these counts as observations, not findings; repository naming is
         only a discovery hint and workflow absence is not automatically a defect.
-    - [ ] Complete the Node.js 20-to-22/24 baseline decision and migration
-      inventory as a dedicated part of the workflow audit.
+    - [ ] Complete the Node.js sibling compatibility inventory and migrations
+      as a dedicated part of the workflow audit.
+      - [x] Approve and apply the shared starter rule: oldest upstream-
+        maintained LTS as the product floor, with verification on that floor
+        and the newest LTS. Include maintained LTS lines between them when
+        practical. The 2026-10-22 snapshot is minimum 22 and newest LTS 24.
       - The first literal scan found Node 20 on a `node-version` line in 29
         direct sibling workflow files, Node 22 in 3, and Node 24 in 14; counts
         overlap where a matrix names more than one version.
@@ -1736,12 +1740,20 @@ Update this section while working. Do not rewrite unrelated TODO items.
         `engines.node` range: 3 use `>=18.19.1`, 5 use `>=20`, 3 use `>=22`,
         and 2 use `>=24 <25`. Confirm applicability before calling older ranges
         defects.
-      - The developer references still express Node 20 assumptions in the
-        layer 10 and layer 40 workflows, layer 40 basic design, Agent Skills
-        and Web `package.json` starters, and the Agent Skills CI starter.
-      - Evaluate the preferred maintained default: product minimum `>=22`, CI
-        build/test on 22 and 24, release artifact build on 24, and smoke the
-        released runtime on 22 as well when `>=22` compatibility is claimed.
+      - The initial inventory found Node 20 assumptions in the layer 10 and
+        layer 40 workflows, layer 40 basic design, Agent Skills and Web
+        `package.json` starters, and the Agent Skills CI starter. The shared
+        references and first-party starter metadata/CI have since been updated;
+        sibling repository applicability remains to be classified.
+      - The first-party Agent Skills starter now uses `engines.node: ">=22"`
+        and CI `[22, 24]`; its Release build host remains 24. The Web starter
+        treats Node as build tooling and matches `engines.node` to its verified
+        Node 24 Release build.
+      - The Agent Skills Release workflow now stages the final release-named
+        ZIP and invokes a shared smoke verifier under Node 22 before upload.
+        The same verifier is covered by the starter tests. GitHub Actions is
+        the formal cross-version check; no Actions run occurred in this task.
+        Local Node 22/24 execution is not required by this strategy.
       - Evaluate Node 24-only as an explicit product profile or exception, not
         as an accidental consequence of using Node 24 for release builds.
       - Keep product runtime, dependency-install/build runtime, release-build
@@ -1752,9 +1764,10 @@ Update this section while working. Do not rewrite unrelated TODO items.
         unsupported compatibility note where useful, or document a bounded
         repository-specific exception with an end condition.
       - Wave C completed the 15-item reference/starter change register. The
-        candidate policy is now reviewable as separate product, CI, release
-        host, final-artifact smoke, compiler target, and Action-runtime fields;
-        the actual public-support decision remains pending.
+        shared support policy is approved; sibling applicability, exceptions,
+        and migrations remain pending. Keep product, CI, release host,
+        final-artifact smoke, compiler target, and Action-runtime fields
+        separate.
     - [ ] Audit and design a canonical release-artifact contract by product
       profile, taking the strongest existing patterns from sibling workflows.
       - Initial workflow signals: 13 files stage/copy `.mjs`, 14 stage/copy
@@ -2387,20 +2400,23 @@ prompt test が成功しても実動作が保証されたとは扱わず、肥�
 
 ## igapyon-miku-soft-developer review 整理
 
-- [ ] Node.js 20 EOL後のスターター互換性方針を更新する
-  - 2026-07-20時点でNode.js 20はEOLだが、新規スターターが
-    `engines.node: ">=20"`、CIマトリクス `[20, 24]` を採用している
-  - 最低対応版をNode.js 22へ引き上げ、`engines.node`、CIマトリクス、
-    関連ドキュメントを `>=22` / `[22, 24]` へ同期することを検討する
-  - ReleaseビルドのNode.js 24は維持する
-  - `actions/checkout@v6`、`actions/setup-node@v6`、
-    `actions/setup-java@v5`、`softprops/action-gh-release@v3` は
-    Node.js 24対応世代として現行方針と整合している
-  - この項目の棚卸し、役割分離、判断基準、移行順序は
-    `## AI Agent Current Tasks` の GitHub Actions 監査と
-    `workplace/miku-soft-reference-audit/github-actions-audit-plan.md` を正本とする
-  - ReleaseをNode.js 24で一度だけ構築し、対応下限を`>=22`とする成果物は
-    Node.js 22でもsmokeする案を検証する
+- [x] 2026-10-22: LUNA-00〜04とLUNA-06を実施した。
+  - ルールの担当箇所・例外・workflow上の要約を一覧化し、overviewの文書一覧とAgent Skills workflow内のNode版説明を整理した。
+  - Agent Skillsの隔離smokeを最終ZIPの展開後に変更し、ZIP内CLIのversionと小さな実操作を確認するfixtureを追加した。runtime欠落・空ファイル・2つ目のbackend欠落・壊れたCLI・欠落ZIP entry・名前変更後のZIPを検査した。
+  - Release workflowに、Node 24で作成して最終名にstageしたZIPをNode 22で検査するstepと、正常・名前変更・破損ZIPを直接検証する共通scriptを追加した。
+  - Node v26.12.0、OpenJDK 17.0.21、Maven 3.10.0で作業。ローカルのNode 22/24実行は必須にせず、GitHub Actionsを正式な確認先とする。Actions、Java 8 runtimeは未実行。
+  - 検証：routing suite 16/16、skill policy/archive suite 78/78、skill-creator quick_validate成功、git diff --check成功。
+  - D-NODEを反映し、最終artifact smokeをworkflowへ実装した。正式な確認先はNode 22/24のGitHub ActionsとRelease smokeであり、今回Actionsを起動していないため実結果は未確認。ローカルのNode 22/24実行は必須にしない。D-PATH、公開checksum・asset名、ローカル配備同期、独立モデル評価、GitHub操作は保留。詳細はskills/igapyon-miku-soft-developer/docs/maintenance/2026-10-22-luna-execution-record.md。
+- [x] Node.js 20 EOL後のスターター互換性方針を更新する
+  - 最低対応版はNode.jsが保守中のLTSのうち製品が対応を約束する最古のラインとし、CIではその最低版と最新LTSを検証する。中間の保守中LTSは可能な範囲で含める
+  - 2026-10-22時点のNode CLI / Agent Skillsスターターは `engines.node: ">=22"`、CI `[22, 24]`、Release build 24。Web starterはNodeをbuild-tool requirementとして扱い、現行検証host 24に合わせる
+  - 新しいLTS指定や最低版のEOL前に、公式release scheduleを確認して数値・CI・文書を一緒に更新する
+  - 最終staged artifactをNode 22で検査するRelease workflow stepとfixtureは実装済み。workflow未実行のためGitHub Actions上のmatrixとsmoke結果は未確認。ローカルのNode 22/24実行は不要とし、兄弟repository migrationは未完了
+- [x] Java CLIの互換性下限と検証対象を定める
+  - Java 8を標準の最低実行環境とし、実行対象はJava 8と選択したJDK配布元の最新LTS。中間の保守中LTSは必要性とCIコストに応じて追加する
+  - ビルドJDKと製品の実行環境を分け、Java 8向けのコンパイル設定だけで実行互換性を証明した扱いにしない。配布元によってサポート期間が異なるため、必要な場合はJDK distributionを明記する
+  - 2026-10-22時点の最新LTSはJava 25。TemurinはJava 8を少なくとも2030年12月まで提供予定。値と提供期間は各配布元の公式roadmapで更新する
+  - Java設計とstraight-conversion workflowへ反映済み。この仕様記録の更新ではJava 8 / 25 runtime、製品ビルド、GitHub Actionsを実行していない
 - [x] `skills/igapyon-miku-soft-developer/references/review/node-cli.md` に、他の review note と同じ `Severity Guidance` と `Review Output` を追加するか検討する
 - [x] `skills/igapyon-miku-soft-developer/references/review/` の入口として、各 review note の使い分けを説明する `README.md` または index 的な案内を追加するか検討する
 - [x] `skills/igapyon-miku-soft-developer/references/review/` 以下の review note 全体を整理し、ファイル粒度、見出し構成、分類条件、`Severity Guidance`、`Review Output` の揃い方を確認する

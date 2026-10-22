@@ -24,12 +24,12 @@ test("list defaults to Open Issues", () => {
   assert.deepEqual(calls, [["issue", "list", "--repo", "a/b", "--state", "open", "--limit", "1000", "--json", "number,state,title,body,url,updatedAt"]]);
 });
 
-test("single-Issue reading uses fixed gh issue view with comments", () => {
+test("single-Issue reading uses fixed gh issue view JSON including comments", () => {
   const calls = [];
   const result = runIssueRead(parseArgs(["--repo", "a/b", "--issue", "7"]), { gh: (args) => {
     calls.push(args); return { ok: true, status: 0, stdout: JSON.stringify({ ...issue, labels: [{ name: "bug" }], comments: [{ body: "note" }] }), stderr: "" };
   } });
-  assert.deepEqual(calls, [["issue", "view", "7", "--repo", "a/b", "--comments", "--json", "number,state,title,body,url,updatedAt,labels,comments"]]);
+  assert.deepEqual(calls, [["issue", "view", "7", "--repo", "a/b", "--json", "number,state,title,body,url,updatedAt,labels,comments"]]);
   assert.equal(result.issue.comments[0].body, "note");
 });
 

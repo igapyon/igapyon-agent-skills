@@ -34,7 +34,11 @@ document. For Web surface references, use the `11 Web App` workflow.
 
 For new Node app creation, start from one or more similar existing miku-soft projects expanded under `workplace/`.
 
-If the user has not provided reference projects, ask them to provide the closest existing miku-soft examples before scaffolding the new app. Treat those examples as shape references for repository layout, package metadata, CLI contracts, tests, docs, and build artifacts.
+If the user has not provided reference projects, inspect available local
+checkouts first. When none fits, record the documented or public fallback as
+described in Required Initial Input. Ask for a reference only when an unresolved
+contract prevents useful progress. Treat examples as shape references for
+repository layout, package metadata, CLI contracts, tests, docs, and artifacts.
 
 When multiple references are available, prefer the newer project version or the project closest to the requested product shape. Use the basic documents as the source of design intent, and use `workplace/` references to confirm practical implementation details that are easy to miss.
 
@@ -107,23 +111,33 @@ Creating or editing a local workflow file is allowed repository work. Pushing br
 
 ## Node.js Compatibility Policy
 
-Keep three different version concerns separate.
+Keep the compatibility floor, CI runtime set, Release build host, and each
+GitHub JavaScript Action's internal runtime as separate contracts.
 
-- Product compatibility is the Node.js range declared by `package.json`
-  `engines.node`. Set its lower bound to the oldest runtime actually verified
-  by CI. For the current starter baseline, use `>=20` and avoid an upper bound
-  unless the product has a demonstrated incompatibility with newer Node.js.
-- CI compatibility is the set of product runtimes tested on every change. For
-  the current starter baseline, test Node.js 20 and 24 so the declared minimum
-  and the release baseline are both exercised.
-- GitHub JavaScript Action runtime is selected by each Action major version; it
-  is not the product runtime selected by `actions/setup-node`. Use Node 24-aware
-  majors such as `actions/checkout@v6`, `actions/setup-node@v6`,
+- Choose the product compatibility floor as the oldest Node.js LTS major that
+  is still maintained by Node.js and that the product intends to support.
+  Declare that lower bound in `package.json` `engines.node` and verify it in
+  CI. Do not make an EOL Node.js line the default; a product-specific need for
+  one requires a documented reason and an end condition.
+- CI must test the compatibility floor and the newest Node.js LTS. Include
+  maintained LTS lines between those endpoints when the matrix cost is
+  reasonable; test every supported line when native dependencies or observed
+  version-specific behavior make gaps risky.
+- Check the [official Node.js release schedule](https://github.com/nodejs/Release#release-schedule)
+  when creating or refreshing the starter baseline. Raise the compatibility
+  floor before its Node.js support ends, then update package metadata, CI,
+  documentation, and runtime artifact checks together.
+- The current starter snapshot, checked on 2026-10-22, uses Node.js 22 as the
+  compatibility floor and Node.js 24 as the newest LTS: `engines.node` is
+  `>=22`, CI tests 22 and 24, and Release builds use 24. Refresh the newest-LTS
+  value when Node.js designates a newer LTS line.
+- Use the newest LTS as the Release build host for a current, reproducible
+  baseline. Do not raise the product minimum merely because the Release build
+  uses a newer Node.js line.
+- GitHub JavaScript Action runtime is selected by each Action major version;
+  it is not the product runtime selected by `actions/setup-node`. Use
+  Node 24-aware majors such as `actions/checkout@v6`, `actions/setup-node@v6`,
   `actions/setup-java@v5`, and `softprops/action-gh-release@v3`.
-
-Use Node.js 24 for release builds to keep release artifact generation on one
-current, reproducible baseline. Do not narrow `engines.node` to Node.js 24 only
-merely because release automation builds with Node.js 24.
 
 Treat `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` and
 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` as temporary migration workarounds, not as
@@ -180,8 +194,9 @@ Check these points:
   and uploading `release-assets/*.tgz` unless the user explicitly asked for
   the npm package tarball as the release asset.
 - Do not add a broad repository source ZIP or generic source archive as a custom uploaded release asset.
-- The release build uses Node.js 24 while product compatibility remains defined
-  separately by `package.json` and the CI matrix.
+- The release build uses the newest Node.js LTS (Node.js 24 in the current
+  starter snapshot) while product compatibility remains defined separately by
+  `package.json` and the CI matrix.
 
 For a Release CLI/runtime bundle request, the expected release assets are normally:
 
@@ -235,7 +250,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: "24" # Current newest LTS; refresh when the LTS line changes.
           cache: npm
 
       - name: Install dependencies

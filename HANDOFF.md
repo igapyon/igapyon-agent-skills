@@ -15,6 +15,14 @@ update_when:
 This file summarizes the current working state for the next human or AI agent.
 Keep it concise. Do not use this as a full work log or a replacement for `TODO.md` and `DECISIONS.md`.
 
+## 最新作業：miku-soft Java互換性方針（2026-10-22）
+
+利用者の合意に基づき、miku-soft Java CLIの最低実行環境をJava 8、実行確認先をJava 8と選択したJDK配布元の最新LTSに定めた。build JDKは製品runtimeと分ける。正本のJava設計、straight-conversion workflow、decision / TODO / maintenance recordを更新した。
+
+- 2026-10-22時点の最新LTSはJava 25。JDK配布元ごとにJava 8の更新・サポート期間は異なる。
+- この更新ではJava 8 / 25上の実行、Java製品のbuild、GitHub Actionsを実施していない。skill正本は未配備で、commit/pushもしていない。
+- 詳細は`skills/igapyon-miku-soft-developer/docs/maintenance/2026-10-22-luna-execution-record.md`のD-JAVA addendumと`DECISIONS.md`を参照。
+
 ## 最新作業：Waypointsの仕様とsource実装（2026-10-20）
 
 利用者が`waypoints/`を採用し、保存・再開手順と番号付きサブ作業入口をsource skillへ実装した。[daybook-waypoints.md](docs/plans/daybook-waypoints.md)が仕様記録。task・activitiesを正本とし、Waypointsは短い再開案内と参照を持つ。関連スレッドの担当範囲・確認時点を記録し、スレッドの実行管理はハーネス側の役割。
@@ -185,8 +193,10 @@ context below is preserved but deferred.
 - Node.js baseline migration is a named sub-track. A literal scan found Node 20
   on `node-version` lines in 29 direct sibling workflow files, compared with
   Node 22 in 3 and Node 24 in 14; matrix files can appear in two counts. The
-  maintained candidate to test is product minimum 22, CI on 22/24, release
-  build on 24, and a Node 22 smoke of released runtimes that claim `>=22`.
+  shared policy is approved: choose the oldest upstream-maintained LTS as the
+  product floor and verify it plus the newest LTS, adding intermediate LTS
+  lines when practical. The 2026-10-22 starter snapshot is minimum 22, CI
+  22/24, and Release build 24. Sibling applicability and rollout remain open.
 - Release artifact normalization is also a named sub-track. Initial signals
   include 13 workflows staging/copying `.mjs`, 14 staging/copying `.jar`, 15
   referring to `sources*.tgz`, 10 referring to Skill bundle `.zip`, and only 3

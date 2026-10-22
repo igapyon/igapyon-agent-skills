@@ -1,4 +1,7 @@
 # Optional OpenAI agent metadata for __SKILL_NAME__.
 # Remove this file if the target skill does not provide agent metadata.
-name: __SKILL_NAME__
-description: __SKILL_TITLE__
+interface:
+  display_name: "__SKILL_TITLE__"
+  short_description: "__SKILL_DESCRIPTION__"
+policy:
+  allow_implicit_invocation: false
