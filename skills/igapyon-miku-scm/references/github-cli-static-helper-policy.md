@@ -33,6 +33,27 @@ gh issue view <positive-number> --repo <owner>/<repo> --json number,state,title,
 gh label list --repo <owner>/<repo> --limit 1000 --json name,description,color
 ```
 
+The operation-specific readers also request complete comment snapshots for
+review and composite-operation checks:
+
+```text
+Issue update/comment/label view: number,url,title,body,state,labels,updatedAt,comments
+Issue close view: number,url,title,body,state,stateReason,updatedAt,labels,comments
+Issue create parent view: number,url,title,state,updatedAt
+Issue create verification: number,url,labels,parent
+```
+
+For Issue views, `comments` is a paginated connection. Validate that it has a
+`nodes` array and integer `totalCount`, that the count equals the node length,
+and that `pageInfo.hasNextPage` is not true. Reject incomplete comment evidence
+before showing an approval review or applying a write.
+
+Every Issue write must be prepared and applied through `miku-scm-run.mjs`.
+Show the complete saved operation plan, then wait for a separate user message
+whose entire trimmed text is exactly `approve` or `miku-scm approve` (or a
+documented explicit selector form). Do not invoke an Issue helper's `--apply`
+mode directly; its `gh` command surface is an internal runner interface.
+
 Use `--list` for an uncached general Issue list, `--issue <number>` for one Issue and its comments, and `--labels` for repository labels. For PR Issue matching, retain the ten-minute cache workflow in `github-issues-cache.mjs`; it has its own fixed `gh issue list` surface. Do not substitute anonymous REST for a helper failure.
 
 ## Static Helper Requirements
@@ -45,7 +66,7 @@ Require every helper that invokes `gh` to:
 4. Reject unknown arguments and arbitrary pass-through options.
 5. Invoke `gh` as an argument array without a shell, interactive mode, browser mode, aliases, or user-provided command fragments.
 6. Keep READONLY commands distinct from mutation commands.
-7. Display the exact planned mutation during preflight and require the workflow's human approval before mutation.
+7. For Issue writes, route through the complete review and exact `approve` handoff; a preflight alone is never approval. For other workflows, require that workflow's documented human approval before mutation.
 8. Persist the required attempt record before mutation and never repeat a mutation automatically.
 9. Verify the resulting remote state with a fixed READONLY `gh` command when the workflow requires confirmation.
 10. Treat authentication setup, token inspection, scope changes, and credential handling as outside the helper.

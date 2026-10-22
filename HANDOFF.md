@@ -15,6 +15,17 @@ update_when:
 This file summarizes the current working state for the next human or AI agent.
 Keep it concise. Do not use this as a full work log or a replacement for `TODO.md` and `DECISIONS.md`.
 
+## 最新作業：miku-scm Issue承認の改善をsource実装（2026-10-23）
+
+利用者の実装指示により、[計画と実施記録](skills/igapyon-miku-scm/docs/2026-10-23-issue-approval-implementation-plan.md)のUX-00〜08を実装した。実行状態と検証結果はroot TODOの同題sectionを参照。
+
+- 固定要件：完成した作業案の提示後に `approve` 必須。文面の委任・明確なclose依頼でも確認を省略しない。一つの案の複数操作を一回承認し、通常はID入力不要。
+- 対象の固定：review済みID/digest/順序へ束縛し、global pendingから選ばない。コメント一覧は全件の接続件数を検証。partial/unknownを区別し、証明済み未実施だけreceipt付きresume可能。
+- 検証：fast 197/197、full 312/312、skill index policy 78/78、Maven validate成功、skill validator有効、contract driftと`git diff --check`成功。
+- ローカルworktreeに未commit。モデル会話確認、Windows実機確認、実GitHub操作、配備、version更新、commit/pushは未実施。
+
+以下の「最新作業」やbranch・未commitの記述は過去作業の記録であり、現在の実装指示として扱わない。
+
 ## 最新作業：miku-soft Java互換性方針（2026-10-22）
 
 利用者の合意に基づき、miku-soft Java CLIの最低実行環境をJava 8、実行確認先をJava 8と選択したJDK配布元の最新LTSに定めた。build JDKは製品runtimeと分ける。正本のJava設計、straight-conversion workflow、decision / TODO / maintenance recordを更新した。

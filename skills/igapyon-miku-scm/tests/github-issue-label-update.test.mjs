@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access, mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -15,9 +15,11 @@ const ISSUE = {
   number: 42,
   url: "https://github.com/igapyon/example/issues/42",
   title: "Example",
+  body: "Issue body.\n",
   state: "OPEN",
   updatedAt: "2026-07-24T01:02:03Z",
   labels: ["bug"],
+  comments: [],
 };
 const AVAILABLE = ["bug", "documentation", "enhancement"];
 
@@ -171,7 +173,11 @@ test("gh Issue reader uses one fixed READONLY command and validates its JSON", a
     return {
       ok: true,
       status: 0,
-      stdout: JSON.stringify({ ...ISSUE, labels: ISSUE.labels.map((name) => ({ name })) }),
+      stdout: JSON.stringify({
+        ...ISSUE,
+        labels: ISSUE.labels.map((name) => ({ name })),
+        comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false } },
+      }),
       stderr: "",
     };
   });
@@ -179,7 +185,7 @@ test("gh Issue reader uses one fixed READONLY command and validates its JSON", a
   assert.deepEqual(calls, [[
     "issue", "view", "42",
     "--repo", "igapyon/example",
-    "--json", "number,url,title,state,labels,updatedAt",
+    "--json", "number,url,title,body,state,labels,updatedAt,comments",
   ]]);
 });
 
@@ -217,4 +223,37 @@ test("pre-mutation READONLY failure is not-applied and invokes no mutation", asy
   });
   assert.equal(result.status, "not-applied");
   assert.equal(mutationCalls, 0);
+});
+
+test("a proven pre-update read failure can resume the unchanged approved operation", async (t) => {
+  const state = await scenario(t);
+  const preflight = await runIssueLabelUpdate(optionsFor(state), {
+    readLabels: async () => AVAILABLE,
+    readIssue: async () => ISSUE,
+  });
+  const apply = applyOptions(state, preflight);
+  const failed = await runIssueLabelUpdate(apply, {
+    readLabels: async () => AVAILABLE,
+    readIssue: async () => { throw new Error("read unavailable"); },
+    gh: () => assert.fail("label mutation must not run after a failed pre-read"),
+  });
+  assert.equal(failed.status, "not-applied");
+
+  const reads = [ISSUE, { ...ISSUE, labels: ["enhancement"] }];
+  let mutationCalls = 0;
+  const resumed = await runIssueLabelUpdate(apply, {
+    readLabels: async () => AVAILABLE,
+    readIssue: async () => reads.shift(),
+    gh: () => {
+      mutationCalls += 1;
+      return { ok: true, stdout: ISSUE.url, stderr: "" };
+    },
+    sleep: async () => {},
+  });
+  assert.equal(resumed.status, "updated");
+  assert.equal(mutationCalls, 1);
+  const record = JSON.parse(await readFile(path.join(state.root, resumed.attempt_record), "utf8"));
+  assert.match(record.recovered_from_attempt, /pre-update-read-/);
+  const files = await readdir(path.dirname(path.join(state.root, resumed.attempt_record)));
+  assert.ok(files.some((file) => file.includes("pre-update-read-")));
 });

@@ -55,6 +55,29 @@ const apply = option(
   "Explicitly authorize the apply workflow after human review.",
   { required: true },
 );
+const handoffSelector = option(
+  "--handoff",
+  "<handoff-selector>",
+  "Exact full handoff ID or a unique listed 12-character suffix, in reviewed order.",
+);
+const reviewSha = option(
+  "--expected-review-sha256",
+  "<sha256>",
+  "Review binding digest returned by github.issue.handoff.review.",
+  { required: true },
+);
+const approvalCommand = option(
+  "--approval-command",
+  "<approve-command>",
+  "The exact current human approval command received after the full review was displayed.",
+  { required_when: "--resume is absent", required_group: "approval or resume" },
+);
+const resume = option(
+  "--resume",
+  "",
+  "Resume only from the stored approval receipt and known-safe prior attempt state.",
+  { required_group: "approval or resume" },
+);
 const addLabel = option(
   "--add-label",
   "<existing-label>",
@@ -198,6 +221,12 @@ const issueCloseApply = [
     { required: true },
   ),
   option(
+    "--expected-comments-sha256",
+    "<sha256>",
+    "Reviewed exact Issue comment snapshot digest.",
+    { required: true },
+  ),
+  option(
     "--expected-duplicate-sha256",
     "<sha256>",
     "Reviewed canonical duplicate Issue digest.",
@@ -323,7 +352,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "GitHub read",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Use the returned immutable apply arguments or the approval handoff."],
+      notes: ["Preflight creates an immutable handoff. Display its complete review and wait for exact approve before the handoff apply workflow."],
     },
   ),
   "github.issue.create.apply": contract(
@@ -344,7 +373,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
         "workplace/miku-scm/issue-attempts",
         "workplace/miku-scm/created-issues",
       ],
-      notes: ["Consume the preflight apply arguments unchanged; never reconstruct digests."],
+      notes: ["Internal helper contract only; the runner blocks direct calls. Apply through the reviewed Issue handoff."],
     },
   ),
   "github.issue.update.preflight": contract(
@@ -418,7 +447,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "GitHub read",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["At least one --add-label or --remove-label is required."],
+      notes: ["At least one --add-label or --remove-label is required. Preflight saves a handoff; review and exact approve are still required."],
     },
   ),
   "github.issue.label.apply": contract(
@@ -436,7 +465,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "GitHub read and one Issue label mutation",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/issue-label-attempts"],
-      notes: ["At least one --add-label or --remove-label is required."],
+      notes: ["Internal helper contract only; the runner blocks direct calls. Apply through the reviewed Issue handoff."],
     },
   ),
   "github.issue.close.preflight": contract(
@@ -456,6 +485,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       "--repo", "owner/repository", "--issue", "123", "--reason", "completed",
       "--expected-operation-sha256", "<reviewed-sha256>",
       "--expected-current-body-sha256", "<reviewed-sha256>",
+      "--expected-comments-sha256", "<reviewed-sha256>",
       "--expected-updated-at", "<reviewed-timestamp>",
       "--expected-contract-pair-sha256", "<reviewed-sha256>",
       "--apply",
@@ -464,6 +494,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "GitHub read and one Issue close mutation",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/issue-close-attempts"],
+      notes: ["Internal helper contract only; the runner blocks direct calls. Apply through the reviewed Issue handoff."],
     },
   ),
   "github.issue.handoff.list": contract(
@@ -476,47 +507,70 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     [],
     {
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Returns stable IDs, 12-character approval suffixes when available, and review summaries for pending handoffs only."],
+      notes: ["Returns pending summaries and attention-needed records. The list is not a full review or approval."],
+    },
+  ),
+  "github.issue.handoff.review": contract(
+    "Return the complete ordered Issue operation review and a digest bound to the repository, records, and current approval contracts.",
+    [
+      option("--root", "<path>", "Repository root containing the approval handoffs.", { default: "current directory" }),
+      option("--handoff", "<handoff-selector>", "Explicit full handoff ID or unique listed suffix in the intended order.", {
+        required: true,
+        repeatable: true,
+        minimum_occurrences: 1,
+        maximum_occurrences: 20,
+      }),
+    ],
+    ["--handoff", "<reviewed-handoff-id>"],
+    {
+      operational_artifacts: ["workplace/miku-scm/handoffs"],
+      notes: ["Displays full operation context, text, and metadata. Review is READONLY and never applies or consumes an attempt."],
     },
   ),
   "github.issue.handoff.apply": contract(
-    "Apply one pending reviewed Issue handoff without reconstructing its arguments.",
+    "Apply exactly one reviewed Issue handoff after an exact approve command and matching review digest.",
     [
       option("--root", "<path>", "Repository root containing the pending handoff.", {
         default: "current directory",
       }),
-      option("--handoff", "<handoff-selector>", "Human-supplied full pending ID, or a listed 12-character approval suffix that resolves uniquely."),
+      { ...handoffSelector, required: true },
+      reviewSha,
+      approvalCommand,
+      resume,
       apply,
     ],
-    ["--apply"],
+    ["--handoff", "<reviewed-handoff-id>", "--expected-review-sha256", "<review-sha256>", "--approval-command", "approve", "--apply"],
     {
       network_access: "Depends on the reviewed Issue apply workflow",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Without --handoff, exactly one pending handoff must exist. A suffix must resolve to exactly one pending handoff."],
+      notes: ["Requires an explicit reviewed handoff ID, the exact review digest, and either the actual approve command or --resume. Global pending selection is disabled."],
     },
   ),
   "github.issue.handoff.batch.apply": contract(
-    "Apply an explicit ordered batch of pending reviewed Issue handoffs.",
+    "Apply an explicit ordered batch of reviewed Issue handoffs after one exact approve command and matching review digest.",
     [
       option("--root", "<path>", "Repository root containing pending handoffs.", {
         default: "current directory",
       }),
-      option("--handoff", "<handoff-selector>", "Human-supplied full pending ID, or a uniquely resolving listed suffix, in approved order.", {
+      option("--handoff", "<handoff-selector>", "Explicit full handoff ID or unique listed suffix in reviewed order.", {
         required: true,
         repeatable: true,
         minimum_occurrences: 2,
         maximum_occurrences: 20,
       }),
+      reviewSha,
+      approvalCommand,
+      resume,
       apply,
     ],
-    ["--handoff", "<first-selector>", "--handoff", "<second-selector>", "--apply"],
+    ["--handoff", "<first-id>", "--handoff", "<second-id>", "--expected-review-sha256", "<review-sha256>", "--approval-command", "approve", "--apply"],
     {
       network_access: "Depends on each reviewed Issue apply workflow",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
       notes: [
-        "Validates every unique pending handoff resolved from the supplied selectors before the first apply.",
+        "Validates the approval grammar, review digest, and every selected record before the first apply.",
         "Preserves the supplied order and stops before later handoffs after any non-applied result.",
       ],
     },
@@ -536,7 +590,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     {
       network_access: "none",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Changes only the selected pending handoff to not-applied."],
+      notes: ["Changes only the selected pending v2 handoff to dismissed; this performs no GitHub mutation."],
     },
   ),
   "repository.maintenance.diagnose": contract(

@@ -1,5 +1,13 @@
 # GitHub Issue Close
 
+**Agent approval path:** run preparation through the fixed miku-scm runner,
+save the returned handoff, display its complete content with
+`github.issue.handoff.review`, then stop and wait for the user's exact
+`approve` message. Apply only through `github.issue.handoff.apply` or the
+reviewed batch workflow. The helper command examples below describe the
+internal operation contract; the Agent must not invoke this script's `--apply`
+mode directly.
+
 Close one existing public GitHub Issue only through the narrowly authorized,
 human-approved static-helper workflow in this document. Follow
 [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
@@ -22,24 +30,26 @@ first and then dependency-refresh this close operation under
 [approval-handoff.md](approval-handoff.md); it still invokes two distinct fixed
 helpers and never adds a comment to `gh issue close`.
 
-Its fixed READONLY command is `gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,stateReason,updatedAt`; it is distinct from the one close mutation.
+Its fixed READONLY command is `gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,stateReason,updatedAt,labels,comments`; it is distinct from the one close mutation.
 
 ## Preflight
 
-Retrieve the target Issue with that fixed READONLY command and require it to be Open. Show its
+Retrieve the target Issue with that fixed READONLY command and require it to be Open. The handoff retains its
 repository, number, URL, title, complete body, state, `updated_at`, selected
 reason, operation digest, and planned command.
 
 For `duplicate`, require exactly one different Issue number and retrieve that
-Issue with that fixed READONLY command. Show its URL, title, state, and snapshot SHA-256. Fix that
+Issue with that fixed READONLY command. Retain its URL, title, state, and snapshot SHA-256. Fix that
 snapshot in the apply arguments and stop on an intervening change. Reject
 `--duplicate-of` for other reasons.
 
-Wait for explicit human approval after displaying all evidence.
+The preflight is not approval. Display the complete operation with
+`github.issue.handoff.review`, then wait for a separate user message whose
+full trimmed text is exactly `approve` or `miku-scm approve`.
 
 ## Apply and Verification
 
-Apply requires the reviewed operation digest, target body digest, `updated_at`,
+Apply requires the reviewed operation digest, target body digest, exact current-comments digest, `updated_at`,
 and reviewed apply workflow contract pair digest. Persist `pending`, retrieve
 the target again, and record
 `conflict` without `gh` if it is no longer Open or the reviewed state changed.

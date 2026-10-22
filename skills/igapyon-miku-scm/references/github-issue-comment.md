@@ -1,5 +1,13 @@
 # GitHub Issue Comment
 
+**Agent approval path:** run preparation through the fixed miku-scm runner,
+save the returned handoff, display its complete content with
+`github.issue.handoff.review`, then stop and wait for the user's exact
+`approve` message. Apply only through `github.issue.handoff.apply` or the
+reviewed batch workflow. The helper command examples below describe the
+internal operation contract; the Agent must not invoke this script's `--apply`
+mode directly.
+
 Add one comment to one existing public GitHub Issue only through the narrowly
 authorized, human-approved static-helper workflow in this document. Follow
 [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
@@ -24,7 +32,7 @@ mutation under [approval-handoff.md](approval-handoff.md).
 The helper's complete fixed `gh` command surface is:
 
 ```text
-gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,labels,updatedAt
+gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,labels,updatedAt,comments
 gh issue comment <number> --repo <owner/repo> --body-file <generated-temporary-body-file>
 gh api --method GET repos/<owner/repo>/issues/comments/<comment-id>
 ```
@@ -41,14 +49,20 @@ Save only the complete comment Markdown under:
 workplace/miku-scm/issue-comments/issue-<number>-comment-<YYYYMMDDHHMM>.md
 ```
 
-Run preflight without `--apply`. Show the human:
+Run preflight without `--apply`. The handoff retains:
 
 - exact repository, Issue number, URL, title, state, `updated_at`, and Issue snapshot SHA-256
 - complete proposed comment body
 - draft path and SHA-256 digest
 - the single planned `gh issue comment --body-file` operation
 
-Wait for explicit approval after displaying this evidence.
+The Agent's human-facing display comes from `github.issue.handoff.review` and
+shows the complete Issue context and comment body without internal digests,
+paths, IDs, or command arguments.
+
+The preflight is not approval. Display the complete operation with
+`github.issue.handoff.review`, then wait for a separate user message whose
+full trimmed text is exactly `approve` or `miku-scm approve`.
 
 ## Apply and Verification
 
@@ -66,7 +80,10 @@ failure is recorded as `not-applied`; a post-mutation verification failure is
 `unresolved`.
 
 Attempt states are `pending`, `commented`, `conflict`, `not-applied`, and `unresolved`.
-Never reuse a draft after any attempt state.
+Only a `not-applied` result at `pre-comment-read` proves that no comment
+mutation ran. Under the same stored approval receipt, resume may archive that
+record and retry the unchanged draft once. A conflict requires a fresh review;
+pending, commented, and unresolved attempts are never retried.
 
 ## Completion Report
 

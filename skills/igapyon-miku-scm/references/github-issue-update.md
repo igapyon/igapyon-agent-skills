@@ -1,5 +1,13 @@
 # GitHub Existing Issue Content Update
 
+**Agent approval path:** run preparation through the fixed miku-scm runner,
+save the returned handoff, display its complete content with
+`github.issue.handoff.review`, then stop and wait for the user's exact
+`approve` message. Apply only through `github.issue.handoff.apply` or the
+reviewed batch workflow. The helper command examples below describe the
+internal operation contract; the Agent must not invoke this script's `--apply`
+mode directly.
+
 Update the title, body, and existing labels of one public GitHub Issue through the narrowly authorized, human-approved static-helper workflow in this document. Follow [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md). The AI Agent must not invoke `gh` directly. Keep drafting and preflight READONLY, and do not treat either as approval to mutate GitHub.
 
 ## Scope
@@ -7,7 +15,7 @@ Update the title, body, and existing labels of one public GitHub Issue through t
 This workflow's static helper permits only these READONLY commands:
 
 ```text
-gh issue view <number> --repo <owner/repo> --json number,url,title,body,labels,updatedAt
+gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,labels,updatedAt,comments
 gh label list --repo <owner/repo> --limit 1000 --json name
 ```
 
@@ -46,7 +54,7 @@ node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \
   [--remove-label <existing-label>]...
 ```
 
-Preflight is READONLY and uses only the fixed `gh issue view` and, when label changes are requested, `gh label list` commands. It rejects Pull Requests and a draft whose filename identifies another Issue. Show the human:
+Preflight is READONLY and uses only the fixed `gh issue view` and, when label changes are requested, `gh label list` commands. It rejects Pull Requests and a draft whose filename identifies another Issue. The handoff retains:
 
 - exact `owner/repo#number` and Issue URL
 - current title and complete current body
@@ -59,13 +67,23 @@ Preflight is READONLY and uses only the fixed `gh issue view` and, when label ch
 - current `updated_at`
 - the single exact planned `gh issue edit` operation
 
-Wait for explicit human approval after displaying all of this evidence. Approval authorizes one attempt for only the displayed repository, Issue, draft digest, current body digest, `updated_at`, and apply workflow contract pair. Editing the draft, changing the workflow contract, or observing a changed Issue invalidates that approval.
+The Agent's human-facing display comes from `github.issue.handoff.review` and
+shows the full current context, complete proposed content, diff, and label
+result without internal digests, paths, IDs, or command arguments.
+
+The preflight is not approval. Display the complete operation with
+`github.issue.handoff.review`, then wait for a separate user message whose
+full trimmed text is exactly `approve` or `miku-scm approve`. Any change to
+the draft, target, workflow contract, or reviewed Issue invalidates that
+approval and requires a new review.
 
 When this handoff is a later step in one explicitly ordered approval batch for the same Issue, the batch runner may perform the dependency preflight defined in [approval-handoff.md](approval-handoff.md). It may refresh only the state expectations permitted there; the reviewed repository, Issue, draft and operation digests, label operations, and contract pair remain fixed.
 
 ## Apply and Conflict Detection
 
-After explicit approval, use the exact `apply_arguments` returned by preflight:
+After exact approval, the runner passes the unchanged `apply_arguments`
+through the approved handoff. The command below describes the internal helper
+interface; the Agent must not invoke this script's `--apply` mode directly.
 
 ```sh
 node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \

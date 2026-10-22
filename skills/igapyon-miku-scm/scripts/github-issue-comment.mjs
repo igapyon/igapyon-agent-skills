@@ -18,6 +18,7 @@ import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+import { normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
 
 const ISSUE_COMMENT_APPLY_CONTRACT = workflowContractById().get("github.issue.comment.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -181,6 +182,16 @@ function priorAttemptError(record) {
   );
 }
 
+function recoverableAttempt(record) {
+  return record?.status === "not-applied" && record.stage === "pre-comment-read";
+}
+
+async function archiveRecoverableAttempt(file) {
+  const archived = `${file}.pre-comment-read-${new Date().toISOString().replaceAll(":", "-")}-${randomUUID()}`;
+  await rename(file, archived);
+  return archived;
+}
+
 async function claimAttempt(file, record) {
   await mkdir(path.dirname(file), { recursive: true });
   let handle;
@@ -219,7 +230,7 @@ export function createGhIssueReader(gh = createGhRunner()) {
     const result = gh([
       "issue", "view", String(issueNumber),
       "--repo", repository,
-      "--json", "number,url,title,body,state,labels,updatedAt",
+      "--json", "number,url,title,body,state,labels,updatedAt,comments",
     ]);
     if (!result?.ok) throw new Error(`gh issue view failed: ${ghDetail(result)}`);
     let issue;
@@ -236,6 +247,7 @@ export function createGhIssueReader(gh = createGhRunner()) {
       || typeof issue?.body !== "string"
       || !["OPEN", "CLOSED"].includes(issue?.state)
       || !Array.isArray(issue?.labels)
+      || !issue?.comments || typeof issue.comments !== "object"
       || issue.labels.some((label) => typeof label?.name !== "string" || !label.name)
       || typeof issue?.updatedAt !== "string"
       || !issue.updatedAt
@@ -250,6 +262,7 @@ export function createGhIssueReader(gh = createGhRunner()) {
       body: issue.body,
       labels: issue.labels.map((label) => label.name),
       updatedAt: issue.updatedAt,
+      comments: normalizeIssueCommentConnection(issue.comments),
     };
   };
 }
@@ -347,8 +360,13 @@ export async function runIssueComment(options, dependencies = {}) {
   const sleep = dependencies.sleep ?? wait;
   const draft = await resolveDraft(options);
   const attempt = attemptPath(draft, options.repository, options.issueNumber);
-  const prior = await readAttempt(attempt);
-  if (prior) throw priorAttemptError(prior);
+  let prior = await readAttempt(attempt);
+  if (prior && !recoverableAttempt(prior)) throw priorAttemptError(prior);
+  let recoveredFrom = null;
+  if (prior) {
+    recoveredFrom = await archiveRecoverableAttempt(attempt);
+    prior = null;
+  }
   const common = {
     repository: options.repository,
     issue_number: options.issueNumber,
@@ -371,6 +389,11 @@ export async function runIssueComment(options, dependencies = {}) {
       issue_url: issue.url,
       issue_title: issue.title,
       issue_state: issue.state,
+      current_title: issue.title,
+      current_body: issue.body,
+      current_labels: issue.labels,
+      current_comments: issue.comments,
+      current_updated_at: issue.updatedAt,
       current_issue_sha256: issueSha256(issue),
       current_updated_at: issue.updatedAt,
       apply_arguments: applyArguments(options, draft, issue),
@@ -393,6 +416,7 @@ export async function runIssueComment(options, dependencies = {}) {
     reviewed_issue_sha256: options.expectedIssueSha256.toLowerCase(),
     reviewed_updated_at: options.expectedUpdatedAt,
     attempt_started_at: new Date().toISOString(),
+    ...(recoveredFrom ? { recovered_from_attempt: relativeOperationalPath(draft.root, recoveredFrom) } : {}),
   };
   await claimAttempt(attempt, pending);
 

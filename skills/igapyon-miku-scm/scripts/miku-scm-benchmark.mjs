@@ -137,7 +137,7 @@ function fakeGh(counter, mode) {
         url: "https://github.com/igapyon/igapyon-agent-skills/issues/293",
         updatedAt: "2026-07-27T13:00:00Z",
         labels: [{ name: "enhancement" }],
-        comments: [],
+        comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false } },
       }),
       args,
     };

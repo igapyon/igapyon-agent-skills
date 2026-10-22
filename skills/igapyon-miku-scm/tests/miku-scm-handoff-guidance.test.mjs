@@ -7,26 +7,23 @@ import { readNormalizedText } from "./miku-scm-test-text.mjs";
 
 const SKILL_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-test("handoff guidance requires human-selected full IDs or uniquely resolving suffixes for recovery", async () => {
+test("handoff guidance requires a complete current review and exact approve", async () => {
   const [skill, approval] = await Promise.all([
     readNormalizedText(path.join(SKILL_ROOT, "SKILL.md")),
     readNormalizedText(path.join(SKILL_ROOT, "references", "approval-handoff.md")),
   ]);
 
-  assert.match(skill, /miku-scm pending/);
-  assert.match(skill, /miku-scm approve <selector>/);
-  assert.match(skill, /miku-scm dismiss <selector>/);
-  assert.match(skill, /12-character\n    approval suffix/);
-  assert.match(skill, /Never choose, invent,\n    or reconstruct a selector/);
-  assert.match(approval, /only against pending handoffs in the current repository and\nonly when exactly one record matches/);
-  assert.match(approval, /must\nnever infer a selector from Issue content, order, recency, or intent/);
-  assert.match(approval, /Dismissal changes only the local approval handoff record/);
-  assert.match(approval, /applies one handoff at a\ntime in the supplied order/);
-  assert.match(approval, /later selected handoff mutates the same existing Issue/);
-  assert.match(approval, /without creating\nanother approval handoff/);
-  assert.match(approval, /current-body SHA-256 only after an earlier content update/);
-  assert.match(approval, /workflow\ncontract digest, and all other options must remain equivalent/);
-  assert.match(approval, /changes it to `conflict`/);
-  assert.match(approval, /READONLY failure records the later handoff as\n`not-applied`, not `conflict`/);
-  assert.match(approval, /stops\nthe batch before all later handoffs/);
+  assert.match(skill, /github\.issue\.handoff\.review/);
+  assert.match(skill, /exactly `approve` or `miku-scm approve`/);
+  assert.match(skill, /Do not select from global pending/);
+  assert.match(skill, /Safe resume is allowed only when the same conversation/);
+  assert.doesNotMatch(skill, /legacy `miku-scm 承認` input remains accepted/);
+  assert.match(approval, /Show the full review, including full text and metadata/);
+  assert.match(approval, /message is approval only if its trimmed full text is exactly/);
+  assert.match(approval, /--expected-review-sha256/);
+  assert.match(approval, /selected records exclusively/);
+  assert.match(approval, /reader compares the full title, body, state, labels, and comment URLs\/bodies/);
+  assert.match(approval, /outcome is uncertain is never retried automatically/);
+  assert.match(approval, /list\s+is a recovery summary and does not authorize an operation/);
+  assert.match(approval, /changes only the local pending\nhandoff to `dismissed`/);
 });

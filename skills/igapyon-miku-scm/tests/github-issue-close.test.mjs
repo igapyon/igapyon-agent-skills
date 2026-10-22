@@ -14,6 +14,8 @@ const ISSUE = {
   state: "OPEN",
   stateReason: null,
   updatedAt: "2026-07-24T01:02:03Z",
+  labels: [],
+  comments: [],
 };
 
 async function scenario(t) {
@@ -34,10 +36,12 @@ function optionsFor(state, ...extra) {
 
 function applyOptions(state, preflight) {
   const contractIndex = preflight.apply_arguments.indexOf("--expected-contract-pair-sha256");
+  const commentsIndex = preflight.apply_arguments.indexOf("--expected-comments-sha256");
   return optionsFor(
     state,
     "--expected-operation-sha256", preflight.operation_sha256,
     "--expected-current-body-sha256", preflight.current_body_sha256,
+    "--expected-comments-sha256", preflight.apply_arguments[commentsIndex + 1],
     "--expected-updated-at", preflight.current_updated_at,
     "--expected-contract-pair-sha256", preflight.apply_arguments[contractIndex + 1],
     "--apply",
@@ -103,6 +107,9 @@ test("duplicate target changes after review are a conflict", async (t) => {
     "--reason", "duplicate", "--duplicate-of", "43", "--root", state.root,
     "--expected-operation-sha256", preflight.operation_sha256,
     "--expected-current-body-sha256", preflight.current_body_sha256,
+    "--expected-comments-sha256", preflight.apply_arguments[
+      preflight.apply_arguments.indexOf("--expected-comments-sha256") + 1
+    ],
     "--expected-duplicate-sha256", preflight.duplicate_target.snapshot_sha256,
     "--expected-updated-at", preflight.current_updated_at,
     "--apply",

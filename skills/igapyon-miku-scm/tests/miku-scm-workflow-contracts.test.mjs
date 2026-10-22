@@ -9,6 +9,7 @@ import {
 import {
   canonicalContractText,
   contractSha256,
+  runtimeContractSha256,
   calculateWorkflowContracts,
   updateWorkflowContracts,
 } from "../scripts/miku-scm-workflow-contracts.mjs";
@@ -43,4 +44,29 @@ test("workflow contract hashes ignore checkout line-ending representation", () =
   assert.equal(canonicalContractText(cr), lf);
   assert.equal(contractSha256(crlf), contractSha256(lf));
   assert.equal(contractSha256(cr), contractSha256(lf));
+});
+
+test("declared runtime sources affect only workflows that declare them", () => {
+  const approvalEntry = WORKFLOW_MANIFEST.find((entry) => entry.id === "github.issue.handoff.apply");
+  const baseSources = new Map([
+    ["miku-scm-human-output.mjs", "renderer-v1\n"],
+    ["miku-scm-issue-approval.mjs", "approval-v1\n"],
+  ]);
+  const before = runtimeContractSha256(approvalEntry, "handoff-v1\n", baseSources);
+  const after = runtimeContractSha256(approvalEntry, "handoff-v1\n", new Map([
+    ...baseSources,
+    ["miku-scm-issue-approval.mjs", "approval-v2\n"],
+  ]));
+  assert.notEqual(after, before);
+
+  const unrelatedEntry = WORKFLOW_MANIFEST.find((entry) => entry.id === "repository.status");
+  assert.equal(
+    runtimeContractSha256(unrelatedEntry, "snapshot-v1\n", baseSources),
+    runtimeContractSha256(unrelatedEntry, "snapshot-v1\n", new Map()),
+  );
+  assert.throws(() => runtimeContractSha256({
+    id: "bad.workflow",
+    runner_entry: "handoff.mjs",
+    contract_runtime_sources: ["../outside.mjs"],
+  }, "runner", new Map()), /safe basename/);
 });

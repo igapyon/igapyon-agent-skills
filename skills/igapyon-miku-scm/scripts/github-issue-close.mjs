@@ -8,6 +8,7 @@ import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+import { issueCommentsSha256, normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
 
 const ISSUE_CLOSE_APPLY_CONTRACT = workflowContractById().get("github.issue.close.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -22,7 +23,8 @@ export const usage = `Usage:
     [--duplicate-of <number>] [--root <root>]
 
 Apply mode additionally requires --expected-operation-sha256,
---expected-current-body-sha256, --expected-updated-at, and --apply.`;
+--expected-current-body-sha256, --expected-comments-sha256,
+--expected-updated-at, and --apply.`;
 
 export function parseArgs(argv, cwd = process.cwd()) {
   const options = {
@@ -33,6 +35,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
     root: cwd,
     expectedOperationSha256: "",
     expectedCurrentBodySha256: "",
+    expectedCommentsSha256: "",
     expectedDuplicateSha256: "",
     expectedUpdatedAt: "",
     expectedContractPairSha256: "",
@@ -51,6 +54,8 @@ export function parseArgs(argv, cwd = process.cwd()) {
       options.expectedOperationSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-current-body-sha256") {
       options.expectedCurrentBodySha256 = argv[++index] ?? "";
+    } else if (arg === "--expected-comments-sha256") {
+      options.expectedCommentsSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-duplicate-sha256") {
       options.expectedDuplicateSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-updated-at") {
@@ -84,6 +89,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
   for (const [name, value] of [
     ["--expected-operation-sha256", options.expectedOperationSha256],
     ["--expected-current-body-sha256", options.expectedCurrentBodySha256],
+    ["--expected-comments-sha256", options.expectedCommentsSha256],
     ["--expected-duplicate-sha256", options.expectedDuplicateSha256],
     ["--expected-contract-pair-sha256", options.expectedContractPairSha256],
   ]) {
@@ -92,6 +98,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
   const expected = [
     options.expectedOperationSha256,
     options.expectedCurrentBodySha256,
+    options.expectedCommentsSha256,
     options.expectedUpdatedAt,
   ];
   if (options.apply && expected.some((value) => !value)) {
@@ -105,7 +112,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
   }
   if (!options.apply
     && (expected.some(Boolean) || options.expectedDuplicateSha256
-      || options.expectedContractPairSha256)) {
+      || options.expectedCommentsSha256 || options.expectedContractPairSha256)) {
     throw new Error("expected values are used only with --apply");
   }
   return options;
@@ -142,7 +149,7 @@ function ghDetail(result) { return result?.stderr || result?.stdout || result?.e
 export function createGhIssueReader(gh = createGhRunner()) {
   return async (repository, issueNumber) => {
     const result = gh(["issue", "view", String(issueNumber), "--repo", repository,
-      "--json", "number,url,title,body,state,stateReason,updatedAt"]);
+      "--json", "number,url,title,body,state,stateReason,updatedAt,labels,comments"]);
     if (!result?.ok) throw new Error(`gh issue view failed: ${ghDetail(result)}`);
     let issue;
     try { issue = JSON.parse(result.stdout); } catch { throw new Error("gh issue view returned malformed JSON"); }
@@ -154,12 +161,17 @@ export function createGhIssueReader(gh = createGhRunner()) {
       || !["OPEN", "CLOSED"].includes(issue?.state)
       || typeof issue?.updatedAt !== "string" || !issue.updatedAt
       || (typeof issue?.stateReason !== "string" && issue?.stateReason !== null)
+      || !Array.isArray(issue?.labels)
+      || issue.labels.some((label) => typeof label?.name !== "string")
+      || !issue?.comments || typeof issue.comments !== "object"
     ) {
       throw new Error("gh issue view does not exactly identify the requested Issue");
     }
     return {
       number: issue.number, url: issue.url, title: issue.title, body: issue.body ?? "",
       state: issue.state, stateReason: issue.stateReason, updatedAt: issue.updatedAt,
+      labels: issue.labels.map((label) => label.name),
+      comments: normalizeIssueCommentConnection(issue.comments),
     };
   };
 }
@@ -269,6 +281,7 @@ function applyArguments(options, digest, current, duplicate) {
     ...(options.reason === "duplicate" ? ["--duplicate-of", String(options.duplicateOf)] : []),
     "--expected-operation-sha256", digest,
     "--expected-current-body-sha256", sha256(current.body),
+    "--expected-comments-sha256", issueCommentsSha256(current.comments),
     ...(duplicate ? ["--expected-duplicate-sha256", issueSnapshotSha256(duplicate)] : []),
     "--expected-updated-at", current.updatedAt,
     "--expected-contract-pair-sha256", ISSUE_CLOSE_APPLY_CONTRACT.pair_sha256,
@@ -343,6 +356,8 @@ export async function runIssueClose(options, dependencies = {}) {
       issue_title: current.title,
       current_body: current.body,
       current_body_sha256: sha256(current.body),
+      current_labels: current.labels,
+      current_comments: current.comments,
       current_state: current.state,
       current_updated_at: current.updatedAt,
       duplicate_target: duplicate
@@ -402,6 +417,7 @@ export async function runIssueClose(options, dependencies = {}) {
     current.state !== "OPEN"
     || current.updatedAt !== options.expectedUpdatedAt
     || sha256(current.body) !== options.expectedCurrentBodySha256.toLowerCase()
+    || issueCommentsSha256(current.comments) !== options.expectedCommentsSha256.toLowerCase()
   ) {
     const record = {
       ...pending,
@@ -409,6 +425,7 @@ export async function runIssueClose(options, dependencies = {}) {
       stage: "target-conflict",
       observed_state: current.state,
       observed_body_sha256: sha256(current.body),
+      observed_comments_sha256: issueCommentsSha256(current.comments),
       observed_updated_at: current.updatedAt,
       result_recorded_at: new Date().toISOString(),
     };

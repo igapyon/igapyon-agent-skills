@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v11";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v12";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -15,6 +15,7 @@ const WORKFLOW_TITLES = Object.freeze({
   "github.issue.close.preflight": "GitHub Issue close",
   "github.issue.close.apply": "GitHub Issue close",
   "github.issue.handoff.list": "GitHub Issue approval handoff list",
+  "github.issue.handoff.review": "GitHub Issue operation review",
   "github.issue.handoff.apply": "GitHub Issue approval handoff apply",
   "github.issue.handoff.batch.apply": "GitHub Issue approval handoff batch apply",
   "github.issue.handoff.dismiss": "GitHub Issue approval handoff dismissal",
@@ -63,6 +64,7 @@ function resultHeader({ status, approvalGate, delegateStatus }) {
   if (approvalGate === "preflight" && delegateStatus === "preflight-ok") {
     return "READY FOR APPROVAL";
   }
+  if (delegateStatus === "reviewed") return "READY FOR APPROVAL";
   return "SUCCESS";
 }
 
@@ -115,10 +117,6 @@ function appendIssueOperation(lines, workflow, result) {
       + ` ${displayValue(result.parent_issue.title)}`,
     );
   }
-  if (result.draft) lines.push(`Draft: ${displayValue(result.draft)}`);
-  if (result.draft_sha256) lines.push(`Draft SHA-256: ${result.draft_sha256}`);
-  if (result.labels_sha256) lines.push(`Label selection SHA-256: ${result.labels_sha256}`);
-  if (result.parent_sha256) lines.push(`Parent Issue snapshot SHA-256: ${result.parent_sha256}`);
   if (result.issue_url) lines.push(`URL: ${result.issue_url}`);
   if (result.issue_verification?.status) {
     lines.push(`Issue verification: ${result.issue_verification.status}`);
@@ -131,15 +129,103 @@ function appendIssueOperation(lines, workflow, result) {
   }
   if (workflow.endsWith(".preflight") && result.apply_arguments) {
     lines.push("Remote mutation: not invoked");
-    if (result.handoff) {
-      lines.push(`Approval ID: ${result.handoff.id}`);
-      if (result.handoff.short_id) lines.push(`Approval suffix: ${result.handoff.short_id}`);
-    }
-    const approval = result.handoff
-      ? `miku-scm approve ${result.handoff.short_id ?? result.handoff.id}`
-      : "miku-scm approve";
-    lines.push(`Approval command: reply with exactly \`${approval}\` in chat`);
+    lines.push("Full Issue review: required before approval");
   }
+}
+
+function appendMultiline(lines, label, value) {
+  lines.push(`${label}:`);
+  lines.push(typeof value === "string" ? value : "(empty)");
+}
+
+function appendIssueSnapshot(lines, review) {
+  const snapshot = review.context?.issue_snapshot;
+  if (!snapshot) return;
+  lines.push("Current Issue context:");
+  lines.push(`Current title: ${displayValue(snapshot.title)}`);
+  lines.push(`Current state: ${displayValue(snapshot.state)}`);
+  lines.push(`Current updated at: ${displayValue(snapshot.updated_at)}`);
+  appendMultiline(lines, "Current body", snapshot.body);
+  lines.push(`Current labels: ${labelsValue(snapshot.labels)}`);
+  const comments = Array.isArray(snapshot.comments) ? snapshot.comments : [];
+  lines.push(`Existing comments: ${comments.length}`);
+  for (let index = 0; index < comments.length; index += 1) {
+    const comment = comments[index];
+    lines.push(`Existing comment ${index + 1}: ${displayValue(comment.author)}`);
+    lines.push(`Existing comment ${index + 1} created at: ${displayValue(comment.created_at)}`);
+    lines.push(`Existing comment ${index + 1} URL: ${displayValue(comment.url)}`);
+    appendMultiline(lines, `Existing comment ${index + 1} body`, comment.body);
+  }
+}
+
+function appendIssueReview(lines, result) {
+  lines.push(`Operation count: ${result.handoffs?.length ?? 0}`);
+  const operationLabels = {
+    create: "Create Issue",
+    update: "Update Issue",
+    comment: "Add comment",
+    label: "Change labels",
+    close: "Close Issue",
+  };
+  for (let index = 0; index < (result.handoffs ?? []).length; index += 1) {
+    const entry = result.handoffs[index];
+    const review = entry.review ?? {};
+    const proposal = review.proposal ?? {};
+    const operation = review.operation;
+    lines.push("");
+    lines.push(`Step ${index + 1}: ${operationLabels[operation] ?? displayValue(operation)}`);
+    lines.push(`Repository: ${displayValue(review.repository)}`);
+    if (operation === "create") {
+      lines.push("Target: new Issue");
+      lines.push(`Title: ${displayValue(proposal.title)}`);
+      appendMultiline(lines, "Body", proposal.body);
+      lines.push(`Labels: ${labelsValue(proposal.labels)}`);
+      if (proposal.parent_issue) {
+        lines.push(
+          `Parent Issue: #${proposal.parent_issue.number} ${displayValue(proposal.parent_issue.title)}`
+          + ` (${displayValue(proposal.parent_issue.state)})`,
+        );
+        if (proposal.parent_issue.url) lines.push(`Parent Issue URL: ${displayValue(proposal.parent_issue.url)}`);
+        if (proposal.parent_issue.updated_at) {
+          lines.push(`Parent Issue updated at: ${displayValue(proposal.parent_issue.updated_at)}`);
+        }
+      }
+    } else {
+      lines.push(`Issue: #${review.issue_number}`);
+      lines.push(`Title: ${displayValue(review.issue_title)}`);
+      if (review.issue_url) lines.push(`URL: ${review.issue_url}`);
+      appendIssueSnapshot(lines, review);
+      if (operation === "update") {
+        lines.push(`Current title: ${displayValue(proposal.current_title)}`);
+        lines.push(`Proposed title: ${displayValue(proposal.proposed_title)}`);
+        appendMultiline(lines, "Body diff", proposal.body_diff);
+        appendMultiline(lines, "Proposed body", proposal.proposed_body);
+        lines.push(`Labels now: ${labelsValue(proposal.current_labels)}`);
+        lines.push(`Labels after: ${labelsValue(proposal.resulting_labels)}`);
+        lines.push(`Add labels: ${labelsValue(proposal.add_labels)}`);
+        lines.push(`Remove labels: ${labelsValue(proposal.remove_labels)}`);
+      } else if (operation === "comment") {
+        lines.push(`Issue state: ${displayValue(proposal.issue_state)}`);
+        appendMultiline(lines, "Comment", proposal.comment_body);
+      } else if (operation === "label") {
+        lines.push(`Labels now: ${labelsValue(proposal.current_labels)}`);
+        lines.push(`Labels after: ${labelsValue(proposal.resulting_labels)}`);
+        lines.push(`Add labels: ${labelsValue(proposal.add_labels)}`);
+        lines.push(`Remove labels: ${labelsValue(proposal.remove_labels)}`);
+      } else if (operation === "close") {
+        lines.push(`Current state: ${displayValue(proposal.current_state)}`);
+        lines.push(`Close reason: ${displayValue(proposal.reason)}`);
+        if (proposal.duplicate_target) {
+          lines.push(`Duplicate of: #${proposal.duplicate_target.number} ${displayValue(proposal.duplicate_target.title)}`);
+          lines.push(`Duplicate target URL: ${displayValue(proposal.duplicate_target.url)}`);
+          lines.push(`Duplicate target state: ${displayValue(proposal.duplicate_target.state)}`);
+        }
+      }
+    }
+  }
+  lines.push("");
+  lines.push("Remote mutation: not invoked");
+  lines.push("Reply with exactly `approve` to execute.");
 }
 
 function appendHandoffList(lines, result) {
@@ -158,6 +244,22 @@ function appendHandoffList(lines, result) {
     lines.push(`Approve command: miku-scm approve ${displayValue(selector)}`);
     lines.push(`Dismiss command: miku-scm dismiss ${displayValue(selector)}`);
   }
+  const attention = Array.isArray(result.attention_handoffs) ? result.attention_handoffs : [];
+  lines.push(`Handoff requiring attention count: ${result.attention_count ?? attention.length}`);
+  for (const handoff of attention) {
+    lines.push(`Attention status: ${displayValue(handoff.status)}`);
+    lines.push(`Apply workflow: ${displayValue(handoff.apply_workflow)}`);
+    lines.push(`Repository: ${displayValue(handoff.repository)}`);
+    if (handoff.issue) lines.push(`Issue: #${handoff.issue}`);
+    if (handoff.title) lines.push(`Title: ${displayValue(handoff.title)}`);
+    if (handoff.status === "applying" || handoff.status === "unresolved") {
+      lines.push("Remote outcome: unknown; reconcile before any resume or retry");
+    } else if (handoff.status === "not-applied") {
+      lines.push("Remote mutation: not invoked; the stored approval receipt may permit resume");
+    } else if (handoff.status === "conflict") {
+      lines.push("Remote mutation: not invoked; create a fresh preflight and review");
+    }
+  }
   if (handoffs.length > 1) {
     lines.push("Batch approval format: miku-scm approve batch <handoff-selector> <handoff-selector> [...]");
   }
@@ -171,11 +273,12 @@ function appendHandoffBatch(lines, result) {
   lines.push(`Applied handoff count: ${result.applied_count ?? 0}`);
   for (let index = 0; index < results.length; index += 1) {
     const entry = results[index];
-    lines.push(
-      `Step ${index + 1}: ${displayValue(entry.handoff?.id)}`
-      + ` | ${displayValue(entry.apply_workflow)}`
-      + ` | ${displayValue(entry.status)}`,
-    );
+    const review = entry.review;
+    lines.push(`Step ${index + 1}: ${displayValue(review?.operation ?? entry.apply_workflow)} | ${displayValue(entry.status)}`);
+    if (review?.repository) lines.push(`Step ${index + 1} repository: ${displayValue(review.repository)}`);
+    if (review?.issue_number) lines.push(`Step ${index + 1} Issue: #${review.issue_number} ${displayValue(review.issue_title)}`);
+    const url = entry.apply_result?.issue_url ?? review?.issue_url;
+    if (url) lines.push(`Step ${index + 1} URL: ${url}`);
     if (entry.dependency_refresh) {
       lines.push(
         `Step ${index + 1} dependency refresh: `
@@ -189,8 +292,7 @@ function appendHandoffBatch(lines, result) {
       }
     }
   }
-  if (result.stopped_handoff) {
-    lines.push(`Stopped handoff: ${displayValue(result.stopped_handoff)}`);
+  if (result.stopped_status) {
     lines.push(`Stopped status: ${displayValue(result.stopped_status)}`);
     const stopped = results.find((entry) => entry.handoff?.id === result.stopped_handoff);
     const delegate = stopped?.apply_result?.delegate_result;
@@ -208,13 +310,27 @@ function appendHandoffBatch(lines, result) {
   if (result.stop_reason) lines.push(`Stop reason: ${displayValue(result.stop_reason)}`);
   const remaining = Array.isArray(result.remaining_handoffs) ? result.remaining_handoffs : [];
   lines.push(`Remaining handoff count: ${remaining.length}`);
-  for (const handoff of remaining) lines.push(`Remaining handoff: ${displayValue(handoff)}`);
 }
 
 function appendHandoffDismiss(lines, result) {
-  lines.push(`Handoff ID: ${displayValue(result.handoff?.id)}`);
   lines.push(`Handoff status: ${displayValue(result.handoff?.status)}`);
-  lines.push(`Handoff path: ${displayValue(result.handoff?.path)}`);
+  if (result.review?.repository) lines.push(`Repository: ${displayValue(result.review.repository)}`);
+  if (result.review?.issue_number) lines.push(`Issue: #${result.review.issue_number} ${displayValue(result.review.issue_title)}`);
+}
+
+function appendHandoffApply(lines, result) {
+  const review = result.handoff_review;
+  lines.push(`Operation: ${displayValue(review?.operation ?? result.apply_workflow)}`);
+  lines.push(`Status: ${displayValue(result.status)}`);
+  if (review?.repository) lines.push(`Repository: ${displayValue(review.repository)}`);
+  if (review?.issue_number) lines.push(`Issue: #${review.issue_number} ${displayValue(review.issue_title)}`);
+  const url = result.apply_result?.issue_url ?? result.apply_result?.comment_url ?? review?.issue_url;
+  if (url) lines.push(`URL: ${url}`);
+  if (result.apply_result?.status === "unresolved") {
+    lines.push("Remote outcome: unknown; do not resend this operation");
+  } else if (result.apply_result?.status === "not-applied") {
+    lines.push("Remote mutation: not invoked; safe resume requires the stored approval receipt");
+  }
 }
 
 function appendGeneric(lines, result) {
@@ -424,12 +540,11 @@ export function renderHumanOutput({
   result,
   error,
 }) {
-  if (workflow === "github.issue.handoff.apply" && result?.apply_result?.human_output) {
-    return `${result.apply_result.human_output.trimEnd()}\n`
-      + `Approval handoff: ${result.handoff.id} (${result.handoff.status})\n`;
-  }
   const title = WORKFLOW_TITLES[workflow] ?? workflow;
-  const lines = [`[${resultHeader({ status, approvalGate, delegateStatus })}] ${title}`, ""];
+  const header = workflow === "github.issue.handoff.review" && delegateStatus === "reviewed"
+    ? "READY FOR APPROVAL"
+    : resultHeader({ status, approvalGate, delegateStatus });
+  const lines = [`[${header}] ${title}`, ""];
 
   if (error) {
     lines.push(`workflow: ${workflow}`);
@@ -460,6 +575,10 @@ export function renderHumanOutput({
     appendIssueRead(lines, result ?? {});
   } else if (workflow === "github.issue.handoff.list") {
     appendHandoffList(lines, result ?? {});
+  } else if (workflow === "github.issue.handoff.review") {
+    appendIssueReview(lines, result ?? {});
+  } else if (workflow === "github.issue.handoff.apply") {
+    appendHandoffApply(lines, result ?? {});
   } else if (workflow === "github.issue.handoff.batch.apply") {
     appendHandoffBatch(lines, result ?? {});
   } else if (workflow === "github.issue.handoff.dismiss") {

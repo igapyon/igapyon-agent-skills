@@ -319,13 +319,31 @@ branch is published.
 - Do not rewrite history, force-push, move or delete tags, publish or delete releases, or change versions without a documented workflow and explicit authorization.
 - Verify repository state after an operation.
 
+## Human-Approved GitHub Issue Writes
+
+All Issue creation, title/body updates, comments, label changes, and closure
+use the miku-scm runner's approval handoff. Finish every requested preflight,
+run `github.issue.handoff.review` with only handoffs from the current request,
+display the complete review, and wait for a separate user message whose full
+trimmed text is exactly `approve` or `miku-scm approve`. The original request,
+`はい`, `OK`, `お願いします`, `いいね`, `承認`, quoted or negated text, and
+prose containing the word do not approve a write. For one reviewed multi-step
+plan, use one ordered batch and one approval. Do not call a low-level helper's
+`--apply` mode directly or infer a target from global pending work. See
+[approval-handoff.md](approval-handoff.md).
+Every reader that requests `comments` must validate the complete connection:
+`nodes.length` must equal `totalCount`, and an explicit `hasNextPage: true`
+invalidates the snapshot. If the response is incomplete, stop before review or
+mutation. The human review includes the existing comment text so a composite
+operation is based on the same evidence the user sees.
+
 ## Human-Approved New Issue Creation
 
 - Keep drafting and label discovery READONLY. The creation helper uses fixed `gh label list` and `gh issue view` reads plus its fixed `gh issue create` mutation; any future command-surface additions require matching code, documentation, and tests.
 - Use [github-issue-rewrite-handoff.md](github-issue-rewrite-handoff.md) to create the local paste-ready draft.
 - Inspect the target repository's existing labels with the documented fixed Issue READONLY helper while drafting. When one or more labels clearly match the Issue evidence and repository semantics, actively propose them instead of omitting labels by default. Do not guess when classification is ambiguous, and never create or edit label definitions.
 - When the user explicitly requests registration, use [github-issue-create.md](github-issue-create.md) and the bundled `scripts/github-issue-create.mjs` preflight/apply workflow.
-- Require approval after displaying the exact repository, title, body, selected labels, optional parent Issue snapshot, every required digest, and planned operation. The helper may invoke only `gh issue create` with the reviewed title, body file, selected existing labels, and optional same-repository `--parent`, and must not retry automatically.
+- Require the complete handoff review and a separate exact `approve` after displaying the repository, title, full body, selected labels, and optional parent Issue. The helper may invoke only `gh issue create` with the reviewed title, body file, selected existing labels, and optional same-repository `--parent`, and must not retry automatically.
 - For sub-Issue creation, require one positive same-repository parent Issue number. Retrieve and fix the Open parent snapshot during preflight, revalidate it immediately before mutation, and verify the created Issue's exact parent afterward through documented fixed `gh issue view` commands.
 - Require the helper to verify every selected label through fixed `gh label list` before creating the attempt record. Fix the ordered label selection with its own SHA-256 digest, then verify the exact created Issue, requested labels, and optional parent together through one fixed `gh issue view` after successful creation.
 - Require the helper to persist a `pending` attempt before the remote request, block repeated repository-plus-digest attempts, record the confirmed Issue URL plus label and parent verification, and archive the unchanged draft under `created-issues/`. A pending or malformed attempt record is a stop condition, not permission to retry.
@@ -336,18 +354,18 @@ branch is published.
 - Keep drafting evidence READONLY. The content-update helper uses its documented fixed READONLY `gh` commands from preflight through verification.
 - Create the local paste-ready update under [github-issue-rewrite-handoff.md](github-issue-rewrite-handoff.md).
 - When the user explicitly requests application, use [github-issue-update.md](github-issue-update.md) and the bundled `scripts/github-issue-update.mjs` preflight/apply workflow.
-- Require approval after displaying the exact Issue; complete current and proposed titles and bodies; body diff; current, added, removed, and resulting labels; draft and update digests; current Issue snapshot digest; current `updated_at`; and planned command.
+- Require the complete handoff review and a separate exact `approve` after displaying the target Issue, full current and proposed content, body diff, current/added/removed/resulting labels, and operation. A preflight is not approval.
 - Permit only one `gh issue edit` call containing reviewed changes to the title, body, and existing-label membership. Do not create or edit label definitions or change other Issue metadata.
 - Immediately before `gh`, require the public Issue title/body/labels snapshot and `updated_at` to equal the reviewed values. Record `conflict` and stop without mutation when they differ.
-- Use fixed READONLY `gh issue view --json number,url,title,body,labels,updatedAt` and `gh label list --limit 1000 --json name` inside the helper from preflight through post-update verification.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt,comments` and `gh label list --limit 1000 --json name` inside the helper from preflight through post-update verification.
 - Persist a `pending` attempt before mutation and verify the exact title, body, and complete label set afterward. Record a `gh issue view` failure before `gh issue edit` as `not-applied` with `gh_invoked: false`; preserve and archive that safe record when retrying the same reviewed operation. Record only post-mutation uncertainty as `unresolved`, and never retry it automatically.
 
 ## Human-Approved Issue Comment
 
 - Use [github-issue-comment.md](github-issue-comment.md) and the bundled `scripts/github-issue-comment.mjs`.
 - Permit only one `gh issue comment <number> --repo <owner/repo> --body-file <temporary-file>` call using the complete reviewed comment draft.
-- Require approval after displaying the exact Issue state, complete comment, draft digest, Issue snapshot digest, `updated_at`, and planned command.
-- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt` for the reviewed Issue snapshot and `gh api --method GET repos/<owner/repo>/issues/comments/<comment-id>` for post-comment verification. Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body. A pre-mutation READONLY failure is `not-applied`; bounded READONLY verification retries must never repeat the mutation.
+- Require the complete handoff review and a separate exact `approve` after displaying the target Issue and complete proposed comment. A preflight is not approval.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt,comments` for the reviewed Issue snapshot and `gh api --method GET repos/<owner/repo>/issues/comments/<comment-id>` for post-comment verification. Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body. A pre-mutation READONLY failure is `not-applied`; bounded READONLY verification retries must never repeat the mutation.
 - Do not edit or delete comments, use interactive or browser modes, or combine a comment with another mutation in one helper or `gh` command. The exact ordered handoff batch may orchestrate separately reviewed helpers and dependency-refresh only the allowlisted snapshot expectations in [approval-handoff.md](approval-handoff.md).
 
 ## Human-Approved Existing Issue Label Update
@@ -355,16 +373,16 @@ branch is published.
 - Use [github-issue-label-update.md](github-issue-label-update.md) and the bundled `scripts/github-issue-label-update.mjs`.
 - Permit one `gh issue edit` containing only reviewed repeated `--add-label` and `--remove-label` arguments for one Issue.
 - Require every label to exist exactly in the repository. Reject overlap, no-op additions or removals, and label-definition changes.
-- Require approval after displaying current, added, removed, and complete resulting labels plus operation, current-label, and resulting-label digests.
-- Use fixed READONLY `gh label list --limit 1000 --json name` and `gh issue view --json number,url,title,state,labels,updatedAt` from preflight through verification. Persist `pending`, detect an intervening Issue change as `conflict`, and verify the complete resulting label set. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
+- Require the complete handoff review and a separate exact `approve` after displaying the target Issue and current/added/removed/resulting labels. A preflight is not approval.
+- Use fixed READONLY `gh label list --limit 1000 --json name` and `gh issue view --json number,url,title,body,state,labels,updatedAt,comments` from preflight through verification. Persist `pending`, detect an intervening Issue change as `conflict`, and verify the complete resulting label set. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
 
 ## Human-Approved Issue Close
 
 - Use [github-issue-close.md](github-issue-close.md) and the bundled `scripts/github-issue-close.mjs`.
 - Permit one `gh issue close` for an Open Issue with exact reason `completed`, `not planned`, or `duplicate`.
 - For `duplicate`, require and display one different, fixed-`gh issue view` verified target Issue and fix its reviewed snapshot digest through apply. Reject a duplicate target for other reasons.
-- Require approval after displaying the complete current Issue, reason, duplicate target when applicable, operation digest, body digest, `updated_at`, and planned command.
-- Use fixed READONLY `gh issue view --json number,url,title,body,state,stateReason,updatedAt` from preflight through verification. Persist `pending`, detect a non-Open or changed Issue as `conflict`, and verify the closed state and reason. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
+- Require the complete handoff review and a separate exact `approve` after displaying the current Issue, close reason, and duplicate target when applicable. A preflight is not approval.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,stateReason,updatedAt,labels,comments` from preflight through verification. Persist `pending`, detect a non-Open or changed Issue as `conflict`, and verify the closed state and reason. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
 - Permit a fresh close preflight after a recorded `conflict` or pre-mutation `not-applied`. A newly approved apply archives that safe no-mutation record before claiming a new attempt. Never archive, replace, or retry a `pending`, `closed`, or `unresolved` attempt.
 - Do not add a closing comment in the close command and do not permit reopen under this workflow.
 

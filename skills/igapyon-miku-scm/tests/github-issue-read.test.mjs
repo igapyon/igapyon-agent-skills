@@ -27,10 +27,33 @@ test("list defaults to Open Issues", () => {
 test("single-Issue reading uses fixed gh issue view JSON including comments", () => {
   const calls = [];
   const result = runIssueRead(parseArgs(["--repo", "a/b", "--issue", "7"]), { gh: (args) => {
-    calls.push(args); return { ok: true, status: 0, stdout: JSON.stringify({ ...issue, labels: [{ name: "bug" }], comments: [{ body: "note" }] }), stderr: "" };
+    calls.push(args); return { ok: true, status: 0, stdout: JSON.stringify({
+      ...issue,
+      labels: [{ name: "bug" }],
+      comments: {
+        nodes: [{ url: `${issue.url}#issuecomment-9`, body: "note", createdAt: "2026-07-25T01:00:00Z" }],
+        totalCount: 1,
+        pageInfo: { hasNextPage: false },
+      },
+    }), stderr: "" };
   } });
   assert.deepEqual(calls, [["issue", "view", "7", "--repo", "a/b", "--json", "number,state,title,body,url,updatedAt,labels,comments"]]);
   assert.equal(result.issue.comments[0].body, "note");
+});
+
+test("single-Issue reading rejects incomplete comment connection evidence", () => {
+  assert.throws(() => runIssueRead(parseArgs(["--repo", "a/b", "--issue", "7"]), {
+    gh: () => ({
+      ok: true,
+      status: 0,
+      stdout: JSON.stringify({
+        ...issue,
+        labels: [],
+        comments: { nodes: [], totalCount: 1 },
+      }),
+      stderr: "",
+    }),
+  }), /comment evidence.*incomplete/i);
 });
 
 test("labels use a fixed gh label list command and parser rejects ambiguous modes", () => {
