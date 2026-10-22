@@ -59,7 +59,12 @@ Confirm these before editing Java code:
   branch, tag, commit, release, or vendored snapshot
 - similar existing `-java` sister project source checkout under `workplace/`
 - target Java repository, artifactId, base package, and CLI class
-- Java source / target compatibility, normally `1.8`
+- Java 8 runtime floor and Java 1.8 source / binary compatibility, unless a
+  repository-specific exception is documented
+- the JDK distribution used for support and runtime checks, when the product
+  makes a distribution-specific support claim
+- runtime verification on Java 8 and the newest LTS of that distribution;
+  distinguish both from the selected build JDK
 - Maven as the build tool
 - JUnit Jupiter as the test framework
 - primary verification command, normally `mvn test`
@@ -169,7 +174,8 @@ Bundled starter templates are available under
   - The workflow checks the release tag version against `pom.xml`, builds from
     the release tag, stages `<artifact>-<version>.jar` and
     `<artifact>-sources-<version>.jar`, verifies the runtime jar with Java 8
-    using `java -jar ... --version`, and uploads only the staged jar assets.
+    and the newest LTS runtime using `java -jar ... --version`, and uploads
+    only the staged jar assets.
   - The template uses Maven standard output names as its copy source:
     `<artifactId>-<project.version>.jar` and
     `<artifactId>-<project.version>-sources.jar`. Keep this default unless the
@@ -183,9 +189,10 @@ Bundled starter templates are available under
     `mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout`, so
     the release asset copy source and staged asset names do not need a
     hard-coded artifactId.
-  - Set up the build JDK explicitly, normally Temurin Java 21 with Maven cache,
-    before `mvn -B package`; set up Java 8 separately for the packaged runtime
-    smoke test.
+  - Set up the build JDK explicitly, selected for the Maven and plugin
+    requirements, before `mvn -B package`. Treat it separately from the
+    packaged-runtime checks, which use Java 8 and the newest LTS of the
+    declared distribution.
   - The template uses `softprops/action-gh-release` so GitHub Release
     `published` runs can update the GitHub Release assets for that tag. Keep
     `permissions: contents: write` and explicit asset overwrite behavior.
@@ -195,6 +202,10 @@ Bundled starter templates are available under
 - `pom-cli-runtime.xml`
   - Starter `pom.xml` for a single-module CLI runtime jar with Java 1.8,
     JUnit Jupiter, Jackson, source jar, shaded runtime jar, and dist zip.
+  - On JDK 9 or newer, an activated profile sets `maven.compiler.release=8`
+    to restrict Java SE APIs as well as syntax and bytecode. JDK 8 retains
+    source/target 1.8. This does not verify third-party dependency compatibility;
+    keep packaged-runtime smoke checks on Java 8 and the newest LTS.
   - The starter follows Maven standard artifact naming, so the package output
     is normally `target/<artifactId>-<version>.jar` and
     `target/<artifactId>-<version>-sources.jar`.

@@ -85,7 +85,7 @@ export function runIssueRead(options, { gh = defaultGh } = {}) {
   }
   if (options.mode === "issue") {
     const issue = runGh(gh, ["issue", "view", String(options.issue), "--repo", options.repo,
-      "--comments", "--json", "number,state,title,body,url,updatedAt,labels,comments"]);
+      "--json", "number,state,title,body,url,updatedAt,labels,comments"]);
     const normalized = normalizeIssue(issue);
     if (!Array.isArray(issue.labels) || !Array.isArray(issue.comments)) {
       throw new Error("gh issue view returned malformed labels or comments");

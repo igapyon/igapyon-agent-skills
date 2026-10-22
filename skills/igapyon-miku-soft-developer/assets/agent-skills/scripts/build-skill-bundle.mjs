@@ -18,6 +18,21 @@ main();
 
 function main() {
   ensureSourceExists(sourceSkillRoot, `skills/${skillName}`);
+  const { skillRuntimeArtifacts } = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
+  if (!Array.isArray(skillRuntimeArtifacts)) {
+    throw new Error("package.json skillRuntimeArtifacts must list required CLI artifact paths; use [] only when none are required");
+  }
+  for (const relative of skillRuntimeArtifacts) {
+    if (typeof relative !== "string" || !relative.startsWith("runtime/") ||
+        relative.includes("\\") || relative.split("/").some((part) => !part || part === "." || part === "..") ||
+        !/\.(?:mjs|jar)$/.test(relative)) {
+      throw new Error(`invalid required CLI artifact path: ${relative}`);
+    }
+    const artifact = path.join(sourceSkillRoot, relative);
+    if (!fs.existsSync(artifact) || !fs.statSync(artifact).isFile() || fs.statSync(artifact).size === 0) {
+      throw new Error(`missing or empty required CLI artifact: ${relative}`);
+    }
+  }
 
   fs.rmSync(bundleRoot, {
     recursive: true,

@@ -554,7 +554,9 @@ The criterion is whether the split can be explained in the upstream class mappin
 
 ### Java Compatibility Conventions
 
-Main source and binary compatibility are fixed to Java 1.8.
+Unless a product documents a repository-specific exception, Java 8 is the
+minimum supported runtime for miku Java CLI applications. Keep source and
+binary compatibility at Java 1.8.
 
 Avoid APIs and syntax that require newer Java versions, such as:
 
@@ -566,6 +568,23 @@ Avoid APIs and syntax that require newer Java versions, such as:
 - text blocks
 
 The compiler may run on a newer JDK, but the produced source and bytecode compatibility should remain aligned with the repository's Java 1.8 policy.
+
+On JDK 9 or newer, compile with `--release 8` (Maven
+`maven.compiler.release=8`) so references to newer Java SE APIs fail at compile
+time. `source=1.8` and `target=1.8` alone do not restrict the host JDK's APIs.
+When retaining JDK 8 build support, use a JDK-activated Maven profile as in the
+bundled starter. The build JDK is a separate choice from the product runtime
+floor; select it for the Maven and plugin requirements, and record it
+explicitly.
+
+Verify the packaged application on an actual Java 8 runtime and on the newest
+LTS runtime of the declared JDK distribution. Where CI exists, include both
+ends of this matrix; add maintained LTS versions between them when product
+requirements or CI cost justify it. Exercise `--version` and a representative
+operation so third-party dependency and runtime behavior is checked as well as
+the compiled API target. Java 8 update and support periods vary by distribution,
+so name the distribution when a support commitment depends on it. Refresh the
+newest-LTS value from that distribution's current release roadmap.
 
 ### Public API Conventions
 

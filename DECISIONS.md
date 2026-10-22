@@ -15,6 +15,28 @@ update_when:
 This file records important decisions for the AI agent.
 Read this before making or revisiting decisions, especially when the work seems to loop.
 
+## 2026-10-22: Set Java 8 As The Compatibility Floor And Test The Newest LTS
+
+理由:
+Java 8 remains a practical compatibility target, and distributions such as
+Eclipse Temurin continue to publish Java 8 updates. Support duration is
+distribution-specific, so a Java version number alone does not establish a
+universal support commitment.
+
+影響:
+Use Java 8 as the default minimum runtime for miku Java CLI products. Verify
+packaged behavior on Java 8 and the newest LTS of the declared distribution;
+include both in an existing CI matrix and add intermediate maintained LTS
+lines when justified. Choose and document the build JDK separately from the
+product runtime. As of 2026-10-22, Java 25 is the newest LTS and Oracle lists
+Java 29 as the next planned LTS for September 2027. Eclipse Temurin lists Java
+8 availability through at least December 2030. Recheck the selected
+distribution's roadmap when refreshing the newest-LTS value.
+
+根拠:
+[Oracle Java SE Support Roadmap](https://www.oracle.com/java/technologies/java-se-support-roadmap.html)
+and [Eclipse Temurin Support](https://adoptium.net/support/).
+
 ## 2026-08-10: Make The miku-scm Work Cycle Responsive Without Removing Its Safety Model
 
 理由:
@@ -75,9 +97,13 @@ changes remain a separate authorized SCM phase.
 For Node-backed profiles, record the product minimum, CI build/test matrix,
 release-build runtime, released-artifact smoke runtime, and each JavaScript
 Action's internal runtime separately. Node.js 20 occurrences are migration
-inventory rather than evidence for the maintained target. The exact Node.js
-22/24 allocation remains a semantic-policy gate; using a Node 24-aware Action
-major does not by itself make the product Node 24-only.
+inventory rather than evidence for the maintained target. The approved
+compatibility rule is to use the oldest upstream-maintained LTS as the product
+floor and verify that floor plus the newest LTS; include maintained LTS lines
+between them when practical. The 2026-10-22 starter snapshot is Node.js 22 as
+the floor and Node.js 24 as the newest LTS / Release build host. Refresh those
+values against the official release schedule. A Node 24-aware Action major
+does not by itself make the product Node 24-only.
 
 Release files are normalized by artifact role and lifecycle, not merely by file
 extension. A CLI module, standalone runtime, curated sources archive, Java

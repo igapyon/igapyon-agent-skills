@@ -19,9 +19,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "github-issue-read.mjs",
     "contract_spec": "github-cli-static-helper-policy.md",
     "contract_test": "github-issue-read.test.mjs",
-    "runner_sha256": "5f928b16fc06b89ab6870ab619313e79463cf8c628ee35a92cf3b7faf875670f",
-    "spec_sha256": "a0a9887d5a9be0804d2956f614d99f174f74cc21e5c5c2b04641d7e603b48b32",
-    "pair_sha256": "5bc607e6d30b060b794d0ead1984ddade47c5d44d4937d958521b59eab075a5c"
+    "runner_sha256": "23a16d5dfd7136692cf29668b6dd41d001d063e4a242392d2f3d0b635673367c",
+    "spec_sha256": "fed1df30a399341411ed27db3d562a529c14399e133b811534106ff632eeec88",
+    "pair_sha256": "d127e1b1039fa2d39f44802b3a8de3f40b345c147f4e8765b4d116f4231968b9"
   },
   {
     "workflow": "github.read.batch",
@@ -31,8 +31,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-cli-static-helper-policy.md",
     "contract_test": "miku-scm-github-readonly.test.mjs",
     "runner_sha256": "ee8d921dc8466898451cc5aaeb13da8d4446085757441c677d9343b424dcef3b",
-    "spec_sha256": "a0a9887d5a9be0804d2956f614d99f174f74cc21e5c5c2b04641d7e603b48b32",
-    "pair_sha256": "3f03f0ee25e13d1f7060269f28b7959c5f5f232d6379fa162b8fc0e082957041"
+    "spec_sha256": "fed1df30a399341411ed27db3d562a529c14399e133b811534106ff632eeec88",
+    "pair_sha256": "a6dc1bc8f4daaa47d22d5a1e7178b612e7281be76cd1f8febaa8fcd0a30d0916"
   },
   {
     "workflow": "github.issue.create.preflight",

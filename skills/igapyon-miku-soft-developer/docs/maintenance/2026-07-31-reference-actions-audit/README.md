@@ -13,7 +13,7 @@ audience:
   - maintainer
   - agent
 created: 2026-07-31
-updated: 2026-07-31
+updated: 2026-10-22
 sources:
   - type: local-file
     role: primary
@@ -29,8 +29,10 @@ sources:
 
 ## Status
 
-The read-only audit and design phase is complete. Policy approval and serial
-implementation pilots remain pending.
+The read-only audit and design phase is complete. The Node compatibility
+policy was approved and applied to the shared references and starter defaults
+on 2026-10-22. Other policy approvals and serial sibling-repository pilots
+remain pending.
 
 Approved findings are intended to move into repositories gradually through
 the [routine maintenance adoption workflow](../adoption-workflow.md). An
@@ -87,8 +89,10 @@ curated durable result.
   migrations rather than peer product layers.
 - GitHub Actions should be normalized by contract profile, not by identical
   YAML text.
-- The leading Node policy is product minimum 22, CI on 22 and 24, Release build
-  on 24, and final staged JavaScript artifact smoke on Node 22.
+- The approved Node policy uses the oldest maintained LTS as the product
+  minimum and verifies that line plus the newest LTS. The 2026-10-22 starter
+  snapshot is Node 22 minimum, CI 22/24, and Release build 24. Final staged
+  artifact smoke and sibling-repository migrations remain separate work.
 - Release artifact filenames are public API and UI. Existing names and URLs are
   immutable historical records.
 - Public filename and checksum changes must be consumer-first.
