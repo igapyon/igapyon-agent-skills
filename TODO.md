@@ -1,5 +1,23 @@
 # TODO
 
+## miku-scm：Issue操作とapprove承認の改善（2026-10-23・source実装済み）
+
+計画と実施記録：[2026-10-23-issue-approval-implementation-plan.md](skills/igapyon-miku-scm/docs/2026-10-23-issue-approval-implementation-plan.md)。利用者の実装指示に基づきUX-00〜08をmiku-scm sourceへ反映した。
+
+- [x] UX-00：現在のbranch/HEAD/worktreeを確認し、既存の計画差分を保持。
+- [x] UX-01：完全一致 `approve` 文法、review正規化、repository・順序・契約・内容digestのbindingとテスト。
+- [x] UX-02：handoff schema v2、explicit-ID READONLY review workflow、v1記録のlist/dismiss互換。
+- [x] UX-03：単独/batch apply gate、exclusive claim、approval receipt、global pendingからの自動選択禁止。
+- [x] UX-04：検証済みの順序付き複合操作と同Issue依存snapshot確認。
+- [x] UX-05：applied/not-applied/conflict/unresolvedの区別、証明済み未実施だけのreceipt付きresume、attention一覧。
+- [x] UX-06：ID/digest/内部引数を通常表示から外し、完全なIssue・コメント・提案内容をreviewに表示。SKILL/referencesとDaybook callerを整合。
+- [x] UX-07：manifest/CLI/help/contract lockと生成referenceを更新し、受け入れテストを追加。
+- [x] UX-08：fast 197/197、full 312/312、skill index policy 78/78、Maven validate、skill validator、contract drift、`git diff --check`を確認。
+
+approveはこの会話で完全表示済みの案にAgent側で束縛し、ID入力やglobal pending選択を求めない。GitHub CLIのcomments接続形式も件数・node数を照合し、不完全なレビューを止める。miku-scm human outputはv12、workflow manifestはv2、Issue approval workflow contractはv2。
+
+未実施：モデル会話確認、Windows実機確認、実GitHub操作、skill配備、version更新、commit/push。変更はローカルworktreeにあり、未commit。
+
 ## daybook：Waypointsの名称・基本方針・source実装（2026-10-20・完了）
 
 仕様記録：[daybook-waypoints.md](docs/plans/daybook-waypoints.md)。ルート`waypoints/`にJSTの作成日時付きの短い再開メモを複数保存する。task・activitiesを正本とし、Git状態は具体的な実行に必要な段階で確認する。関連スレッドは担当範囲と最終確認時点を添えた参照として扱う。

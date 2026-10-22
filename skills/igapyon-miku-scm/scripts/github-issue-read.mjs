@@ -2,6 +2,8 @@
 
 import { spawnSync } from "node:child_process";
 
+import { normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
+
 function usage() {
   return `Usage: github-issue-read.mjs --repo <owner>/<repo> (--list [--state <open|closed|all>] | --issue <number> | --labels)
 
@@ -87,10 +89,12 @@ export function runIssueRead(options, { gh = defaultGh } = {}) {
     const issue = runGh(gh, ["issue", "view", String(options.issue), "--repo", options.repo,
       "--json", "number,state,title,body,url,updatedAt,labels,comments"]);
     const normalized = normalizeIssue(issue);
-    if (!Array.isArray(issue.labels) || !Array.isArray(issue.comments)) {
-      throw new Error("gh issue view returned malformed labels or comments");
+    if (!Array.isArray(issue.labels)) {
+      throw new Error("gh issue view returned malformed labels");
     }
-    return { mode: "issue", repository: options.repo, issue: { ...normalized, labels: issue.labels, comments: issue.comments } };
+    normalizeIssueCommentConnection(issue.comments);
+    const comments = issue.comments.nodes ?? issue.comments.Nodes;
+    return { mode: "issue", repository: options.repo, issue: { ...normalized, labels: issue.labels, comments } };
   }
   const labels = runGh(gh, ["label", "list", "--repo", options.repo, "--limit", "1000", "--json", "name,description,color"]);
   if (!Array.isArray(labels) || labels.some((label) => !label || typeof label.name !== "string")) {

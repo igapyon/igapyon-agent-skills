@@ -8,6 +8,7 @@ import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+import { normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
 
 const ISSUE_LABEL_APPLY_CONTRACT = workflowContractById().get("github.issue.label.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -161,7 +162,7 @@ export function createGhIssueReader(gh = createGhRunner()) {
     const result = gh([
       "issue", "view", String(issueNumber),
       "--repo", repository,
-      "--json", "number,url,title,state,labels,updatedAt",
+      "--json", "number,url,title,body,state,labels,updatedAt,comments",
     ]);
     if (!result?.ok) throw new Error(`gh issue view failed: ${ghDetail(result)}`);
     let issue;
@@ -175,10 +176,12 @@ export function createGhIssueReader(gh = createGhRunner()) {
       issue?.number !== issueNumber
       || issue?.url !== expectedUrl
       || typeof issue?.title !== "string"
+      || typeof issue?.body !== "string"
       || !["OPEN", "CLOSED"].includes(issue?.state)
       || typeof issue?.updatedAt !== "string"
       || !issue.updatedAt
       || !Array.isArray(issue?.labels)
+      || !issue?.comments || typeof issue.comments !== "object"
       || issue.labels.some((label) => typeof label?.name !== "string" || !label.name)
     ) {
       throw new Error("gh issue view does not exactly identify the requested Issue");
@@ -191,9 +194,11 @@ export function createGhIssueReader(gh = createGhRunner()) {
       number: issue.number,
       url: issue.url,
       title: issue.title,
+      body: issue.body,
       state: issue.state,
       updatedAt: issue.updatedAt,
       labels,
+      comments: normalizeIssueCommentConnection(issue.comments),
     };
   };
 }
@@ -261,6 +266,16 @@ async function readAttempt(file) {
   const record = JSON.parse(content);
   if (!ATTEMPT_STATUSES.has(record?.status)) throw new Error("Unsupported label attempt record");
   return record;
+}
+
+function recoverableAttempt(record) {
+  return record?.status === "not-applied" && record.stage === "pre-update-read";
+}
+
+async function archiveRecoverableAttempt(file) {
+  const archived = `${file}.pre-update-read-${Date.now()}-${randomUUID()}.json`;
+  await rename(file, archived);
+  return archived;
 }
 
 async function claimAttempt(file, record) {
@@ -360,7 +375,11 @@ export async function runIssueLabelUpdate(options, dependencies = {}) {
   const digest = operationSha256(options);
   const attempt = operationalPath(root, options.repository, options.issueNumber, digest);
   const prior = await readAttempt(attempt);
-  if (prior) throw new Error(`This label operation already has a ${prior.status} attempt. Do not retry it.`);
+  if (prior && !recoverableAttempt(prior)) {
+    throw new Error(`This label operation already has a ${prior.status} attempt. Do not retry it.`);
+  }
+  let recoveredFrom = null;
+  if (prior) recoveredFrom = await archiveRecoverableAttempt(attempt);
   const available = await readLabels(options.repository);
   validateExistingLabels(available, options);
   const common = {
@@ -383,7 +402,10 @@ export async function runIssueLabelUpdate(options, dependencies = {}) {
       issue_url: current.url,
       issue_title: current.title,
       issue_state: current.state,
+      current_title: current.title,
+      current_body: current.body,
       current_labels: current.labels,
+      current_comments: current.comments,
       current_labels_sha256: labelsSha256(current.labels),
       resulting_labels: target,
       resulting_labels_sha256: labelsSha256(target),
@@ -409,6 +431,7 @@ export async function runIssueLabelUpdate(options, dependencies = {}) {
     reviewed_current_labels_sha256: options.expectedCurrentLabelsSha256.toLowerCase(),
     reviewed_updated_at: options.expectedUpdatedAt,
     attempt_started_at: new Date().toISOString(),
+    ...(recoveredFrom ? { recovered_from_attempt: relativeOperationalPath(root, recoveredFrom) } : {}),
   };
   await claimAttempt(attempt, pending);
   let current;

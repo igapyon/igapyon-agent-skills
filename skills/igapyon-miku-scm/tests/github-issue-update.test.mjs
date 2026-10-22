@@ -26,8 +26,10 @@ const CURRENT = {
   url: "https://github.com/igapyon/example/issues/42",
   title: "Existing title",
   body: "Old body.\n",
+  state: "OPEN",
   labels: ["bug"],
   updatedAt: "2026-07-23T01:02:03Z",
+  comments: [],
 };
 
 async function scenario(t, content = "Existing title\n\nNew body.\n") {
@@ -279,8 +281,10 @@ test("gh issue reader uses one fixed read-only command and validates its JSON", 
         url: CURRENT.url,
         title: CURRENT.title,
         body: CURRENT.body,
+        state: CURRENT.state,
         labels: CURRENT.labels.map((name) => ({ name })),
         updatedAt: CURRENT.updatedAt,
+        comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false } },
       }),
       stderr: "",
     };
@@ -289,7 +293,7 @@ test("gh issue reader uses one fixed read-only command and validates its JSON", 
   assert.deepEqual(calls, [[
     "issue", "view", "42",
     "--repo", "igapyon/example",
-    "--json", "number,url,title,body,labels,updatedAt",
+    "--json", "number,url,title,body,state,labels,updatedAt,comments",
   ]]);
 });
 

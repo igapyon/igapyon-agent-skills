@@ -32,6 +32,21 @@ async function workspace(t) {
   return root;
 }
 
+async function reviewedApprovalArgs(root, artifactRoot, runId, handoffs) {
+  const args = handoffs.flatMap((handoff) => ["--handoff", handoff]);
+  const reviewed = await runWorkflow("github.issue.handoff.review", args, {
+    cwd: root,
+    artifactRoot,
+    runId,
+  });
+  return [
+    ...args,
+    "--expected-review-sha256", reviewed.result.review_binding.review_sha256,
+    "--approval-command", "approve",
+    "--apply",
+  ];
+}
+
 test("runner CLI format is fixed and cannot become a workflow option", () => {
   assert.deepEqual(
     parseRunnerCliArgs(["--format", "human", "repository.status", "--repo", "."]),
@@ -105,6 +120,7 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
     "github.issue.close.preflight",
     "github.issue.close.apply",
     "github.issue.handoff.list",
+    "github.issue.handoff.review",
     "github.issue.handoff.apply",
     "github.issue.handoff.batch.apply",
     "github.issue.handoff.dismiss",
@@ -130,7 +146,7 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
 });
 
 test("manifest exposes complete AI-readable CLI help contracts", () => {
-  assert.equal(WORKFLOW_MANIFEST.length, 33);
+  assert.equal(WORKFLOW_MANIFEST.length, 34);
   for (const workflow of WORKFLOW_MANIFEST) {
     assert.equal(typeof workflow.cli.summary, "string", workflow.id);
     assert.ok(workflow.cli.summary.length > 0, workflow.id);
@@ -302,7 +318,7 @@ test("READONLY Issue workflow completes in one runner call with stable artifacts
           url: "https://github.com/a/b/issues/7",
           updatedAt: "2026-07-27T13:00:00Z",
           labels: [],
-          comments: [],
+          comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false } },
         }),
       };
     },
@@ -401,7 +417,8 @@ test("Issue preflight delegates label and parent checks and returns reviewed app
   assert.equal(result.status, "success");
   assert.equal(result.delegate_status, "preflight-ok");
   assert.match(result.human_output, /^\[READY FOR APPROVAL\] GitHub Issue create/);
-  assert.match(result.human_output, /Approval command: reply with exactly `miku-scm approve preflight-ok` in chat/);
+  assert.match(result.human_output, /Full Issue review: required before approval/);
+  assert.doesNotMatch(result.human_output, /Approval command:|preflight-ok/);
   assert.equal(result.result.handoff.status, "pending");
   assert.match(result.result.handoff.immutable_sha256, /^[0-9a-f]{64}$/);
   assert.equal(result.result.parent_issue.number, 2);
@@ -448,6 +465,56 @@ test("an internal dependency preflight records its run without creating another 
   assert.equal(existsSync(path.join(root, "runs", "dependency-preflight", "result.json")), true);
 });
 
+test("Issue approval review is read-only and contains the full saved proposal", async (t) => {
+  const root = await workspace(t);
+  const draftDirectory = path.join(root, "workplace", "miku-scm", "new-issues");
+  await mkdir(draftDirectory, { recursive: true });
+  const draft = "workplace/miku-scm/new-issues/issue-new-202607271402.md";
+  await writeFile(path.join(root, draft), "Reviewed title\n\nFull reviewed body\n", "utf8");
+  await runWorkflow("github.issue.create.preflight", ["--repo", "a/b", "--draft", draft], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "review-preflight",
+    issueCreateDependencies: { readLabels: async () => [] },
+  });
+
+  const reviewed = await runWorkflow("github.issue.handoff.review", ["--handoff", "review-preflight"], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "review-display",
+  });
+  assert.equal(reviewed.delegate_status, "reviewed");
+  assert.equal(reviewed.mutation_invoked, false);
+  assert.match(reviewed.result.handoffs[0].review.proposal.body, /Full reviewed body/);
+  assert.match(reviewed.result.review_binding.review_sha256, /^[0-9a-f]{64}$/);
+  assert.match(reviewed.human_output, /Full reviewed body/);
+  assert.match(reviewed.human_output, /Reply with exactly `approve` to execute/);
+  assert.doesNotMatch(reviewed.human_output, /review-preflight|review_sha256/);
+});
+
+test("low-level Issue apply workflows cannot bypass the handoff approval gate", async (t) => {
+  const root = await workspace(t);
+  const draftDirectory = path.join(root, "workplace", "miku-scm", "new-issues");
+  await mkdir(draftDirectory, { recursive: true });
+  const draft = "workplace/miku-scm/new-issues/issue-new-202607271403.md";
+  await writeFile(path.join(root, draft), "Guarded title\n\nBody\n", "utf8");
+  const preflight = await runWorkflow("github.issue.create.preflight", ["--repo", "a/b", "--draft", draft], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "guard-preflight",
+    issueCreateDependencies: { readLabels: async () => [] },
+  });
+
+  const direct = await runWorkflow("github.issue.create.apply", preflight.result.apply_arguments, {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "guard-direct-apply",
+  });
+  assert.equal(direct.status, "not-applied");
+  assert.equal(direct.mutation_invoked, false);
+  assert.equal(direct.error.code, "ISSUE_HANDOFF_APPROVAL_REQUIRED");
+});
+
 test("Issue handoff apply forwards the single reviewed argument set", async (t) => {
   const root = await workspace(t);
   const draftDirectory = path.join(root, "workplace", "miku-scm", "new-issues");
@@ -466,9 +533,12 @@ test("Issue handoff apply forwards the single reviewed argument set", async (t) 
       readLabels: async () => [],
     },
   });
+  const approvalArgs = await reviewedApprovalArgs(
+    root, path.join(root, "runs"), "handoff-review", ["handoff-preflight"],
+  );
   const calls = [];
   const applied = await runWorkflow("github.issue.handoff.apply", [
-    "--apply",
+    ...approvalArgs,
   ], {
     cwd: root,
     artifactRoot: path.join(root, "runs"),
@@ -491,7 +561,9 @@ test("Issue handoff apply forwards the single reviewed argument set", async (t) 
   assert.deepEqual(calls[0].args, preflight.result.apply_arguments);
   assert.equal(applied.status, "success");
   assert.equal(applied.delegate_status, "applied");
-  assert.match(applied.human_output, /Approval handoff: handoff-preflight \(applied\)/);
+  assert.match(applied.human_output, /Operation: create/);
+  assert.match(applied.human_output, /Status: applied/);
+  assert.doesNotMatch(applied.human_output, /handoff-preflight/);
 });
 
 test("Issue handoff recovery lists, selects, and dismisses exact pending IDs", async (t) => {
@@ -527,10 +599,12 @@ test("Issue handoff recovery lists, selects, and dismisses exact pending IDs", a
   assert.match(listed.human_output, /miku-scm approve handoff-second/);
   assert.match(listed.human_output, /miku-scm dismiss handoff-first/);
 
+  const approvalArgs = await reviewedApprovalArgs(
+    root, path.join(root, "runs"), "handoff-recovery-review", ["handoff-second"],
+  );
+
   const calls = [];
-  const applied = await runWorkflow("github.issue.handoff.apply", [
-    "--handoff", "handoff-second", "--apply",
-  ], {
+  const applied = await runWorkflow("github.issue.handoff.apply", approvalArgs, {
     cwd: root,
     artifactRoot: path.join(root, "runs"),
     runId: "handoff-selected-apply",
@@ -559,7 +633,7 @@ test("Issue handoff recovery lists, selects, and dismisses exact pending IDs", a
   assert.equal(dismissed.status, "success");
   assert.equal(dismissed.delegate_status, "dismissed");
   assert.equal(dismissed.mutation_invoked, true);
-  assert.equal(dismissed.result.handoff.status, "not-applied");
+  assert.equal(dismissed.result.handoff.status, "dismissed");
 
   const empty = await runWorkflow("github.issue.handoff.list", [], {
     cwd: root,
@@ -575,7 +649,10 @@ test("handoff selection stops are recorded as not-applied before mutation", asyn
   let invoked = false;
 
   const result = await runWorkflow("github.issue.handoff.apply", [
-    "--handoff", "missing-handoff", "--apply",
+    "--handoff", "missing-handoff",
+    "--expected-review-sha256", "a".repeat(64),
+    "--approval-command", "approve",
+    "--apply",
   ], {
     cwd: root,
     artifactRoot: path.join(root, "runs"),
@@ -608,13 +685,12 @@ test("Issue handoff batch preserves order and reports a partial stop", async (t)
     });
   }
 
+  const approvalArgs = await reviewedApprovalArgs(
+    root, path.join(root, "runs"), "batch-review", ["batch-second", "batch-first", "batch-third"],
+  );
+
   let calls = 0;
-  const result = await runWorkflow("github.issue.handoff.batch.apply", [
-    "--handoff", "batch-second",
-    "--handoff", "batch-first",
-    "--handoff", "batch-third",
-    "--apply",
-  ], {
+  const result = await runWorkflow("github.issue.handoff.batch.apply", approvalArgs, {
     cwd: root,
     artifactRoot: path.join(root, "runs"),
     runId: "batch-run",
@@ -647,7 +723,8 @@ test("Issue handoff batch preserves order and reports a partial stop", async (t)
   );
   assert.deepEqual(result.result.remaining_handoffs, ["batch-third"]);
   assert.match(result.human_output, /^\[PARTIAL\] GitHub Issue approval handoff batch apply/);
-  assert.match(result.human_output, /Remaining handoff: batch-third/);
+  assert.match(result.human_output, /Remaining handoff count: 1/);
+  assert.doesNotMatch(result.human_output, /batch-(first|second|third)/);
   const plan = JSON.parse(await readFile(path.join(root, "runs", "batch-run", "plan.json"), "utf8"));
   assert.deepEqual(plan.ordered_handoffs, ["batch-second", "batch-first", "batch-third"]);
 });
@@ -668,8 +745,10 @@ test("migrated Issue mutations return contract-fixed apply arguments", async (t)
     url: "https://github.com/a/b/issues/7",
     title: "Current title",
     body: "Current body",
+    state: "OPEN",
     labels: ["enhancement"],
     updatedAt: "2026-07-27T13:00:00Z",
+    comments: [],
   };
   const commentIssue = {
     ...updateIssue,
@@ -682,6 +761,7 @@ test("migrated Issue mutations return contract-fixed apply arguments", async (t)
     state: "OPEN",
     labels: ["enhancement"],
     updatedAt: updateIssue.updatedAt,
+    comments: [],
   };
   const closeIssue = {
     number: 7,
@@ -691,6 +771,8 @@ test("migrated Issue mutations return contract-fixed apply arguments", async (t)
     state: "OPEN",
     stateReason: null,
     updatedAt: updateIssue.updatedAt,
+    labels: ["enhancement"],
+    comments: [],
   };
 
   const cases = [
@@ -729,7 +811,7 @@ test("migrated Issue mutations return contract-fixed apply arguments", async (t)
       now: () => new Date("2026-07-27T14:00:00Z"),
       ...entry.dependencies,
     });
-    assert.equal(result.status, "success");
+    assert.equal(result.status, "success", `${entry.id}: ${result.error?.message ?? JSON.stringify(result.result)}`);
     assert.equal(result.delegate_status, "preflight-ok");
     const contractOption = result.result.apply_arguments.indexOf(
       "--expected-contract-pair-sha256",

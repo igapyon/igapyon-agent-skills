@@ -22,6 +22,18 @@ prose requests route first to the matching `writing.*.prepare` ID; generative
 drafting consumes its bounded evidence, and any later mutation returns to a
 mechanical preflight.
 
+Every GitHub Issue write follows this sequence: complete all requested
+preflights, collect only their returned handoff IDs, run
+`github.issue.handoff.review`, display its complete content, and wait for a
+separate exact `approve` or `miku-scm approve` message. Then pass the actual
+message and the review binding to the single or batch apply workflow. A
+preflight, pending list, initial request, `はい`, `OK`, `お願いします`, `いいね`,
+`承認`, quoted text, or prose containing `approve` does not satisfy the gate.
+The Agent carries IDs and digests from the current review; the user normally
+does not type them. Never choose from global pending handoffs or call a
+low-level Issue apply workflow directly. See
+[approval-handoff.md](approval-handoff.md).
+
 Normal migrated execution reads the small safety kernel in `SKILL.md` and only
 the selected entry's `runtime_references`. An empty list means that no detailed
 Markdown is loaded. `design_references` are for implementation, maintenance,

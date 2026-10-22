@@ -19,9 +19,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "github-issue-read.mjs",
     "contract_spec": "github-cli-static-helper-policy.md",
     "contract_test": "github-issue-read.test.mjs",
-    "runner_sha256": "23a16d5dfd7136692cf29668b6dd41d001d063e4a242392d2f3d0b635673367c",
-    "spec_sha256": "fed1df30a399341411ed27db3d562a529c14399e133b811534106ff632eeec88",
-    "pair_sha256": "d127e1b1039fa2d39f44802b3a8de3f40b345c147f4e8765b4d116f4231968b9"
+    "runner_sha256": "0ac1952e3403e9fdcdd29c922e7f28f0111bfd02e34e717409092e7a7ee04e73",
+    "spec_sha256": "91604c7cfd36228ad11cb802e056b86c41be83b1ee4c7da2362a02cf715dd7c6",
+    "pair_sha256": "2821e5d6730e27b2a814be12d788672656ba3b792aacff2280b75f12830451dd"
   },
   {
     "workflow": "github.read.batch",
@@ -30,163 +30,174 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "miku-scm-github-readonly.mjs",
     "contract_spec": "github-cli-static-helper-policy.md",
     "contract_test": "miku-scm-github-readonly.test.mjs",
-    "runner_sha256": "ee8d921dc8466898451cc5aaeb13da8d4446085757441c677d9343b424dcef3b",
-    "spec_sha256": "fed1df30a399341411ed27db3d562a529c14399e133b811534106ff632eeec88",
-    "pair_sha256": "a6dc1bc8f4daaa47d22d5a1e7178b612e7281be76cd1f8febaa8fcd0a30d0916"
+    "runner_sha256": "966c45a31149c0de57ddc4fc42e1622eca51bf4aa80863d2ede3bfffee8ac915",
+    "spec_sha256": "91604c7cfd36228ad11cb802e056b86c41be83b1ee4c7da2362a02cf715dd7c6",
+    "pair_sha256": "731bebc93691a8fd4c0f2196195d832705d1fe926e16ccc902a5eacde15dd6ac"
   },
   {
     "workflow": "github.issue.create.preflight",
     "contract_id": "github.issue.create.preflight",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "github-issue-create.mjs",
     "contract_spec": "github-issue-create.md",
     "contract_test": "github-issue-create.test.mjs",
-    "runner_sha256": "637e741dcf8fb7446c5c502ac11ca38dae79558354f6241105dfabf403033e9b",
-    "spec_sha256": "0c3f229a3c07ed3f92165b47c4fd269f494e7003134c697a5acb50eeead9286b",
-    "pair_sha256": "5991a3f46a03bd82fb84c77cd59814dce2a181936c1db9d72d3ef151782f39b5"
+    "runner_sha256": "893a2eabb3ad9de8ad87a25de2abdb5b2b90da25964b8ac1a76b7124ec5e4988",
+    "spec_sha256": "dba838060d9d71a39d117dd53075f52ed877e1ddb7ee0f134c0ae8d01cda5a3e",
+    "pair_sha256": "016af93603ceba68478b95bbab86f25a2e9ec74612e9e39c4436d1371d7ef794"
   },
   {
     "workflow": "github.issue.create.apply",
     "contract_id": "github.issue.create.apply",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "github-issue-create.mjs",
     "contract_spec": "github-issue-create.md",
     "contract_test": "github-issue-create.test.mjs",
-    "runner_sha256": "637e741dcf8fb7446c5c502ac11ca38dae79558354f6241105dfabf403033e9b",
-    "spec_sha256": "0c3f229a3c07ed3f92165b47c4fd269f494e7003134c697a5acb50eeead9286b",
-    "pair_sha256": "362394c442195f53e2a4254d95cdc6fd4685f36d28d9dad183a770789218c9e4"
+    "runner_sha256": "893a2eabb3ad9de8ad87a25de2abdb5b2b90da25964b8ac1a76b7124ec5e4988",
+    "spec_sha256": "dba838060d9d71a39d117dd53075f52ed877e1ddb7ee0f134c0ae8d01cda5a3e",
+    "pair_sha256": "1c4cf0091fbf0ba2adb2f2bfc7dae37d61c41d5c45b129c996f7d93724388f71"
   },
   {
     "workflow": "github.issue.update.preflight",
     "contract_id": "github.issue.update.preflight",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "github-issue-update.mjs",
     "contract_spec": "github-issue-update.md",
     "contract_test": "github-issue-update.test.mjs",
-    "runner_sha256": "eba06b1463b5d5ccc42152d229e3a3654ad60c7272ed00255cda81995f7057e8",
-    "spec_sha256": "e72ba014991a0b1f8de4520a932feb5fc4c726e5a65fc38ea2619d1e84133a87",
-    "pair_sha256": "d10ce844b87982c4ea3a9ab6cbbe8e1d3a8b00062e8903bf3f49ba87487526f9"
+    "runner_sha256": "be6062ae54f0e8930d01cf5c5bceae989d011515d3dec6beece683dce050b286",
+    "spec_sha256": "41b5c5bc8797e98cbee932a9acbbbf6384ba597e819e5ccd2a9ef1435a6dba96",
+    "pair_sha256": "151e7b067f112b5b44bb2a3eaf7b234b52df0be67fa8e9ec25fa5af10e7f1fb6"
   },
   {
     "workflow": "github.issue.update.apply",
     "contract_id": "github.issue.update.apply",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "github-issue-update.mjs",
     "contract_spec": "github-issue-update.md",
     "contract_test": "github-issue-update.test.mjs",
-    "runner_sha256": "eba06b1463b5d5ccc42152d229e3a3654ad60c7272ed00255cda81995f7057e8",
-    "spec_sha256": "e72ba014991a0b1f8de4520a932feb5fc4c726e5a65fc38ea2619d1e84133a87",
-    "pair_sha256": "b3fc7759e7465e90c999aac969f4aeacc1d1c10727f48d8003dad344ad85ad22"
+    "runner_sha256": "be6062ae54f0e8930d01cf5c5bceae989d011515d3dec6beece683dce050b286",
+    "spec_sha256": "41b5c5bc8797e98cbee932a9acbbbf6384ba597e819e5ccd2a9ef1435a6dba96",
+    "pair_sha256": "a809f0be8ae0b18eff09c8ba6c5e3a0a0921f10f108adc7406759ff042656e69"
   },
   {
     "workflow": "github.issue.comment.preflight",
     "contract_id": "github.issue.comment.preflight",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "github-issue-comment.mjs",
     "contract_spec": "github-issue-comment.md",
     "contract_test": "github-issue-comment.test.mjs",
-    "runner_sha256": "fd5b609b7c54283ce422247562916d844fb1147b10f104736782e9f7cb04ee4e",
-    "spec_sha256": "bdab9c3248f14fdc0e98690f26b81133c2bf3593f8a347b4ad0aa90222dc1099",
-    "pair_sha256": "4127a188ce1453877bce94c0327109903782b7c1022eddcdb1a0251711ab4286"
+    "runner_sha256": "a2f9634fd9fdeb2cdc44f4d7ed0e2ced47e96385e529f421a5d9e0b70dfb12b3",
+    "spec_sha256": "081e86dc53b20ecb10a020011c55e1c4f550e1830203fe5f672f8661cd2de738",
+    "pair_sha256": "147f1e581924618de66c995d5a4bc7dc685fb578e7d30c04b5f9ee7ddf0721a4"
   },
   {
     "workflow": "github.issue.comment.apply",
     "contract_id": "github.issue.comment.apply",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "github-issue-comment.mjs",
     "contract_spec": "github-issue-comment.md",
     "contract_test": "github-issue-comment.test.mjs",
-    "runner_sha256": "fd5b609b7c54283ce422247562916d844fb1147b10f104736782e9f7cb04ee4e",
-    "spec_sha256": "bdab9c3248f14fdc0e98690f26b81133c2bf3593f8a347b4ad0aa90222dc1099",
-    "pair_sha256": "4f22f938c4e7b975e2c751720b497d973835130f5a8f7e92583b8a52f4097094"
+    "runner_sha256": "a2f9634fd9fdeb2cdc44f4d7ed0e2ced47e96385e529f421a5d9e0b70dfb12b3",
+    "spec_sha256": "081e86dc53b20ecb10a020011c55e1c4f550e1830203fe5f672f8661cd2de738",
+    "pair_sha256": "3f05cb2ad7615a48d62b4a09020ea2461ac3afe837cff65352793de190652cea"
   },
   {
     "workflow": "github.issue.label.preflight",
     "contract_id": "github.issue.label.preflight",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "github-issue-label-update.mjs",
     "contract_spec": "github-issue-label-update.md",
     "contract_test": "github-issue-label-update.test.mjs",
-    "runner_sha256": "9be7c3652b80ff9e2c64a8e8912acc636ad39915aab6002dc9034890283ea9a8",
-    "spec_sha256": "f494a992b1d13f7aa8974dc48921bc4999c126f42c6b2315a1e188696be0b693",
-    "pair_sha256": "f6e70f55370959e56b0abe5af6d14b2ac268cf8ba7206e5447f8c0ce381e749e"
+    "runner_sha256": "98db0ca54ea929881c242b0199d96fd83da6b80b614d0f12af2fec72caf66334",
+    "spec_sha256": "32440e86402f6509df2e9d664b2d462b4d0f7b424a1962aaa18796812f1e57fc",
+    "pair_sha256": "b88248726733556445787646044ec59ade0f01b5c4eb91321cfecad8c69ebda5"
   },
   {
     "workflow": "github.issue.label.apply",
     "contract_id": "github.issue.label.apply",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "github-issue-label-update.mjs",
     "contract_spec": "github-issue-label-update.md",
     "contract_test": "github-issue-label-update.test.mjs",
-    "runner_sha256": "9be7c3652b80ff9e2c64a8e8912acc636ad39915aab6002dc9034890283ea9a8",
-    "spec_sha256": "f494a992b1d13f7aa8974dc48921bc4999c126f42c6b2315a1e188696be0b693",
-    "pair_sha256": "e29b9d5621c83cf2cddd30f331dbad243afa55bb70043369335806286ab31554"
+    "runner_sha256": "98db0ca54ea929881c242b0199d96fd83da6b80b614d0f12af2fec72caf66334",
+    "spec_sha256": "32440e86402f6509df2e9d664b2d462b4d0f7b424a1962aaa18796812f1e57fc",
+    "pair_sha256": "4d4881e96dac844f9cd83ed55c7a1ba88747ef1d5f2e39632128b4f85c3e8651"
   },
   {
     "workflow": "github.issue.close.preflight",
     "contract_id": "github.issue.close.preflight",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "github-issue-close.mjs",
     "contract_spec": "github-issue-close.md",
     "contract_test": "github-issue-close.test.mjs",
-    "runner_sha256": "cd1bd1d13840451593a6d3dd6eaf73948c7816f5143d056b2733e068828d8128",
-    "spec_sha256": "5b6950325fe1b6e9f80eb1471c14b48847b5c7817b5dbe0775c29448c84e439c",
-    "pair_sha256": "16e680003fc311c7d06b7598958cf3c137a8d5e05e1e3dfd0725fe1fbbb19de5"
+    "runner_sha256": "1d4adee9d637992c69257062233b30814a0aa60c44c1abbfe1e0e786c622dbfb",
+    "spec_sha256": "71bc9d458d3da298dd8c1d368bb406b5b2e867b6b5b794310a862bdaea80c01b",
+    "pair_sha256": "73086e00c0a1e8a410c3fe662822d7ca2f48ac3312eced6b1849eeb0045b3763"
   },
   {
     "workflow": "github.issue.close.apply",
     "contract_id": "github.issue.close.apply",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "github-issue-close.mjs",
     "contract_spec": "github-issue-close.md",
     "contract_test": "github-issue-close.test.mjs",
-    "runner_sha256": "cd1bd1d13840451593a6d3dd6eaf73948c7816f5143d056b2733e068828d8128",
-    "spec_sha256": "5b6950325fe1b6e9f80eb1471c14b48847b5c7817b5dbe0775c29448c84e439c",
-    "pair_sha256": "d7cc9c2eeae0a329562d51b21f03cb6eeed48541283c4c198c6fe533e9f1373e"
+    "runner_sha256": "1d4adee9d637992c69257062233b30814a0aa60c44c1abbfe1e0e786c622dbfb",
+    "spec_sha256": "71bc9d458d3da298dd8c1d368bb406b5b2e867b6b5b794310a862bdaea80c01b",
+    "pair_sha256": "1d097293bb3da84e93c890afab52ac7dd15515301223976f2e88282d69b3a63e"
   },
   {
     "workflow": "github.issue.handoff.list",
     "contract_id": "github.issue.handoff.list",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "miku-scm-handoff.mjs",
     "contract_spec": "approval-handoff.md",
     "contract_test": "miku-scm-handoff.test.mjs",
-    "runner_sha256": "750c287981f22d049d6b2bd124cefe69ff1a2fee43d029f3b642a16fb73837c0",
-    "spec_sha256": "67562545d22884ce43f21c172fbd21c7ec69048155fce88f03f265a20e6ed8b6",
-    "pair_sha256": "324db33b038a04d68997b03a5a85c2e5316ba73e633e711f2e56e7a8b0503c32"
+    "runner_sha256": "e90fae33da458d232e47eb17bb1ee3243ad7715299dccde0ec017b8c0b00c97a",
+    "spec_sha256": "c39336d49adf6b618ab982f5b871fba9ac7156ddac3607b4e61ba337b7df1487",
+    "pair_sha256": "416d06b3401fdf4b5f4b3887f7547bfe1252c2786ca02d3b2848e8f58391bf32"
+  },
+  {
+    "workflow": "github.issue.handoff.review",
+    "contract_id": "github.issue.handoff.review",
+    "contract_version": 2,
+    "runner_entry": "miku-scm-handoff.mjs",
+    "contract_spec": "approval-handoff.md",
+    "contract_test": "miku-scm-handoff.test.mjs",
+    "runner_sha256": "e90fae33da458d232e47eb17bb1ee3243ad7715299dccde0ec017b8c0b00c97a",
+    "spec_sha256": "c39336d49adf6b618ab982f5b871fba9ac7156ddac3607b4e61ba337b7df1487",
+    "pair_sha256": "cacdf2535e8e698b0c2b1027f892f749f5a8b61da95d172823b2dd6c9675e8ed"
   },
   {
     "workflow": "github.issue.handoff.apply",
     "contract_id": "github.issue.handoff.apply",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "miku-scm-handoff.mjs",
     "contract_spec": "approval-handoff.md",
     "contract_test": "miku-scm-handoff.test.mjs",
-    "runner_sha256": "750c287981f22d049d6b2bd124cefe69ff1a2fee43d029f3b642a16fb73837c0",
-    "spec_sha256": "67562545d22884ce43f21c172fbd21c7ec69048155fce88f03f265a20e6ed8b6",
-    "pair_sha256": "3b25c9dbf6dc3aefcaa61f11feaabcf7a92e362f38ece94888958f20494d2982"
+    "runner_sha256": "e90fae33da458d232e47eb17bb1ee3243ad7715299dccde0ec017b8c0b00c97a",
+    "spec_sha256": "c39336d49adf6b618ab982f5b871fba9ac7156ddac3607b4e61ba337b7df1487",
+    "pair_sha256": "41fd890533cfa86f725b603bb3e16fdc2345a55df74c0ce89d668b1b3550a8fd"
   },
   {
     "workflow": "github.issue.handoff.batch.apply",
     "contract_id": "github.issue.handoff.batch.apply",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "miku-scm-handoff.mjs",
     "contract_spec": "approval-handoff.md",
     "contract_test": "miku-scm-handoff.test.mjs",
-    "runner_sha256": "750c287981f22d049d6b2bd124cefe69ff1a2fee43d029f3b642a16fb73837c0",
-    "spec_sha256": "67562545d22884ce43f21c172fbd21c7ec69048155fce88f03f265a20e6ed8b6",
-    "pair_sha256": "8ee475c7609d50862e87932fd32e036291373740c5524bcad78f2c1fb828f4ee"
+    "runner_sha256": "e90fae33da458d232e47eb17bb1ee3243ad7715299dccde0ec017b8c0b00c97a",
+    "spec_sha256": "c39336d49adf6b618ab982f5b871fba9ac7156ddac3607b4e61ba337b7df1487",
+    "pair_sha256": "f91efa4af52ac9722a51883b8a61d8e9c4293e2037a528ee6cc159add6447a8b"
   },
   {
     "workflow": "github.issue.handoff.dismiss",
     "contract_id": "github.issue.handoff.dismiss",
-    "contract_version": 1,
+    "contract_version": 2,
     "runner_entry": "miku-scm-handoff.mjs",
     "contract_spec": "approval-handoff.md",
     "contract_test": "miku-scm-handoff.test.mjs",
-    "runner_sha256": "750c287981f22d049d6b2bd124cefe69ff1a2fee43d029f3b642a16fb73837c0",
-    "spec_sha256": "67562545d22884ce43f21c172fbd21c7ec69048155fce88f03f265a20e6ed8b6",
-    "pair_sha256": "1a483e8fc5f5f6c57b22b910fc5e4ee6052f3d970c22455b3c14769e04bceeb4"
+    "runner_sha256": "55a9af08eeac23ea1e7946aacd203dab153d11960e7553acaaab47aae864445d",
+    "spec_sha256": "c39336d49adf6b618ab982f5b871fba9ac7156ddac3607b4e61ba337b7df1487",
+    "pair_sha256": "4a70cb84d4fa703b8fb66529d922d9d06e6bf753591124e504546fe362d16f3d"
   },
   {
     "workflow": "repository.maintenance.diagnose",
@@ -229,8 +240,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "scm-rules.md",
     "contract_test": "post-recommit-publish.test.mjs",
     "runner_sha256": "8eea3cb810a5e2d041e80cf4d38875e595b949319f943a6f631969b3e0e985ae",
-    "spec_sha256": "e1575779393b6200c74fdc4b105a006523d1a96b39c04962859ab47a2f86b94e",
-    "pair_sha256": "5e120eb22554c3d00362a855444fd77a80a6978acae96f39e17424deea598133"
+    "spec_sha256": "a51073704a990eac39e980970707beb345f2d9ded1eb6079e478134b3d0383bd",
+    "pair_sha256": "c5a85d1e4a2a64aaa10d8140ad58860cb1fe77f55a4acb3808a9aa7feb0336f6"
   },
   {
     "workflow": "work.commit",

@@ -134,24 +134,31 @@ alone. Increment validation requires an explicit policy plus the required
 timezone or Semantic Version level and returns proposed values without editing
 them.
 
-Issue mutation preflights also save an approval handoff. `miku-scm pending`
-routes to the READONLY `github.issue.handoff.list`. After the human reviews the
-complete preflight, `miku-scm approve` invokes
-`github.issue.handoff.apply --apply` and stops unless exactly one pending Issue
-handoff exists. An exact `miku-scm approve <handoff-id>` may select one listed
-pending handoff, while `miku-scm dismiss <handoff-id>` marks only that record
-`not-applied`. An exact
-`miku-scm approve batch <handoff-id> <handoff-id> [...]` applies two to twenty
-unique pending handoffs in the exact human-supplied order and stops before
-later entries after any non-applied outcome. For later mutations to the same
-Issue, it invokes the corresponding fixed preflight without saving another
-handoff and refreshes only the snapshot expectation fields allowlisted in the
-batch contract. All semantic arguments, artifact digests, operation digests,
-and the apply contract digest remain fixed. A dependency refresh or delegate
-conflict remains `conflict` in the handoff and batch report. The Agent must
-pass the exact human-supplied IDs and never choose membership or order
-implicitly. See
-[approval-handoff.md](approval-handoff.md).
+Issue mutation preflights save approval handoffs, but a preflight is not
+approval. Finish the requested preparation, select only the returned
+handoff IDs, run the READONLY `github.issue.handoff.review`, display the full
+review, and wait for a separate message whose complete trimmed text is exactly
+`approve` or `miku-scm approve`. Reject `はい`, `OK`, `お願いします`, `いいね`,
+`承認`, quoted/negated text, and prose that merely contains `approve`. Bind the
+actual approval to the review digest for the current repository, ordered
+handoffs, immutable content, and current wrapper contracts. Use the single
+apply workflow for one operation and the ordered batch workflow for one
+reviewed multi-operation plan. Do not select a lone global pending handoff,
+ask the user to copy an opaque ID, or invoke low-level Issue apply workflows
+directly.
+
+`miku-scm pending` routes to the READONLY handoff list. It summarizes pending
+and attention-needed records but is not a review or approval. An exact
+`miku-scm dismiss <selector>` changes only a local pending record. A batch
+validates all selected work before its first mutation, applies in review order,
+and stops on failed refresh, `not-applied`, `conflict`, or `unresolved`. For a
+later mutation to the same Issue, it compares the fixed reader's title, body,
+state, labels, and comments with the reviewed snapshot plus exact verified
+effects from successful earlier steps. It refreshes only allowlisted snapshot
+expectations; it does not accept unexplained changes. Safe resume requires the
+stored approval receipt and proven no-mutation state. An interrupted claim or
+unknown remote outcome requires reconciliation and must not be retried.
+See [approval-handoff.md](approval-handoff.md).
 
 Writing prepare workflows collect bounded, versioned evidence and a fixed
 writing contract in one READONLY runner call. They do not draft prose or

@@ -211,9 +211,9 @@ The daybook CLI never posts. If `gh` is missing, record `pending-gh` with `reaso
 1. Confirm the current canonical record files still match the saved `after_hash` values.
 2. Read the Issue and comments again through miku-scm. If a valid receipt from a configured `receipt_author_logins` identity has the same `import_id`, record `already-posted` and its exact comment URL. A marker with malformed data or an unknown author is `UNVERIFIED_RECEIPT`; stop without recreating or reposting. A different import ID is a conflict.
 3. Copy the exact saved body from `comment-<number>.md` to the miku-scm required draft path `workplace/miku-scm/issue-comments/issue-<number>-comment-<YYYYMMDDHHMM>.md`. Do not edit its body during the copy.
-4. Use `github.issue.comment.preflight` from the existing runner. Show the exact Issue snapshot, draft body, digest, and planned operation and wait for the approval that the miku-scm workflow requires.
-5. Record `sending` with the returned handoff reference immediately before applying. Apply only that reviewed draft with `github.issue.comment.apply`. The miku-scm helper verifies the returned exact comment; record `posted`, exact comment URL, handoff ID, and attempt path only for a verified result.
-6. Map miku-scm `not-applied` to `failed`; map `unresolved` or other uncertain completion to `uncertain`. Save the reason and attempt reference. Never rerun a comment mutation after an attempt. On resume, read first and follow miku-scm's attempt recovery rules.
+4. Use `github.issue.comment.preflight`, then `github.issue.handoff.review` with its returned handoff. Show the complete Issue context and exact comment body, then wait for a separate user message whose full trimmed text is exactly `approve` or `miku-scm approve`.
+5. Record `sending` with the returned handoff reference immediately before applying. Apply only through `github.issue.handoff.apply` using that review binding and the exact approval. The miku-scm helper verifies the returned exact comment; record `posted`, exact comment URL, handoff ID, and attempt path only for a verified result.
+6. Map miku-scm `not-applied` to `failed`; map `unresolved` or other uncertain completion to `uncertain`. Save the reason and attempt reference. Never resend an uncertain comment. A resume is allowed only for the same reviewed plan and stored approval receipt when miku-scm proves that no comment mutation ran.
 
 For example, state updates use only the local CLI:
 
@@ -235,9 +235,9 @@ Do not put an Issue into `posted` from a successful process exit alone; use miku
 
 Do not close a `needs-info`, skipped, excluded, already-imported, failed, pending, or uncertain comment. After `posted` or `already-posted` is saved:
 
-1. Read the target Issue again through miku-scm. If already closed, record `already-closed` with its canonical Issue URL; do not reopen or re-close it.
+1. If comment and close were both part of the same import plan, prepare the close handoff before the review and include it after the comment in one ordered batch. The batch verifies the comment before closing; one `approve` covers the complete displayed plan. If close is a later, separate operation, prepare and approve it separately. Read the target Issue again through miku-scm. If already closed, record `already-closed` with its canonical Issue URL; do not reopen or re-close it.
 2. If open, verify the non-receipt Issue source still matches the saved `source_hash`. If it changed, stop and ask the user; do not close stale intake.
-3. Use the existing `github.issue.close.preflight` for the exact target with reason `completed`. Show the reviewed Issue state and planned close, then wait for its required approval. Apply the unchanged handoff through `github.issue.close.apply`; do not combine comment and close into a custom command.
+3. For a separate close operation, use `github.issue.close.preflight` for the exact target with reason `completed`, then `github.issue.handoff.review`. Show the complete Issue context and planned close and wait for a separate exact `approve`. Apply through `github.issue.handoff.apply`; never call the low-level close helper directly or combine comment and close into a custom command.
 4. Record `closing` immediately before apply, then record `closed` only after miku-scm verifies the closed state. Save its exact Issue URL, handoff, and attempt references. A miku-scm `not-applied` result is `failed`; unresolved completion is `uncertain`.
 
 Example verified close result:

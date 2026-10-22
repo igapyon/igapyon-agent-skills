@@ -18,6 +18,7 @@ import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+import { normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
 
 const ISSUE_UPDATE_APPLY_CONTRACT = workflowContractById().get("github.issue.update.apply");
 const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -342,7 +343,7 @@ export function createGhIssueReader(gh = createGhRunner()) {
     const result = gh([
       "issue", "view", String(issueNumber),
       "--repo", repository,
-      "--json", "number,url,title,body,labels,updatedAt",
+      "--json", "number,url,title,body,state,labels,updatedAt,comments",
     ]);
     if (!result?.ok) {
       throw new Error(`gh issue view failed: ${ghDetail(result)}`);
@@ -359,7 +360,9 @@ export function createGhIssueReader(gh = createGhRunner()) {
       || issue?.url !== expectedUrl
       || typeof issue?.title !== "string"
       || typeof issue?.body !== "string"
+      || !["OPEN", "CLOSED"].includes(issue?.state)
       || !Array.isArray(issue?.labels)
+      || !issue?.comments || typeof issue.comments !== "object"
       || issue.labels.some((label) => typeof label?.name !== "string")
       || typeof issue?.updatedAt !== "string"
       || !issue.updatedAt
@@ -371,8 +374,10 @@ export function createGhIssueReader(gh = createGhRunner()) {
       url: issue.url,
       title: issue.title,
       body: issue.body,
+      state: issue.state,
       labels: issue.labels.map((label) => label.name),
       updatedAt: issue.updatedAt,
+      comments: normalizeIssueCommentConnection(issue.comments),
     };
   };
 }
@@ -611,6 +616,8 @@ export async function runIssueUpdate(options, dependencies = {}) {
       current_body: current.body,
       current_body_sha256: sha256(current.body),
       current_labels: current.labels,
+      current_state: current.state,
+      current_comments: current.comments,
       current_labels_sha256: labelsSha256(current.labels),
       resulting_labels: resultingLabels,
       resulting_labels_sha256: labelsSha256(resultingLabels),

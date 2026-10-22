@@ -8,7 +8,7 @@ import {
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v11");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v12");
 });
 
 test("every workflow uses English fixed output wording", () => {
@@ -62,7 +62,7 @@ Mutation invoked: no
   assert.doesNotMatch(output, /Users\/example/);
 });
 
-test("Issue create preflight output contains complete review identifiers", () => {
+test("Issue create preflight withholds apply identifiers until the full review", () => {
   const output = renderHumanOutput({
     workflow: "github.issue.create.preflight",
     status: "success",
@@ -86,9 +86,76 @@ test("Issue create preflight output contains complete review identifiers", () =>
   assert.match(output, /Repository: a\/b/);
   assert.match(output, /Labels: enhancement/);
   assert.match(output, /Parent Issue: #2 \(OPEN\) Parent/);
-  assert.match(output, new RegExp(`Draft SHA-256: ${"a".repeat(64)}`));
   assert.match(output, /Remote mutation: not invoked/);
-  assert.match(output, /miku-scm approve/);
+  assert.match(output, /Full Issue review: required before approval/);
+  assert.doesNotMatch(output, /Draft SHA-256|miku-scm approve|handoff/);
+});
+
+test("Issue approval review displays the complete proposal and the exact approval word", () => {
+  const output = renderHumanOutput({
+    workflow: "github.issue.handoff.review",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "reviewed",
+    mutationInvoked: false,
+    result: {
+      handoffs: [{ review: {
+        operation: "create",
+        repository: "a/b",
+        issue_title: null,
+        proposal: { title: "New issue", body: "First line\nSecond line", labels: ["bug"] },
+      } }],
+      review_binding: { review_sha256: "a".repeat(64) },
+    },
+  });
+
+  assert.match(output, /^\[READY FOR APPROVAL\] GitHub Issue operation review/);
+  assert.match(output, /Title: New issue/);
+  assert.match(output, /Body:\nFirst line\nSecond line/);
+  assert.match(output, /Labels: bug/);
+  assert.match(output, /Reply with exactly `approve` to execute\./);
+  assert.match(output, /Remote mutation: not invoked/);
+  assert.doesNotMatch(output, /review_sha256|handoff ID|a{64}/);
+});
+
+test("Issue review displays the full existing Issue snapshot and comment text", () => {
+  const output = renderHumanOutput({
+    workflow: "github.issue.handoff.review",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "reviewed",
+    mutationInvoked: false,
+    result: {
+      handoffs: [{ review: {
+        operation: "close",
+        repository: "a/b",
+        issue_number: 9,
+        issue_title: "Current title",
+        issue_url: "https://github.com/a/b/issues/9",
+        context: {
+          issue_snapshot: {
+            title: "Current title",
+            body: "Current Issue body",
+            state: "OPEN",
+            updated_at: "2026-10-23T00:00:00Z",
+            labels: ["bug"],
+            comments: [{
+              url: "https://github.com/a/b/issues/9#issuecomment-1",
+              author: "reviewer",
+              created_at: "2026-10-23T00:00:00Z",
+              body: "Existing comment text",
+            }],
+          },
+        },
+        proposal: { current_state: "OPEN", reason: "completed", duplicate_target: null },
+      } }],
+    },
+  });
+  assert.match(output, /Current body:\nCurrent Issue body/);
+  assert.match(output, /Current labels: bug/);
+  assert.match(output, /Current updated at: 2026-10-23T00:00:00Z/);
+  assert.match(output, /Existing comment 1 body:\nExisting comment text/);
+  assert.match(output, /Close reason: completed/);
 });
 
 test("handoff recovery output exposes exact commands and dismissal state", () => {
@@ -159,11 +226,13 @@ test("handoff batch output preserves conflict diagnostics for a partial stop", (
           status: "applied",
           handoff: { id: "handoff-1" },
           apply_workflow: "github.issue.comment.apply",
+          review: { operation: "comment", repository: "a/b", issue_number: 7, issue_title: "Example" },
         },
         {
           status: "conflict",
           handoff: { id: "handoff-2" },
           apply_workflow: "github.issue.close.apply",
+          review: { operation: "close", repository: "a/b", issue_number: 7, issue_title: "Example" },
           apply_result: {
             status: "conflict",
             delegate_result: {
@@ -182,16 +251,16 @@ test("handoff batch output preserves conflict diagnostics for a partial stop", (
   });
 
   assert.match(output, /^\[PARTIAL\] GitHub Issue approval handoff batch apply/);
-  assert.match(output, /Step 1: handoff-1 \| github.issue.comment.apply \| applied/);
-  assert.match(output, /Step 2: handoff-2 \| github.issue.close.apply \| conflict/);
+  assert.match(output, /Step 1: comment \| applied/);
+  assert.match(output, /Step 2: close \| conflict/);
   assert.match(output, /Step 2 dependency refresh: refreshed/);
   assert.match(output, /Step 2 refreshed options: --expected-updated-at/);
-  assert.match(output, /Stopped handoff: handoff-2/);
   assert.match(output, /Stopped apply status: conflict/);
   assert.match(output, /Stopped stage: target-conflict/);
   assert.match(output, /Reviewed updated at: 2026-08-01T00:00:00Z/);
   assert.match(output, /Observed updated at: 2026-08-02T00:00:00Z/);
-  assert.match(output, /Remaining handoff: handoff-3/);
+  assert.match(output, /Remaining handoff count: 1/);
+  assert.doesNotMatch(output, /handoff-[123]/);
   assert.match(output, /Mutation invoked: yes/);
 });
 

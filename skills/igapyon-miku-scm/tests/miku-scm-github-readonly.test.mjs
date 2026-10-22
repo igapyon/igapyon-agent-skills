@@ -23,7 +23,7 @@ function ghFixture(counter, fail = false) {
       stdout: JSON.stringify({
         number: 293, state: "OPEN", title: "Title", body: "Body",
         url: "https://github.com/a/b/issues/293", updatedAt: "2026-07-27T00:00:00Z",
-        labels: [], comments: [],
+        labels: [], comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false } },
       }),
     };
   };

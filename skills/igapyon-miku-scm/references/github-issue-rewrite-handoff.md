@@ -83,7 +83,7 @@ Keep the draft ready to paste and save it according to Local Draft Save Rules un
 
 ## Human Handoff and Registration Boundary
 
-End after returning the drafted text and saved path unless the user explicitly requests a documented remote Issue operation. For new-Issue registration, content update, comment, standalone existing-label update, or closure, read and follow the matching dedicated workflow. Drafting alone never authorizes remote mutation.
+End after returning the drafted text and saved path unless the user explicitly requests a documented remote Issue operation. For new-Issue registration, content update, comment, standalone existing-label update, or closure, read and follow the matching dedicated workflow and [approval-handoff.md](approval-handoff.md). Finish all requested preflights, show the complete ordered review, and wait for the user's separate exact `approve` message. A request that delegates wording or explicitly asks to close does not skip this final review.
 
 Do not:
 

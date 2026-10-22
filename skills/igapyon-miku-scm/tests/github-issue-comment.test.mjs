@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { access, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -20,6 +20,7 @@ const ISSUE = {
   state: "OPEN",
   labels: ["enhancement"],
   updatedAt: "2026-07-24T01:02:03Z",
+  comments: [],
 };
 
 async function scenario(t) {
@@ -176,6 +177,7 @@ test("gh Issue reader uses one fixed READONLY command and validates its JSON", a
       stdout: JSON.stringify({
         ...ISSUE,
         labels: ISSUE.labels.map((name) => ({ name })),
+        comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false } },
       }),
       stderr: "",
     };
@@ -184,7 +186,7 @@ test("gh Issue reader uses one fixed READONLY command and validates its JSON", a
   assert.deepEqual(calls, [[
     "issue", "view", "42",
     "--repo", "igapyon/example",
-    "--json", "number,url,title,body,state,labels,updatedAt",
+    "--json", "number,url,title,body,state,labels,updatedAt,comments",
   ]]);
 });
 
@@ -226,4 +228,39 @@ test("pre-mutation READONLY failure is not-applied and invokes no mutation", asy
   });
   assert.equal(result.status, "not-applied");
   assert.equal(mutationCalls, 0);
+});
+
+test("a proven pre-comment read failure can resume the unchanged approved operation", async (t) => {
+  const state = await scenario(t);
+  const preflight = await runIssueComment(optionsFor(state), {
+    readIssue: async () => ISSUE,
+  });
+  const apply = applyOptions(state, preflight);
+  const failed = await runIssueComment(apply, {
+    readIssue: async () => { throw new Error("read unavailable"); },
+    gh: () => assert.fail("comment mutation must not run after a failed pre-read"),
+  });
+  assert.equal(failed.status, "not-applied");
+  assert.equal(failed.stage, "pre-comment-read");
+
+  let mutationCalls = 0;
+  const resumed = await runIssueComment(apply, {
+    readIssue: async () => ISSUE,
+    readComment: async () => ({
+      id: 77,
+      url: `${ISSUE.url}#issuecomment-77`,
+      body: "A reviewed comment.\n",
+    }),
+    gh: () => {
+      mutationCalls += 1;
+      return { ok: true, stdout: `${ISSUE.url}#issuecomment-77`, stderr: "" };
+    },
+  });
+  assert.equal(resumed.status, "commented");
+  assert.equal(mutationCalls, 1);
+  const record = JSON.parse(await readFile(path.join(state.root, resumed.attempt_record), "utf8"));
+  assert.equal(record.status, "commented");
+  assert.match(record.recovered_from_attempt, /pre-comment-read-/);
+  const files = await readdir(path.dirname(path.join(state.root, resumed.attempt_record)));
+  assert.ok(files.some((file) => file.includes("pre-comment-read-")));
 });

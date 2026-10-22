@@ -15,6 +15,17 @@ update_when:
 This file records important decisions for the AI agent.
 Read this before making or revisiting decisions, especially when the work seems to loop.
 
+## 2026-10-23: Require approve After A Concrete Issue Operation Preview
+
+利用者合意:
+Issueへの書き込みは完成した作業案を提示した後、利用者の `approve` で承認する。「文面は任せるので登録まで」や明確なclose指示でも確認を省略しない。「はい」「OK」「お願いします」「いいね」「承認」および説明・引用中のapproveは書き込み承認にしない。一つの作業案にコメントとclose等をまとめ、承認は案全体に一度とする。
+
+設計:
+通常操作では利用者にIDをコピーさせず、提示した対象・内容・順序のID/digestへAgentが正確に束縛する。global pendingの件数や最新時刻から選ばない。変更された案には新しいapproveが必要。既存handoffを拡張し、固定helper・attempt・postconditionを活かす。
+
+実施状態:
+[計画と実施記録](skills/igapyon-miku-scm/docs/2026-10-23-issue-approval-implementation-plan.md)のUX-00〜08をsource skill、fixed helper、runner、contract、テストへ実装した。Issue書き込みは完全表示した一意な案への独立した完全一致 `approve` のみで許可し、複合操作は一回の承認でレビュー順に実行する。現在の利用者メッセージと提示済みreviewの対応はAgentが担い、runnerがID/digest/順序/契約と実行状態を検証する。本決定の記録だけを根拠に承認経路を迂回しない。競合判定の緩和、正当な同内容操作の再実行identity、動的な作成後操作は後続課題とする。検証と未実施事項は計画・実施記録とroot TODOに記録した。
+
 ## 2026-10-22: Set Java 8 As The Compatibility Floor And Test The Newest LTS
 
 理由:

@@ -101,16 +101,26 @@ import {
   createIssueApprovalHandoff,
   dismissPendingIssueHandoff,
   listPendingIssueHandoffs,
+  parseHandoffReviewArgs,
   parseHandoffApplyArgs,
   parseHandoffBatchApplyArgs,
   parseHandoffDismissArgs,
   parseHandoffListArgs,
+  reviewIssueApprovalHandoffs,
 } from "./miku-scm-handoff.mjs";
 import { failureEvent } from "./miku-scm-observability.mjs";
 
 export const RUNNER_SCHEMA_VERSION = "miku-scm.runner/v1";
 export const RESULT_SCHEMA_VERSION = "miku-scm.runner-result/v1";
 export const PRODUCT_VERSION = "1.20261023.1";
+
+const ISSUE_APPLY_WORKFLOWS = new Set([
+  "github.issue.create.apply",
+  "github.issue.update.apply",
+  "github.issue.comment.apply",
+  "github.issue.label.apply",
+  "github.issue.close.apply",
+]);
 
 const RUN_ID = /^[A-Za-z0-9._-]+$/;
 const SECRET_OPTION = /(?:token|password|secret|authorization|credential)/i;
@@ -170,7 +180,10 @@ function normalizedStatus(delegateStatus, mutationLevel, error = false) {
   return mutationLevel === "remote" ? "unresolved" : "not-applied";
 }
 
-function mutationState(workflow, delegateStatus) {
+function mutationState(workflow, delegateStatus, delegateResult = null) {
+  if (delegateResult && Object.hasOwn(delegateResult, "mutation_invoked")) {
+    return delegateResult.mutation_invoked;
+  }
   if (workflow.approvalGate !== "apply" || workflow.mutationLevel === "readonly") return false;
   if (delegateStatus === "not-applied" || delegateStatus === "conflict") return false;
   if (delegateStatus === "unresolved") return null;
@@ -578,6 +591,21 @@ export function workflowRegistry(dependencies = {}) {
       }),
       execute: (options) => listPendingIssueHandoffs(options),
     }],
+    ["github.issue.handoff.review", {
+      version: 1,
+      mutationLevel: "readonly",
+      approvalGate: "none",
+      parse: parseHandoffReviewArgs,
+      plan: (options) => ({
+        operation: "github-issue-approval-handoff-review",
+        repository: path.resolve(options.root),
+        ordered_handoffs: [...options.handoffs],
+        mutation_invocation_allowed: false,
+      }),
+      execute: (options) => reviewIssueApprovalHandoffs(options, {
+        approvalContracts: workflowContractById(),
+      }),
+    }],
     ["github.issue.handoff.apply", {
       version: 1,
       mutationLevel: "remote",
@@ -591,10 +619,11 @@ export function workflowRegistry(dependencies = {}) {
       }),
       execute: (options) => applyPendingIssueHandoff(options, {
         now: dependencies.now,
+        approvalContracts: workflowContractById(),
         runApply: dependencies.handoffRunApply ?? ((applyWorkflow, applyArguments) => runWorkflow(
           applyWorkflow,
           applyArguments,
-          { cwd: options.root },
+          { cwd: options.root, issueHandoffApproval: true },
         )),
       }),
     }],
@@ -611,10 +640,11 @@ export function workflowRegistry(dependencies = {}) {
       }),
       execute: (options) => applyPendingIssueHandoffBatch(options, {
         now: dependencies.now,
+        approvalContracts: workflowContractById(),
         runApply: dependencies.handoffRunApply ?? ((applyWorkflow, applyArguments) => runWorkflow(
           applyWorkflow,
           applyArguments,
-          { cwd: options.root },
+          { cwd: options.root, issueHandoffApproval: true },
         )),
         runPreflight: dependencies.handoffRunPreflight
           ?? ((preflightWorkflow, preflightArguments) => runWorkflow(
@@ -759,6 +789,16 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       );
     }
     const options = workflow.parse(argv, cwd);
+    if (ISSUE_APPLY_WORKFLOWS.has(workflowId) && dependencies.issueHandoffApproval !== true) {
+      throw new MikuScmCliError(
+        "ISSUE_HANDOFF_APPROVAL_REQUIRED",
+        `${workflowId} can be invoked only through an approved Issue handoff`,
+        {
+          workflow: workflowId,
+          help_command: `${PORTABLE_RUNNER} github.issue.handoff.review --help`,
+        },
+      );
+    }
     phase = "plan";
     plan = {
       schema_version: RUNNER_SCHEMA_VERSION,
@@ -815,7 +855,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       started_at: startedAt,
       finished_at: finishedAt,
       duration_ms: Math.round((performance.now() - performanceStarted) * 1000) / 1000,
-      mutation_invoked: mutationState(workflow, delegateResult?.status),
+      mutation_invoked: mutationState(workflow, delegateResult?.status, delegateResult),
       run_directory: relativeOperationalPath(cwd, runDirectory),
       result: delegateResult,
     };
