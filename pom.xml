@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20261023.1</version>
+  <version>1.20261023.3</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -37,7 +37,7 @@
     <external.miku-json2xlsx-skills.ref>aab690d54a55022a7366b5325b103a5832d85a99</external.miku-json2xlsx-skills.ref>
     <external.miku-json2xlsx-skills.skillName>igapyon-miku-json2xlsx</external.miku-json2xlsx-skills.skillName>
     <external.miku-project-skills.repo>https://github.com/igapyon/miku-project-skills.git</external.miku-project-skills.repo>
-    <external.miku-project-skills.ref>2aa84147d11539d77b92a9bd12c9291cc8f9866b</external.miku-project-skills.ref>
+    <external.miku-project-skills.ref>7a855f3695d1f8143db6e8ce6fe0c50362d98566</external.miku-project-skills.ref>
     <external.miku-project-skills.skillName>igapyon-miku-project</external.miku-project-skills.skillName>
     <external.miku-score-skills.repo>https://github.com/igapyon/miku-score-skills.git</external.miku-score-skills.repo>
     <external.miku-score-skills.ref>f40727cb87df3123ea26e055fe616d421860d423</external.miku-score-skills.ref>

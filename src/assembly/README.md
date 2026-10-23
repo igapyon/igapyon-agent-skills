@@ -1,6 +1,6 @@
 # igapyon-agent-skills
 
-This archive contains 25 Agent Skills: 15 maintained in the igapyon-agent-skills
+This archive contains 26 Agent Skills: 16 maintained in the igapyon-agent-skills
 repository and 10 bundled from pinned upstream repositories. They support
 article writing, daybook records, Git/GitHub workflows, software development
 and review, file conversion, and music/audio work.
@@ -14,7 +14,7 @@ Install the skills you want to use by following the guide below.
 Both tables describe the complete set shipped in this archive. Use a skill
 name to jump to its detailed explanation, expected results, and example.
 
-### Maintained In This Repository (15)
+### Maintained In This Repository (16)
 
 | Skill | What it helps you achieve |
 | --- | --- |
@@ -25,6 +25,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-ffmpeg-helper](#igapyon-ffmpeg-helper) | Turn an orchestra recording into a retained WAV master and a YouTube-ready video. |
 | [igapyon-github-writer](#igapyon-github-writer) | Give reviewers a clear explanation of your changes and save a ready-to-use GitHub draft. |
 | [igapyon-miku-daybook](#igapyon-miku-daybook) | Keep current tasks, the reasons behind decisions, and the next work plan connected. |
+| [igapyon-miku-md2html](#igapyon-miku-md2html) | Convert a Markdown file and local images into one portable HTML document that works offline. |
 | [igapyon-miku-scm](#igapyon-miku-scm) | Carry completed work through a repeatable Git/GitHub cycle with a reviewable PR draft. |
 | [igapyon-miku-soft-developer](#igapyon-miku-soft-developer) | Turn an application idea or maintenance request into a project following miku-soft's design rules. |
 | [igapyon-mikuku-agent](#igapyon-mikuku-agent) | Create Japanese technical essays and explanatory visuals with Mikuku's recognizable voice. |
@@ -56,11 +57,11 @@ After extracting `igapyon-agent-skills-<version>.zip`, open the
 
 | Path | Contents |
 | --- | --- |
-| `README.md` | This overview and the complete catalog of 25 skills. |
+| `README.md` | This overview and the complete catalog of 26 skills. |
 | `INSTALL.md` | Instructions for installing, updating, and checking selected skills. |
 | `LICENSE` | Distribution license. Preserve additional license and attribution files within skills. |
 | `EXTERNAL_SKILLS.lock` | Upstream repositories, pinned commit SHAs, and names of the 10 externally maintained skills. |
-| `skills/` | The 25 installable skill directories in the catalog. |
+| `skills/` | The 26 installable skill directories in the catalog. |
 
 Each `skills/<skill-name>/SKILL.md` is that skill's entry point. Supporting
 files vary by skill and include reference documents, templates, examples,
@@ -212,6 +213,31 @@ You need both a current view of your work and a dated account of how you reached
 **Example:** Use igapyon-miku-daybook to record why we changed approach today, update the task's next action, and regenerate today's plan.
 
 [Full workflow, setup, and invocation rules](skills/igapyon-miku-daybook/SKILL.md).
+
+### igapyon-miku-md2html
+
+**When it helps**
+
+You have a Markdown document that should be shared or viewed as one portable
+HTML file, including its local images, without requiring an internet
+connection.
+
+**What you can achieve**
+
+- Convert one UTF-8 Markdown file into a self-contained HTML document with
+  embedded CSS, viewer code, SVG, and supported local images.
+- Keep the document's Markdown input intact and save the HTML at a requested
+  path or under `workplace/miku-md2html/`.
+- Use the bundled Node.js runtime locally; the converter does not download
+  remote images or require npm dependencies at conversion time.
+
+**Scope and prerequisites:** Requires Node.js 22 or newer. Remote images are
+not fetched; the converter reports missing or unsafe local image references.
+
+**Example:** Use miku-md2html to convert this Markdown guide and its local
+images into one offline HTML file under `workplace/`.
+
+[Full workflow, usage, and runtime provenance](skills/igapyon-miku-md2html/SKILL.md).
 
 ### igapyon-miku-scm
 
