@@ -2,16 +2,17 @@
 
 Agent Skills for turning everyday work into concrete results: readable articles,
 connected task records, reviewable GitHub changes, reusable knowledge files,
-Office document text, project plans, and score or audio deliverables.
+Office document text, portable HTML conversions, project plans, and score or
+audio deliverables.
 
-The release bundle contains **25 skills**: **15 maintained in this repository**
+The release bundle contains **26 skills**: **16 maintained in this repository**
 and **10 bundled from pinned upstream repositories**. Each skill combines
 instructions for an AI agent with the references, templates, assets, or
 executable helpers needed for its workflow. Many writing workflows target
 Japanese content; the catalog explains their purpose in English.
 
 Download the bundle from [GitHub Releases](https://github.com/igapyon/igapyon-agent-skills/releases)
-to choose from all 25 skills. A source checkout contains the 15 internal skill
+to choose from all 26 skills. A source checkout contains the 16 internal skill
 directories; external skills are incorporated when the release bundle is built.
 
 ## Skill Catalog
@@ -19,7 +20,7 @@ directories; external skills are incorporated when the release bundle is built.
 Both tables describe the complete set shipped in the release bundle. Use a skill
 name to jump to its detailed explanation, expected results, and example.
 
-### Maintained In This Repository (15)
+### Maintained In This Repository (16)
 
 | Skill | What it helps you achieve |
 | --- | --- |
@@ -30,6 +31,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-ffmpeg-helper](#igapyon-ffmpeg-helper) | Turn an orchestra recording into a retained WAV master and a YouTube-ready video. |
 | [igapyon-github-writer](#igapyon-github-writer) | Give reviewers a clear explanation of your changes and save a ready-to-use GitHub draft. |
 | [igapyon-miku-daybook](#igapyon-miku-daybook) | Keep current tasks, the reasons behind decisions, and the next work plan connected. |
+| [igapyon-miku-md2html](#igapyon-miku-md2html) | Convert a Markdown file and local images into one portable HTML document that works offline. |
 | [igapyon-miku-scm](#igapyon-miku-scm) | Carry completed work through a repeatable Git/GitHub cycle with a reviewable PR draft. |
 | [igapyon-miku-soft-developer](#igapyon-miku-soft-developer) | Turn an application idea or maintenance request into a project following miku-soft's design rules. |
 | [igapyon-mikuku-agent](#igapyon-mikuku-agent) | Create Japanese technical essays and explanatory visuals with Mikuku's recognizable voice. |
@@ -74,7 +76,7 @@ skill directory and should be copied together during installation.
 
 | Path | Contents |
 | --- | --- |
-| `README.md` | A guide to the 25 skills and how to choose one. |
+| `README.md` | A guide to the 26 skills and how to choose one. |
 | `INSTALL.md` | Installation, update, and drift-check instructions. |
 | `skills/` | Complete installable skill directories, each with a `SKILL.md` entry point. |
 | `EXTERNAL_SKILLS.lock` | The upstream repositories, pinned commit SHAs, and names included in that release bundle. |
@@ -212,6 +214,31 @@ You need both a current view of your work and a dated account of how you reached
 **Example:** Use igapyon-miku-daybook to record why we changed approach today, update the task's next action, and regenerate today's plan.
 
 [Full workflow, setup, and invocation rules](skills/igapyon-miku-daybook/SKILL.md).
+
+### igapyon-miku-md2html
+
+**When it helps**
+
+You have a Markdown document that should be shared or viewed as one portable
+HTML file, including its local images, without requiring an internet
+connection.
+
+**What you can achieve**
+
+- Convert one UTF-8 Markdown file into a self-contained HTML document with
+  embedded CSS, viewer code, SVG, and supported local images.
+- Keep the document's Markdown input intact and save the HTML at a requested
+  path or under `workplace/miku-md2html/`.
+- Use the bundled Node.js runtime locally; the converter does not download
+  remote images or require npm dependencies at conversion time.
+
+**Scope and prerequisites:** Requires Node.js 22 or newer. Remote images are
+not fetched; the converter reports missing or unsafe local image references.
+
+**Example:** Use miku-md2html to convert this Markdown guide and its local
+images into one offline HTML file under `workplace/`.
+
+[Full workflow, usage, and runtime provenance](skills/igapyon-miku-md2html/SKILL.md).
 
 ### igapyon-miku-scm
 
@@ -464,7 +491,7 @@ You want a planning conversation to result in a usable project plan: phases and 
 
 **Example:** Use miku-project to plan a small website release, break it into design, implementation, and testing tasks with dependencies, then produce an Excel Gantt and a weekly SVG for our planning discussion.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-project-skills/blob/2aa84147d11539d77b92a9bd12c9291cc8f9866b/skills/igapyon-miku-project/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-project-skills/blob/7a855f3695d1f8143db6e8ce6fe0c50362d98566/skills/igapyon-miku-project/SKILL.md).
 
 ### igapyon-miku-prompt-lint
 
