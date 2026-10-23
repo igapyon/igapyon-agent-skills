@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20261023.5</version>
+  <version>1.20261023.6</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -33,6 +33,9 @@
     <external.miku-ms-office-skills.repo>https://github.com/igapyon/miku-ms-office-skills.git</external.miku-ms-office-skills.repo>
     <external.miku-ms-office-skills.ref>1b2dbd8ea7e7d7681664a0f12a954b61d8130e17</external.miku-ms-office-skills.ref>
     <external.miku-ms-office-skills.skillName>igapyon-miku-ms-office</external.miku-ms-office-skills.skillName>
+    <external.miku-md2formats-skills.repo>https://github.com/igapyon/miku-md2formats-skills.git</external.miku-md2formats-skills.repo>
+    <external.miku-md2formats-skills.ref>b4959fe9e9ca76df4f26ac61158e31d2b528228c</external.miku-md2formats-skills.ref>
+    <external.miku-md2formats-skills.skillName>igapyon-miku-md2formats</external.miku-md2formats-skills.skillName>
     <external.miku-json2xlsx-skills.repo>https://github.com/igapyon/miku-json2xlsx-skills.git</external.miku-json2xlsx-skills.repo>
     <external.miku-json2xlsx-skills.ref>aab690d54a55022a7366b5325b103a5832d85a99</external.miku-json2xlsx-skills.ref>
     <external.miku-json2xlsx-skills.skillName>igapyon-miku-json2xlsx</external.miku-json2xlsx-skills.skillName>
@@ -179,6 +182,9 @@
                 <argument>${external.miku-ms-office-skills.repo}</argument>
                 <argument>${external.miku-ms-office-skills.ref}</argument>
                 <argument>${external.miku-ms-office-skills.skillName}</argument>
+                <argument>${external.miku-md2formats-skills.repo}</argument>
+                <argument>${external.miku-md2formats-skills.ref}</argument>
+                <argument>${external.miku-md2formats-skills.skillName}</argument>
                 <argument>${external.miku-json2xlsx-skills.repo}</argument>
                 <argument>${external.miku-json2xlsx-skills.ref}</argument>
                 <argument>${external.miku-json2xlsx-skills.skillName}</argument>
