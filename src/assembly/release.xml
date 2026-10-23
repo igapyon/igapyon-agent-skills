@@ -12,6 +12,7 @@
     <fileSet>
       <directory>${project.build.directory}/release-staging</directory>
       <outputDirectory>/</outputDirectory>
+      <useDefaultExcludes>false</useDefaultExcludes>
       <includes>
         <include>skills/**</include>
         <include>README.md</include>
