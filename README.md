@@ -5,14 +5,14 @@ connected task records, reviewable GitHub changes, reusable knowledge files,
 Office document text, portable HTML conversions, project plans, and score or
 audio deliverables.
 
-The release bundle contains **26 skills**: **16 maintained in this repository**
-and **10 bundled from pinned upstream repositories**. Each skill combines
+The release bundle contains **26 skills**: **15 maintained in this repository**
+and **11 bundled from pinned upstream repositories**. Each skill combines
 instructions for an AI agent with the references, templates, assets, or
 executable helpers needed for its workflow. Many writing workflows target
 Japanese content; the catalog explains their purpose in English.
 
 Download the bundle from [GitHub Releases](https://github.com/igapyon/igapyon-agent-skills/releases)
-to choose from all 26 skills. A source checkout contains the 16 internal skill
+to choose from all 26 skills. A source checkout contains the 15 internal skill
 directories; external skills are incorporated when the release bundle is built.
 
 ## Skill Catalog
@@ -20,7 +20,7 @@ directories; external skills are incorporated when the release bundle is built.
 Both tables describe the complete set shipped in the release bundle. Use a skill
 name to jump to its detailed explanation, expected results, and example.
 
-### Maintained In This Repository (16)
+### Maintained In This Repository (15)
 
 | Skill | What it helps you achieve |
 | --- | --- |
@@ -31,7 +31,6 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-ffmpeg-helper](#igapyon-ffmpeg-helper) | Turn an orchestra recording into a retained WAV master and a YouTube-ready video. |
 | [igapyon-github-writer](#igapyon-github-writer) | Give reviewers a clear explanation of your changes and save a ready-to-use GitHub draft. |
 | [igapyon-miku-daybook](#igapyon-miku-daybook) | Keep current tasks, the reasons behind decisions, and the next work plan connected. |
-| [igapyon-miku-md2html](#igapyon-miku-md2html) | Convert a Markdown file and local images into one portable HTML document that works offline. |
 | [igapyon-miku-scm](#igapyon-miku-scm) | Carry completed work through a repeatable Git/GitHub cycle with a reviewable PR draft. |
 | [igapyon-miku-soft-developer](#igapyon-miku-soft-developer) | Turn an application idea or maintenance request into a project following miku-soft's design rules. |
 | [igapyon-mikuku-agent](#igapyon-mikuku-agent) | Create Japanese technical essays and explanatory visuals with Mikuku's recognizable voice. |
@@ -41,13 +40,14 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-reviewer](#igapyon-reviewer) | Identify concrete issues before merging or publishing, with evidence and a clear fixing order. |
 | [igapyon-skill-compactor](#igapyon-skill-compactor) | Make an Agent Skill easier to load and maintain while checking what behavior is preserved. |
 
-### Bundled From Upstream Repositories (10)
+### Bundled From Upstream Repositories (11)
 
 | Skill | What it helps you achieve |
 | --- | --- |
 | [igapyon-miku-ai-assistant-builder](#igapyon-miku-ai-assistant-builder) | Turn a mixed folder into reviewable knowledge files and instructions for a Copilot agent or Gemini Gem. |
 | [igapyon-miku-indexgen](#igapyon-miku-indexgen) | Make a directory easier to navigate or consume through a generated file catalog. |
 | [igapyon-miku-json2xlsx](#igapyon-miku-json2xlsx) | Turn JSON records into an inspectable Excel workbook with an explicit account of the data layout. |
+| [igapyon-miku-md2formats](#igapyon-miku-md2formats) | Convert Markdown into self-contained HTML, editable DOCX, XLSX, or PPTX with local miku-soft tools. |
 | [igapyon-miku-ms-office](#igapyon-miku-ms-office) | Make Word, Excel, and PowerPoint content available to text-based AI workflows, and prepare basic Office outputs from Markdown. |
 | [igapyon-miku-project](#igapyon-miku-project) | Turn project ideas or existing plans into a structured WBS, revise them through conversation, and share Gantt charts and reports. |
 | [igapyon-miku-prompt-lint](#igapyon-miku-prompt-lint) | Find instruction and context problems that can make an agent choose the wrong task or execute it inconsistently. |
@@ -214,31 +214,6 @@ You need both a current view of your work and a dated account of how you reached
 **Example:** Use igapyon-miku-daybook to record why we changed approach today, update the task's next action, and regenerate today's plan.
 
 [Full workflow, setup, and invocation rules](skills/igapyon-miku-daybook/SKILL.md).
-
-### igapyon-miku-md2html
-
-**When it helps**
-
-You have a Markdown document that should be shared or viewed as one portable
-HTML file, including its local images, without requiring an internet
-connection.
-
-**What you can achieve**
-
-- Convert one UTF-8 Markdown file into a self-contained HTML document with
-  embedded CSS, viewer code, SVG, and supported local images.
-- Keep the document's Markdown input intact and save the HTML at a requested
-  path or under `workplace/miku-md2html/`.
-- Use the bundled Node.js runtime locally; the converter does not download
-  remote images or require npm dependencies at conversion time.
-
-**Scope and prerequisites:** Requires Node.js 22 or newer. Remote images are
-not fetched; the converter reports missing or unsafe local image references.
-
-**Example:** Use miku-md2html to convert this Markdown guide and its local
-images into one offline HTML file under `workplace/`.
-
-[Full workflow, usage, and runtime provenance](skills/igapyon-miku-md2html/SKILL.md).
 
 ### igapyon-miku-scm
 
@@ -439,6 +414,32 @@ You have JSON or JSONL that is awkward to review as raw text and want to inspect
 **Example:** Use miku-json2xlsx to turn these order records into an Excel workbook, with orders on one sheet and explicitly mapped line items on a child sheet.
 
 [Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-json2xlsx-skills/blob/aab690d54a55022a7366b5325b103a5832d85a99/skills/igapyon-miku-json2xlsx/SKILL.md).
+
+### igapyon-miku-md2formats
+
+**When it helps**
+
+You want to turn Markdown into a requested deliverable: a portable HTML file,
+an editable Word document, an Excel workbook, or a PowerPoint presentation.
+
+**What you can achieve**
+
+- Convert Markdown to self-contained HTML, DOCX, XLSX, or PPTX with the
+  corresponding miku-soft CLI.
+- Create HTML through the bundled `miku-md2html` CLI; choose a Node.js or Java
+  backend for DOCX, XLSX, and PPTX where supported.
+- Use a local Node.js or Java runtime where supported, and receive the
+  converter's diagnostics and output path.
+- Keep conversion local and produce only the requested output format.
+
+**Scope and prerequisites:** Node.js 22+ is required for Node.js CLIs; Java 8+
+is required for Java CLIs. HTML is available through Node.js only. The skill
+asks for a target format when it is unclear.
+
+**Example:** Use miku-md2formats to convert this Markdown guide to DOCX, keeping
+the source file and using a requested output path.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-md2formats-skills/blob/b4959fe9e9ca76df4f26ac61158e31d2b528228c/skills/igapyon-miku-md2formats/SKILL.md).
 
 ### igapyon-miku-ms-office
 
