@@ -1,6 +1,6 @@
 # みくく Version
 
-Version: 20261023f
+Version: 20261024a
 
 ## Version Rule
 

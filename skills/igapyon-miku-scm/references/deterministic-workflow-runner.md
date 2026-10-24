@@ -231,6 +231,17 @@ node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   --format human repository.status
 ```
 
+For `github.issue.read --list`, the human output shows the Issue count and one
+line per result in the returned order. Each line contains the Issue number,
+state, and full title; title whitespace is collapsed to keep each Issue on one
+line. An empty list prints `Issues: none`. The structured JSON result and the
+fixed GitHub read command are unchanged.
+
+    Issue count: 2
+    Issues:
+    #17 [CLOSED] 日本語のIssueタイトル
+    #4 [OPEN] Second title
+
 ```sh
 node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
   github.issue.create.preflight \

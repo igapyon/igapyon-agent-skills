@@ -8,7 +8,90 @@ import {
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v12");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v13");
+});
+
+test("Issue list displays number, state, and title in the returned order", () => {
+  const output = renderHumanOutput({
+    workflow: "github.issue.read",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "read",
+    mutationInvoked: false,
+    result: {
+      repository: "a/b",
+      mode: "list",
+      state: "all",
+      issues: [
+        {
+          number: 17,
+          state: "CLOSED",
+          title: "日本語のIssue\nタイトル",
+          body: "Body must not appear in the list.",
+        },
+        {
+          number: 4,
+          state: "OPEN",
+          title: "Second title",
+          body: "Second body must not appear either.",
+        },
+      ],
+    },
+  });
+
+  assert.equal(output, `[SUCCESS] GitHub Issue read
+
+Repository: a/b
+Read mode: list
+State filter: all
+Issue count: 2
+Issues:
+#17 [CLOSED] 日本語のIssue タイトル
+#4 [OPEN] Second title
+Mutation invoked: no
+`);
+});
+
+test("empty Issue list reports that it contains no Issues", () => {
+  const output = renderHumanOutput({
+    workflow: "github.issue.read",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "read",
+    mutationInvoked: false,
+    result: { repository: "a/b", mode: "list", state: "open", issues: [] },
+  });
+
+  assert.equal(output, `[SUCCESS] GitHub Issue read
+
+Repository: a/b
+Read mode: list
+State filter: open
+Issue count: 0
+Issues: none
+Mutation invoked: no
+`);
+});
+
+test("Issue list title is normalized to one line without truncation", () => {
+  const title = `長い題名 ${"説明".repeat(80)}\t末尾`;
+  const output = renderHumanOutput({
+    workflow: "github.issue.read",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "read",
+    mutationInvoked: false,
+    result: {
+      repository: "a/b",
+      mode: "list",
+      state: "open",
+      issues: [{ number: 22, state: "OPEN", title }],
+    },
+  });
+  const expectedTitle = title.replace(/\s+/g, " ").trim();
+
+  assert.ok(output.includes(`#22 [OPEN] ${expectedTitle}`));
+  assert.equal(output.split("\n").filter((line) => line.startsWith("#22 ")).length, 1);
 });
 
 test("every workflow uses English fixed output wording", () => {

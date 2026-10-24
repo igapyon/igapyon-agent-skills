@@ -349,6 +349,56 @@ test("READONLY Issue workflow completes in one runner call with stable artifacts
   assert.equal(snapshot.delegate_result.issue.number, 7);
 });
 
+test("READONLY Issue list includes number, state, and title in human output", async (t) => {
+  const root = await workspace(t);
+  const calls = [];
+  const issues = [
+    {
+      number: 17,
+      state: "CLOSED",
+      title: "日本語のIssueタイトル",
+      body: "Body must not appear in human output.",
+      url: "https://github.com/a/b/issues/17",
+      updatedAt: "2026-07-27T13:00:00Z",
+    },
+    {
+      number: 4,
+      state: "OPEN",
+      title: "Second title",
+      body: "Second body must stay in structured data only.",
+      url: "https://github.com/a/b/issues/4",
+      updatedAt: "2026-07-27T12:00:00Z",
+    },
+  ];
+  const result = await runWorkflow("github.issue.read", ["--repo", "a/b", "--list"], {
+    cwd: root,
+    artifactRoot: path.join(root, "runs"),
+    runId: "readonly-list-titles",
+    now: () => new Date("2026-07-27T14:00:00Z"),
+    gh: (args) => {
+      calls.push(args);
+      return { ok: true, status: 0, stderr: "", stdout: JSON.stringify(issues) };
+    },
+  });
+
+  assert.equal(result.status, "success");
+  assert.equal(result.mutation_invoked, false);
+  assert.equal(result.human_output_schema_version, HUMAN_OUTPUT_SCHEMA_VERSION);
+  assert.ok(result.human_output.includes("#17 [CLOSED] 日本語のIssueタイトル"));
+  assert.ok(result.human_output.includes("#4 [OPEN] Second title"));
+  assert.doesNotMatch(result.human_output, /Body must not appear|Second body must stay/);
+  assert.deepEqual(
+    result.result.issues.map(({ title, body }) => ({ title, body })),
+    issues.map(({ title, body }) => ({ title, body })),
+  );
+  assert.deepEqual(calls, [[
+    "issue", "list", "--repo", "a/b", "--state", "open", "--limit", "1000",
+    "--json", "number,state,title,body,url,updatedAt",
+  ]]);
+  const saved = JSON.parse(await readFile(path.join(root, "runs", "readonly-list-titles", "result.json"), "utf8"));
+  assert.equal(saved.human_output, result.human_output);
+});
+
 test("preflight and apply workflow IDs cannot cross the approval boundary", async (t) => {
   const root = await workspace(t);
   const draftDirectory = path.join(root, "workplace", "miku-scm", "new-issues");
