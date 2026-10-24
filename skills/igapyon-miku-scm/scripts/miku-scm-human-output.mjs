@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v12";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v13";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -98,7 +98,16 @@ function appendIssueRead(lines, result) {
     lines.push(`Comment count: ${result.issue.comments?.length ?? 0}`);
   } else if (result.mode === "list") {
     lines.push(`State filter: ${displayValue(result.state)}`);
-    lines.push(`Issue count: ${result.issues?.length ?? 0}`);
+    const issues = Array.isArray(result.issues) ? result.issues : [];
+    lines.push(`Issue count: ${issues.length}`);
+    if (issues.length === 0) {
+      lines.push("Issues: none");
+    } else {
+      lines.push("Issues:");
+      for (const issue of issues) {
+        lines.push(`#${issue.number} [${displayValue(issue.state)}] ${displayValue(issue.title)}`);
+      }
+    }
   } else if (result.mode === "labels") {
     lines.push(`Label count: ${result.labels?.length ?? 0}`);
   }
