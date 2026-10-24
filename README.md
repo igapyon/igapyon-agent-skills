@@ -426,20 +426,20 @@ an editable Word document, an Excel workbook, or a PowerPoint presentation.
 
 - Convert Markdown to self-contained HTML, DOCX, XLSX, or PPTX with the
   corresponding miku-soft CLI.
-- Create HTML through the bundled `miku-md2html` CLI; choose a Node.js or Java
-  backend for DOCX, XLSX, and PPTX where supported.
+- Create HTML through the bundled Node.js `miku-md2html` or Java
+  `miku-md2html-java` CLI; choose either backend for DOCX, XLSX, and PPTX.
 - Use a local Node.js or Java runtime where supported, and receive the
   converter's diagnostics and output path.
 - Keep conversion local and produce only the requested output format.
 
 **Scope and prerequisites:** Node.js 22+ is required for Node.js CLIs; Java 8+
-is required for Java CLIs. HTML is available through Node.js only. The skill
-asks for a target format when it is unclear.
+is required for Java CLIs. All four formats have both backends, and CLI options
+may differ. The skill asks for a target format when it is unclear.
 
 **Example:** Use miku-md2formats to convert this Markdown guide to DOCX, keeping
 the source file and using a requested output path.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-md2formats-skills/blob/b4959fe9e9ca76df4f26ac61158e31d2b528228c/skills/igapyon-miku-md2formats/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-md2formats-skills/blob/181b25087a82b52c35fb86e12003c087583119dd/skills/igapyon-miku-md2formats/SKILL.md).
 
 ### igapyon-miku-ms-office
 
@@ -506,11 +506,11 @@ A prompt, Agent Skill, or repository instruction set seems ambiguous, overbroad,
 - Report documented checkpoint and anti-pattern findings with rule identifiers, evidence, practical impact, and suggested corrections.
 - Follow up with focused rewrite guidance or an appropriate prompt skeleton when requested, while leaving unknown requirements visible.
 
-**Scope and prerequisites:** Use the exact skill or product name to invoke it. Missing prerequisites are reported as unassessed rather than inferred.
+**Scope and prerequisites:** Invoke with `igapyon-miku-prompt-lint` or `miku-prompt-lint`. A `$` mention must match the complete name or registered alias. Missing prerequisites are reported as unassessed rather than inferred.
 
 **Example:** Use miku-prompt-lint to check why this skill activates for unrelated requests and identify the instructions that need tightening.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-prompt-lint-skills/blob/2e5bb9e76a56f7bf1a3fde8d196526234d8d0f7f/skills/igapyon-miku-prompt-lint/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-prompt-lint-skills/blob/e550a2fd3d252f18b468f5514640a218f1aeafb8/skills/igapyon-miku-prompt-lint/SKILL.md).
 
 ### igapyon-miku-repo-bundle
 

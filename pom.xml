@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20261024.1</version>
+  <version>1.20261024.4</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -25,7 +25,7 @@
     <external.miku-text-file-ops-skills.ref>cd270f0736c9a7b5760a6a2b28942e6ddb1c5692</external.miku-text-file-ops-skills.ref>
     <external.miku-text-file-ops-skills.skillName>igapyon-miku-text-file-ops</external.miku-text-file-ops-skills.skillName>
     <external.miku-prompt-lint-skills.repo>https://github.com/igapyon/miku-prompt-lint-skills.git</external.miku-prompt-lint-skills.repo>
-    <external.miku-prompt-lint-skills.ref>2e5bb9e76a56f7bf1a3fde8d196526234d8d0f7f</external.miku-prompt-lint-skills.ref>
+    <external.miku-prompt-lint-skills.ref>e550a2fd3d252f18b468f5514640a218f1aeafb8</external.miku-prompt-lint-skills.ref>
     <external.miku-prompt-lint-skills.skillName>igapyon-miku-prompt-lint</external.miku-prompt-lint-skills.skillName>
     <external.miku-ai-assistant-builder-skills.repo>https://github.com/igapyon/miku-ai-assistant-builder-skills.git</external.miku-ai-assistant-builder-skills.repo>
     <external.miku-ai-assistant-builder-skills.ref>cf1f0bbe42ca9ea8af9a1c6f09c2956a85224b80</external.miku-ai-assistant-builder-skills.ref>
@@ -34,7 +34,7 @@
     <external.miku-ms-office-skills.ref>1b2dbd8ea7e7d7681664a0f12a954b61d8130e17</external.miku-ms-office-skills.ref>
     <external.miku-ms-office-skills.skillName>igapyon-miku-ms-office</external.miku-ms-office-skills.skillName>
     <external.miku-md2formats-skills.repo>https://github.com/igapyon/miku-md2formats-skills.git</external.miku-md2formats-skills.repo>
-    <external.miku-md2formats-skills.ref>b4959fe9e9ca76df4f26ac61158e31d2b528228c</external.miku-md2formats-skills.ref>
+    <external.miku-md2formats-skills.ref>181b25087a82b52c35fb86e12003c087583119dd</external.miku-md2formats-skills.ref>
     <external.miku-md2formats-skills.skillName>igapyon-miku-md2formats</external.miku-md2formats-skills.skillName>
     <external.miku-json2xlsx-skills.repo>https://github.com/igapyon/miku-json2xlsx-skills.git</external.miku-json2xlsx-skills.repo>
     <external.miku-json2xlsx-skills.ref>aab690d54a55022a7366b5325b103a5832d85a99</external.miku-json2xlsx-skills.ref>

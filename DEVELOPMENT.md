@@ -334,7 +334,7 @@ ZIP内の `README.md` は [src/assembly/README.md](src/assembly/README.md) を�
 
 release archive には、この repo の `skills/` に加えて、外部管理の miku-soft 系 skill も同梱します。
 外部 skill は `mvn package` の `prepare-package` フェーズで `target/release-staging/skills/` に取得し、archive 化します。
-生成した `EXTERNAL_SKILLS.lock` にrepository、ref、skill名を記録します。各skillの採用状態に沿ってsourceから配布し、外部skillのskill root indexも `config/skill-index-policy.json` に従って検査します。現在の外部10 skillは、補助的なファイル一覧indexを削除したsourceを固定SHAで同梱しています。stagingでは全skillのindexを再生成しません。製品が出力するindexは、各製品の仕様に従って扱います。
+生成した `EXTERNAL_SKILLS.lock` にrepository、ref、skill名を記録します。各skillの採用状態に沿ってsourceから配布し、外部skillのskill root indexも `config/skill-index-policy.json` に従って検査します。現在の外部11 skillは、補助的なファイル一覧indexを削除したsourceを固定SHAで同梱しています。stagingでは全skillのindexを再生成しません。製品が出力するindexは、各製品の仕様に従って扱います。
 取得元は `pom.xml` の `external.*` properties で固定します。
 
 同梱する外部 skill は次の通りです。
@@ -345,16 +345,17 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 - `miku-text-bundle-skills` `v1.6.0`: `skills/igapyon-miku-text-bundle/`
 - `miku-repo-bundle-skills` `v0.6.0` (experimental): `skills/igapyon-miku-repo-bundle/`
 - `miku-text-file-ops-skills` `v0.6.0`: `skills/igapyon-miku-text-file-ops/`
-- `miku-prompt-lint-skills` `v0.7.0`: `skills/igapyon-miku-prompt-lint/`
+- `miku-prompt-lint-skills` `v0.8.0`: `skills/igapyon-miku-prompt-lint/`
 - `miku-ai-assistant-builder-skills` `v0.14.0`: `skills/igapyon-miku-ai-assistant-builder/`
 - `miku-ms-office-skills` `v0.7.3`: `skills/igapyon-miku-ms-office/`
+- `miku-md2formats-skills` `v0.3.6`: `skills/igapyon-miku-md2formats/`
 - `miku-json2xlsx-skills` `v0.5.0`: `skills/igapyon-miku-json2xlsx/`
-- `miku-project-skills` `v0.12.4`: `skills/igapyon-miku-project/`
+- `miku-project-skills` `v1.1.2`: `skills/igapyon-miku-project/`
 - `miku-score-skills` `v0.6.1`: `skills/igapyon-miku-score/`
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
 生成されたzipの内容を検査してからGitHub Release assetとして添付します。archiveのindex要件は採用状態に従い、未採用indexをpackage処理で生成しません。配布zipからMaven packageを再実行する構成ではありません。
-archive検査では、内部15 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内で14 skillの代表参照経路も確認します。外部10 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
+archive検査では、内部15 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内で14 skillの代表参照経路も確認します。外部11 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
 
 ## 同梱スキル・ライブラリの更新確認と取り込み
 
