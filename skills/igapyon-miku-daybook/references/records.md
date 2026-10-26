@@ -28,12 +28,14 @@ daybook/
 - Keep a task in its creation-month `tasks/` directory when it becomes `done` or `cancelled`; update its status in place and do not move it to an archive or closed folder.
 - A day-plan belongs to the target date's month and is a generated snapshot.
 - Waypoints live in the daybook repository root, outside the year/month record directories. They are short resume entries; see [waypoints.md](waypoints.md) for naming, metadata, and update rules.
-- Store supporting files under the same month as their primary record, in `attachments/<record-key>/`. Use the full task ID, or the schedule/activity filename stem, as the record key. Create these directories only when needed.
+- Store retained text attachments under their primary record's month: tasks use `attachments/<task-id>/`, where `task-id` is the task's existing front matter `id` (`task-YYYYMM-NNNNN`); activities and schedules use `attachments/activity-YYYYMMDD/` and `attachments/schedule-YYYYMMDD-name/`, respectively. Keep original binaries elsewhere and link to a stable reference; retaining one in Git is an extremely rare, file-specific exception. Follow [attachments.md](attachments.md) for content selection, temporary files, and exceptions. Create directories only when needed.
 - Use lowercase English prefixes and a short English filename suffix. Preserve an existing filename and ID when updating its title or deadline.
 
 ## Task IDs and status
 
-The task ID is `task-YYYYMM-NNNNN`. `NNNNN` is a five-digit sequence within the creation month. Inspect current files and Git history before assigning the next number. Never reuse a deleted number or close a gap. A filename's ID, front matter `id`, and displayed ID must agree. The ID month and directory month must also agree with `created` when that field is present. Existing tasks without `created` remain readable; validate the date and month whenever it is supplied.
+`task-id` (task ID) is the task's persistent identifier, stored in front matter as `id`, in `task-YYYYMM-NNNNN` format. For example, `task-202610-00014` is the task-id of `task-202610-00014-prepare-materials.md`; the corresponding attachment folder is `attachments/task-202610-00014/`. Keep the YAML field name as `id`.
+
+`NNNNN` is a five-digit sequence within the creation month. Inspect current files and Git history before assigning the next number. Never reuse a deleted number or close a gap. A filename's ID, front matter `id`, and displayed ID must agree. The ID month and directory month must also agree with `created` when that field is present. Existing tasks without `created` remain readable; validate the date and month whenever it is supplied.
 
 Use these statuses:
 
@@ -135,7 +137,7 @@ generated: YYYY-MM-DD
 
 ## Relationship rules
 
-Use relative links between records and to files under `attachments/`, and check that each target exists after edits. Keep supplied source URLs for event pages and emails. If multiple records use the same supporting file, keep one copy under its primary record's month and link to it from the other records. Treat the original task and schedule as authoritative; a day-plan is a snapshot and should not become a second source of truth.
+Use relative links between records and to retained text files under `attachments/`, and check that each target exists after edits. Keep supplied source URLs for event pages and emails. If multiple records use the same supporting file, keep one copy under its primary record's month and link to it from the other records. Prefer a stable reference to originals managed elsewhere; never use a temporary-file path as a permanent link. Treat the original task and schedule as authoritative; a day-plan is a snapshot and should not become a second source of truth.
 
 When a task has implementation milestones or a firm external deadline in addition to its planned work period, label each date's meaning in the body and preserve the source. Do not silently reinterpret a `planned_end_date` as a firm external deadline.
 

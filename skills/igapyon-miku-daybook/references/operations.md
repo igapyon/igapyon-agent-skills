@@ -4,7 +4,11 @@ Read this reference for an add, update, list, activity, schedule, or day-plan re
 
 ## Task and activity responsibilities
 
-Keep a task focused on its current purpose, latest conclusion or adopted approach, status, unresolved issues, and next actions. A brief dated history can explain material changes. Keep the work leading to those changes in dated activities: attempted approaches, observations, unsuccessful or inconclusive trials, options considered, and decision reasons. A task follows one work item across dates; an activity records what happened on a date, including investigations that have not reached a conclusion or do not need a task.
+Use activities as the primary record of daily work, investigations, observations, and reflections, including unfinished or inconclusive work. If the activity/task choice is unclear and there is no clear intent to register future work or edit a task, choose an activity without a classification question. A concrete action mentioned in a report of work, or the existence of a related task, does not by itself request a task edit.
+
+Keep detailed attempts, observations, unsuccessful trials, options considered, and decision reasons in dated activities. Keep a task focused on its current purpose, latest conclusion or adopted approach, status, unresolved issues, and next actions, with a brief dated history for material changes. Avoid copying the same detailed account into both record types.
+
+When task editing is in scope and consolidation is needed, review the relevant activities across dates and summarize the current conclusions, state, unresolved issues, and next actions in the task. Link to the supporting activities for the detailed accounts, and preserve those activities in place. Recording an activity does not trigger automatic task consolidation or synchronization.
 
 When both task and activity updates are in scope and a later decision changes the approach, update the task's current summary and record the new decision and reasons in the corresponding activity. Preserve earlier activities as accounts of what was tried and understood at the time. Correct factual errors explicitly so the correction remains distinguishable from a later change of approach. Use full task IDs and relative links to connect related records; when both records are being updated, link the task's brief history to the activity and the activity back to the task.
 
@@ -37,11 +41,11 @@ Examples:
 4. Add a Japanese title, concise content, checklist, and history entry. Store supplied email or source links under a related section.
 5. Use one task for work the user explicitly asks to combine; put the components in a checklist.
 
-“TODO” is a useful input phrase, not a file type. Create a task for concrete expense claims, applications, renewals, confirmations, payments, or work items. Keep a planning idea in the repository TODO only while it lacks an actionable unit.
+“TODO” is a useful input phrase, not a file type. For a request to register future work, create a task for concrete expense claims, applications, renewals, confirmations, payments, or work items. Keep a planning idea in the repository TODO only while it lacks an actionable unit.
 
 ## Update a task
 
-Identify the file by full ID first. If only a short number is supplied, search the creation month, title, and links before editing. Preserve the ID, creation date, filename, directory, and unrelated user changes. Mark completion with `status: done` and cancellation with `status: cancelled`; keep the task file in its creation-month directory instead of moving it to an archive or closed folder.
+Identify the file by its full `task-id` first. If only a short number is supplied, search the creation month, title, and links before editing. Preserve the task-id, creation date, filename, directory, and unrelated user changes. Mark completion with `status: done` and cancellation with `status: cancelled`; keep the task file in its creation-month directory instead of moving it to an archive or closed folder.
 
 Update all representations that the request affects:
 
@@ -62,7 +66,9 @@ When the user changes only one endpoint, keep or set `planned_dates_status: prov
 
 ## Store an attachment
 
-When a supplied local file is intended as supporting material for a daybook record, store it under the same month's `attachments/` directory as that record, inside a record-key folder: the full task ID for a task, or the schedule/activity filename stem for those records. Preserve the supplied filename when possible; if a same-name file already exists, do not overwrite it. Add a relative link to the file from the record and verify the target. Keep one copy when multiple records refer to the same file, and link to that copy. Do not create empty attachment directories or copy files into generated day-plans.
+Before retaining a supplied file, follow [attachments.md](attachments.md). Put necessary facts in the record when enough; keep a separate attachment as UTF-8 text by default. Prefer managing original binaries elsewhere and linking to a stable reference. Keeping a binary in Git is an extremely rare exception requiring an explicit request for that specific file and a clear reason it cannot reasonably be managed elsewhere or represented as text. Do not treat “attach this” as permission to store a binary.
+
+Keep source copies and conversion intermediates in a verified Git-ignored `workplace/` path or outside the repository. Place only the final necessary text in `attachments/`. For a retained task attachment, use `attachments/<task-id>/`, where `task-id` is its existing front matter `id` (`task-YYYYMM-NNNNN`). For an activity or schedule, use its filename without `.md` as the folder name: `attachments/activity-YYYYMMDD/` or `attachments/schedule-YYYYMMDD-name/`. Preserve a useful supplied filename when possible; if a same-name file exists, do not overwrite it. Add a relative link and verify the target. Keep one copy of shared text, create directories only when needed, and do not copy attachments into generated day-plans.
 
 ## Register a weekly recurring task
 
@@ -104,7 +110,7 @@ Do not infer attendance, ticket purchase, registration, or a rehearsal role from
 
 Use the Asia/Tokyo calendar date unless the user gives another date. Create the day's `activities/activity-YYYYMMDD.md` if it does not exist; otherwise append under `## やったこと` or the existing equivalent section. Keep a single coherent event together when its place, activity, and instrument belong to one event. For example, an afternoon ensemble at a named venue while playing violin is one activity item.
 
-For work or investigation, include the purpose, approaches tried and changed, observations and results, conclusions and their reasons, remaining questions, and next actions when known. Ground the account in reported work, the conversation, and visible results; do not invent attempts, outcomes, alternatives, or motivations. Recording an inconclusive investigation is valid. Keep trial-and-error history in the same activity item while it remains readable; move lengthy supporting detail to a linked document or attachment when it obscures the account. Choose the detail needed to understand or resume the work rather than a fixed length or mandatory set of headings for every activity.
+For work or investigation, include the purpose, approaches tried and changed, observations and results, conclusions and their reasons, remaining questions, and next actions when known. Ground the account in reported work, the conversation, and visible results; do not invent attempts, outcomes, alternatives, or motivations. Recording an inconclusive investigation is valid. Keep trial-and-error history in the same activity item while it remains readable; move lengthy supporting detail to a linked text document only when it obscures the account, following [attachments.md](attachments.md). Choose the detail needed to understand or resume the work rather than a fixed length or mandatory set of headings for every activity.
 
 When the user says work was done, record the fact. Activity-only requests update the activity only. Update a related task only when task editing is in scope under [Task completion and scope](#task-completion-and-scope), and apply that section's completion evidence rule.
 

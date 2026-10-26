@@ -1,9 +1,9 @@
 # igapyon-agent-skills
 
-This archive contains 26 Agent Skills: 15 maintained in the igapyon-agent-skills
-repository and 11 bundled from pinned upstream repositories. They support
+This archive contains 27 Agent Skills: 15 maintained in the igapyon-agent-skills
+repository and 12 bundled from pinned upstream repositories. They support
 article writing, daybook records, Git/GitHub workflows, software development
-and review, file conversion, and music/audio work.
+and review, file conversion, music/audio work, and password generation.
 
 An Agent Skill is a directory of instructions that an AI agent reads to carry
 out a specific workflow, together with supporting files used by that workflow.
@@ -34,7 +34,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-reviewer](#igapyon-reviewer) | Identify concrete issues before merging or publishing, with evidence and a clear fixing order. |
 | [igapyon-skill-compactor](#igapyon-skill-compactor) | Make an Agent Skill easier to load and maintain while checking what behavior is preserved. |
 
-### Bundled From Upstream Repositories (11)
+### Bundled From Upstream Repositories (12)
 
 | Skill | What it helps you achieve |
 | --- | --- |
@@ -49,6 +49,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-miku-score](#igapyon-miku-score) | Move a score between supported formats, prepare AI-editable score text, and inspect a rendered result. |
 | [igapyon-miku-text-bundle](#igapyon-miku-text-bundle) | Turn a directory of text files into manageable Markdown parts for AI handoff or knowledge preparation. |
 | [igapyon-miku-text-file-ops](#igapyon-miku-text-file-ops) | **Experimental.** Search and edit encoding-sensitive text without silently changing its encoding or line-ending conventions. |
+| [igapyon-miku-toolbox](#igapyon-miku-toolbox) | Generate passwords locally using miku-toolbox's fixed character sets and generation rules. |
 
 ## Archive Contents
 
@@ -57,11 +58,11 @@ After extracting `igapyon-agent-skills-<version>.zip`, open the
 
 | Path | Contents |
 | --- | --- |
-| `README.md` | This overview and the complete catalog of 26 skills. |
+| `README.md` | This overview and the complete catalog of 27 skills. |
 | `INSTALL.md` | Instructions for installing, updating, and checking selected skills. |
 | `LICENSE` | Distribution license. Preserve additional license and attribution files within skills. |
-| `EXTERNAL_SKILLS.lock` | Upstream repositories, pinned commit SHAs, and names of the 11 externally maintained skills. |
-| `skills/` | The 26 installable skill directories in the catalog. |
+| `EXTERNAL_SKILLS.lock` | Upstream repositories, pinned commit SHAs, and names of the 12 externally maintained skills. |
+| `skills/` | The 27 installable skill directories in the catalog. |
 
 Each `skills/<skill-name>/SKILL.md` is that skill's entry point. Supporting
 files vary by skill and include reference documents, templates, examples,
@@ -582,6 +583,24 @@ A file uses Windows-31J or another non-UTF-8 encoding, a repository mixes encodi
 **Example:** Use miku-text-file-ops to find a configuration value in these Windows-31J files and update it while preserving the repository's encoding and line endings.
 
 [Full workflow, setup, and invocation rules](skills/igapyon-miku-text-file-ops/SKILL.md).
+
+### igapyon-miku-toolbox
+
+**When it helps**
+
+You explicitly ask to use miku-toolbox for a local utility such as password generation. The skill does not take over a generic password request when the product is not named.
+
+**What you can achieve**
+
+- Generate one password using the fixed character sets and generation rules, with the documented defaults or requested length and excluded character types.
+- Continue with the most recent successful conditions in the current conversation, including requests for another password.
+- Run the bundled local helper with Node.js 22 or later.
+
+**Scope and prerequisites:** The current utility is password generation. Invoke the product or skill by name; the bundled helper requires Node.js 22 or later.
+
+**Example:** Use miku-toolbox to generate a 16-character password without symbols.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-toolbox-skills/blob/ecc03c3dec6019845535140d3b920ade9909d7c2/skills/igapyon-miku-toolbox/SKILL.md).
 
 ## Provenance, Licenses, And Source
 

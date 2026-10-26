@@ -253,9 +253,11 @@ daybook では、課題管理に研究ノートと意思決定記録を組み合
 | 観察・結果 | activities に実行結果、失敗、不確かな結果を記録 |
 | 考察・結論 | activities に当時の判断と理由を残し、task に現在採用している結論を反映 |
 | 次にすること | activities にその時点の残課題を残し、task の次の行動を更新 |
-| データや資料の添付 | 既存の `attachments/<record-key>/` に資料を置き、記録から相対リンク |
+| データや資料の添付 | 添付は必要なテキストを標準とする。原本は別の場所で管理して安定した参照先を記録し、Git管理下へのバイナリ保存は極めて例外的な場合だけ許容する。作業中の原本・中間物は Git 管理外へ置く。保存するテキストは task が `attachments/<task-id>/`（既存の `id`）、activity・schedule が記録ファイル名のフォルダに置き、記録から相対リンク |
 
 この分担は [SKILL.md](skills/igapyon-miku-daybook/SKILL.md) と [operations.md](skills/igapyon-miku-daybook/references/operations.md#task-and-activity-responsibilities) のエージェント向け編集指示として実装しています。本文に経緯や理由を記述し、既存の task ID と相対リンクで関連づけます。方針が変わったときは task を最新化し、以前の activities は当時の経緯として保持します。記録内容は会話や確認できた結果に基づいてまとめます。
+
+daybook の添付は、Git 管理下のサイズ増加を抑えるため必要なテキストを標準とします。原本は別の場所で管理して安定した参照先を記録し、原本の一時コピーや変換中間物は Git 管理外に置きます。詳しい判定・例外・配置規則は [attachments.md](skills/igapyon-miku-daybook/references/attachments.md) に集約しています。
 
 task を最新状態として別管理すること、優先度・進捗・予定期間の管理、Markdown 記録間のリンクは daybook 側で加えた設計です。day-plan は task と schedule から既存の生成スクリプトが作る予定のスナップショットであり、教材にある週次の振り返りを自動化するものではありません。
 
