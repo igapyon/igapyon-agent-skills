@@ -17,6 +17,7 @@ import {
 } from "../scripts/post-recommit-publish.mjs";
 import {
   classifyTagLookup,
+  prepareNextWorkBranch,
   run as runNextWork,
 } from "../scripts/post-merge-next-work.mjs";
 import { runWorkflow } from "../scripts/miku-scm-run.mjs";
@@ -338,6 +339,9 @@ test("programmatic publication marks plan-load failure as not invoked", async (t
 
 test("post-merge helper creates the next work branch from refreshed devel", async (t) => {
   const state = await scenario(t);
+  git(state.repo, "config", "branch.autoSetupMerge", "true");
+  git(state.repo, "config", "core.hooksPath", path.join(state.repo, ".git/hooks"));
+  await writeFile(path.join(state.repo, ".git/hooks/post-checkout"), "#!/bin/sh\ngit rev-parse --symbolic-full-name '@{upstream}' > .git/checkout-upstream\n", { mode: 0o755 });
   git(state.repo, "branch", "-m", state.branch, `${state.branch}-done`);
   const result = await runNextWork({ repo: state.repo, remote: "origin", base: "devel", confirmedMerged: true, apply: true }, {
     now: () => new Date("2026-07-25T08:45:00+09:00"),
@@ -348,6 +352,56 @@ test("post-merge helper creates the next work branch from refreshed devel", asyn
   assert.equal(result.tag_status, "absent");
   assert.equal(result.human_handoff, "Next work branch is ready: devel-tiga0725ief");
   assert.equal(git(state.repo, "branch", "--show-current"), "devel-tiga0725ief");
+  assert.equal(git(state.repo, "rev-parse", "--symbolic-full-name", "@{upstream}"), "refs/remotes/origin/devel");
+  assert.equal(git(state.repo, "status", "-sb"), "## devel-tiga0725ief...origin/devel");
+  assert.equal((await readFile(path.join(state.repo, ".git/checkout-upstream"), "utf8")).trim(), "refs/remotes/origin/devel");
+});
+
+test("post-merge helper tracks the selected remote and base", async (t) => {
+  const state = await mergedScenario(t);
+  git(state.repo, "config", "branch.autoSetupMerge", "true");
+  git(state.repo, "remote", "rename", "origin", "shared");
+  git(state.repo, "push", "shared", "HEAD:release");
+  const result = await runNextWork({ ...nextWorkOptions(state), remote: "shared", base: "release" }, {
+    now: () => NEXT_WORK_DATE,
+  });
+  assert.equal(result.status, "created");
+  assert.equal(result.base_commit, state.expectedHead);
+  assert.equal(result.final_branch, "release-tiga0725ief");
+  assert.equal(git(state.repo, "rev-parse", "HEAD"), state.expectedHead);
+  assert.equal(git(state.repo, "rev-parse", "--symbolic-full-name", "@{upstream}"), "refs/remotes/shared/release");
+  assert.equal(git(state.repo, "status", "-sb"), "## release-tiga0725ief...shared/release");
+});
+
+test("post-merge branch preparation preserves native Git tracking and rebase policies", async (t) => {
+  for (const merge of ["true", "false", "inherit", "simple", "always"]) {
+    for (const rebase of ["never", "remote"]) {
+      const state = await scenario(t);
+      git(state.repo, "config", "branch.autoSetupMerge", merge);
+      git(state.repo, "config", "branch.autoSetupRebase", rebase);
+      const base = git(state.repo, "rev-parse", "origin/devel");
+      git(state.repo, "branch", "control", "origin/devel");
+      const result = prepareNextWorkBranch(state.repo, "candidate", base, "refs/remotes/origin/devel");
+      const config = (name) => (spawnSync("git", ["config", "--local", "--get-regexp", `^branch\\.${name}\\.`], { cwd: state.repo, encoding: "utf8" }).stdout || "")
+        .replaceAll(`branch.${name}.`, "branch.NEXT.").trim().split("\n").sort();
+      assert.deepEqual(config("candidate"), config("control"), `${merge}/${rebase}`);
+      assert.equal(result.upstream, git(state.repo, "for-each-ref", "--format=%(upstream)", "refs/heads/control"));
+      assert.equal(git(state.repo, "rev-parse", "candidate"), base);
+      assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
+    }
+  }
+});
+
+test("post-merge branch preparation stops before checkout if the shared ref moves", async (t) => {
+  const state = await scenario(t);
+  const base = git(state.repo, "rev-parse", "origin/devel");
+  const calls = []; const localGit = recordedGit(calls);
+  assert.throws(() => prepareNextWorkBranch(state.repo, "candidate", base, "refs/remotes/origin/devel", (cwd, args, allowFailure) => {
+    if (args[0] === "branch" && args[1] === "candidate") git(state.repo, "update-ref", "refs/remotes/origin/devel", state.expectedHead);
+    return localGit(cwd, args, allowFailure);
+  }), /pinned base/);
+  assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
+  assert.ok(!calls.some((args) => args[0] === "switch"));
 });
 
 test("post-merge carries unstaged edits, deletions and new files while retaining both new and existing stashes", async (t) => {

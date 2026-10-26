@@ -914,6 +914,7 @@ test("post-merge workflow keeps merge confirmation and apply inside one fixed ru
   const root = await workspace(t);
   let branch = "devel-tiga0727vda-done";
   let head = "a".repeat(40);
+  let upstream = "";
   const baseHead = "b".repeat(40);
   let tagLookupResult = { ok: true, out: `${baseHead}\trefs/tags/v20260727c` };
   const calls = [];
@@ -940,7 +941,14 @@ test("post-merge workflow keeps merge confirmation and apply inside one fixed ru
       return tagLookupResult;
     }
     if (command === "check-ref-format --branch devel-tiga0727weg") return { ok: true, out: "devel-tiga0727weg" };
-    if (command === `switch --no-overwrite-ignore -c devel-tiga0727weg ${baseHead}`) {
+    if (command === "check-ref-format refs/remotes/origin/devel") return { ok: true, out: "" };
+    if (command === "rev-parse --verify refs/remotes/origin/devel^{commit}" || command === "rev-parse --verify refs/heads/devel-tiga0727weg^{commit}") return { ok: true, out: baseHead };
+    if (command === "branch devel-tiga0727weg refs/remotes/origin/devel") {
+      upstream = "refs/remotes/origin/devel";
+      return { ok: true, out: "" };
+    }
+    if (command === "for-each-ref --format=%(upstream) refs/heads/devel-tiga0727weg") return { ok: true, out: upstream };
+    if (command === "switch --no-overwrite-ignore devel-tiga0727weg") {
       branch = "devel-tiga0727weg";
       head = baseHead;
       return { ok: true, out: "" };

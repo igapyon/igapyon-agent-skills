@@ -293,6 +293,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       option("--resume", "<operation-id>", "Resume this same interrupted pull without a fresh fetch or stash."),
       option("--abort", "<operation-id>", "Abort this same rebase and restore its retained carryover."),
       option("--resolved-carryover", "", "With --resume, explicitly confirm every retained carryover path was reviewed and resolved."),
+      option("--resolved-next-work", "", "With --resume, explicitly confirm the saved next branch and interrupted checkout/hook were reviewed and resolved."),
       option("--empty", "<keep|drop>", "Explicit treatment of an empty stopped replay commit, only with --resume.", { choices: ["keep", "drop"] }), apply],
     ["--apply"],
     { network_access: "Git fetch; fixed GitHub PR reads only for -done", authentication: "existing Git and gh authentication", operational_artifacts: ["workplace/miku-scm/sync"], notes: ["Git 2.45+; no remote writes. Branch-base provenance is required for divergent replay."] },

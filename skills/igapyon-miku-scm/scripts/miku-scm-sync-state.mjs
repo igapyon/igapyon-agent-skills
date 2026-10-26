@@ -122,11 +122,53 @@ export function remoteState(ctx, remote, push = false) {
   const identity = repositoryIdentity(fetch[0], ctx.root);
   if (push && (send.length !== 1 || repositoryIdentity(send[0], ctx.root) !== identity)) throw new Error("Sync push requires one fetch and push destination for the same repository");
   if (ctx.git(ctx.root, ["config", "--bool", `remote.${remote}.mirror`], { allowFailure: true }).out === "true") throw new Error("Mirror remotes are outside sync");
-  return { name: remote, identity, digest: hash([fetch, send]) };
+  const refspecs = ctx.git(ctx.root, ["config", "--get-all", `remote.${remote}.fetch`], { allowFailure: true });
+  if (refspecs.code !== 0 && refspecs.code !== 1) throw new Error("Cannot inspect remote fetch configuration");
+  const tagOption = ctx.git(ctx.root, ["config", "--get", `remote.${remote}.tagOpt`], { allowFailure: true });
+  if (tagOption.code !== 0 && tagOption.code !== 1) throw new Error("Cannot inspect remote tag configuration");
+  return { name: remote, identity, digest: hash([fetch, send]), fetch_refspecs: refspecs.out ? refspecs.out.split("\n") : [], tag_option: tagOption.out };
 }
 
 export function assertRemote(ctx, expected, push = false) {
-  if (remoteState(ctx, expected.name, push).digest !== expected.digest) throw new Error("Resolved fetch/push destination changed during sync");
+  const current = remoteState(ctx, expected.name, push);
+  if (current.digest !== expected.digest) throw new Error("Resolved fetch/push destination changed during sync");
+  if ((expected.fetch_refspecs && hash(current.fetch_refspecs) !== hash(expected.fetch_refspecs))
+    || (Object.hasOwn(expected, "tag_option") && current.tag_option !== expected.tag_option)) throw new Error("Remote fetch or tag configuration changed during sync");
+}
+
+function matchRef(pattern, ref) {
+  const parts = pattern.split("*");
+  if (parts.length === 1) return pattern === ref ? "" : null;
+  return ref.startsWith(parts[0]) && ref.endsWith(parts[1]) && ref.length >= parts[0].length + parts[1].length
+    ? ref.slice(parts[0].length, ref.length - parts[1].length) : null;
+}
+
+export function requireFetchBranch(ctx, remote, name) {
+  const refspecs = remote.fetch_refspecs ?? remoteState(ctx, remote.name).fetch_refspecs;
+  const positive = [];
+  const negative = [];
+  for (const raw of refspecs) {
+    const spec = raw.startsWith("+") ? raw.slice(1) : raw;
+    const excluded = spec.startsWith("^");
+    const parts = (excluded ? spec.slice(1) : spec).split(":");
+    const source = parts[0];
+    const destination = parts[1];
+    if (parts.length !== (excluded ? 1 : 2) || !source.startsWith("refs/heads/")
+      || !ctx.git(ctx.root, ["check-ref-format", "--refspec-pattern", source], { allowFailure: true }).ok
+      || (!excluded && (!destination?.startsWith(`refs/remotes/${remote.name}/`)
+        || !ctx.git(ctx.root, ["check-ref-format", "--refspec-pattern", destination], { allowFailure: true }).ok
+        || source.includes("*") !== destination.includes("*")))) throw new Error("Remote fetch refspec is outside supported branch mappings; preserve its configuration and use separate integration");
+    if (excluded) negative.push(source);
+    else positive.push({ source, destination });
+  }
+  const source = `refs/heads/${name}`;
+  const destination = `refs/remotes/${remote.name}/${name}`;
+  const mapped = positive.some((entry) => {
+    const matched = matchRef(entry.source, source);
+    return matched !== null && entry.destination.replace("*", matched) === destination;
+  });
+  if (!mapped || negative.some((pattern) => matchRef(pattern, source) !== null)) throw new Error(`Configured fetch does not update ${destination}; preserve its configuration and use separate integration`);
+  return { complete_heads: negative.length === 0 && positive.some((entry) => entry.source === "refs/heads/*" && entry.destination === `refs/remotes/${remote.name}/*`) };
 }
 
 export function resolveBase(ctx, remote, supplied = "") {
@@ -149,7 +191,8 @@ export function resolveBase(ctx, remote, supplied = "") {
 
 export function fetchBase(ctx, remote, base) {
   assertRemote(ctx, remote);
-  ctx.git(ctx.root, ["fetch", "--no-tags", remote.name, `+refs/heads/*:refs/remotes/${remote.name}/*`]);
+  requireFetchBranch(ctx, remote, base.name);
+  ctx.git(ctx.root, ["fetch", remote.name]);
   assertRemote(ctx, remote);
   const sha = ctx.git(ctx.root, ["rev-parse", "--verify", `${base.ref}^{commit}`]).out;
   if (!SHA.test(sha)) throw new Error("Fetched base commit is invalid");

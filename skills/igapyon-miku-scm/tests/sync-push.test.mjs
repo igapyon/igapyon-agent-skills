@@ -53,12 +53,14 @@ test("sync push detects later base advance and preserves the created commit for 
   const old = await applySyncPush(options); assert.equal(old.status, "not-applied"); assert.match(old.reason, /not available/);
 });
 
-for (const change of ["draft", "plan", "head", "push-url"]) test(`sync push rejects changed ${change} before recommit`, async (t) => {
+for (const change of ["draft", "plan", "head", "push-url", "fetch-refspec", "tag-policy"]) test(`sync push rejects changed ${change} before recommit`, async (t) => {
   const f = await fixture(t); await f.commit("own.txt", "pending\n"); const p = await prepareSyncPush(f.options); const options = await draft(f, p);
   if (change === "draft") await f.write(options.prDraft, "Changed prose\n");
   if (change === "plan") await f.write(`workplace/miku-scm/sync/operations/${p.operation_id}/plan.json`, "{}\n");
   if (change === "head") await f.commit("later.txt", "later\n");
   if (change === "push-url") f.git(["remote", "set-url", "--push", "origin", path.join(f.directory, "other.git")]);
+  if (change === "fetch-refspec") f.git(["config", "--add", "remote.origin.fetch", "^refs/heads/excluded"]);
+  if (change === "tag-policy") f.git(["config", "remote.origin.tagOpt", "--no-tags"]);
   const head = f.git(["rev-parse", "HEAD"]); const r = await applySyncPush(options);
   assert.equal(r.status, "not-applied", JSON.stringify(r)); assert.equal(f.git(["rev-parse", "HEAD"]), head); assert.equal(f.git(["branch", "--list", "backup/*"]), "");
 });
@@ -94,6 +96,34 @@ test("sync push unsupported platform and frozen branch stop before commit", asyn
   const f = await fixture(t); await f.write("own.txt", "pending\n"); const before = f.git(["rev-parse", "HEAD"]);
   const r = await prepareSyncPush(f.options, { platform: "linux" }); assert.equal(r.status, "not-applied");
   f.git(["branch", "-m", `${f.git(["branch", "--show-current"])}-done`]); const done = await prepareSyncPush(f.options); assert.equal(done.status, "not-applied"); assert.equal(f.git(["rev-parse", "HEAD"]), before);
+});
+
+test("sync push refuses an unfetchable publication branch before ordinary commit", async (t) => {
+  const f = await fixture(t); await f.write("own.txt", "pending\n");
+  f.git(["config", "remote.origin.fetch", "+refs/heads/devel:refs/remotes/origin/devel"]);
+  const before = await snapshot(await context(f.repo));
+  const result = await prepareSyncPush(f.options);
+  assert.equal(result.status, "not-applied", JSON.stringify(result)); assert.match(result.reason, /Configured fetch does not update/);
+  assert.equal((await snapshot(await context(f.repo))).digest, before.digest);
+});
+
+test("sync push publishes through configured base and work-branch fetch mappings", async (t) => {
+  const f = await fixture(t); await f.write("own.txt", "pending\n");
+  f.git(["config", "remote.origin.fetch", "+refs/heads/devel:refs/remotes/origin/devel"]);
+  f.git(["config", "--add", "remote.origin.fetch", "+refs/heads/devel-tiga*:refs/remotes/origin/devel-tiga*"]);
+  const prepared = await prepareSyncPush({ ...f.options, message: "Publish configured work branch" });
+  assert.equal(prepared.status, "prepared", JSON.stringify(prepared));
+  const result = await applySyncPush(await draft(f, prepared));
+  assert.equal(result.status, "published", JSON.stringify(result));
+  assert.equal(f.git(["rev-list", "--left-right", "--count", "HEAD...origin/devel-tiga1026aaa"]).replace(/\s+/g, " "), "0 0");
+});
+
+test("sync push no-op needs only the configured base fetch mapping", async (t) => {
+  const f = await fixture(t);
+  f.git(["config", "remote.origin.fetch", "+refs/heads/devel:refs/remotes/origin/devel"]);
+  const result = await prepareSyncPush(f.options);
+  assert.equal(result.status, "up-to-date", JSON.stringify(result));
+  assert.equal(result.mutation_invoked, false);
 });
 
 test("sync push parser requires immutable apply evidence and no arbitrary options", () => {

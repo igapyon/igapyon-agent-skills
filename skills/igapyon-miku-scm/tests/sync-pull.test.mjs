@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { lstat, readFile, rm } from "node:fs/promises";
+import { lstat, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { runSyncPull, parseArgs } from "../scripts/sync-pull.mjs";
 import { context, hash, loadOperation, lock, newId, snapshot, syncGit, writeJson } from "../scripts/miku-scm-sync-state.mjs";
@@ -119,14 +119,133 @@ async function doneFixture(t, response = {}, squash = false) {
 
 test("sync pull done verifies exact PR and carries staged work to one new branch", async (t) => {
   const f = await doneFixture(t); const latest = await f.advance();
+  f.git(["config", "branch.autoSetupMerge", "true"]);
+  f.git(["config", "core.hooksPath", path.join(f.repo, ".git/hooks")]);
+  await writeFile(path.join(f.repo, ".git/hooks/post-checkout"), "#!/bin/sh\ngit rev-parse --symbolic-full-name '@{upstream}' > .git/checkout-upstream\n", { mode: 0o755 });
   await f.write("carry.txt", "stage\n"); f.git(["add", "carry.txt"]); await f.write("carry.txt", "stage\nunstaged\n");
   const r = await runSyncPull(f.options, f.dependencies);
   assert.equal(r.status, "completed", JSON.stringify(r)); assert.equal(r.method, "next-work"); assert.equal(r.head, latest); assert.equal(r.final_branch, "devel-tiga1026mef");
+  assert.equal(f.git(["rev-parse", "--symbolic-full-name", "@{upstream}"]), "refs/remotes/origin/devel");
+  assert.equal(f.git(["status", "-sb"]).split("\n")[0], "## devel-tiga1026mef...origin/devel");
+  assert.equal((await readFile(path.join(f.repo, ".git/checkout-upstream"), "utf8")).trim(), "refs/remotes/origin/devel");
   assert.equal(await f.read("carry.txt"), "stage\nunstaged\n"); assert.equal(f.git(["show", ":carry.txt"]), "stage");
   assert.equal(f.calls.length, 2); assert.equal(f.calls[0].options.timeout, 15000); assert.deepEqual(f.calls[1].args, ["api", "--method", "GET", "repos/owner/repo/pulls/7"]);
   assert.deepEqual(f.calls[0].args, ["api", "--method", "GET", "repos/owner/repo/pulls", "-f", "state=all", "-f", "head=owner:devel-tiga1026aaa", "-f", "base=devel", "-f", "per_page=100"]);
+  await rm(path.join(f.repo, ".git/hooks/post-checkout"));
   f.git(["stash", "push", "--include-untracked"]); f.git(["switch", r.previous_branch]);
   const again = await runSyncPull(f.options, f.dependencies); assert.equal(again.status, "not-applied"); assert.match(again.reason, /already has a next-work transition/);
+});
+
+test("sync pull next-work resumes a prepared branch without another branch or stash", async (t) => {
+  const f = await doneFixture(t);
+  f.git(["config", "branch.autoSetupMerge", "true"]);
+  await f.write("carry.txt", "preserve me\n");
+  const stopped = await runSyncPull(f.options, {
+    ...f.dependencies,
+    beforeAction: (phase) => { if (phase === "next-work-switch") throw new Error("Interrupted before checkout"); },
+  });
+  assert.equal(stopped.status, "partial", JSON.stringify(stopped));
+  assert.equal(stopped.final_branch, "devel-tiga1026aaa-done");
+  assert.equal(f.git(["rev-parse", "HEAD"]), f.pull.merge_commit_sha);
+  assert.equal(f.git(["rev-parse", "--symbolic-full-name", "devel-tiga1026mef@{upstream}"]), "refs/remotes/origin/devel");
+  await assert.rejects(f.read("carry.txt"), { code: "ENOENT" });
+  const calls = [];
+  const resumed = await runSyncPull({ repo: f.repo, resume: stopped.operation_id, apply: true }, {
+    ...f.dependencies,
+    git: (cwd, args, options) => { calls.push(args); return f.dependencies.git(cwd, args, options); },
+  });
+  assert.equal(resumed.status, "completed", JSON.stringify(resumed));
+  assert.equal(resumed.stash_sha, stopped.stash_sha);
+  assert.equal(f.git(["rev-parse", "--symbolic-full-name", "@{upstream}"]), "refs/remotes/origin/devel");
+  assert.equal(await f.read("carry.txt"), "preserve me\n");
+  assert.ok(!calls.some((args) => args[0] === "fetch" || (args[0] === "branch" && args[1] === "devel-tiga1026mef") || (args[0] === "stash" && args[1] === "push")));
+  assert.equal(calls.filter((args) => args[0] === "switch").length, 1);
+});
+
+test("sync pull never retries an unconfirmed checkout hook without explicit resolution", async (t) => {
+  const f = await doneFixture(t);
+  await f.write("carry.txt", "preserve me\n");
+  f.git(["config", "core.hooksPath", path.join(f.repo, ".git/hooks")]);
+  await writeFile(path.join(f.repo, ".git/hooks/post-checkout"), "#!/bin/sh\nprintf x >> .git/checkout-count\nexit 1\n", { mode: 0o755 });
+  const stopped = await runSyncPull(f.options, f.dependencies);
+  assert.equal(stopped.status, "partial", JSON.stringify(stopped));
+  assert.equal(stopped.final_branch, "devel-tiga1026mef");
+  const plain = await runSyncPull({ repo: f.repo, resume: stopped.operation_id, apply: true }, f.dependencies);
+  assert.equal(plain.status, "partial"); assert.match(plain.reason, /--resolved-next-work/);
+  await assert.rejects(f.read("carry.txt"), { code: "ENOENT" });
+  const resolved = await runSyncPull({ repo: f.repo, resume: stopped.operation_id, resolvedNextWork: true, apply: true }, f.dependencies);
+  assert.equal(resolved.status, "completed", JSON.stringify(resolved));
+  assert.equal(await f.read("carry.txt"), "preserve me\n");
+  assert.equal(await readFile(path.join(f.repo, ".git/checkout-count"), "utf8"), "x");
+});
+
+test("sync pull recovers an unconfirmed branch preparation only after explicit review", async (t) => {
+  const f = await doneFixture(t); await f.write("carry.txt", "pending\n");
+  const stopped = await runSyncPull(f.options, {
+    ...f.dependencies,
+    git: (cwd, args, options) => {
+      const result = f.dependencies.git(cwd, args, options);
+      if (args[0] === "branch" && args[1] === "devel-tiga1026mef") throw new Error("Lost branch preparation receipt");
+      return result;
+    },
+  });
+  assert.equal(stopped.status, "partial", JSON.stringify(stopped));
+  assert.equal(stopped.final_branch, "devel-tiga1026aaa-done");
+  const plain = await runSyncPull({ repo: f.repo, resume: stopped.operation_id, apply: true }, f.dependencies);
+  assert.equal(plain.status, "partial"); assert.match(plain.reason, /no complete receipt/);
+  const calls = [];
+  const resolved = await runSyncPull({ repo: f.repo, resume: stopped.operation_id, resolvedNextWork: true, apply: true }, {
+    ...f.dependencies, git: (cwd, args, options) => { calls.push(args); return f.dependencies.git(cwd, args, options); },
+  });
+  assert.equal(resolved.status, "completed", JSON.stringify(resolved));
+  assert.equal(await f.read("carry.txt"), "pending\n");
+  assert.equal(resolved.stash_sha, stopped.stash_sha);
+  assert.ok(!calls.some((args) => args[0] === "fetch" || (args[0] === "branch" && args[1] === "devel-tiga1026mef") || (args[0] === "stash" && args[1] === "push")));
+});
+
+test("sync pull honors narrowed and negative fetch refspecs without fetching excluded branches", async (t) => {
+  for (const mode of ["narrow", "negative"]) {
+    const f = await fixture(t);
+    syncGit(f.other, ["push", "origin", "HEAD:excluded"]);
+    await f.advance();
+    if (mode === "narrow") f.git(["config", "remote.origin.fetch", "+refs/heads/devel:refs/remotes/origin/devel"]);
+    else f.git(["config", "--add", "remote.origin.fetch", "^refs/heads/excluded"]);
+    const result = await runSyncPull(f.options);
+    assert.equal(result.status, "completed", JSON.stringify(result));
+    assert.equal(syncGit(f.repo, ["show-ref", "--verify", "--quiet", "refs/remotes/origin/excluded"], { allowFailure: true }).ok, false);
+  }
+});
+
+test("sync pull honors default tag following and an explicit no-tags setting", async (t) => {
+  for (const noTags of [false, true]) {
+    const f = await fixture(t);
+    await f.advance(); syncGit(f.other, ["tag", "v-new-release"]); syncGit(f.other, ["push", "origin", "refs/tags/v-new-release"]);
+    if (noTags) f.git(["config", "remote.origin.tagOpt", "--no-tags"]);
+    const result = await runSyncPull(f.options);
+    assert.equal(result.status, "completed", JSON.stringify(result));
+    assert.equal(syncGit(f.repo, ["show-ref", "--verify", "--quiet", "refs/tags/v-new-release"], { allowFailure: true }).ok, !noTags);
+  }
+});
+
+test("sync pull with incomplete fetch coverage stops unpublished replay before backup", async (t) => {
+  const f = await fixture(t); await runSyncPull(f.options);
+  f.git(["config", "remote.origin.fetch", "+refs/heads/devel:refs/remotes/origin/devel"]);
+  await f.commit("own.txt", "shared elsewhere\n"); f.git(["push", "origin", "HEAD:hidden"]);
+  await f.write("carry.txt", "pending\n"); const before = await snapshot(await context(f.repo)); await f.advance();
+  const result = await runSyncPull(f.options);
+  assert.equal(result.status, "not-applied", JSON.stringify(result));
+  assert.match(result.reason, /complete publication evidence/); assert.equal(result.backup_branch, null);
+  assert.equal((await snapshot(await context(f.repo))).digest, before.digest);
+  assert.equal(syncGit(f.repo, ["show-ref", "--verify", "--quiet", "refs/remotes/origin/hidden"], { allowFailure: true }).ok, false);
+});
+
+test("sync pull rejects an excluded base before fetching or changing work", async (t) => {
+  const f = await fixture(t); await f.write("carry.txt", "pending\n"); await f.advance();
+  f.git(["config", "--add", "remote.origin.fetch", "^refs/heads/devel"]);
+  const before = await snapshot(await context(f.repo)); const calls = [];
+  const result = await runSyncPull(f.options, { git: (cwd, args, options) => { calls.push(args); return syncGit(cwd, args, options); } });
+  assert.equal(result.status, "not-applied", JSON.stringify(result)); assert.match(result.reason, /Configured fetch does not update/);
+  assert.ok(!calls.some((args) => args[0] === "fetch")); assert.equal((await snapshot(await context(f.repo))).digest, before.digest);
 });
 
 for (const bad of [{ merged: false }, { state: "open" }, { head: { ref: "wrong" } }, { merge_commit_sha: "0".repeat(40) }]) test(`sync pull done blocks unverifiable merge ${JSON.stringify(bad)}`, async (t) => {
@@ -143,6 +262,7 @@ test("sync locks exclude sibling worktrees and do not linger after prepare-like 
 test("sync pull parser rejects command passthrough and ambiguous recovery", () => {
   assert.throws(() => parseArgs(["--apply", "--exec", "anything"]), /Unknown/);
   assert.throws(() => parseArgs(["--apply", "--resume", "x", "--base", "devel"]), /saved remote/);
+  assert.throws(() => parseArgs(["--apply", "--resolved-next-work"]), /requires --resume/);
 });
 
 test("sync pull squash merge uses the merge result rather than PR head ancestry", async (t) => {

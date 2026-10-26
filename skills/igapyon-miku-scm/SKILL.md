@@ -36,7 +36,7 @@ The usual sequence is:
 4. `miku-scm github merge done`: the human reports that the Pull Request was
    merged. Run `repository.post-merge.next-work --confirmed-merged --apply`
    to refresh the base, check the recommended tag, and create and switch to
-   the next work branch.
+   the next work branch, following Git's tracking settings for the shared base.
 
 Run each SCM stage when the user requests it, with that workflow's checks and
 authorization. In this Skill, `draft` means saving PR text; GitHub PR creation
@@ -63,9 +63,12 @@ conflicts stop with recovery information. Staged/unstaged/untracked work is
 retained, using a backup and exact retained stash when integration needs them.
 Only on a local `-done` branch does the fixed helper verify the exact GitHub
 PR as merged and contained in the fetched base before creating the next work
-branch and carrying work over. Missing or unmerged PR evidence stops that
-transition. Ordinary branches do not query PR merge state. Pull requires
-Git 2.45 or newer; its `-done` check also needs working GitHub CLI access.
+branch using Git's tracking settings for the shared base and carrying work
+over. Missing or unmerged PR evidence stops that transition. Ordinary branches do not query
+PR merge state. Pull requires Git 2.45 or newer; its `-done` check also needs
+working GitHub CLI access. Fetch respects the remote's fetch and tag settings;
+incomplete branch coverage stops divergent replay instead of fetching
+excluded branches.
 It never pushes. See [sync-pull.md](references/sync-pull.md) for recovery.
 
 `miku-scm sync push` stages and commits all ordinary non-ignored pending work
