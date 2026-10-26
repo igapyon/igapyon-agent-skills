@@ -8,7 +8,46 @@ import {
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v14");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v15");
+});
+
+test("version candidates map proposed values to authoritative and coupled sources", () => {
+  const authoritative = [{ path: "pom.xml", value: "1.20261026.4" }];
+  const coupled = [{ path: "VERSION.md", value: "20261026d" }];
+  const result = {
+    policy: "miku-date-coupled", policy_resolved: true,
+    authoritative, coupled,
+    proposed: { authoritative: "1.20261026.5", coupled: "20261026e", date: "20261026", sequence: 5 },
+  };
+  const before = structuredClone(result);
+  const output = renderHumanOutput({ workflow: "version.increment.validate", status: "success", approvalGate: "preflight", delegateStatus: "validated", mutationInvoked: false, result });
+  assert.deepEqual(output.split("\n").filter((line) => line.startsWith("Candidate (")), [
+    "Candidate (pom.xml): 1.20261026.5",
+    "Candidate (VERSION.md): 20261026e",
+  ]);
+  assert.ok(output.includes("Current value (pom.xml): 1.20261026.4"));
+  assert.deepEqual(result, before);
+});
+
+test("content-date candidate is displayed for its authoritative source only", () => {
+  const output = renderHumanOutput({ workflow: "version.increment.validate", status: "success", approvalGate: "preflight", delegateStatus: "validated", mutationInvoked: false, result: { policy: "content-date", policy_resolved: true, authoritative: [{ path: "VERSION.md", value: "20260727z" }], coupled: [], proposed: { authoritative: "20260727aa", coupled: null, date: "20260727", sequence: 27 } } });
+  assert.deepEqual(output.split("\n").filter((line) => line.startsWith("Candidate (")), ["Candidate (VERSION.md): 20260727aa"]);
+});
+
+test("SemVer candidate is displayed for its authoritative source", () => {
+  const output = renderHumanOutput({ workflow: "version.increment.validate", status: "success", approvalGate: "preflight", delegateStatus: "validated", mutationInvoked: false, result: { policy: "semver", policy_resolved: true, authoritative: [{ path: "package.json", value: "1.2.3" }], coupled: [], proposed: { authoritative: "1.3.0", coupled: null, date: null, sequence: null } } });
+  assert.deepEqual(output.split("\n").filter((line) => line.startsWith("Candidate (")), ["Candidate (package.json): 1.3.0"]);
+});
+
+test("coupled candidates preserve source order", () => {
+  const output = renderHumanOutput({ workflow: "version.increment.validate", status: "success", approvalGate: "preflight", delegateStatus: "validated", mutationInvoked: false, result: { policy: "miku-date-coupled", policy_resolved: true, authoritative: [{ path: "pom.xml", value: "1.20261026.4" }], coupled: [{ path: "VERSION.md", value: "20261026d" }, { path: "docs/VERSION.md", value: "20261026d" }], proposed: { authoritative: "1.20261026.5", coupled: "20261026e", date: "20261026", sequence: 5 } } });
+  assert.deepEqual(output.split("\n").filter((line) => line.startsWith("Candidate (")), ["Candidate (pom.xml): 1.20261026.5", "Candidate (VERSION.md): 20261026e", "Candidate (docs/VERSION.md): 20261026e"]);
+});
+
+test("version status has no candidates and retains current values", () => {
+  const output = renderHumanOutput({ workflow: "version.status", status: "success", approvalGate: "none", delegateStatus: "inspected", mutationInvoked: false, result: { policy: "auto", policy_resolved: false, authoritative: [{ path: "VERSION.md", value: "20260727d" }], proposed: null } });
+  assert.deepEqual(output.split("\n").filter((line) => line.startsWith("Candidate (")), []);
+  assert.ok(output.includes("Current value (VERSION.md): 20260727d"));
 });
 
 test("Issue list displays number, state, and title in the returned order", () => {

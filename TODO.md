@@ -4,14 +4,14 @@
 
 ### 現在地（2026-10-26照合）
 
-TODO・HANDOFFの矛盾確認と訂正はHEAD `8d8f68c` から始め、commit `9e9fec5` で完了した。その後の依頼で2026-10-26の版数更新を実施。
+TODO・HANDOFFの矛盾確認と訂正はHEAD `8d8f68c` から始め、commit `9e9fec5` で完了した。その後の依頼で版数を `.5` / `20261026e` に更新し、続けて候補版数human output修正を実装した。現在branchは `devel-tiga1026wce`、HEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`。
 
-続く会話で `miku-scm sync pull` と `miku-scm sync push` の名称・基本動作を合意し、[合意仕様](skills/igapyon-miku-scm/docs/2026-10-26-sync-pull-push-spec.md)へ保存した。自己レビュー済みの[実装計画と検証記録](skills/igapyon-miku-scm/docs/2026-10-26-sync-implementation-plan.md)に従い、後続の実装指示でsourceへ反映した。通常branchではPR確認をせず、`-done` のときだけ正確なマージ証拠を使う。
+`miku-scm sync pull` / `sync push` はsourceへ実装し、PR #409でmerge済み（現HEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`）。続く依頼でsync説明補完とWindows CRLF fixture修正を行い、候補版数human output修正を追加実装した。現在の作業ツリー差分（版数 `.5` / `20261026e`、説明・fixture、候補表示）は未commit。
 
-自己レビューの5件をコードへ反映。新規integration 49件とrouting等3件を含むfull suite 368/368が成功した。固定API応答と一時bare remoteによるローカル検証であり、native Windows実機・hosted CI・実GitHub・モデル会話確認は未実施。
+自己レビューの5件をコードへ反映。続くsync説明・Windows CRLF fixture修正を含む変更と、候補版数表示修正後のfull suiteは **374/374** 成功。候補修正のfocused testsは **45/45**、contract 37件のcheckと `mvn validate`、`git diff --check` も成功。提示されたWindows hosted CIログで当時368件中5件のCRLF失敗を確認した（ログにPR番号・run URLの記載はない）。fixture修正後のWindows hosted CI再実行成功とnative Windows 11手動smokeは未確認。
 
-- 現在版は共通 `1.20261026.4` / Mikuku `20261026d`。POM、VERSION.md、2つのrunnerを更新し、`mvn validate`で整合を確認した。`v20261026d` はローカルとoriginにない。
-- 実装・状態文書・版数更新は未stage・未commit。branch `devel-tiga1026meh`、現HEAD `9e9fec5916fe110b6f21552403547d5412b9ebcd`、local `origin/devel` より1 commit先。Release/tagは作成していない。
+- 現在版は共通 `1.20261026.5` / Mikuku `20261026e`。POM、VERSION.md、2つのrunnerの整合は `mvn validate` で確認した。
+- 版数更新・sync説明/fixture修正・候補版数表示修正を含む作業ツリーは未stage・未commit。実装時点branch `devel-tiga1026wce`、HEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`。追加version increment、package、配備、commit/pushは未実施。
 - 配布対象は内製15件＋外部12件＝27スキル。
 - 下の作業記録にあるbranch、未commit、commit/push未実施、テスト件数、環境制約は、明示的な更新がなければ記録当時の状態。現在地はこの節と [HANDOFF.md](HANDOFF.md) を入口に確認する。
 - 過去計画の未チェック欄は、未実装と未検証を一律には区別していない。source・後続の記録で確認できた箇所だけ訂正し、実行証拠がない検証や配備を完了扱いにしない。
@@ -20,11 +20,12 @@ TODO・HANDOFFの矛盾確認と訂正はHEAD `8d8f68c` から始め、commit `9
 
 - [x] `sync pull` / `sync push` の実装計画を作成。`-done` のときだけ対象PRを確認し、マージ済みと正確に検証できれば次branchへ進める案を含む。通常branchではこのPR確認を省略する。
 - [x] 計画を自己レビューし、base記録、ignored保護、rebase option、接続先binding、prepare後の再開/取消を修正。3種類のGit挙動を一時fixtureで再現した。
-- [x] SYNC-00〜07：共通状態/退避、PR確認、共有post-merge core、pull、push、SKILL・manifest・CLI/help・human output・生成契約をsourceへ実装。full 368/368、policy 78/78、validator、版整合を確認。
-- [ ] SYNC-08の残り：native Windows実機、hosted CI、実GitHubのmerge方式、実モデルでのsync会話routingを確認。ローカルfixtureの成功から完了扱いにしない。
-- [ ] 現在版 `1.20261026.4` をpackageし、配布ZIPを検査する。`1.20261026.3` のZIPはincrement前の成果物である。
+- [x] SYNC-00〜07：共通状態/退避、PR確認、共有post-merge core、pull、push、SKILL・manifest・CLI/help・human output・生成契約をsourceへ実装。今回のfull suite 374/374、候補版数修正focused 45/45、contract check、`mvn validate`を確認。
+- [x] 候補版数human output修正：実producerのproposed schema対応、human output v15、5ケースと実producer接続テスト、contract lock/table更新。[計画と検証記録](skills/igapyon-miku-scm/docs/2026-10-26-version-candidate-output-fix-plan.md)
+- [ ] SYNC-08の残り：native Windows実機、fixture修正後のhosted CI成功、実GitHub上のsync、実モデルでのsync会話routingを確認。提示されたWindows hosted CIログで368件中5件のCRLF失敗を確認済み（PR番号・run URLは不明）。修正後の成功とローカルfixtureの成功を混同しない。
+- [ ] 現在版 `1.20261026.5` をpackageし、配布ZIPを検査する。`.3` のZIPはincrement前の成果物である。
 - [ ] day-plan生成前の `npm ci` を必要時だけにする案を検討する。[実運用改善メモ](docs/plans/daybook-operation-feedback.md)の項目1。項目2〜4の記録方針・用語は `38e73af` / PR #408で反映済み。
-- [ ] native Windows 11のjunction / CRLF / publication smokeを確認する。[Windows計画](WINDOWS11-PUSH-PLAN.md)のW02・W05・W08・W09は未完了。hosted CI結果も今回未確認。
+- [ ] native Windows 11のjunction / CRLF / publication smokeを確認する。[Windows計画](WINDOWS11-PUSH-PLAN.md)のW02・W05・W08・W09は未完了。提示されたWindows hosted CIログで368件中5件のCRLF失敗を確認済み（PR番号・run URLは不明）。fixture修正後の再CI成功は未確認。
 - [ ] Work Cycleのcycle artifact、作業開始のone-shot化、PR evidence統合を、着手時に現行sourceと再照合する。[設計記録](skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md)。初期実装とWindows publication経路はすでにマージ済み。
 - [ ] 旧draft系コマンド全体の文案再利用とbase・HEADの対応付けは継続候補。新しいsync pushではevidence/plan/draft digestへ固定したが、既存コマンド全体の意味変更には広げていない。
 - [ ] 旧計画に残るモデル会話確認、実資料の品質確認、配備・運用反映、参照監査などは、対象を指定して再照合する。今回の記録訂正から自動着手しない。
@@ -52,7 +53,7 @@ TODO・HANDOFFの矛盾確認と訂正はHEAD `8d8f68c` から始め、commit `9
 - [x] full suite 368/368、policy 78/78、skill validator、`mvn validate`。実行環境はmacOS、APIはfixture、pushは一時bare remoteのみ。
 - [x] 最終fast 204/204、契約37件のdriftなし。rename推測によるignored上書きを追加再現し、sync内では推測を無効化して3経路を回帰確認。
 - [x] increment前のsourceについて配布ZIP照合が成功。`target/igapyon-agent-skills-1.20261026.3.zip` を生成。文書リンク45件と差分検査も成功。
-- [ ] version increment後の `1.20261026.4` ZIPを生成・照合する。実repoへのsync、配備、commit/pushは今回の依頼に含めず未実施。
+- [ ] version increment後の `1.20261026.5` ZIPを生成・照合する。実repoへのsync、配備、commit/pushは今回の依頼に含めず未実施。
 
 ## miku-toolbox を外部スキルとして同梱（2026-10-26）
 

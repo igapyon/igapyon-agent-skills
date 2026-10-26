@@ -12,7 +12,14 @@ export async function fixture(t) {
   await mkdir(repo);
   syncGit(directory, ["init", "--bare", remote]);
   syncGit(repo, ["init", "-b", "devel"]);
-  const configure = (root) => { syncGit(root, ["config", "user.name", "Sync Test"]); syncGit(root, ["config", "user.email", "sync@example.invalid"]); syncGit(root, ["config", "commit.gpgsign", "false"]); };
+  const configure = (root) => {
+    // Exact-byte assertions use LF regardless of the host's Git defaults.
+    syncGit(root, ["config", "core.autocrlf", "false"]);
+    syncGit(root, ["config", "core.eol", "lf"]);
+    syncGit(root, ["config", "user.name", "Sync Test"]);
+    syncGit(root, ["config", "user.email", "sync@example.invalid"]);
+    syncGit(root, ["config", "commit.gpgsign", "false"]);
+  };
   configure(repo);
   const write = async (file, text, root = repo) => { await mkdir(path.dirname(path.join(root, file)), { recursive: true }); await writeFile(path.join(root, file), text); };
   await write(".gitignore", "workplace/\nignored/\n*.cache\n");
@@ -26,7 +33,8 @@ export async function fixture(t) {
   syncGit(repo, ["push", "-u", "origin", "devel"]);
   syncGit(repo, ["symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/devel"]);
   syncGit(repo, ["switch", "-c", "devel-tiga1026aaa"]);
-  syncGit(directory, ["clone", "--branch", "devel", remote, other]);
+  // Clone configuration must take effect before its initial checkout.
+  syncGit(directory, ["clone", "--config", "core.autocrlf=false", "--config", "core.eol=lf", "--branch", "devel", remote, other]);
   configure(other);
   const git = (args, options) => syncGit(repo, args, options).out;
   const commit = async (file, content, message = "Own work") => { await write(file, content); git(["add", "--", file]); git(["commit", "-m", message]); return git(["rev-parse", "HEAD"]); };

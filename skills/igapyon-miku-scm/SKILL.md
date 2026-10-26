@@ -1,6 +1,6 @@
 ---
 name: igapyon-miku-scm
-description: Use only when the user explicitly names `igapyon-miku-scm`, explicitly asks to apply the miku SCM workflow, explicitly says `recommit` or `draft recommit push` to invoke the miku-soft PR-text drafting, soft-reset, and optional push flow, or explicitly asks to perform Git, GitHub writing, GitHub Release, repository-maintenance, or version-management work under miku-soft SCM rules. Supports PR-text, Release, About, and public GitHub Issue drafting; human-approved Issue and optional sub-Issue creation, title/body/existing-label updates, comments, standalone existing-label changes, and closure through narrowly documented `gh` workflows; PR soft-reset recommit; backup, branch-status, and three-stage local repository-maintenance workflows; date-based and Semantic Version increments; and READONLY version, tag, Release, and asset audits. Do not activate for generic Git or GitHub questions, ordinary repository inspection, or release-note writing outside an explicit miku-soft SCM request.
+description: Use only when the user explicitly requests an `igapyon-miku-scm` or `miku-scm` workflow, explicitly says `recommit` or `draft recommit push` to invoke the miku-soft PR-text drafting, soft-reset, and optional push flow, or requests Git/GitHub/version/repository-maintenance work under miku-soft SCM rules. Supports `miku-scm sync pull` for shared-base integration, `miku-scm sync push` for commit/draft/recommit/push, individual work-cycle stages, approved Issue operations, PR/Release/About drafting, repository maintenance, and version/tag/Release/asset audits. Do not activate for generic Git/GitHub questions, ordinary repository inspection, or release-note writing without an explicit miku-soft SCM request.
 ---
 
 # igapyon-miku-scm
@@ -49,23 +49,44 @@ alias are owned exclusively by this Skill. Do not activate or run
 
 ### Sync Commands
 
-`miku-scm sync pull` runs `repository.sync.pull --apply`: fetch the shared
-base and preserve local commits and staged/unstaged/untracked work. Only on
-`-done`, the fixed helper verifies the exact GitHub PR as merged before
-creating the next work branch. Ordinary branches do not query PR merge state.
+The combined cycle is `sync pull` → edit work and explicitly increment the
+version when needed → `sync push` → human PR creation/merge → `sync pull`.
+Both commands use Node.js, Git, and an already Git-ignored
+`workplace/miku-scm/sync/` in the target repository. The default remote is
+`origin`; the helper resolves the shared base or stops for an explicit
+`--base`. See the references for setup and base selection.
+
+`miku-scm sync pull` runs `repository.sync.pull --repo <target-repo> --apply`.
+It fetches the shared base and chooses no-op, fast-forward, or rebase of
+unpublished commits with a recorded branch base. Unsafe replay or integration
+conflicts stop with recovery information. Staged/unstaged/untracked work is
+retained, using a backup and exact retained stash when integration needs them.
+Only on a local `-done` branch does the fixed helper verify the exact GitHub
+PR as merged and contained in the fetched base before creating the next work
+branch and carrying work over. Missing or unmerged PR evidence stops that
+transition. Ordinary branches do not query PR merge state. Pull requires
+Git 2.45 or newer; its `-done` check also needs working GitHub CLI access.
 It never pushes. See [sync-pull.md](references/sync-pull.md) for recovery.
 
-`miku-scm sync push` includes the ordinary commit stage and then the existing
-draft/recommit/push transition. Run `repository.sync.push.prepare --apply`
-with a concrete `--message` when available, using the `work.commit` message
-rules below. If `prepared`, draft once from returned `evidence`, save exactly
-at `suggested_draft_path`, compute its byte SHA-256, and invoke
-`repository.sync.push.apply --operation <returned-id>
+`miku-scm sync push` stages and commits all ordinary non-ignored pending work
+when dirty, then drafts PR text, backs up and collapses the branch's commits
+into one PR-text commit, pushes the work branch, and renames the local branch
+with `-done`. Clean work skips the ordinary commit; no commits above the base
+ends as `up-to-date` without drafting or publication. Push supports macOS and
+native Windows, and rejects a frozen `-done` branch.
+
+Run `repository.sync.push.prepare --repo <target-repo> --apply` with a concrete
+`--message` when available, using the `work.commit` message rules below.
+If `prepared`, draft once from returned `evidence` and its `writing_contract`,
+save exactly at `suggested_draft_path`, compute its byte SHA-256, and invoke
+`repository.sync.push.apply --repo <same-target-repo> --operation <returned-id>
 --expected-plan-sha256 <returned-plan-digest> --pr-draft <suggested-path>
 --expected-draft-sha256 <saved-byte-digest> --apply` in the same user turn.
 Carry the same-session values; no confirmation is needed between successful
-steps. If not prepared, return that fixed stop/no-op. Never add an automatic
-pull or version increment. PR creation and merge remain the human's step.
+steps. If not prepared, return that fixed stop/no-op. A changed base stops for
+an explicitly requested `sync pull` and fresh preparation; an ordinary commit
+already made is retained. Never add an automatic pull or version increment.
+PR creation and merge remain the human's step; tag/Release work is separate.
 See [sync-push.md](references/sync-push.md) for cancellation and recovery.
 
 Naming, design and explanation requests about sync do not authorize its

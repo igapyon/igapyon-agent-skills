@@ -18,7 +18,7 @@ update_when:
 
 ## Status
 
-2026-10-26：両機能をfixed helper、runner、manifest、CLI/help、human output v14、契約、SKILLとreferencesへ実装。full suite 368/368、skill index policy 78/78、validator、版整合を確認。[実装計画と検証記録](skills/igapyon-miku-scm/docs/2026-10-26-sync-implementation-plan.md)を参照。後続の明示依頼で共通版を `1.20261026.4` / Mikukuを `20261026d` にincrementし、`mvn validate`で確認した。実装・版更新は未stage・未commit。実repoへのsync、配備、commit/push、GitHubへの書き込みは行っていない。
+2026-10-26：sync pull/pushに加え、候補版数human output修正をsourceへ実装。human output v15、契約更新、5ケースと実producer接続テストを含み、focused 45/45、full suite 374/374、contract 37件check、`mvn validate`、`git diff --check`が成功。[候補版数修正計画と検証記録](skills/igapyon-miku-scm/docs/2026-10-26-version-candidate-output-fix-plan.md)を参照。現在版は共通 `1.20261026.5` / Mikuku `20261026e`。作業ツリーは未stage・未commit。native Windows/hosted CI再確認、package/配備、commit/pushは未実施。
 
 ## Done
 
@@ -30,7 +30,7 @@ update_when:
 
 ## Resume
 
-最終確認：実装時点のfast 204/204、契約37件のdriftなし、ローカルリンク45件、差分検査が成功。increment前の `1.20261026.3` ZIPは27スキルとsourceを照合済み。現在版 `.4` のpackageは未実施。
+最終確認：focused 45/45、full 374/374、契約37件check、`mvn validate`、`git diff --check`成功。候補修正のnative Windows/hosted CI確認と現在版 `.5` packageは未実施。
 
 次回は最新の利用者依頼と実際のGit状態から対象を決め、`HANDOFF.md` と `TODO.md` 冒頭を確認する。syncの基本実装を繰り返さず、公開・配備・実機検証は依頼範囲に応じて行う。
 
