@@ -1,12 +1,12 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
-import { createNextWorkBranch, nextWorkAdvice, workBranchName } from "./post-merge-next-work.mjs";
+import { inspectNextWorkBranch, nextWorkAdvice, prepareNextWorkBranch, switchNextWorkBranch, workBranchName } from "./post-merge-next-work.mjs";
 import { verifyMergedPull } from "./miku-scm-sync-merge-check.mjs";
-import { SHA, afterAction, ancestor, assertIdle, assertRemote, assertSnapshot, beforeAction, branch, checkPending, failure, fetchBase, head, loadOperation, newId, newOperation, openSync, readBaseRecord, readJson, remoteState, resolveBase, saveBaseRecord, saveOperation, snapshot } from "./miku-scm-sync-state.mjs";
+import { SHA, afterAction, ancestor, assertIdle, assertRemote, assertSnapshot, beforeAction, branch, checkPending, failure, fetchBase, head, loadOperation, newId, newOperation, openSync, readBaseRecord, readJson, remoteState, requireFetchBranch, resolveBase, saveBaseRecord, saveOperation, snapshot } from "./miku-scm-sync-state.mjs";
 import { createBackup, guardIgnored, integrateGit, locateStash, rebaseIdentity, requireGitCapabilities, restoreWork, stashWork, verifyLocation } from "./miku-scm-sync-worktree.mjs";
 
 export function parseArgs(argv, cwd = process.cwd()) {
-  const o = { repo: cwd, remote: "origin", base: "", apply: false, resume: "", abort: "", empty: "", resolvedCarryover: false, help: false };
+  const o = { repo: cwd, remote: "origin", base: "", apply: false, resume: "", abort: "", empty: "", resolvedCarryover: false, resolvedNextWork: false, help: false };
   const fields = { "--repo": "repo", "--remote": "remote", "--base": "base", "--resume": "resume", "--abort": "abort", "--empty": "empty" };
   const seen = new Set();
   for (let i = 0; i < argv.length; i++) {
@@ -16,6 +16,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
     if (a === "--help" || a === "-h") o.help = true;
     else if (a === "--apply") o.apply = true;
     else if (a === "--resolved-carryover") o.resolvedCarryover = true;
+    else if (a === "--resolved-next-work") o.resolvedNextWork = true;
     else if (fields[a]) { if (!argv[i + 1] || argv[i + 1].startsWith("--")) throw new Error(`Missing value: ${a}`); o[fields[a]] = argv[++i]; }
     else throw new Error(`Unknown argument: ${a}`);
   }
@@ -24,6 +25,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
   if (o.resume && o.abort) throw new Error("--resume and --abort are exclusive");
   if (o.empty && (!o.resume || !["keep", "drop"].includes(o.empty))) throw new Error("--empty keep|drop requires --resume");
   if (o.resolvedCarryover && !o.resume) throw new Error("--resolved-carryover requires --resume and a reviewed carryover resolution");
+  if (o.resolvedNextWork && !o.resume) throw new Error("--resolved-next-work requires --resume and a reviewed branch/checkout resolution");
   if ((o.resume || o.abort) && (seen.has("--remote") || seen.has("--base"))) throw new Error("Recovery uses the saved remote and base");
   return o;
 }
@@ -68,6 +70,53 @@ async function complete(ctx, op, aborted = false) {
   return result(ctx, op, aborted ? "aborted" : op.method === "up-to-date" ? "up-to-date" : "completed");
 }
 
+async function integrateNextWork(ctx, op, options = {}) {
+  const onOriginal = () => branch(ctx) === op.original.branch && head(ctx) === op.original.head;
+  const onNext = () => branch(ctx) === op.next_branch && head(ctx) === op.base_sha;
+  const requireCleanOriginal = () => {
+    if (!onOriginal() || ctx.git(ctx.root, ["status", "--porcelain"]).out) throw new Error("Next-work checkout requires the original clean branch and HEAD");
+  };
+  if (!op.next_work || op.next_work.phase === "creating") {
+    const exists = ctx.git(ctx.root, ["show-ref", "--verify", "--quiet", `refs/heads/${op.next_branch}`], { allowFailure: true }).ok;
+    let prepared;
+    if (exists) {
+      if (!options.resolvedNextWork) throw new Error("Next-work preparation has no complete receipt; inspect its branch configuration and checkout hook, then resume with --resolved-next-work");
+      if (!onNext()) requireCleanOriginal();
+      prepared = inspectNextWorkBranch(ctx.root, op.next_branch, op.base_sha, ctx.git);
+    } else {
+      requireCleanOriginal();
+      op.next_work = { phase: "creating" };
+      await beforeAction(ctx, op, "next-work-create");
+      prepared = prepareNextWorkBranch(ctx.root, op.next_branch, op.base_sha, op.base.ref, ctx.git);
+    }
+    op.next_work = { phase: onNext() ? "switched" : "prepared", ...prepared };
+    await saveOperation(ctx, op);
+  }
+  if (["switching", "checkout-failed"].includes(op.next_work.phase)) {
+    if (!options.resolvedNextWork) throw new Error("Next-work checkout or its hook is unconfirmed; inspect and resolve it, then resume with --resolved-next-work");
+    if (!onNext()) requireCleanOriginal();
+    op.next_work.phase = onNext() ? "switched" : "prepared";
+    await saveOperation(ctx, op);
+  }
+  if (op.next_work.phase === "prepared") {
+    requireCleanOriginal();
+    const prepared = inspectNextWorkBranch(ctx.root, op.next_branch, op.base_sha, ctx.git);
+    if (prepared.upstream !== op.next_work.upstream && !options.resolvedNextWork) throw new Error("Prepared next-work tracking configuration changed; inspect it before --resolved-next-work");
+    assertRemote(ctx, op.remote);
+    await guardIgnored(ctx, [op.base_sha]);
+    await beforeAction(ctx, op, "next-work-switch");
+    op.next_work.phase = "switching";
+    await saveOperation(ctx, op);
+    try { switchNextWorkBranch(ctx.root, op.next_branch, op.base_sha, ctx.git); }
+    catch (error) { op.next_work.phase = "checkout-failed"; await saveOperation(ctx, op); throw error; }
+    op.next_work.phase = "switched";
+    await afterAction(ctx, op);
+  }
+  if (op.next_work.phase !== "switched" || !onNext()) throw new Error("Next-work checkout does not match its saved branch and pinned HEAD");
+  op.integrated_head = op.base_sha;
+  await saveOperation(ctx, op);
+}
+
 async function recover(ctx, op, options) {
   if (op.type !== "pull" || !["partial", "running"].includes(op.status)) throw new Error("This pull operation cannot be resumed or aborted");
   assertRemote(ctx, op.remote);
@@ -76,6 +125,7 @@ async function recover(ctx, op, options) {
     if (!op.stash_sha) throw new Error("The interrupted stash cannot be identified; preserve current work and inspect the operation explicitly");
   }
   const rebasing = await rebaseIdentity(ctx, op);
+  if (options.resolvedNextWork && op.method !== "next-work") throw new Error("--resolved-next-work only applies to a saved next-work transition");
   if (options.abort) {
     if (op.restore_started) throw new Error("Restoration has started; preserve the resolution and recover from the retained backup/stash explicitly");
     if (rebasing) {
@@ -87,7 +137,10 @@ async function recover(ctx, op, options) {
     if (op.stash_sha) await restoreWork(ctx, op);
     return complete(ctx, op, true);
   }
-  if (rebasing) {
+  if (op.method === "next-work") {
+    if (rebasing) throw new Error("An unexpected rebase blocks next-work recovery");
+    await integrateNextWork(ctx, op, options);
+  } else if (rebasing) {
     if (ctx.git(ctx.root, ["ls-files", "--unmerged", "-z"]).stdout) throw new Error("Resolve and stage rebase conflicts before resuming");
     const dirtyIndex = ctx.git(ctx.root, ["diff", "--cached", "--quiet"], { allowFailure: true });
     if (dirtyIndex.code !== 0 && dirtyIndex.code !== 1) throw new Error("Cannot inspect rebase resolution");
@@ -104,8 +157,8 @@ async function recover(ctx, op, options) {
     await saveOperation(ctx, op);
   } else if (!op.integrated_head) {
     // Crash after Git completed, before its receipt: recognize only a pinned
-    // FF/new branch. A finished rebase needs explicit inspection, never replay.
-    if (["fast-forward", "next-work"].includes(op.method) && head(ctx) === op.base_sha) {
+    // FF. A finished rebase needs explicit inspection, never replay.
+    if (op.method === "fast-forward" && head(ctx) === op.base_sha) {
       verifyLocation(ctx, op, op.base_sha);
       op.integrated_head = op.base_sha;
       await saveOperation(ctx, op);
@@ -155,6 +208,7 @@ export async function runSyncPull(options, dependencies = {}) {
       if (record && (!ancestor(ctx, record.base_sha, initial.head) || !ancestor(ctx, record.base_sha, op.base_sha))) throw new Error("Recorded branch base is missing from HEAD or the fetched base; history was rewritten");
       op.method = ancestor(ctx, op.base_sha, initial.head) ? "up-to-date" : ancestor(ctx, initial.head, op.base_sha) ? "fast-forward" : "rebase";
       if (op.method === "rebase") {
+        if (!requireFetchBranch(ctx, remote, base.name).complete_heads) throw new Error("Configured fetch excludes remote heads; automatic rebase requires complete publication evidence. Preserve the fetch configuration and use separate integration");
         if (!record) throw new Error("Branch creation base is unknown; automatic replay is unsafe");
         if (ctx.git(ctx.root, ["rev-list", "--merges", `${record.base_sha}..${initial.head}`]).out) throw new Error("Local merge commits require separate integration");
         op.commits = ctx.git(ctx.root, ["rev-list", "--reverse", `${record.base_sha}..${initial.head}`]).out.split("\n").filter(Boolean);
@@ -177,7 +231,7 @@ export async function runSyncPull(options, dependencies = {}) {
     await guardIgnored(ctx, [op.base_sha, ...(op.commits ?? [])]);
     let integrated;
     if (op.method === "next-work") {
-      createNextWorkBranch(ctx.root, op.next_branch, op.base_sha, ctx.git);
+      await integrateNextWork(ctx, op);
       integrated = true;
     } else if (op.method === "fast-forward") integrated = ctx.git(ctx.root, ["merge", "--ff-only", "--no-overwrite-ignore", op.base_sha], { allowFailure: true }).ok;
     else integrated = integrateGit(ctx, ["rebase", "--merge", "--reapply-cherry-picks", "--empty=stop", "--keep-empty", "--no-autostash", "--no-autosquash", "--no-update-refs", "--no-fork-point", "--onto", op.base_sha, op.record_base], { allowFailure: true }).ok;

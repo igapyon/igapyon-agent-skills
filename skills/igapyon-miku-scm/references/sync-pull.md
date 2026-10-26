@@ -26,10 +26,21 @@ The default remote is `origin`. Resolve the shared base in this order:
 If unresolved, stop and request the intended `--base`; do not guess a
 different branch. The current branch must differ from the base branch.
 
+Fetch uses `git fetch <remote>` and honors the configured branch refspecs and
+`remote.<name>.tagOpt`, including normal automatic tag following. Supported
+refspecs map `refs/heads/` into the selected remote's `refs/remotes/` namespace,
+using exact names or one wildcard, with optional negative branch refspecs.
+The base must map to its expected remote-tracking ref and must not be excluded;
+unsupported mappings stop before fetch. No excluded branch is fetched by override.
+Narrowed mappings support no-op, fast-forward and verified next-work transitions.
+Divergent replay requires complete remote-head coverage without exclusions;
+otherwise stop before backup/stash because publication evidence is incomplete.
+
 ## Transition
 
 The helper fixes the real worktree, remote identity and expanded fetch/push
-URL digests, branch, HEAD, binary index/working diffs and untracked contents.
+URL digests and fetch/tag configuration, branch, HEAD, binary index/working
+diffs and untracked contents.
 It uses a common-Git-directory execution lock and a persistent operation
 journal under ignored `workplace/miku-scm/sync/`. Existing merge, rebase,
 cherry-pick, conflicts, detached HEAD, shallow history, sparse checkout and
@@ -96,6 +107,13 @@ Require exact head repository/ref/SHA and base repository/ref, then detailed
 and rebase merges and deleted remote work branches. The suffix alone is not
 merge evidence. Create one next branch from the pinned fetched base through
 the shared next-work core, then carry work over; never replay the old PR.
+Prepare the branch and its configuration before checkout so post-checkout
+hooks see the final tracking configuration. Git's `branch.autoSetupMerge` and
+`branch.autoSetupRebase` settings are preserved. Under the normal tracking
+default, `git status -sb` reports `## <next-branch>...<remote>/<base>`; settings
+that disable or restrict tracking are respected. Verify the shared ref before
+branch creation and the created branch's SHA before checkout; a moved ref
+stops the transition before switching to an unreviewed commit.
 An already recorded transition cannot create more next branches.
 
 This is a narrow frozen-branch exception authorized by `sync pull`. The
@@ -117,9 +135,19 @@ Only an explicit recovery request authorizes one of:
 repository.sync.pull --repo <path> --resume <operation-id> --apply
 repository.sync.pull --repo <path> --resume <operation-id> --empty <keep|drop> --apply
 repository.sync.pull --repo <path> --resume <operation-id> --resolved-carryover --apply
+repository.sync.pull --repo <path> --resume <operation-id> --resolved-next-work --apply
 repository.sync.pull --repo <path> --abort <operation-id> --apply
 ```
 
+For an interrupted next-work transition with a complete preparation receipt,
+resume verifies and switches to the same prepared branch without creating
+another branch, fetching or stashing again. If preparation has no complete
+receipt, or a checkout/hook outcome is unconfirmed, inspect the saved branch,
+pinned HEAD, tracking configuration and hook outcome first. Only an explicit
+confirmation of that resolution authorizes `--resolved-next-work`. When
+already on the verified next branch, this continues without rerunning its hook.
+This flag does not confirm a carryover resolution; that still requires
+`--resolved-carryover` when applicable.
 Resume verifies the same rebase original HEAD, branch and onto SHA, requires
 conflicts resolved/staged, and continues without fetching or stashing again.
 For an empty stopped commit require the explicit keep/drop selection. Abort

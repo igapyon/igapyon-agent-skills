@@ -16,6 +16,13 @@ The default remote is `origin`; shared-base selection follows
 fetch URL and a single push URL that identify the same repository. A local
 `-done` branch is frozen and cannot start this operation.
 
+Fetch honors the remote's branch refspecs and tag settings under the
+[pull mapping rules](sync-pull.md#requirements-and-base-selection). Both the
+shared base and, when publication is needed, the work branch must map to their
+expected remote-tracking refs. A clean no-op needs only the base mapping.
+An unfetchable publication branch stops before an
+ordinary commit; sync does not expand the configured fetch range to repair it.
+
 The ordinary commit stage includes all current ordinary non-ignored staged,
 unstaged and untracked changes, including work outside the latest request;
 the existing `work.commit` sensitive-path and validation checks still apply.
@@ -72,7 +79,8 @@ Require exact contained plan identity/digest, current apply contract, prepared
 unconsumed operation, original clean snapshot, exact suggested draft path and
 draft bytes. Expand actual `remote get-url --all` and `--push --all` URLs;
 require one fetch and push URL for the same repository and reject mirrors.
-Bind their full digest without storing credentials. Revalidate at apply,
+Bind their full digest and the fetch/tag configuration without storing
+credentials. Revalidate at apply,
 inside the recommit core immediately before backup/reset, and before remote
 fetch/push/verification. Bind the prepared remote branch expectation too.
 

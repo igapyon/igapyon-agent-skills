@@ -6,7 +6,7 @@ import { runWorkCommit } from "./work-commit.mjs";
 import { runPublish } from "./post-recommit-publish.mjs";
 import { runRecommitPush } from "./pr-recommit-push.mjs";
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
-import { ancestor, assertIdle, assertRemote, assertSnapshot, beforeAction, branch, checkPending, checkedId, failure, fetchBase, hash, head, loadOperation, newId, newOperation, openSync, operationPath, readJson, remoteState, resolveBase, saveOperation, snapshot, writeJson } from "./miku-scm-sync-state.mjs";
+import { ancestor, assertIdle, assertRemote, assertSnapshot, beforeAction, branch, checkPending, checkedId, failure, fetchBase, hash, head, loadOperation, newId, newOperation, openSync, operationPath, readJson, remoteState, requireFetchBranch, resolveBase, saveOperation, snapshot, writeJson } from "./miku-scm-sync-state.mjs";
 
 export function parseArgs(mode, argv, cwd = process.cwd()) {
   const o = { repo: cwd, remote: "origin", base: "", message: "", operation: "", resume: "", cancel: "", expectedPlanSha256: "", prDraft: "", expectedDraftSha256: "", apply: false, help: false };
@@ -92,6 +92,7 @@ export async function prepareSyncPush(options, dependencies = {}) {
       await saveOperation(ctx, op);
       return { status: "not-applied", stage: "base", reason: "Base advanced; run sync pull before sync push", operation_id: id, mutation_invoked: false };
     }
+    if (initial.dirty || initial.head !== op.base_sha) requireFetchBranch(ctx, remote, initial.branch);
     // Publication blockers that are knowable now must precede an ordinary commit.
     if (ctx.git(ctx.root, ["show-ref", "--verify", "--quiet", `refs/heads/${initial.branch}-done`], { allowFailure: true }).ok) throw new Error("The local completion branch already exists");
     const preflight = await (dependencies.publish ?? runPublish)({ repo: ctx.root, remote: remote.name, expectedHead: initial.head, apply: false }, { ...dependencies.publishDependencies, allowDirtyPreflight: true });

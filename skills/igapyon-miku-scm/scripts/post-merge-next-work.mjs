@@ -41,13 +41,32 @@ export function workBranchName(base, date = new Date()) {
   const abc = (n) => String.fromCharCode(97 + n);
   return `${base}-tiga${String(parts.month).padStart(2, "0")}${String(parts.day).padStart(2, "0")}${abc(parts.hour)}${abc(Math.floor(parts.minute / 10))}${abc(parts.minute % 10)}`;
 }
+export function inspectNextWorkBranch(root, next, baseCommit, git = runner) {
+  if (git(root, ["rev-parse", "--verify", `refs/heads/${next}^{commit}`]).out !== baseCommit) throw new Error("Next work branch no longer points to the pinned base");
+  return { upstream: git(root, ["for-each-ref", "--format=%(upstream)", `refs/heads/${next}`]).out };
+}
 // Shared creation core. Authorization belongs to the caller: the legacy route
 // requires a human merge report; sync requires exact GitHub merge evidence.
-export function createNextWorkBranch(root, next, baseCommit, git = runner) {
+export function prepareNextWorkBranch(root, next, baseCommit, upstream, git = runner) {
   if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(baseCommit)) throw new Error("Next work base must be a pinned commit");
+  if (!upstream.startsWith("refs/remotes/")) throw new Error("Next work upstream must be a remote-tracking ref");
   git(root, ["check-ref-format", "--branch", next]);
-  git(root, ["switch", "--no-overwrite-ignore", "-c", next, baseCommit]);
+  git(root, ["check-ref-format", upstream]);
+  if (git(root, ["rev-parse", "--verify", `${upstream}^{commit}`]).out !== baseCommit) throw new Error("Shared base changed before next work branch creation");
+  // Git applies autoSetupMerge/autoSetupRebase while creating this ref. Verify
+  // its pinned target before checkout, so the hook sees the final configuration.
+  git(root, ["branch", next, upstream]);
+  return inspectNextWorkBranch(root, next, baseCommit, git);
+}
+export function switchNextWorkBranch(root, next, baseCommit, git = runner) {
+  inspectNextWorkBranch(root, next, baseCommit, git);
+  git(root, ["switch", "--no-overwrite-ignore", next]);
   if (git(root, ["branch", "--show-current"]).out !== next || git(root, ["rev-parse", "HEAD"]).out !== baseCommit) throw new Error("Post-create verification failed");
+}
+export function createNextWorkBranch(root, next, baseCommit, upstream, git = runner) {
+  const prepared = prepareNextWorkBranch(root, next, baseCommit, upstream, git);
+  switchNextWorkBranch(root, next, baseCommit, git);
+  return prepared;
 }
 function baseFromDoneBranch(branch) {
   return branch.match(/^(.+)-tiga\d{4}[a-x][a-j][a-j]-done$/)?.[1] ?? "";
@@ -141,7 +160,7 @@ export async function run(options, dependencies = {}) {
     }
     stage = "branch-create";
     mutationInvoked = true;
-    createNextWorkBranch(root, next, baseCommit, git);
+    createNextWorkBranch(root, next, baseCommit, `refs/remotes/${options.remote}/${base}`, git);
     stage = "branch-verify";
     const comparison = git(root, ["rev-list", "--left-right", "--count", `HEAD...${remoteBase}`]).out.replace(/\s+/g, " ");
     if (git(root, ["branch", "--show-current"]).out !== next || git(root, ["rev-parse", "HEAD"]).out !== baseCommit || comparison !== "0 0" || git(root, ["status", "--porcelain"]).out) throw new Error("Post-create verification failed");
