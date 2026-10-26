@@ -7,9 +7,15 @@ description: Use for managing an igapyon daybook's activity, schedule, task, day
 
 Manage the Markdown records in a daybook repository. The records are the source of truth; generated day-plans and GitHub notifications are derived views.
 
-The task/activity recording policy draws on MIT OpenCourseWare's [Guidelines for Keeping a Laboratory Notebook](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/b4c64ac11fc0a68466af7e025e29bf3e_lab_notebook.pdf), a course resource for *7.16 Experimental Molecular Biology: Biotechnology II* (Spring 2005). Keep a task's latest conclusion, state, and next actions with a brief history; keep dated work, trials, observations, and decision reasons in activities. This separation adapts the notebook approach to task management. See [task and activity responsibilities](references/operations.md#task-and-activity-responsibilities) for the editing rules.
+The task/activity recording policy is informed by both the user's practical daybook experience and MIT OpenCourseWare's [Guidelines for Keeping a Laboratory Notebook](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/b4c64ac11fc0a68466af7e025e29bf3e_lab_notebook.pdf), a course resource for *7.16 Experimental Molecular Biology: Biotechnology II* (Spring 2005). Use the material's guidance on prompt recording, observations and results, and review and next steps as supporting rationale for recording decisions. The preference for activity capture followed by task consolidation when needed is a daybook-specific judgment developed from that guidance and experience.
+
+Keep a task's latest conclusion, state, and next actions with a brief history; keep dated work, trials, observations, and decision reasons in activities. See [task and activity responsibilities](references/operations.md#task-and-activity-responsibilities) for the editing rules.
 
 Unless the user specifies another style, write narrative prose in daybook records in Japanese polite form (です・ます調). Bullet items may use concise plain-form sentences or noun phrases; do not force polite endings on every bullet.
+
+## Terminology
+
+`task-id` (task ID) is a task's persistent identifier: its front matter `id` value in `task-YYYYMM-NNNNN` format, for example `task-202610-00014`. The same value forms the task filename's ID prefix and its attachment folder name. Use `task-id` when referring to this identifier; keep the YAML field name as `id`.
 
 ## Activation and boundaries
 
@@ -26,6 +32,7 @@ Weekly recurrence is maintained only for an explicit weekly-task registration or
 3. Read only the reference needed for the current operation:
    - [records.md](references/records.md) for schemas, paths, IDs, and dates.
    - [operations.md](references/operations.md) for add, update, list, activity, schedule, and day-plan workflows.
+   - [attachments.md](references/attachments.md) before storing supplied material or supporting files; it defines text-first retention, external references, temporary work files, and the extremely rare binary exception.
    - [notification.md](references/notification.md) for GitHub Actions workflow generation or email notification troubleshooting.
    - [issue-import.md](references/issue-import.md) only for an explicit request to import GitHub Issue(s).
    - [url-task-lookup.md](references/url-task-lookup.md) only for an explicit request to find daybook tasks related to a URL.
@@ -33,7 +40,7 @@ Weekly recurrence is maintained only for an explicit weekly-task registration or
 
 ## Core workflow
 
-Classify the request before editing: task, schedule, activity, task list, day-plan, waypoint, explicit URL-to-task lookup, explicit Issue import, notification, explanation, or explicit weekly-task maintenance. Resolve an existing record by its full ID/path/title before creating a new one. When a request is ambiguous, use the available date, month, title, and links to narrow it; do not create a duplicate silently. Keep checks and edits within the requested records and information directly needed for their consistency.
+Classify the request before editing: task, schedule, activity, task list, day-plan, waypoint, explicit URL-to-task lookup, explicit Issue import, notification, explanation, or explicit weekly-task maintenance. When choosing between activity and task for a recording request, prefer an activity unless the request clearly calls for registering future work or editing a task. If only that classification is unclear, choose an activity without a classification question. Resolve an existing record by its full ID/path/title before creating a new one. When record identity is ambiguous, use the available date, month, title, and links to narrow it; do not create a duplicate silently. Keep checks and edits within the requested records and information directly needed for their consistency.
 
 For an explicit waypoint request, follow [waypoints.md](references/waypoints.md). A waypoint is a short resume entry that points to canonical task and activity records; it does not replace them. Numbered entries are for independently resumable subwork, not a second task plan.
 
@@ -45,9 +52,9 @@ When the user explicitly registers a weekly recurring task, keep one active task
 
 For schedules, use `status: scheduled` or `status: cancelled`. Keep cancellation separate from the user's participation decision; cancelled events stay in the source records but are omitted from generated day-plans. Read [records.md](references/records.md) for legacy handling.
 
-For a report of work or investigation actually performed, update the activity file for the Asia/Tokyo date. Keep one coherent event or work episode in one activity item, including a readable account of trial and error and decision reasons when known. An investigation without a conclusion is also an activity. An activity-only request does not add a task edit; update a task only when task editing is in scope, and use [Task completion and scope](references/operations.md#task-completion-and-scope) to decide whether completion is established.
+For a report of work or investigation actually performed, update the activity file for the Asia/Tokyo date. Keep one coherent event or work episode in one activity item, including a readable account of trial and error and decision reasons when known. An investigation without a conclusion is also an activity. Keep detailed accounts in activities; when task editing is in scope, consolidate the current conclusions, state, and next actions into the task with links to the activities, without copying the detailed account. An activity-only request does not add a task edit; update a task only when task editing is in scope, and use [Task completion and scope](references/operations.md#task-completion-and-scope) to decide whether completion is established.
 
-For supplied files intended as supporting material, store them under `YYYY/YYYYMM/attachments/<record-key>/` in the primary record's month and link them relatively from the record. Use a task ID or schedule/activity filename stem as the key. Keep one copy of a shared file and do not copy attachments into generated day-plans.
+Before retaining supplied material, follow [attachments.md](references/attachments.md): put useful facts in the record when sufficient; keep attachments as necessary text by default; manage originals elsewhere and link to a stable reference. Retaining a binary in Git is an extremely rare, file-specific exception. Keep temporary originals and conversion intermediates under a verified Git-ignored `workplace/` path or outside the repository. For retained text attachments, use the primary record's month: tasks use `attachments/<task-id>/`, while activities and schedules use the filename stem under `attachments/`. Link relatively, keep one copy of shared material, and do not copy attachments into generated day-plans.
 
 For day-plan generation, use the target repository's updated `scripts/generate-day-plan.mjs` with its default output root so the file is written to the canonical `YYYY/YYYYMM/day-plan/day-plan-YYYYMMDD.md` path under the target repository root. Use today's Asia/Tokyo date unless the user specifies another date. Set `--output-root` only when a separate staging directory is explicitly needed. The target date plus six days is the display window. The generated plan separates today's work and other date-based task groups from a dedicated Backlog section. Active `planning_state: backlog` tasks from all months appear only in Backlog, regardless of dates or priority; completed/cancelled tasks stay excluded. Schedules remain date-based. Display both ends of each planned task period. Sort today's tasks by priority, and sort dated task sections by date then priority, using full task ID as the final tie-breaker. Priority affects ordering only, not task selection. Regeneration overwrites the existing day-plan for that date; treat it as a generated snapshot and do not edit it as a source record. Do not reimplement this selection in the skill.
 

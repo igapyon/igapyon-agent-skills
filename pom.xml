@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20261024.4</version>
+  <version>1.20261026.2</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -45,6 +45,9 @@
     <external.miku-score-skills.repo>https://github.com/igapyon/miku-score-skills.git</external.miku-score-skills.repo>
     <external.miku-score-skills.ref>f40727cb87df3123ea26e055fe616d421860d423</external.miku-score-skills.ref>
     <external.miku-score-skills.skillName>igapyon-miku-score</external.miku-score-skills.skillName>
+    <external.miku-toolbox-skills.repo>https://github.com/igapyon/miku-toolbox-skills.git</external.miku-toolbox-skills.repo>
+    <external.miku-toolbox-skills.ref>ecc03c3dec6019845535140d3b920ade9909d7c2</external.miku-toolbox-skills.ref>
+    <external.miku-toolbox-skills.skillName>igapyon-miku-toolbox</external.miku-toolbox-skills.skillName>
   </properties>
 
   <build>
@@ -194,6 +197,9 @@
                 <argument>${external.miku-score-skills.repo}</argument>
                 <argument>${external.miku-score-skills.ref}</argument>
                 <argument>${external.miku-score-skills.skillName}</argument>
+                <argument>${external.miku-toolbox-skills.repo}</argument>
+                <argument>${external.miku-toolbox-skills.ref}</argument>
+                <argument>${external.miku-toolbox-skills.skillName}</argument>
               </arguments>
             </configuration>
           </execution>

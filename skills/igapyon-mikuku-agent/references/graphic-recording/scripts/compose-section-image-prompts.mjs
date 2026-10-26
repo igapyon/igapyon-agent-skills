@@ -111,7 +111,24 @@ async function writeNewOrSame(filePath, content, overwrite) {
   return "written";
 }
 
+function deviationRecordFromSectionText(sectionText) {
+  const heading = sectionText.match(/^##\s+変更（deviation）\s*$/mu);
+  if (!heading) return "- none";
+  const remaining = sectionText.slice(heading.index + heading[0].length);
+  const nextHeading = remaining.search(/^##\s+/mu);
+  return remaining.slice(0, nextHeading < 0 ? undefined : nextHeading).trim() || "- none";
+}
+
 function buildImagePrompt({ section, title, sectionText, mikukuPromptPath, mikukuPromptText }) {
+  const deviationRecord = deviationRecordFromSectionText(sectionText);
+  const necessaryHands = /手指|手や指|手と指|hands?|fingers?/iu.test(deviationRecord)
+    && /理由|必要|reason|because|requested|依頼|明示指定/iu.test(deviationRecord);
+  const handDirection = necessaryHands
+    ? "The hand or finger depiction is essential to this explanation. Do not hide or crop the required hands or fingers; depict only the necessary portion described in the section summary and Deviation Record. Allow wider upper-body framing if needed."
+    : "Mikuku's hands and fingers are outside the scope of illustration by default. Keep Mikuku's hands and fingers outside the frame. Prefer a head-and-shoulders view and do not add hand gestures.";
+  const handVisualDirection = necessaryHands
+    ? "どうしても必要な手指の描写は妨げず、必要な範囲だけ描く。画面外に隠す制約は適用しない。判断理由は下の Deviation Record に引き継ぐ"
+    : "手指は原則描写対象外として画面外に置き、説明に不要な手のジェスチャーを加えない";
   return `# Section Graphic Recording Image Prompt
 
 ## Source
@@ -137,6 +154,7 @@ Use only the section summary below as the explanation source. Do not mix in othe
 - canonical character lighting must not darken the poster background
 - use at least a left, center, and right region and make one article-grounded diagram the largest element
 - keep Mikuku recognizable and large enough to read as the explaining character (roughly 15–25% of the canvas)
+- ${handDirection}
 - include one short speech bubble based on the section summary or its \`グラレコ構図案\`
 - do not add scenic background decoration that is not grounded in the section
 
@@ -166,12 +184,13 @@ ${mikukuPromptText.trim()}
 - 図解、矢印、囲み、アイコンを使う
 - セクション本文に基づく重要語だけを使う
 - みくくの短い吹き出しを入れる
-- みくくを極端に小さくしたり、吹き出しを黙って削除したりしない。変更する場合は下の deviation に理由を書く
+- みくくは画面の15〜25%を占める説明役として描き、短い吹き出しを含める。固定条件を変更する場合は下の deviation に理由を書く
 - 日本語ラベルは短く、少数に絞る
 - 長文を画像内に入れすぎない
 - 明るく清潔で、Note.com や技術記事に合うビジュアル
 - 写実寄り、暗い色味、無機質な企業プレゼン風は避ける
-- みくくに物を持たせない
+- みくくには不要な物を持たせない
+- ${handVisualDirection}
 
 ## Image Text Policy
 
@@ -186,7 +205,7 @@ ${mikukuPromptText.trim()}
 
 ## Deviation Record
 
-- none
+${deviationRecord}
 
 ## Output Target
 

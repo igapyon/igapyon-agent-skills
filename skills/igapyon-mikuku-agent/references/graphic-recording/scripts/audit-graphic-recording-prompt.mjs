@@ -75,6 +75,12 @@ function addCheck(checks, status, name, detail) {
   checks.push({ status, name, detail });
 }
 
+function hasHandException(markdown, heading) {
+  const deviation = sectionBody(markdown, heading);
+  return /手指|手や指|手と指|hands?|fingers?/iu.test(deviation)
+    && /理由|必要|reason|because|requested|依頼|明示指定/iu.test(deviation);
+}
+
 function auditPrompt({ graphicText, imagePrompt }) {
   const checks = [];
   const title = graphicText.match(/^#\s+(.+?)\s*$/mu)?.[1]?.trim() ?? "";
@@ -121,11 +127,29 @@ function auditPrompt({ graphicText, imagePrompt }) {
     [/横長|horizontal/iu, "horizontal-layout", "横長構図"],
     [/ベージュ|暖色|warm|beige|アイボリー|ivory|白|white/iu, "warm-paper", "紙面の配色指定（画像の明度は別途検品）"],
     [/手描き|hand[- ]drawn|graphic recording/iu, "hand-drawn-style", "手描きグラレコ"],
-    [/物を持たせない|do not let mikuku hold|no objects/iu, "no-objects", "みくくの持ち物なし"],
+    [/物を持たせない|do not let mikuku hold|no objects/iu, "no-objects", "みくくに不要な持ち物を加えない指定"],
     [/みくく|mikuku/iu, "character-present", "みくくの明示"],
   ];
   for (const [pattern, name, label] of styleChecks) {
     addCheck(checks, pattern.test(imagePrompt) ? "pass" : "error", name, pattern.test(imagePrompt) ? `${label}を確認しました。` : `${label}の指示がありません。`);
+  }
+
+  const sourceHandException = hasHandException(graphicText, "変更（deviation）");
+  const promptHandException = hasHandException(imagePrompt, "Deviation Record");
+  const handsOutsideFrame = [
+    /hands?\s+and\s+fingers?\s+(?:(?:must|should)\s+)?(?:(?:remain|stay|be)\s+)?(?:entirely\s+)?(?:outside|out\s+of)\s+(?:the\s+)?frame/iu,
+    /no\s+(?:visible\s+)?hands?\s*(?:,|and|or)\s*fingers?|do\s+not\s+(?:show|draw|depict)\s+(?:any\s+)?hands?\s*(?:,|and|or)\s*fingers?/iu,
+    /手(?:指|や指|と指)[^\n]*(?:画面外|フレーム外|描かない|描かず)/u,
+  ].some((pattern) => pattern.test(imagePrompt));
+  if (sourceHandException || promptHandException) {
+    const preserved = sourceHandException && promptHandException;
+    addCheck(checks, preserved ? "warn" : "error", "hands-outside-frame", preserved
+      ? "手指を描く例外理由を整理テキストと最終プロンプトに記録しています。生成画像の手指を別途検品してください。"
+      : "手指を描く例外理由を、整理テキストの変更（deviation）と最終プロンプトの Deviation Record の両方へ記録してください。");
+  } else {
+    addCheck(checks, handsOutsideFrame ? "pass" : "error", "hands-outside-frame", handsOutsideFrame
+      ? "手指を原則画面外に置く指示を確認しました。"
+      : "手指を原則画面外に置く指示がありません。物を持たせない指定だけでは不足します。");
   }
 
   const requiredKeywordCount = Math.min(3, keywords.length);

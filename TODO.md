@@ -1,5 +1,18 @@
 # TODO
 
+## miku-toolbox を外部スキルとして同梱（2026-10-26）
+
+- [x] igapyon-miku-toolbox を外部取り込み対象へ追加。v0.4.0 のコミット ecc03c3dec6019845535140d3b920ade9909d7c2 に固定。
+- [x] Maven の取得設定、index policy、配布 README の件数・カタログを更新。配布対象は合計27件（内製15件、外部12件）。
+- [x] 上流の固定コミットに index.json がないため、既存の外部 index policy に従って索引検査対象外とした。
+- [ ] ビルドと配布ZIP検査は未実施。
+
+## mikuku-agent：手指は原則対象外、どうしても必要な描写は妨げない（2026-10-26）
+
+- [x] 手指は原則描写対象外とする。どうしても必要な場合は画面外に隠す制約を外し、必要な描写を妨げない。制作上の判断として理由を短く残す。
+- [x] 共通スタイル、10〜60番の制作・検品手順、セクションプロンプト合成、生成前監査へ方針を反映。
+- [x] 「物を持たせない」だけでは監査を通さず、合成出力と例外理由の引き継ぎも確認。対象Nodeテスト13件とskill validatorが成功。
+
 ## miku-scm：Issue操作とapprove承認の改善（2026-10-23・source実装済み）
 
 計画と実施記録：[2026-10-23-issue-approval-implementation-plan.md](skills/igapyon-miku-scm/docs/2026-10-23-issue-approval-implementation-plan.md)。利用者の実装指示に基づきUX-00〜08をmiku-scm sourceへ反映した。
@@ -1260,6 +1273,10 @@ Update this section while working. Do not rewrite unrelated TODO items.
       contract drift check、`mvn generate-resources`、Skill validation、`git diff --check`を成功
       させた。sourceの`index.json`は更新済み。hosted macOS/Windows CI、commit、push、
       `~/.codex/skills`同期はユーザー指示がないため未実施であり、実装の未完了ではない。
+    - 2026-10-24: contract driftを検出して12 workflow分のgenerated lock/tableを再生成した。
+      `npm run test:github-writer`（34 pass）、contract drift check、generated index check、
+      Skill validation、`git diff --check`が成功。macOS arm64のbenchmarkを取得した。hosted
+      macOS/Windows CIとWindows 11実機acceptance smokeはこの環境から未実施。
 
 - [ ] [Current priority: miku-scm `work.commit` staged diff failure]
   stage済みの正当な変更を固定runnerがcommit前に`partial`として停止し、巨大な

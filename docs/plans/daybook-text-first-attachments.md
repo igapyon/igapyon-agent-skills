@@ -1,12 +1,12 @@
-# daybook：添付をテキスト中心にする仕様案
+# daybook：添付をテキスト中心にする設計記録
 
-作成日：2026-10-20。状態：**仕様検討案。運用ルールへの反映は後続工程**。
+作成日：2026-10-20。状態：**2026-10-26 に利用者の方針を確認し、運用ルールへ反映済み**。
 
 ## 1. 目的と利用者の指定
 
 Daybook の Git 管理下の容量が増え続けないよう、記録と補助資料を必要なテキストに絞る。画像・音声・動画の原本は原則格納しない。XLSX・DOCX などの Office 原本も極力格納せず、内容の保存が必要なら `igapyon-miku-ms-office` による Markdown 化を検討する。PDF もテキストへの変換を基本にする。
 
-この文書は、その指定を具体的な保存判断・変換・例外・導入手順へ落とした提案である。対象は daybook の task、schedule、activity に付随する資料であり、この agent-skills リポジトリの配布用 runtime や教材画像へ一律に適用する規則ではない。
+この文書は、その指定を具体的な保存判断・変換・例外・導入手順へ落とした設計記録である。対象は daybook の task、schedule、activity に付随する資料であり、この agent-skills リポジトリの配布用 runtime や教材画像へ一律に適用する規則ではない。運用上の正本は [attachments.md](../../skills/igapyon-miku-daybook/references/attachments.md)。
 
 ## 2. 現行仕様と変更の必要性
 
@@ -14,12 +14,12 @@ Daybook の Git 管理下の容量が増え続けないよう、記録と補助�
 
 | 調査した箇所 | 現行の案内 | 仕様反映時の変更 |
 | --- | --- | --- |
-| [SKILL.md](../../skills/igapyon-miku-daybook/SKILL.md) の添付案内 | supplied files を `attachments/<record-key>/` へ保存 | 保存前の判定とテキスト優先方針を入口に置く |
+| [SKILL.md](../../skills/igapyon-miku-daybook/SKILL.md) の添付案内 | supplied files を主記録に対応する添付フォルダへ保存（task は `attachments/<task-id>/`） | 保存前の判定とテキスト優先方針を入口に置く |
 | [records.md](../../skills/igapyon-miku-daybook/references/records.md) の配置・リンク規則 | 補助ファイルを主記録と同じ月へ保存 | 保存対象は採用したテキスト資料と明示的な例外とする |
 | [operations.md](../../skills/igapyon-miku-daybook/references/operations.md) の Store an attachment | supplied local file を保存 | 第3節以降の判断順序に置き換える |
 | [DEVELOPMENT.md](../../DEVELOPMENT.md) の記録モデル | 資料を attachments に置く | 原本参照・テキスト保存・例外の区別を説明する |
 
-既存の月別配置、record key、相対リンク、共有資料は1コピーという規則を引き継ぐ。task の front matter や day-plan のデータ契約には、新しい属性を追加する必要がない。現行 generator は添付本文を読まず、day-plan へ添付を複製しない。
+既存の月別配置、記録種別ごとの添付フォルダ名（task は `task-id`）、相対リンク、共有資料は1コピーという規則を引き継ぐ。task の front matter や day-plan のデータ契約には、新しい属性を追加する必要がない。現行 generator は添付本文を読まず、day-plan へ添付を複製しない。
 
 ## 3. 保存の判断順序
 
@@ -71,7 +71,7 @@ OCR や確認のために生成するページ画像、OCR 済み PDF、途中�
 
 ## 7. 保存場所と原本情報
 
-変換・抽出した補助文書は、既存の `YYYY/YYYYMM/attachments/<record-key>/` に置く。task なら完全な task ID、schedule/activity なら従来の filename stem を key とする。変換結果は UTF-8 の `.md` を基本とし、プレーンテキストが適切な場合は `.txt` も扱える。
+変換・抽出した補助文書は、主記録と同じ月の `attachments/` に置く。task は `YYYY/YYYYMM/attachments/<task-id>/` とし、`task-id` は既存の front matter の `id`（`task-YYYYMM-NNNNN`）を指す。activity・schedule は、それぞれ `attachments/activity-YYYYMMDD/`・`attachments/schedule-YYYYMMDD-name/` とする。変換結果は UTF-8 の `.md` を基本とし、プレーンテキストが適切な場合は `.txt` も扱える。
 
 記録本文は要点と補助文書への相対リンクを持つ。別の task や activity でも同じ資料を使う場合は、その1コピーを参照する。生成 day-plan に本文や補助ファイルを複製しない。
 
@@ -118,9 +118,9 @@ OCR や確認のために生成するページ画像、OCR 済み PDF、途中�
 
 ## 9. 原本を格納する個別例外
 
-必要な情報をテキストと原本参照で扱えず、利用者がその原本を Daybook の Git 管理下へ入れる意図を明示した場合は、個別例外として扱える。原本の種類、容量、保持理由を確認し、記録本文へ短く残す。
+Daybook の Git 管理下へバイナリ原本を入れるのは極めて例外的な場合に限る。利用者がそのファイルの保存を明示し、必要な情報をテキストと安定した原本参照で扱えず、別管理も合理的にできず、長期的に daybook 内へ置く明確な理由がある場合だけ、個別例外として検討する。容量が小さいことや手軽さだけでは理由にならない。原本の種類、容量、保持理由を確認し、記録本文へ短く残す。
 
-通常の「資料を添付して」「これを記録して」だけでは、原則を上書きする原本格納の意図とみなさない。一方で、「このPDFは例外として原本をGit管理して」のように例外が明示されていれば、同じ内容の承認を重ねない。例外はその対象だけに適用し、他のファイルや将来の取り込みへ広げない。
+通常の「資料を添付して」「これを記録して」だけでは、原則を上書きする原本格納の意図とみなさない。例外が明示されても、保存の必要性と別管理の可否を確認する。条件を満たさない場合は、原本参照や必要なテキストを提案する。例外はその対象だけに適用し、他のファイルや将来の取り込みへ広げない。
 
 例外原本は既存の配置・重複回避・上書き防止規則で扱う。使う記録から参照し、原本と同じ内容を別の月や day-plan に複製しない。
 
@@ -151,13 +151,9 @@ OCR や確認のために生成するページ画像、OCR 済み PDF、途中�
 | 原本格納の例外が明示されている | 対象・容量・理由を残して個別対応。同じ承認を重ねない |
 | 既存添付に画像やPDFがある | 通常編集では保持。整理の依頼時に棚卸しして判断 |
 
-## 12. 仕様を反映する際の構成
+## 12. 運用ルールへの反映
 
-1. 詳細ルールを新規の `skills/igapyon-miku-daybook/references/attachments.md` へ集約する。形式判断・変換・例外が必要なときに読む入口を作る。
-2. `SKILL.md` の添付案内と first checks から詳細へ接続する。
-3. `records.md` の保存対象・パス・リンク規則と、`operations.md` の Store an attachment を整合する。長い活動の補助資料へ分ける案内も同じ方針へ接続する。
-4. `DEVELOPMENT.md` の添付の説明を更新する。README は利用者に必要な短い説明を検討する。
-5. 第11節のケース、リンク到達性、矛盾する旧保存案内の残存を確認する。実際の変換を試す場合は、対象形式に応じた代表資料で必要内容と中間物の配置を確認する。
+詳細ルールを `skills/igapyon-miku-daybook/references/attachments.md` に集約し、SKILL.md、records.md、operations.md、DEVELOPMENT.md から参照する。第11節の振る舞い例はこの設計時に確認した。実資料の変換を行う場合は、対象形式に応じた資料で必要内容と中間物の配置を確認する。
 
 初版の反映はエージェントの保存判断・操作規則を対象とする。generator の選択処理や Issue import の schema を変更したり、実 daybook へデータ移行を自動適用したりする必要はない。専用の監査CLIやGit hookは、この案の必須要件に含めない。
 

@@ -2,17 +2,17 @@
 
 Agent Skills for turning everyday work into concrete results: readable articles,
 connected task records, reviewable GitHub changes, reusable knowledge files,
-Office document text, portable HTML conversions, project plans, and score or
-audio deliverables.
+Office document text, portable HTML conversions, project plans, score or audio
+deliverables, and local utilities.
 
-The release bundle contains **26 skills**: **15 maintained in this repository**
-and **11 bundled from pinned upstream repositories**. Each skill combines
+The release bundle contains **27 skills**: **15 maintained in this repository**
+and **12 bundled from pinned upstream repositories**. Each skill combines
 instructions for an AI agent with the references, templates, assets, or
 executable helpers needed for its workflow. Many writing workflows target
 Japanese content; the catalog explains their purpose in English.
 
 Download the bundle from [GitHub Releases](https://github.com/igapyon/igapyon-agent-skills/releases)
-to choose from all 26 skills. A source checkout contains the 15 internal skill
+to choose from all 27 skills. A source checkout contains the 15 internal skill
 directories; external skills are incorporated when the release bundle is built.
 
 ## Skill Catalog
@@ -40,7 +40,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-reviewer](#igapyon-reviewer) | Identify concrete issues before merging or publishing, with evidence and a clear fixing order. |
 | [igapyon-skill-compactor](#igapyon-skill-compactor) | Make an Agent Skill easier to load and maintain while checking what behavior is preserved. |
 
-### Bundled From Upstream Repositories (11)
+### Bundled From Upstream Repositories (12)
 
 | Skill | What it helps you achieve |
 | --- | --- |
@@ -55,6 +55,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-miku-score](#igapyon-miku-score) | Move a score between supported formats, prepare AI-editable score text, and inspect a rendered result. |
 | [igapyon-miku-text-bundle](#igapyon-miku-text-bundle) | Turn a directory of text files into manageable Markdown parts for AI handoff or knowledge preparation. |
 | [igapyon-miku-text-file-ops](#igapyon-miku-text-file-ops) | **Experimental.** Search and edit encoding-sensitive text without silently changing its encoding or line-ending conventions. |
+| [igapyon-miku-toolbox](#igapyon-miku-toolbox) | Generate passwords locally using miku-toolbox's fixed character sets and generation rules. |
 
 ## Get Started
 
@@ -76,7 +77,7 @@ skill directory and should be copied together during installation.
 
 | Path | Contents |
 | --- | --- |
-| `README.md` | A guide to the 26 skills and how to choose one. |
+| `README.md` | A guide to the 27 skills and how to choose one. |
 | `INSTALL.md` | Installation, update, and drift-check instructions. |
 | `skills/` | Complete installable skill directories, each with a `SKILL.md` entry point. |
 | `EXTERNAL_SKILLS.lock` | The upstream repositories, pinned commit SHAs, and names included in that release bundle. |
@@ -583,6 +584,24 @@ A file uses Windows-31J or another non-UTF-8 encoding, a repository mixes encodi
 **Example:** Use miku-text-file-ops to find a configuration value in these Windows-31J files and update it while preserving the repository's encoding and line endings.
 
 [Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-text-file-ops-skills/blob/cd270f0736c9a7b5760a6a2b28942e6ddb1c5692/skills/igapyon-miku-text-file-ops/SKILL.md).
+
+### igapyon-miku-toolbox
+
+**When it helps**
+
+You explicitly ask to use miku-toolbox for a local utility such as password generation. The skill does not take over a generic password request when the product is not named.
+
+**What you can achieve**
+
+- Generate one password using the fixed character sets and generation rules, with the documented defaults or requested length and excluded character types.
+- Continue with the most recent successful conditions in the current conversation, including requests for another password.
+- Run the bundled local helper with Node.js 22 or later.
+
+**Scope and prerequisites:** The current utility is password generation. Invoke the product or skill by name; the bundled helper requires Node.js 22 or later.
+
+**Example:** Use miku-toolbox to generate a 16-character password without symbols.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-toolbox-skills/blob/ecc03c3dec6019845535140d3b920ade9909d7c2/skills/igapyon-miku-toolbox/SKILL.md).
 
 ## Provenance And Licenses
 
