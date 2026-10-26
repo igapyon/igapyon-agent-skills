@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v14";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v15";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -505,15 +505,16 @@ function appendVersion(lines, result) {
       lines.push(`Current value (${displayValue(entry.path)}): ${displayValue(entry.value)}`);
     }
   }
-  if (result.proposed) {
-    const proposed = Array.isArray(result.proposed) ? result.proposed : [result.proposed];
-    for (const entry of proposed) {
-      if (entry && typeof entry === "object") {
-        lines.push(
-          `Candidate (${displayValue(entry.path, "version")}): `
-          + `${displayValue(entry.value ?? entry.proposed ?? entry.next)}`,
-        );
-      }
+  const proposed = result.proposed;
+  if (!proposed || typeof proposed !== "object") return;
+  if (typeof proposed.authoritative === "string" && proposed.authoritative !== "") {
+    for (const source of Array.isArray(result.authoritative) ? result.authoritative : []) {
+      lines.push(`Candidate (${displayValue(source.path, "version")}): ${displayValue(proposed.authoritative)}`);
+    }
+  }
+  if (typeof proposed.coupled === "string" && proposed.coupled !== "") {
+    for (const source of Array.isArray(result.coupled) ? result.coupled : []) {
+      lines.push(`Candidate (${displayValue(source.path, "coupled version")}): ${displayValue(proposed.coupled)}`);
     }
   }
 }

@@ -14,15 +14,14 @@ update_when:
 
 ## 現在地（2026-10-26照合）
 
-最新作業は `miku-scm sync pull` / `sync push` のsource実装。[実装計画と検証記録](skills/igapyon-miku-scm/docs/2026-10-26-sync-implementation-plan.md)の第14節を参照。pullは現在の作業を保持し、`-done` だけ正確なPRマージ証拠で次branchへ移る。通常branchではPR照会をしない。pushは必要な通常commit、AgentのPR文案、既存recommit/pushを固定prepare/applyでつなぐ。既存の個別操作は維持した。
+最新作業は共通版を `.5` / `20261026e` へ更新した後のsync説明補完・Windows CRLF fixture修正と、候補版数human output修正。候補修正はhuman output v15、5ケースと実producer接続テストを含み、詳細は[計画・検証記録](skills/igapyon-miku-scm/docs/2026-10-26-version-candidate-output-fix-plan.md)を参照。sync pull/push本体はPR #409でmerge済み（このcheckoutのHEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`）。
 
-[自己レビュー](skills/igapyon-miku-scm/docs/2026-10-26-sync-plan-self-review.md)の5件を実装へ反映した。独立したbranch-base記録、ignored途中tree保護、固定rebase option、実際のfetch/push先binding、prepare再開/取消、競合時の同じoperationによる回復を追加。full suite **368/368**、skill index policy **78/78**、validator、版整合が成功。APIは固定fixture、Git操作は一時repository/bare remoteで検証した。
+[自己レビュー](skills/igapyon-miku-scm/docs/2026-10-26-sync-plan-self-review.md)の5件を実装へ反映した。独立したbranch-base記録、ignored途中tree保護、固定rebase option、実際のfetch/push先binding、prepare再開/取消、競合時の同じoperationによる回復を追加。候補版数human output修正も実装し、full suite **374/374**、focused tests **45/45**、contract 37件check、`mvn validate`、`git diff --check`が成功。今回の版数整合は `1.20261026.5` / `20261026e`。
 
-- 状態文書監査はHEAD `8d8f68c` から開始し、`9e9fec5` にcommit済み。続けて依頼された版数更新前のHEADは `9e9fec5916fe110b6f21552403547d5412b9ebcd`。branch `devel-tiga1026meh` はローカル `origin/devel` より1 commit先。
-- 現在版は共通 `1.20261026.4` / Mikuku `20261026d`。POM、VERSION.md、2つのrunnerの4値を更新し、`mvn validate`で整合を確認した。候補tag `v20261026d` はローカル・`origin` とも存在しない。
-- 版数更新とsync実装・仕様・計画を含む変更は未stage・未commit。直前の `1.20261026.3` package/ZIP検査はincrement前の成果物であり、版数更新後の最新版packageと照合は未実施。Release/tagも作成していない。
+- 現在branchは `devel-tiga1026wce`、実装開始時HEADは `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`。作業ツリーの版数更新・sync説明/fixture修正・候補版数表示修正は未stage・未commit。
+- 現在版は共通 `1.20261026.5` / Mikuku `20261026e`。POM、VERSION.md、2つのrunnerの整合は `mvn validate` で確認済み。追加increment、package、配備、commit/pushは未実施。
 - 内製15件＋外部12件＝配布対象27スキル。外部skillはPOMの固定refからビルド時に取り込む。
-- 実装時点ではfast **204/204**、契約37件のdriftなし、ローカル文書リンク45件と差分検査が成功。increment前の `1.20261026.3` ZIPは内製15＋外部12＝27スキルを照合済み。`1.20261026.4` のpackageは未実施。
+- 最新検証はfull **374/374**、focused **45/45**、contract 37件check、`mvn validate`、差分検査成功。提示されたWindows hosted CIログでは当時のsuite 368件中5件がCRLF差分で失敗していた。fixture修正後のWindows hosted CI再実行成功は未確認。native Windows 11の手動smokeも未確認。
 
 ## 実装・マージ確認
 
@@ -30,6 +29,7 @@ update_when:
 
 | 対象 | 確認できた状態・根拠 |
 | --- | --- |
+| miku-scm sync pull / sync push | PR #409でmerge済み。現在のHEAD `dc4c5b3`。後続の説明補完・CRLF fixture修正・候補human output・版数 `.5` の作業ツリー差分は未commit |
 | miku-toolbox同梱、Mikuku手指方針、daybook記録方針・task-id用語 | `38e73af`、PR #408のmerge `8d8f68c` に含まれる |
 | daybookの添付テキスト優先方針 | 案からsourceへ反映済み。同じ `38e73af` に [attachments.md](skills/igapyon-miku-daybook/references/attachments.md) と各入口を追加・更新 |
 | miku-scm Issueのapprove承認改善 | `2066b3d`、PR #398のmerge `ee88c7c` |
@@ -43,10 +43,10 @@ update_when:
 
 ## 残件・保留の入口
 
-- `sync pull` / `sync push` のsource実装とローカル検証は完了。SYNC-08のnative Windows実機、hosted CI、実GitHub、モデル会話routingは未実施。実repoへのsync、配備、commit/pushは行っていない。
-- `target/igapyon-agent-skills-1.20261026.3.zip` はincrement前の成果物。現在版 `.4` のpackageとZIP照合を行ってから公開する。
+- `sync pull` / `sync push` 本体はPR #409でmerge済み。提示されたWindows hosted CIログで368件中5件のCRLF関連失敗を確認した（ログにPR番号・run URLの記載はない）。fixture修正後のWindows再CI成功は未確認。実GitHub上のsync実運用とモデル会話routingも未確認。後続の版数・説明・fixture・候補表示差分は未stage・未commit。
+- 現在版 `.5` のpackage/ZIP照合は未実施。候補版数表示修正のWindows hosted CI再確認とnative Windows 11手動smokeは未確認。
 - day-plan生成前の `npm ci` を必要時だけにする案は未反映。[実運用改善メモ](docs/plans/daybook-operation-feedback.md)の項目1。項目2〜4の記録方針・用語は反映済み。
-- native Windows 11のjunction / CRLF / publication smoke、hosted CI結果は今回未確認。[Windows計画](WINDOWS11-PUSH-PLAN.md)のW02・W05・W08・W09は未完了のまま扱う。
+- native Windows 11のjunction / CRLF / publication smokeは未確認。提示されたWindows hosted CIログで5/368のCRLF失敗を確認した。fixture修正後の成功は未確認。[Windows計画](WINDOWS11-PUSH-PLAN.md)のW02・W05・W08・W09は未完了のまま扱う。
 - Work Cycle全体のcycle artifact、作業開始のone-shot化、PR evidence統合は継続候補。[設計記録](skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md)と現行sourceを再照合してから別途着手する。
 - モデル会話確認、実資料の変換、配備・運用反映、tag / Release、旧監査の残件は、この訂正で実施・完了したことにしない。個別の未確認事項と過去の検証件数は [TODO.md](TODO.md) を参照する。
 

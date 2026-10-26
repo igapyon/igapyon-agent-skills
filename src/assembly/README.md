@@ -25,7 +25,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-ffmpeg-helper](#igapyon-ffmpeg-helper) | Turn an orchestra recording into a retained WAV master and a YouTube-ready video. |
 | [igapyon-github-writer](#igapyon-github-writer) | Give reviewers a clear explanation of your changes and save a ready-to-use GitHub draft. |
 | [igapyon-miku-daybook](#igapyon-miku-daybook) | Keep current tasks, the reasons behind decisions, and the next work plan connected. |
-| [igapyon-miku-scm](#igapyon-miku-scm) | Carry completed work through a repeatable Git/GitHub cycle with a reviewable PR draft. |
+| [igapyon-miku-scm](#igapyon-miku-scm) | Bring shared changes into your work branch and publish work through a repeatable Git/GitHub cycle. |
 | [igapyon-miku-soft-developer](#igapyon-miku-soft-developer) | Turn an application idea or maintenance request into a project following miku-soft's design rules. |
 | [igapyon-mikuku-agent](#igapyon-mikuku-agent) | Create Japanese technical essays and explanatory visuals with Mikuku's recognizable voice. |
 | [igapyon-note-writer](#igapyon-note-writer) | **Experimental.** Keep a Note article's publishable Markdown, metadata, and publication state in sync. |
@@ -223,15 +223,21 @@ You want miku-soft's documented source-control process applied consistently, fro
 
 **What you can achieve**
 
-- Prepare GitHub text, make local commits and backups, inspect branches, and perform the documented recommit/push and post-merge transitions.
+- Use `miku-scm sync pull` to bring the shared base into your work branch while retaining local commits and staged, unstaged, and untracked work. Safe fast-forward or unpublished-commit rebase is chosen from the recorded state; unsafe integration stops with recovery information.
+- Use `miku-scm sync push` to commit all ordinary non-ignored pending changes when needed, save PR text, back up and collapse the branch commits into one PR-text commit, push the work branch, and mark the local branch `-done`. Already committed work skips the ordinary commit; no commits above the base ends without drafting or publication.
+- Prepare GitHub text, make local commits and backups, inspect branches, and perform the individual recommit/push and post-merge transitions.
 - Run supported Issue creation, editing, label, comment, and closure workflows with their required preflight and approval steps.
 - Update date-based or Semantic Versions, check coupled values, maintain repositories, and inspect tags, Releases, and assets.
 
-**Scope and prerequisites:** `draft recommit push` saves the PR text and performs its documented branch-push transition. The human creates and merges the PR on GitHub.
+**Scope and prerequisites:** Give these requests to the AI agent with this skill installed. Sync uses Node.js, Git, and a Git-ignored `workplace/miku-scm/sync/` in the target repository. Pull requires Git 2.45 or newer; push supports macOS and native Windows. Automatic PR merge verification requires GitHub CLI access to the repository.
 
-**Example:** Use `miku-scm sync pull` to bring the shared base into your work branch, then `miku-scm sync push` to commit pending work, draft PR text, recommit, and push. After the human merges the PR, `sync pull` can verify that merge and start the next work branch. Existing `draft recommit push` and `github merge done` commands remain available.
+Only a local `-done` branch triggers `sync pull`'s PR check. The exact PR must be verified as merged into the fetched base before a new work branch is created; missing or unmerged evidence stops the transition. Ordinary work branches skip that PR check. If the shared base has advanced beyond the work branch, `sync push` stops for an explicitly requested `sync pull`.
 
-[Full workflow, setup, and invocation rules](skills/igapyon-miku-scm/SKILL.md).
+**Example:** Ask the agent for `miku-scm sync pull`, edit your work, request a version increment when needed, then ask for `miku-scm sync push`. Create and merge the PR on GitHub using the saved draft, then request `miku-scm sync pull` again from the local `-done` branch to start the next cycle.
+
+Existing `git add commit`, `draft recommit push` and `github merge done` requests remain available. `sync push` includes the ordinary commit stage that `draft recommit push` omits. Version increments, tags and Releases are separate requests.
+
+[Full workflow and invocation rules](skills/igapyon-miku-scm/SKILL.md) · [Pull setup and recovery](skills/igapyon-miku-scm/references/sync-pull.md) · [Push setup and recovery](skills/igapyon-miku-scm/references/sync-push.md).
 
 ### igapyon-miku-soft-developer
 

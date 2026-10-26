@@ -48,16 +48,27 @@ repo 全体のバージョンを更新するときは、日付部分に合わせ
 
 `mvn validate`、`mvn generate-resources`、`mvn clean package` では、root版、`みくく` の日付・suffix、2つのskill runnerの `PRODUCT_VERSION` が対応していることを確認します。たとえば `1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
 
-## 複数 OS でのテスト
+## miku-scm の同期操作
 
 `miku-scm sync pull` は共有baseを取り込み、`-done` の場合だけ正確なPRの
-マージ済み証拠を確認して次branchへ移る。`miku-scm sync push` は必要な通常commit、
-PR文案作成、既存recommit/pushを一回の依頼で行う。Git 2.45以降が必要。
-PR作成とmergeは引き続き人間が行う。詳細と回復は
+マージ済み証拠と取得baseへの反映を確認して次branchへ移る。通常branchではPR確認を行わない。
+安全にrebaseできない履歴や競合では、backup・stash等の回復情報を保持して停止する。
+
+`miku-scm sync push` は未commitの通常の非ignored変更をまとめてcommitし、
+PR文案作成、backup、既存recommit/push、ローカルbranchの`-done`化を一回の依頼で行う。
+cleanなら通常commitを省略し、baseより先のcommitもなければ文案作成・公開を行わない。
+baseが進んでいれば、明示依頼の`sync pull`と再準備へ案内する。
+バージョン更新は必要に応じて別途依頼し、PR作成とmergeは引き続き人間が行う。
+
+両操作ともNode.js・Gitと、対象repoでの`workplace/miku-scm/sync/`のGit除外が必要。
+pullはGit 2.45以降、pushはmacOSまたはnative Windowsに対応する。
+`-done`の自動PR確認には対象repoへアクセス可能なGitHub CLIも必要。詳細と回復は
 [sync pull](skills/igapyon-miku-scm/references/sync-pull.md) /
 [sync push](skills/igapyon-miku-scm/references/sync-push.md) を参照する。
 新規の一時bare remoteテストはfull suiteへ自動収集される。実repoへのsyncやpushを
 source変更の検証として実行しない。
+
+## 複数 OS でのテスト
 
 miku-scm と GitHub Writer は、GitHub Actions で macOS と Windows の両方に対してテストを実行します。Windows の改行コードの違いを見つけた実例と、この構成の価値を [複数 OS でテストする価値](docs/maintenance/github-actions-cross-platform-testing.md) に記録しています。
 

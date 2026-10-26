@@ -7,6 +7,23 @@ or merge a PR, or create a tag/Release. `draft recommit push` and its
 `pr recommit push` alias keep their existing meaning without an ordinary
 commit stage.
 
+## Requirements and scope
+
+Use Node.js and Git on macOS or native Windows, with an active work branch
+and an already Git-ignored `workplace/miku-scm/sync/` in the target repository.
+The default remote is `origin`; shared-base selection follows
+[sync-pull.md](sync-pull.md#requirements-and-base-selection). Require a single
+fetch URL and a single push URL that identify the same repository. A local
+`-done` branch is frozen and cannot start this operation.
+
+The ordinary commit stage includes all current ordinary non-ignored staged,
+unstaged and untracked changes, including work outside the latest request;
+the existing `work.commit` sensitive-path and validation checks still apply.
+This is a composite workflow, not an alias that changes `draft recommit push`.
+When work is already committed, it skips the ordinary commit. When there are
+no commits above the base, it returns `up-to-date` without PR drafting,
+recommit, push or local `-done` rename.
+
 ## Agent route
 
 1. Invoke `repository.sync.push.prepare --repo <path> --apply`, optionally
@@ -14,7 +31,7 @@ commit stage.
    the same message rules as `work.commit`.
 2. Stop on any result other than `prepared`; `up-to-date` needs no draft or
    publication. For `prepared`, compose once from its returned `evidence`
-   using the PR writing contract. Save at `suggested_draft_path` and compute
+   using its returned `writing_contract`. Save at `suggested_draft_path` and compute
    the SHA-256 of those exact bytes. Do not reuse an unbound older draft.
 3. In the same requested workflow, invoke
    `repository.sync.push.apply --repo <path> --operation <operation-id>
@@ -45,11 +62,9 @@ bounded exact-range PR evidence, draft path and apply contract to a plan
 digest stored in ignored `workplace/miku-scm/sync/operations/<id>/`.
 
 Prepare releases the execution lock while awaiting prose. The operation
-remains prepared. `prepare --resume <operation-id> --apply` returns the same
-evidence and plan after revalidation, without another commit.
-`prepare --cancel <operation-id> --apply` revokes an unapplied plan but retains
-all work, ordinary commits and draft files. A new `sync pull` may supersede a
-prepared or needs-sync-pull push only when apply has never started.
+remains prepared; the recovery routes below can return its saved evidence or
+cancel it. A new explicitly requested `sync pull` may supersede a prepared or
+needs-sync-pull push only when apply has never started.
 
 ## Apply contract
 
@@ -67,8 +82,35 @@ Fetch again before apply; a changed base stops with a fresh-evidence /
 remote lease/new-branch expectation, publication attempt receipt, exact
 post-push `0 0` check and `-done` rename. Do not reconstruct this sequence in
 the Agent. Do not retry a consumed plan or an unknown remote mutation.
+The remote branch keeps its published name; only the local branch receives
+`-done`. The human creates and merges the PR using the saved title/body.
+Afterward, explicit `sync pull` can verify the merge and create the next work
+branch, or the human can report it with the existing `github merge done`.
 
 Results report the ordinary commit as created/skipped, the stopped stage,
 backup and final branch. A remote result that cannot be verified is
 `unresolved`, requires inspection of the saved publication attempt, and may
 not be cleared by a new pull or an automatic resend.
+
+## Recovery
+
+Carry the returned operation ID in the conversation. Pass these workflow
+arguments to the fixed runner only after an explicit resume/cancel request:
+
+```text
+repository.sync.push.prepare --repo <path> --resume <operation-id> --apply
+repository.sync.push.prepare --repo <path> --cancel <operation-id> --apply
+```
+
+Resume returns the same completed evidence and plan after validating the
+saved branch, HEAD, local base ref and remote, without another commit. It
+requires a saved complete plan; an interrupted preparation without one must
+be cancelled before starting a new preparation. Cancellation is available
+only before apply starts and preserves all work, ordinary commits and draft
+files; it does not undo the ordinary commit.
+
+If the base advanced, run `sync pull` only when explicitly requested, then
+prepare again and write a fresh bound draft. Do not reuse the old plan/draft
+digests. If apply started or the remote outcome is unknown, these preparation
+routes cannot cancel or replay it; inspect the saved publication result and
+retained backup before choosing a separate recovery action.

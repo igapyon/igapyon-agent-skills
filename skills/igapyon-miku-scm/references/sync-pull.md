@@ -6,6 +6,26 @@ An exact `miku-scm sync pull` request authorizes
 local work branch; it never pushes or increments a version. Do not activate
 the operation for naming, design, or explanation requests.
 
+## Requirements and base selection
+
+Use Node.js and Git 2.45 or newer in an existing work branch. The target
+repository must already ignore `workplace/miku-scm/sync/`, where operation and
+branch-base records are retained; missing ignore configuration stops sync.
+The automatic `-done` transition additionally requires a GitHub remote and
+GitHub CLI access that can read its PRs. A normal branch does not require PR
+access.
+
+The default remote is `origin`. Resolve the shared base in this order:
+
+1. Explicit `--base <branch>` (also accepts `<remote>/<branch>`).
+2. The current branch's upstream on that remote, unless it is the published
+   work branch itself.
+3. The base prefix of a standard miku work-branch name.
+4. The selected remote's local symbolic `HEAD`.
+
+If unresolved, stop and request the intended `--base`; do not guess a
+different branch. The current branch must differ from the base branch.
+
 ## Transition
 
 The helper fixes the real worktree, remote identity and expanded fetch/push
@@ -13,7 +33,7 @@ URL digests, branch, HEAD, binary index/working diffs and untracked contents.
 It uses a common-Git-directory execution lock and a persistent operation
 journal under ignored `workplace/miku-scm/sync/`. Existing merge, rebase,
 cherry-pick, conflicts, detached HEAD, shallow history, sparse checkout and
-submodules stop before work mutation. Git 2.45 or newer is required.
+submodules stop before work mutation.
 
 For a normal branch there are **no GitHub PR reads**. Fetch once, then:
 
@@ -27,6 +47,10 @@ For a normal branch there are **no GitHub PR reads**. Fetch once, then:
 An exact-base no-op or safe FF records provenance. An ahead no-op with no
 record does not invent one. Verified successful runner records from the older
 `repository.post-merge.next-work` workflow can supply the original base.
+For an ordinary manually created branch without that record, an initial pull
+while HEAD still equals the shared base can establish it. Once histories have
+diverged without provenance, stop for separate recovery; do not infer a
+creation base from the current upstream or merge-base.
 Only fetched refs and local receipts are checked for publication; do not claim
 knowledge of every remote repository.
 
@@ -77,6 +101,11 @@ An already recorded transition cannot create more next branches.
 This is a narrow frozen-branch exception authorized by `sync pull`. The
 explicit `github merge done` route keeps its human confirmation and staged
 change blocker. Never synthesize its `--confirmed-merged` flag.
+Successful push renames only the local branch with `-done`; PR lookup uses
+the published branch name without that suffix. An open PR, an unmerged closed
+PR, or unavailable matching evidence stops before stash or branch creation.
+This transition also returns the version/recommended-tag check from the
+shared next-work core; creating a tag or Release remains a separate operation.
 
 ## Recovery
 
@@ -95,6 +124,9 @@ Resume verifies the same rebase original HEAD, branch and onto SHA, requires
 conflicts resolved/staged, and continues without fetching or stashing again.
 For an empty stopped commit require the explicit keep/drop selection. Abort
 only the same rebase, verify the original HEAD, then restore its carryover.
+`--abort` is not a general undo for an already completed fast-forward or
+next-work transition; when rewinding cannot be proven safe, the helper stops
+for inspection of the retained backup and stash.
 After restoration starts, never reapply automatically or discard resolution
 work. Inspect all paths in the retained stash, restore/resolve and stage them
 as intended, then explicitly resume with `--resolved-carryover` only after the

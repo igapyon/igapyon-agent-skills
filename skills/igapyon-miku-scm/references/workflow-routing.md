@@ -27,8 +27,11 @@ alone chooses whether the current `-done` branch needs PR verification.
 Exact `sync push` routes to `repository.sync.push.prepare --apply`, one
 Agent-authored draft from the returned evidence, then
 `repository.sync.push.apply` with that same operation and plan/draft digests.
-No intermediate success confirmation is needed. Explanations about these
-commands do not execute them. See [sync-pull.md](sync-pull.md) and
+Only `prepared` advances to drafting/apply; other results stop, including an
+`up-to-date` result that needs no publication. A changed base requires an
+explicit `sync pull` request and fresh push preparation, while preserving any
+ordinary commit already made. No intermediate success confirmation is needed.
+Explanations about these commands do not execute them. See [sync-pull.md](sync-pull.md) and
 [sync-push.md](sync-push.md) for exceptions/recovery.
 
 Every GitHub Issue write follows this sequence: complete all requested
