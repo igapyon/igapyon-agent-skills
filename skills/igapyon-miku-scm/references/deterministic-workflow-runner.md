@@ -58,6 +58,9 @@ The canonical machine-readable catalog is
 | `repository.maintenance.plan` | READONLY plus operational artifact | preflight | `repository-maintenance.mjs` |
 | `repository.maintenance.apply` | local | apply | `repository-maintenance.mjs` |
 | `repository.post-merge.next-work` | local | apply | `post-merge-next-work.mjs` |
+| `repository.sync.pull` | local | apply | `sync-pull.mjs` |
+| `repository.sync.push.prepare` | local | apply | `sync-push.mjs` |
+| `repository.sync.push.apply` | remote | apply | `sync-push.mjs` |
 | `work.commit` | local | apply | `work-commit.mjs` |
 | `pr.publish.preflight` | READONLY plus operational artifact | preflight | `post-recommit-publish.mjs` |
 | `pr.publish.apply` | remote | apply | `post-recommit-publish.mjs` |
@@ -100,6 +103,14 @@ and committed without an Agent round trip. It stops before staging conflicts,
 frozen branches, sensitive-path candidates, and coupled-version mismatches;
 after staging it reports a known `partial` state rather than guessing a retry.
 See [work-commit.md](work-commit.md).
+
+Sync keeps mechanical operations in the runner. `repository.sync.pull`
+preserves local work and queries the exact PR merge state only on `-done`.
+`repository.sync.push.prepare` commits only if dirty and returns immutable
+PR evidence; the Agent writes once, then `repository.sync.push.apply`
+consumes the plan/draft digests and shares the existing recommit/publication
+core. Prepared operations release execution locks and support explicit
+resume/cancel. See [sync-pull.md](sync-pull.md) and [sync-push.md](sync-push.md).
 
 PR publication retains its two-part human boundary. Use
 `pr.publish.preflight` with the reviewed full local commit SHA and

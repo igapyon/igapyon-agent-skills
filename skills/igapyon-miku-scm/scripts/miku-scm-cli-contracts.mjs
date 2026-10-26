@@ -287,6 +287,29 @@ function contract(summary, options, exampleArguments, extra = {}) {
 }
 
 export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
+  "repository.sync.pull": contract(
+    "Fetch the shared base and preserve local work; verify a merged PR only on a done branch.",
+    [repoPath, option("--remote", "<name>", "Selected Git remote.", { default: "origin" }), option("--base", "<branch>", "Shared base branch; inferred when omitted."),
+      option("--resume", "<operation-id>", "Resume this same interrupted pull without a fresh fetch or stash."),
+      option("--abort", "<operation-id>", "Abort this same rebase and restore its retained carryover."),
+      option("--resolved-carryover", "", "With --resume, explicitly confirm every retained carryover path was reviewed and resolved."),
+      option("--empty", "<keep|drop>", "Explicit treatment of an empty stopped replay commit, only with --resume.", { choices: ["keep", "drop"] }), apply],
+    ["--apply"],
+    { network_access: "Git fetch; fixed GitHub PR reads only for -done", authentication: "existing Git and gh authentication", operational_artifacts: ["workplace/miku-scm/sync"], notes: ["Git 2.45+; no remote writes. Branch-base provenance is required for divergent replay."] },
+  ),
+  "repository.sync.push.prepare": contract(
+    "Commit dirty work once and prepare immutable PR evidence for sync push.",
+    [repoPath, option("--remote", "<name>", "Selected Git remote.", { default: "origin" }), option("--base", "<branch>", "Shared base branch."), option("--message", "<commit-message>", "Concise ordinary commit title; existing deterministic fallback applies when omitted."),
+      option("--resume", "<operation-id>", "Return the same prepared evidence without committing again."), option("--cancel", "<operation-id>", "Revoke an unapplied prepared push while retaining all work."), apply],
+    ["--message", "Update work", "--apply"],
+    { network_access: "Git fetch and remote branch reads", authentication: "existing Git authentication", operational_artifacts: ["workplace/miku-scm/sync"], notes: ["Prepared evidence needs one Agent-authored PR draft before apply. No automatic sync pull or version increment."] },
+  ),
+  "repository.sync.push.apply": contract(
+    "Consume the exact sync push plan and draft, then recommit and publish once.",
+    [repoPath, option("--operation", "<operation-id>", "Exact prepared operation ID.", { required: true }), option("--expected-plan-sha256", "<sha256>", "Exact prepare result plan digest.", { required: true }), option("--pr-draft", "<repository-relative-path>", "Exact suggested PR draft path.", { required: true }), option("--expected-draft-sha256", "<sha256>", "SHA-256 of the saved draft bytes.", { required: true }), apply],
+    ["--operation", "<operation-id>", "--expected-plan-sha256", "<sha256>", "--pr-draft", "workplace/miku-scm/pr-drafts/<draft>.md", "--expected-draft-sha256", "<sha256>", "--apply"],
+    { network_access: "Git fetch, branch push and verification", authentication: "existing Git authentication", operational_artifacts: ["workplace/miku-scm/sync", "workplace/miku-scm/ok-push"], notes: ["macOS/Windows only. Creates no PR, merge, tag or Release. An unresolved push must never be resent automatically."] },
+  ),
   "repository.status": contract(
     "Inspect local branch, worktree, worktrees, and selected version files.",
     [

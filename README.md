@@ -230,7 +230,7 @@ You want miku-soft's documented source-control process applied consistently, fro
 
 **Scope and prerequisites:** `draft recommit push` saves the PR text and performs its documented branch-push transition. The human creates and merges the PR on GitHub.
 
-**Example:** Use miku-scm draft recommit push to prepare the completed branch for review, then use the post-merge workflow after the PR has been merged.
+**Example:** Use `miku-scm sync pull` to bring the shared base into your work branch, then `miku-scm sync push` to commit pending work, draft PR text, recommit, and push. After the human merges the PR, `sync pull` can verify that merge and start the next work branch. Existing `draft recommit push` and `github merge done` commands remain available.
 
 [Full workflow, setup, and invocation rules](skills/igapyon-miku-scm/SKILL.md).
 

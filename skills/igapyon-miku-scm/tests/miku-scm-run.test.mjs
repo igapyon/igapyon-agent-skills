@@ -127,6 +127,9 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
     "repository.maintenance.diagnose",
     "repository.maintenance.plan",
     "repository.maintenance.apply",
+    "repository.sync.pull",
+    "repository.sync.push.prepare",
+    "repository.sync.push.apply",
     "repository.post-merge.next-work",
     "work.commit",
     "pr.publish.preflight",
@@ -146,7 +149,7 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
 });
 
 test("manifest exposes complete AI-readable CLI help contracts", () => {
-  assert.equal(WORKFLOW_MANIFEST.length, 34);
+  assert.equal(WORKFLOW_MANIFEST.length, 37);
   for (const workflow of WORKFLOW_MANIFEST) {
     assert.equal(typeof workflow.cli.summary, "string", workflow.id);
     assert.ok(workflow.cli.summary.length > 0, workflow.id);
@@ -170,7 +173,7 @@ test("workflow help never advertises an option absent from its fixed parser", as
     const source = await readFile(path.join(scripts, workflow.runner_entry), "utf8");
     const parserFlags = new Set(
       [...source.matchAll(/(?:arg|argument|a) === "(--[a-z0-9-]+)"/g)]
-        .map((match) => match[1]),
+        .map((match) => match[1]).concat([...source.matchAll(/"(--[a-z0-9-]+)":\s*"[A-Za-z0-9]+"/g)].map((match) => match[1])),
     );
     for (const option of workflow.cli.options) {
       assert.ok(
@@ -936,7 +939,8 @@ test("post-merge workflow keeps merge confirmation and apply inside one fixed ru
     if (command.startsWith("ls-remote --tags origin refs/tags/v20260727c")) {
       return tagLookupResult;
     }
-    if (command === "switch -c devel-tiga0727weg origin/devel") {
+    if (command === "check-ref-format --branch devel-tiga0727weg") return { ok: true, out: "devel-tiga0727weg" };
+    if (command === `switch --no-overwrite-ignore -c devel-tiga0727weg ${baseHead}`) {
       branch = "devel-tiga0727weg";
       head = baseHead;
       return { ok: true, out: "" };

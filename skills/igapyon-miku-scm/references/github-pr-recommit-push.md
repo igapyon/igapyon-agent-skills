@@ -1,5 +1,9 @@
 # Draft Recommit Push
 
+For the separate `sync push` command, see [sync-push.md](sync-push.md): it
+precedes this shared recommit/publication core with an ordinary commit only
+when dirty. This command's existing meaning does not change.
+
 `pr.recommit.push` is the fixed remote-mutation transition behind the exact
 user-facing command `miku-scm draft recommit push`. The older
 `miku-scm pr recommit push` spelling is a compatible alias. In this command,

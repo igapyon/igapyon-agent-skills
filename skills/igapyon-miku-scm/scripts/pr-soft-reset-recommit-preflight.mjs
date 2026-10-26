@@ -330,12 +330,14 @@ export function runRecommit(args, dependencies = {}) {
       throw new Error("Cannot apply because branch, HEAD, base, ancestry, worktree, index, or PR draft changed after preflight.");
     }
 
+    dependencies.validateSyncSnapshot?.({ phase: "pre-backup", root, head: applyHead, base: baseCommit });
     runGit(root, ["branch", backup, "HEAD"]);
     mutationInvoked = true;
     const backupHead = runGit(root, ["rev-parse", backup]).stdout;
     if (backupHead !== applyHead) {
       throw new Error("Backup branch does not point to the reviewed pre-reset HEAD");
     }
+    dependencies.validateSyncSnapshot?.({ phase: "pre-reset", root, head: applyHead, base: baseCommit });
     runGit(root, ["reset", "--soft", baseCommit]);
     runGit(root, ["commit", "-F", "-"], { input: applyDraftContent });
 

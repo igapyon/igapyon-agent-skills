@@ -22,6 +22,15 @@ prose requests route first to the matching `writing.*.prepare` ID; generative
 drafting consumes its bounded evidence, and any later mutation returns to a
 mechanical preflight.
 
+Exact `sync pull` routes to `repository.sync.pull --apply`; its fixed helper
+alone chooses whether the current `-done` branch needs PR verification.
+Exact `sync push` routes to `repository.sync.push.prepare --apply`, one
+Agent-authored draft from the returned evidence, then
+`repository.sync.push.apply` with that same operation and plan/draft digests.
+No intermediate success confirmation is needed. Explanations about these
+commands do not execute them. See [sync-pull.md](sync-pull.md) and
+[sync-push.md](sync-push.md) for exceptions/recovery.
+
 Every GitHub Issue write follows this sequence: complete all requested
 preflights, collect only their returned handoff IDs, run
 `github.issue.handoff.review`, display its complete content, and wait for a

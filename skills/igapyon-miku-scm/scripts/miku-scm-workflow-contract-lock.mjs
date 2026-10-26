@@ -20,8 +20,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-cli-static-helper-policy.md",
     "contract_test": "github-issue-read.test.mjs",
     "runner_sha256": "0ac1952e3403e9fdcdd29c922e7f28f0111bfd02e34e717409092e7a7ee04e73",
-    "spec_sha256": "91604c7cfd36228ad11cb802e056b86c41be83b1ee4c7da2362a02cf715dd7c6",
-    "pair_sha256": "2821e5d6730e27b2a814be12d788672656ba3b792aacff2280b75f12830451dd"
+    "spec_sha256": "2faf8d7e00b553ea5828bcd7ee36c94c18c990efdfd052a50af43d8eddc78161",
+    "pair_sha256": "056b28b304dc7512012ea2b9b7755b19c2869716f0a4542375e8ff8afca3bb8d"
   },
   {
     "workflow": "github.read.batch",
@@ -31,8 +31,8 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "contract_spec": "github-cli-static-helper-policy.md",
     "contract_test": "miku-scm-github-readonly.test.mjs",
     "runner_sha256": "966c45a31149c0de57ddc4fc42e1622eca51bf4aa80863d2ede3bfffee8ac915",
-    "spec_sha256": "91604c7cfd36228ad11cb802e056b86c41be83b1ee4c7da2362a02cf715dd7c6",
-    "pair_sha256": "731bebc93691a8fd4c0f2196195d832705d1fe926e16ccc902a5eacde15dd6ac"
+    "spec_sha256": "2faf8d7e00b553ea5828bcd7ee36c94c18c990efdfd052a50af43d8eddc78161",
+    "pair_sha256": "c74ee4c37e56516c71aff04d9299abdf4dcb65b5872af84a0e74f9891fdfea22"
   },
   {
     "workflow": "github.issue.create.preflight",
@@ -151,9 +151,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "miku-scm-handoff.mjs",
     "contract_spec": "approval-handoff.md",
     "contract_test": "miku-scm-handoff.test.mjs",
-    "runner_sha256": "79515fffe4b4f1adc80fcae0aae8e372f9b2f97b03bb9e2c83d1d52f97b6331d",
+    "runner_sha256": "7a986e8dafbff7cd3459597727e3b8c0142f12c791aee77be6cbfc3d15b0d166",
     "spec_sha256": "c39336d49adf6b618ab982f5b871fba9ac7156ddac3607b4e61ba337b7df1487",
-    "pair_sha256": "c76f9a58d7e043720d0b807f25da9a10ec3303b01f143af4f0d2009545b815a8"
+    "pair_sha256": "f968a3a7b695db44ee76bc19fdf72f0370e15edca6f3374c03dfd5922fa8d8f1"
   },
   {
     "workflow": "github.issue.handoff.review",
@@ -162,9 +162,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "miku-scm-handoff.mjs",
     "contract_spec": "approval-handoff.md",
     "contract_test": "miku-scm-handoff.test.mjs",
-    "runner_sha256": "79515fffe4b4f1adc80fcae0aae8e372f9b2f97b03bb9e2c83d1d52f97b6331d",
+    "runner_sha256": "7a986e8dafbff7cd3459597727e3b8c0142f12c791aee77be6cbfc3d15b0d166",
     "spec_sha256": "c39336d49adf6b618ab982f5b871fba9ac7156ddac3607b4e61ba337b7df1487",
-    "pair_sha256": "1758123977949411d22f138d5924b16ce9572cbd6ea32b4f7f0823419ecfeeb4"
+    "pair_sha256": "fb514171f413c2aafab259e035829cf483a87c46fc04710fa7bc1f08eac26be3"
   },
   {
     "workflow": "github.issue.handoff.apply",
@@ -173,9 +173,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "miku-scm-handoff.mjs",
     "contract_spec": "approval-handoff.md",
     "contract_test": "miku-scm-handoff.test.mjs",
-    "runner_sha256": "79515fffe4b4f1adc80fcae0aae8e372f9b2f97b03bb9e2c83d1d52f97b6331d",
+    "runner_sha256": "7a986e8dafbff7cd3459597727e3b8c0142f12c791aee77be6cbfc3d15b0d166",
     "spec_sha256": "c39336d49adf6b618ab982f5b871fba9ac7156ddac3607b4e61ba337b7df1487",
-    "pair_sha256": "22a8828033a100a9515babd9b673d3cb89885c65cd34624aaf57c076ef95d6a6"
+    "pair_sha256": "d2ed57e31f448059e2b1708b760b6416ae68e3dc44e29e046b0e44a1c37374e0"
   },
   {
     "workflow": "github.issue.handoff.batch.apply",
@@ -184,9 +184,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "miku-scm-handoff.mjs",
     "contract_spec": "approval-handoff.md",
     "contract_test": "miku-scm-handoff.test.mjs",
-    "runner_sha256": "79515fffe4b4f1adc80fcae0aae8e372f9b2f97b03bb9e2c83d1d52f97b6331d",
+    "runner_sha256": "7a986e8dafbff7cd3459597727e3b8c0142f12c791aee77be6cbfc3d15b0d166",
     "spec_sha256": "c39336d49adf6b618ab982f5b871fba9ac7156ddac3607b4e61ba337b7df1487",
-    "pair_sha256": "66b99317fba12f469998379ccbf62c41b12307716de769dc70d38c46bf4fee33"
+    "pair_sha256": "d33bf3112f6a974775ba2e460045c0a07d9672b48e39a82926a5f4777ddae972"
   },
   {
     "workflow": "github.issue.handoff.dismiss",
@@ -233,15 +233,48 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "pair_sha256": "2824e559455afed24a0f9d4dee621187230e8df9ed33e90f219a82f0cd814946"
   },
   {
+    "workflow": "repository.sync.pull",
+    "contract_id": "repository.sync.pull",
+    "contract_version": 1,
+    "runner_entry": "sync-pull.mjs",
+    "contract_spec": "sync-pull.md",
+    "contract_test": "sync-pull.test.mjs",
+    "runner_sha256": "230ca64996f1bd593ef68a604cfb6a0a1ab63c2e64228ed0c31a338820b8e173",
+    "spec_sha256": "dbce8e54769522b77d56891fd480e36c2af42e60957148768d0d925bb24720ef",
+    "pair_sha256": "e55b6d72d2ae351a6cc2c24487776fd8a8306febd7a54c7ee15ead211dd4ac78"
+  },
+  {
+    "workflow": "repository.sync.push.prepare",
+    "contract_id": "repository.sync.push.prepare",
+    "contract_version": 1,
+    "runner_entry": "sync-push.mjs",
+    "contract_spec": "sync-push.md",
+    "contract_test": "sync-push.test.mjs",
+    "runner_sha256": "21937da43402f14384b89c47df7a538698a4ce4eb5f8b2edd4df380ba72d1843",
+    "spec_sha256": "65a408ac73393a000717315bb6f58541c37bd5de32c12e4be6c45ef294ed0cb4",
+    "pair_sha256": "71ac64f234669f840bc35eb328ab6929b6cabb7c086af8482d44d4ae175040ff"
+  },
+  {
+    "workflow": "repository.sync.push.apply",
+    "contract_id": "repository.sync.push.apply",
+    "contract_version": 1,
+    "runner_entry": "sync-push.mjs",
+    "contract_spec": "sync-push.md",
+    "contract_test": "sync-push.test.mjs",
+    "runner_sha256": "21937da43402f14384b89c47df7a538698a4ce4eb5f8b2edd4df380ba72d1843",
+    "spec_sha256": "65a408ac73393a000717315bb6f58541c37bd5de32c12e4be6c45ef294ed0cb4",
+    "pair_sha256": "b7bdc168833d11fb5171fc45958106ea08374122901995fa24b8e303586d4679"
+  },
+  {
     "workflow": "repository.post-merge.next-work",
     "contract_id": "repository.post-merge.next-work",
     "contract_version": 1,
     "runner_entry": "post-merge-next-work.mjs",
     "contract_spec": "scm-rules.md",
     "contract_test": "post-recommit-publish.test.mjs",
-    "runner_sha256": "8eea3cb810a5e2d041e80cf4d38875e595b949319f943a6f631969b3e0e985ae",
-    "spec_sha256": "a51073704a990eac39e980970707beb345f2d9ded1eb6079e478134b3d0383bd",
-    "pair_sha256": "c5a85d1e4a2a64aaa10d8140ad58860cb1fe77f55a4acb3808a9aa7feb0336f6"
+    "runner_sha256": "dc731e2e25f0784c3cac8711d99b71d1cfeab3777680498953946d683e704892",
+    "spec_sha256": "333ce03de8f29f7b46cca386942e6d37e51876160b366dcc6d44c0c53489f433",
+    "pair_sha256": "e93cf164a6c815cf0b043517fd2212e0121da9c070494febb76d7949c9f1a924"
   },
   {
     "workflow": "work.commit",
@@ -261,9 +294,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "post-recommit-publish.mjs",
     "contract_spec": "github-post-recommit-publish.md",
     "contract_test": "post-recommit-publish.test.mjs",
-    "runner_sha256": "9489373257689b1e625580d79ba2cb6facd0bd7dde2010a3421ce492457751cc",
+    "runner_sha256": "93153fc775dcd9f5d8827edc3824f53344ec273a7f6e38f722005148816875f8",
     "spec_sha256": "b1aa755e1aef9f979a5015ffe40434e2265c1dc247d929e805226f8a0279eceb",
-    "pair_sha256": "9e2d970f3d183dec55cf75b6b5e0cbb67a853559808e4492578d8de0460cc0bd"
+    "pair_sha256": "8f09597c5a85fb85df95687908749d762909421357ea98d9d1f999f8f446d69f"
   },
   {
     "workflow": "pr.publish.apply",
@@ -272,9 +305,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "post-recommit-publish.mjs",
     "contract_spec": "github-post-recommit-publish.md",
     "contract_test": "post-recommit-publish.test.mjs",
-    "runner_sha256": "9489373257689b1e625580d79ba2cb6facd0bd7dde2010a3421ce492457751cc",
+    "runner_sha256": "93153fc775dcd9f5d8827edc3824f53344ec273a7f6e38f722005148816875f8",
     "spec_sha256": "b1aa755e1aef9f979a5015ffe40434e2265c1dc247d929e805226f8a0279eceb",
-    "pair_sha256": "c9eeec6c6a0262c14046dd764ecb20b0bd368a2b64903bc8d93a3a40643b7c31"
+    "pair_sha256": "f88539480dfd889776d38bce1c3a26740d9e60de2a336c156405a5556d81021f"
   },
   {
     "workflow": "pr.recommit.preflight",
@@ -283,9 +316,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "pr-soft-reset-recommit-preflight.mjs",
     "contract_spec": "github-pr-soft-reset-recommit.md",
     "contract_test": "miku-scm-recommit.test.mjs",
-    "runner_sha256": "e4257f668b2866878dd228cd91e883c09ef07642191530f2fcefa026513dbde0",
+    "runner_sha256": "f727a7f1ae1b71fc6e6d63902ff4f5cdeb09058e26c958725ee0b8ea8f9881bc",
     "spec_sha256": "66cbc4afdfd4d93573ae3b7a5a4d130a62a136f97e6f3eae6f8760b39c8a3412",
-    "pair_sha256": "62f60b7f46b90c16b1eb7c62fcb1731075c8aa4d4fe4e0aa1fe5d4a300e601d9"
+    "pair_sha256": "8b54f9270fe4c16926efc6b3a473564688ac324fa7360d7d7f1b04f5444681d3"
   },
   {
     "workflow": "pr.recommit.apply",
@@ -294,9 +327,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "pr-soft-reset-recommit-preflight.mjs",
     "contract_spec": "github-pr-soft-reset-recommit.md",
     "contract_test": "miku-scm-recommit.test.mjs",
-    "runner_sha256": "e4257f668b2866878dd228cd91e883c09ef07642191530f2fcefa026513dbde0",
+    "runner_sha256": "f727a7f1ae1b71fc6e6d63902ff4f5cdeb09058e26c958725ee0b8ea8f9881bc",
     "spec_sha256": "66cbc4afdfd4d93573ae3b7a5a4d130a62a136f97e6f3eae6f8760b39c8a3412",
-    "pair_sha256": "df74e5261f9fa0a7d3c489556cfab295ff51c5faa8076679d8bc322bf081f949"
+    "pair_sha256": "7c93614051043a2835411b4e435b668dcb75ade5b7f34d7cfe2082878429624b"
   },
   {
     "workflow": "pr.recommit.push",
@@ -305,9 +338,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "pr-recommit-push.mjs",
     "contract_spec": "github-pr-recommit-push.md",
     "contract_test": "pr-recommit-push.test.mjs",
-    "runner_sha256": "8b94796c8ad4d6246c419dc4f6bbf9c14d6b13d0a1b6d5e1d132bc254ab9aec9",
-    "spec_sha256": "7212a69550cf35007c30ae583bef01e718d3cd57a3600f1679acf41dc4665963",
-    "pair_sha256": "5bf97f449b98abe188ef53ce9d1c68677974e53c37df67e8ccda5bca21adfdcc"
+    "runner_sha256": "ff05667ed4062a0eb9c0083c63e42ec09b38a11ea6645e8a41719705d009f1aa",
+    "spec_sha256": "8c8d5f7f500832996e0871124135c0c1a5eeb0a68235c9341c408c2399a23352",
+    "pair_sha256": "c7fec1b266939f9555cdeaa2b1997819e84d789dcdf61570a82e0136064137e3"
   },
   {
     "workflow": "version.status",

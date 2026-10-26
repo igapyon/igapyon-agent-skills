@@ -14,6 +14,7 @@ operations, and exceptions; migrated workflows execute through the fixed runner.
 Support repository status and maintenance; PR-text, Release, About, and Issue work;
 recommit, publication, backup, and post-merge work; version and release audits;
 and deterministic READONLY, preflight, and apply workflows.
+Also support explicit `miku-scm sync pull` and `miku-scm sync push` requests.
 
 ## Activation-Only Fast Path
 
@@ -45,6 +46,30 @@ a compatible alias for `draft recommit push`.
 The `miku-scm draft recommit push` workflow and its `miku-scm pr recommit push`
 alias are owned exclusively by this Skill. Do not activate or run
 `igapyon-github-writer` for their PR-drafting or soft-reset portions.
+
+### Sync Commands
+
+`miku-scm sync pull` runs `repository.sync.pull --apply`: fetch the shared
+base and preserve local commits and staged/unstaged/untracked work. Only on
+`-done`, the fixed helper verifies the exact GitHub PR as merged before
+creating the next work branch. Ordinary branches do not query PR merge state.
+It never pushes. See [sync-pull.md](references/sync-pull.md) for recovery.
+
+`miku-scm sync push` includes the ordinary commit stage and then the existing
+draft/recommit/push transition. Run `repository.sync.push.prepare --apply`
+with a concrete `--message` when available, using the `work.commit` message
+rules below. If `prepared`, draft once from returned `evidence`, save exactly
+at `suggested_draft_path`, compute its byte SHA-256, and invoke
+`repository.sync.push.apply --operation <returned-id>
+--expected-plan-sha256 <returned-plan-digest> --pr-draft <suggested-path>
+--expected-draft-sha256 <saved-byte-digest> --apply` in the same user turn.
+Carry the same-session values; no confirmation is needed between successful
+steps. If not prepared, return that fixed stop/no-op. Never add an automatic
+pull or version increment. PR creation and merge remain the human's step.
+See [sync-push.md](references/sync-push.md) for cancellation and recovery.
+
+Naming, design and explanation requests about sync do not authorize its
+execution. Existing individual commands and aliases retain their meanings.
 
 ### Unstaged Work Remaining After Merge
 
@@ -122,7 +147,9 @@ current branch, and retained stash; preserve the partial state for recovery.
    and workflow gate. Approval never transfers between workflows.
 7. Before tracked-content mutation or an ordinary commit, inspect the current
    branch and worktree. Do not mutate a `-done` branch or discard unrelated
-   changes. For `work.commit`, ordinary non-ignored changes are all in scope
+   changes. The narrow exception is explicit `sync pull`: only its fixed
+   helper may verify the exact merged PR and carry work to a new branch from
+   the fetched base. Do not fabricate `--confirmed-merged`. For `work.commit`, ordinary non-ignored changes are all in scope
    even when they are unrelated to the current request; operational drafts and
    workflows with their own branch checks keep those documented rules.
 8. A standalone apply must consume the unchanged reviewed artifact and
