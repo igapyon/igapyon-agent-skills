@@ -3,6 +3,8 @@ import { workflowCliContractById } from "./miku-scm-cli-contracts.mjs";
 export const WORKFLOW_MANIFEST_VERSION = "miku-scm.workflow-manifest/v2";
 export const WORKFLOW_CONTRACT_VERSION = 1;
 const ISSUE_APPROVAL_CONTRACT_VERSION = 2;
+const SYNC_SOURCES = ["miku-scm-sync-state.mjs", "miku-scm-sync-worktree.mjs", "miku-scm-sync-merge-check.mjs", "post-merge-next-work.mjs", "miku-scm-command-runner.mjs", "miku-scm-jst-time.mjs"];
+const SYNC_PUSH_SOURCES = [...SYNC_SOURCES, "work-commit.mjs", "miku-scm-fixed-command-runner.mjs", "miku-scm-operational-path.mjs", "miku-scm-writing-prepare.mjs", "pr-soft-reset-recommit-preflight.mjs", "pr-recommit-push.mjs", "post-recommit-publish.mjs"];
 
 const WORKFLOW_DEFINITIONS = [
   {
@@ -227,6 +229,36 @@ const WORKFLOW_DEFINITIONS = [
     references: ["repository-maintenance.md", "deterministic-workflow-runner.md"],
   },
   {
+    id: "repository.sync.pull",
+    triggers: ["miku-scm sync pull", "sync pull"],
+    required_parameters: ["repository", "explicit_sync_pull_request"],
+    mutation_level: "local",
+    approval_gate: "apply",
+    runner_entry: "sync-pull.mjs",
+    references: ["sync-pull.md", "deterministic-workflow-runner.md"],
+    contract_runtime_sources: SYNC_SOURCES,
+  },
+  {
+    id: "repository.sync.push.prepare",
+    triggers: ["miku-scm sync push", "sync push"],
+    required_parameters: ["repository", "explicit_sync_push_request"],
+    mutation_level: "local",
+    approval_gate: "apply",
+    runner_entry: "sync-push.mjs",
+    references: ["sync-push.md", "deterministic-workflow-runner.md"],
+    contract_runtime_sources: SYNC_PUSH_SOURCES,
+  },
+  {
+    id: "repository.sync.push.apply",
+    triggers: ["Prepared sync push execution only"],
+    required_parameters: ["repository", "operation", "plan_digest", "draft_digest"],
+    mutation_level: "remote",
+    approval_gate: "apply",
+    runner_entry: "sync-push.mjs",
+    references: ["sync-push.md", "deterministic-workflow-runner.md"],
+    contract_runtime_sources: SYNC_PUSH_SOURCES,
+  },
+  {
     id: "repository.post-merge.next-work",
     triggers: ["GitHub merge done", "PRマージ完了", "次作業branch作成"],
     required_parameters: ["repository", "confirmed_merge"],
@@ -351,6 +383,8 @@ const WORKFLOW_DEFINITIONS = [
 ];
 
 const CONTRACT_TEST_BY_RUNNER = Object.freeze({
+  "sync-pull.mjs": "sync-pull.test.mjs",
+  "sync-push.mjs": "sync-push.test.mjs",
   "miku-scm-local-snapshot.mjs": "miku-scm-local-snapshot.test.mjs",
   "github-issue-read.mjs": "github-issue-read.test.mjs",
   "miku-scm-github-readonly.mjs": "miku-scm-github-readonly.test.mjs",

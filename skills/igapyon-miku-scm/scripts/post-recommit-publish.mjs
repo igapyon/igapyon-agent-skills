@@ -356,6 +356,7 @@ export async function runPublish(options, dependencies = {}) {
   const platform = dependencies.platform ?? process.platform;
   const gh = Object.hasOwn(dependencies, "gh") ? dependencies.gh : createGhRunner({ platform, spawn: dependencies.spawn });
   const root = gitText(git, options.repo, ["rev-parse", "--show-toplevel"]);
+  await dependencies.validateSyncSnapshot?.({ phase: "publication-inspect", root });
   const branch = gitText(git, root, ["branch", "--show-current"], { allowFailure: true });
   if (!branch) throw new Error("Current branch is detached or unresolved");
   if (branch.endsWith("-done")) throw new Error(`Current branch is frozen: ${branch}`);
@@ -364,7 +365,7 @@ export async function runPublish(options, dependencies = {}) {
   const head = gitText(git, root, ["rev-parse", "HEAD"]).toLowerCase();
   assertUnchanged("local HEAD", head, options.expectedHead);
   const statusPorcelain = gitText(git, root, ["status", "--porcelain"]);
-  if (statusPorcelain) throw new Error("Working tree or index is dirty");
+  if (statusPorcelain && (options.apply || !dependencies.allowDirtyPreflight)) throw new Error("Working tree or index is dirty");
 
   const doneBranch = `${branch}-done`;
   if (git(root, ["show-ref", "--verify", "--quiet", `refs/heads/${doneBranch}`], { allowFailure: true }).ok) {
@@ -409,6 +410,7 @@ export async function runPublish(options, dependencies = {}) {
     throw new Error(`Apply mode is supported only on macOS and Windows; current platform is ${platform}`);
   }
 
+  await dependencies.validateSyncSnapshot?.({ phase: "publication-fetch", root });
   gitText(git, root, ["fetch", options.remote]);
   const remoteHeadAfterFetch = remoteHead(git, root, options.remote, branch);
   validateRemoteExpectation(remoteHeadAfterFetch, options);
@@ -426,6 +428,7 @@ export async function runPublish(options, dependencies = {}) {
     destination,
     expected_remote_head: options.expectedRemoteHead || null,
   });
+  await dependencies.validateSyncSnapshot?.({ phase: "publication-push", root });
   let pushMode;
   if (options.expectedRemoteHead) {
     pushMode = "force-with-explicit-lease";
@@ -440,7 +443,9 @@ export async function runPublish(options, dependencies = {}) {
     gitText(git, root, ["push", "-u", options.remote, `HEAD:${destination}`]);
   }
 
+  await dependencies.validateSyncSnapshot?.({ phase: "publication-verify", root });
   gitText(git, root, ["fetch", options.remote]);
+  await dependencies.validateSyncSnapshot?.({ phase: "publication-after-fetch", root });
   const comparison = gitText(git, root, [
     "rev-list",
     "--left-right",

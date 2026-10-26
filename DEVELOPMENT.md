@@ -50,6 +50,15 @@ repo 全体のバージョンを更新するときは、日付部分に合わせ
 
 ## 複数 OS でのテスト
 
+`miku-scm sync pull` は共有baseを取り込み、`-done` の場合だけ正確なPRの
+マージ済み証拠を確認して次branchへ移る。`miku-scm sync push` は必要な通常commit、
+PR文案作成、既存recommit/pushを一回の依頼で行う。Git 2.45以降が必要。
+PR作成とmergeは引き続き人間が行う。詳細と回復は
+[sync pull](skills/igapyon-miku-scm/references/sync-pull.md) /
+[sync push](skills/igapyon-miku-scm/references/sync-push.md) を参照する。
+新規の一時bare remoteテストはfull suiteへ自動収集される。実repoへのsyncやpushを
+source変更の検証として実行しない。
+
 miku-scm と GitHub Writer は、GitHub Actions で macOS と Windows の両方に対してテストを実行します。Windows の改行コードの違いを見つけた実例と、この構成の価値を [複数 OS でテストする価値](docs/maintenance/github-actions-cross-platform-testing.md) に記録しています。
 
 ## 保守時の確認

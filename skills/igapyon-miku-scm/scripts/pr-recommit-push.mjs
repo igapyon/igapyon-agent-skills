@@ -105,8 +105,8 @@ export async function runRecommitPush(options, dependencies = {}) {
   const recommit = dependencies.recommit ?? runRecommit;
   const publish = dependencies.publish ?? runPublish;
   const publishExecute = dependencies.publishExecute ?? executePublish;
-  const recommitDependencies = { ...dependencies.recommitDependencies, platform };
-  const publishDependencies = { ...dependencies.publishDependencies, platform };
+  const recommitDependencies = { ...dependencies.recommitDependencies, platform, validateSyncSnapshot: dependencies.validateSyncRecommit };
+  const publishDependencies = { ...dependencies.publishDependencies, platform, validateSyncSnapshot: dependencies.validateSyncSnapshot };
 
   if (platform !== "darwin" && platform !== "win32") {
     throw asFailure(
@@ -153,6 +153,9 @@ export async function runRecommitPush(options, dependencies = {}) {
         mutation_invoked: false,
       };
     }
+    if (dependencies.expectedPublication && JSON.stringify(initialPublication.remote_branch) !== JSON.stringify(dependencies.expectedPublication)) {
+      throw new Error("Remote publication expectation changed since sync preparation");
+    }
 
     recommitResult = await recommit(resolvedRecommitOptions, recommitDependencies);
     if (recommitResult.status !== "recommitted") {
@@ -164,10 +167,11 @@ export async function runRecommitPush(options, dependencies = {}) {
         mutation_invoked: Boolean(recommitResult.mutation_invoked),
       };
     }
+    await dependencies.validateSyncSnapshot?.({ phase: "post-recommit", root: options.repo, head: recommitResult.new_head, backup: recommitResult.backup_branch });
   } catch (error) {
     const mutationInvoked = error && typeof error === "object" && Object.hasOwn(error, "mutationInvoked")
       ? error.mutationInvoked
-      : false;
+      : Boolean(recommitResult?.mutation_invoked);
     throw asFailure(error, mutationInvoked);
   }
 

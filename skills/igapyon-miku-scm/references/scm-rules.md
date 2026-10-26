@@ -45,7 +45,7 @@ Do not apply Startup Work Branch Checkout for:
 - READONLY inspection, status, URL, tag, Release, asset, source, branch, Issue, or Actions queries
 - PR, Release, About, or Issue drafting that writes only under `workplace/` or `temp/`
 - standalone backup-branch creation
-- PR Soft Reset Recommit, post-recommit publication, or Next Work Branch After PR Completion, which have their own branch rules
+- PR Soft Reset Recommit, post-recommit publication, sync pull/push, or Next Work Branch After PR Completion, which have their own branch rules
 
 For these excluded workflows, keep the current branch checked out and apply only their operation-specific rules.
 
@@ -83,13 +83,18 @@ When the branch name ends in `-done`:
 - Treat it as frozen. Do not edit files, stage, commit, reset, recommit, or begin other new work on that branch.
 - Allow READONLY inspection and local GitHub draft writing under `workplace/` or `temp/` without asking whether the Pull Request was merged.
 - Treat `-done` only as evidence that the post-recommit publication flow probably reached its local rename. It does not prove that GitHub received a Pull Request or that the Pull Request was merged.
+- For an explicit `sync pull`, use the fixed [sync-pull.md](sync-pull.md) exception: verify the exact merged PR and fetched merge result before next-branch creation and carryover. Do not ask for a human merge report or fabricate `--confirmed-merged` on this path. A normal non-`-done` branch does not run that PR check.
 - If the user's activating message explicitly reports that the Pull Request was merged, run the Next Work Branch After PR Completion workflow before doing any new work.
-- If merge completion has not been explicitly reported, stop only before a tracked-content or history-mutating workflow and ask `GitHubのPRはマージ済みですか？` Do not infer the answer from local Git state, remote branch state, or the `-done` suffix.
+- Outside that explicit sync pull exception, if merge completion has not been explicitly reported, stop only before a tracked-content or history-mutating workflow and ask `GitHubのPRはマージ済みですか？` Do not infer the answer from local Git state, remote branch state, or the `-done` suffix.
 - If the user says the Pull Request is not merged, keep the branch frozen. Allow read-only inspection and reporting, but require an explicitly documented recovery path before applying a correction.
 
 After the human confirms that the Pull Request was merged, treat that confirmation as authorization to refresh the base and create the next work branch under the documented workflow. Continue other requested work only after switching to that new branch.
 
 ## PR Soft Reset Recommit Delegation
+
+Explicit `sync push` follows [sync-push.md](sync-push.md): necessary ordinary
+commit, one evidence-based draft, then fixed recommit/publication. It does not
+change the separate recommit commands below or automatically pull/increment.
 
 - Treat bare `recommit`, `pr recommit`, `pr soft reset recommit`, and `pr reset recommit` as explicit requests to run the PR Soft Reset Recommit workflow built into `igapyon-miku-scm`. Bare `recommit` implicitly includes PR writing; do not require a separate PR request.
 - Treat the exact request `draft recommit push` as the distinct one-shot local

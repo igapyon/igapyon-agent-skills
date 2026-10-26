@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v13";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v14";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -23,6 +23,9 @@ const WORKFLOW_TITLES = Object.freeze({
   "repository.maintenance.plan": "Repository maintenance plan",
   "repository.maintenance.apply": "Repository maintenance",
   "repository.post-merge.next-work": "Post-merge next-work preparation",
+  "repository.sync.pull": "Sync pull",
+  "repository.sync.push.prepare": "Sync push preparation",
+  "repository.sync.push.apply": "Sync push",
   "work.commit": "Work commit",
   "pr.publish.preflight": "PR publication",
   "pr.publish.apply": "PR publication",
@@ -574,7 +577,30 @@ export function renderHumanOutput({
     return `${lines.join("\n")}\n`;
   }
 
-  if (workflow === "repository.status") {
+  if (workflow.startsWith("repository.sync.")) {
+    const r = result ?? {};
+    lines.push(`Result: ${displayValue(r.status)}`);
+    if (r.method) lines.push(`Method: ${displayValue(r.method)}`);
+    if (r.commit) lines.push(`Ordinary commit: ${displayValue(r.commit.status)}`);
+    if (r.final_branch) lines.push(`Final branch: ${displayValue(r.final_branch)}`);
+    if (r.base) lines.push(`Base: ${displayValue(r.base)} (${displayValue(r.base_commit)})`);
+    if (r.head || r.new_head) lines.push(`HEAD: ${displayValue(r.head || r.new_head)}`);
+    if (r.backup_branch) lines.push(`Backup branch: ${displayValue(r.backup_branch)}`);
+    if (r.stash_sha) lines.push(`Retained carryover stash: ${displayValue(r.stash_sha)}`);
+    if (r.merge_verification) lines.push(`Verified merged PR: #${r.merge_verification.number}`);
+    if (r.recommended_tag) lines.push(`Recommended tag: ${displayValue(r.recommended_tag)} (${displayValue(r.tag_status)})`);
+    if (r.reason) lines.push(`Reason: ${displayValue(r.reason)}`);
+    if (r.stage) lines.push(`Stage: ${displayValue(r.stage)}`);
+    if (r.status === "prepared") lines.push(`PR draft: ${displayValue(r.suggested_draft_path)}`, "Next action: compose once from the returned evidence, then apply this exact plan.");
+    if (r.next_action) lines.push(`Next action: ${displayValue(r.next_action)}`);
+    if (["partial", "unresolved"].includes(r.status) && r.operation_id) lines.push(`Recovery operation: ${r.operation_id}`);
+    if (r.status === "published") appendPublication(lines, r.publication ?? r);
+    else if (r.publication) {
+      lines.push(`Publication status: ${displayValue(r.publication.status)}`);
+      lines.push(`Publication stage: ${displayValue(r.publication.stage)}`);
+      lines.push(`Publication detail: ${displayValue(r.publication.message)}`);
+    }
+  } else if (workflow === "repository.status") {
     appendRepositoryStatus(lines, result ?? {});
   } else if (workflow === "repository.post-merge.next-work") {
     appendPostMergeNextWork(lines, result ?? {});

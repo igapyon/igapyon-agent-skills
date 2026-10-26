@@ -90,6 +90,12 @@ fields, headers, hostnames, or user-provided command fragments. Apply a
 
 ## Failure Semantics
 
+The separate [sync-pull.md](sync-pull.md) helper may use its two fixed PR GET
+commands, including the validated base filter, only on a `-done` sync pull.
+It verifies exact head/base identities and that the merge result is in the
+fetched base before local work mutation. Normal work branches make no PR
+reads. This allowlist does not authorize GitHub mutation or direct Agent gh.
+
 - A READONLY `gh` failure before mutation is `not-applied`; report that no mutation command ran.
 - A reviewed-state mismatch is `conflict`; do not mutate.
 - A mutation command failure or an unverifiable post-mutation result is `unresolved`; do not retry automatically.

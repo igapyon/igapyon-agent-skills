@@ -41,6 +41,14 @@ export function workBranchName(base, date = new Date()) {
   const abc = (n) => String.fromCharCode(97 + n);
   return `${base}-tiga${String(parts.month).padStart(2, "0")}${String(parts.day).padStart(2, "0")}${abc(parts.hour)}${abc(Math.floor(parts.minute / 10))}${abc(parts.minute % 10)}`;
 }
+// Shared creation core. Authorization belongs to the caller: the legacy route
+// requires a human merge report; sync requires exact GitHub merge evidence.
+export function createNextWorkBranch(root, next, baseCommit, git = runner) {
+  if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(baseCommit)) throw new Error("Next work base must be a pinned commit");
+  git(root, ["check-ref-format", "--branch", next]);
+  git(root, ["switch", "--no-overwrite-ignore", "-c", next, baseCommit]);
+  if (git(root, ["branch", "--show-current"]).out !== next || git(root, ["rev-parse", "HEAD"]).out !== baseCommit) throw new Error("Post-create verification failed");
+}
 function baseFromDoneBranch(branch) {
   return branch.match(/^(.+)-tiga\d{4}[a-x][a-j][a-j]-done$/)?.[1] ?? "";
 }
@@ -82,6 +90,12 @@ export function classifyTagLookup(recommendedTag, lookup, baseCommit) {
   };
 }
 
+export async function nextWorkAdvice(root, baseCommit, remote, git = runner) {
+  const info = await version(root, baseCommit, git);
+  const lookup = info.tag === "unresolved" ? null : git(root, ["ls-remote", "--tags", remote, `refs/tags/${info.tag}`, `refs/tags/${info.tag}^{}`], true);
+  return { version: info.value, version_source: info.source, recommended_tag: info.tag, ...classifyTagLookup(info.tag, lookup, baseCommit), tag_mutation: false, release_mutation: false };
+}
+
 export async function run(options, dependencies = {}) {
   const git = dependencies.git ?? runner;
   let root;
@@ -109,11 +123,7 @@ export async function run(options, dependencies = {}) {
     const baseCommit = git(root, ["rev-parse", remoteBase]).out;
     next = workBranchName(base, dependencies.now ? dependencies.now() : new Date());
     if (git(root, ["show-ref", "--verify", "--quiet", `refs/heads/${next}`], true).ok) throw new Error(`Next work branch already exists: ${next}`);
-    const info = await version(root, baseCommit, git);
-    const tagLookup = info.tag === "unresolved"
-      ? null
-      : git(root, ["ls-remote", "--tags", options.remote, `refs/tags/${info.tag}`, `refs/tags/${info.tag}^{}`], true);
-    const tagResult = classifyTagLookup(info.tag, tagLookup, baseCommit);
+    const advice = await nextWorkAdvice(root, baseCommit, options.remote, git);
     if (git(root, ["branch", "--show-current"]).out !== before || git(root, ["rev-parse", "HEAD"]).out !== head || git(root, ["status", "--porcelain"]).out !== initialStatus) throw new Error("Local state changed before branch creation");
     if (initialStatus) {
       if (staged()) throw new Error("Index is dirty; staged changes are outside the unstaged carryover workflow");
@@ -131,7 +141,7 @@ export async function run(options, dependencies = {}) {
     }
     stage = "branch-create";
     mutationInvoked = true;
-    git(root, ["switch", "-c", next, remoteBase]);
+    createNextWorkBranch(root, next, baseCommit, git);
     stage = "branch-verify";
     const comparison = git(root, ["rev-list", "--left-right", "--count", `HEAD...${remoteBase}`]).out.replace(/\s+/g, " ");
     if (git(root, ["branch", "--show-current"]).out !== next || git(root, ["rev-parse", "HEAD"]).out !== baseCommit || comparison !== "0 0" || git(root, ["status", "--porcelain"]).out) throw new Error("Post-create verification failed");
@@ -159,10 +169,7 @@ export async function run(options, dependencies = {}) {
       remote: options.remote,
       base,
       base_commit: baseCommit,
-      version: info.value,
-      version_source: info.source,
-      recommended_tag: info.tag,
-      ...tagResult,
+      ...advice,
       next_branch: next,
       final_branch: next,
       comparison,

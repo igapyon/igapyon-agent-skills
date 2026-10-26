@@ -31,6 +31,8 @@ import {
   runIssueClose,
 } from "./github-issue-close.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+import { parseArgs as parseSyncPullArgs, runSyncPull } from "./sync-pull.mjs";
+import { parseArgs as parseSyncPushArgs, prepareSyncPush, applySyncPush } from "./sync-push.mjs";
 import {
   applyMaintenancePlan,
   diagnose as diagnoseMaintenance,
@@ -112,7 +114,7 @@ import { failureEvent } from "./miku-scm-observability.mjs";
 
 export const RUNNER_SCHEMA_VERSION = "miku-scm.runner/v1";
 export const RESULT_SCHEMA_VERSION = "miku-scm.runner-result/v1";
-export const PRODUCT_VERSION = "1.20261026.2";
+export const PRODUCT_VERSION = "1.20261026.4";
 
 const ISSUE_APPLY_WORKFLOWS = new Set([
   "github.issue.create.apply",
@@ -672,6 +674,15 @@ export function workflowRegistry(dependencies = {}) {
     ["repository.maintenance.diagnose", maintenanceWorkflow("diagnose", dependencies)],
     ["repository.maintenance.plan", maintenanceWorkflow("plan", dependencies)],
     ["repository.maintenance.apply", maintenanceWorkflow("apply", dependencies)],
+    ...["pull", "push.prepare", "push.apply"].map((mode) => [`repository.sync.${mode}`, {
+      version: 1,
+      mutationLevel: mode === "push.apply" ? "remote" : "local",
+      approvalGate: "apply",
+      parse: (argv, cwd) => mode === "pull" ? parseSyncPullArgs(argv, cwd) : parseSyncPushArgs(mode.split(".")[1], argv, cwd),
+      plan: (options) => ({ operation: `sync-${mode}`, repository: path.resolve(options.repo), mutation_invocation_allowed: true }),
+      execute: (options) => mode === "pull" ? runSyncPull(options, dependencies.syncPullDependencies)
+        : mode === "push.prepare" ? prepareSyncPush(options, dependencies.syncPushDependencies) : applySyncPush(options, dependencies.syncPushDependencies),
+    }]),
     ["repository.post-merge.next-work", {
       version: 1,
       mutationLevel: "local",

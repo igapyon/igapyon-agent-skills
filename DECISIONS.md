@@ -15,6 +15,22 @@ update_when:
 This file records important decisions for the AI agent.
 Read this before making or revisiting decisions, especially when the work seems to loop.
 
+## 2026-10-26: Adopt sync pull And Composite sync push
+
+利用者合意:
+共有baseの変更を現在の作業branchへ一方向に取り込む操作を `miku-scm sync pull` とする。自分の作業を保持し、状態に応じてfast-forward、未公開commitのrebase、未commit変更の退避・復元を使う。競合時はbackup・退避データと停止状態を保持する。
+
+`miku-scm sync push` は、必要な `git add commit` と既存の `draft recommit push` をまとめた複合操作とする。変更がcommit済みなら最初のcommitを省略し、PR文案、backup、recommit、push、検証、`-done`化まで進む。途中失敗では停止する。既存の個別コマンドと互換名は維持する。
+
+実施状態:
+[合意仕様](skills/igapyon-miku-scm/docs/2026-10-26-sync-pull-push-spec.md)と[実装計画・検証記録](skills/igapyon-miku-scm/docs/2026-10-26-sync-implementation-plan.md)に基づきsource実装済み。fixed helper、SKILL・manifest・runner・CLI・生成契約を更新し、full suite 368/368を確認した。実repoへのsync、配備、commit/pushは別途依頼範囲とする。
+
+後続の検討結果:
+`sync pull` の現在branchが `-done` でなければ、PRのマージ済み確認は起動しない。`-done` のときだけ、対象PRのhead/repository/baseとマージ結果を検証できた場合に次branch作成へ自動で進む。現行の `--confirmed-merged` を推測で渡す方式は使わず、人間報告と検証済みPR証拠の経路を分けて実装した。
+
+自己レビュー:
+[記録](skills/igapyon-miku-scm/docs/2026-10-26-sync-plan-self-review.md)の5件を実装計画へ反映した。tracking refだけで作業開始点を推測せず、ignored fileと既存commitを保護し、実際の送信先とprepare後の再開/取消を明示する。名称・基本動作を変える追加機能ではなく、合意した作業保持と停止条件を実現するための補強とする。
+
 ## 2026-10-23: Require approve After A Concrete Issue Operation Preview
 
 利用者合意:
