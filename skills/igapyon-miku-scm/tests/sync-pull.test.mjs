@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { lstat, readFile, rm, writeFile } from "node:fs/promises";
+import { lstat, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { runSyncPull, parseArgs } from "../scripts/sync-pull.mjs";
 import { renderHumanOutput } from "../scripts/miku-scm-human-output.mjs";
 import { context, hash, loadOperation, lock, newId, snapshot, syncGit, writeJson } from "../scripts/miku-scm-sync-state.mjs";
+import { guardIgnored } from "../scripts/miku-scm-sync-worktree.mjs";
 import { fixture } from "./sync-fixture.mjs";
 
 test("sync pull FF preserves staged, unstaged, binary, deletion and untracked work without gh", async (t) => {
@@ -86,6 +87,61 @@ for (const mode of ["ff", "intermediate-rebase"]) test(`sync pull protects ignor
   await f.write("secret.cache", "private local\n");
   const before = f.git(["rev-parse", "HEAD"]); const r = await runSyncPull(f.options);
   assert.equal(r.status, "not-applied", JSON.stringify(r)); assert.match(r.reason, /Ignored path/); assert.equal(await f.read("secret.cache"), "private local\n"); assert.equal(f.git(["rev-parse", "HEAD"]), before);
+});
+
+test("sync pull allows tracked descendants under an ignored directory and protects ignored additions", async (t) => {
+  const f = await fixture(t);
+  await f.write(".gitignore", "workplace/\nignored/\n*.cache\n/blanco/main/\n");
+  await f.write("blanco/main/Tracked.java", "generated source\n");
+  f.git(["add", ".gitignore"]);
+  f.git(["add", "-f", "blanco/main/Tracked.java"]);
+  f.git(["commit", "-m", "Track generated source"]);
+  f.git(["push", "origin", "HEAD:devel"]);
+  f.git(["fetch", "origin"]);
+  f.git(["reset", "--hard", "origin/devel"]);
+  syncGit(f.other, ["fetch", "origin"]);
+  syncGit(f.other, ["reset", "--hard", "origin/devel"]);
+
+  assert.equal((await runSyncPull(f.options)).status, "up-to-date");
+  const latest = await f.advance();
+  const integrated = await runSyncPull(f.options);
+  assert.equal(integrated.status, "completed", JSON.stringify(integrated));
+  assert.equal(integrated.method, "fast-forward");
+  assert.equal(integrated.head, latest);
+  assert.equal(await f.read("blanco/main/Tracked.java"), "generated source\n");
+
+  await f.write("blanco/main/New.cache", "upstream\n", f.other);
+  syncGit(f.other, ["add", "-f", "blanco/main/New.cache"]);
+  syncGit(f.other, ["commit", "-m", "Add generated cache path"]);
+  syncGit(f.other, ["push", "origin", "devel"]);
+  await f.write("blanco/main/New.cache", "private local\n");
+  const before = f.git(["rev-parse", "HEAD"]);
+  const blocked = await runSyncPull(f.options);
+  assert.equal(blocked.status, "not-applied", JSON.stringify(blocked));
+  assert.match(blocked.reason, /Ignored path/);
+  assert.equal(await f.read("blanco/main/New.cache"), "private local\n");
+  assert.equal(f.git(["rev-parse", "HEAD"]), before);
+});
+
+for (const kind of ["file", "symlink"]) test(`sync pull protects an ignored ${kind} replacing a tracked directory`, async (t) => {
+  const f = await fixture(t);
+  await f.write(".gitignore", "workplace/\nignored/\n*.cache\n/generated\n");
+  await f.write("generated/Tracked.java", "tracked source\n");
+  f.git(["add", ".gitignore"]);
+  f.git(["add", "-f", "generated/Tracked.java"]);
+  f.git(["commit", "-m", "Track generated source"]);
+  await rm(path.join(f.repo, "generated"), { recursive: true });
+  if (kind === "symlink") {
+    const target = path.join(f.directory, "private-target");
+    await writeFile(target, "private local\n");
+    try { await symlink(target, path.join(f.repo, "generated")); }
+    catch (error) { if (["EPERM", "EACCES", "ENOTSUP"].includes(error.code)) { t.skip("Symlinks are unavailable"); return; } throw error; }
+  } else await f.write("generated", "private local\n");
+  const before = f.git(["rev-parse", "HEAD"]);
+  await assert.rejects(guardIgnored(await context(f.repo), [before]), /Ignored path/);
+  assert.equal(await f.read("generated"), "private local\n");
+  assert.equal((await lstat(path.join(f.repo, "generated"))).isSymbolicLink(), kind === "symlink");
+  assert.equal(f.git(["rev-parse", "HEAD"]), before);
 });
 
 test("sync pull rebase conflict abort restores exact staged and unstaged carryover", async (t) => {

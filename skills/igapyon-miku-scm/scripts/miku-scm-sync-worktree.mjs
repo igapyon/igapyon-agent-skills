@@ -23,7 +23,15 @@ export function requireGitCapabilities(ctx) {
 export async function guardIgnored(ctx, commits) {
   const insensitive = ctx.git(ctx.root, ["config", "--bool", "core.ignorecase"], { allowFailure: true }).out === "true";
   const key = (name) => insensitive ? name.normalize("NFC").toLowerCase() : name;
-  const tracked = new Set(zeros(ctx.git(ctx.root, ["ls-files", "-z"]).stdout).map(key));
+  const trackedPaths = new Set(zeros(ctx.git(ctx.root, ["ls-files", "-z"]).stdout).map(key));
+  const trackedDirectories = new Set();
+  for (const trackedPath of trackedPaths) {
+    let slash = trackedPath.lastIndexOf("/");
+    while (slash !== -1) {
+      trackedDirectories.add(trackedPath.slice(0, slash));
+      slash = trackedPath.lastIndexOf("/", slash - 1);
+    }
+  }
   const leaves = new Set();
   for (const commit of new Set(commits)) {
     if (!SHA.test(commit)) throw new Error("Invalid checkout tree commit");
@@ -50,7 +58,10 @@ export async function guardIgnored(ctx, commits) {
       relative = relative ? `${relative}/${piece}` : piece;
       let stat;
       try { stat = await lstat(path.join(ctx.root, relative)); } catch (error) { if (error.code === "ENOENT" || error.code === "ENOTDIR") break; throw error; }
-      if (!tracked.has(key(relative)) && ignored(relative)) throw new Error(`Ignored path would be overwritten by sync: ${relative}`);
+      // Ignore rules also match parent directories of tracked generated files.
+      // Only real directories qualify; ignored file/symlink replacements remain protected.
+      const managed = trackedPaths.has(key(relative)) || (stat.isDirectory() && trackedDirectories.has(key(relative)));
+      if (!managed && ignored(relative)) throw new Error(`Ignored path would be overwritten by sync: ${relative}`);
       if (stat.isSymbolicLink() || !stat.isDirectory()) break;
       if (i === pieces.length - 1) {
         const children = ctx.git(ctx.root, ["ls-files", "--others", "--ignored", "--exclude-standard", "-z", "--", `${relative}/`]).stdout;

@@ -239,9 +239,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "sync-pull.mjs",
     "contract_spec": "sync-pull.md",
     "contract_test": "sync-pull.test.mjs",
-    "runner_sha256": "e5a1c36939a610f344db4067bbb137d1a79b9e2d3438e17929701999f60eab1d",
-    "spec_sha256": "1c3e9bf6e35eb5a65aae33a7ba2de5859a04c832f144919d7145a1b1dbf1a199",
-    "pair_sha256": "f0baf83d3469adc10bc924439c39193df37bcce68c53d85861f0abe9fa7ec88b"
+    "runner_sha256": "70302be47f4e0d09619d5bd551bc99603f9a46933269f83fc747c36112224607",
+    "spec_sha256": "631c370283013ce0002d2bd485dc06fb8676cdd70663067401eca8a2e6b6d953",
+    "pair_sha256": "8d929ced0dd3aef19e7ce9a52365a86a33687fb7e4290aa433319ac8a8584662"
   },
   {
     "workflow": "repository.sync.push.prepare",
@@ -250,9 +250,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "sync-push.mjs",
     "contract_spec": "sync-push.md",
     "contract_test": "sync-push.test.mjs",
-    "runner_sha256": "332eb06f5f14cea2b938c12c3e7a058584eee3b80356c69025cba9eb7f4c7349",
+    "runner_sha256": "fca45ff62a7c04366e5b5ebcfb8df17e7f1375133a160b7419ad8ca174927e41",
     "spec_sha256": "4d0fccd7b83305abf76461d0ee1b1fccd9d7d6ffbcbf0916df7a8e208c830ea2",
-    "pair_sha256": "40bed3605841005d8c7cc0585b44c5efdae18a6be9b999e086084f208ebf3e73"
+    "pair_sha256": "f482ad5ea979536981b02bc3135d829909e72b79603022b39d25bb5bedd8dac6"
   },
   {
     "workflow": "repository.sync.push.apply",
@@ -261,9 +261,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "sync-push.mjs",
     "contract_spec": "sync-push.md",
     "contract_test": "sync-push.test.mjs",
-    "runner_sha256": "332eb06f5f14cea2b938c12c3e7a058584eee3b80356c69025cba9eb7f4c7349",
+    "runner_sha256": "fca45ff62a7c04366e5b5ebcfb8df17e7f1375133a160b7419ad8ca174927e41",
     "spec_sha256": "4d0fccd7b83305abf76461d0ee1b1fccd9d7d6ffbcbf0916df7a8e208c830ea2",
-    "pair_sha256": "6bc0037c80664826723125c257155c42a46744345bbac82a2de24be43059c098"
+    "pair_sha256": "4d6b19818dbe8f31ac3cfca72cd9d155d34dbdb471c81ab412aa504a8cc25d7f"
   },
   {
     "workflow": "repository.post-merge.next-work",
