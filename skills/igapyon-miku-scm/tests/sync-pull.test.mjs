@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { lstat, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { runSyncPull, parseArgs } from "../scripts/sync-pull.mjs";
+import { renderHumanOutput } from "../scripts/miku-scm-human-output.mjs";
 import { context, hash, loadOperation, lock, newId, snapshot, syncGit, writeJson } from "../scripts/miku-scm-sync-state.mjs";
 import { fixture } from "./sync-fixture.mjs";
 
@@ -125,6 +126,10 @@ test("sync pull done verifies exact PR and carries staged work to one new branch
   await f.write("carry.txt", "stage\n"); f.git(["add", "carry.txt"]); await f.write("carry.txt", "stage\nunstaged\n");
   const r = await runSyncPull(f.options, f.dependencies);
   assert.equal(r.status, "completed", JSON.stringify(r)); assert.equal(r.method, "next-work"); assert.equal(r.head, latest); assert.equal(r.final_branch, "devel-tiga1026mef");
+  const output = renderHumanOutput({ workflow: "repository.sync.pull", status: "success", approvalGate: "apply", delegateStatus: r.status, mutationInvoked: r.mutation_invoked, result: r });
+  assert.match(output, /^Previous branch: devel-tiga1026aaa-done$/m);
+  assert.match(output, /^New work branch: devel-tiga1026mef$/m);
+  assert.doesNotMatch(output, /(?:Current|Final) branch:/);
   assert.equal(f.git(["rev-parse", "--symbolic-full-name", "@{upstream}"]), "refs/remotes/origin/devel");
   assert.equal(f.git(["status", "-sb"]).split("\n")[0], "## devel-tiga1026mef...origin/devel");
   assert.equal((await readFile(path.join(f.repo, ".git/checkout-upstream"), "utf8")).trim(), "refs/remotes/origin/devel");
@@ -170,6 +175,9 @@ test("sync pull never retries an unconfirmed checkout hook without explicit reso
   const stopped = await runSyncPull(f.options, f.dependencies);
   assert.equal(stopped.status, "partial", JSON.stringify(stopped));
   assert.equal(stopped.final_branch, "devel-tiga1026mef");
+  const output = renderHumanOutput({ workflow: "repository.sync.pull", status: "partial", approvalGate: "apply", delegateStatus: stopped.status, mutationInvoked: stopped.mutation_invoked, result: stopped });
+  assert.match(output, /^Current branch: devel-tiga1026mef$/m);
+  assert.doesNotMatch(output, /New work branch:/);
   const plain = await runSyncPull({ repo: f.repo, resume: stopped.operation_id, apply: true }, f.dependencies);
   assert.equal(plain.status, "partial"); assert.match(plain.reason, /--resolved-next-work/);
   await assert.rejects(f.read("carry.txt"), { code: "ENOENT" });

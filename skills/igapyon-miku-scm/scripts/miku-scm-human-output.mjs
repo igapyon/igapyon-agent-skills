@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v15";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v16";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -583,7 +583,12 @@ export function renderHumanOutput({
     lines.push(`Result: ${displayValue(r.status)}`);
     if (r.method) lines.push(`Method: ${displayValue(r.method)}`);
     if (r.commit) lines.push(`Ordinary commit: ${displayValue(r.commit.status)}`);
-    if (r.final_branch) lines.push(`Final branch: ${displayValue(r.final_branch)}`);
+    if (workflow === "repository.sync.pull") {
+      if (r.method === "next-work" && r.status === "completed" && r.final_branch) {
+        if (r.previous_branch) lines.push(`Previous branch: ${displayValue(r.previous_branch)}`);
+        lines.push(`New work branch: ${displayValue(r.final_branch)}`);
+      } else if (r.final_branch) lines.push(`Current branch: ${displayValue(r.final_branch)}`);
+    } else if (r.final_branch) lines.push(`Final branch: ${displayValue(r.final_branch)}`);
     if (r.base) lines.push(`Base: ${displayValue(r.base)} (${displayValue(r.base_commit)})`);
     if (r.head || r.new_head) lines.push(`HEAD: ${displayValue(r.head || r.new_head)}`);
     if (r.backup_branch) lines.push(`Backup branch: ${displayValue(r.backup_branch)}`);
