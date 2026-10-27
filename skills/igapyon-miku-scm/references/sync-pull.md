@@ -67,8 +67,10 @@ Only fetched refs and local receipts are checked for publication; do not claim
 knowledge of every remote repository.
 
 Before integration, check ignored file/directory/symlink and case collisions
-in the base **and every intermediate replay tree**. Keep ignored contents out
-of the stash. Create a unique backup at the old HEAD, stash staged/unstaged
+in the base **and every intermediate replay tree**. An ignored directory that
+contains tracked descendants is not itself a collision; ignored untracked paths
+that intersect a checkout path remain blockers. Keep ignored contents out of
+the stash. Create a unique backup at the old HEAD, stash staged/unstaged
 and untracked work once, identify that stash by its unique message and exact
 SHA, and retain it. Restore with `stash apply --index <exact-sha>` once.
 Restoration conflicts are partial completion, never success.
