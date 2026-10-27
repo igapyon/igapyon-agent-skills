@@ -21,6 +21,8 @@ test("sync pull runner reports a genuine no-op as no work mutation", async (t) =
   const r = await runWorkflow("repository.sync.pull", ["--repo", f.repo, "--base", "devel", "--apply"], { cwd: f.repo });
   assert.equal(r.status, "success", JSON.stringify(r)); assert.equal(r.delegate_status, "up-to-date"); assert.equal(r.mutation_invoked, false);
   assert.match(r.human_output, /Result: up-to-date/); assert.match(r.human_output, /Base: devel/);
+  assert.match(r.human_output, /^Current branch: devel-tiga1026aaa$/m);
+  assert.doesNotMatch(r.human_output, /New work branch:/);
 });
 
 test("sync fixed output makes partial work and exact recovery visible", () => {

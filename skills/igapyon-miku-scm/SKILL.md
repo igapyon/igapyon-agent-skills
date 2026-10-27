@@ -69,6 +69,8 @@ PR merge state. Pull requires Git 2.45 or newer; its `-done` check also needs
 working GitHub CLI access. Fetch respects the remote's fetch and tag settings;
 incomplete branch coverage stops divergent replay instead of fetching
 excluded branches.
+Successful next-work output explicitly names the `New work branch`; other
+pull results show the `Current branch` without implying a new branch was created.
 It never pushes. See [sync-pull.md](references/sync-pull.md) for recovery.
 
 `miku-scm sync push` stages and commits all ordinary non-ignored pending work

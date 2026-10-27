@@ -125,6 +125,11 @@ PR, or unavailable matching evidence stops before stash or branch creation.
 This transition also returns the version/recommended-tag check from the
 shared next-work core; creating a tag or Release remains a separate operation.
 
+Successful next-work output shows `Previous branch: <old-branch>` and
+`New work branch: <created-branch>` so the newly created work branch is explicit.
+Up-to-date, fast-forward, rebase and incomplete results show
+`Current branch: <branch>`; they do not claim a completed new-branch transition.
+
 ## Recovery
 
 Report the retained operation, branch, backup and exact stash. The Agent
