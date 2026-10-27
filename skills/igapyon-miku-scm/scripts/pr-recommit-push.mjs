@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { platformWarnings } from "./miku-scm-command-runner.mjs";
+
 import { realpath } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -108,12 +110,7 @@ export async function runRecommitPush(options, dependencies = {}) {
   const recommitDependencies = { ...dependencies.recommitDependencies, platform, validateSyncSnapshot: dependencies.validateSyncRecommit };
   const publishDependencies = { ...dependencies.publishDependencies, platform, validateSyncSnapshot: dependencies.validateSyncSnapshot };
 
-  if (platform !== "darwin" && platform !== "win32") {
-    throw asFailure(
-      new Error(`pr.recommit.push apply is supported only on macOS and Windows; current platform is ${platform}`),
-      false,
-    );
-  }
+  const warnings = platformWarnings(platform);
 
   let initialPublication;
   let recommitResult;
@@ -127,7 +124,7 @@ export async function runRecommitPush(options, dependencies = {}) {
       allowDirty: false,
     }, recommitDependencies);
     if (recommitPreflight.status !== "preflight-ok") {
-      return { ...recommitPreflight, status: "not-applied", mode: "apply", mutation_invoked: false };
+      return { ...recommitPreflight, warnings, status: "not-applied", mode: "apply", mutation_invoked: false };
     }
 
     const resolvedRecommitOptions = {
@@ -147,6 +144,7 @@ export async function runRecommitPush(options, dependencies = {}) {
     if (initialPublication.status !== "preflight-ok") {
       return {
         ...recommitPreflight,
+        warnings,
         status: "not-applied",
         mode: "apply",
         publication: initialPublication,
@@ -161,6 +159,7 @@ export async function runRecommitPush(options, dependencies = {}) {
     if (recommitResult.status !== "recommitted") {
       return {
         ...recommitResult,
+        warnings,
         status: "not-applied",
         mode: "apply",
         initial_remote_branch: initialPublication.remote_branch,
@@ -187,7 +186,7 @@ export async function runRecommitPush(options, dependencies = {}) {
     const root = await realpath(options.repo);
     savedPlan = await savePublicationPlan(root, verifiedPublication);
   } catch (error) {
-    return partialResult(recommitResult, initialPublication, "publication-preflight", error);
+    return { ...partialResult(recommitResult, initialPublication, "publication-preflight", error), warnings };
   }
 
   try {
@@ -218,11 +217,12 @@ export async function runRecommitPush(options, dependencies = {}) {
       initial_remote_branch: initialPublication.remote_branch,
       publication,
       ...publication,
+      warnings: [...new Set([...warnings, ...(publication.warnings ?? []), ...(recommitResult.warnings ?? [])])],
       mutation_invoked: true,
     };
   } catch (error) {
     if (error?.mutationInvoked === null) throw asFailure(error, null);
-    return partialResult(recommitResult, initialPublication, "publication-apply", error);
+    return { ...partialResult(recommitResult, initialPublication, "publication-apply", error), warnings };
   }
 }
 

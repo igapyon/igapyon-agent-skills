@@ -16,6 +16,31 @@ recommit, publication, backup, and post-merge work; version and release audits;
 and deterministic READONLY, preflight, and apply workflows.
 Also support explicit `miku-scm sync pull` and `miku-scm sync push` requests.
 
+Here, GitHub includes GitHub Enterprise and similar hosting services. Do not
+restrict execution to `github.com`. Derive the host from the selected remote
+for local workflows; for Issue workflows use `[host/]owner/repo`, retaining the
+host when it is known. Fixed helpers use that host for URL checks and compatible
+GitHub CLI/API calls. An unavailable command or incompatible API is reported at
+that operation, rather than rejecting a service by hostname.
+
+Potentially sensitive filenames stop an ordinary commit before staging. Show
+the returned paths and wait for explicit user consent. After consent, rerun
+the same requested stage with `--allow-sensitive-path <path>` for each agreed
+path; pass these options to `work.commit` or `repository.sync.push.prepare`.
+Do not infer this consent from the original commit/push request or reuse it
+for additional paths. This local consent does not authorize an Issue write.
+
+Draft locations and names are conventions: warn and import a working copy when
+they differ, retaining the source. An already satisfied operation returns
+`up-to-date` without a mutation or a new approval handoff. Missing operational
+ignore setup is reported and handled through Git's local `info/exclude`, so it
+does not stop the requested workflow or edit tracked `.gitignore` files.
+
+Platform names and line-ending conventions are advisory. On Linux or other
+platforms, report a notice and attempt the same fixed commands; their actual
+outcome determines success. Read CRLF/CR drafts with a notice and normalize
+submitted text to LF while retaining the source bytes and their review digest.
+
 ## Activation-Only Fast Path
 
 If no concrete SCM task is given, acknowledge activation and ask what is wanted.
@@ -51,8 +76,9 @@ alias are owned exclusively by this Skill. Do not activate or run
 
 The combined cycle is `sync pull` → edit work and explicitly increment the
 version when needed → `sync push` → human PR creation/merge → `sync pull`.
-Both commands use Node.js, Git, and an already Git-ignored
-`workplace/miku-scm/sync/` in the target repository. The default remote is
+Both commands use Node.js, Git, and local operational files under
+`workplace/miku-scm/sync/`. The helper configures local exclusion with a notice
+when necessary. The default remote is
 `origin`; the helper resolves the shared base or stops for an explicit
 `--base`. See the references for setup and base selection.
 
@@ -77,8 +103,8 @@ It never pushes. See [sync-pull.md](references/sync-pull.md) for recovery.
 when dirty, then drafts PR text, backs up and collapses the branch's commits
 into one PR-text commit, pushes the work branch, and renames the local branch
 with `-done`. Clean work skips the ordinary commit; no commits above the base
-ends as `up-to-date` without drafting or publication. Push supports macOS and
-native Windows, and rejects a frozen `-done` branch.
+ends as `up-to-date` without drafting or publication. Push uses available Git/Node.js commands, reports a notice on platforms other
+than macOS/native Windows, and rejects a frozen `-done` branch.
 
 Run `repository.sync.push.prepare --repo <target-repo> --apply` with a concrete
 `--message` when available, using the `work.commit` message rules below.

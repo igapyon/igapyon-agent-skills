@@ -80,12 +80,11 @@ second approval is requested after backup when the fixed state remains valid.
 
 ## Platform Boundary
 
-Current apply support covers macOS and native Windows (`darwin` and `win32`).
-The shared argv-based command runner keeps the publication contract identical on
-both platforms. Linux, WSL-as-Linux, and other platforms stop before backup
-creation and report no mutation. Windows enablement requires the native Windows
-smoke evidence recorded in the repository plan before a release claim is made;
-it is not a shell-script split.
+The shared argv-based runner uses Windows command handling on `win32` and the
+same executable/argv path on other platforms. Linux, WSL-as-Linux, and other
+platforms produce a notice and continue. Required commands and workflow checks
+determine the outcome; the platform name alone never blocks execution.
+Native platform verification is reported separately from simulated paths.
 
 `rg` is not required by this transition.
 

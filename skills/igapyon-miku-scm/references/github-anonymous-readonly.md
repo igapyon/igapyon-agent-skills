@@ -16,7 +16,10 @@ The AI Agent must not invoke `gh` directly, even for READONLY inspection. Do not
 
 ## Endpoint Patterns
 
-Use `https://api.github.com` with these `GET` endpoint patterns:
+Use the selected service's REST API base with these `GET` endpoint patterns.
+`https://api.github.com` is the base for `github.com`; for Enterprise or similar
+services use their documented API base. Do not send another host's repository
+request to `api.github.com` or reject it only because its hostname differs.
 
 ```text
 /repos/{owner}/{repo}

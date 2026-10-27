@@ -2,6 +2,12 @@
 
 This is the initial rule entry point for `igapyon-miku-scm`. Add detailed rules incrementally as concrete workflows are decided.
 
+GitHub means GitHub and similar repository hosting services, including GitHub
+Enterprise. There is no `github.com` hostname allowlist. Preserve the selected
+remote's host and repository path when constructing browser URLs, comparing
+repository identities, and calling compatible APIs. Use the service's actual
+Git/CLI/API capabilities; do not reject a different hostname in advance.
+
 ## Current Development Policy
 
 - Keep public GitHub inspection READONLY by default.
@@ -127,7 +133,7 @@ git log -1 | head -n 20
 - Run this post-check only after successful recommit. If recommit fails, report the failure instead of presenting the previous commit log as the new result.
 - Do not push or create a Pull Request as part of this delegated workflow.
 
-## One-Shot PR Recommit Push On macOS or Windows
+## One-Shot PR Recommit Push
 
 Use the fixed `pr.recommit.push` runner workflow after the reviewed PR draft is
 available. It validates the local candidate and fixes the remote branch state
@@ -140,10 +146,10 @@ a remote mutation and leaves the ordinary work branch checked out. Do not retry
 or force-push automatically. Use the reported backup and candidate HEAD for a
 separately authorized recovery.
 
-Current apply support covers macOS and native Windows. Linux, WSL-as-Linux, and
-other platforms stop before backup; retain that guard for unsupported platforms.
+Linux, WSL-as-Linux, and other platforms produce a notice and continue through
+the available fixed commands. OS names alone never block execution.
 
-## Human-Approved Post-Recommit Publication On macOS or Windows
+## Human-Approved Post-Recommit Publication
 
 After a successful PR Soft Reset Recommit and the required `git log -1 | head -n 20` display, stop and wait for the human to inspect the commit log.
 
@@ -151,7 +157,7 @@ Use [github-post-recommit-publish.md](github-post-recommit-publish.md) and the b
 
 Proceed only when all of these conditions hold:
 
-- the environment is macOS or native Windows
+- the required Git/Node.js commands can execute; other platforms produce a notice
 - the working tree is clean
 - the human explicitly says the displayed commit is OK and authorizes publication
 - the target `<current-branch>-done` local branch does not already exist
@@ -368,16 +374,16 @@ operation is based on the same evidence the user sees.
 ## Human-Approved Issue Comment
 
 - Use [github-issue-comment.md](github-issue-comment.md) and the bundled `scripts/github-issue-comment.mjs`.
-- Permit only one `gh issue comment <number> --repo <owner/repo> --body-file <temporary-file>` call using the complete reviewed comment draft.
+- Permit only one `gh issue comment <number> --repo <[host/]owner/repo> --body-file <temporary-file>` call using the complete reviewed comment draft.
 - Require the complete handoff review and a separate exact `approve` after displaying the target Issue and complete proposed comment. A preflight is not approval.
-- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt,comments` for the reviewed Issue snapshot and `gh api --method GET repos/<owner/repo>/issues/comments/<comment-id>` for post-comment verification. Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body. A pre-mutation READONLY failure is `not-applied`; bounded READONLY verification retries must never repeat the mutation.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt,comments` for the reviewed Issue snapshot and `gh api --method GET repos/<owner/repo>/issues/comments/<comment-id> [--hostname <selected-host>]` for post-comment verification. Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body. A pre-mutation READONLY failure is `not-applied`; bounded READONLY verification retries must never repeat the mutation.
 - Do not edit or delete comments, use interactive or browser modes, or combine a comment with another mutation in one helper or `gh` command. The exact ordered handoff batch may orchestrate separately reviewed helpers and dependency-refresh only the allowlisted snapshot expectations in [approval-handoff.md](approval-handoff.md).
 
 ## Human-Approved Existing Issue Label Update
 
 - Use [github-issue-label-update.md](github-issue-label-update.md) and the bundled `scripts/github-issue-label-update.mjs`.
 - Permit one `gh issue edit` containing only reviewed repeated `--add-label` and `--remove-label` arguments for one Issue.
-- Require every label to exist exactly in the repository. Reject overlap, no-op additions or removals, and label-definition changes.
+- Require additions to name existing repository labels. Reject overlap and label-definition changes. Already-present additions and absent removals are harmless; return no changes required when the full request is already satisfied.
 - Require the complete handoff review and a separate exact `approve` after displaying the target Issue and current/added/removed/resulting labels. A preflight is not approval.
 - Use fixed READONLY `gh label list --limit 1000 --json name` and `gh issue view --json number,url,title,body,state,labels,updatedAt,comments` from preflight through verification. Persist `pending`, detect an intervening Issue change as `conflict`, and verify the complete resulting label set. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
 

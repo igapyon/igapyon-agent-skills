@@ -2,6 +2,8 @@ import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { lstat, mkdir, open, readFile, readdir, readlink, realpath, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { repositoryFromRemote } from "./miku-scm-repository.mjs";
+import { ensureOperationalExclusion, ORDINARY_PATHSPEC } from "./miku-scm-operational-storage.mjs";
 
 export const SYNC_SCHEMA = "miku-scm.sync/v1";
 export const SHA = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
@@ -49,14 +51,12 @@ export async function context(repo, dependencies = {}) {
   const root = await realpath(git(repo, ["rev-parse", "--show-toplevel"]).out);
   const common = await realpath(git(root, ["rev-parse", "--path-format=absolute", "--git-common-dir"]).out);
   const gitDir = await realpath(git(root, ["rev-parse", "--path-format=absolute", "--git-dir"]).out);
-  if (!git(root, ["check-ignore", "--quiet", "--", "workplace/miku-scm/sync/probe"], { allowFailure: true }).ok) {
-    throw new Error("workplace/miku-scm/sync must be Git-ignored before sync can run");
-  }
+  const warnings = await ensureOperationalExclusion(root, git);
   const storage = path.join(root, "workplace/miku-scm/sync");
   await mkdir(storage, { recursive: true });
   const actual = await realpath(storage);
   if (path.relative(root, actual).startsWith("..") || path.isAbsolute(path.relative(root, actual))) throw new Error("Sync storage escapes the repository");
-  return { root, common, gitDir, storage: actual, git, dependencies };
+  return { root, common, gitDir, storage: actual, git, dependencies, warnings };
 }
 
 export function branch(ctx) { return ctx.git(ctx.root, ["branch", "--show-current"]).out; }
@@ -69,7 +69,7 @@ export function ancestor(ctx, a, b) {
 
 export async function snapshot(ctx) {
   const g = (args) => ctx.git(ctx.root, args);
-  const untracked = zeros(g(["ls-files", "--others", "--exclude-standard", "-z"]).stdout).sort();
+  const untracked = zeros(g(["ls-files", "--others", "--exclude-standard", "-z", ...ORDINARY_PATHSPEC]).stdout).sort();
   const contents = [];
   for (const name of untracked) {
     const file = path.join(ctx.root, name);
@@ -78,9 +78,9 @@ export async function snapshot(ctx) {
     if (st.size > 64 * 1024 * 1024) throw new Error("An untracked file exceeds the bounded sync snapshot size");
     contents.push([name, st.mode, hash(st.isSymbolicLink() ? await readlink(file) : await readFile(file))]);
   }
-  const index = g(["diff", "--cached", "--binary", "--full-index", "--no-ext-diff", "--no-textconv", "--no-renames"]).bytes;
-  const working = g(["diff", "--binary", "--full-index", "--no-ext-diff", "--no-textconv", "--no-renames"]).bytes;
-  const status = g(["status", "--porcelain=v2", "-z", "--untracked-files=all"]).stdout;
+  const index = g(["diff", "--cached", "--binary", "--full-index", "--no-ext-diff", "--no-textconv", "--no-renames", ...ORDINARY_PATHSPEC]).bytes;
+  const working = g(["diff", "--binary", "--full-index", "--no-ext-diff", "--no-textconv", "--no-renames", ...ORDINARY_PATHSPEC]).bytes;
+  const status = g(["status", "--porcelain=v2", "-z", "--untracked-files=all", ...ORDINARY_PATHSPEC]).stdout;
   const value = { branch: branch(ctx), head: head(ctx), index_dirty: index.length > 0, dirty: Boolean(status),
     index_digest: hash(index), working_digest: hash(working), untracked_digest: hash(contents), status_digest: hash(status) };
   return { ...value, digest: hash(value) };
@@ -104,12 +104,11 @@ export async function assertIdle(ctx) {
 }
 
 export function repositoryIdentity(url, root = process.cwd()) {
-  const scp = url.match(/^git@github\.com:([^/]+)\/([^/]+)$/i);
-  if (scp) return `github.com/${scp[1]}/${scp[2].replace(/\.git$/, "")}`.toLowerCase();
+  const repository = repositoryFromRemote(url);
+  if (repository) return `${repository.host}/${repository.full_name}`.toLowerCase();
   try {
     const u = new URL(url);
     if (u.protocol === "file:") return `local:${path.resolve(decodeURIComponent(u.pathname))}`;
-    if (u.hostname.toLowerCase() === "github.com") return `github.com/${u.pathname.replace(/^\/+/, "").replace(/\.git$/, "")}`.toLowerCase();
     return `${u.protocol}//${u.hostname.toLowerCase()}:${u.port}${u.pathname.replace(/\/$/, "")}`;
   } catch { return `local:${path.resolve(root, url)}`; }
 }
@@ -212,7 +211,7 @@ export async function loadOperation(ctx, id) {
 }
 
 export async function newOperation(ctx, type, id, initial, remote, base, baseSha) {
-  const op = { schema: SYNC_SCHEMA, id, type, root: ctx.root, common: ctx.common, status: "running", phase: "inspect", original: initial, remote, base, base_sha: baseSha, mutation_invoked: false, created_at: new Date().toISOString() };
+  const op = { schema: SYNC_SCHEMA, id, type, root: ctx.root, common: ctx.common, warnings: ctx.warnings, status: "running", phase: "inspect", original: initial, remote, base, base_sha: baseSha, mutation_invoked: false, created_at: new Date().toISOString() };
   await saveOperation(ctx, op);
   return op;
 }
@@ -281,7 +280,7 @@ export async function failure(ctx, op, error) {
   const closed = op && TERMINAL.has(op.status);
   const status = !closed && op?.mutation_invoked ? "partial" : "not-applied";
   if (op && !closed) { op.status = op.mutation_invoked ? "partial" : "rejected"; op.error = error.message; await saveOperation(ctx, op); }
-  return { status, reason: error.message, mutation_invoked: closed ? false : op?.mutation_invoked ?? false, operation_id: op?.id ?? null, stage: op?.phase ?? "inspect", final_branch: branch(ctx), head: head(ctx), backup_branch: op?.backup_branch ?? null, stash_sha: op?.stash_sha ?? null, next_action: !closed && op?.mutation_invoked ? "Inspect the retained sync operation; resume or abort it explicitly" : "Resolve the reported condition before starting sync" };
+  return { status, warnings: ctx.warnings, reason: error.message, mutation_invoked: closed ? false : op?.mutation_invoked ?? false, operation_id: op?.id ?? null, stage: op?.phase ?? "inspect", final_branch: branch(ctx), head: head(ctx), backup_branch: op?.backup_branch ?? null, stash_sha: op?.stash_sha ?? null, next_action: !closed && op?.mutation_invoked ? "Inspect the retained sync operation; resume or abort it explicitly" : "Resolve the reported condition before starting sync" };
 }
 
 function baseRecordFile(ctx, name) { return path.join(ctx.storage, "branches", `${hash(name)}.json`); }

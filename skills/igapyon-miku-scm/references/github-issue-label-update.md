@@ -18,7 +18,7 @@ The AI Agent must not invoke `gh` directly.
 The only allowed mutation is one command containing reviewed existing labels:
 
 ```text
-gh issue edit <number> --repo <owner/repo> [--add-label <name>]... [--remove-label <name>]...
+gh issue edit <number> --repo <[host/]owner/repo> [--add-label <name>]... [--remove-label <name>]...
 ```
 
 Use
@@ -30,9 +30,9 @@ Issue type, relationships, state, or label definitions.
 The helper's complete fixed `gh` command surface is:
 
 ```text
-gh label list --repo <owner/repo> --limit 1000 --json name
-gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,labels,updatedAt,comments
-gh issue edit <number> --repo <owner/repo> [--add-label <name>]... [--remove-label <name>]...
+gh label list --repo <[host/]owner/repo> --limit 1000 --json name
+gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt,comments
+gh issue edit <number> --repo <[host/]owner/repo> [--add-label <name>]... [--remove-label <name>]...
 ```
 
 The first two commands are READONLY and are distinct from the single mutation.
@@ -45,8 +45,6 @@ commands above. Reject:
 
 - labels that do not exist exactly in the repository
 - a label requested for both addition and removal
-- adding an already-present label or removing an absent label
-- an empty or otherwise no-op change
 
 The handoff retains the exact Issue, current labels, additions, removals,
 complete resulting labels, operation digest, current-label digest, `updated_at`,
@@ -80,3 +78,10 @@ Attempt states are `pending`, `updated`, `conflict`, `not-applied`, and `unresol
 Report the Issue URL, complete verified labels, operation digest, verification
 attempt count, and attempt-record path. Never imply success for a conflict or
 unresolved result.
+
+Already-present additions and absent removals require no change. Return
+`up-to-date` with `mutation_invoked: false` when the complete request is already
+satisfied. For a mixed request, keep the full reviewed intent but send only
+effective additions/removals to `gh`. A label removed from an Issue need not
+still exist in the repository's label definitions. Unknown additions remain
+an error. No new approval is requested for a read-confirmed no-op.

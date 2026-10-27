@@ -5,21 +5,21 @@ import { spawnSync } from "node:child_process";
 import { mkdir, open, readFile, realpath, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { repositoryCacheParts, ghRepository, parseRepository, matchesIssueUrl } from "./miku-scm-repository.mjs";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 import { normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
 
 const ISSUE_LABEL_APPLY_CONTRACT = workflowContractById().get("github.issue.label.apply");
-const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
-const ATTEMPT_STATUSES = new Set(["pending", "updated", "conflict", "not-applied", "unresolved"]);
+const ATTEMPT_STATUSES = new Set(["pending", "updated", "up-to-date", "conflict", "not-applied", "unresolved"]);
 const VERIFICATION_DELAYS_MS = [0, 250, 1_000];
 const MAX_CHANGES = 20;
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/github-issue-label-update.mjs \\
-    --repo <owner/repo> --issue <number> \\
+    --repo <[host/]owner/repo> --issue <number> \\
     [--add-label <existing-label>]... [--remove-label <existing-label>]...
 
 Apply mode additionally requires --expected-operation-sha256,
@@ -59,9 +59,10 @@ export function parseArgs(argv, cwd = process.cwd()) {
     else throw new Error(`Unknown argument: ${arg}`);
   }
   if (options.help) return options;
-  if (!REPOSITORY_PATTERN.test(options.repository)) {
-    throw new Error("--repo must be exactly owner/repo");
+  if (!parseRepository(options.repository)) {
+    throw new Error("--repo must use [host/]owner/repo");
   }
+  options.repository = ghRepository(parseRepository(options.repository));
   if (!Number.isSafeInteger(options.issueNumber) || options.issueNumber < 1) {
     throw new Error("--issue must be a positive integer");
   }
@@ -126,32 +127,21 @@ function operationSha256(options) {
 
 function targetLabels(current, options) {
   const removed = new Set(options.removeLabels);
-  return [
+  return [...new Set([
     ...current.filter((label) => !removed.has(label)),
     ...options.addLabels,
-  ];
+  ])];
 }
 
 function validateExistingLabels(available, options) {
   const availableSet = new Set(available);
-  const requested = [...options.addLabels, ...options.removeLabels];
+  const requested = options.addLabels;
   const missing = requested.filter((label) => !availableSet.has(label));
   if (missing.length > 0) {
     throw new Error(`Requested labels do not exist exactly: ${missing.join(", ")}`);
   }
 }
 
-function validateCurrentLabels(current, options) {
-  const set = new Set(current);
-  const alreadyPresent = options.addLabels.filter((label) => set.has(label));
-  const absent = options.removeLabels.filter((label) => !set.has(label));
-  if (alreadyPresent.length > 0) {
-    throw new Error(`Labels already present cannot be added: ${alreadyPresent.join(", ")}`);
-  }
-  if (absent.length > 0) {
-    throw new Error(`Absent labels cannot be removed: ${absent.join(", ")}`);
-  }
-}
 
 function ghDetail(result) {
   return result?.stderr || result?.stdout || result?.error?.message || `exit ${result?.status}`;
@@ -171,10 +161,9 @@ export function createGhIssueReader(gh = createGhRunner()) {
     } catch {
       throw new Error("gh issue view returned malformed JSON");
     }
-    const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
     if (
       issue?.number !== issueNumber
-      || issue?.url !== expectedUrl
+      || !matchesIssueUrl(issue?.url, repository, issueNumber)
       || typeof issue?.title !== "string"
       || typeof issue?.body !== "string"
       || !["OPEN", "CLOSED"].includes(issue?.state)
@@ -242,14 +231,12 @@ export function createGhRunner() {
 }
 
 function operationalPath(root, repository, issueNumber, digest) {
-  const [owner, repo] = repository.split("/");
   return path.join(
     root,
     "workplace",
     "miku-scm",
     "issue-label-attempts",
-    owner,
-    repo,
+    ...repositoryCacheParts(repository),
     String(issueNumber),
     `${digest}.json`,
   );
@@ -340,12 +327,12 @@ async function verifyLabels(readIssue, sleep, repository, issueNumber, expected)
   };
 }
 
-function ghArguments(options) {
+function ghArguments(options, current = null) {
   return [
     "issue", "edit", String(options.issueNumber),
     "--repo", options.repository,
-    ...options.addLabels.flatMap((label) => ["--add-label", label]),
-    ...options.removeLabels.flatMap((label) => ["--remove-label", label]),
+    ...options.addLabels.filter((label) => !current || !current.labels.includes(label)).flatMap((label) => ["--add-label", label]),
+    ...options.removeLabels.filter((label) => !current || current.labels.includes(label)).flatMap((label) => ["--remove-label", label]),
   ];
 }
 
@@ -375,11 +362,11 @@ export async function runIssueLabelUpdate(options, dependencies = {}) {
   const digest = operationSha256(options);
   const attempt = operationalPath(root, options.repository, options.issueNumber, digest);
   const prior = await readAttempt(attempt);
-  if (prior && !recoverableAttempt(prior)) {
+  if (prior && !recoverableAttempt(prior) && (options.apply || !["updated", "up-to-date"].includes(prior.status))) {
     throw new Error(`This label operation already has a ${prior.status} attempt. Do not retry it.`);
   }
   let recoveredFrom = null;
-  if (prior) recoveredFrom = await archiveRecoverableAttempt(attempt);
+  if (prior && recoverableAttempt(prior)) recoveredFrom = await archiveRecoverableAttempt(attempt);
   const available = await readLabels(options.repository);
   validateExistingLabels(available, options);
   const common = {
@@ -394,11 +381,16 @@ export async function runIssueLabelUpdate(options, dependencies = {}) {
 
   if (!options.apply) {
     const current = await readIssue(options.repository, options.issueNumber);
-    validateCurrentLabels(current.labels, options);
     const target = targetLabels(current.labels, options);
+    const noChanges = labelsSha256(target) === labelsSha256(current.labels);
+    if (prior && !recoverableAttempt(prior) && !noChanges) throw new Error("This label operation was already completed; prepare a fresh operation from the current Issue");
     return {
-      status: "preflight-ok",
+      status: noChanges ? "up-to-date" : "preflight-ok",
+      no_changes: noChanges,
+      mutation_invoked: false,
+      ...(noChanges ? { reason: "No changes required; the requested labels are already in place" } : {}),
       ...common,
+      planned_gh_arguments: noChanges ? [] : ghArguments(options, current),
       issue_url: current.url,
       issue_title: current.title,
       issue_state: current.state,
@@ -448,6 +440,11 @@ export async function runIssueLabelUpdate(options, dependencies = {}) {
     await replaceAttempt(attempt, record);
     return { status: "not-applied", ...common, ...record };
   }
+  if (labelsSha256(targetLabels(current.labels, options)) === labelsSha256(current.labels)) {
+    const record = { ...pending, status: "up-to-date", issue_url: current.url, resulting_labels: current.labels, mutation_invoked: false, reason: "No changes required; the requested labels are already in place" };
+    await replaceAttempt(attempt, record);
+    return { ...common, ...record };
+  }
   if (
     current.updatedAt !== options.expectedUpdatedAt
     || labelsSha256(current.labels) !== options.expectedCurrentLabelsSha256.toLowerCase()
@@ -463,11 +460,10 @@ export async function runIssueLabelUpdate(options, dependencies = {}) {
     await replaceAttempt(attempt, record);
     return { status: "conflict", ...common, issue_url: current.url, ...record };
   }
-  validateCurrentLabels(current.labels, options);
   const target = targetLabels(current.labels, options);
   let result;
   try {
-    result = ghMutation(ghArguments(options));
+    result = ghMutation(ghArguments(options, current));
   } catch (error) {
     result = { ok: false, error };
   }

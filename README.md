@@ -222,6 +222,10 @@ You need both a current view of your work and a dated account of how you reached
 
 You want miku-soft's documented source-control process applied consistently, from local work and backups through publication preparation and the next work branch. Fixed runners carry the mechanical steps and checks, while the draft explains the change to a reviewer.
 
+GitHub includes GitHub Enterprise and similar hosting services. The skill uses
+the selected remote's host without a `github.com` restriction; API operations
+use the service's compatible GitHub CLI/API capabilities.
+
 **What you can achieve**
 
 - Use `miku-scm sync pull` to bring the shared base into your work branch while retaining local commits and staged, unstaged, and untracked work. Safe fast-forward or unpublished-commit rebase is chosen from the recorded state; unsafe integration stops with recovery information.
@@ -230,7 +234,8 @@ You want miku-soft's documented source-control process applied consistently, fro
 - Run supported Issue creation, editing, label, comment, and closure workflows with their required preflight and approval steps.
 - Update date-based or Semantic Versions, check coupled values, maintain repositories, and inspect tags, Releases, and assets.
 
-**Scope and prerequisites:** Give these requests to the AI agent with this skill installed. Sync uses Node.js, Git, and a Git-ignored `workplace/miku-scm/sync/` in the target repository. Pull requires Git 2.45 or newer; push supports macOS and native Windows. Automatic PR merge verification requires GitHub CLI access to the repository.
+**Scope and prerequisites:** Give these requests to the AI agent with this skill installed. Sync uses Node.js, Git, and local `workplace/miku-scm/sync/` storage. Missing ignore setup is handled with
+a notice and a local Git exclusion rule. Pull requires Git 2.45 or newer; push uses the available commands and reports a notice on Linux/other platforms. Automatic PR merge verification requires GitHub CLI access to the repository.
 
 Only a local `-done` branch triggers `sync pull`'s PR check. The exact PR must be verified as merged into the fetched base before a new work branch is created; missing or unmerged evidence stops the transition. Ordinary work branches skip that PR check. If the shared base has advanced beyond the work branch, `sync push` stops for an explicitly requested `sync pull`.
 

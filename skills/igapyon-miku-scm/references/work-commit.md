@@ -23,17 +23,28 @@ Pull Request, or publishes a Release.
 ## Speed-First Scope
 
 The explicit `git add commit` request means that every current non-ignored
-change is in scope. The runner therefore uses fixed `git add --all`; it does
+change is in scope. The runner stages the complete ordinary path set with fixed
+`git add --all --pathspec-from-file=- --pathspec-file-nul` and NUL-delimited
+literal pathspecs. Operational files under `workplace/miku-scm/` are excluded. It does
 not return to the Agent to select ordinary changed or untracked paths.
 
 It stops before staging only for a merge conflict, a `-done` branch, no
-non-ignored changes, a coupled-version mismatch, or a sensitive-path
+non-ignored changes, a coupled-version mismatch, or an unapproved sensitive-path
 candidate. The fixed basename denylist is `.env`, `.env.*`, `.npmrc`,
 `.netrc`, `.pypirc`, `id_rsa`, `id_dsa`, `id_ecdsa`, `id_ed25519`,
 `secret*`, `credential*`, `token*`, and `.pem`, `.p12`, `.pfx`, or `.key`
 extensions (case-insensitive where applicable). It evaluates only paths, never
-reads candidate content, and requires separate explicit handling rather than
-silently committing a candidate.
+reads candidate content. On a candidate it returns the exact paths and stops
+before staging. After the user explicitly agrees to include selected paths,
+the Agent repeats the requested stage with one `--allow-sensitive-path <path>`
+per agreed path. Only those paths are allowed in that invocation; a new
+candidate stops again. This is also supported by `sync push` preparation.
+A clean worktree returns `up-to-date`, without a commit or approval request.
+
+When operational files are not ignored, the helper warns and adds
+`/workplace/miku-scm/` to Git's local `info/exclude`. Tracked ignore files are
+not edited. Staging uses only ordinary paths, so local runtime records do not
+enter the commit.
 
 On a branch ending in `-done`, branch inspection takes precedence over change
 and check discovery. The runner returns `not-applied` with an explicit warning
@@ -47,7 +58,7 @@ working files untouched, including when the branch has no changes.
 2. Resolve only recognised repository checks: `npm run check:index` when the
    tracked `package.json` declares `mikuIndex.required` and that exact script,
    and `mvn validate` when the POM declares `validate-version-alignment`.
-3. Stage all current non-ignored changes with `git add --all`.
+3. Stage all current ordinary non-ignored unstaged/untracked paths with the fixed NUL-delimited literal-pathspec Git command. Preserve already staged changes, including deletions and renames.
 4. Fix the exact staged path list and binary staged-diff SHA-256. Obtain that
    diff with `--no-ext-diff --no-textconv` so repository-configured renderers
    cannot alter the fingerprint or return a presentation-specific status. The
@@ -70,7 +81,7 @@ two states are informational. A forgotten increment does not block a normal
 commit; an actual coupled-source mismatch still blocks because the repository
 has declared that invariant.
 
-## macOS and Windows 11
+## Command Execution
 
 This workflow uses one common Node.js module; it does not require a separate
 macOS or Windows script. It invokes `git` directly. For native Windows fixed

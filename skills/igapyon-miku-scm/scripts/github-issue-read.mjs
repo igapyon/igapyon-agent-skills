@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
+import { ghRepository, parseRepository } from "./miku-scm-repository.mjs";
 
 import { normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
 
 function usage() {
-  return `Usage: github-issue-read.mjs --repo <owner>/<repo> (--list [--state <open|closed|all>] | --issue <number> | --labels)
+  return `Usage: github-issue-read.mjs --repo <[host/]owner/repo> (--list [--state <open|closed|all>] | --issue <number> | --labels)
 
 Options:
-  --repo <owner>/<repo>             Repository to inspect
+  --repo <[host/]owner/repo>             Repository to inspect
   --list                            List Issues (default state: open)
   --state <open|closed|all>         State for --list
   --issue <positive-number>         Read one Issue with its comments
@@ -31,9 +32,10 @@ export function parseArgs(argv) {
     } else if (arg === "--labels") options.mode = options.mode ? "invalid" : "labels";
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(options.repo)) {
-    throw new Error("--repo must use the owner/repository form");
+  if (!parseRepository(options.repo)) {
+    throw new Error("--repo must use [host/]owner/repository");
   }
+  options.repo = ghRepository(parseRepository(options.repo));
   if (!new Set(["list", "issue", "labels"]).has(options.mode)) {
     throw new Error("Specify exactly one of --list, --issue, or --labels");
   }

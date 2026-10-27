@@ -9,8 +9,9 @@ commit stage.
 
 ## Requirements and scope
 
-Use Node.js and Git on macOS or native Windows, with an active work branch
-and an already Git-ignored `workplace/miku-scm/sync/` in the target repository.
+Use available Node.js and Git commands with an active work branch
+and local operational storage under `workplace/miku-scm/sync/`. Missing ignore
+setup produces a notice and a local `info/exclude` rule, then continues.
 The default remote is `origin`; shared-base selection follows
 [sync-pull.md](sync-pull.md#requirements-and-base-selection). Require a single
 fetch URL and a single push URL that identify the same repository. A local
@@ -26,6 +27,10 @@ ordinary commit; sync does not expand the configured fetch range to repair it.
 The ordinary commit stage includes all current ordinary non-ignored staged,
 unstaged and untracked changes, including work outside the latest request;
 the existing `work.commit` sensitive-path and validation checks still apply.
+Unapproved sensitive paths stop before staging. Show the candidates, wait for
+explicit user consent, and repeat preparation with `--allow-sensitive-path`
+for each agreed path. A stopped preparation has made no ordinary commit;
+start fresh preparation with that bounded consent.
 This is a composite workflow, not an alias that changes `draft recommit push`.
 When work is already committed, it skips the ordinary commit. When there are
 no commits above the base, it returns `up-to-date` without PR drafting,
@@ -54,7 +59,8 @@ ordinary commit and prepared operation intact.
 ## Prepare contract
 
 Resolve real worktree/common Git directory, branch, remote and shared base.
-Require supported macOS/native Windows, an active work branch, no conflicting
+Use the native command form, report a notice for Linux/other platforms, and
+require an active work branch, no conflicting
 Git operation and no other pending sync. Fetch once and stop **before an
 ordinary commit** if the fetched base is not an ancestor of HEAD. Run fixed
 publication preflight (allow dirty only for this read-only preparation) to

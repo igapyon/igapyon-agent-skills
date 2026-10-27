@@ -39,7 +39,7 @@ Pull Request on GitHub.
 
 Release mode requires an explicit start commit or range. A single Release
 start commit is inclusive through `HEAD`. About mode reads bounded repository
-documents. Issue mode requires an exact `owner/repository`; it retrieves either
+documents. Issue mode requires an exact `[host/]owner/repository`; it retrieves either
 the exact existing Issue or the repository's existing labels through the fixed
 Issue READONLY helper.
 

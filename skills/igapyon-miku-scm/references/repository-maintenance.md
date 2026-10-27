@@ -77,10 +77,10 @@ The helper uses these fixed authenticated READONLY `gh` command surfaces
 without a shell:
 
 ```text
-gh api --method GET repos/{owner}/{repo}/pulls \
+gh api --method GET repos/{owner}/{repo}/pulls [--hostname <selected-host>] \
   -f state=all -f head={owner}:{branch} -f per_page=100
 
-gh api --method GET repos/{owner}/{repo}/pulls/{reviewed-positive-number}
+gh api --method GET repos/{owner}/{repo}/pulls/{reviewed-positive-number} [--hostname <selected-host>]
 ```
 
 Query only the pushed branch corresponding to each local `-done` candidate.

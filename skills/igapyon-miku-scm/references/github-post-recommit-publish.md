@@ -102,7 +102,7 @@ the reviewed remote SHA.
 
 Apply mode performs these operations in order:
 
-1. Require macOS or native Windows and resolve the repository.
+1. Resolve the repository and select native command handling. On Linux or other platforms, report a notice and continue with the available commands.
 2. Verify the current non-`-done` branch and clean worktree/index.
 3. Verify exact `HEAD` equality with `--expected-head`.
 4. Refuse an existing local `<branch>-done`.

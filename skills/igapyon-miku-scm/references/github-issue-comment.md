@@ -14,12 +14,21 @@ authorized, human-approved static-helper workflow in this document. Follow
 The AI Agent must not invoke `gh` directly. Drafting or preflight never
 authorizes publication.
 
+Draft paths and filenames below are preferred conventions. A readable UTF-8
+file with another name or location is imported into a canonical working copy
+with a warning; the source is retained. Review and apply use the returned
+working-copy path and digest. The explicit Issue option identifies the target,
+including when a source filename names a different Issue. Content, digest, and duplicate-attempt checks still apply. CRLF/CR line
+endings produce a notice and are read as LF for submitted text. Original bytes
+and the review digest are retained. Line-ending-only changes do not bypass
+duplicate-attempt protection.
+
 ## Scope
 
 The only allowed mutation is:
 
 ```text
-gh issue comment <number> --repo <owner/repo> --body-file <generated-temporary-body-file>
+gh issue comment <number> --repo <[host/]owner/repo> --body-file <generated-temporary-body-file>
 ```
 
 Use [scripts/github-issue-comment.mjs](../scripts/github-issue-comment.mjs).
@@ -32,9 +41,9 @@ mutation under [approval-handoff.md](approval-handoff.md).
 The helper's complete fixed `gh` command surface is:
 
 ```text
-gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,labels,updatedAt,comments
-gh issue comment <number> --repo <owner/repo> --body-file <generated-temporary-body-file>
-gh api --method GET repos/<owner/repo>/issues/comments/<comment-id>
+gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt,comments
+gh issue comment <number> --repo <[host/]owner/repo> --body-file <generated-temporary-body-file>
+gh api --method GET repos/<owner/repo>/issues/comments/<comment-id> [--hostname <selected-host>]
 ```
 
 The first and third commands are READONLY and are separate from the one mutation

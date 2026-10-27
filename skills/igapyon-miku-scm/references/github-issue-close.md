@@ -18,7 +18,7 @@ The AI Agent must not invoke `gh` directly.
 The only allowed mutation is:
 
 ```text
-gh issue close <number> --repo <owner/repo> --reason <completed|not planned|duplicate> [--duplicate-of <number>]
+gh issue close <number> --repo <[host/]owner/repo> --reason <completed|not planned|duplicate> [--duplicate-of <number>]
 ```
 
 Use [scripts/github-issue-close.mjs](../scripts/github-issue-close.mjs).
@@ -30,11 +30,12 @@ first and then dependency-refresh this close operation under
 [approval-handoff.md](approval-handoff.md); it still invokes two distinct fixed
 helpers and never adds a comment to `gh issue close`.
 
-Its fixed READONLY command is `gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,stateReason,updatedAt,labels,comments`; it is distinct from the one close mutation.
+Its fixed READONLY command is `gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,stateReason,updatedAt,labels,comments`; it is distinct from the one close mutation.
 
 ## Preflight
 
-Retrieve the target Issue with that fixed READONLY command and require it to be Open. The handoff retains its
+Retrieve the target Issue with that fixed READONLY command and inspect its state. An already Closed target returns `up-to-date`
+without mutation or an approval handoff; its existing close reason is retained. The handoff retains its
 repository, number, URL, title, complete body, state, `updated_at`, selected
 reason, operation digest, and planned command.
 
@@ -52,7 +53,8 @@ full trimmed text is exactly `approve` or `miku-scm approve`.
 Apply requires the reviewed operation digest, target body digest, exact current-comments digest, `updated_at`,
 and reviewed apply workflow contract pair digest. Persist `pending`, retrieve
 the target again, and record
-`conflict` without `gh` if it is no longer Open or the reviewed state changed.
+`up-to-date` without mutation if it is already Closed. Other reviewed-state
+changes remain `conflict` before a close mutation.
 
 A `conflict` or pre-mutation `not-applied` attempt proves that `gh issue close`
 was not invoked. A later preflight may therefore read and display the latest

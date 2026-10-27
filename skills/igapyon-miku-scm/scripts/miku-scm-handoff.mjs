@@ -751,8 +751,8 @@ async function refreshSelectedIssueHandoff(selected, priorEntries, dependencies 
   );
   const delegate = refreshResult?.result ?? refreshResult;
   const successful = refreshResult?.status === "success"
-    ? delegate?.status === "preflight-ok"
-    : refreshResult?.status === "preflight-ok";
+    ? ["preflight-ok", "up-to-date"].includes(delegate?.status)
+    : ["preflight-ok", "up-to-date"].includes(refreshResult?.status);
   if (!successful || !Array.isArray(delegate?.apply_arguments)) {
     const detail = refreshResult?.error?.message
       ?? delegate?.detail
@@ -764,7 +764,7 @@ async function refreshSelectedIssueHandoff(selected, priorEntries, dependencies 
     );
   }
   try {
-    assertDependencySnapshot(selected, delegate, priorEntries);
+    if (delegate.status !== "up-to-date") assertDependencySnapshot(selected, delegate, priorEntries);
   } catch (error) {
     if (error?.handoffStatus) throw error;
     throw dependencyRefreshError(error.message, "conflict", refreshResult);
@@ -846,6 +846,8 @@ async function writeHandoffRecord(root, selected, record) {
 }
 
 function handoffStatusForApplyResult(applyResult) {
+  if (applyResult?.status === "success" && applyResult.mutation_invoked === false
+    && applyResult.result?.status === "up-to-date") return "applied";
   if (applyResult?.status === "success" && applyResult.mutation_invoked === true) return "applied";
   if (applyResult?.status === "conflict" && applyResult.mutation_invoked === false) return "conflict";
   if (applyResult?.status === "not-applied" && applyResult.mutation_invoked === false) return "not-applied";

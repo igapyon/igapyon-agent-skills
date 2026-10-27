@@ -311,6 +311,46 @@ test("sensitive path candidates stop before staging", async (t) => {
   assert.equal(git(root, "diff", "--cached", "--name-only"), "");
 });
 
+test("explicit consent includes only the selected sensitive paths in this commit", async (t) => {
+  const root = await repository(t);
+  await writeFile(path.join(root, ".npmrc"), "registry=https://example.invalid\n");
+  await writeFile(path.join(root, "token.ts"), "export const tokenType = 'word';\n");
+  const stopped = await runWorkCommit(options(root));
+  assert.deepEqual(stopped.sensitive_paths, [".npmrc", "token.ts"]);
+  const partlyAllowed = await runWorkCommit(options(root, "--allow-sensitive-path", ".npmrc"));
+  assert.deepEqual(partlyAllowed.sensitive_paths, ["token.ts"]);
+  assert.equal(git(root, "diff", "--cached", "--name-only"), "");
+  const result = await runWorkCommit(options(root, "--allow-sensitive-path", ".npmrc", "--allow-sensitive-path", "token.ts"));
+  assert.equal(result.status, "committed", JSON.stringify(result));
+  assert.equal(git(root, "show", "HEAD:token.ts"), "export const tokenType = 'word';");
+  await writeFile(path.join(root, ".env"), "NEW_CANDIDATE=example\n");
+  const next = await runWorkCommit(options(root, "--allow-sensitive-path", ".npmrc", "--allow-sensitive-path", "token.ts"));
+  assert.deepEqual(next.sensitive_paths, [".env"]);
+});
+
+test("missing ignore setup is repaired locally and operational records never enter the commit", async (t) => {
+  const root = await repository(t);
+  await writeFile(path.join(root, ".gitignore"), "\n");
+  await mkdir(path.join(root, "workplace/miku-scm/runs"), { recursive: true });
+  await writeFile(path.join(root, "workplace/miku-scm/runs/local.json"), "{}\n");
+  await writeFile(path.join(root, "README.md"), "Updated\n");
+  const result = await runWorkCommit(options(root));
+  assert.equal(result.status, "committed", JSON.stringify(result));
+  assert.equal(result.warnings.length, 1);
+  assert.equal(await readFile(path.join(root, ".gitignore"), "utf8"), "\n");
+  assert.match(await readFile(path.join(root, ".git/info/exclude"), "utf8"), /\/workplace\/miku-scm\//);
+  assert.ok(!git(root, "ls-tree", "-r", "--name-only", "HEAD").includes("local.json"));
+});
+
+test("an already clean worktree completes without a new commit", async (t) => {
+  const root = await repository(t);
+  const before = git(root, "rev-parse", "HEAD");
+  const result = await runWorkCommit(options(root));
+  assert.equal(result.status, "up-to-date");
+  assert.equal(result.mutation_invoked, false);
+  assert.equal(git(root, "rev-parse", "HEAD"), before);
+});
+
 test("fixed sensitive-path denylist stops before staging and preserves HEAD", async (t) => {
   const candidates = [
     ".env.local",
