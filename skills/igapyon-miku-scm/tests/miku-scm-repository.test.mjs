@@ -41,7 +41,7 @@ test("hosted remotes share repository identity across HTTPS and SSH without a do
   assert.equal(repositoryFromRemote("https://user:secret@ghe.example.test/team/project.git").url,
     "https://ghe.example.test/team/project");
   assert.equal(repositoryFromRemote("/tmp/repository.git"), null);
-  assert.equal(repositoryIdentity("/tmp/repository.git"), "local:/tmp/repository.git");
+  assert.equal(repositoryIdentity("/tmp/repository.git"), `local:${path.resolve("/tmp/repository.git")}`);
   assert.equal(parseRepository("local:/tmp/repository.git"), null);
   assert.equal(parseRepository("/team/project"), null);
 });
