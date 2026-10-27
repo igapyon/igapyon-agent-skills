@@ -174,6 +174,7 @@ export function normalizeIssueReview(preflightWorkflow, result) {
     issue_url: result.issue_url ?? null,
     issue_title: result.issue_title ?? (operation === "create" ? null : result.current_title ?? result.title ?? null),
     proposal,
+    ...(result.warnings?.length ? { warnings: result.warnings.filter((warning) => typeof warning === "string") } : {}),
     context,
   };
 }

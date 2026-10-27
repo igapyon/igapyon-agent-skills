@@ -21,8 +21,8 @@ const repoPath = option(
 );
 const repository = option(
   "--repo",
-  "<owner/repo>",
-  "Target GitHub repository in exact owner/repository form.",
+  "<[host/]owner/repo>",
+  "Target repository on GitHub or a compatible service, optionally qualified by host.",
   { required: true },
 );
 const root = option(
@@ -301,6 +301,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
   "repository.sync.push.prepare": contract(
     "Commit dirty work once and prepare immutable PR evidence for sync push.",
     [repoPath, option("--remote", "<name>", "Selected Git remote.", { default: "origin" }), option("--base", "<branch>", "Shared base branch."), option("--message", "<commit-message>", "Concise ordinary commit title; existing deterministic fallback applies when omitted."),
+      option("--allow-sensitive-path", "<reviewed-path>", "Include this potentially sensitive path only after explicit user consent.", { repeatable: true }),
       option("--resume", "<operation-id>", "Return the same prepared evidence without committing again."), option("--cancel", "<operation-id>", "Revoke an unapplied prepared push while retaining all work."), apply],
     ["--message", "Update work", "--apply"],
     { network_access: "Git fetch and remote branch reads", authentication: "existing Git authentication", operational_artifacts: ["workplace/miku-scm/sync"], notes: ["Prepared evidence needs one Agent-authored PR draft before apply. No automatic sync pull or version increment."] },
@@ -309,7 +310,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     "Consume the exact sync push plan and draft, then recommit and publish once.",
     [repoPath, option("--operation", "<operation-id>", "Exact prepared operation ID.", { required: true }), option("--expected-plan-sha256", "<sha256>", "Exact prepare result plan digest.", { required: true }), option("--pr-draft", "<repository-relative-path>", "Exact suggested PR draft path.", { required: true }), option("--expected-draft-sha256", "<sha256>", "SHA-256 of the saved draft bytes.", { required: true }), apply],
     ["--operation", "<operation-id>", "--expected-plan-sha256", "<sha256>", "--pr-draft", "workplace/miku-scm/pr-drafts/<draft>.md", "--expected-draft-sha256", "<sha256>", "--apply"],
-    { network_access: "Git fetch, branch push and verification", authentication: "existing Git authentication", operational_artifacts: ["workplace/miku-scm/sync", "workplace/miku-scm/ok-push"], notes: ["macOS/Windows only. Creates no PR, merge, tag or Release. An unresolved push must never be resent automatically."] },
+    { network_access: "Git fetch, branch push and verification", authentication: "existing Git authentication", operational_artifacts: ["workplace/miku-scm/sync", "workplace/miku-scm/ok-push"], notes: ["Linux/other platforms produce a notice and continue with available commands. Creates no PR, merge, tag or Release. An unresolved push must never be resent automatically."] },
   ),
   "repository.status": contract(
     "Inspect local branch, worktree, worktrees, and selected version files.",
@@ -689,6 +690,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     [
       repoPath,
       option("--message", "<commit-message>", "Optional reviewed commit message; a deterministic fallback is used when omitted."),
+      option("--allow-sensitive-path", "<reviewed-path>", "Include this potentially sensitive path only after explicit user consent.", { repeatable: true }),
       apply,
     ],
     ["--message", "Update work", "--apply"],
@@ -696,7 +698,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       operational_artifacts: ["workplace/miku-scm/runs"],
       notes: [
         "Stages all current non-ignored changes; it never pushes, tags, or creates a Release.",
-        "Stops before staging conflicts, frozen -done branches, sensitive-path candidates, and coupled-version mismatches.",
+        "Stops before staging conflicts, frozen -done branches, unapproved sensitive-path candidates, and coupled-version mismatches.",
       ],
     },
   ),
@@ -830,7 +832,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     "Collect bounded repository and GitHub evidence for drafting Issue prose.",
     [
       repoPath,
-      option("--github-repo", "<owner/repo>", "Target GitHub repository.", { required: true }),
+      option("--github-repo", "<[host/]owner/repo>", "Target GitHub or compatible repository.", { required: true }),
       option("--issue", "<positive-integer>", "Existing Issue to include as evidence."),
     ],
     ["--github-repo", "owner/repository"],

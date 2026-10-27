@@ -68,7 +68,7 @@ test("preflight returns exact current and resulting labels without gh", async (t
   await assert.rejects(access(path.join(state.root, result.attempt_record)), /ENOENT/);
 });
 
-test("preflight rejects absent labels, overlap, and no-op changes", async (t) => {
+test("preflight rejects absent labels and overlap but completes already satisfied labels", async (t) => {
   const state = await scenario(t);
   await assert.rejects(
     runIssueLabelUpdate(
@@ -87,16 +87,15 @@ test("preflight rejects absent labels, overlap, and no-op changes", async (t) =>
     ]),
     /both added and removed/,
   );
-  await assert.rejects(
-    runIssueLabelUpdate(
-      parseArgs([
-        "--repo", "igapyon/example", "--issue", "42",
-        "--add-label", "bug", "--root", state.root,
-      ]),
-      { readLabels: async () => AVAILABLE, readIssue: async () => ISSUE },
-    ),
-    /already present/,
-  );
+  const noChange = await runIssueLabelUpdate(parseArgs([
+    "--repo", "igapyon/example", "--issue", "42", "--add-label", "bug", "--root", state.root,
+  ]), { readLabels: async () => AVAILABLE, readIssue: async () => ISSUE });
+  assert.equal(noChange.status, "up-to-date");
+  assert.equal(noChange.mutation_invoked, false);
+  const absent = await runIssueLabelUpdate(parseArgs([
+    "--repo", "igapyon/example", "--issue", "42", "--remove-label", "nonexistent", "--root", state.root,
+  ]), { readLabels: async () => AVAILABLE, readIssue: async () => ISSUE });
+  assert.equal(absent.status, "up-to-date");
 });
 
 test("apply invokes one exact label edit and verifies the complete result", async (t) => {

@@ -150,14 +150,14 @@ test("apply invokes one exact close and verifies GitHub's uppercase state reason
   assert.equal(record.status, "closed");
 });
 
-test("already closed or changed Issue is rejected before gh", async (t) => {
+test("already closed Issue completes without mutation and changed Issue still conflicts", async (t) => {
   const state = await scenario(t);
-  await assert.rejects(
-    runIssueClose(optionsFor(state), {
-      readIssue: async () => ({ ...ISSUE, state: "CLOSED", stateReason: "COMPLETED" }),
-    }),
-    /Only an Open Issue/,
-  );
+  const noChange = await runIssueClose(optionsFor(state), {
+    readIssue: async () => ({ ...ISSUE, state: "CLOSED", stateReason: "COMPLETED" }),
+    gh: () => { throw new Error("No mutation expected"); },
+  });
+  assert.equal(noChange.status, "up-to-date");
+  assert.equal(noChange.mutation_invoked, false);
   const preflight = await runIssueClose(optionsFor(state), {
     readIssue: async () => ISSUE,
   });

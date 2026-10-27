@@ -2,6 +2,17 @@
 
 Use `gh` only behind a repository-provided deterministic helper. Never let the AI Agent assemble or invoke `gh` directly.
 
+GitHub includes Enterprise and similar hosting services; no hostname allowlist
+applies. Repository options accept `[host/]owner/repo`. Retain a known host from
+the selected remote or request, and use `GH_HOST` when configured for an
+unqualified repository. Fixed API reads use `--hostname` from that repository,
+and response URLs are checked against the selected host/path rather than
+`github.com`. These forms follow the [GitHub CLI repository option](https://cli.github.com/manual/gh_issue_view),
+[API hostname option](https://cli.github.com/manual/gh_api), and
+[environment settings](https://cli.github.com/manual/gh_help_environment).
+Helpers retain a configured host in the prepared repository argument so that a
+later environment change does not select a different service during apply.
+
 ## Core Boundary
 
 Distinguish the caller from the implementation:
@@ -28,9 +39,9 @@ Do not add direct `gh` use merely because an anonymous request failed. Add or re
 Use [../scripts/github-issue-read.mjs](../scripts/github-issue-read.mjs) for generic public Issue retrieval. The AI Agent invokes the helper, never `gh` directly. Its fixed READONLY command surface is:
 
 ```text
-gh issue list --repo <owner>/<repo> --state <open|closed|all> --limit 1000 --json number,state,title,body,url,updatedAt
-gh issue view <positive-number> --repo <owner>/<repo> --json number,state,title,body,url,updatedAt,labels,comments
-gh label list --repo <owner>/<repo> --limit 1000 --json name,description,color
+gh issue list --repo <[host/]owner/repo> --state <open|closed|all> --limit 1000 --json number,state,title,body,url,updatedAt
+gh issue view <positive-number> --repo <[host/]owner/repo> --json number,state,title,body,url,updatedAt,labels,comments
+gh label list --repo <[host/]owner/repo> --limit 1000 --json name,description,color
 ```
 
 The operation-specific readers also request complete comment snapshots for
@@ -78,15 +89,16 @@ Adding or changing an allowed `gh` command requires a tracked helper change, mat
 The repository-maintenance helper may invoke only these fixed commands:
 
 ```text
-gh api --method GET repos/<owner>/<repo>/pulls -f state=all -f head=<owner>:<branch> -f per_page=100
-gh api --method GET repos/<owner>/<repo>/pulls/<positive-number>
+gh api --method GET repos/<owner>/<repo>/pulls [--hostname <selected-host>] -f state=all -f head=<owner>:<branch> -f per_page=100
+gh api --method GET repos/<owner>/<repo>/pulls/<positive-number> [--hostname <selected-host>]
 ```
 
 Use the first command only for a local `-done` diagnosis and the second only
 to revalidate a PR number fixed in a reviewed maintenance plan. Validate every
 owner, repository, branch, and number. Do not pass `--paginate`, arbitrary
-fields, headers, hostnames, or user-provided command fragments. Apply a
-15-second process timeout and stop further PR reads after the first failure.
+fields, headers, or user-provided command fragments. The fixed helper derives
+`--hostname` only from the selected repository; it is not a pass-through option.
+Apply a 15-second process timeout and stop further PR reads after the first failure.
 
 ## Failure Semantics
 

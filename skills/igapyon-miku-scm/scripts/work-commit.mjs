@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { ensureOperationalExclusion, isOperationalPath } from "./miku-scm-operational-storage.mjs";
 
 import {
   commandForPlatform,
@@ -17,7 +18,7 @@ const GIT_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/work-commit.mjs \\
-    [--repo <path>] [--message <commit-message>] --apply
+    [--repo <path>] [--message <commit-message>] [--allow-sensitive-path <reviewed-path>]... --apply
 
 Stages every non-ignored current change, runs recognised repository consistency
 checks, and creates one local commit. It never pushes, creates a tag, or
@@ -86,12 +87,12 @@ const VERSION_SOURCE_PATHS = Object.freeze([
   "skills/igapyon-mikuku-agent/references/VERSION.md",
 ]);
 
-function changedPaths(root, git) {
+function changedPaths(root, git, includeStaged = true) {
   return stablePaths([
     ...zeroPaths(output(git, root, ["diff", "--name-only", "-z", "--no-renames"])),
-    ...zeroPaths(output(git, root, ["diff", "--cached", "--name-only", "-z", "--no-renames"])),
+    ...(includeStaged ? zeroPaths(output(git, root, ["diff", "--cached", "--name-only", "-z", "--no-renames"])) : []),
     ...zeroPaths(output(git, root, ["ls-files", "--others", "--exclude-standard", "-z"])),
-  ]);
+  ]).filter((name) => !isOperationalPath(name));
 }
 
 function coupledSuffix(sequence) {
@@ -176,12 +177,17 @@ function preMutationFailure(error) {
 }
 
 export function parseArgs(argv, cwd = process.cwd()) {
-  const options = { repo: cwd, message: "", apply: false, help: false };
+  const options = { repo: cwd, message: "", allowSensitivePaths: [], apply: false, help: false };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--help" || arg === "-h") options.help = true;
     else if (arg === "--repo") options.repo = argv[++index] ?? "";
     else if (arg === "--message") options.message = argv[++index] ?? "";
+    else if (arg === "--allow-sensitive-path") {
+      const value = argv[++index] ?? "";
+      if (!value || path.isAbsolute(value) || value.split(/[\\/]/).includes("..") || /[\r\n\0]/.test(value)) throw new Error("--allow-sensitive-path must name one reviewed repository-relative path");
+      options.allowSensitivePaths.push(value.replaceAll("\\", "/"));
+    }
     else if (arg === "--apply") options.apply = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -204,6 +210,8 @@ export async function runWorkCommit(options, dependencies = {}) {
   let checks;
   let message;
   let messageSource;
+  let warnings = [];
+  let approvedSensitivePaths = [];
   try {
     root = output(git, options.repo, ["rev-parse", "--show-toplevel"]).trim();
     branch = output(git, root, ["branch", "--show-current"]).trim();
@@ -218,15 +226,19 @@ export async function runWorkCommit(options, dependencies = {}) {
         mutation_invoked: false,
       });
     }
+    warnings = await ensureOperationalExclusion(root, git);
     paths = changedPaths(root, git);
     const conflicts = zeroPaths(output(git, root, ["diff", "--name-only", "--diff-filter=U", "-z"]));
     versionNotice = withIncrementStatus(await readVersionNotice(root, dependencies.readFile), paths);
     checks = dependencies.resolveChecks ? await dependencies.resolveChecks(root) : await resolveChecks(root, dependencies.readFile);
 
     if (conflicts.length > 0) return result("conflict", { repository: root, branch, head_before: headBefore, conflicted_paths: conflicts, mutation_invoked: false });
-    if (paths.length === 0) return result("not-applied", { repository: root, branch, head_before: headBefore, reason: "No non-ignored changes to commit", mutation_invoked: false });
+    if (paths.length === 0) return result("up-to-date", { repository: root, branch, head_before: headBefore, warnings, reason: "No changes required; there is nothing to commit", mutation_invoked: false });
     const sensitivePaths = paths.filter(sensitivePath);
-    if (sensitivePaths.length > 0) return result("not-applied", { repository: root, branch, head_before: headBefore, paths, sensitive_paths: sensitivePaths, reason: "Sensitive-path candidate requires explicit separate handling", mutation_invoked: false });
+    approvedSensitivePaths = sensitivePaths;
+    const allowed = new Set(options.allowSensitivePaths ?? []);
+    const unapproved = sensitivePaths.filter((name) => !allowed.has(name));
+    if (unapproved.length > 0) return result("not-applied", { repository: root, branch, head_before: headBefore, paths, warnings, sensitive_paths: unapproved, reason: "Potentially sensitive filenames require user consent before committing", next_action: "Show these paths, obtain explicit user consent, then rerun this workflow with --allow-sensitive-path for each agreed path", mutation_invoked: false });
     if (versionNotice.alignment === "mismatch") return result("not-applied", { repository: root, branch, head_before: headBefore, paths, version_notice: versionNotice, reason: "Coupled version sources are mismatched", mutation_invoked: false });
 
     ({ message, source: messageSource } = resolveCommitMessage(paths, versionNotice, options.message));
@@ -238,7 +250,10 @@ export async function runWorkCommit(options, dependencies = {}) {
   let staged = false;
   let stage = "stage";
   try {
-    git(root, ["add", "--all"]);
+    const pathsToStage = changedPaths(root, git, false).filter((name) => paths.includes(name));
+    if (pathsToStage.length) git(root, ["add", "--all", "--pathspec-from-file=-", "--pathspec-file-nul"], {
+      input: pathsToStage.map((name) => `:(literal)${name}\0`).join(""),
+    });
     staged = true;
     const stagedPaths = stablePaths(zeroPaths(output(git, root, ["diff", "--cached", "--name-only", "-z", "--no-renames"])));
     if (JSON.stringify(stagedPaths) !== JSON.stringify(paths)) throw new Error("Staged paths differ from the reviewed non-ignored worktree paths");
@@ -257,8 +272,8 @@ export async function runWorkCommit(options, dependencies = {}) {
     if (JSON.stringify(verifiedPaths) !== JSON.stringify(paths) || verifiedDigest !== stagedDigest) {
       throw new Error("Pre-commit checks changed the staged content; rerun work.commit with the refreshed worktree");
     }
-    const postCheckUnstagedPaths = stablePaths(zeroPaths(output(git, root, ["diff", "--name-only", "-z", "--no-renames", "--"], { allowFailure: true })));
-    const postCheckUntrackedPaths = stablePaths(zeroPaths(output(git, root, ["ls-files", "--others", "--exclude-standard", "-z"])));
+    const postCheckUnstagedPaths = stablePaths(zeroPaths(output(git, root, ["diff", "--name-only", "-z", "--no-renames", "--"], { allowFailure: true }))).filter((name) => !isOperationalPath(name));
+    const postCheckUntrackedPaths = stablePaths(zeroPaths(output(git, root, ["ls-files", "--others", "--exclude-standard", "-z"]))).filter((name) => !isOperationalPath(name));
     if (postCheckUnstagedPaths.length > 0 || postCheckUntrackedPaths.length > 0) {
       const changedAfterChecks = stablePaths([...postCheckUnstagedPaths, ...postCheckUntrackedPaths]);
       const failure = new Error("Pre-commit checks changed the worktree; rerun work.commit with the refreshed worktree");
@@ -282,6 +297,8 @@ export async function runWorkCommit(options, dependencies = {}) {
       message_source: messageSource,
       commit_message_sha256: sha256(`${message}\n`),
       paths,
+      warnings,
+      allowed_sensitive_paths: approvedSensitivePaths,
       staged_diff_sha256: stagedDigest,
       checks: checks.map((entry) => entry.label),
       version_notice: versionNotice,
@@ -298,6 +315,7 @@ export async function runWorkCommit(options, dependencies = {}) {
       paths,
       version_notice: versionNotice,
       stage,
+      warnings,
       message_source: messageSource,
       message: error instanceof Error ? error.message : String(error),
       post_check_unstaged_paths: error?.postCheckUnstagedPaths,

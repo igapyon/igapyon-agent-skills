@@ -133,3 +133,10 @@ An exact `miku-scm dismiss <selector>` request changes only the local pending
 handoff to `dismissed`; it does not call GitHub. Do not interpret dismissal as
 a safe retry. A missing, ambiguous, stale, or non-pending selector leaves all
 records unchanged.
+
+A fixed preflight that proves no change is needed returns `up-to-date` and
+requires no new approval. If an already approved operation becomes satisfied
+before execution, its fixed apply returns success with no remote mutation.
+Record that handoff as completed and continue an approved batch; never classify
+that confirmed no-op as an unknown mutation. The reviewed operation arguments
+remain bound during dependency refresh, including a refreshed no-op.

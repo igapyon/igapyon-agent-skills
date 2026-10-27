@@ -23,7 +23,8 @@ Node code.
 Every repository-relative operational path exposed in a result, plan, handoff,
 or human output is serialized with POSIX `/` separators. The fixed runners may
 use host-native `path` APIs internally, but a reviewed path never changes when
-the same workflow runs on macOS or Windows.
+the same workflow runs on different platforms. Platforms other than macOS or
+native Windows produce a notice and attempt the same fixed commands.
 
 Normal execution does not require the Agent to read this document or the
 workflow's normative spec. The manifest's `runtime_references` is the complete

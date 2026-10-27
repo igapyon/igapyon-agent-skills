@@ -6,16 +6,23 @@ import { runWorkCommit } from "./work-commit.mjs";
 import { runPublish } from "./post-recommit-publish.mjs";
 import { runRecommitPush } from "./pr-recommit-push.mjs";
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
+import { platformWarnings } from "./miku-scm-command-runner.mjs";
 import { ancestor, assertIdle, assertRemote, assertSnapshot, beforeAction, branch, checkPending, checkedId, failure, fetchBase, hash, head, loadOperation, newId, newOperation, openSync, operationPath, readJson, remoteState, requireFetchBranch, resolveBase, saveOperation, snapshot, writeJson } from "./miku-scm-sync-state.mjs";
 
 export function parseArgs(mode, argv, cwd = process.cwd()) {
-  const o = { repo: cwd, remote: "origin", base: "", message: "", operation: "", resume: "", cancel: "", expectedPlanSha256: "", prDraft: "", expectedDraftSha256: "", apply: false, help: false };
+  const o = { repo: cwd, remote: "origin", base: "", message: "", allowSensitivePaths: [], operation: "", resume: "", cancel: "", expectedPlanSha256: "", prDraft: "", expectedDraftSha256: "", apply: false, help: false };
   const common = { "--repo": "repo" };
   const fields = mode === "prepare" ? { ...common, "--remote": "remote", "--base": "base", "--message": "message", "--resume": "resume", "--cancel": "cancel" }
     : { ...common, "--operation": "operation", "--expected-plan-sha256": "expectedPlanSha256", "--pr-draft": "prDraft", "--expected-draft-sha256": "expectedDraftSha256" };
   const seen = new Set();
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
+    if (a === "--allow-sensitive-path" && mode === "prepare") {
+      const value = argv[++i] ?? "";
+      if (!value || path.isAbsolute(value) || value.split(/[\\/]/).includes("..") || /[\r\n\0]/.test(value)) throw new Error("--allow-sensitive-path must name one reviewed repository-relative path");
+      o.allowSensitivePaths.push(value.replaceAll("\\", "/"));
+      continue;
+    }
     if (seen.has(a)) throw new Error(`Duplicate argument: ${a}`);
     seen.add(a);
     if (a === "--help" || a === "-h") o.help = true;
@@ -26,6 +33,7 @@ export function parseArgs(mode, argv, cwd = process.cwd()) {
   if (o.help) return o;
   if (!o.apply || !o.repo) throw new Error("sync push requires --apply");
   if (o.resume && o.cancel) throw new Error("--resume and --cancel are exclusive");
+  if ((o.resume || o.cancel) && o.allowSensitivePaths.length) throw new Error("Recovery uses the saved push options");
   if ((o.resume || o.cancel) && ["--remote", "--base", "--message"].some((v) => seen.has(v))) throw new Error("Recovery uses the saved push options");
   if (mode === "apply") {
     checkedId(o.operation);
@@ -34,9 +42,9 @@ export function parseArgs(mode, argv, cwd = process.cwd()) {
   return o;
 }
 
-function platformCheck(dependencies) {
+function runtimePlatform(dependencies, ctx) {
   const platform = dependencies.platform ?? process.platform;
-  if (!["darwin", "win32"].includes(platform)) throw new Error("Sync push is supported only on macOS and Windows");
+  ctx.warnings = [...new Set([...ctx.warnings, ...platformWarnings(platform)])];
   return platform;
 }
 function planFile(ctx, op) { return path.join(path.dirname(operationPath(ctx, op.id)), "plan.json"); }
@@ -52,7 +60,7 @@ function pushContract() { return workflowContractById().get("repository.sync.pus
 async function preparedResult(ctx, op) {
   const plan = await readPlan(ctx, op);
   if (!plan || hash(plan) !== op.plan_sha256) throw new Error("Prepared push plan changed");
-  return { status: "prepared", operation_id: op.id, plan_sha256: op.plan_sha256, commit: op.commit, head: plan.snapshot.head, base: plan.base.name, base_commit: plan.base_sha, evidence: plan.evidence, suggested_draft_path: plan.draft_path, mutation_invoked: op.mutation_invoked };
+  return { status: "prepared", warnings: [...new Set([...(op.warnings ?? []), ...ctx.warnings])], operation_id: op.id, plan_sha256: op.plan_sha256, commit: op.commit, head: plan.snapshot.head, base: plan.base.name, base_commit: plan.base_sha, evidence: plan.evidence, suggested_draft_path: plan.draft_path, mutation_invoked: op.mutation_invoked };
 }
 
 export async function prepareSyncPush(options, dependencies = {}) {
@@ -60,7 +68,7 @@ export async function prepareSyncPush(options, dependencies = {}) {
   const { ctx, release } = await openSync(options.repo, dependencies, id, Boolean(options.resume || options.cancel));
   let op;
   try {
-    platformCheck(dependencies);
+    runtimePlatform(dependencies, ctx);
     if (options.resume || options.cancel) {
       op = await loadOperation(ctx, id);
       if (op.type !== "push" || op.apply_started || !(options.cancel ? ["prepared", "needs-sync-pull", "partial", "running"] : ["prepared", "needs-sync-pull"]).includes(op.status)) throw new Error("Only an unapplied push can be cancelled; resume requires prepared evidence");
@@ -102,14 +110,14 @@ export async function prepareSyncPush(options, dependencies = {}) {
       await beforeAction(ctx, op, "work-commit");
       assertRemote(ctx, remote, true);
       await assertSnapshot(ctx, initial);
-      const committed = await (dependencies.workCommit ?? runWorkCommit)({ repo: ctx.root, message: options.message, apply: true }, dependencies.workCommitDependencies);
+      const committed = await (dependencies.workCommit ?? runWorkCommit)({ repo: ctx.root, message: options.message ?? "", allowSensitivePaths: options.allowSensitivePaths ?? [], apply: true }, dependencies.workCommitDependencies);
       op.commit = { status: committed.status === "committed" ? "created" : committed.status, result: committed };
       op.mutation_invoked = committed.mutation_invoked;
       await saveOperation(ctx, op);
       if (committed.status !== "committed") {
         op.status = committed.mutation_invoked ? "partial" : "rejected";
         await saveOperation(ctx, op);
-        return { ...committed, commit: op.commit, stage: "work-commit", operation_id: id };
+        return { ...committed, warnings: [...ctx.warnings, ...(committed.warnings ?? [])], commit: op.commit, stage: "work-commit", operation_id: id };
       }
     }
     const current = await snapshot(ctx);
@@ -119,7 +127,7 @@ export async function prepareSyncPush(options, dependencies = {}) {
     if (current.head === op.base_sha) {
       op.status = "completed";
       await saveOperation(ctx, op);
-      return { status: "up-to-date", commit: op.commit, head: current.head, mutation_invoked: op.mutation_invoked };
+      return { status: "up-to-date", warnings: ctx.warnings, commit: op.commit, head: current.head, mutation_invoked: op.mutation_invoked };
     }
     const evidence = await (dependencies.prepareWriting ?? prepareWritingEvidence)({ mode: "pr", repo: ctx.root, target: `${op.base_sha}..${current.head}` }, { ...dependencies.writingDependencies, now: dependencies.now });
     await assertSnapshot(ctx, current);
@@ -150,7 +158,7 @@ export async function applySyncPush(options, dependencies = {}) {
   let op;
   let attemptOwned = false;
   try {
-    const platform = platformCheck(dependencies);
+    const platform = runtimePlatform(dependencies, ctx);
     op = await loadOperation(ctx, options.operation);
     if (op.type !== "push" || op.status !== "prepared" || op.apply_started) throw new Error("This push plan is not available for apply; it may be consumed, cancelled or superseded");
     await checkPending(ctx, { except: op.id });
@@ -201,7 +209,7 @@ export async function applySyncPush(options, dependencies = {}) {
     op.mutation_invoked = Boolean(op.mutation_invoked || delegate.mutation_invoked);
     op.status = delegate.status === "published" ? "completed" : delegate.mutation_invoked ? "partial" : "rejected";
     await saveOperation(ctx, op);
-    return { ...delegate, operation_id: op.id, commit: op.commit, stage: "recommit-push", mutation_invoked: op.mutation_invoked };
+    return { ...delegate, warnings: [...new Set([...(op.warnings ?? []), ...ctx.warnings, ...(delegate.warnings ?? [])])], operation_id: op.id, commit: op.commit, stage: "recommit-push", mutation_invoked: op.mutation_invoked };
   } catch (error) {
     if (!attemptOwned) return { ...await failure(ctx, null, error), operation_id: op?.id, commit: op?.commit };
     if (op?.apply_started && error.mutationInvoked !== false) op.mutation_invoked = true;

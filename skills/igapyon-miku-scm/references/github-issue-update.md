@@ -10,19 +10,28 @@ mode directly.
 
 Update the title, body, and existing labels of one public GitHub Issue through the narrowly authorized, human-approved static-helper workflow in this document. Follow [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md). The AI Agent must not invoke `gh` directly. Keep drafting and preflight READONLY, and do not treat either as approval to mutate GitHub.
 
+Draft paths and filenames below are preferred conventions. A readable UTF-8
+file with another name or location is imported into a canonical working copy
+with a warning; the source is retained. Review and apply use the returned
+working-copy path and digest. The explicit Issue option identifies the target,
+including when a source filename names a different Issue. Content, digest, and duplicate-attempt checks still apply. CRLF/CR line
+endings produce a notice and are read as LF for submitted text. Original bytes
+and the review digest are retained. Line-ending-only changes do not bypass
+duplicate-attempt protection.
+
 ## Scope
 
 This workflow's static helper permits only these READONLY commands:
 
 ```text
-gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,labels,updatedAt,comments
-gh label list --repo <owner/repo> --limit 1000 --json name
+gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt,comments
+gh label list --repo <[host/]owner/repo> --limit 1000 --json name
 ```
 
 and this one mutation command:
 
 ```text
-gh issue edit <number> --repo <owner/repo> \
+gh issue edit <number> --repo <[host/]owner/repo> \
   [--title <reviewed-title>] \
   [--body-file <generated-temporary-body-file>] \
   [--add-label <reviewed-existing-label>]... \
@@ -31,7 +40,7 @@ gh issue edit <number> --repo <owner/repo> \
 
 Use [scripts/github-issue-update.mjs](../scripts/github-issue-update.mjs); do not assemble or invoke the command independently. The helper may update the title, body, and existing-label membership of exactly one Issue in one command. It must not create or edit label definitions or update assignees, milestone, project, Issue type, state, comments, relationships, or any other metadata.
 
-At least one of the title, body, or label membership must change. Every requested label must already exist exactly in the repository. Reject overlap, adding a present label, removing an absent label, and more than 20 label changes.
+If title, body, and requested label membership already match, report no changes required. Additions must name existing repository labels. Reject overlap and more than 20 label changes; already-present additions and absent removals are harmless.
 
 Use the fixed READONLY commands from preflight through post-update verification. Validate every complete response. Do not assemble these commands outside the helper, add fields, enter interactive mode, or use them for authentication management. If a read fails before `gh issue edit`, record `not-applied`; do not imply an uncertain remote result.
 
@@ -47,14 +56,14 @@ Run the helper without `--apply`:
 
 ```sh
 node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \
-  --repo <owner/repo> \
+  --repo <[host/]owner/repo> \
   --issue <number> \
   --draft workplace/miku-scm/issue-updates/issue-<number>-update-<YYYYMMDDHHMM>.md \
   [--add-label <existing-label>]... \
   [--remove-label <existing-label>]...
 ```
 
-Preflight is READONLY and uses only the fixed `gh issue view` and, when label changes are requested, `gh label list` commands. It rejects Pull Requests and a draft whose filename identifies another Issue. The handoff retains:
+Preflight is READONLY and uses only the fixed `gh issue view` and, when label changes are requested, `gh label list` commands. It rejects Pull Requests; nonstandard draft names produce an import notice. The handoff retains:
 
 - exact `owner/repo#number` and Issue URL
 - current title and complete current body
@@ -87,7 +96,7 @@ interface; the Agent must not invoke this script's `--apply` mode directly.
 
 ```sh
 node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \
-  --repo <owner/repo> \
+  --repo <[host/]owner/repo> \
   --issue <number> \
   --draft workplace/miku-scm/issue-updates/issue-<number>-update-<YYYYMMDDHHMM>.md \
   [--add-label <existing-label>]... \
@@ -154,3 +163,7 @@ For a confirmed update, report:
 - local attempt-record path
 
 For `not-applied`, `conflict`, or `unresolved`, name the state and evidence without implying success. For `not-applied`, explicitly report `gh issue edit: 未実行`.
+
+When title, body, and requested labels already match, return `up-to-date`
+without mutation or a new handoff. Already-present additions and absent
+removals are harmless; a mixed update sends only effective label changes.

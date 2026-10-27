@@ -107,7 +107,7 @@ function optionsFor(state, ...extra) {
 const applyDependencies = { platform: "darwin", fetchImpl: null };
 const windowsApplyDependencies = { platform: "win32", gh: null };
 const nativeApplyDependencies = {
-  platform: process.platform === "win32" ? "win32" : "darwin",
+  platform: process.platform,
   gh: null,
 };
 
@@ -760,14 +760,13 @@ test("apply publishes on the native platform and verifies the remote", async (t)
   assert.equal(git(state.repo, "branch", "--show-current"), `${state.branch}-done`);
 });
 
-test("apply stops before push on unsupported platform", async (t) => {
+test("apply uses available commands on Linux with a warning", async (t) => {
   const state = await scenario(t);
-  await assert.rejects(
-    runPublish(optionsFor(state, "--expect-new-remote-branch", "--apply"), { platform: "linux" }),
-    /macOS and Windows/,
-  );
-  assert.equal(git(state.remote, "branch", "--list", state.branch), "");
-  assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
+  const result = await runPublish(optionsFor(state, "--expect-new-remote-branch", "--apply"), { platform: "linux", gh: null });
+  assert.equal(result.status, "published");
+  assert.ok(result.warnings.some((warning) => warning.includes("linux")));
+  assert.equal(git(state.remote, "rev-parse", `refs/heads/${state.branch}`), state.expectedHead);
+  assert.equal(git(state.repo, "branch", "--show-current"), `${state.branch}-done`);
 });
 
 test("apply uses the reviewed remote SHA as an explicit force-with-lease", async (t) => {

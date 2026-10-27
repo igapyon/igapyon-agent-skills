@@ -8,10 +8,11 @@ the operation for naming, design, or explanation requests.
 
 ## Requirements and base selection
 
-Use Node.js and Git 2.45 or newer in an existing work branch. The target
-repository must already ignore `workplace/miku-scm/sync/`, where operation and
-branch-base records are retained; missing ignore configuration stops sync.
-The automatic `-done` transition additionally requires a GitHub remote and
+Use Node.js and Git 2.45 or newer in an existing work branch. Operation and branch-base records are retained under
+`workplace/miku-scm/sync/`. If they are not ignored, report a warning and add
+`/workplace/miku-scm/` to Git's local `info/exclude`, then continue. No tracked
+`.gitignore` edit or prior setup is required.
+The automatic `-done` transition additionally requires a hosted remote with a compatible PR API and
 GitHub CLI access that can read its PRs. A normal branch does not require PR
 access.
 
@@ -91,13 +92,14 @@ Only on `-done`, invoke the tracked `miku-scm-sync-merge-check.mjs` read-only
 helper. Its complete GitHub command surface is:
 
 ```text
-gh api --method GET repos/<owner>/<repo>/pulls -f state=all -f head=<owner>:<published-branch> -f base=<base-branch> -f per_page=100
-gh api --method GET repos/<owner>/<repo>/pulls/<positive-number>
+gh api --method GET repos/<owner>/<repo>/pulls [--hostname <selected-host>] -f state=all -f head=<owner>:<published-branch> -f base=<base-branch> -f per_page=100
+gh api --method GET repos/<owner>/<repo>/pulls/<positive-number> [--hostname <selected-host>]
 ```
 
-Repository names come from the selected GitHub remote, branch/base from
+The API host and repository names come from the selected remote, branch/base from
 validated Git refs, and the PR number from the unique exact match. Use a
-15-second timeout, no pagination, arbitrary fields or passthrough. A result of
+15-second timeout, no pagination, arbitrary fields or passthrough. There is no
+`github.com` host restriction; API requests use the selected host. A result of
 100 entries is incomplete and stops. Auth/JSON/API failures stop before
 stash or branch creation.
 

@@ -3,13 +3,14 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { ghRepository, parseRepository, repositoryCacheParts } from "./miku-scm-repository.mjs";
 
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const DEFAULT_MAX_AGE_MINUTES = 10;
 
 function usage() {
-  return `Usage: github-issues-cache.mjs --repo <owner>/<repo> [options]
+  return `Usage: github-issues-cache.mjs --repo <[host/]owner/repo> [options]
 
 Options:
   --state <open|all>       Issue state to cache (default: open)
@@ -45,9 +46,10 @@ function parseArgs(argv) {
     }
   }
 
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(options.repo)) {
-    throw new Error("--repo must use the owner/repository form");
+  if (!parseRepository(options.repo)) {
+    throw new Error("--repo must use [host/]owner/repository");
   }
+  options.repo = ghRepository(parseRepository(options.repo));
   if (!new Set(["open", "all"]).has(options.state)) {
     throw new Error("--state must be open or all");
   }
@@ -119,8 +121,7 @@ function report(status, dataFile, metadata) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const root = repositoryRoot();
-  const [owner, repository] = options.repo.split("/");
-  const cacheDirectory = path.join(root, "workplace", "miku-scm", "github-cache", owner, repository);
+  const cacheDirectory = path.join(root, "workplace", "miku-scm", "github-cache", ...repositoryCacheParts(options.repo));
   const basename = `issues-${options.state}`;
   const dataFile = path.join(cacheDirectory, `${basename}.json`);
   const metadataFile = path.join(cacheDirectory, `${basename}.meta.json`);

@@ -1,14 +1,14 @@
 import { createGhCommandRunner } from "./miku-scm-command-runner.mjs";
 import { SHA, ancestor } from "./miku-scm-sync-state.mjs";
+import { parseRepository, repositoryApiArgs } from "./miku-scm-repository.mjs";
 
 // This module has a read-only, fixed GitHub surface. It is never called for a
 // normal work branch. A branch deleted after merge still has verifiable PR data.
 export async function verifyMergedPull(ctx, op) {
   if (!op.original.branch.endsWith("-done")) throw new Error("Merge verification requires a done branch");
-  const match = op.remote.identity.match(/^github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/);
-  if (!match) throw new Error("Automatic done-branch transition requires a GitHub remote");
-  const [, owner, repository] = match;
-  const fullName = `${owner}/${repository}`;
+  const repository = parseRepository(op.remote.identity);
+  if (!repository?.host) throw new Error("Automatic done-branch transition requires a hosted repository with a compatible PR API");
+  const { owner, full_name: fullName } = repository;
   const publishedBranch = op.original.branch.slice(0, -5);
   const gh = ctx.dependencies.gh ?? createGhCommandRunner();
   const get = (args) => {
@@ -19,11 +19,11 @@ export async function verifyMergedPull(ctx, op) {
   const same = (pull) => pull?.head?.ref === publishedBranch
     && pull.head.sha === op.original.head && pull.head.repo?.full_name?.toLowerCase() === fullName
     && pull.base?.ref === op.base.name && pull.base.repo?.full_name?.toLowerCase() === fullName;
-  const pulls = get(["api", "--method", "GET", `repos/${fullName}/pulls`, "-f", "state=all", "-f", `head=${owner}:${publishedBranch}`, "-f", `base=${op.base.name}`, "-f", "per_page=100"]);
+  const pulls = get(repositoryApiArgs(repository, "pulls", "-f", "state=all", "-f", `head=${owner}:${publishedBranch}`, "-f", `base=${op.base.name}`, "-f", "per_page=100"));
   if (!Array.isArray(pulls) || pulls.length >= 100) throw new Error("GitHub PR lookup is incomplete or exceeds its bounded result limit");
   const candidates = pulls.filter(same);
   if (candidates.length !== 1 || !Number.isSafeInteger(candidates[0].number) || candidates[0].number < 1) throw new Error("Exactly one matching PR head, repository and base is required");
-  const pull = get(["api", "--method", "GET", `repos/${fullName}/pulls/${candidates[0].number}`]);
+  const pull = get(repositoryApiArgs(repository, `pulls/${candidates[0].number}`));
   if (!same(pull) || pull.number !== candidates[0].number || pull.merged !== true || pull.state !== "closed"
     || typeof pull.merged_at !== "string" || !Number.isFinite(Date.parse(pull.merged_at)) || !SHA.test(pull.merge_commit_sha ?? "")) {
     throw new Error("The exact PR has not been verified as merged");

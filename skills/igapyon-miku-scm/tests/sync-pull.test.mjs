@@ -39,6 +39,21 @@ test("sync pull ahead no-op keeps dirty content and does not seed an unknown bra
   assert.equal(r.status, "not-applied"); assert.match(r.reason, /base is unknown/);
 });
 
+test("sync pull continues with local exclusion when no ignore rule was prepared", async (t) => {
+  const f = await fixture(t);
+  await f.write(".gitignore", "ignored/\n*.cache\n");
+  const result = await runSyncPull(f.options);
+  assert.equal(result.status, "up-to-date", JSON.stringify(result));
+  assert.equal(result.warnings.length, 1);
+  assert.equal(f.git(["status", "--porcelain", "--", "workplace/miku-scm"]), "");
+  assert.equal(await f.read(".gitignore"), "ignored/\n*.cache\n");
+  await f.advance();
+  const integrated = await runSyncPull(f.options);
+  assert.equal(integrated.status, "completed", JSON.stringify(integrated));
+  assert.equal(integrated.method, "fast-forward");
+  assert.equal(await f.read(".gitignore"), "ignored/\n*.cache\n");
+});
+
 test("sync pull replays only unpublished work from the independently recorded base", async (t) => {
   const f = await fixture(t); await runSyncPull(f.options);
   const original = await f.commit("own.txt", "one\n"); await f.commit("second.txt", "two\n");
@@ -104,7 +119,7 @@ test("sync pull refuses shared commits and local merges before backup", async (t
   const r = await runSyncPull(f.options); assert.equal(r.status, "not-applied"); assert.match(r.reason, /Published work/); assert.equal(r.backup_branch, null);
 });
 
-async function doneFixture(t, response = {}, squash = false) {
+async function doneFixture(t, response = {}, squash = false, host = "github.com") {
   const f = await fixture(t); const own = await f.commit("own.txt", "merged\n");
   syncGit(f.other, ["fetch", f.repo, f.git(["branch", "--show-current"])]);
   syncGit(f.other, squash ? ["merge", "--squash", "FETCH_HEAD"] : ["merge", "--ff-only", "FETCH_HEAD"]);
@@ -114,7 +129,7 @@ async function doneFixture(t, response = {}, squash = false) {
   f.git(["branch", "-m", `${f.git(["branch", "--show-current"])}-done`]);
   const calls = [];
   const pull = { number: 7, state: "closed", merged: true, merged_at: "2026-10-26T00:00:00Z", merge_commit_sha: merged, head: { ref: "devel-tiga1026aaa", sha: own, repo: { full_name: "owner/repo" } }, base: { ref: "devel", repo: { full_name: "owner/repo" } }, ...response };
-  const dependencies = { now: () => new Date("2026-10-26T03:45:00Z"), git: (cwd, args, options) => args[0] === "remote" && args[1] === "get-url" ? { ...syncGit(cwd, args, options), out: "https://github.com/owner/repo.git" } : syncGit(cwd, args, options), gh: (cwd, args, options) => { calls.push({ args, options }); return { ok: true, stdout: JSON.stringify(args[3].endsWith("/7") ? pull : [pull]) }; } };
+  const dependencies = { now: () => new Date("2026-10-26T03:45:00Z"), git: (cwd, args, options) => args[0] === "remote" && args[1] === "get-url" ? { ...syncGit(cwd, args, options), out: `https://${host}/owner/repo.git` } : syncGit(cwd, args, options), gh: (cwd, args, options) => { calls.push({ args, options }); return { ok: true, stdout: JSON.stringify(args[3].endsWith("/7") ? pull : [pull]) }; } };
   return { ...f, dependencies, calls, pull };
 }
 
@@ -134,11 +149,23 @@ test("sync pull done verifies exact PR and carries staged work to one new branch
   assert.equal(f.git(["status", "-sb"]).split("\n")[0], "## devel-tiga1026mef...origin/devel");
   assert.equal((await readFile(path.join(f.repo, ".git/checkout-upstream"), "utf8")).trim(), "refs/remotes/origin/devel");
   assert.equal(await f.read("carry.txt"), "stage\nunstaged\n"); assert.equal(f.git(["show", ":carry.txt"]), "stage");
-  assert.equal(f.calls.length, 2); assert.equal(f.calls[0].options.timeout, 15000); assert.deepEqual(f.calls[1].args, ["api", "--method", "GET", "repos/owner/repo/pulls/7"]);
-  assert.deepEqual(f.calls[0].args, ["api", "--method", "GET", "repos/owner/repo/pulls", "-f", "state=all", "-f", "head=owner:devel-tiga1026aaa", "-f", "base=devel", "-f", "per_page=100"]);
+  assert.equal(f.calls.length, 2); assert.equal(f.calls[0].options.timeout, 15000); assert.deepEqual(f.calls[1].args, ["api", "--method", "GET", "repos/owner/repo/pulls/7", "--hostname", "github.com"]);
+  assert.deepEqual(f.calls[0].args, ["api", "--method", "GET", "repos/owner/repo/pulls", "--hostname", "github.com", "-f", "state=all", "-f", "head=owner:devel-tiga1026aaa", "-f", "base=devel", "-f", "per_page=100"]);
   await rm(path.join(f.repo, ".git/hooks/post-checkout"));
   f.git(["stash", "push", "--include-untracked"]); f.git(["switch", r.previous_branch]);
   const again = await runSyncPull(f.options, f.dependencies); assert.equal(again.status, "not-applied"); assert.match(again.reason, /already has a next-work transition/);
+});
+
+test("sync pull done verifies a compatible Enterprise host and starts the next work branch", async (t) => {
+  const f = await doneFixture(t, {}, true, "ghe.example.test");
+  await f.write("carry.txt", "carry over\n");
+  const result = await runSyncPull(f.options, f.dependencies);
+  assert.equal(result.status, "completed", JSON.stringify(result));
+  assert.equal(result.method, "next-work");
+  assert.equal(result.head, f.pull.merge_commit_sha);
+  assert.equal(await f.read("carry.txt"), "carry over\n");
+  assert.equal(f.calls.length, 2);
+  for (const { args } of f.calls) assert.equal(args[args.indexOf("--hostname") + 1], "ghe.example.test");
 });
 
 test("sync pull next-work resumes a prepared branch without another branch or stash", async (t) => {

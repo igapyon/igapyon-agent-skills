@@ -3,7 +3,7 @@ import { workflowCliContractById } from "./miku-scm-cli-contracts.mjs";
 export const WORKFLOW_MANIFEST_VERSION = "miku-scm.workflow-manifest/v2";
 export const WORKFLOW_CONTRACT_VERSION = 1;
 const ISSUE_APPROVAL_CONTRACT_VERSION = 2;
-const SYNC_SOURCES = ["miku-scm-sync-state.mjs", "miku-scm-sync-worktree.mjs", "miku-scm-sync-merge-check.mjs", "post-merge-next-work.mjs", "miku-scm-command-runner.mjs", "miku-scm-jst-time.mjs"];
+const SYNC_SOURCES = ["miku-scm-sync-state.mjs", "miku-scm-sync-worktree.mjs", "miku-scm-sync-merge-check.mjs", "post-merge-next-work.mjs", "miku-scm-command-runner.mjs", "miku-scm-jst-time.mjs", "miku-scm-repository.mjs", "miku-scm-operational-storage.mjs"];
 const SYNC_PUSH_SOURCES = [...SYNC_SOURCES, "work-commit.mjs", "miku-scm-fixed-command-runner.mjs", "miku-scm-operational-path.mjs", "miku-scm-writing-prepare.mjs", "pr-soft-reset-recommit-preflight.mjs", "pr-recommit-push.mjs", "post-recommit-publish.mjs"];
 
 const WORKFLOW_DEFINITIONS = [
@@ -410,13 +410,34 @@ if (cliContracts.size !== WORKFLOW_DEFINITIONS.length
   throw new Error("Workflow manifest and CLI help contracts are inconsistent");
 }
 
+const REPOSITORY_HOST_RUNNERS = new Set([
+  "github-issue-read.mjs", "miku-scm-github-readonly.mjs",
+  "github-issue-create.mjs", "github-issue-update.mjs", "github-issue-comment.mjs",
+  "github-issue-label-update.mjs", "github-issue-close.mjs",
+  "repository-maintenance.mjs", "post-recommit-publish.mjs", "pr-recommit-push.mjs",
+  "miku-scm-writing-prepare.mjs",
+]);
+
+const SUPPORT_SOURCES = {
+  "github-issue-create.mjs": ["miku-scm-draft.mjs", "miku-scm-jst-time.mjs"],
+  "github-issue-update.mjs": ["miku-scm-draft.mjs", "miku-scm-jst-time.mjs"],
+  "github-issue-comment.mjs": ["miku-scm-draft.mjs", "miku-scm-jst-time.mjs"],
+  "work-commit.mjs": ["miku-scm-operational-storage.mjs"],
+  "post-recommit-publish.mjs": ["miku-scm-command-runner.mjs"],
+  "pr-recommit-push.mjs": ["miku-scm-command-runner.mjs"],
+};
+
 export const WORKFLOW_MANIFEST = Object.freeze(WORKFLOW_DEFINITIONS.map((entry) => Object.freeze({
   ...entry,
   cli: cliContracts.get(entry.id),
   contract_id: entry.id,
   contract_version: entry.contract_version ?? WORKFLOW_CONTRACT_VERSION,
-  ...(entry.contract_runtime_sources
-    ? { contract_runtime_sources: Object.freeze([...entry.contract_runtime_sources]) }
+  ...(entry.contract_runtime_sources || REPOSITORY_HOST_RUNNERS.has(entry.runner_entry) || SUPPORT_SOURCES[entry.runner_entry]
+    ? { contract_runtime_sources: Object.freeze([...new Set([
+      ...(entry.contract_runtime_sources ?? []),
+      ...(SUPPORT_SOURCES[entry.runner_entry] ?? []),
+      ...(REPOSITORY_HOST_RUNNERS.has(entry.runner_entry) ? ["miku-scm-repository.mjs"] : []),
+    ])]) }
     : {}),
   contract_spec: entry.references.find((reference) => reference !== "deterministic-workflow-runner.md"),
   contract_test: CONTRACT_TEST_BY_RUNNER[entry.runner_entry],
