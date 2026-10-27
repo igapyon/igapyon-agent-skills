@@ -333,6 +333,34 @@ test("apply parser never selects a global pending handoff", async (t) => {
   assert.equal((await listPendingIssueHandoffs({ root })).pending_count, 2);
 });
 
+test("an approved operation that now needs no changes completes without an unknown outcome", async (t) => {
+  const root = await workspace(t);
+  const handoff = await createExistingIssuePending(root, { id: "already-closed", operation: "close" });
+  const options = await approvedOne(root, handoff.id);
+  const result = await applyPendingIssueHandoff(options, {
+    runApply: async () => ({ status: "success", mutation_invoked: false, result: { status: "up-to-date" } }),
+  });
+  assert.equal(result.status, "applied");
+  assert.equal(result.mutation_invoked, false);
+  assert.equal((await listPendingIssueHandoffs({ root })).pending_count, 0);
+});
+
+test("a batch continues when its refreshed final operation is already satisfied", async (t) => {
+  const root = await workspace(t);
+  await createExistingIssuePending(root, { id: "comment-before-close", operation: "comment" });
+  const close = await createExistingIssuePending(root, { id: "closed-during-batch", operation: "close" });
+  const saved = JSON.parse(await readFile(path.join(root, close.path), "utf8"));
+  const options = await approvedBatch(root, ["comment-before-close", "closed-during-batch"]);
+  const result = await applyPendingIssueHandoffBatch(options, {
+    runPreflight: async () => ({ status: "success", result: { status: "up-to-date", apply_arguments: saved.apply_arguments } }),
+    runApply: async (workflow) => workflow.endsWith("comment.apply")
+      ? { status: "success", mutation_invoked: true, result: { status: "commented" } }
+      : { status: "success", mutation_invoked: false, result: { status: "up-to-date" } },
+  });
+  assert.equal(result.status, "applied");
+  assert.equal(result.applied_count, 2);
+});
+
 test("explicit handoff selection applies only that pending record", async (t) => {
   const root = await workspace(t);
   const first = await createPending(root, "handoff-1");

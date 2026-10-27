@@ -167,9 +167,23 @@ test("diagnosis classifies exactly matched merged done branch for deletion", asy
   assert.equal(result.done.delete_candidates[0].pull_request.number, 42);
   assert.deepEqual(requests[0], [
     "api", "--method", "GET", "repos/example/project/pulls",
+    "--hostname", "github.com",
     "-f", "state=all", "-f", `head=example:${pushed}`, "-f", "per_page=100",
   ]);
   assert.ok(!requests[0].includes("--paginate"));
+});
+
+test("diagnosis queries Enterprise remotes through their selected API host", async (t) => {
+  const state = await repository(t);
+  const pushed = "devel-tiga0720daa";
+  git(state.root, "branch", `${pushed}-done`, state.head);
+  git(state.root, "remote", "set-url", "origin", "git@forge.internal:example/project.git");
+  const calls = [];
+  const result = await diagnose(options(state.root), {
+    gh: (args) => { calls.push(args); return ghReturning([mergedPull(pushed, state.head)])(); },
+  });
+  assert.equal(result.done.delete_candidates.length, 1);
+  assert.equal(calls[0][calls[0].indexOf("--hostname") + 1], "forge.internal");
 });
 
 test("diagnosis queries only local done heads and never enumerates all pull requests", async (t) => {
@@ -364,6 +378,7 @@ test("apply rechecks only done branches included in the reviewed plan", async (t
       applyRequests += 1;
       assert.deepEqual(args, [
         "api", "--method", "GET", "repos/example/project/pulls/42",
+        "--hostname", "github.com",
       ]);
       return ghReturning(mergedPull(planned, state.head))();
     },

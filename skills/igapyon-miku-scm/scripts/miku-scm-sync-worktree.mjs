@@ -1,4 +1,6 @@
 import { lstat, readdir, readFile } from "node:fs/promises";
+import { ORDINARY_PATHSPEC } from "./miku-scm-operational-storage.mjs";
+
 import path from "node:path";
 import { SHA, afterAction, beforeAction, branch, head, saveOperation, snapshot, zeros } from "./miku-scm-sync-state.mjs";
 
@@ -76,7 +78,9 @@ export async function stashWork(ctx, op) {
   await beforeAction(ctx, op, "stash-create");
   op.mutation_invoked = true;
   await saveOperation(ctx, op);
-  const r = ctx.git(ctx.root, ["stash", "push", "--include-untracked", "--message", op.stash_message], { allowFailure: true });
+  const operationalIgnored = ctx.git(ctx.root, ["check-ignore", "--quiet", "--", "workplace/miku-scm/probe"], { allowFailure: true }).ok;
+  const r = ctx.git(ctx.root, ["stash", "push", "--include-untracked", "--message", op.stash_message,
+    ...(operationalIgnored ? [] : ORDINARY_PATHSPEC)], { allowFailure: true });
   await locateStash(ctx, op);
   if (!r.ok || !op.stash_sha) throw new Error("Sync stash creation did not complete; inspect retained work before recovery");
   if ((await snapshot(ctx)).dirty) throw new Error("Working tree was not clean after sync stash");

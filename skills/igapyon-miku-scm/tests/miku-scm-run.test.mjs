@@ -47,6 +47,39 @@ async function reviewedApprovalArgs(root, artifactRoot, runId, handoffs) {
   ];
 }
 
+test("an already closed Issue returns success without an approval handoff or mutation", async (t) => {
+  const root = await workspace(t);
+  const result = await runWorkflow("github.issue.close.preflight", [
+    "--repo", "a/b", "--issue", "7", "--reason", "completed",
+  ], {
+    cwd: root,
+    issueCloseDependencies: { readIssue: async () => ({
+      number: 7, url: "https://github.com/a/b/issues/7", title: "Closed", body: "Body",
+      state: "CLOSED", stateReason: "COMPLETED", updatedAt: "2026-10-27T00:00:00Z", labels: [], comments: [],
+    }) },
+  });
+  assert.equal(result.status, "success");
+  assert.equal(result.mutation_invoked, false);
+  assert.equal(result.result.status, "up-to-date");
+  assert.equal(result.result.handoff, undefined);
+  assert.match(result.human_output, /no changes required/);
+  assert.doesNotMatch(result.human_output, /READY FOR APPROVAL/);
+});
+
+test("an imported draft notice remains visible in the final approval review", async (t) => {
+  const root = await workspace(t);
+  const source = path.join(root, "draft.md");
+  await writeFile(source, "Title\r\n\r\nBody.\r\n");
+  const prepared = await runWorkflow("github.issue.create.preflight", ["--repo", "a/b", "--draft", source], { cwd: root });
+  const reviewed = await runWorkflow("github.issue.handoff.review", ["--handoff", prepared.result.handoff.id], { cwd: root });
+  assert.equal(reviewed.status, "success");
+  assert.match(reviewed.human_output, /Warning: Draft location or name/);
+  assert.match(reviewed.human_output, /Warning: CRLF/);
+  assert.equal(prepared.result.body, "Body.\n");
+  assert.doesNotMatch(reviewed.human_output, /workplace\/miku-scm\/new-issues/);
+  assert.equal(await readFile(source, "utf8"), "Title\r\n\r\nBody.\r\n");
+});
+
 test("runner CLI format is fixed and cannot become a workflow option", () => {
   assert.deepEqual(
     parseRunnerCliArgs(["--format", "human", "repository.status", "--repo", "."]),

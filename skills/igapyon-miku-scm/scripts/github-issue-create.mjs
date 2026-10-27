@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { normalizedDraftText, resolveIssueDraft } from "./miku-scm-draft.mjs";
+
 import { createHash, randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import {
@@ -15,12 +17,12 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { repositoryCacheParts, ghRepository, parseRepository, matchesIssueUrl, findIssueUrl } from "./miku-scm-repository.mjs";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const ISSUE_CREATE_APPLY_CONTRACT = workflowContractById().get("github.issue.create.apply");
-const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const NEW_DRAFT_PATTERN = /^issue-new-\d{12}(?:-\d+)?\.md$/;
 const MAX_LABELS = 20;
@@ -28,11 +30,11 @@ const MAX_ISSUE_NUMBER = Number.MAX_SAFE_INTEGER;
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/github-issue-create.mjs \\
-    --repo <owner/repo> --draft <path> [--label <existing-label>]... [--parent <number>] \\
+    --repo <[host/]owner/repo> --draft <path> [--label <existing-label>]... [--parent <number>] \\
     [--root <repository-root>]
 
   node skills/igapyon-miku-scm/scripts/github-issue-create.mjs \\
-    --repo <owner/repo> --draft <path> [--label <reviewed-label>]... [--parent <number>] \\
+    --repo <[host/]owner/repo> --draft <path> [--label <reviewed-label>]... [--parent <number>] \\
     --expected-draft-sha256 <reviewed-sha256> \\
     --expected-labels-sha256 <reviewed-labels-sha256> \\
     [--expected-parent-sha256 <reviewed-parent-sha256>] \\
@@ -101,9 +103,10 @@ export function parseArgs(argv, cwd = process.cwd()) {
   }
 
   if (options.help) return options;
-  if (!REPOSITORY_PATTERN.test(options.repository)) {
-    throw new Error("--repo must be exactly owner/repo");
+  if (!parseRepository(options.repository)) {
+    throw new Error("--repo must use [host/]owner/repo");
   }
+  options.repository = ghRepository(parseRepository(options.repository));
   if (!options.draft) throw new Error("--draft must not be empty");
   if (!options.root) throw new Error("--root must not be empty");
   if (options.labels.length > MAX_LABELS) {
@@ -166,9 +169,7 @@ function parentSha256(parent) {
 }
 
 export function parseDraft(content) {
-  if (content.includes("\r")) {
-    throw new Error("Draft must use LF line endings");
-  }
+  content = normalizedDraftText(content);
   const separator = content.indexOf("\n\n");
   if (separator < 1) {
     throw new Error("Draft must contain a title, one blank line, and a body");
@@ -185,49 +186,28 @@ export function parseDraft(content) {
 }
 
 async function resolveDraft(options) {
-  const root = await realpath(path.resolve(options.root));
-  const draft = await realpath(path.resolve(root, options.draft));
-  const draftDirectory = path.join(root, "workplace", "miku-scm", "new-issues");
-  const relative = path.relative(draftDirectory, draft);
-  if (!relative || relative.startsWith("..") || path.isAbsolute(relative) || relative.includes(path.sep)) {
-    throw new Error("--draft must name one file directly under workplace/miku-scm/new-issues");
-  }
-  if (!NEW_DRAFT_PATTERN.test(relative)) {
-    throw new Error("--draft must use the issue-new-<YYYYMMDDHHMM>.md naming form");
-  }
-  const content = await readFile(draft, "utf8");
-  const parsed = parseDraft(content);
-  return {
-    root,
-    draft,
-    relativeDraft: relativeOperationalPath(root, draft),
-    content,
-    digest: sha256(content),
-    ...parsed,
-  };
+  const draft = await resolveIssueDraft(options, "new-issues", NEW_DRAFT_PATTERN, "issue-new");
+  return { ...draft, ...parseDraft(draft.text) };
 }
 
 function issueOperationalPaths(draft, repository) {
-  const [owner, repo] = repository.split("/");
   const attemptsDirectory = path.join(
     draft.root,
     "workplace",
     "miku-scm",
     "issue-attempts",
-    owner,
-    repo,
+    ...repositoryCacheParts(repository),
   );
   const createdDirectory = path.join(
     draft.root,
     "workplace",
     "miku-scm",
     "created-issues",
-    owner,
-    repo,
+    ...repositoryCacheParts(repository),
   );
   return {
     attemptsDirectory,
-    attempt: path.join(attemptsDirectory, `${draft.digest}.json`),
+    attempt: path.join(attemptsDirectory, `${draft.normalizedDigest}.json`),
     createdDirectory,
     createdDraft: path.join(createdDirectory, path.basename(draft.draft)),
   };
@@ -342,10 +322,9 @@ export function createGhParentReader(gh = createGhRunner()) {
       "--json", "number,url,title,state,updatedAt",
     ]);
     const issue = parseGhJson(result, "gh issue view parent");
-    const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
     if (
       issue?.number !== issueNumber
-      || issue?.url !== expectedUrl
+      || !matchesIssueUrl(issue?.url, repository, issueNumber)
       || typeof issue?.title !== "string"
       || !["OPEN", "CLOSED"].includes(issue?.state)
       || typeof issue?.updatedAt !== "string"
@@ -394,10 +373,9 @@ export function createGhCreatedIssueReader(gh = createGhRunner()) {
       "--json", "number,url,labels,parent",
     ]);
     const issue = parseGhJson(result, "gh issue view created Issue");
-    const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
     if (
       issue?.number !== issueNumber
-      || issue?.url !== expectedUrl
+      || !matchesIssueUrl(issue?.url, repository, issueNumber)
       || !Array.isArray(issue?.labels)
       || issue.labels.some((label) => typeof label?.name !== "string" || !label.name)
     ) {
@@ -419,7 +397,8 @@ export function createGhCreatedIssueReader(gh = createGhRunner()) {
         !Number.isSafeInteger(parent.number)
         || parent.number <= 0
         || typeof parent.url !== "string"
-        || parent.url !== `https://github.com/${repository}/issues/${parent.number}`
+        || !matchesIssueUrl(parent.url, repository, parent.number)
+        || new URL(parent.url).origin !== new URL(issue.url).origin
       )
     ) {
       throw new Error("gh issue view returned malformed parent metadata");
@@ -496,6 +475,7 @@ export async function runIssueCreate(options, dependencies = {}) {
   const common = {
     repository: options.repository,
     draft: draft.relativeDraft,
+    warnings: draft.warnings,
     draft_sha256: draft.digest,
     labels: options.labels,
     labels_sha256: labelsSha256(options.labels),
@@ -575,9 +555,7 @@ export async function runIssueCreate(options, dependencies = {}) {
         `gh issue create failed or had an uncertain outcome: ${detail}. Do not retry automatically; inspect Issues anonymously first.`,
       );
     }
-    const escapedRepository = options.repository.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const issueUrlPattern = new RegExp(`https://github\\.com/${escapedRepository}/issues/\\d+`, "i");
-    const issueUrl = result.stdout.match(issueUrlPattern)?.[0] ?? "";
+    const issueUrl = findIssueUrl(result.stdout, options.repository);
     if (!issueUrl) {
       throw new Error(
         "gh issue create returned success without the expected Issue URL. Treat the remote outcome as unresolved and inspect anonymously before any retry.",
@@ -636,7 +614,7 @@ export async function runIssueCreate(options, dependencies = {}) {
     };
     if (options.parent) {
       if (observedCreatedIssue) {
-        const expectedParentUrl = `https://github.com/${options.repository}/issues/${options.parent}`;
+        const expectedParentUrl = parent.url;
         const matches = (
           observedCreatedIssue.parent?.number === options.parent
           && observedCreatedIssue.parent?.url === expectedParentUrl

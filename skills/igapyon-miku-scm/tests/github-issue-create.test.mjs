@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { access, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -155,33 +156,24 @@ test("apply rejects a changed reviewed draft before invoking gh", async (t) => {
   assert.equal(calls, 0);
 });
 
-test("helper rejects existing-Issue update drafts and paths outside the draft directory", async (t) => {
+test("helper imports a draft with a nonstandard name and location while retaining the source", async (t) => {
   const state = await scenario(t);
-  const updateDirectory = path.join(state.root, "workplace", "miku-scm", "issue-updates");
-  await mkdir(updateDirectory, { recursive: true });
-  const update = path.join(updateDirectory, "issue-42-update-202607221230.md");
-  await writeFile(update, "Updated title\n\nUpdated body.\n", "utf8");
-  await assert.rejects(
-    runIssueCreate(parseArgs([
-      "--repo", "igapyon/example", "--draft", update, "--root", state.root,
-    ])),
-    /directly under/,
-  );
-
   const outside = path.join(state.root, "outside.md");
   await writeFile(outside, "Title\n\nBody.\n", "utf8");
-  await assert.rejects(
-    runIssueCreate(parseArgs([
-      "--repo", "igapyon/example", "--draft", outside, "--root", state.root,
-    ])),
-    /directly under/,
-  );
+  const result = await runIssueCreate(parseArgs([
+    "--repo", "igapyon/example", "--draft", outside, "--root", state.root,
+  ]));
+  assert.equal(result.status, "preflight-ok");
+  assert.equal(result.warnings.length, 1);
+  assert.match(result.draft, /^workplace\/miku-scm\/new-issues\/issue-new-/);
+  assert.equal(await readFile(outside, "utf8"), "Title\n\nBody.\n");
+  assert.equal(await readFile(path.join(state.root, result.draft), "utf8"), "Title\n\nBody.\n");
 });
 
 test("helper rejects malformed drafts", () => {
   assert.throws(() => parseDraft("Title only"), /title, one blank line, and a body/);
   assert.throws(() => parseDraft("# Heading\n\nBody\n"), /heading marker/);
-  assert.throws(() => parseDraft("Title\r\n\r\nBody\r\n"), /LF line endings/);
+  assert.deepEqual(parseDraft("Title\r\n\r\nBody\r\n"), { title: "Title", body: "Body\n" });
   assert.throws(
     () => parseArgs([
       "--repo", "igapyon/example",
@@ -219,6 +211,31 @@ test("helper rejects malformed drafts", () => {
     ]),
     /--expected-parent-sha256/,
   );
+});
+
+test("CRLF creation drafts are submitted as LF while retaining source bytes and their digest", async (t) => {
+  const state = await scenario(t);
+  const source = path.join(state.root, "draft.md");
+  const original = "A reviewed title\r\n\r\nThe reviewed body.\r\n";
+  await writeFile(source, original);
+  const preflight = await runIssueCreate(parseArgs(["--repo", "igapyon/example", "--root", state.root, "--draft", source]));
+  assert.equal(preflight.body, "The reviewed body.\n");
+  assert.equal(preflight.draft_sha256, createHash("sha256").update(original).digest("hex"));
+  assert.ok(preflight.warnings.some((warning) => warning.includes("CRLF")));
+  const result = await runIssueCreate(parseArgs(preflight.apply_arguments), {
+    gh: (args) => {
+      assert.equal(readFileSync(args[args.indexOf("--body-file") + 1], "utf8"), "The reviewed body.\n");
+      return { ok: true, stdout: "https://github.com/igapyon/example/issues/42" };
+    },
+    readCreatedIssue: async () => ({ number: 42, url: "https://github.com/igapyon/example/issues/42", labels: [], parent: null }),
+  });
+  assert.equal(result.status, "created");
+  assert.equal(await readFile(source, "utf8"), original);
+  const equivalent = path.join(state.root, "equivalent.md");
+  await writeFile(equivalent, original.replaceAll("\r\n", "\n"));
+  await assert.rejects(runIssueCreate(parseArgs([
+    "--repo", "igapyon/example", "--root", state.root, "--draft", equivalent,
+  ])), /already registered/);
 });
 
 test("gh label reader uses one fixed read-only command and validates its JSON", async () => {

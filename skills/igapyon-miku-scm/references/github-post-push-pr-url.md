@@ -39,7 +39,7 @@ URL-encode query values. Do not expose credentials or add authenticated mutation
 When no Open PR is found, derive this browser URL from the canonical repository URL and the pushed branch:
 
 ```text
-https://github.com/<owner>/<repository>/pull/new/<encoded-pushed-branch>
+https://<selected-host>/<owner>/<repository>/pull/new/<encoded-pushed-branch>
 ```
 
 Encode the pushed branch as a URL path component so branch names containing `/` or other reserved characters remain unambiguous.

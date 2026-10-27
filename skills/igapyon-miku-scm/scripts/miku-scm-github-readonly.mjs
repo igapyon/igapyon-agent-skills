@@ -1,10 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { ghRepository, parseRepository, repositoryCacheParts } from "./miku-scm-repository.mjs";
 
 import { parseArgs as parseIssueReadArgs, runIssueRead } from "./github-issue-read.mjs";
 
-const REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const QUERY = /^(?:labels|issue:[1-9]\d*|issues:(?:open|closed|all))$/;
 const DEFAULT_TTL_MS = 10 * 60 * 1000;
 const MAX_QUERIES = 20;
@@ -29,7 +29,8 @@ export function parseGitHubBatchArgs(argv, cwd = process.cwd()) {
     else if (arg === "--ttl-ms") options.ttlMs = Number(argv[++index]);
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (!REPOSITORY.test(options.repository)) throw new Error("--repo must be exactly owner/repo");
+  if (!parseRepository(options.repository)) throw new Error("--repo must use [host/]owner/repo");
+  options.repository = ghRepository(parseRepository(options.repository));
   if (options.queries.length < 1 || options.queries.length > MAX_QUERIES) {
     throw new Error(`Provide 1 through ${MAX_QUERIES} --query values`);
   }
@@ -93,8 +94,7 @@ async function parallelMap(values, limit, mapper) {
 export async function runGitHubBatch(options, dependencies = {}) {
   const now = dependencies.now ? dependencies.now() : new Date();
   const root = path.resolve(options.root);
-  const [owner, repo] = options.repository.split("/");
-  const cacheDirectory = path.join(root, "workplace", "miku-scm", "github-readonly-cache", owner, repo);
+  const cacheDirectory = path.join(root, "workplace", "miku-scm", "github-readonly-cache", ...repositoryCacheParts(options.repository));
   const uniqueQueries = [...new Set(options.queries)];
   const counters = { cache_hits: 0, stale_fallbacks: 0, fixed_gh_reads: 0 };
   const gh = dependencies.gh;

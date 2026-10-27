@@ -7,7 +7,8 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
-import { createGhCommandRunner, createGitCommandRunner } from "./miku-scm-command-runner.mjs";
+import { createGhCommandRunner, createGitCommandRunner, platformWarnings } from "./miku-scm-command-runner.mjs";
+import { ghRepository, repositoryFromRemote } from "./miku-scm-repository.mjs";
 import { isPathWithin, normalizeOperationalPath, relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const SHA_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i;
@@ -205,34 +206,6 @@ function validateRemoteExpectation(actualRemoteHead, options) {
   }
 }
 
-function canonicalGitHubRepository(remoteUrl) {
-  let owner = "";
-  let repository = "";
-  const scpMatch = remoteUrl.match(/^git@github\.com:([^/]+)\/(.+)$/i);
-  if (scpMatch) {
-    [, owner, repository] = scpMatch;
-  } else {
-    try {
-      const parsed = new URL(remoteUrl);
-      if (parsed.hostname.toLowerCase() !== "github.com") return null;
-      const parts = parsed.pathname.replace(/^\/+/, "").split("/");
-      if (parts.length !== 2) return null;
-      [owner, repository] = parts;
-    } catch {
-      return null;
-    }
-  }
-  repository = repository.replace(/\.git$/, "");
-  if (!owner || !repository || !/^[A-Za-z0-9_.-]+$/.test(owner) || !/^[A-Za-z0-9_.-]+$/.test(repository)) {
-    return null;
-  }
-  return {
-    owner,
-    repository,
-    url: `https://github.com/${owner}/${repository}`,
-  };
-}
-
 function encodeAlphabeticSequence(number) {
   let value = number;
   let result = "";
@@ -315,7 +288,7 @@ export function resolvePrHandoff(repository, branch, gh) {
     return { repository_url: repository.url, pr_creation_url: creationUrl, pr_lookup: "unconfirmed" };
   }
   try {
-    const result = gh(["pr", "list", "--repo", `${repository.owner}/${repository.repository}`,
+    const result = gh(["pr", "list", "--repo", ghRepository(repository),
       "--head", branch, "--state", "open", "--limit", "100", "--json", "url"]);
     if (!result?.ok) throw new Error(result?.stderr || result?.stdout || result?.error?.message || "gh pr list failed");
     const pulls = JSON.parse(result.stdout);
@@ -388,6 +361,7 @@ export async function runPublish(options, dependencies = {}) {
     branch,
     remote: options.remote,
     platform,
+    warnings: platformWarnings(platform),
     upstream: upstream || "none",
     head,
     remote_branch: initialRemoteHead
@@ -404,10 +378,6 @@ export async function runPublish(options, dependencies = {}) {
       ...common,
       apply_arguments: preflightApplyArguments(options, head, initialRemoteHead),
     };
-  }
-
-  if (platform !== "darwin" && platform !== "win32") {
-    throw new Error(`Apply mode is supported only on macOS and Windows; current platform is ${platform}`);
   }
 
   await dependencies.validateSyncSnapshot?.({ phase: "publication-fetch", root });
@@ -458,7 +428,7 @@ export async function runPublish(options, dependencies = {}) {
 
   gitText(git, root, ["branch", "-m", branch, doneBranch]);
   const finalStatus = gitText(git, root, ["status", "-sb"]);
-  const repository = canonicalGitHubRepository(remoteUrl);
+  const repository = repositoryFromRemote(remoteUrl);
   const prHandoff = resolvePrHandoff(repository, branch, gh);
   const recommended = await resolveRecommendedTag(root, git);
 

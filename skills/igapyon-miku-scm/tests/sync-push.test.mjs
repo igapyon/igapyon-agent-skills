@@ -15,14 +15,19 @@ async function draft(f, prepared) {
 
 test("sync push dirty commits once, prepares evidence, recommits and pushes to done", async (t) => {
   const f = await fixture(t); await f.write("own.txt", "work\n");
+  await f.write(".gitignore", "ignored/\n*.cache\n");
   const p = await prepareSyncPush({ ...f.options, message: "Implement work" });
   assert.equal(p.status, "prepared", JSON.stringify(p)); assert.equal(p.commit.status, "created");
+  assert.equal(p.warnings.length, 1);
   assert.equal(p.evidence.commit_count, 1); assert.equal(p.evidence.head, p.head);
   const resumed = await prepareSyncPush({ repo: f.repo, resume: p.operation_id, apply: true });
   assert.equal(resumed.status, "prepared", JSON.stringify(resumed)); assert.equal(resumed.plan_sha256, p.plan_sha256); assert.equal(resumed.head, p.head);
+  assert.deepEqual(resumed.warnings, p.warnings);
   const options = await draft(f, p);
   const r = await applySyncPush(options);
   assert.equal(r.status, "published", JSON.stringify(r)); assert.equal(r.commit.status, "created"); assert.ok(r.final_branch.endsWith("-done"));
+  assert.deepEqual(r.warnings, p.warnings);
+  assert.ok(!f.git(["ls-tree", "-r", "--name-only", "HEAD"]).includes("workplace/miku-scm/"));
   assert.equal(f.git(["rev-list", "--left-right", "--count", "HEAD...origin/devel-tiga1026aaa"]).replace(/\s+/g, " "), "0 0");
   assert.equal(f.git(["rev-parse", r.backup_branch]), p.head);
   const again = await applySyncPush(options); assert.equal(again.status, "not-applied");
@@ -71,6 +76,18 @@ for (const stop of ["not-applied", "partial", "conflict"]) test(`sync push does 
   assert.equal(r.status, stop, JSON.stringify(r)); assert.equal(evidence, 0); assert.equal(r.stage, "work-commit");
 });
 
+test("sync push can restart preparation after consent for the displayed sensitive paths", async (t) => {
+  const f = await fixture(t);
+  await f.write("token.ts", "export const kind = 'word';\n");
+  const stopped = await prepareSyncPush({ ...f.options, message: "Add token type" });
+  assert.equal(stopped.status, "not-applied", JSON.stringify(stopped));
+  assert.deepEqual(stopped.sensitive_paths, ["token.ts"]);
+  const prepared = await prepareSyncPush({ ...f.options, message: "Add token type", allowSensitivePaths: ["token.ts"] });
+  assert.equal(prepared.status, "prepared", JSON.stringify(prepared));
+  assert.equal(prepared.commit.status, "created");
+  assert.equal(f.git(["show", "HEAD:token.ts"]), "export const kind = 'word';");
+});
+
 test("sync push prepare cancel retains work and releases its claim", async (t) => {
   const f = await fixture(t); await f.write("own.txt", "pending\n"); const p = await prepareSyncPush({ ...f.options, message: "Work" }); const options = await draft(f, p);
   const r = await prepareSyncPush({ repo: f.repo, cancel: p.operation_id, apply: true }); assert.equal(r.status, "cancelled"); assert.equal(f.git(["rev-parse", "HEAD"]), p.head);
@@ -92,10 +109,23 @@ test("sync push checks URL again inside the delegate before backup/reset", async
   assert.equal(r.status, "not-applied", JSON.stringify(r)); assert.equal(f.git(["rev-parse", "HEAD"]), p.head); assert.equal(f.git(["branch", "--list", "backup/*"]), "");
 });
 
-test("sync push unsupported platform and frozen branch stop before commit", async (t) => {
+test("sync push frozen branch stops before commit", async (t) => {
   const f = await fixture(t); await f.write("own.txt", "pending\n"); const before = f.git(["rev-parse", "HEAD"]);
-  const r = await prepareSyncPush(f.options, { platform: "linux" }); assert.equal(r.status, "not-applied");
-  f.git(["branch", "-m", `${f.git(["branch", "--show-current"])}-done`]); const done = await prepareSyncPush(f.options); assert.equal(done.status, "not-applied"); assert.equal(f.git(["rev-parse", "HEAD"]), before);
+  f.git(["branch", "-m", `${f.git(["branch", "--show-current"])}-done`]);
+  const done = await prepareSyncPush(f.options);
+  assert.equal(done.status, "not-applied");
+  assert.equal(f.git(["rev-parse", "HEAD"]), before);
+});
+
+test("sync push continues on Linux through preparation and publication with a notice", async (t) => {
+  const f = await fixture(t); await f.write("own.txt", "pending\n");
+  const prepared = await prepareSyncPush(f.options, { platform: "linux" });
+  assert.equal(prepared.status, "prepared", JSON.stringify(prepared));
+  assert.ok(prepared.warnings.some((warning) => warning.includes("linux")));
+  const result = await applySyncPush(await draft(f, prepared), { platform: "linux" });
+  assert.equal(result.status, "published", JSON.stringify(result));
+  assert.ok(result.warnings.some((warning) => warning.includes("linux")));
+  assert.equal(f.git(["rev-parse", "origin/devel-tiga1026aaa"]), result.new_head);
 });
 
 test("sync push refuses an unfetchable publication branch before ordinary commit", async (t) => {

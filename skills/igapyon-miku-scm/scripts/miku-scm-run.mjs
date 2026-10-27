@@ -114,7 +114,7 @@ import { failureEvent } from "./miku-scm-observability.mjs";
 
 export const RUNNER_SCHEMA_VERSION = "miku-scm.runner/v1";
 export const RESULT_SCHEMA_VERSION = "miku-scm.runner-result/v1";
-export const PRODUCT_VERSION = "1.20261027.2";
+export const PRODUCT_VERSION = "1.20261027.3";
 
 const ISSUE_APPLY_WORKFLOWS = new Set([
   "github.issue.create.apply",
@@ -454,6 +454,7 @@ function workCommitWorkflow(dependencies) {
         operation: "work-commit",
         repository: path.resolve(options.repo),
         commit_message_supplied: Boolean(options.message.trim()),
+        allowed_sensitive_paths: options.allowSensitivePaths,
         mutation_invocation_allowed: true,
       };
     },

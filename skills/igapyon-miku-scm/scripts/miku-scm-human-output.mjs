@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v15";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v16";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -117,6 +117,9 @@ function appendIssueRead(lines, result) {
 }
 
 function appendIssueOperation(lines, workflow, result) {
+  if (result.status === "up-to-date") lines.push("Result: no changes required", "Remote mutation: not invoked");
+  if (result.reason) lines.push(`Reason: ${displayValue(result.reason)}`);
+  if (result.reason_detail) lines.push(`Detail: ${displayValue(result.reason_detail)}`);
   lines.push(`Repository: ${displayValue(result.repository)}`);
   if (result.issue_number || result.issue) {
     lines.push(`Issue: #${result.issue_number ?? result.issue}`);
@@ -187,6 +190,7 @@ function appendIssueReview(lines, result) {
     lines.push("");
     lines.push(`Step ${index + 1}: ${operationLabels[operation] ?? displayValue(operation)}`);
     lines.push(`Repository: ${displayValue(review.repository)}`);
+    for (const warning of review.warnings ?? []) lines.push(`Warning: ${oneLine(warning)}`);
     if (operation === "create") {
       lines.push("Target: new Issue");
       lines.push(`Title: ${displayValue(proposal.title)}`);
@@ -487,6 +491,7 @@ function appendWorkCommit(lines, result) {
   if (Object.hasOwn(result, "working_tree_clean")) lines.push(`Working tree: ${result.working_tree_clean ? "clean" : "dirty"}`);
   if (result.stage) lines.push(`Stopped stage: ${displayValue(result.stage)}`);
   if (result.warning) lines.push(`Warning: ${displayValue(result.warning)}`);
+  if (result.next_action) lines.push(`Next action: ${displayValue(result.next_action)}`);
   if (result.reason) lines.push(`Reason: ${displayValue(result.reason)}`);
   if (result.message) lines.push(`Detail: ${displayValue(result.message)}`);
 }
@@ -583,7 +588,12 @@ export function renderHumanOutput({
     lines.push(`Result: ${displayValue(r.status)}`);
     if (r.method) lines.push(`Method: ${displayValue(r.method)}`);
     if (r.commit) lines.push(`Ordinary commit: ${displayValue(r.commit.status)}`);
-    if (r.final_branch) lines.push(`Final branch: ${displayValue(r.final_branch)}`);
+    if (workflow === "repository.sync.pull") {
+      if (r.method === "next-work" && r.status === "completed" && r.final_branch) {
+        if (r.previous_branch) lines.push(`Previous branch: ${displayValue(r.previous_branch)}`);
+        lines.push(`New work branch: ${displayValue(r.final_branch)}`);
+      } else if (r.final_branch) lines.push(`Current branch: ${displayValue(r.final_branch)}`);
+    } else if (r.final_branch) lines.push(`Final branch: ${displayValue(r.final_branch)}`);
     if (r.base) lines.push(`Base: ${displayValue(r.base)} (${displayValue(r.base_commit)})`);
     if (r.head || r.new_head) lines.push(`HEAD: ${displayValue(r.head || r.new_head)}`);
     if (r.backup_branch) lines.push(`Backup branch: ${displayValue(r.backup_branch)}`);
@@ -641,6 +651,10 @@ export function renderHumanOutput({
     lines.push(workflow === "pr.recommit.push"
       ? "PR text draft saved; Pull Request and tag operations remain in GitHub."
       : displayValue(result.human_handoff));
+  }
+  for (const warning of result?.warnings ?? []) lines.push(`Warning: ${oneLine(warning)}`);
+  if (Array.isArray(result?.sensitive_paths) && result.sensitive_paths.length) {
+    lines.push("Potentially sensitive paths:", ...result.sensitive_paths.map((name) => `  ${oneLine(name)}`));
   }
   return `${lines.join("\n")}\n`;
 }
