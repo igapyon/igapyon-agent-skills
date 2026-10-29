@@ -28,7 +28,7 @@ daybook/
 - Keep a task in its creation-month `tasks/` directory when it becomes `done` or `cancelled`; update its status in place and do not move it to an archive or closed folder.
 - A day-plan belongs to the target date's month and is a generated snapshot.
 - Waypoints live in the daybook repository root, outside the year/month record directories. They are short resume entries; see [waypoints.md](waypoints.md) for naming, metadata, and update rules.
-- Store retained text attachments under their primary record's month: tasks use `attachments/<task-id>/`, where `task-id` is the task's existing front matter `id` (`task-YYYYMM-NNNNN`); activities and schedules use `attachments/activity-YYYYMMDD/` and `attachments/schedule-YYYYMMDD-name/`, respectively. Keep original binaries elsewhere and link to a stable reference; retaining one in Git is an extremely rare, file-specific exception. Follow [attachments.md](attachments.md) for content selection, temporary files, and exceptions. Create directories only when needed.
+- Choose record text, an external reference, or an in-repository attachment using [attachments.md](attachments.md). When an attachment is chosen, store it under its primary record's month: tasks use `attachments/<task-id>/`, where `task-id` is the task's existing front matter `id` (`task-YYYYMM-NNNNN`); activities and schedules use `attachments/activity-YYYYMMDD/` and `attachments/schedule-YYYYMMDD-name/`, respectively. Keep original binaries elsewhere and link to a stable reference; retaining one in Git is an extremely rare, file-specific exception. Follow [attachments.md](attachments.md) for content selection, temporary files, and exceptions. Create directories only when needed.
 - Use lowercase English prefixes and a short English filename suffix. Preserve an existing filename and ID when updating its title or deadline.
 
 ## Task IDs and status
@@ -137,7 +137,7 @@ generated: YYYY-MM-DD
 
 ## Relationship rules
 
-Use relative links between records and to retained text files under `attachments/`, and check that each target exists after edits. Keep supplied source URLs for event pages and emails. If multiple records use the same supporting file, keep one copy under its primary record's month and link to it from the other records. Prefer a stable reference to originals managed elsewhere; never use a temporary-file path as a permanent link. Treat the original task and schedule as authoritative; a day-plan is a snapshot and should not become a second source of truth.
+Use relative links between records and to retained text files under `attachments/`, and check that each target exists after edits. Keep supplied source URLs for event pages and emails. If multiple records use the same supporting file, reference one canonical copy. For an in-repository attachment, keep that copy under its primary record's month. Prefer stable references to originals and retained results managed outside daybook, including another Git repository; never use a temporary-file path as a permanent link. Treat the original task and schedule as authoritative; a day-plan is a snapshot and should not become a second source of truth.
 
 When a task has implementation milestones or a firm external deadline in addition to its planned work period, label each date's meaning in the body and preserve the source. Do not silently reinterpret a `planned_end_date` as a firm external deadline.
 

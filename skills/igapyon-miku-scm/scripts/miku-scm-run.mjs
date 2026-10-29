@@ -114,7 +114,7 @@ import { failureEvent } from "./miku-scm-observability.mjs";
 
 export const RUNNER_SCHEMA_VERSION = "miku-scm.runner/v1";
 export const RESULT_SCHEMA_VERSION = "miku-scm.runner-result/v1";
-export const PRODUCT_VERSION = "1.20261030.2";
+export const PRODUCT_VERSION = "1.20261030.3";
 
 const ISSUE_APPLY_WORKFLOWS = new Set([
   "github.issue.create.apply",
