@@ -2,6 +2,18 @@
 
 ## AI Agent Current Tasks
 
+### Contract CI改善（2026-10-30・source反映済み）
+
+- [x] PR/manualにContract起動を一本化し、変更判定・常時最終gate・古いPR実行取消・job上限を追加。
+- [x] miku-scm suiteのファイル別時間・即時進捗・30秒heartbeat・同時実行上限4を実装。
+- [x] 計測で最長だったsync pullを4分割。full 445/445を維持し、ローカル単発比較で158.862秒から76.250秒へ短縮。
+- [x] GitHub Writer full 34/34、CI helper 3/3、契約37件、YAML/JS構文と差分検査成功。
+- [ ] この変更を反映したPRでWindows/macOSのCIと最終gateを確認し、develの必須チェックを新gateへ移行する。
+- [ ] Windowsのファイル別時間と並列数を比較し、改善の実測結果を記録する。
+
+設定移行・リリース順序・検証範囲は[Contract CI運用](docs/maintenance/2026-10-30-contract-ci.md)を参照。
+下の10月26日の現在地は当時の記録であり、この作業のbranch・版数・検証結果を表さない。
+
 ### 現在地（2026-10-26照合）
 
 TODO・HANDOFFの矛盾確認と訂正はHEAD `8d8f68c` から始め、commit `9e9fec5` で完了した。その後の依頼で版数を `.5` / `20261026e` に更新し、続けて候補版数human output修正を実装した。現在branchは `devel-tiga1026wce`、HEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`。

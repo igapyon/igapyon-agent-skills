@@ -72,6 +72,12 @@ source変更の検証として実行しない。
 
 miku-scm と GitHub Writer は、GitHub Actions で macOS と Windows の両方に対してテストを実行します。Windows の改行コードの違いを見つけた実例と、この構成の価値を [複数 OS でテストする価値](docs/maintenance/github-actions-cross-platform-testing.md) に記録しています。
 
+ContractはPR時と手動実行で検証します。devel pushでは重複実行しません。
+対象外変更でも最終判定を返す`Miku SCM required`と`GitHub Writer required`を
+GitHub側の必須チェックに登録し、成功後にmerge、tag、Releaseの順で進めます。
+既存必須チェックからの移行とWindowsの計測方法は
+[Contract CI運用](docs/maintenance/2026-10-30-contract-ci.md)を参照してください。
+
 ## 保守時の確認
 
 ビルド・検査には Node.js / npm、Java / Maven、Git、`sh`、`rsync`、`unzip` を使います。Release CI の Java 設定は [.github/workflows/release-archive.yml](.github/workflows/release-archive.yml)、skill ごとの実行環境や追加依存は各 `SKILL.md` と参照資料で確認します。
