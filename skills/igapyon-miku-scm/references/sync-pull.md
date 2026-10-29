@@ -12,9 +12,10 @@ Use Node.js and Git 2.45 or newer in an existing work branch. Operation and bran
 `workplace/miku-scm/sync/`. If they are not ignored, report a warning and add
 `/workplace/miku-scm/` to Git's local `info/exclude`, then continue. No tracked
 `.gitignore` edit or prior setup is required.
-The automatic `-done` transition additionally requires a hosted remote with a compatible PR API and
-GitHub CLI access that can read its PRs. A normal branch does not require PR
-access.
+The automatic `-done` transition additionally requires a hosted remote with a
+compatible PR API. It uses GitHub CLI when installed, or anonymous HTTPS reads
+when `gh` is missing. Unavailable PR reads can use the human-confirmation path
+below. A normal branch does not require PR access.
 
 The default remote is `origin`. Resolve the shared base in this order:
 
@@ -105,6 +106,59 @@ validated Git refs, and the PR number from the unique exact match. Use a
 100 entries is incomplete and stops. Auth/JSON/API failures stop before
 stash or branch creation.
 
+Only an executable-not-found (`ENOENT`) result switches this fixed helper to
+Node.js HTTPS reads of the same two PR endpoints and list filters. Derive the
+API base from the selected remote host: `https://api.github.com` for GitHub.com,
+`https://api.<subdomain>.ghe.com` for GHE Cloud, and
+`https://<selected-host>/api/v3` for GHE Server or a compatible service, retaining
+an explicit port. No host allowlist applies. This fallback sends no credentials,
+reads no tokens, rejects redirects, limits each response to 1 MiB, and applies a
+15-second deadline through body consumption. It uses no cache or pagination.
+An installed `gh` failing authentication, authorization, or its API request does
+not trigger anonymous fallback. Unavailable reads (including authentication,
+non-public PRs, rate limits or connection failures) stop before stash or branch
+creation and offer the human-confirmation path below. Invalid JSON, oversized
+or incomplete responses and contradictory PR evidence remain hard stops.
+Both transports apply all the exact PR and fetched-base checks below.
+
+Node.js HTTPS has its own proxy and certificate configuration. For a proxy,
+supported Node versions can use `NODE_USE_ENV_PROXY=1` with `HTTPS_PROXY` and
+`NO_PROXY`; this is available in Node 24+ and 22.21+. For an enterprise CA, use
+`NODE_EXTRA_CA_CERTS` or the supported system-CA option (`NODE_USE_SYSTEM_CA=1`
+on Node 24.6+ or 22.19+). Configure these before starting the Node process.
+Git's `http.proxy` and `http.sslCAInfo` are not automatically imported. Keep
+certificate verification enabled. The helper reports bounded TLS/DNS/connection
+codes, without printing response bodies or credentials. See the
+[Node CLI documentation](https://nodejs.org/api/cli.html#node_use_env_proxy1).
+
+### Human confirmation when PR reads are unavailable
+
+The helper saves `awaiting-merge-confirmation` and returns `not-applied` with
+`confirmation_required: true`, the operation ID and the exact repository,
+published branch, HEAD and base to confirm. Display its question and wait for
+the user to confirm that a PR containing that HEAD was merged into that base.
+The original `sync pull` instruction is not a merge report. A clear affirmative
+reply in the same conversation authorizes:
+
+```text
+repository.sync.pull --repo <same-path> --confirm-merged <saved-operation-id> --apply
+```
+
+The Agent supplies the saved ID; the user need not copy it. A `github merge done`
+reply answering this pending question continues this sync path, including staged
+carryover. Do not route that reply through the legacy unstaged-only helper.
+This is a human attestation; it is recorded and displayed as such, never as an
+API-verified PR. No new PR reads or API authentication are needed to continue.
+Verify the saved branch, HEAD, index, working contents, untracked files and remote
+configuration, refetch the same base, and reject rewritten base history before
+using the normal backup/stash/next-work/restore flow. Changed state invalidates
+the confirmation and requires fresh inspection. Completed or superseded receipts
+cannot be reused. A fresh explicit `sync pull` supersedes an unanswered question;
+`--abort <saved-operation-id> --apply` cancels one without altering work.
+Unmerged, mismatched or malformed PR evidence cannot be overridden this way.
+
+### Automatic PR verification
+
 Require exact head repository/ref/SHA and base repository/ref, then detailed
 `merged: true`, `state: closed`, a valid `merged_at`, and a full
 `merge_commit_sha` contained in the fetched base. This also supports squash
@@ -121,7 +175,7 @@ stops the transition before switching to an unreviewed commit.
 An already recorded transition cannot create more next branches.
 
 This is a narrow frozen-branch exception authorized by `sync pull`. The
-explicit `github merge done` route keeps its human confirmation and staged
+standalone `github merge done` route keeps its human confirmation and staged
 change blocker. Never synthesize its `--confirmed-merged` flag.
 Successful push renames only the local branch with `-done`; PR lookup uses
 the published branch name without that suffix. An open PR, an unmerged closed

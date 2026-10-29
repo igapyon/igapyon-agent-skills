@@ -24,6 +24,11 @@ mechanical preflight.
 
 Exact `sync pull` routes to `repository.sync.pull --apply`; its fixed helper
 alone chooses whether the current `-done` branch needs PR verification.
+If it returns `confirmation_required`, show its saved target and question and
+wait. A clear human merge report answering that question continues the same
+`repository.sync.pull --confirm-merged <saved-operation-id> --apply` workflow.
+This includes a `github merge done` reply to that question; retain staged work
+through the sync helper. Standalone `github merge done` keeps its original route.
 Exact `sync push` routes to `repository.sync.push.prepare --apply`, one
 Agent-authored draft from the returned evidence, then
 `repository.sync.push.apply` with that same operation and plan/draft digests.

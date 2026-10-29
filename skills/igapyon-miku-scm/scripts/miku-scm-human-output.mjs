@@ -598,7 +598,13 @@ export function renderHumanOutput({
     if (r.head || r.new_head) lines.push(`HEAD: ${displayValue(r.head || r.new_head)}`);
     if (r.backup_branch) lines.push(`Backup branch: ${displayValue(r.backup_branch)}`);
     if (r.stash_sha) lines.push(`Retained carryover stash: ${displayValue(r.stash_sha)}`);
-    if (r.merge_verification) lines.push(`Verified merged PR: #${r.merge_verification.number}`);
+    if (r.merge_verification?.source === "human") lines.push("Merge confirmation: human report (API verification unavailable)");
+    else if (r.merge_verification) lines.push(`Verified merged PR: #${r.merge_verification.number}`);
+    if (r.confirmation_required && r.merge_confirmation) {
+      const c = r.merge_confirmation;
+      lines.push("Human merge confirmation required", `Repository: ${displayValue(c.repository)}`,
+        `Published branch: ${displayValue(c.branch)}`, `Confirm HEAD: ${displayValue(c.head)}`, `Merge destination: ${displayValue(c.base)}`);
+    }
     if (r.recommended_tag) lines.push(`Recommended tag: ${displayValue(r.recommended_tag)} (${displayValue(r.tag_status)})`);
     if (r.reason) lines.push(`Reason: ${displayValue(r.reason)}`);
     if (r.stage) lines.push(`Stage: ${displayValue(r.stage)}`);

@@ -72,7 +72,11 @@ The `miku-scm draft recommit push` workflow and its `miku-scm pr recommit push`
 alias are owned exclusively by this Skill. Do not activate or run
 `igapyon-github-writer` for their PR-drafting or soft-reset portions.
 
-### Sync Commands
+### Sync Instructions
+
+In user requests, `miku-scm` names this Skill; `sync pull`, `sync push` and
+`github merge done` are instructions passed to it, not standalone shell commands.
+The Skill invokes the documented Node.js runner and its CLI arguments below.
 
 The combined cycle is `sync pull` → edit work and explicitly increment the
 version when needed → `sync push` → human PR creation/merge → `sync pull`.
@@ -90,9 +94,24 @@ retained, using a backup and exact retained stash when integration needs them.
 Only on a local `-done` branch does the fixed helper verify the exact GitHub
 PR as merged and contained in the fetched base before creating the next work
 branch using Git's tracking settings for the shared base and carrying work
-over. Missing or unmerged PR evidence stops that transition. Ordinary branches do not query
-PR merge state. Pull requires Git 2.45 or newer; its `-done` check also needs
-working GitHub CLI access. Fetch respects the remote's fetch and tag settings;
+over. Unmerged or mismatched PR evidence stops that transition. Ordinary branches do not query
+PR merge state. Pull requires Git 2.45 or newer. Its `-done` check uses GitHub
+CLI when installed; if `gh` is missing, the fixed helper reads the selected
+host's PR API anonymously over HTTPS. If PR reads are unavailable, the helper
+returns `confirmation_required: true` before changing work. Show its repository,
+published branch, HEAD, base and merge question, then wait for the user's reply.
+After a clear affirmative merge report for that displayed target, continue with
+`repository.sync.pull --repo <same-repo> --confirm-merged <returned-operation-id>
+--apply`. Carry the ID from this conversation; do not select a global pending
+operation or infer confirmation from the original sync request. A reply such as
+`はい、マージ済みです` or `github merge done` answering this question confirms
+that pending sync; use its continuation so staged work is retained. Standalone
+`github merge done` retains its existing meaning. A negative or ambiguous reply
+does not authorize continuation. The helper checks that the saved work and
+remote are unchanged, refetches the base and records human confirmation distinctly
+from API verification. Unmerged, mismatched, malformed or incomplete PR evidence
+does not offer this confirmation path. See the sync reference for cancellation.
+Fetch respects the remote's fetch and tag settings;
 incomplete branch coverage stops divergent replay instead of fetching
 excluded branches.
 Successful next-work output explicitly names the `New work branch`; other
@@ -200,8 +219,9 @@ current branch, and retained stash; preserve the partial state for recovery.
 7. Before tracked-content mutation or an ordinary commit, inspect the current
    branch and worktree. Do not mutate a `-done` branch or discard unrelated
    changes. The narrow exception is explicit `sync pull`: only its fixed
-   helper may verify the exact merged PR and carry work to a new branch from
-   the fetched base. Do not fabricate `--confirmed-merged`. For `work.commit`, ordinary non-ignored changes are all in scope
+   helper may verify the exact merged PR, or consume the user's explicit reply
+   to its saved merge question, and carry work to a new branch from the fetched
+   base. Do not fabricate merge confirmation. For `work.commit`, ordinary non-ignored changes are all in scope
    even when they are unrelated to the current request; operational drafts and
    workflows with their own branch checks keep those documented rules.
 8. A standalone apply must consume the unchanged reviewed artifact and

@@ -235,9 +235,9 @@ use the service's compatible GitHub CLI/API capabilities.
 - Update date-based or Semantic Versions, check coupled values, maintain repositories, and inspect tags, Releases, and assets.
 
 **Scope and prerequisites:** Give these requests to the AI agent with this skill installed. Sync uses Node.js, Git, and local `workplace/miku-scm/sync/` storage. Missing ignore setup is handled with
-a notice and a local Git exclusion rule. Pull requires Git 2.45 or newer; push uses the available commands and reports a notice on Linux/other platforms. Automatic PR merge verification requires GitHub CLI access to the repository.
+a notice and a local Git exclusion rule. Pull requires Git 2.45 or newer; push uses the available commands and reports a notice on Linux/other platforms. Automatic PR merge verification uses GitHub CLI when installed. If `gh` is missing, the helper uses anonymous HTTPS reads against the selected GitHub or GHE host's PR API. When PR reads are unavailable, it asks the human to confirm the displayed branch HEAD was merged into the displayed base, then continues the same sync workflow with staged, unstaged and untracked work preserved.
 
-Only a local `-done` branch triggers `sync pull`'s PR check. The exact PR must be verified as merged into the fetched base before a new work branch is created; missing or unmerged evidence stops the transition. Ordinary work branches skip that PR check. If the shared base has advanced beyond the work branch, `sync push` stops for an explicitly requested `sync pull`.
+Only a local `-done` branch triggers `sync pull`'s PR check. Before a new work branch is created, the exact PR is verified as merged into the fetched base, or the human explicitly answers a saved merge question when PR reads are unavailable. Unmerged, mismatched or malformed evidence stops the transition. Ordinary work branches skip that PR check. If the shared base has advanced beyond the work branch, `sync push` stops for an explicitly requested `sync pull`.
 
 **Example:** Ask the agent for `miku-scm sync pull`, edit your work, request a version increment when needed, then ask for `miku-scm sync push`. Create and merge the PR on GitHub using the saved draft, then request `miku-scm sync pull` again from the local `-done` branch to start the next cycle.
 

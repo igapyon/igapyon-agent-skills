@@ -224,6 +224,183 @@ test("sync pull done verifies a compatible Enterprise host and starts the next w
   for (const { args } of f.calls) assert.equal(args[args.indexOf("--hostname") + 1], "ghe.example.test");
 });
 
+function withoutGh(f, fetch) {
+  let attempts = 0;
+  return {
+    ...f.dependencies, fetch,
+    gh: () => { attempts++; return { ok: false, error: { code: "ENOENT" } }; },
+    attempts: () => attempts,
+  };
+}
+
+for (const [host, api] of [
+  ["github.com", "https://api.github.com"],
+  ["ghe.example.test", "https://ghe.example.test/api/v3"],
+  ["ghe.example.test:8443", "https://ghe.example.test:8443/api/v3"],
+  ["example.ghe.com", "https://api.example.ghe.com"],
+]) test(`sync pull without gh verifies PRs on ${host} and carries work to the next branch`, async (t) => {
+  const f = await doneFixture(t, {}, true, host);
+  await f.write("carry.txt", "staged\n"); f.git(["add", "carry.txt"]);
+  await f.write("carry.txt", "staged\nunstaged\n");
+  const calls = [];
+  const dependencies = withoutGh(f, async (url, options) => {
+    calls.push({ url: String(url), options });
+    return new Response(JSON.stringify(calls.length === 1 ? [f.pull] : f.pull));
+  });
+  const result = await runSyncPull(f.options, dependencies);
+  assert.equal(result.status, "completed", JSON.stringify(result));
+  assert.equal(result.method, "next-work");
+  assert.equal(result.head, f.pull.merge_commit_sha);
+  assert.equal(await f.read("carry.txt"), "staged\nunstaged\n");
+  assert.equal(f.git(["show", ":carry.txt"]), "staged");
+  assert.equal(dependencies.attempts(), 1);
+  assert.equal(calls[0].url, `${api}/repos/owner/repo/pulls?state=all&head=owner%3Adevel-tiga1026aaa&base=devel&per_page=100`);
+  assert.equal(calls[1].url, `${api}/repos/owner/repo/pulls/7`);
+  for (const { options } of calls) {
+    assert.equal(options.method, "GET");
+    assert.equal(options.redirect, "error");
+    assert.equal(options.credentials, "omit");
+    assert.ok(options.signal instanceof AbortSignal);
+    assert.equal(new Headers(options.headers).has("Authorization"), false);
+  }
+  assert.ok(result.warnings.some((warning) => warning.includes("anonymous HTTPS")));
+});
+
+for (const kind of ["404", "403", "429", "redirect", "invalid-json", "oversize", "network", "mismatch", "unmerged", "incomplete"]) {
+  test(`sync pull without gh stops before changing work for ${kind} anonymous evidence`, async (t) => {
+    const f = await doneFixture(t);
+    await f.write("carry.txt", "untouched\n");
+    const before = await snapshot(await context(f.repo));
+    let calls = 0;
+    const dependencies = withoutGh(f, async () => {
+      calls++;
+      if (kind === "network") throw new TypeError("transport failure");
+      if (/^\d+$/.test(kind)) return new Response("", { status: Number(kind) });
+      if (kind === "redirect") return new Response("", { status: 302 });
+      if (kind === "invalid-json") return new Response("{");
+      if (kind === "oversize") return new Response(" ".repeat(1024 * 1024 + 1));
+      if (kind === "incomplete") return new Response(JSON.stringify(Array(100).fill(f.pull)));
+      const pull = kind === "mismatch" ? { ...f.pull, head: { ...f.pull.head, sha: "0".repeat(40) } }
+        : { ...f.pull, merged: false };
+      return new Response(JSON.stringify(calls === 1 ? [pull] : pull));
+    });
+    const result = await runSyncPull(f.options, dependencies);
+    assert.equal(result.status, "not-applied", JSON.stringify(result));
+    assert.equal(result.stash_sha, null);
+    assert.equal(result.backup_branch, null);
+    assert.equal((await snapshot(await context(f.repo))).digest, before.digest);
+    assert.equal(calls, kind === "unmerged" ? 2 : 1);
+    const unavailable = ["404", "403", "429", "redirect", "network"].includes(kind);
+    assert.equal(Boolean(result.confirmation_required), unavailable);
+    if (unavailable) assert.match(result.reason, /gh is not installed.*anonymous/);
+  });
+}
+
+test("sync pull does not replace an installed gh authentication failure with anonymous reads", async (t) => {
+  const f = await doneFixture(t);
+  let calls = 0;
+  const result = await runSyncPull(f.options, {
+    ...f.dependencies,
+    gh: () => ({ ok: false, status: 1, stderr: "authentication required" }),
+    fetch: () => { calls++; throw new Error("unexpected anonymous read"); },
+  });
+  assert.equal(result.status, "not-applied");
+  assert.match(result.reason, /GitHub PR verification failed/);
+  assert.equal(calls, 0);
+});
+
+test("sync pull on a normal branch uses neither gh nor anonymous PR reads", async (t) => {
+  const f = await fixture(t); await f.advance();
+  const unexpected = () => { throw new Error("unexpected PR read"); };
+  const result = await runSyncPull(f.options, { gh: unexpected, fetch: unexpected });
+  assert.equal(result.status, "completed", JSON.stringify(result));
+  assert.equal(result.method, "fast-forward");
+});
+
+test("human-confirmed sync pull on private GHE retains staged, unstaged and untracked work", async (t) => {
+  const f = await doneFixture(t, {}, true, "ghe.example.test:8443");
+  await f.write("carry.txt", "staged\n"); f.git(["add", "carry.txt"]);
+  await f.write("carry.txt", "staged\nunstaged\n"); await f.write("untracked.txt", "new\n");
+  const before = await snapshot(await context(f.repo));
+  const dependencies = withoutGh(f, async () => new Response("", { status: 404 }));
+  const pending = await runSyncPull(f.options, dependencies);
+  assert.equal(pending.confirmation_required, true);
+  assert.equal(pending.mutation_invoked, false);
+  assert.equal((await snapshot(await context(f.repo))).digest, before.digest);
+  assert.equal(pending.merge_confirmation.repository, "ghe.example.test:8443/owner/repo");
+  const latest = await f.advance();
+  const noPr = () => { throw new Error("Confirmation must not require PR access"); };
+  const confirmed = await runSyncPull({ repo: f.repo, apply: true, confirmMerged: pending.operation_id }, { ...dependencies, gh: noPr, fetch: noPr });
+  assert.equal(confirmed.status, "completed", JSON.stringify(confirmed));
+  assert.equal(confirmed.head, latest);
+  assert.equal(confirmed.merge_verification.source, "human");
+  assert.equal(f.git(["show", ":carry.txt"]), "staged");
+  assert.equal(await f.read("carry.txt"), "staged\nunstaged\n");
+  assert.equal(await f.read("untracked.txt"), "new\n");
+  assert.ok(confirmed.stash_retained);
+  const output = renderHumanOutput({ workflow: "repository.sync.pull", status: "success", approvalGate: "apply", result: confirmed });
+  assert.match(output, /Merge confirmation: human report/);
+  assert.doesNotMatch(output, /Verified merged PR/);
+  const replay = await runSyncPull({ repo: f.repo, apply: true, confirmMerged: pending.operation_id }, dependencies);
+  assert.equal(replay.status, "not-applied");
+  assert.equal((await loadOperation(await context(f.repo), pending.operation_id)).status, "completed");
+});
+
+for (const change of ["worktree", "index", "head", "remote", "base-history"]) {
+  test(`human merge confirmation rejects changed ${change}`, async (t) => {
+    const f = await doneFixture(t);
+    await f.advance();
+    const dependencies = withoutGh(f, async () => new Response("", { status: 403 }));
+    const pending = await runSyncPull(f.options, dependencies);
+    if (change === "worktree") await f.write("edit.txt", "changed\n");
+    if (change === "index") { await f.write("edit.txt", "changed\n"); f.git(["add", "edit.txt"]); }
+    if (change === "head") await f.commit("edit.txt", "changed\n");
+    if (change === "remote") f.git(["config", "remote.origin.tagOpt", "--no-tags"]);
+    if (change === "base-history") syncGit(f.other, ["push", "--force", "origin", "HEAD~1:devel"]);
+    const before = await snapshot(await context(f.repo));
+    const result = await runSyncPull({ repo: f.repo, apply: true, confirmMerged: pending.operation_id }, dependencies);
+    assert.equal(result.status, "not-applied", JSON.stringify(result));
+    assert.equal(result.mutation_invoked, false);
+    assert.equal(result.backup_branch, null);
+    assert.equal((await snapshot(await context(f.repo))).digest, before.digest);
+  });
+}
+
+test("a fresh pull supersedes the old merge question and a pending question can be cancelled", async (t) => {
+  const f = await doneFixture(t);
+  const dependencies = withoutGh(f, async () => new Response("", { status: 404 }));
+  const old = await runSyncPull(f.options, dependencies);
+  const fresh = await runSyncPull(f.options, dependencies);
+  assert.equal((await loadOperation(await context(f.repo), old.operation_id)).status, "superseded");
+  const cancelled = await runSyncPull({ repo: f.repo, apply: true, abort: fresh.operation_id }, dependencies);
+  assert.equal(cancelled.status, "cancelled");
+  assert.equal(cancelled.mutation_invoked, false);
+  for (const pending of [old, fresh]) {
+    const result = await runSyncPull({ repo: f.repo, apply: true, confirmMerged: pending.operation_id }, dependencies);
+    assert.equal(result.status, "not-applied");
+    assert.equal(result.mutation_invoked, false);
+  }
+});
+
+test("unmerged PR evidence cannot be overridden by human-confirmation recovery", async (t) => {
+  const f = await doneFixture(t, { merged: false });
+  const pending = await runSyncPull(f.options, f.dependencies);
+  assert.equal(pending.confirmation_required, undefined);
+  const result = await runSyncPull({ repo: f.repo, apply: true, confirmMerged: pending.operation_id }, f.dependencies);
+  assert.equal(result.status, "not-applied");
+  assert.match(result.reason, /not awaiting human merge confirmation/);
+});
+
+test("TLS failures retain a bounded diagnostic and offer human merge confirmation", async (t) => {
+  const f = await doneFixture(t, {}, false, "ghe.example.test");
+  const result = await runSyncPull(f.options, withoutGh(f, async () => {
+    throw new TypeError("private transport details", { cause: { code: "SELF_SIGNED_CERT_IN_CHAIN" } });
+  }));
+  assert.equal(result.confirmation_required, true);
+  assert.match(result.reason, /SELF_SIGNED_CERT_IN_CHAIN/);
+  assert.doesNotMatch(result.reason, /private transport details/);
+});
+
 test("sync pull next-work resumes a prepared branch without another branch or stash", async (t) => {
   const f = await doneFixture(t);
   f.git(["config", "branch.autoSetupMerge", "true"]);

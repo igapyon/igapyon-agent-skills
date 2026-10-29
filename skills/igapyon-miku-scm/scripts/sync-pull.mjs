@@ -1,13 +1,13 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { inspectNextWorkBranch, nextWorkAdvice, prepareNextWorkBranch, switchNextWorkBranch, workBranchName } from "./post-merge-next-work.mjs";
-import { verifyMergedPull } from "./miku-scm-sync-merge-check.mjs";
+import { MergeReadUnavailable, verifyMergedPull } from "./miku-scm-sync-merge-check.mjs";
 import { SHA, afterAction, ancestor, assertIdle, assertRemote, assertSnapshot, beforeAction, branch, checkPending, failure, fetchBase, head, loadOperation, newId, newOperation, openSync, readBaseRecord, readJson, remoteState, requireFetchBranch, resolveBase, saveBaseRecord, saveOperation, snapshot } from "./miku-scm-sync-state.mjs";
 import { createBackup, guardIgnored, integrateGit, locateStash, rebaseIdentity, requireGitCapabilities, restoreWork, stashWork, verifyLocation } from "./miku-scm-sync-worktree.mjs";
 
 export function parseArgs(argv, cwd = process.cwd()) {
   const o = { repo: cwd, remote: "origin", base: "", apply: false, resume: "", abort: "", empty: "", resolvedCarryover: false, resolvedNextWork: false, help: false };
-  const fields = { "--repo": "repo", "--remote": "remote", "--base": "base", "--resume": "resume", "--abort": "abort", "--empty": "empty" };
+  const fields = { "--repo": "repo", "--remote": "remote", "--base": "base", "--resume": "resume", "--abort": "abort", "--empty": "empty", "--confirm-merged": "confirmMerged" };
   const seen = new Set();
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -23,10 +23,11 @@ export function parseArgs(argv, cwd = process.cwd()) {
   if (o.help) return o;
   if (!o.apply || !o.repo) throw new Error("sync pull requires --repo and --apply");
   if (o.resume && o.abort) throw new Error("--resume and --abort are exclusive");
+  if (o.confirmMerged && (o.resume || o.abort)) throw new Error("--confirm-merged cannot be combined with --resume or --abort");
   if (o.empty && (!o.resume || !["keep", "drop"].includes(o.empty))) throw new Error("--empty keep|drop requires --resume");
   if (o.resolvedCarryover && !o.resume) throw new Error("--resolved-carryover requires --resume and a reviewed carryover resolution");
   if (o.resolvedNextWork && !o.resume) throw new Error("--resolved-next-work requires --resume and a reviewed branch/checkout resolution");
-  if ((o.resume || o.abort) && (seen.has("--remote") || seen.has("--base"))) throw new Error("Recovery uses the saved remote and base");
+  if ((o.resume || o.abort || o.confirmMerged) && (seen.has("--remote") || seen.has("--base"))) throw new Error("Recovery uses the saved remote and base");
   return o;
 }
 
@@ -118,6 +119,11 @@ async function integrateNextWork(ctx, op, options = {}) {
 }
 
 async function recover(ctx, op, options) {
+  if (op.type === "pull" && op.status === "awaiting-merge-confirmation" && !op.mutation_invoked && options.abort) {
+    op.status = "cancelled";
+    await saveOperation(ctx, op);
+    return result(ctx, op, "cancelled");
+  }
   if (op.type !== "pull" || !["partial", "running"].includes(op.status)) throw new Error("This pull operation cannot be resumed or aborted");
   assertRemote(ctx, op.remote);
   if (op.stash_message && !op.stash_sha) {
@@ -171,8 +177,8 @@ async function recover(ctx, op, options) {
 }
 
 export async function runSyncPull(options, dependencies = {}) {
-  const id = options.resume || options.abort || newId();
-  const { ctx, release } = await openSync(options.repo, dependencies, id, Boolean(options.resume || options.abort));
+  const id = options.confirmMerged || options.resume || options.abort || newId();
+  const { ctx, release } = await openSync(options.repo, dependencies, id, Boolean(options.confirmMerged || options.resume || options.abort));
   let op;
   try {
     if (options.resume || options.abort) {
@@ -182,18 +188,53 @@ export async function runSyncPull(options, dependencies = {}) {
       await checkPending(ctx, { except: id });
       return await recover(ctx, op, options);
     }
-    await checkPending(ctx, { pull: true });
+    await checkPending(ctx, options.confirmMerged ? { except: id } : { pull: true });
     await assertIdle(ctx);
     requireGitCapabilities(ctx);
-    const initial = await snapshot(ctx);
-    const remote = remoteState(ctx, options.remote);
-    const base = resolveBase(ctx, options.remote, options.base);
-    op = await newOperation(ctx, "pull", id, initial, remote, base, null);
+    let initial, remote, base;
+    let confirmedBase;
+    if (options.confirmMerged) {
+      const saved = await loadOperation(ctx, id);
+      if (saved.type !== "pull" || saved.status !== "awaiting-merge-confirmation" || saved.mutation_invoked || !saved.original.branch.endsWith("-done") || !saved.merge_read_failure) {
+        throw new Error("This operation is not awaiting human merge confirmation");
+      }
+      op = saved;
+      ({ original: initial, remote, base } = op);
+      assertRemote(ctx, remote);
+      await assertSnapshot(ctx, initial);
+      confirmedBase = op.base_sha;
+    } else {
+      initial = await snapshot(ctx);
+      remote = remoteState(ctx, options.remote);
+      base = resolveBase(ctx, options.remote, options.base);
+      op = await newOperation(ctx, "pull", id, initial, remote, base, null);
+    }
     op.base_sha = fetchBase(ctx, remote, base);
     await assertSnapshot(ctx, initial);
+    if (options.confirmMerged) {
+      if (!ancestor(ctx, confirmedBase, op.base_sha)) throw new Error("Shared base history changed since the merge question; inspect it and request a fresh sync pull");
+      op.status = "running";
+      op.merge_evidence = { source: "human", repository: remote.identity, branch: initial.branch.slice(0, -5), head: initial.head, base: base.name, confirmed_at: new Date().toISOString() };
+      await saveOperation(ctx, op);
+    }
     if (initial.branch.endsWith("-done")) {
       await refuseDuplicateNext(ctx, op);
-      op.merge_evidence = await verifyMergedPull(ctx, op);
+      if (!options.confirmMerged) {
+        try { op.merge_evidence = await verifyMergedPull(ctx, op); }
+        catch (error) {
+          if (!(error instanceof MergeReadUnavailable)) throw error;
+          assertRemote(ctx, remote);
+          await assertSnapshot(ctx, initial);
+          op.status = "awaiting-merge-confirmation";
+          op.merge_read_failure = error.message;
+          await saveOperation(ctx, op);
+          return {
+            ...result(ctx, op, "not-applied"), reason: error.message, confirmation_required: true,
+            merge_confirmation: { repository: remote.identity, branch: initial.branch.slice(0, -5), head: initial.head, base: base.name },
+            next_action: "Has the PR containing the displayed branch HEAD been merged into the displayed base? Await a clear human confirmation before continuing this saved sync pull.",
+          };
+        }
+      }
       assertRemote(ctx, remote);
       op.advice = await nextWorkAdvice(ctx.root, op.base_sha, remote.name, (cwd, args, allowFailure = false) => ctx.git(cwd, args, { allowFailure }));
       if (op.advice.tag_lookup_warning) op.advice.tag_lookup_warning = "Remote tag lookup failed; tag state is unconfirmed";

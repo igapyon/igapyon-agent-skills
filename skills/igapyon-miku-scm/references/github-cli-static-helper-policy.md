@@ -104,9 +104,18 @@ Apply a 15-second process timeout and stop further PR reads after the first fail
 
 The separate [sync-pull.md](sync-pull.md) helper may use its two fixed PR GET
 commands, including the validated base filter, only on a `-done` sync pull.
+When `gh` is not installed (`ENOENT`), that fixed helper alone may read those
+same endpoints anonymously with Node.js HTTPS using the selected host's API
+base, documented in `sync-pull.md`. It retains the same PR checks and stops on
+unreadable evidence. This exception does not apply to authentication or API
+failures from an installed `gh`, or to any other helper or Issue operation.
 It verifies exact head/base identities and that the merge result is in the
 fetched base before local work mutation. Normal work branches make no PR
-reads. This allowlist does not authorize GitHub mutation or direct Agent gh.
+reads. If these reads are unavailable, the documented sync pull continuation
+can consume an explicit human merge report for the saved target. Its result
+identifies human confirmation rather than claiming API verification. This does
+not override unmerged or mismatched PR evidence. This allowlist does not authorize
+GitHub mutation or direct Agent gh.
 
 - A READONLY `gh` failure before mutation is `not-applied`; report that no mutation command ran.
 - A reviewed-state mismatch is `conflict`; do not mutate.
