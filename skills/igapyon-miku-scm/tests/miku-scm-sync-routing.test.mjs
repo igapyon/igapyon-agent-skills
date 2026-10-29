@@ -5,6 +5,7 @@ import { renderHumanOutput } from "../scripts/miku-scm-human-output.mjs";
 import { parseArgs as parsePull } from "../scripts/sync-pull.mjs";
 import { parseArgs as parsePush } from "../scripts/sync-push.mjs";
 import { fixture } from "./sync-fixture.mjs";
+import { syncGit } from "../scripts/miku-scm-sync-state.mjs";
 
 test("sync routes keep separate local prepare and remote apply gates", () => {
   const registry = workflowRegistry();
@@ -14,6 +15,29 @@ test("sync routes keep separate local prepare and remote apply gates", () => {
   assert.throws(() => parsePull([]), /requires/);
   assert.throws(() => parsePush("prepare", []), /requires/);
   assert.throws(() => parsePush("apply", ["--apply"]), /operation ID/);
+  assert.equal(parsePull(["--apply", "--confirm-merged", "saved-id"]).confirmMerged, "saved-id");
+  assert.throws(() => parsePull(["--apply", "--confirm-merged", "saved-id", "--resume", "other-id"]), /cannot be combined/);
+  assert.throws(() => parsePull(["--apply", "--confirm-merged", "saved-id", "--base", "main"]), /saved remote and base/);
+});
+
+test("runner presents unreadable PRs as a merge question, not completed sync", async (t) => {
+  const f = await fixture(t);
+  f.git(["branch", "-m", "devel-tiga1026aaa-done"]);
+  const result = await runWorkflow("repository.sync.pull", ["--repo", f.repo, "--apply"], {
+    cwd: f.repo,
+    syncPullDependencies: {
+      git: (cwd, args, options) => args[0] === "remote" && args[1] === "get-url"
+        ? { ...syncGit(cwd, args, options), out: "https://ghe.example.test/owner/repo.git" } : syncGit(cwd, args, options),
+      gh: () => ({ ok: false, status: 1 }),
+    },
+  });
+  assert.equal(result.status, "not-applied", JSON.stringify(result));
+  assert.equal(result.mutation_invoked, false);
+  assert.match(result.human_output, /Human merge confirmation required/);
+  assert.match(result.human_output, /Repository: ghe.example.test\/owner\/repo/);
+  assert.match(result.human_output, /Merge destination: devel/);
+  assert.match(result.human_output, /Has the PR containing/);
+  assert.doesNotMatch(result.human_output, /New work branch:|Verified merged PR:/);
 });
 
 test("sync pull runner reports a genuine no-op as no work mutation", async (t) => {

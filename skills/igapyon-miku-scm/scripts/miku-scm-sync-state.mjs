@@ -231,6 +231,11 @@ export async function pendingOperations(ctx) {
 export async function checkPending(ctx, { pull = false, except = "" } = {}) {
   for (const op of await pendingOperations(ctx)) {
     if (op.id === except) continue;
+    if (pull && op.type === "pull" && op.status === "awaiting-merge-confirmation" && !op.mutation_invoked) {
+      op.status = "superseded";
+      await saveOperation(ctx, op);
+      continue;
+    }
     if (pull && op.type === "push" && !op.apply_started && ["prepared", "needs-sync-pull"].includes(op.status)) {
       op.status = "superseded";
       await saveOperation(ctx, op);
