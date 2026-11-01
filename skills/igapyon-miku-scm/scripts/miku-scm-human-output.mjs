@@ -1,4 +1,4 @@
-export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v16";
+export const HUMAN_OUTPUT_SCHEMA_VERSION = "miku-scm.human-output/v17";
 
 const WORKFLOW_TITLES = Object.freeze({
   "repository.status": "Repository status",
@@ -556,6 +556,7 @@ export function renderHumanOutput({
   delegateStatus,
   mutationInvoked,
   result,
+  resultFile,
   error,
 }) {
   const title = WORKFLOW_TITLES[workflow] ?? workflow;
@@ -608,7 +609,11 @@ export function renderHumanOutput({
     if (r.recommended_tag) lines.push(`Recommended tag: ${displayValue(r.recommended_tag)} (${displayValue(r.tag_status)})`);
     if (r.reason) lines.push(`Reason: ${displayValue(r.reason)}`);
     if (r.stage) lines.push(`Stage: ${displayValue(r.stage)}`);
-    if (r.status === "prepared") lines.push(`PR draft: ${displayValue(r.suggested_draft_path)}`, "Next action: compose once from the returned evidence, then apply this exact plan.");
+    if (r.status === "prepared") {
+      lines.push(`Operation: ${displayValue(r.operation_id)}`, `Result file: ${displayValue(resultFile)}`,
+        `PR draft: ${displayValue(r.suggested_draft_path)}`,
+        "Next action: read result.evidence from the saved result file, compose once, then apply this exact plan.");
+    }
     if (r.next_action) lines.push(`Next action: ${displayValue(r.next_action)}`);
     if (["partial", "unresolved"].includes(r.status) && r.operation_id) lines.push(`Recovery operation: ${r.operation_id}`);
     if (r.status === "published") appendPublication(lines, r.publication ?? r);
