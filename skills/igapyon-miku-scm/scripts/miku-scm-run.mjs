@@ -879,6 +879,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       delegateStatus: result.delegate_status,
       mutationInvoked: result.mutation_invoked,
       result: delegateResult,
+      resultFile: path.join(runDirectory, "result.json"),
     });
     await writeJsonAtomic(path.join(runDirectory, "snapshot.json"), {
       schema_version: RUNNER_SCHEMA_VERSION,

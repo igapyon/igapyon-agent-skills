@@ -8,7 +8,22 @@ import {
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v16");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v17");
+});
+
+test("prepared sync push output identifies its operation and saved evidence", () => {
+  const resultFile = "/tmp/workplace/miku-scm/runs/exact-run/result.json";
+  const output = renderHumanOutput({
+    workflow: "repository.sync.push.prepare",
+    status: "success",
+    resultFile,
+    mutationInvoked: false,
+    result: { status: "prepared", operation_id: "exact-operation", suggested_draft_path: "workplace/miku-scm/pr-drafts/example.md" },
+  });
+  assert.ok(output.includes("Operation: exact-operation\n"));
+  assert.ok(output.includes(`Result file: ${resultFile}\n`));
+  assert.match(output, /read result\.evidence from the saved result file/);
+  assert.doesNotMatch(output, /from the returned evidence/);
 });
 
 test("version candidates map proposed values to authoritative and coupled sources", () => {

@@ -38,7 +38,8 @@ recommit, push or local `-done` rename.
 
 ## Agent route
 
-1. Invoke `repository.sync.push.prepare --repo <path> --apply`, optionally
+1. Invoke `node <skill-root>/scripts/miku-scm-run.mjs --format json
+   repository.sync.push.prepare --repo <path> --apply`, optionally
    supplying `--remote`, `--base`, and a concise concrete `--message` under
    the same message rules as `work.commit`.
 2. Stop on any result other than `prepared`; `up-to-date` needs no draft or
@@ -46,7 +47,8 @@ recommit, push or local `-done` rename.
    using its returned `writing_contract`. Save at `suggested_draft_path` and compute
    the SHA-256 of those exact bytes. Do not reuse an unbound older draft.
 3. In the same requested workflow, invoke
-   `repository.sync.push.apply --repo <path> --operation <operation-id>
+   `node <skill-root>/scripts/miku-scm-run.mjs --format human
+   repository.sync.push.apply --repo <path> --operation <operation-id>
    --expected-plan-sha256 <prepare-plan-digest> --pr-draft <suggested-path>
    --expected-draft-sha256 <saved-bytes-digest> --apply` once. Carry the IDs
    and digests from this conversation; do not choose a global latest plan.
@@ -55,6 +57,30 @@ recommit, push or local `-done` rename.
 Successful steps need no extra conversational confirmation. The Agent writes
 PR prose; fixed helpers own all Git mechanics. A writing failure leaves the
 ordinary commit and prepared operation intact.
+
+## Reading the same execution result
+
+`--format` selects the output of a new invocation; it does not redisplay an
+earlier result. Never start another preparation just to obtain JSON output.
+The runner saves the full result before printing either format. Successful
+human preparation output includes the operation ID and absolute `Result file`
+path, so missing stdout detail can be retrieved without another preparation.
+
+During the same ongoing requested execution, read only that exact `result.json`
+and the runner `plan.json` beside it. Confirm their workflow and run IDs agree,
+the workflow is `repository.sync.push.prepare`, the plan's `repository` resolves
+to the requested repository, and `result.operation_id` matches the operation
+from this execution. Require `result.status: prepared`, a complete
+`result.evidence` with its `writing_contract`, `suggested_draft_path`, original
+`plan_sha256` and HEAD, and matching evidence HEAD. Apply must not have started.
+Use those original values for drafting and apply; the existing apply checks
+revalidate the current operation, worktree and contracts.
+
+This file read does not advance or resume the operation and needs no extra
+confirmation within the same ongoing request. Do not choose a global latest run,
+recompute expectations from changed state, or retry an apply. Missing or mismatched
+evidence, an interrupted workflow or an uncertain apply outcome stops continuation
+and uses the recovery rules below instead of another prepare invocation.
 
 ## Prepare contract
 
@@ -108,7 +134,8 @@ not be cleared by a new pull or an automatic resend.
 
 ## Recovery
 
-Carry the returned operation ID in the conversation. Pass these workflow
+The same-execution file read above is separate from resuming an interrupted
+workflow. Carry the returned operation ID in the conversation. Pass these workflow
 arguments to the fixed runner only after an explicit resume/cancel request:
 
 ```text

@@ -125,11 +125,13 @@ with `-done`. Clean work skips the ordinary commit; no commits above the base
 ends as `up-to-date` without drafting or publication. Push uses available Git/Node.js commands, reports a notice on platforms other
 than macOS/native Windows, and rejects a frozen `-done` branch.
 
-Run `repository.sync.push.prepare --repo <target-repo> --apply` with a concrete
+Run `node <skill-root>/scripts/miku-scm-run.mjs --format json
+repository.sync.push.prepare --repo <target-repo> --apply` with a concrete
 `--message` when available, using the `work.commit` message rules below.
 If `prepared`, draft once from returned `evidence` and its `writing_contract`,
 save exactly at `suggested_draft_path`, compute its byte SHA-256, and invoke
-`repository.sync.push.apply --repo <same-target-repo> --operation <returned-id>
+`node <skill-root>/scripts/miku-scm-run.mjs --format human
+repository.sync.push.apply --repo <same-target-repo> --operation <returned-id>
 --expected-plan-sha256 <returned-plan-digest> --pr-draft <suggested-path>
 --expected-draft-sha256 <saved-byte-digest> --apply` in the same user turn.
 Carry the same-session values; no confirmation is needed between successful
@@ -138,6 +140,15 @@ an explicitly requested `sync pull` and fresh preparation; an ordinary commit
 already made is retained. Never add an automatic pull or version increment.
 PR creation and merge remain the human's step; tag/Release work is separate.
 See [sync-push.md](references/sync-push.md) for cancellation and recovery.
+
+Never rerun prepare just to change its output format. During the same ongoing
+requested execution, missing output detail may be read from that exact run's
+saved `result.json` and matching runner `plan.json`. Verify the repository,
+workflow, run and operation identities, complete prepared evidence and original
+digests before continuing; apply must not have started. This read-only lookup
+needs no extra confirmation. Do not select a global latest result. An interrupted
+workflow, uncertain apply outcome, missing evidence or identity mismatch uses the
+documented recovery path, including an explicit resume/cancel request where required.
 
 Naming, design and explanation requests about sync do not authorize its
 execution. Existing individual commands and aliases retain their meanings.
@@ -164,8 +175,10 @@ current branch, and retained stash; preserve the partial state for recovery.
    containing this `SKILL.md`; never derive it from the target repository name
    or `--repo`, which identifies only the workflow target. Do not read its
    detailed Markdown during normal execution.
-   Prefer human output for a mechanical workflow when no structured field is
-   needed for a subsequent step. Because `--format` is a runner-global option,
+   Use `--format json` when returned fields feed a subsequent step, including
+   `repository.sync.push.prepare`. Prefer human output when no structured field
+   is needed later. Changing `--format` starts a new invocation; it never replays
+   a previous result. Because `--format` is a runner-global option,
    always place it before the workflow ID:
    `node <skill-root>/scripts/miku-scm-run.mjs --format human <workflow-id>
    [workflow options]`. Never place `--format` after the workflow ID. Return
