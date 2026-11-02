@@ -1,4 +1,4 @@
-import { readFile, realpath } from "node:fs/promises";
+import { access, readFile, realpath } from "node:fs/promises";
 import { readFileSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { prepareWritingEvidence } from "./miku-scm-writing-prepare.mjs";
@@ -10,9 +10,9 @@ import { platformWarnings } from "./miku-scm-command-runner.mjs";
 import { ancestor, assertIdle, assertRemote, assertSnapshot, beforeAction, branch, checkPending, checkedId, failure, fetchBase, hash, head, loadOperation, newId, newOperation, openSync, operationPath, readJson, remoteState, requireFetchBranch, resolveBase, saveOperation, snapshot, writeJson } from "./miku-scm-sync-state.mjs";
 
 export function parseArgs(mode, argv, cwd = process.cwd()) {
-  const o = { repo: cwd, remote: "origin", base: "", message: "", allowSensitivePaths: [], operation: "", resume: "", cancel: "", expectedPlanSha256: "", prDraft: "", expectedDraftSha256: "", apply: false, help: false };
+  const o = { repo: cwd, remote: "origin", base: "", message: "", allowSensitivePaths: [], operation: "", resume: "", cancel: "", recover: "", expectedPlanSha256: "", prDraft: "", expectedDraftSha256: "", apply: false, help: false };
   const common = { "--repo": "repo" };
-  const fields = mode === "prepare" ? { ...common, "--remote": "remote", "--base": "base", "--message": "message", "--resume": "resume", "--cancel": "cancel" }
+  const fields = mode === "prepare" ? { ...common, "--remote": "remote", "--base": "base", "--message": "message", "--resume": "resume", "--cancel": "cancel", "--recover": "recover" }
     : { ...common, "--operation": "operation", "--expected-plan-sha256": "expectedPlanSha256", "--pr-draft": "prDraft", "--expected-draft-sha256": "expectedDraftSha256" };
   const seen = new Set();
   for (let i = 0; i < argv.length; i++) {
@@ -32,9 +32,11 @@ export function parseArgs(mode, argv, cwd = process.cwd()) {
   }
   if (o.help) return o;
   if (!o.apply || !o.repo) throw new Error("sync push requires --apply");
-  if (o.resume && o.cancel) throw new Error("--resume and --cancel are exclusive");
+  if ([o.resume, o.cancel, o.recover].filter(Boolean).length > 1) throw new Error("--resume, --cancel and --recover are exclusive");
   if ((o.resume || o.cancel) && o.allowSensitivePaths.length) throw new Error("Recovery uses the saved push options");
   if ((o.resume || o.cancel) && ["--remote", "--base", "--message"].some((v) => seen.has(v))) throw new Error("Recovery uses the saved push options");
+  if (o.recover && ["--remote", "--base"].some((v) => seen.has(v))) throw new Error("Partial recovery uses the saved remote and base");
+  if (o.recover) checkedId(o.recover);
   if (mode === "apply") {
     checkedId(o.operation);
     if (!o.prDraft || !/^[0-9a-f]{64}$/.test(o.expectedPlanSha256) || !/^[0-9a-f]{64}$/.test(o.expectedDraftSha256)) throw new Error("Push apply requires the exact plan and draft SHA-256");
@@ -57,6 +59,65 @@ async function readPlan(ctx, op) {
 }
 function pushContract() { return workflowContractById().get("repository.sync.push.apply")?.pair_sha256 ?? null; }
 
+async function pathExists(file) {
+  try { await access(file); return true; }
+  catch (error) { if (error.code === "ENOENT") return false; throw error; }
+}
+
+async function inspectRecoverablePreflightFailure(ctx, op) {
+  if (op.type !== "push" || op.status !== "partial" || !op.apply_started
+    || op.phase !== "recommit-push" || op.attempt?.phase !== "recommit-push" || op.attempt.completed !== false) {
+    throw new Error("Only the exact saved sync-push preflight failure can use --recover");
+  }
+  const branchName = op.original?.branch;
+  const publication = op.delegate?.publication;
+  if (!branchName?.includes("/") || op.delegate?.status !== "partial"
+    || publication?.status !== "conflict" || publication.stage !== "publication-preflight"
+    || op.delegate.initial_remote_branch?.state !== "absent"
+    || !op.recommitted_head || op.delegate.new_head !== op.recommitted_head
+    || !op.backup_branch || op.delegate.backup_branch !== op.backup_branch) {
+    throw new Error("Saved operation is not the known preflight-only branch-path failure");
+  }
+
+  const plan = await readPlan(ctx, op);
+  const expectedBackup = op.commit?.status === "created" ? op.commit.result?.head : op.original?.head;
+  if (!plan || hash(plan) !== op.plan_sha256 || plan.operation !== op.id || plan.root !== ctx.root
+    || plan.snapshot?.branch !== branchName || plan.snapshot?.head !== expectedBackup
+    || plan.base_sha !== op.base_sha || plan.publication_expectation?.state !== "absent") {
+    throw new Error("Saved sync-push plan or backup identity changed; recovery stopped");
+  }
+
+  const failedPath = /^ENOENT: no such file or directory, open '([^']+)'$/.exec(publication.message ?? "")?.[1];
+  const brokenPrefix = path.join(ctx.root, "workplace", "miku-scm", "ok-push", `ok-push-${branchName}-${op.recommitted_head.slice(0, 12)}-`);
+  const failedSuffix = failedPath?.startsWith(brokenPrefix) ? failedPath.slice(brokenPrefix.length) : "";
+  if (!failedPath || path.resolve(failedPath) !== failedPath || !/^\d{12}\.json$/.test(failedSuffix)
+    || await pathExists(failedPath) || await pathExists(`${failedPath}.attempt.json`)) {
+    throw new Error("Publication failure does not match the saved missing-plan-file error");
+  }
+
+  await assertIdle(ctx);
+  assertRemote(ctx, op.remote, true);
+  const backup = ctx.git(ctx.root, ["rev-parse", "--verify", `refs/heads/${op.backup_branch}`], { allowFailure: true });
+  if (!backup.ok || backup.out !== expectedBackup) throw new Error("Retained backup does not match the prepared branch HEAD");
+  const current = await snapshot(ctx);
+  if (current.branch !== branchName || !ancestor(ctx, op.recommitted_head, current.head)) {
+    throw new Error("Current branch no longer contains the recommitted work; recovery stopped");
+  }
+  const base = fetchBase(ctx, op.remote, op.base);
+  if (base !== op.base_sha) throw new Error("Shared base advanced; sync pull and fresh review are required");
+  const remoteBranch = ctx.git(ctx.root, ["ls-remote", "--heads", op.remote.name, `refs/heads/${branchName}`]);
+  if (remoteBranch.out.trim()) throw new Error("Remote work branch now exists; publication state needs manual inspection");
+  return {
+    failure_path: failedPath,
+    branch: branchName,
+    base_sha: base,
+    backup_branch: op.backup_branch,
+    backup_head: backup.out,
+    current_head: current.head,
+    remote_branch: "absent",
+  };
+}
+
 async function preparedResult(ctx, op) {
   const plan = await readPlan(ctx, op);
   if (!plan || hash(plan) !== op.plan_sha256) throw new Error("Prepared push plan changed");
@@ -64,11 +125,30 @@ async function preparedResult(ctx, op) {
 }
 
 export async function prepareSyncPush(options, dependencies = {}) {
-  const id = options.resume || options.cancel || newId();
-  const { ctx, release } = await openSync(options.repo, dependencies, id, Boolean(options.resume || options.cancel));
+  let id = options.resume || options.cancel || options.recover || newId();
+  const { ctx, release } = await openSync(options.repo, dependencies, id, Boolean(options.resume || options.cancel || options.recover));
   let op;
+  let recoveryCompleted = false;
+  let effectiveOptions = options;
   try {
     runtimePlatform(dependencies, ctx);
+    if (options.recover) {
+      op = await loadOperation(ctx, options.recover);
+      await checkPending(ctx, { except: op.id });
+      const recovery = await inspectRecoverablePreflightFailure(ctx, op);
+      const previousId = op.id;
+      const savedRemote = op.remote.name;
+      const savedBase = op.base.name;
+      op.status = "recovered";
+      op.recovered_at = new Date().toISOString();
+      op.recovery = { status: "verified-not-published", ...recovery };
+      await saveOperation(ctx, op);
+      recoveryCompleted = true;
+      ctx.warnings = [...new Set([...ctx.warnings, `Recovered preflight-only sync push ${previousId}; retained backup and confirmed the remote branch is absent.`])];
+      effectiveOptions = { ...options, remote: savedRemote, base: savedBase };
+      id = newId();
+      op = null;
+    }
     if (options.resume || options.cancel) {
       op = await loadOperation(ctx, id);
       if (op.type !== "push" || op.apply_started || !(options.cancel ? ["prepared", "needs-sync-pull", "partial", "running"] : ["prepared", "needs-sync-pull"]).includes(op.status)) throw new Error("Only an unapplied push can be cancelled; resume requires prepared evidence");
@@ -89,8 +169,8 @@ export async function prepareSyncPush(options, dependencies = {}) {
     await assertIdle(ctx);
     const initial = await snapshot(ctx);
     if (initial.branch.endsWith("-done")) throw new Error("Sync push cannot commit or publish a frozen done branch; use sync pull after merge");
-    const remote = remoteState(ctx, options.remote, true);
-    const base = resolveBase(ctx, options.remote, options.base);
+    const remote = remoteState(ctx, effectiveOptions.remote, true);
+    const base = resolveBase(ctx, effectiveOptions.remote, effectiveOptions.base);
     op = await newOperation(ctx, "push", id, initial, remote, base, null);
     op.base_sha = fetchBase(ctx, remote, base);
     await assertSnapshot(ctx, initial);
@@ -105,12 +185,15 @@ export async function prepareSyncPush(options, dependencies = {}) {
     if (ctx.git(ctx.root, ["show-ref", "--verify", "--quiet", `refs/heads/${initial.branch}-done`], { allowFailure: true }).ok) throw new Error("The local completion branch already exists");
     const preflight = await (dependencies.publish ?? runPublish)({ repo: ctx.root, remote: remote.name, expectedHead: initial.head, apply: false }, { ...dependencies.publishDependencies, allowDirtyPreflight: true });
     if (preflight.status !== "preflight-ok") throw new Error("Publication preflight did not succeed");
+    if (options.recover && preflight.remote_branch?.state !== "absent") {
+      throw new Error("Remote work branch appeared during recovery; no commit was made and publication needs review");
+    }
     op.commit = { status: "skipped" };
     if (initial.dirty) {
       await beforeAction(ctx, op, "work-commit");
       assertRemote(ctx, remote, true);
       await assertSnapshot(ctx, initial);
-      const committed = await (dependencies.workCommit ?? runWorkCommit)({ repo: ctx.root, message: options.message ?? "", allowSensitivePaths: options.allowSensitivePaths ?? [], apply: true }, dependencies.workCommitDependencies);
+      const committed = await (dependencies.workCommit ?? runWorkCommit)({ repo: ctx.root, message: effectiveOptions.message ?? "", allowSensitivePaths: effectiveOptions.allowSensitivePaths ?? [], apply: true }, dependencies.workCommitDependencies);
       op.commit = { status: committed.status === "committed" ? "created" : committed.status, result: committed };
       op.mutation_invoked = committed.mutation_invoked;
       await saveOperation(ctx, op);
@@ -138,6 +221,7 @@ export async function prepareSyncPush(options, dependencies = {}) {
     await saveOperation(ctx, op);
     return await preparedResult(ctx, op);
   } catch (error) {
+    if (options.recover && !recoveryCompleted) return { ...await failure(ctx, null, error), operation_id: options.recover, commit: op?.commit };
     if ((options.resume || options.cancel) && op && !op.apply_started) return { ...await failure(ctx, null, error), operation_id: op.id, commit: op.commit };
     return await failure(ctx, op, error);
   }

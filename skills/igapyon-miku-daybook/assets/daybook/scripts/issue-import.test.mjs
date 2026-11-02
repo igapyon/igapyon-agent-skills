@@ -406,7 +406,7 @@ test("prepare generates all three canonical record types and a stable preview wi
   assert.equal(fs.existsSync(path.join(root, task.path)), false);
 });
 
-test("shared same-day activities are combined into one write with sorted Issue numbers", (t) => {
+test("same-day activity records get separate letter paths and preserve each Issue source", async (t) => {
   const root = makeRoot(t);
   const input = source([issue(43), issue(42)]);
   const decisions = manifest([
@@ -414,11 +414,64 @@ test("shared same-day activities are combined into one write with sorted Issue n
     { number: 42, decision: "import", records: [activityRecord("activity-42", { title: "準備をした" })] },
   ]);
   const { plan } = prepare(root, input, decisions);
-  assert.equal(plan.writes.length, 1);
-  assert.deepEqual(plan.writes[0].issue_numbers, [42, 43]);
+  assert.equal(plan.writes.length, 2);
+  assert.deepEqual(plan.writes.map((write) => write.path), [
+    "2026/202610/activities/activity-20261005a.md", "2026/202610/activities/activity-20261005b.md",
+  ]);
+  assert.deepEqual(plan.writes.map((write) => write.issue_numbers), [[42], [43]]);
   assert.match(plan.writes[0].content, /Issue #42/);
-  assert.match(plan.writes[0].content, /Issue #43/);
+  assert.match(plan.writes[1].content, /Issue #43/);
   assert.equal(plan.issues[0].number, 42);
+  const resultPath = path.join(root, "workplace/issue-import/run-activities/result.json");
+  await applyIssueImport({ repoRoot: root, plan, refreshSource: input, resultPath });
+  await applyIssueImport({ repoRoot: root, plan, resultPath });
+  assert.deepEqual(prepare(root, input, decisions).plan.issues.map((entry) => entry.outcome), ["already-imported", "already-imported"]);
+});
+
+test("saved legacy daily append plans apply, resume and remain discoverable", async (t) => {
+  const root = makeRoot(t);
+  const decisions = manifest([{ number: 42, decision: "import", records: [activityRecord()] }]);
+  const prepared = prepare(root, source(), decisions).plan;
+  const plan = JSON.parse(JSON.stringify(prepared).replaceAll("activity-20261005a", "activity-20261005"));
+  const original = "---\ntype: activity\ndate: 2026-10-05\n---\n\n# 既存日次記録\n\n## やったこと\n\n先に記録した活動。\n";
+  const target = path.join(root, plan.writes[0].path);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, original);
+  plan.writes[0].before_hash = sha256(original);
+  plan.writes[0].content = plan.writes[0].content.replace("## やったこと", "## やったこと\n\n先に記録した活動。");
+  plan.writes[0].after_hash = sha256(plan.writes[0].content);
+  const { plan_id: ignored, ...contents } = plan;
+  plan.plan_id = sha256(stableStringify(contents));
+  const resultPath = path.join(root, "workplace/issue-import/legacy-activity/result.json");
+  await applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath });
+  await applyIssueImport({ repoRoot: root, plan, resultPath });
+  assert.match(fs.readFileSync(target, "utf8"), /先に記録した活動/);
+  assert.equal(prepare(root, source(), decisions).plan.issues[0].outcome, "already-imported");
+  assert.equal(fs.existsSync(path.join(root, "2026/202610/activities/activity-20261005a.md")), false);
+});
+
+test("one Issue allocates aa and ab after z without touching an existing daily file", (t) => {
+  const root = makeRoot(t);
+  const directory = path.join(root, "2026/202610/activities");
+  fs.mkdirSync(directory, { recursive: true });
+  const original = "---\ntype: activity\ndate: 2026-10-05\n---\n\n# Existing\n";
+  fs.writeFileSync(path.join(directory, "activity-20261005.md"), original);
+  fs.writeFileSync(path.join(directory, "activity-20261005z.md"), original);
+  const { plan } = prepare(root, source(), manifest([{
+    number: 42, decision: "import", records: [activityRecord("first"), activityRecord("second")],
+  }]));
+  assert.deepEqual(plan.writes.map((write) => path.basename(write.path)), ["activity-20261005aa.md", "activity-20261005ab.md"]);
+  assert.equal(fs.readFileSync(path.join(directory, "activity-20261005.md"), "utf8"), original);
+});
+
+test("an activity created by a peer after prepare is preserved and apply stops", async (t) => {
+  const root = makeRoot(t);
+  const { plan } = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord()] }]));
+  const target = path.join(root, plan.writes[0].path);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, "peer session content\n");
+  await assert.rejects(applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath: path.join(root, "workplace/issue-import/conflict/result.json") }), { code: "LOCAL_CONFLICT" });
+  assert.equal(fs.readFileSync(target, "utf8"), "peer session content\n");
 });
 
 test("receipt, excluded, needs-info, duplicate, and remote-only outcomes avoid unsafe recreation", (t) => {
@@ -473,6 +526,101 @@ test("existing task can be linked without changing its content or completion sta
   assert.match(plan.writes[0].content, /User text/);
   assert.match(plan.writes[0].content, /既存記録へ関連付けた/);
   assert.equal(fs.readFileSync(target, "utf8"), original);
+});
+
+test("peer edits during prepare are preserved for linked tasks and schedules", (t) => {
+  for (const type of ["task", "schedule"]) {
+    const root = makeRoot(t);
+    const relative = type === "task"
+      ? "2026/202610/tasks/task-202610-00001-existing.md"
+      : "2026/202610/schedules/schedule-20261005-existing.md";
+    const target = path.join(root, relative);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    const original = type === "task"
+      ? "---\ntype: task\nid: task-202610-00001\nstatus: todo\n---\n\n# Existing\n"
+      : "---\ntype: schedule\ndate: 2026-10-05\nstatus: scheduled\n---\n\n# Existing\n";
+    fs.writeFileSync(target, original);
+    assert.throws(() => prepare(root, source(), manifest([{ number: 42, decision: "import", records: [
+      { key: "a-link", type, action: "link-existing", title: "Existing", target_path: relative },
+      taskRecord("z-create"),
+    ] }]), { gitLog: () => { fs.appendFileSync(target, "\nPeer edit must survive.\n"); return ""; } }), { code: "SOURCE_CONFLICT" });
+    assert.equal(fs.readFileSync(target, "utf8"), `${original}\nPeer edit must survive.\n`);
+  }
+});
+
+test("linked record hashes describe the exact input and apply preserves its body", async (t) => {
+  const root = makeRoot(t);
+  const relative = "2026/202610/tasks/task-202610-00001-existing.md";
+  const target = path.join(root, relative);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  const original = "---\r\ntype: task\r\nid: task-202610-00001\r\nstatus: done\r\n---\r\n\r\n# Existing\r\n\r\nUser text.\r\n";
+  fs.writeFileSync(target, original);
+  const { plan } = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [
+    { key: "link", type: "task", action: "link-existing", title: "Existing", target_path: relative },
+  ] }]));
+  assert.equal(plan.writes[0].before_hash, sha256(Buffer.from(original)));
+  await applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath: path.join(root, "workplace/issue-import/linked/result.json") });
+  assert.match(fs.readFileSync(target, "utf8"), /status: done\r\n/);
+  assert.match(fs.readFileSync(target, "utf8"), /User text\.\r\n/);
+});
+
+test("apply rejects an Issue published between source scanning and allocation", async (t) => {
+  const root = makeRoot(t);
+  const directory = path.join(root, "2026/202610/activities");
+  fs.mkdirSync(directory, { recursive: true });
+  const peer = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord()] }])).plan;
+  const readDir = fs.readdirSync;
+  let published = false;
+  const mock = t.mock.method(fs, "readdirSync", function (directoryPath, options) {
+    if (!published && directoryPath === directory && options === undefined) {
+      published = true;
+      fs.writeFileSync(path.join(root, peer.writes[0].path), peer.writes[0].content, { flag: "wx" });
+    }
+    return readDir.apply(this, arguments);
+  });
+  let plan;
+  try { ({ plan } = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord(), taskRecord()] }]))); }
+  finally { mock.mock.restore(); }
+  assert.equal(published, true);
+  assert.notEqual(plan.writes.find((write) => write.path.includes("/activities/")).path, peer.writes[0].path);
+  const resultPath = path.join(root, "workplace/issue-import/duplicate/result.json");
+  await assert.rejects(applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath }), { code: "SOURCE_CONFLICT" });
+  assert.equal(fs.readFileSync(path.join(root, peer.writes[0].path), "utf8"), peer.writes[0].content);
+  assert.equal(plan.writes.every((write) => !fs.existsSync(path.join(root, write.path))), true);
+  assert.equal(fs.existsSync(resultPath), false);
+  assert.equal(prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord()] }])).plan.issues[0].outcome, "already-imported");
+});
+
+test("apply checks Issue identity even when a competing import uses another record key", async (t) => {
+  const root = makeRoot(t);
+  const plan = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord("own")] }])).plan;
+  const peer = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord("peer", { date: "2026-10-04" })] }])).plan;
+  await applyIssueImport({ repoRoot: root, plan: peer, refreshSource: source(), resultPath: path.join(root, "workplace/issue-import/peer/result.json") });
+  await assert.rejects(applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath: path.join(root, "workplace/issue-import/own/result.json") }), { code: "SOURCE_CONFLICT" });
+  assert.equal(fs.existsSync(path.join(root, plan.writes[0].path)), false);
+});
+
+test("activity recovery accepts only its own exact published writes", async (t) => {
+  const root = makeRoot(t);
+  const { plan } = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord("first"), activityRecord("second")] }]));
+  const first = plan.writes[0];
+  const target = path.join(root, first.path);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, first.content);
+  const resultPath = path.join(root, "workplace/issue-import/recover-activity/result.json");
+  const result = await applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath });
+  assert.equal(result.status, "local-written");
+  assert.equal(result.issues[0].comment.status, "uncertain");
+  assert.ok(result.issues[0].comment.message);
+  assert.equal(fs.readFileSync(target, "utf8"), first.content);
+  assert.equal((await applyIssueImport({ repoRoot: root, plan, resultPath })).status, "local-written");
+  // Earlier versions saved RESULT_RECOVERED without its required explanation.
+  const legacy = JSON.parse(fs.readFileSync(resultPath, "utf8"));
+  legacy.issues[0].comment.message = null;
+  fs.writeFileSync(resultPath, JSON.stringify(legacy));
+  const resumed = await applyIssueImport({ repoRoot: root, plan, resultPath });
+  assert.equal(resumed.issues[0].comment.status, "uncertain");
+  assert.ok(resumed.issues[0].comment.message);
 });
 
 test("apply, comment-result, and close-result retain the local todo state and complete in order", async (t) => {

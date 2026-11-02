@@ -6,9 +6,11 @@ import path from "node:path";
 
 import { stringify as stringifyYaml } from "yaml";
 import { parseFrontMatter, todayInTokyo, validateIsoDate } from "./day-plan.mjs";
+import { ACTIVITY_FILENAME_PATTERN, nextActivityPath, validateActivityRecord } from "./activity-files.mjs";
 
 export const ISSUE_IMPORT_SCHEMA_VERSION = 1;
 export const ISSUE_IMPORT_MARKER = "daybook-issue-import:v1";
+const RESULT_RECOVERY_MESSAGE = "result.json was recovered from local records; verify GitHub before any remote recovery.";
 export const ISSUE_IMPORT_DATA_MARKER = "daybook-issue-import-data:v1";
 
 const HASH_PATTERN = /^[a-f0-9]{64}$/;
@@ -566,13 +568,14 @@ export function scanIssueSources(repoRoot) {
   for (const { directory, kind } of canonicalDirectories(repoRoot)) {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
-      if (kind === "activities" && !/^activity-\d{8}\.md$/.test(entry.name)) continue;
+      if (kind === "activities" && !ACTIVITY_FILENAME_PATTERN.test(entry.name)) continue;
       if (kind === "tasks" && !/^task-\d{6}-\d{5}-.+\.md$/.test(entry.name)) continue;
       if (kind === "schedules" && !/^schedule-\d{8}-.+\.md$/.test(entry.name)) continue;
       const filePath = path.join(directory, entry.name);
       const relativePath = path.relative(repoRoot, filePath).split(path.sep).join("/");
       const text = fs.readFileSync(filePath, "utf8");
       if (kind === "activities") {
+        validateActivityRecord(relativePath, text);
         for (const item of parseActivityMarkers(text, relativePath)) add(item);
         continue;
       }
@@ -757,32 +760,8 @@ function canonicalSchedulePath(date, number, key) {
   return `${date.slice(0, 4)}/${date.slice(0, 7).replace("-", "")}/schedules/schedule-${date.replaceAll("-", "")}-issue-${number}-${key}.md`;
 }
 
-function canonicalActivityPath(date) {
-  return `${date.slice(0, 4)}/${date.slice(0, 7).replace("-", "")}/activities/activity-${date.replaceAll("-", "")}.md`;
-}
-
-function appendActivity(existingText, block, recordPath) {
-  if (!existingText) {
-    const date = path.posix.basename(recordPath).match(/activity-(\d{8})/)?.[1];
-    const isoDate = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`;
-    return `---\ntype: activity\ndate: ${isoDate}\n---\n\n# ${Number(isoDate.slice(5, 7))}月${Number(isoDate.slice(8, 10))}日の活動\n\n## やったこと\n\n${block}\n`;
-  }
-  const newline = existingText.includes("\r\n") ? "\r\n" : "\n";
-  let text = existingText.replace(/\r?\n/g, newline);
-  if (text.includes(block)) return text;
-  const section = /^## やったこと\s*$/m.exec(text);
-  if (!section) {
-    text = `${text.trimEnd()}${newline}${newline}## やったこと${newline}${newline}${block}${newline}`;
-    return text;
-  }
-  const sectionStart = section.index + section[0].length;
-  const nextHeading = /^## /gm;
-  nextHeading.lastIndex = sectionStart;
-  const next = nextHeading.exec(text);
-  const insertionAt = next ? next.index : text.length;
-  const before = text.slice(0, insertionAt).replace(/\s*$/, "");
-  const after = text.slice(insertionAt).replace(/^\s*/, "");
-  return `${before}${newline}${newline}${block}${newline}${after ? `${newline}${after}` : ""}`;
+function renderActivityFile(record, context) {
+  return `---\ntype: activity\ndate: ${record.date}\n---\n\n# ${record.title}\n\n## やったこと\n\n${renderActivityBlock(record, context)}\n`;
 }
 
 function taskSequencePrefix(month) {
@@ -850,7 +829,8 @@ function validateLinkTarget(repoRoot, record) {
     fail("INVALID_MANIFEST", "link-existing target must be an existing canonical record of the requested type", { path: value, type: record.type });
   }
   assertSafeRepoPath(repoRoot, relative, { allowMissing: false });
-  const contents = fs.readFileSync(resolved, "utf8");
+  const bytes = fs.readFileSync(resolved);
+  const contents = bytes.toString("utf8");
   const parsed = parseFrontMatter(contents, relative);
   if (parsed.frontMatter.type !== record.type) fail("INVALID_MANIFEST", "link-existing target type does not match", { path: value });
   const segments = relative.split("/");
@@ -868,7 +848,7 @@ function validateLinkTarget(repoRoot, record) {
   }
   const existingSource = issueSourceFromFrontMatter(parsed.rawFrontMatter, relative);
   if (existingSource) fail("SOURCE_CONFLICT", "link-existing target already has an Issue source", { path: value, issue: existingSource.number });
-  return { relative, resolved, contents, parsed };
+  return { relative, resolved, contents, parsed, beforeHash: sha256(bytes) };
 }
 
 function addSourceToExisting(target, record, context) {
@@ -935,7 +915,7 @@ function safeRelativeWritePath(value) {
   }
   const task = /^(\d{4})\/(\d{6})\/tasks\/task-(\d{6})-\d{5}-.+\.md$/.exec(value);
   const schedule = /^(\d{4})\/(\d{6})\/schedules\/schedule-(\d{8})-.+\.md$/.exec(value);
-  const activity = /^(\d{4})\/(\d{6})\/activities\/activity-(\d{8})\.md$/.exec(value);
+  const activity = /^(\d{4})\/(\d{6})\/activities\/activity-(\d{8})(?:[a-z]+)?\.md$/.exec(value);
   const directories = [task && [task[1], task[2]], schedule && [schedule[1], schedule[2]], activity && [activity[1], activity[2]]].filter(Boolean);
   for (const [year, month] of directories) {
     if (!/^\d{4}(0[1-9]|1[0-2])$/.test(month) || year !== month.slice(0, 4)) {
@@ -975,7 +955,7 @@ function assertSafeRepoPath(repoRoot, relativePath, { allowMissing = true } = {}
   return path.join(repoRoot, ...parts);
 }
 
-function addWrite(writeMap, repoRoot, pathValue, content, issueNumber, { append = false, allowExisting = false } = {}) {
+function addWrite(writeMap, repoRoot, pathValue, content, issueNumber, { append = false, allowExisting = false, beforeHash = null } = {}) {
   const relative = safeRelativeWritePath(pathValue);
   const absolute = assertSafeRepoPath(repoRoot, relative);
   if (!writeMap.has(relative) && fs.existsSync(absolute) && !allowExisting) {
@@ -988,14 +968,14 @@ function addWrite(writeMap, repoRoot, pathValue, content, issueNumber, { append 
     existing.issue_numbers.add(issueNumber);
     return;
   }
-  writeMap.set(relative, { path: relative, content, issue_numbers: new Set([issueNumber]), allowExisting });
+  writeMap.set(relative, { path: relative, content, issue_numbers: new Set([issueNumber]), beforeHash });
 }
 
 function materializeCreateRecord(record, context, taskSequences, writeMap) {
   if (record.action === "link-existing") {
     const target = validateLinkTarget(context.repoRoot, record);
     const write = addSourceToExisting(target, record, context);
-    addWrite(writeMap, context.repoRoot, write.path, write.content, context.issue.number, { allowExisting: true });
+    addWrite(writeMap, context.repoRoot, write.path, write.content, context.issue.number, { allowExisting: true, beforeHash: target.beforeHash });
     return write.record;
   }
   if (record.type === "task") {
@@ -1018,19 +998,13 @@ function materializeCreateRecord(record, context, taskSequences, writeMap) {
     addWrite(writeMap, context.repoRoot, pathValue, write.content, context.issue.number);
     return write.record;
   }
-  const pathValue = canonicalActivityPath(record.date);
-  const absolute = path.join(context.repoRoot, ...pathValue.split("/"));
-  const staged = writeMap.get(pathValue);
-  let existing = staged?.content ?? "";
-  if (!staged && fs.existsSync(absolute)) {
-    if (fs.lstatSync(absolute).isSymbolicLink() || !fs.lstatSync(absolute).isFile()) {
-      fail("PATH_OUTSIDE_REPO", "Activity target must be a regular file", { path: pathValue });
-    }
-    existing = fs.readFileSync(absolute, "utf8");
-  }
-  const block = renderActivityBlock(record, context);
-  const content = appendActivity(existing, block, pathValue);
-  addWrite(writeMap, context.repoRoot, pathValue, content, context.issue.number, { append: true, allowExisting: true });
+  const allocation = nextActivityPath(context.repoRoot, record.date, {
+    reservedPaths: writeMap.keys(), gitLog: context.dependencies.gitLog,
+  });
+  for (const warning of allocation.warnings) if (!context.warnings.includes(warning)) context.warnings.push(warning);
+  const pathValue = allocation.path;
+  const content = renderActivityFile(record, context);
+  addWrite(writeMap, context.repoRoot, pathValue, content, context.issue.number);
   return { key: record.key, type: "activity", id: path.posix.basename(pathValue, ".md"), path: pathValue, issue: context.issue.number };
 }
 
@@ -1050,6 +1024,7 @@ function provisionalQuestions(records) {
 
 function renderPreview(plan) {
   const lines = ["# Issue取り込みプレビュー", "", `対象repo：${plan.repo}`, `取り込み日：${plan.import_date}`, "", "## Issueごとの結果", ""];
+  if (plan.warnings?.length) lines.push(...plan.warnings.map((warning) => `- ${warning}`), "");
   for (const issue of plan.issues) {
     lines.push(`### #${issue.number} ${issue.title ?? ""}`, "", `- 判定：${issue.outcome}`);
     if (issue.reason) lines.push(`- 理由：${issue.reason}`);
@@ -1092,6 +1067,7 @@ export function prepareIssueImport({ repoRoot, source: sourceInput, manifest: ma
   const taskSequences = new Map();
   const writeMap = new Map();
   const plan = emptyPlan(source);
+  const warnings = [];
   plan.repo_root = realRoot;
   const excluded = new Set(source.excluded_issue_numbers);
 
@@ -1133,7 +1109,7 @@ export function prepareIssueImport({ repoRoot, source: sourceInput, manifest: ma
       continue;
     }
     const importId = makeImportId(source, issue, decision.records);
-    const context = { source, issue, importDate: source.import_date, importId, repoRoot: realRoot, dependencies };
+    const context = { source, issue, importDate: source.import_date, importId, repoRoot: realRoot, dependencies, warnings };
     const records = decision.records.slice().sort((left, right) => left.key.localeCompare(right.key))
       .map((record) => materializeCreateRecord(record, context, taskSequences, writeMap));
     const periods = records.map((record, indexInRecords) => {
@@ -1161,17 +1137,18 @@ export function prepareIssueImport({ repoRoot, source: sourceInput, manifest: ma
     }));
   }
   plan.writes = [...writeMap.values()].map((write) => {
-    const absolute = path.join(realRoot, ...write.path.split("/"));
-    const beforeHash = fs.existsSync(absolute) ? sha256(fs.readFileSync(absolute)) : null;
-    if (beforeHash !== null && !write.issue_numbers.size) fail("SOURCE_CONFLICT", "Existing target has no matching source", { path: write.path });
+    if (getCurrentHash(realRoot, write.path) !== write.beforeHash) {
+      fail("SOURCE_CONFLICT", "Record changed during prepare; prepare and review again", { path: write.path });
+    }
     return {
       path: write.path,
       issue_numbers: [...write.issue_numbers].sort((a, b) => a - b),
-      before_hash: beforeHash,
+      before_hash: write.beforeHash,
       after_hash: sha256(write.content),
       content: write.content,
     };
   }).sort((left, right) => left.path.localeCompare(right.path));
+  if (warnings.length) plan.warnings = warnings;
   plan.plan_id = planDigest(plan);
   return { plan, preview: renderPreview(plan) };
 }
@@ -1359,6 +1336,9 @@ function validateStoredResult(result, plan) {
       const commentPosted = ["posted", "already-posted"].includes(actual.comment.status);
       if (commentPosted !== (typeof actual.comment.url === "string")) fail("PLAN_CHANGED", "Comment URL does not match its verification status", { issue: expected.number });
       if (commentPosted) validateCommentResultUrl(actual.comment.url, actual);
+      if (actual.comment.status === "uncertain" && actual.comment.reason === "RESULT_RECOVERED" && actual.comment.message == null) {
+        actual.comment.message = RESULT_RECOVERY_MESSAGE;
+      }
       if (["failed", "uncertain"].includes(actual.comment.status) && !actual.comment.message) fail("PLAN_CHANGED", "Failed or uncertain comment has no explanation", { issue: expected.number });
       if (actual.comment.status === "pending-gh" && actual.comment.reason !== "GH_NOT_FOUND") fail("PLAN_CHANGED", "pending-gh comment has no GH_NOT_FOUND reason", { issue: expected.number });
       const closeSucceeded = ["closed", "already-closed"].includes(actual.close.status);
@@ -1394,7 +1374,10 @@ function updateIssueLocalStates(result, recoveredWithoutResult = new Set()) {
       issue.local_status = "local-written";
       if (issue.comment.status === "blocked") {
         issue.comment.status = recoveredWithoutResult.has(issue.number) ? "uncertain" : "pending";
-        if (recoveredWithoutResult.has(issue.number)) issue.comment.reason = "RESULT_RECOVERED";
+        if (recoveredWithoutResult.has(issue.number)) {
+          issue.comment.reason = "RESULT_RECOVERED";
+          issue.comment.message = RESULT_RECOVERY_MESSAGE;
+        }
       }
     } else if (statuses.some((status) => status === "written")) issue.local_status = "partial";
     else issue.local_status = "prepared";
@@ -1469,8 +1452,10 @@ function verifyWriteSourceContent(write, plan) {
     fail("PLAN_CHANGED", "Write issue_numbers do not match its record references", { path: write.path });
   }
   let actual;
-  if (write.path.includes("/activities/")) actual = parseActivityMarkers(write.content, write.path);
-  else {
+  if (write.path.includes("/activities/")) {
+    validateActivityRecord(write.path, write.content);
+    actual = parseActivityMarkers(write.content, write.path);
+  } else {
     const parsed = parseFrontMatter(write.content, write.path);
     const item = issueSourceFromFrontMatter(parsed.rawFrontMatter, write.path);
     actual = item ? [item] : [];
@@ -1565,11 +1550,36 @@ async function applyOneWrite(repoRoot, write) {
   }
 }
 
+function verifyCurrentIssueSources(repoRoot, plan) {
+  // Report edits at planned paths before attempting to parse their current contents.
+  for (const write of plan.writes) {
+    const currentHash = getCurrentHash(repoRoot, write.path);
+    if (currentHash !== write.before_hash && currentHash !== write.after_hash) {
+      fail("LOCAL_CONFLICT", "Record no longer matches its before_hash or after_hash", { path: write.path });
+    }
+  }
+  const index = scanIssueSources(repoRoot);
+  const writes = new Map(plan.writes.map((write) => [write.path, write]));
+  for (const issue of plan.issues.filter((item) => item.outcome === "create")) {
+    for (const found of index.byUrl.get(issue.url) ?? []) {
+      const record = issue.records.find((item) => item.key === found.key && item.path === found.path);
+      const write = record && writes.get(record.path);
+      // Exact writes from this plan are legitimate partial/lost-result recovery.
+      if (!record || found.import_id !== issue.import_id || getCurrentHash(repoRoot, write.path) !== write.after_hash) {
+        fail("SOURCE_CONFLICT", "Issue was imported outside this plan; review current records before continuing", {
+          issue: issue.number, path: found.path,
+        });
+      }
+    }
+  }
+}
+
 export async function applyIssueImport({ repoRoot, plan, refreshSource, resultPath, dependencies = {} }) {
   const realRoot = validatePlan(plan, repoRoot);
   const paths = assertRunFilePath(realRoot, resultPath);
   const releaseLock = await createRepoLock(realRoot, plan.plan_id);
   try {
+    verifyCurrentIssueSources(realRoot, plan);
     const resultExisted = fs.existsSync(paths.absolute);
     let result;
     if (resultExisted) {
