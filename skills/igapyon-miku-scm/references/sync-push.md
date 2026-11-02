@@ -141,6 +141,7 @@ arguments to the fixed runner only after an explicit resume/cancel request:
 ```text
 repository.sync.push.prepare --repo <path> --resume <operation-id> --apply
 repository.sync.push.prepare --repo <path> --cancel <operation-id> --apply
+repository.sync.push.prepare --repo <path> --recover <operation-id> --apply
 ```
 
 Resume returns the same completed evidence and plan after validating the
@@ -150,8 +151,24 @@ be cancelled before starting a new preparation. Cancellation is available
 only before apply starts and preserves all work, ordinary commits and draft
 files; it does not undo the ordinary commit.
 
+`--recover` is a separate recovery for one narrow case: the saved push operation
+is `partial` after recommit, its publication result is a `publication-preflight`
+`ENOENT` for the branch-derived `ok-push` filename, and its prepared publication
+expectation was an absent remote branch. The helper verifies the original plan
+digest, retained backup and its exact HEAD, current branch ancestry, unchanged
+remote/base, missing failed plan/attempt files, and current absence of the remote
+work branch. It then marks that operation `recovered` and creates a fresh sync
+push preparation from the current branch and worktree. That preparation commits
+ordinary dirty work under the normal checks and requires a new PR draft bound to
+the fresh evidence; it never reuses the consumed plan or draft. Any failed check,
+base advance, existing remote branch, or other partial/unresolved result remains
+blocked for manual inspection. Publication plan filenames encode branch names
+without path separators and include a branch digest.
+
 If the base advanced, run `sync pull` only when explicitly requested, then
 prepare again and write a fresh bound draft. Do not reuse the old plan/draft
 digests. If apply started or the remote outcome is unknown, these preparation
-routes cannot cancel or replay it; inspect the saved publication result and
-retained backup before choosing a separate recovery action.
+routes cannot cancel or replay it. The narrowly verified `--recover` case above
+is the only automatic path for a publication-preflight file-creation failure;
+all other outcomes require inspecting the saved publication result and retained
+backup before a separately designed recovery.

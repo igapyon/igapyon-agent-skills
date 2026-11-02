@@ -37,7 +37,7 @@ File extensions do not determine whether content is text. Do not use base64, `da
 After choosing an in-repository text attachment, place it under the same month as its primary record:
 
 - Task: `YYYY/YYYYMM/attachments/<task-id>/`, where `task-id` is the task's existing front matter `id`.
-- Activity: `YYYY/YYYYMM/attachments/activity-YYYYMMDD/`.
+- Activity: `YYYY/YYYYMM/attachments/activity-YYYYMMDDa/`, using the primary activity filename stem (including its letter suffix). Existing unsuffixed attachment folders remain valid.
 - Schedule: `YYYY/YYYYMM/attachments/schedule-YYYYMMDD-name/`.
 
 Use UTF-8 text, normally `.md` or `.txt`; preserve a useful native text format for reproduction scripts or selected command logs. Preserve a supplied filename when practical, avoid overwriting an existing file, create directories only when needed, and add a relative link from the record. Keep one copy of shared material and link to it from other records. Never copy attachments into generated day-plans.

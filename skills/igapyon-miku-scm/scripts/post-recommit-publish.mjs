@@ -111,6 +111,11 @@ export function parseArgs(argv, cwd = process.cwd()) {
 
 function sha256(value) { return createHash("sha256").update(value).digest("hex"); }
 
+function branchFileToken(branch) {
+  const slug = String(branch).replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 72) || "branch";
+  return `${slug}-${sha256(String(branch)).slice(0, 12)}`;
+}
+
 function planDirectory(root) { return path.join(root, "workplace", "miku-scm", "ok-push"); }
 
 export async function savePublicationPlan(root, result) {
@@ -123,7 +128,7 @@ export async function savePublicationPlan(root, result) {
     contract_pair_sha256: PUBLISH_APPLY_CONTRACT.pair_sha256 };
   const content = `${JSON.stringify(plan, null, 2)}\n`;
   const digest = sha256(content);
-  const filename = `ok-push-${result.branch}-${result.head.slice(0, 12)}-${timestamp}.json`;
+  const filename = `ok-push-${branchFileToken(result.branch)}-${result.head.slice(0, 12)}-${timestamp}.json`;
   const directory = planDirectory(root);
   await mkdir(directory, { recursive: true });
   const file = path.join(directory, filename);

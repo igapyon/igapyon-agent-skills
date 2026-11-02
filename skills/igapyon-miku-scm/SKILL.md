@@ -149,6 +149,10 @@ digests before continuing; apply must not have started. This read-only lookup
 needs no extra confirmation. Do not select a global latest result. An interrupted
 workflow, uncertain apply outcome, missing evidence or identity mismatch uses the
 documented recovery path, including an explicit resume/cancel request where required.
+For an apply-started push, `--recover <operation-id>` is allowed only for the
+documented branch-path `ENOENT` at `publication-preflight`; it verifies the
+saved plan, backup, unchanged base and absent remote branch before retiring that
+operation and preparing fresh evidence. It never replays the consumed plan.
 
 Naming, design and explanation requests about sync do not authorize its
 execution. Existing individual commands and aliases retain their meanings.

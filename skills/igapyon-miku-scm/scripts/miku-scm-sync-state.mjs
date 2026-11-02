@@ -8,7 +8,7 @@ import { ensureOperationalExclusion, ORDINARY_PATHSPEC } from "./miku-scm-operat
 export const SYNC_SCHEMA = "miku-scm.sync/v1";
 export const SHA = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 const ID = /^[0-9a-f]{8}-[0-9a-f-]{27}$/;
-const TERMINAL = new Set(["completed", "aborted", "cancelled", "superseded", "rejected"]);
+const TERMINAL = new Set(["completed", "aborted", "cancelled", "superseded", "recovered", "rejected"]);
 export const hash = (value) => createHash("sha256").update(typeof value === "string" || Buffer.isBuffer(value) ? value : JSON.stringify(value)).digest("hex");
 export const zeros = (value) => value.split("\0").filter(Boolean);
 

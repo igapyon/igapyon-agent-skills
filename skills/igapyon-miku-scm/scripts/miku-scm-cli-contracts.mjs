@@ -300,12 +300,13 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     { network_access: "Git fetch; fixed GitHub PR reads only for -done", authentication: "existing Git authentication; gh or anonymous PR reads, with human confirmation when reads are unavailable", operational_artifacts: ["workplace/miku-scm/sync"], notes: ["Git 2.45+; no remote writes. Branch-base provenance is required for divergent replay."] },
   ),
   "repository.sync.push.prepare": contract(
-    "Commit dirty work once and prepare immutable PR evidence for sync push.",
+    "Commit dirty work once and prepare immutable PR evidence for sync push; explicitly recover only a verified preflight-only partial publication.",
     [repoPath, option("--remote", "<name>", "Selected Git remote.", { default: "origin" }), option("--base", "<branch>", "Shared base branch."), option("--message", "<commit-message>", "Concise ordinary commit title; existing deterministic fallback applies when omitted."),
       option("--allow-sensitive-path", "<reviewed-path>", "Include this potentially sensitive path only after explicit user consent.", { repeatable: true }),
-      option("--resume", "<operation-id>", "Return the same prepared evidence without committing again."), option("--cancel", "<operation-id>", "Revoke an unapplied prepared push while retaining all work."), apply],
+      option("--resume", "<operation-id>", "Return the same prepared evidence without committing again."), option("--cancel", "<operation-id>", "Revoke an unapplied prepared push while retaining all work."),
+      option("--recover", "<operation-id>", "Retire only a verified publication-preflight ENOENT partial, then prepare fresh evidence from the current branch."), apply],
     ["--message", "Update work", "--apply"],
-    { network_access: "Git fetch and remote branch reads", authentication: "existing Git authentication", operational_artifacts: ["workplace/miku-scm/sync"], notes: ["Prepared evidence needs one Agent-authored PR draft before apply. No automatic sync pull or version increment."] },
+    { network_access: "Git fetch and remote branch reads", authentication: "existing Git authentication", operational_artifacts: ["workplace/miku-scm/sync"], notes: ["Prepared evidence needs one Agent-authored PR draft before apply. --recover accepts only the exact saved branch-path ENOENT at publication-preflight after checking the intact plan, backup, unchanged base and absent remote branch. No automatic sync pull or version increment."] },
   ),
   "repository.sync.push.apply": contract(
     "Consume the exact sync push plan and draft, then recommit and publish once.",
