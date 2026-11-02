@@ -6,6 +6,7 @@ import path from "node:path";
 
 import { stringify as stringifyYaml } from "yaml";
 import { parseFrontMatter, todayInTokyo, validateIsoDate } from "./day-plan.mjs";
+import { ACTIVITY_FILENAME_PATTERN, nextActivityPath, validateActivityRecord } from "./activity-files.mjs";
 
 export const ISSUE_IMPORT_SCHEMA_VERSION = 1;
 export const ISSUE_IMPORT_MARKER = "daybook-issue-import:v1";
@@ -566,13 +567,14 @@ export function scanIssueSources(repoRoot) {
   for (const { directory, kind } of canonicalDirectories(repoRoot)) {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
-      if (kind === "activities" && !/^activity-\d{8}\.md$/.test(entry.name)) continue;
+      if (kind === "activities" && !ACTIVITY_FILENAME_PATTERN.test(entry.name)) continue;
       if (kind === "tasks" && !/^task-\d{6}-\d{5}-.+\.md$/.test(entry.name)) continue;
       if (kind === "schedules" && !/^schedule-\d{8}-.+\.md$/.test(entry.name)) continue;
       const filePath = path.join(directory, entry.name);
       const relativePath = path.relative(repoRoot, filePath).split(path.sep).join("/");
       const text = fs.readFileSync(filePath, "utf8");
       if (kind === "activities") {
+        validateActivityRecord(relativePath, text);
         for (const item of parseActivityMarkers(text, relativePath)) add(item);
         continue;
       }
@@ -757,32 +759,8 @@ function canonicalSchedulePath(date, number, key) {
   return `${date.slice(0, 4)}/${date.slice(0, 7).replace("-", "")}/schedules/schedule-${date.replaceAll("-", "")}-issue-${number}-${key}.md`;
 }
 
-function canonicalActivityPath(date) {
-  return `${date.slice(0, 4)}/${date.slice(0, 7).replace("-", "")}/activities/activity-${date.replaceAll("-", "")}.md`;
-}
-
-function appendActivity(existingText, block, recordPath) {
-  if (!existingText) {
-    const date = path.posix.basename(recordPath).match(/activity-(\d{8})/)?.[1];
-    const isoDate = `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`;
-    return `---\ntype: activity\ndate: ${isoDate}\n---\n\n# ${Number(isoDate.slice(5, 7))}月${Number(isoDate.slice(8, 10))}日の活動\n\n## やったこと\n\n${block}\n`;
-  }
-  const newline = existingText.includes("\r\n") ? "\r\n" : "\n";
-  let text = existingText.replace(/\r?\n/g, newline);
-  if (text.includes(block)) return text;
-  const section = /^## やったこと\s*$/m.exec(text);
-  if (!section) {
-    text = `${text.trimEnd()}${newline}${newline}## やったこと${newline}${newline}${block}${newline}`;
-    return text;
-  }
-  const sectionStart = section.index + section[0].length;
-  const nextHeading = /^## /gm;
-  nextHeading.lastIndex = sectionStart;
-  const next = nextHeading.exec(text);
-  const insertionAt = next ? next.index : text.length;
-  const before = text.slice(0, insertionAt).replace(/\s*$/, "");
-  const after = text.slice(insertionAt).replace(/^\s*/, "");
-  return `${before}${newline}${newline}${block}${newline}${after ? `${newline}${after}` : ""}`;
+function renderActivityFile(record, context) {
+  return `---\ntype: activity\ndate: ${record.date}\n---\n\n# ${record.title}\n\n## やったこと\n\n${renderActivityBlock(record, context)}\n`;
 }
 
 function taskSequencePrefix(month) {
@@ -935,7 +913,7 @@ function safeRelativeWritePath(value) {
   }
   const task = /^(\d{4})\/(\d{6})\/tasks\/task-(\d{6})-\d{5}-.+\.md$/.exec(value);
   const schedule = /^(\d{4})\/(\d{6})\/schedules\/schedule-(\d{8})-.+\.md$/.exec(value);
-  const activity = /^(\d{4})\/(\d{6})\/activities\/activity-(\d{8})\.md$/.exec(value);
+  const activity = /^(\d{4})\/(\d{6})\/activities\/activity-(\d{8})(?:[a-z]+)?\.md$/.exec(value);
   const directories = [task && [task[1], task[2]], schedule && [schedule[1], schedule[2]], activity && [activity[1], activity[2]]].filter(Boolean);
   for (const [year, month] of directories) {
     if (!/^\d{4}(0[1-9]|1[0-2])$/.test(month) || year !== month.slice(0, 4)) {
@@ -1018,19 +996,13 @@ function materializeCreateRecord(record, context, taskSequences, writeMap) {
     addWrite(writeMap, context.repoRoot, pathValue, write.content, context.issue.number);
     return write.record;
   }
-  const pathValue = canonicalActivityPath(record.date);
-  const absolute = path.join(context.repoRoot, ...pathValue.split("/"));
-  const staged = writeMap.get(pathValue);
-  let existing = staged?.content ?? "";
-  if (!staged && fs.existsSync(absolute)) {
-    if (fs.lstatSync(absolute).isSymbolicLink() || !fs.lstatSync(absolute).isFile()) {
-      fail("PATH_OUTSIDE_REPO", "Activity target must be a regular file", { path: pathValue });
-    }
-    existing = fs.readFileSync(absolute, "utf8");
-  }
-  const block = renderActivityBlock(record, context);
-  const content = appendActivity(existing, block, pathValue);
-  addWrite(writeMap, context.repoRoot, pathValue, content, context.issue.number, { append: true, allowExisting: true });
+  const allocation = nextActivityPath(context.repoRoot, record.date, {
+    reservedPaths: writeMap.keys(), gitLog: context.dependencies.gitLog,
+  });
+  for (const warning of allocation.warnings) if (!context.warnings.includes(warning)) context.warnings.push(warning);
+  const pathValue = allocation.path;
+  const content = renderActivityFile(record, context);
+  addWrite(writeMap, context.repoRoot, pathValue, content, context.issue.number);
   return { key: record.key, type: "activity", id: path.posix.basename(pathValue, ".md"), path: pathValue, issue: context.issue.number };
 }
 
@@ -1050,6 +1022,7 @@ function provisionalQuestions(records) {
 
 function renderPreview(plan) {
   const lines = ["# Issue取り込みプレビュー", "", `対象repo：${plan.repo}`, `取り込み日：${plan.import_date}`, "", "## Issueごとの結果", ""];
+  if (plan.warnings?.length) lines.push(...plan.warnings.map((warning) => `- ${warning}`), "");
   for (const issue of plan.issues) {
     lines.push(`### #${issue.number} ${issue.title ?? ""}`, "", `- 判定：${issue.outcome}`);
     if (issue.reason) lines.push(`- 理由：${issue.reason}`);
@@ -1092,6 +1065,7 @@ export function prepareIssueImport({ repoRoot, source: sourceInput, manifest: ma
   const taskSequences = new Map();
   const writeMap = new Map();
   const plan = emptyPlan(source);
+  const warnings = [];
   plan.repo_root = realRoot;
   const excluded = new Set(source.excluded_issue_numbers);
 
@@ -1133,7 +1107,7 @@ export function prepareIssueImport({ repoRoot, source: sourceInput, manifest: ma
       continue;
     }
     const importId = makeImportId(source, issue, decision.records);
-    const context = { source, issue, importDate: source.import_date, importId, repoRoot: realRoot, dependencies };
+    const context = { source, issue, importDate: source.import_date, importId, repoRoot: realRoot, dependencies, warnings };
     const records = decision.records.slice().sort((left, right) => left.key.localeCompare(right.key))
       .map((record) => materializeCreateRecord(record, context, taskSequences, writeMap));
     const periods = records.map((record, indexInRecords) => {
@@ -1163,6 +1137,7 @@ export function prepareIssueImport({ repoRoot, source: sourceInput, manifest: ma
   plan.writes = [...writeMap.values()].map((write) => {
     const absolute = path.join(realRoot, ...write.path.split("/"));
     const beforeHash = fs.existsSync(absolute) ? sha256(fs.readFileSync(absolute)) : null;
+    if (beforeHash !== null && !write.allowExisting) fail("SOURCE_CONFLICT", "New record appeared during prepare", { path: write.path });
     if (beforeHash !== null && !write.issue_numbers.size) fail("SOURCE_CONFLICT", "Existing target has no matching source", { path: write.path });
     return {
       path: write.path,
@@ -1172,6 +1147,7 @@ export function prepareIssueImport({ repoRoot, source: sourceInput, manifest: ma
       content: write.content,
     };
   }).sort((left, right) => left.path.localeCompare(right.path));
+  if (warnings.length) plan.warnings = warnings;
   plan.plan_id = planDigest(plan);
   return { plan, preview: renderPreview(plan) };
 }
@@ -1469,8 +1445,10 @@ function verifyWriteSourceContent(write, plan) {
     fail("PLAN_CHANGED", "Write issue_numbers do not match its record references", { path: write.path });
   }
   let actual;
-  if (write.path.includes("/activities/")) actual = parseActivityMarkers(write.content, write.path);
-  else {
+  if (write.path.includes("/activities/")) {
+    validateActivityRecord(write.path, write.content);
+    actual = parseActivityMarkers(write.content, write.path);
+  } else {
     const parsed = parseFrontMatter(write.content, write.path);
     const item = issueSourceFromFrontMatter(parsed.rawFrontMatter, write.path);
     actual = item ? [item] : [];

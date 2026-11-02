@@ -13,7 +13,7 @@ Use this procedure only when the user explicitly asks to import one or more GitH
 
 ## 1. Check local CLI prerequisites and prepare the intake files
 
-Run this preparation only after an explicit Issue-intake request. Ordinary daybook operations do not need these scripts or the `yaml` package.
+Run this preparation only after an explicit Issue-intake request. Other daybook operations do not need the Issue-intake scripts. New activity creation uses its own CLI and the shared parsing dependency; see [operations.md](operations.md#add-an-activity).
 
 Start at the target daybook repository root. Read its `README.md`, check its Git status, and inspect its `scripts/`, package manifest, lockfile, and dependency setup. Confirm Node.js is available with `node --version`. Do not assume that the installed skill directory and target repository are the same location.
 
@@ -24,11 +24,12 @@ The source bundle is the `assets/daybook/` directory next to the `SKILL.md` that
 | Node.js | `node --version`; use the target repository's supported runtime. No new minimum is set here. |
 | `scripts/import-issues.mjs` | CLI entry point; bundle source `assets/daybook/scripts/import-issues.mjs`. |
 | `scripts/issue-import.mjs` | CLI core; imports the shared module and `yaml`; bundle source `assets/daybook/scripts/issue-import.mjs`. |
+| `scripts/activity-files.mjs` | Shared activity naming and path validation; bundle source `assets/daybook/scripts/activity-files.mjs`. |
 | `scripts/day-plan.mjs` | Shared parsing and day-plan module; bundle source `assets/daybook/scripts/day-plan.mjs`. |
 | `yaml` | From the target root, check `node --input-type=module -e "await import('yaml')"`. The bundle's `package.json` declares `yaml: ^2.8.1`. |
 | miku-scm | Required for remote Issue reads, comments, and closes. Locate its installed skill and runner through that skill's own instructions/configuration. |
 
-Check all three target files. Add a missing file from the same bundle. If a target file already matches its bundle counterpart, leave it untouched. If it differs, compare the file and its callers; preserve target-specific behavior. If compatibility cannot be established, stop before replacing it and report the exact conflicting path and behavior that needs a decision. Never overwrite an existing customized `day-plan.mjs` merely because the intake CLI needs it.
+Check all four target files. Add a missing file from the same bundle. If a target file already matches its bundle counterpart, leave it untouched. If it differs, compare the file and its callers; preserve target-specific behavior. If compatibility cannot be established, stop before replacing it and report the exact conflicting path and behavior that needs a decision. Never overwrite an existing customized `day-plan.mjs` merely because the intake CLI needs it.
 
 The intake core imports `yaml`; the bundle declares `yaml: ^2.8.1`. From the target repository root, check whether `yaml` can be imported by Node with `node --input-type=module -e "await import('yaml')"`, and whether the target dependency manager declares and installs it. If import succeeds and the target's dependency setup is already consistent, leave the manifest and lockfile unchanged. Otherwise:
 
@@ -166,7 +167,7 @@ For an Issue that should stay in Backlog without a date assumption, set `plannin
 }
 ```
 
-For an existing matching task or schedule, use `action: "link-existing"` with a canonical repository-relative `target_path`. This preserves its content and status and adds only Issue provenance and history. Do not merge two Issues into one existing record. Activity records cannot be linked this way. For activity, the program appends a marked source block to the dated activity file; use `date_evidence` and its actual activity date.
+For an existing matching task or schedule, use `action: "link-existing"` with a canonical repository-relative `target_path`. This preserves its content and status and adds only Issue provenance and history. Do not merge two Issues into one existing record. Activity records cannot be linked this way. For activity, the program allocates one letter-suffixed file per manifest record, preserving its marked source block; use `date_evidence` and its actual activity date.
 
 Do not put Issue-provided text inside a daybook source marker. The program rejects reserved marker text in record content and generates its own provenance markers.
 
@@ -182,7 +183,9 @@ node scripts/import-issues.mjs prepare \
   --out-dir workplace/issue-import/20261006-review
 ```
 
-Review `preview.md` and `plan.json` before apply. Confirm every Issue outcome; each record kind, path, task ID, planning state, due/work-period distinction, and date evidence; every planned `provisional` range and reason; that Backlog records have not received invented dates; duplicate or linked record decisions; each activity append; and the complete comment body including its statement that records are local and the later close only completes intake. Daily Briefing #3 must be `excluded`. `needs-info`, `skip`, already-imported, remote-only, and excluded outcomes must have no write and must not receive an import comment.
+Review `preview.md` and `plan.json` before apply. Confirm every Issue outcome; each record kind, path, task ID, planning state, due/work-period distinction, and date evidence; every planned `provisional` range and reason; that Backlog records have not received invented dates; duplicate or linked record decisions; each activity file and its allocated suffix; and the complete comment body including its statement that records are local and the later close only completes intake. Daily Briefing #3 must be `excluded`. `needs-info`, `skip`, already-imported, remote-only, and excluded outcomes must have no write and must not receive an import comment.
+
+`prepare` reserves names across all pending activity writes and considers existing files and local Git history. Old unsuffixed and new suffixed files are both scanned for Issue provenance. Old saved plan/result paths remain valid on apply/resume. If a new target appears after review, apply stops with `LOCAL_CONFLICT`; prepare and review a new plan rather than renaming during apply.
 
 `prepare` only writes run artifacts; it must not change canonical daybook records. The task sequence comes from current files and local Git history without fetching. The plan stores the complete intended writes and before/after hashes. Do not hand-edit the plan. A changed plan fails its digest check.
 
@@ -198,7 +201,7 @@ node scripts/import-issues.mjs apply \
   --result workplace/issue-import/20261006-review/result.json
 ```
 
-The CLI locks one repo-level apply, verifies the refreshed source and all paths/hashes before record writes, then applies writes in path order. New records are exclusive creates. Existing activity appends and linked-record provenance use same-directory temporary files and an original-hash check. Each write is journaled to `result.json`. Review the final `result.json`, `comment-<number>.md` files, and every changed canonical record. Never comment or close an Issue unless all of its writes are `written`, its `local_status` is `local-written`, and each current record still matches its `after_hash`.
+The CLI locks one repo-level apply, verifies the refreshed source and all paths/hashes before record writes, then applies writes in path order. New records are exclusive creates. Legacy saved activity-append plans and linked-record provenance use same-directory temporary files and an original-hash check. Each write is journaled to `result.json`. Review the final `result.json`, `comment-<number>.md` files, and every changed canonical record. Never comment or close an Issue unless all of its writes are `written`, its `local_status` is `local-written`, and each current record still matches its `after_hash`.
 
 If apply returns `PARTIAL_WRITE`, retain all completed files and the same run. Do not delete or roll back successful writes. Re-run apply with the same `plan.json`, `result.json`, and a fresh `refresh-source.json` if writes remain; a file at its planned `after_hash` is recognized as applied. Any other current hash is a local conflict and requires user review.
 

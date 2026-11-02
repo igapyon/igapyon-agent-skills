@@ -12,8 +12,8 @@ daybook/
 │   ├── attachments/
 │   │   ├── task-YYYYMM-NNNNN/
 │   │   ├── schedule-YYYYMMDD-name/
-│   │   └── activity-YYYYMMDD/
-│   ├── activities/activity-YYYYMMDD.md
+│   │   └── activity-YYYYMMDDa/
+│   ├── activities/activity-YYYYMMDDa.md
 │   ├── day-plan/day-plan-YYYYMMDD.md
 │   ├── schedules/schedule-YYYYMMDD-name.md
 │   └── tasks/task-YYYYMM-NNNNN-name.md
@@ -22,14 +22,16 @@ daybook/
     └── YYYYMMDD-HHMM-topic-00001.md
 ```
 
-- An activity belongs to the month in which it happened and normally has one file per day.
+- An activity belongs to the month in which it happened. Create a separate file for each coherent event or work episode, with a lowercase letter suffix immediately after the date: `activity-YYYYMMDDa.md`, through `z`, then `aa`, `ab`, through `zz`, then `aaa`. Restart at `a` for each activity date. Continue the same file for updates to that episode. Multiple episodes combined during concurrent work are acceptable; preserve all contributions.
+- Compare suffixes by length then alphabetically, rather than ordinary filename sorting. Allocate after the largest suffix found in current files, local Git history and pending writes; do not reuse gaps or deleted names. Use the bundled activity helper described in [operations.md](operations.md#add-an-activity). The suffix is an allocation sequence, not an event time. Keep front matter `type: activity` and `date`; the activity date must agree with the filename and month.
+- Existing unsuffixed `activity-YYYYMMDD.md` files remain valid and may be updated for their existing episodes. Keep their links and attachments. New episodes use suffixed files; an existing unsuffixed file does not consume `a`. Do not bulk-split or rename old records.
 - A schedule belongs to the month in which the event occurs and has one file per independent event. Separate unrelated events on the same day.
 - A task belongs permanently to the month in which the task was created. A September-created task for an October event stays under `YYYY/202609/tasks/`.
 - Keep a task in its creation-month `tasks/` directory when it becomes `done` or `cancelled`; update its status in place and do not move it to an archive or closed folder.
 - A day-plan belongs to the target date's month and is a generated snapshot.
 - Waypoints live in the daybook repository root, outside the year/month record directories. They are short resume entries; see [waypoints.md](waypoints.md) for naming, metadata, and update rules.
-- Choose record text, an external reference, or an in-repository attachment using [attachments.md](attachments.md). When an attachment is chosen, store it under its primary record's month: tasks use `attachments/<task-id>/`, where `task-id` is the task's existing front matter `id` (`task-YYYYMM-NNNNN`); activities and schedules use `attachments/activity-YYYYMMDD/` and `attachments/schedule-YYYYMMDD-name/`, respectively. Keep original binaries elsewhere and link to a stable reference; retaining one in Git is an extremely rare, file-specific exception. Follow [attachments.md](attachments.md) for content selection, temporary files, and exceptions. Create directories only when needed.
-- Use lowercase English prefixes and a short English filename suffix. Preserve an existing filename and ID when updating its title or deadline.
+- Choose record text, an external reference, or an in-repository attachment using [attachments.md](attachments.md). When an attachment is chosen, store it under its primary record's month: tasks use `attachments/<task-id>/`, where `task-id` is the task's existing front matter `id` (`task-YYYYMM-NNNNN`); activities and schedules use `attachments/activity-YYYYMMDDa/` and `attachments/schedule-YYYYMMDD-name/`, respectively. Keep original binaries elsewhere and link to a stable reference; retaining one in Git is an extremely rare, file-specific exception. Follow [attachments.md](attachments.md) for content selection, temporary files, and exceptions. Create directories only when needed.
+- Use lowercase English prefixes. Tasks and schedules use a short English name suffix; activities use the letter sequence above. Preserve an existing filename and ID when updating its title or deadline.
 
 ## Task IDs and status
 

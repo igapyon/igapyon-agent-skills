@@ -204,7 +204,7 @@ You need both a current view of your work and a dated account of how you reached
 
 **What you can achieve**
 
-- Create and update tasks, activities, and schedules with priorities, planned periods, current conclusions, next actions, and links to supporting material.
+- Create and update tasks, activities, and schedules with priorities, planned periods, current conclusions, next actions, and links to supporting material. Record distinct work episodes in separate activity files with daily letter suffixes (`a` through `z`, then `aa`, `ab`, and onward).
 - Save short Waypoints that resume a task or an independently resumable subtask across sessions.
 - Generate day-plan snapshots from those source records, or explicitly check whether a supplied URL relates to an existing task.
 - Keep date-planned work separate from a dedicated Backlog section; Backlog tasks can remain undated until they are scheduled.

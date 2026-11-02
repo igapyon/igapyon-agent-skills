@@ -2,6 +2,14 @@
 
 ## AI Agent Current Tasks
 
+### daybook：activity分割とBacklog実運用への反映（2026-11-03・実装済み）
+
+- [x] 内容ごとのactivityファイルを `activity-YYYYMMDDa.md`、`…z.md`、`…aa.md` の順で作成する規約とhelperを実装した。
+- [x] Issue取り込みの探索・採番・再実行を新旧形式に対応させた。
+- [x] 実daybookへactivity対応と既存Backlog実装を統合し、README・検証を揃えた。
+
+合意事項と実装記録は[実装計画](docs/plans/daybook-activity-files-and-runtime-alignment.md)を参照。source suite 60/60、実daybook suite 59/59、参照・配布関連78/78成功。実データのBacklog分離・15リンク・Git管理下の記録等104ファイルの不変を確認。インストール済みskill同期、commit/push、GitHub運用反映は未実施。
+
 ### Contract CI改善（2026-10-30・source反映済み）
 
 - [x] PR/manualにContract起動を一本化し、変更判定・常時最終gate・古いPR実行取消・job上限を追加。
