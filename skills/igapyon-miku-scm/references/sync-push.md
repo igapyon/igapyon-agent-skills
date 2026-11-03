@@ -43,16 +43,18 @@ recommit, push or local `-done` rename.
    supplying `--remote`, `--base`, and a concise concrete `--message` under
    the same message rules as `work.commit`.
 2. Stop on any result other than `prepared`; `up-to-date` needs no draft or
-   publication. For `prepared`, compose once from its returned `evidence`
-   using its returned `writing_contract`. Save at `suggested_draft_path` and compute
-   the SHA-256 of those exact bytes. Do not reuse an unbound older draft.
+   publication. For `prepared`, retain and verify the exact suggested draft when
+   `existing_draft_sha256` is supplied. Otherwise compose once from its returned
+   `evidence` and `writing_contract`. Save at `suggested_draft_path` and compute
+   its byte SHA-256. An older draft from a superseded plan remains unbound.
 3. In the same requested workflow, invoke
    `node <skill-root>/scripts/miku-scm-run.mjs --format human
    repository.sync.push.apply --repo <path> --operation <operation-id>
    --expected-plan-sha256 <prepare-plan-digest> --pr-draft <suggested-path>
    --expected-draft-sha256 <saved-bytes-digest> --apply` once. Carry the IDs
    and digests from this conversation; do not choose a global latest plan.
-   Return the fixed final human output unchanged.
+   Report the result in the user's language. When stopped, explain whether push
+   started, what work is retained, and the supplied `next_command` or inspection.
 
 Successful steps need no extra conversational confirmation. The Agent writes
 PR prose; fixed helpers own all Git mechanics. A writing failure leaves the
@@ -134,9 +136,20 @@ not be cleared by a new pull or an automatic resend.
 
 ## Recovery
 
+A repeated plain `sync push` is the normal continuation command. Under the
+repository lock, the helper considers only a single pending push for the current
+repository, branch and selected remote. It verifies remote configuration and
+saved plan integrity. An unchanged unapplied plan returns the same evidence and
+existing draft digest without another commit. Changed local work, local base or
+apply contract supersedes the unapplied plan and creates fresh evidence with a
+distinct draft path. A `needs-sync-pull` operation is also superseded and checked
+again, so the result can name `miku-scm sync pull` instead of trapping later syncs.
+Old operation files and drafts are retained. Ambiguous operations, another
+branch/remote, corrupted evidence, or unknown publication outcomes remain blocked.
+
 The same-execution file read above is separate from resuming an interrupted
 workflow. Carry the returned operation ID in the conversation. Pass these workflow
-arguments to the fixed runner only after an explicit resume/cancel request:
+arguments are also available for explicit diagnostic selection:
 
 ```text
 repository.sync.push.prepare --repo <path> --resume <operation-id> --apply
@@ -151,24 +164,32 @@ be cancelled before starting a new preparation. Cancellation is available
 only before apply starts and preserves all work, ordinary commits and draft
 files; it does not undo the ordinary commit.
 
-`--recover` is a separate recovery for one narrow case: the saved push operation
-is `partial` after recommit, its publication result is a `publication-preflight`
-`ENOENT` for the branch-derived `ok-push` filename, and its prepared publication
-expectation was an absent remote branch. The helper verifies the original plan
-digest, retained backup and its exact HEAD, current branch ancestry, unchanged
-remote/base, missing failed plan/attempt files, and current absence of the remote
-work branch. It then marks that operation `recovered` and creates a fresh sync
+Automatic recovery (also selectable with `--recover`) accepts a saved `partial`
+after recommit only when its structured publication result proves
+`publication-preflight` stopped before push, or the exact legacy branch-path
+`ENOENT` proves the same. The original publication expectation must be absent.
+The helper verifies the plan digest and identity, backup and exact HEAD, current
+branch ancestry, unchanged remote configuration, and current remote branch
+absence. The legacy case also verifies missing failed plan/attempt files.
+It marks that operation `recovered` and creates a fresh sync
 push preparation from the current branch and worktree. That preparation commits
 ordinary dirty work under the normal checks and requires a new PR draft bound to
-the fresh evidence; it never reuses the consumed plan or draft. Any failed check,
-base advance, existing remote branch, or other partial/unresolved result remains
-blocked for manual inspection. Publication plan filenames encode branch names
-without path separators and include a branch digest.
+the fresh evidence; it never reuses the consumed plan or draft. A base advance
+then returns `next_command: miku-scm sync pull`, with the old operation retired so
+pull can run. A remote branch appearing during fresh preparation stops before a
+commit. Failed evidence checks and unknown publication results preserve the old
+operation for inspection. Publication filenames use safe branch tokens and a
+UUID so repeated saves in the same minute cannot collide.
+
+Before backup/reset, publication storage is probed for writability. A failure
+that proves recommit never started and leaves the prepared snapshot unchanged
+retains the original plan as `prepared`; repeating sync push reuses it after the
+environment problem is fixed. No apply attempt is automatically sent twice.
 
 If the base advanced, run `sync pull` only when explicitly requested, then
 prepare again and write a fresh bound draft. Do not reuse the old plan/draft
 digests. If apply started or the remote outcome is unknown, these preparation
-routes cannot cancel or replay it. The narrowly verified `--recover` case above
-is the only automatic path for a publication-preflight file-creation failure;
+routes cannot cancel or replay it. The verified preflight-only recovery above
+is the only automatic path after local recommit;
 all other outcomes require inspecting the saved publication result and retained
 backup before a separately designed recovery.

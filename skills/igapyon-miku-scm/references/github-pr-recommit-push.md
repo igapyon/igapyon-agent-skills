@@ -54,7 +54,8 @@ approval pause between successful steps:
    for automatic base resolution as well as publication.
 2. Read the destination branch on the selected remote and fix its exact state:
    absent, or one full remote SHA.
-3. Create the local backup branch and verify it still points to the old HEAD.
+3. Probe the publication storage for writability before creating the local
+   backup branch, then verify the backup still points to the old HEAD.
 4. Soft-reset to the verified base and create the PR-draft commit.
 5. Re-read the remote destination while requiring the state fixed in step 2.
    A changed or newly appeared branch stops before push.
@@ -62,6 +63,11 @@ approval pause between successful steps:
    the existing publication apply path. That path rechecks the expectation,
    uses a new-branch push or explicit `--force-with-lease`, records its attempt,
    fetches, verifies `0 0`, and only then renames the local branch to `-done`.
+
+Plan filenames use a safe branch token and a UUID to avoid path separators and
+same-minute collisions. A failure before publication apply is invoked records
+`publication.push_started: false` with `evidence_version: 1`. Sync push can use
+that structured result for verified recovery on the next explicit request.
 
 The backup-success boundary is intentionally inside this one invocation: no
 second approval is requested after backup when the fixed state remains valid.

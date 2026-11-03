@@ -118,6 +118,21 @@ function branchFileToken(branch) {
 
 function planDirectory(root) { return path.join(root, "workplace", "miku-scm", "ok-push"); }
 
+async function writablePlanDirectory(root) {
+  const directory = planDirectory(root);
+  await mkdir(directory, { recursive: true });
+  const actual = await realpath(directory);
+  if (!isPathWithin(await realpath(root), actual)) throw new Error("Publication storage escapes the repository");
+  return directory;
+}
+
+export async function checkPublicationStorage(root) {
+  const directory = await writablePlanDirectory(root);
+  const probe = path.join(directory, `.write-probe-${randomUUID()}`);
+  await writeFile(probe, "", { flag: "wx", mode: 0o600 });
+  await rm(probe);
+}
+
 export async function savePublicationPlan(root, result) {
   const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 12);
   const plan = { schema_version: 1, repository: result.repository, branch: result.branch, remote: result.remote,
@@ -128,9 +143,8 @@ export async function savePublicationPlan(root, result) {
     contract_pair_sha256: PUBLISH_APPLY_CONTRACT.pair_sha256 };
   const content = `${JSON.stringify(plan, null, 2)}\n`;
   const digest = sha256(content);
-  const filename = `ok-push-${branchFileToken(result.branch)}-${result.head.slice(0, 12)}-${timestamp}.json`;
-  const directory = planDirectory(root);
-  await mkdir(directory, { recursive: true });
+  const filename = `ok-push-${branchFileToken(result.branch)}-${result.head.slice(0, 12)}-${timestamp}-${randomUUID()}.json`;
+  const directory = await writablePlanDirectory(root);
   const file = path.join(directory, filename);
   await writeFile(file, content, { encoding: "utf8", flag: "wx", mode: 0o600 });
   return {

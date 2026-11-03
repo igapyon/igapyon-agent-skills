@@ -25,7 +25,8 @@ test("every routed workflow fixes safety metadata and separates runtime referenc
     assert.ok(entry.references.includes("deterministic-workflow-runner.md"));
     assert.equal(entry.contract_id, entry.id);
     const issueWriteContract = entry.id.startsWith("github.issue.") && entry.id !== "github.issue.read";
-    assert.equal(entry.contract_version, issueWriteContract ? 2 : 1);
+    const syncVersions = { "repository.sync.push.prepare": 3, "repository.sync.push.apply": 2 };
+    assert.equal(entry.contract_version, syncVersions[entry.id] ?? (issueWriteContract ? 2 : 1));
     assert.match(entry.contract_spec, /\.md$/);
     assert.match(entry.contract_test, /\.test\.mjs$/);
     assert.deepEqual(entry.runtime_references, []);

@@ -10,6 +10,7 @@ import {
   executePublish,
   runPublish,
   savePublicationPlan,
+  checkPublicationStorage,
 } from "./post-recommit-publish.mjs";
 import { runRecommit } from "./pr-soft-reset-recommit-preflight.mjs";
 
@@ -97,6 +98,7 @@ function partialResult(recommit, initialPublication, stage, error) {
       status: "conflict",
       stage,
       message: error instanceof Error ? error.message : String(error),
+      ...(stage === "publication-preflight" ? { push_started: false, evidence_version: 1 } : {}),
     },
     mutation_invoked: true,
   };
@@ -155,6 +157,9 @@ export async function runRecommitPush(options, dependencies = {}) {
       throw new Error("Remote publication expectation changed since sync preparation");
     }
 
+    // Discover ordinary storage errors before creating a backup or rewriting HEAD.
+    await (dependencies.checkPublicationStorage ?? checkPublicationStorage)(await realpath(options.repo));
+
     recommitResult = await recommit(resolvedRecommitOptions, recommitDependencies);
     if (recommitResult.status !== "recommitted") {
       return {
@@ -184,7 +189,7 @@ export async function runRecommitPush(options, dependencies = {}) {
       ...expectation,
     }), publishDependencies);
     const root = await realpath(options.repo);
-    savedPlan = await savePublicationPlan(root, verifiedPublication);
+    savedPlan = await (dependencies.savePublicationPlan ?? savePublicationPlan)(root, verifiedPublication);
   } catch (error) {
     return { ...partialResult(recommitResult, initialPublication, "publication-preflight", error), warnings };
   }
