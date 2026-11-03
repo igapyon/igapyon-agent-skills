@@ -5,13 +5,14 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20261103.4</version>
+  <version>1.20261103.6</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
 
   <properties>
-    <project.build.outputTimestamp>2020-01-01T00:00:00Z</project.build.outputTimestamp>
+    <maven.build.timestamp.format>yyyy-MM-dd'T'00:00:00'Z'</maven.build.timestamp.format>
+    <project.build.outputTimestamp>${maven.build.timestamp}</project.build.outputTimestamp>
     <external.miku-indexgen-skills.repo>https://github.com/igapyon/miku-indexgen-skills.git</external.miku-indexgen-skills.repo>
     <external.miku-indexgen-skills.ref>cc6578a2aea71aea71955398231e249a96561e29</external.miku-indexgen-skills.ref>
     <external.miku-indexgen-skills.skillName>igapyon-miku-indexgen</external.miku-indexgen-skills.skillName>
@@ -122,6 +123,21 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.6.2</version>
         <executions>
+          <execution>
+            <id>record-release-archive-timestamp</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>node</executable>
+              <arguments>
+                <argument>${project.basedir}/scripts/record-release-archive-timestamp.mjs</argument>
+                <argument>${project.build.outputTimestamp}</argument>
+                <argument>${project.version}</argument>
+              </arguments>
+            </configuration>
+          </execution>
           <execution>
             <id>validate-version-alignment</id>
             <phase>validate</phase>

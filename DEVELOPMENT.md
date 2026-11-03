@@ -87,6 +87,7 @@ GitHub側の必須チェックに登録し、成功後にmerge、tag、Release�
 | コマンド | 確認する内容 |
 | --- | --- |
 | `npm run test:skill-index-policy` | 索引方針、配布ファイル照合、代表参照経路 |
+| `npm run test:release-archive-timestamp` | UTC日付の検証とZIP全エントリの更新日時 |
 | `npm run test:miku-scm` | miku-scm の full suite |
 | `npm run test:github-writer` | GitHub Writer の full suite |
 | `mvn generate-resources` | バージョン整合と採用した内部索引の再生成 |
@@ -351,7 +352,24 @@ mvn clean package
 
 生成物は `target/igapyon-agent-skills-<version>.zip` です。
 
-再現性を保つため、ZIP内の全エントリの更新日時は `2020-01-01 00:00:00 UTC` に固定します。
+ZIP内の全エントリの更新日時は、Mavenビルド開始時点のUTC日付にある
+`00:00:00 UTC` に揃えます。同じ内容を別の日にビルドすると日時が異なるため、ZIPの
+ハッシュも変わります。過去のZIPを再現する場合は、日時を明示してビルドします。
+
+```sh
+mvn clean package -Dproject.build.outputTimestamp=2026-11-03T00:00:00Z
+```
+
+ビルド開始時に採用した日時は `target/release-archive-timestamp.json` に保存し、ZIP検査で
+すべての中央ディレクトリとローカルヘッダーの日時を照合します。検査には通常どおり次を
+実行します。
+
+```sh
+node scripts/check-release-archive.mjs target/igapyon-agent-skills-<version>.zip
+```
+
+ZIP標準の日時欄はタイムゾーンを保持しません。ここで保証する値は、ZIP内に記録する
+UTC基準の日付と時刻です。
 
 archive には `skills/`、配布用の `README.md` と `INSTALL.md`、`LICENSE`、
 `EXTERNAL_SKILLS.lock` を含めます。ビルド用ソースはリポジトリとGitHubの標準ソース

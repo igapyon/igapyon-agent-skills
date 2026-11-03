@@ -64,6 +64,9 @@ After extracting `igapyon-agent-skills-<version>.zip`, open the
 | `EXTERNAL_SKILLS.lock` | Upstream repositories, pinned commit SHAs, and names of the 12 externally maintained skills. |
 | `skills/` | The 27 installable skill directories in the catalog. |
 
+The release ZIP records every outer archive entry at `00:00:00 UTC` on the UTC
+date when the Maven build started. ZIP timestamps do not store a timezone.
+
 Each `skills/<skill-name>/SKILL.md` is that skill's entry point. Supporting
 files vary by skill and include reference documents, templates, examples,
 images, operation scripts, and other assets. Some skills also bundle upstream

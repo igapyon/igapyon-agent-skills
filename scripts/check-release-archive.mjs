@@ -8,6 +8,8 @@ import { fileURLToPath } from "node:url";
 import { assertIndexPresence, readSkillIndexPolicy } from "./skill-index-policy.mjs";
 import { assertSkillFilesMatchSource } from "./release-archive-files.mjs";
 import { assertRepresentativeRoutes } from "./skill-reference-routes.mjs";
+import { parseOutputTimestamp, TIMESTAMP_RECORD_SCHEMA } from "./record-release-archive-timestamp.mjs";
+import { assertZipEntryTimestamps } from "./zip-entry-timestamps.mjs";
 
 const projectRoot = fileURLToPath(new URL("..", import.meta.url));
 const allowedRootFiles = new Set([
@@ -193,6 +195,33 @@ function validateSkill(skillName, skillRoot, indexIsAdopted) {
 function validateArchive(archivePath) {
   const { artifactId, version, externalSkills, policy } = readProjectMetadata();
   const expectedRoot = artifactId + "-" + version;
+  const timestampRecordPath = path.join(projectRoot, "target", "release-archive-timestamp.json");
+  let timestampRecord;
+  try {
+    timestampRecord = JSON.parse(fs.readFileSync(timestampRecordPath, "utf8"));
+  } catch (error) {
+    fail("Release archive timestamp record is missing or invalid: " + error.message);
+  }
+  if (timestampRecord?.schema_version !== TIMESTAMP_RECORD_SCHEMA) {
+    fail("Release archive timestamp record has an unsupported schema");
+  }
+  if (timestampRecord.project_version !== version) {
+    fail(`Release archive timestamp record is for ${timestampRecord.project_version}, expected ${version}`);
+  }
+  let parsedTimestamp;
+  try {
+    parsedTimestamp = parseOutputTimestamp(timestampRecord.output_timestamp);
+  } catch (error) {
+    fail("Release archive timestamp record has an invalid timestamp: " + error.message);
+  }
+  if (timestampRecord.output_timestamp_epoch_seconds !== parsedTimestamp.epoch_seconds) {
+    fail("Release archive timestamp record epoch does not match its UTC timestamp");
+  }
+  const timestampCheck = assertZipEntryTimestamps(
+    fs.readFileSync(archivePath),
+    timestampRecord.output_timestamp,
+  );
+
   const listing = runUnzip(["-Z1", archivePath]);
   const entries = listing.split(/\r?\n/).filter((entry) => entry.length > 0);
   if (entries.length === 0) {
@@ -321,7 +350,9 @@ function validateArchive(archivePath) {
       ", external=" + externalSkills.length +
       ", total=" + expectedNames.size +
       ", source-checked=" + sourceChecked +
-      ", representative-routes=" + representativeRouteCount + ")"
+      ", representative-routes=" + representativeRouteCount +
+      ", timestamp=" + timestampCheck.output_timestamp +
+      ", timestamped-entries=" + timestampCheck.entry_count + ")"
     );
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
