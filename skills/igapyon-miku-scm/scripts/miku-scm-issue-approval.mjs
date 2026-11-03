@@ -50,6 +50,19 @@ export function normalizeIssueCommentConnection(connection) {
   return normalizeIssueComments(nodes);
 }
 
+export function normalizeIssuePreflightSnapshot(result) {
+  return {
+    title: result?.current_title ?? result?.issue_title ?? null,
+    body: result?.current_body ?? null,
+    state: result?.current_state ?? result?.issue_state ?? null,
+    labels: Array.isArray(result?.current_labels) ? [...result.current_labels] : null,
+    updated_at: result?.current_updated_at ?? null,
+    comments: Array.isArray(result?.current_comments)
+      ? normalizeIssueComments(result.current_comments)
+      : null,
+  };
+}
+
 export function issueCommentsSha256(comments) {
   return sha256(JSON.stringify(normalizeIssueComments(comments)));
 }
@@ -152,16 +165,7 @@ export function normalizeIssueReview(preflightWorkflow, result) {
     labels_sha256: result.labels_sha256 ?? null,
     parent_sha256: result.parent_sha256 ?? null,
     operation_sha256: result.operation_sha256 ?? null,
-    issue_snapshot: operation === "create" ? null : {
-      title: result.current_title ?? result.issue_title ?? null,
-      body: result.current_body ?? null,
-      state: result.current_state ?? result.issue_state ?? null,
-      labels: Array.isArray(result.current_labels) ? [...result.current_labels] : null,
-      updated_at: result.current_updated_at ?? null,
-      comments: Array.isArray(result.current_comments)
-        ? normalizeIssueComments(result.current_comments)
-        : null,
-    },
+    issue_snapshot: operation === "create" ? null : normalizeIssuePreflightSnapshot(result),
     planned_gh_arguments: Array.isArray(result.planned_gh_arguments)
       ? [...result.planned_gh_arguments]
       : null,

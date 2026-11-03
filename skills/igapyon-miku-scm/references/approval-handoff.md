@@ -93,6 +93,15 @@ with the reviewed snapshot plus the exact verified effects. An unexplained
 change, incomplete read, failed preflight, or non-applied step stops the rest
 of the batch. Successful earlier steps remain applied; there is no rollback.
 
+Review creation and dependency refresh use the same normalized Issue snapshot.
+The normalizer accepts the existing operation-specific names for the current
+title and state, including the close helper's `issue_title`; fixed helpers keep
+their public preflight JSON unchanged. A verified comment from an earlier step
+in the same reviewed plan is an expected effect, so a following close can
+proceed under that one approval. The batch still stops on a missing snapshot
+field or a real outside change. Its detail names missing fields separately
+from changed fields and retains the dependency preflight run ID.
+
 The batch report identifies completed operations and the stopped status.
 `applied`, `not-applied`, `conflict`, and `unresolved` are distinct. A remote
 mutation whose outcome is uncertain is never retried automatically.

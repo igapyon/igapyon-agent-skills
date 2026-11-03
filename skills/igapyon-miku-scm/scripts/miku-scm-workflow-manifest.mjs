@@ -189,7 +189,7 @@ const WORKFLOW_DEFINITIONS = [
     approval_gate: "apply",
     runner_entry: "miku-scm-handoff.mjs",
     references: ["approval-handoff.md", "deterministic-workflow-runner.md"],
-    contract_version: ISSUE_APPROVAL_CONTRACT_VERSION,
+    contract_version: 3,
     contract_runtime_sources: ["miku-scm-issue-approval.mjs", "miku-scm-human-output.mjs"],
   },
   {

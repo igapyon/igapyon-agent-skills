@@ -135,16 +135,15 @@ async function createExistingIssuePending(root, {
       status: "preflight-ok",
       repository,
       issue_number: issue,
-      title: "Existing Issue",
       issue_url: `https://github.com/${repository}/issues/${issue}`,
       issue_title: "Existing Issue",
-      issue_state: "OPEN",
-      current_title: "Existing Issue",
       current_body: "Current body",
-      current_state: "OPEN",
       current_labels: [],
       current_comments: commentSnapshot,
       current_updated_at: "2026-07-28T11:59:00.000Z",
+      ...(operation === "close"
+        ? { current_state: "OPEN" }
+        : { current_title: "Existing Issue", issue_state: "OPEN" }),
       ...(operation === "comment"
         ? { comment_body: "Reviewed comment body" }
         : { reason: "completed" }),
@@ -696,11 +695,12 @@ test("batch refreshes only state expectations for a later same-Issue mutation", 
           result: {
             status: "preflight-ok",
             apply_arguments: refreshedCloseArguments,
-            current_title: "Existing Issue",
+            issue_title: "Existing Issue",
             current_body: "Current body",
             current_state: "OPEN",
             current_labels: [],
             current_comments: [verifiedComment],
+            current_updated_at: "2026-07-28T12:01:00.000Z",
           },
         };
       },
@@ -724,6 +724,58 @@ test("batch refreshes only state expectations for a later same-Issue mutation", 
   const closeRecord = JSON.parse(await readFile(path.join(root, close.path), "utf8"));
   assert.equal(closeRecord.status, "applied");
   assert.equal(closeRecord.dependency_refresh.preflight_run_id, "dependency-close-preflight");
+});
+
+test("batch requires an exact verified comment receipt before refreshing a later close", async (t) => {
+  const root = await workspace(t);
+  await createExistingIssuePending(root, { id: "comment-18", operation: "comment" });
+  const close = await createExistingIssuePending(root, { id: "close-18", operation: "close" });
+  const options = await approvedBatch(root, ["comment-18", "close-18"]);
+  let applyCalls = 0;
+  let preflightCalls = 0;
+
+  const result = await applyPendingIssueHandoffBatch(options, {
+    runApply: async (workflow) => {
+      applyCalls += 1;
+      return workflow === "github.issue.comment.apply"
+        ? {
+          status: "success",
+          mutation_invoked: true,
+          run_id: "comment-applied-without-receipt",
+          result: { status: "commented", comment_id: 77, comment_url: "https://github.com/a/b/issues/18#issuecomment-77" },
+        }
+        : { status: "success", mutation_invoked: true, run_id: "unexpected-close" };
+    },
+    runPreflight: async () => {
+      preflightCalls += 1;
+      const savedClose = JSON.parse(await readFile(path.join(root, close.path), "utf8"));
+      return {
+        status: "success",
+        run_id: "close-preflight-no-receipt",
+        result: {
+          status: "preflight-ok",
+          apply_arguments: savedClose.apply_arguments,
+          issue_title: "Existing Issue",
+          current_body: "Current body",
+          current_state: "OPEN",
+          current_labels: [],
+          current_comments: [{
+            url: "https://github.com/a/b/issues/18#issuecomment-77",
+            body: "Reviewed comment body",
+          }],
+          current_updated_at: "2026-07-28T12:01:00.000Z",
+        },
+      };
+    },
+  });
+
+  assert.equal(result.batch_status, "partial-conflict");
+  assert.equal(result.stop_reason, "Earlier Issue comment lacks an exact verified receipt");
+  assert.equal(applyCalls, 1);
+  assert.equal(preflightCalls, 1);
+  const closeRecord = JSON.parse(await readFile(path.join(root, close.path), "utf8"));
+  assert.equal(closeRecord.status, "conflict");
+  assert.equal(closeRecord.dependency_refresh.preflight_run_id, "close-preflight-no-receipt");
 });
 
 test("batch stops after an earlier apply when dependency refresh changes operation content", async (t) => {
@@ -772,11 +824,12 @@ test("batch stops after an earlier apply when dependency refresh changes operati
             "--expected-contract-pair-sha256", "d".repeat(64),
             "--apply",
           ],
-          current_title: "Existing Issue",
+          issue_title: "Existing Issue",
           current_body: "Current body",
           current_state: "OPEN",
           current_labels: [],
           current_comments: [verifiedComment],
+          current_updated_at: "2026-07-28T12:01:00.000Z",
         },
       }),
     },
