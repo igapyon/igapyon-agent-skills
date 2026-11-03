@@ -240,7 +240,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "repository.sync.push.prepare",
-    contract_version: 2,
+    contract_version: 3,
     triggers: ["miku-scm sync push", "sync push"],
     required_parameters: ["repository", "explicit_sync_push_request"],
     mutation_level: "local",
@@ -251,6 +251,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "repository.sync.push.apply",
+    contract_version: 2,
     triggers: ["Prepared sync push execution only"],
     required_parameters: ["repository", "operation", "plan_digest", "draft_digest"],
     mutation_level: "remote",

@@ -587,6 +587,9 @@ export function renderHumanOutput({
   if (workflow.startsWith("repository.sync.")) {
     const r = result ?? {};
     lines.push(`Result: ${displayValue(r.status)}`);
+    if (r.continuation) lines.push(`Continuation: ${displayValue(r.continuation)}`);
+    if (r.publication_state) lines.push(`Push state: ${displayValue(r.publication_state)}`);
+    if (r.pending_branch) lines.push(`Pending branch: ${displayValue(r.pending_branch)}`);
     if (r.method) lines.push(`Method: ${displayValue(r.method)}`);
     if (r.commit) lines.push(`Ordinary commit: ${displayValue(r.commit.status)}`);
     if (workflow === "repository.sync.pull") {
@@ -615,6 +618,7 @@ export function renderHumanOutput({
         "Next action: read result.evidence from the saved result file, compose once, then apply this exact plan.");
     }
     if (r.next_action) lines.push(`Next action: ${displayValue(r.next_action)}`);
+    if (r.next_command) lines.push(`Next command: ${displayValue(r.next_command)}`);
     if (["partial", "unresolved"].includes(r.status) && r.operation_id) lines.push(`Recovery operation: ${r.operation_id}`);
     if (r.status === "published") appendPublication(lines, r.publication ?? r);
     else if (r.publication) {

@@ -128,14 +128,26 @@ than macOS/native Windows, and rejects a frozen `-done` branch.
 Run `node <skill-root>/scripts/miku-scm-run.mjs --format json
 repository.sync.push.prepare --repo <target-repo> --apply` with a concrete
 `--message` when available, using the `work.commit` message rules below.
-If `prepared`, draft once from returned `evidence` and its `writing_contract`,
-save exactly at `suggested_draft_path`, compute its byte SHA-256, and invoke
+The helper automatically continues the single matching pending operation for
+this repository, branch and remote: it reuses unchanged preparations, replaces
+unapplied stale evidence, and recovers verified preflight-only unpublished work.
+No extra recovery phrase or operation ID from the user is needed. Ambiguous or
+unverified publication outcomes stop for inspection by the Agent.
+If `prepared` has `existing_draft_sha256`, read the exact suggested draft,
+review it against the returned evidence, and verify its digest before retaining
+the prose for this unchanged plan. Otherwise draft
+once from returned `evidence` and its `writing_contract`. Save exactly at
+`suggested_draft_path`, compute its byte SHA-256, and invoke
 `node <skill-root>/scripts/miku-scm-run.mjs --format human
 repository.sync.push.apply --repo <same-target-repo> --operation <returned-id>
 --expected-plan-sha256 <returned-plan-digest> --pr-draft <suggested-path>
 --expected-draft-sha256 <saved-byte-digest> --apply` in the same user turn.
 Carry the same-session values; no confirmation is needed between successful
-steps. If not prepared, return that fixed stop/no-op. A changed base stops for
+steps. If not prepared, explain the outcome and next action in the user's
+language, including whether push started and where their current work remains.
+Use `next_command` when supplied. Do not repeat a blocked command or ask the user
+to choose internal recovery IDs; inspect the saved evidence when the helper
+requires it. A changed base stops for
 an explicitly requested `sync pull` and fresh preparation; an ordinary commit
 already made is retained. Never add an automatic pull or version increment.
 PR creation and merge remain the human's step; tag/Release work is separate.
@@ -148,11 +160,12 @@ workflow, run and operation identities, complete prepared evidence and original
 digests before continuing; apply must not have started. This read-only lookup
 needs no extra confirmation. Do not select a global latest result. An interrupted
 workflow, uncertain apply outcome, missing evidence or identity mismatch uses the
-documented recovery path, including an explicit resume/cancel request where required.
-For an apply-started push, `--recover <operation-id>` is allowed only for the
-documented branch-path `ENOENT` at `publication-preflight`; it verifies the
-saved plan, backup, unchanged base and absent remote branch before retiring that
-operation and preparing fresh evidence. It never replays the consumed plan.
+documented recovery path. Explicit resume/cancel/recover selectors remain for
+diagnostics; a normal repeated sync push performs supported continuation itself.
+Apply-started recovery requires structured proof that publication never started
+(or the recognized legacy branch-path ENOENT), an intact plan and backup, current
+branch ancestry, and an absent remote branch. It retires that operation and makes
+fresh evidence. Unknown publication outcomes are never replayed.
 
 Naming, design and explanation requests about sync do not authorize its
 execution. Existing individual commands and aliases retain their meanings.
@@ -186,7 +199,8 @@ current branch, and retained stash; preserve the partial state for recovery.
    always place it before the workflow ID:
    `node <skill-root>/scripts/miku-scm-run.mjs --format human <workflow-id>
    [workflow options]`. Never place `--format` after the workflow ID. Return
-   the runner's `human_output` unchanged instead of paraphrasing it.
+   the runner's `human_output` unchanged for mechanical workflows other than sync.
+   For sync, give a concise result and actionable explanation in the user's language.
 3. Treat a bare `recommit` request as the PR Soft Reset Recommit workflow with
    an implicit PR-writing request. The user does not need to say `PR`
    separately. Resolve the base first and draft from exactly `<base>..HEAD`.
@@ -249,9 +263,11 @@ current branch, and retained stash; preserve the partial state for recovery.
    draft and digest, requested labels, close reason, duplicate target, and
    workflow contract must remain byte-for-byte equivalent. Never retry an
    unresolved mutation automatically.
-9. For every mechanical workflow, the runner's `human_output` is the complete
-   final response. Return it unchanged and add no greeting, paraphrase,
-   summary, or separate completion report. The fixed output itself reports
+9. For mechanical workflows other than sync, the runner's `human_output` is the
+   complete final response. Return it unchanged. For sync workflows, summarize
+   the result in the user's language and identify the next action when needed;
+   preserve branch, publication, and verification facts without making internal
+   UUIDs a task for the user. The fixed output itself reports
    inspected, changed, and pending work where applicable. Keep tag
    recommendation separate from tag mutation; normal tag handoff is GitHub's
    Release UI.

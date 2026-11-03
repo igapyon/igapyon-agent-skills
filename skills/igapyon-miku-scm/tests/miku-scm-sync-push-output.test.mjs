@@ -6,8 +6,17 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { fixture } from "./sync-fixture.mjs";
+import { renderHumanOutput } from "../scripts/miku-scm-human-output.mjs";
 
 const RUNNER = fileURLToPath(new URL("../scripts/miku-scm-run.mjs", import.meta.url));
+
+test("sync push stop reports publication state and the command the user can run", () => {
+  const output = renderHumanOutput({ workflow: "repository.sync.push.prepare", status: "not-applied", approvalGate: "apply", delegateStatus: "not-applied", mutationInvoked: false,
+    result: { status: "not-applied", publication_state: "not-started", reason: "Base advanced", next_command: "miku-scm sync pull", next_action: "Local work is retained. Run sync pull, then sync push." } });
+  assert.match(output, /^Push state: not-started$/m);
+  assert.match(output, /^Next command: miku-scm sync pull$/m);
+  assert.match(output, /Local work is retained/);
+});
 
 function cli(cwd, format, workflow, args) {
   const result = spawnSync(process.execPath, [RUNNER, "--format", format, workflow, ...args], {
@@ -71,12 +80,15 @@ for (const format of ["human", "json"]) test(`sync push ${format} CLI retrieves 
   assert.equal(await readFile(stateFile, "utf8"), preparedState);
   assert.equal(f.git(["rev-parse", "HEAD"]), p.head);
 
-  // An accidental second preparation is refused without consuming the first.
+  // Repeating the user's command returns the exact preparation without another commit.
   const duplicate = cli(caller, "json", "repository.sync.push.prepare", prepareArgs);
-  assert.equal(duplicate.status, 1, duplicate.stdout + duplicate.stderr);
-  const refused = JSON.parse(duplicate.stdout).result;
-  assert.equal(refused.status, "not-applied");
-  assert.match(refused.reason, /requires explicit recovery before another sync/);
+  assert.equal(duplicate.status, 0, duplicate.stdout + duplicate.stderr);
+  const continued = JSON.parse(duplicate.stdout).result;
+  assert.equal(continued.status, "prepared");
+  assert.equal(continued.operation_id, operation);
+  assert.equal(continued.plan_sha256, p.plan_sha256);
+  assert.equal(continued.continuation, "resumed-preparation");
+  assert.equal(continued.mutation_invoked, false);
   assert.equal(await readFile(stateFile, "utf8"), preparedState);
   assert.equal(await readFile(resultFile, "utf8"), savedBytes);
   assert.equal(f.git(["rev-parse", "HEAD"]), p.head);

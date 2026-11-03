@@ -13,8 +13,9 @@ The Agent's responsibility is limited to:
 
 1. selecting a documented workflow ID
 2. supplying that workflow's fixed minimal options
-3. returning the stable `human_output` unchanged, or using structured JSON
-   fields only when a subsequent fixed step requires them
+3. using structured JSON when a subsequent fixed step needs it; for sync,
+   explaining the result, publication state and next action in the user's
+   language, and otherwise returning the stable `human_output` unchanged
 
 Repository resolution, validation, fixed command execution, digest checks,
 attempt records, and postcondition checks remain inside tracked and tested
@@ -110,8 +111,12 @@ preserves local work and queries the exact PR merge state only on `-done`.
 `repository.sync.push.prepare` commits only if dirty and returns immutable
 PR evidence; the Agent writes once, then `repository.sync.push.apply`
 consumes the plan/draft digests and shares the existing recommit/publication
-core. Prepared operations release execution locks and support explicit
-resume/cancel. See [sync-pull.md](sync-pull.md) and [sync-push.md](sync-push.md).
+core. Prepared operations release execution locks. Repeating sync push safely
+reuses an unchanged preparation, refreshes unapplied stale evidence, or recovers
+verified preflight-only unpublished work on the same branch and remote. Explicit
+selectors remain available for diagnostics. Unknown remote outcomes require
+inspection before any resend. See [sync-pull.md](sync-pull.md) and
+[sync-push.md](sync-push.md).
 
 PR publication retains its two-part human boundary. Use
 `pr.publish.preflight` with the reviewed full local commit SHA and

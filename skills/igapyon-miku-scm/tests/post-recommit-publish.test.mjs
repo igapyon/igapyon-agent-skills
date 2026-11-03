@@ -14,6 +14,7 @@ import {
   parseArgs,
   resolvePrHandoff,
   runPublish,
+  savePublicationPlan,
 } from "../scripts/post-recommit-publish.mjs";
 import {
   classifyTagLookup,
@@ -252,6 +253,20 @@ test("saved publication plan applies once and publishes the reviewed branch", as
   assert.throws(() => execFileSync(process.execPath, [PUBLISH_SCRIPT,
     "--repo", state.repo, "--apply-plan", saved.plan_path,
     "--expected-plan-sha256", saved.plan_sha256], { encoding: "utf8", stdio: "pipe" }));
+});
+
+test("saved publication plans for the same branch and HEAD have unique safe filenames", async (t) => {
+  const state = await scenario(t);
+  const preflight = await runPublish(optionsFor(state), applyDependencies);
+  const first = await savePublicationPlan(state.repo, preflight);
+  const second = await savePublicationPlan(state.repo, preflight);
+  assert.notEqual(first.plan_path, second.plan_path);
+  for (const saved of [first, second]) {
+    assert.match(saved.plan_path, /^workplace\/miku-scm\/ok-push\/[A-Za-z0-9._-]+\.json$/);
+    const bytes = await readFile(path.join(state.repo, saved.plan_path));
+    assert.equal(createHash("sha256").update(bytes).digest("hex"), saved.plan_sha256);
+    assert.equal(JSON.parse(bytes).reviewed_head, state.expectedHead);
+  }
 });
 
 test("saved publication plan stops before mutation when its workflow contract changed", async (t) => {
