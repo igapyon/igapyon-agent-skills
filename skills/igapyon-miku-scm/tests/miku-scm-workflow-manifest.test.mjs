@@ -38,6 +38,7 @@ test("every routed workflow fixes safety metadata and separates runtime referenc
       "github.issue.label.apply": 3,
       "github.issue.close.preflight": 3,
       "github.issue.close.apply": 3,
+      "github.issue.handoff.batch.apply": 3,
       "writing.issue.prepare": 2,
     };
     assert.equal(entry.contract_version, syncVersions[entry.id] ?? (issueWriteContract ? 2 : 1));

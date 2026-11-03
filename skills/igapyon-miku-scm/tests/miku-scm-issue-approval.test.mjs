@@ -5,6 +5,7 @@ import {
   ISSUE_APPROVAL_CONTRACTS,
   buildIssueReviewBinding,
   normalizeIssueCommentConnection,
+  normalizeIssuePreflightSnapshot,
   normalizeIssueReview,
   parseIssueApprovalCommand,
   validateIssueApprovalBinding,
@@ -123,6 +124,71 @@ test("review normalization refuses missing content rather than summarizing it", 
   assert.throws(() => normalizeIssueReview("github.issue.comment.preflight", {
     status: "preflight-ok", repository: "owner/repo", issue_number: 42,
   }), /complete comment body/);
+});
+
+test("Issue preflight snapshots normalize operation-specific title and state aliases", () => {
+  const common = {
+    current_body: "",
+    current_labels: [],
+    current_comments: [],
+    current_updated_at: "2026-11-03T00:00:00.000Z",
+  };
+  const cases = [
+    ["update", { current_title: "Title", current_state: "OPEN" }],
+    ["comment", { current_title: "Title", issue_title: "Title", issue_state: "OPEN" }],
+    ["label", { current_title: "Title", issue_title: "Title", issue_state: "OPEN" }],
+    ["close", { issue_title: "Title", current_state: "OPEN" }],
+  ];
+  for (const [operation, aliases] of cases) {
+    const input = { ...common, ...aliases };
+    const before = structuredClone(input);
+    assert.deepEqual(normalizeIssuePreflightSnapshot(input), {
+      title: "Title",
+      body: "",
+      state: "OPEN",
+      labels: [],
+      updated_at: "2026-11-03T00:00:00.000Z",
+      comments: [],
+    }, operation);
+    assert.deepEqual(input, before, `${operation} input remains unchanged`);
+  }
+});
+
+test("Issue preflight snapshot keeps missing fields null and agrees with review context", () => {
+  assert.deepEqual(normalizeIssuePreflightSnapshot({}), {
+    title: null,
+    body: null,
+    state: null,
+    labels: null,
+    updated_at: null,
+    comments: null,
+  });
+
+  const preflight = {
+    status: "preflight-ok",
+    repository: "owner/repo",
+    issue_number: 42,
+    issue_title: "Close title",
+    current_body: "",
+    current_state: "OPEN",
+    current_labels: [],
+    current_comments: [{
+      url: "https://github.com/owner/repo/issues/42#issuecomment-1",
+      body: "",
+    }],
+    current_updated_at: "2026-11-03T00:00:00.000Z",
+    reason: "completed",
+  };
+  const review = normalizeIssueReview("github.issue.close.preflight", preflight);
+  assert.deepEqual(review.context.issue_snapshot, normalizeIssuePreflightSnapshot(preflight));
+  assert.equal(review.context.issue_snapshot.body, "");
+  assert.deepEqual(review.context.issue_snapshot.labels, []);
+  assert.deepEqual(review.context.issue_snapshot.comments, [{
+    url: "https://github.com/owner/repo/issues/42#issuecomment-1",
+    body: "",
+    created_at: null,
+    author: null,
+  }]);
 });
 
 test("review binding fixes root, contracts, immutable content, and order", () => {

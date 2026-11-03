@@ -2,6 +2,18 @@
 
 ## AI Agent Current Tasks
 
+### miku-scm：コメント後クローズの誤衝突修正（2026-11-03・実装・検証済み）
+
+実装計画は[Luna向け修正計画](docs/plans/miku-scm-comment-close-luna-implementation.md)、作業・検証記録は[実施記録](docs/plans/miku-scm-comment-close-execution.md)を参照。実close preflightの `issue_title` をバッチが `current_title` として読んでしまい、承認どおりのコメント投稿後に誤って停止する問題を修正した。
+
+- [x] 実行記録とsourceを照合し、項目名不整合・実形式と異なるmock・診断run ID欠落を特定。
+- [x] 公開JSONを維持する共通snapshotを実装。reviewとbatch refreshで共有し、欠落field・外部差分・preflight run IDを診断。
+- [x] 実helper接続で修正前の誤停止を再現。単一Issueと3件6操作を一回のreview/approveで完了する回帰テストを追加。
+- [x] 外部変更・不完全read・不正receipt・unresolved結果でcloseを止め、成功済みコメントを再投稿しないことを検証。
+- [x] batch.apply contract v3、reference、生成lock/tableを更新。focused 44/44、関連suite 62/62、miku-scm full 487、skill-index policy 79/79、contract 37件、`mvn validate`、差分検査に成功。
+
+source skill配備、version increment、package、commit/push、Windows実機/hosted CIは今回の実装対象外。[実施記録](docs/plans/miku-scm-comment-close-execution.md)に未実施として記録した。
+
 ### Issues #318・#400・#405：Luna向け対応（2026-11-03・実装・検証済み）
 
 実装手順は[実装計画](docs/plans/issues-318-400-405-luna-implementation.md)、実施内容・検証・実GitHub読取は[実施記録](docs/plans/issues-318-400-405-execution.md)を参照。計画作成時点では実装未着手で、#400はIssue #399の読み取り失敗を再現した。

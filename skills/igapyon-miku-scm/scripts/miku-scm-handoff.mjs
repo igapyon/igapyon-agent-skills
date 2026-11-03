@@ -8,6 +8,8 @@ import {
   ISSUE_APPROVAL_CONTRACTS,
   ISSUE_REVIEW_SCHEMA_VERSION,
   buildIssueReviewBinding,
+  normalizeIssueComments,
+  normalizeIssuePreflightSnapshot,
   normalizeIssueReview,
   validateIssueApprovalBinding,
 } from "./miku-scm-issue-approval.mjs";
@@ -678,17 +680,55 @@ function delegateApplyResult(record) {
 }
 
 function snapshotCommentsForCompare(comments) {
-  if (!Array.isArray(comments)) throw new Error("Issue comment snapshot is incomplete");
-  return comments.map((entry) => ({ url: entry.url, body: entry.body }))
+  return normalizeIssueComments(comments).map((entry) => ({ url: entry.url, body: entry.body }))
     .sort((left, right) => left.url.localeCompare(right.url, "en"));
+}
+
+function incompleteSnapshotFields(snapshot) {
+  const fields = [];
+  if (typeof snapshot?.title !== "string" || snapshot.title.length === 0) fields.push("title");
+  if (typeof snapshot?.body !== "string") fields.push("body");
+  if (!new Set(["OPEN", "CLOSED"]).has(snapshot?.state)) fields.push("state");
+  if (!Array.isArray(snapshot?.labels) || snapshot.labels.some((label) => typeof label !== "string")) {
+    fields.push("labels");
+  }
+  if (!Array.isArray(snapshot?.comments)) {
+    fields.push("comments");
+  } else {
+    try {
+      normalizeIssueComments(snapshot.comments);
+    } catch {
+      fields.push("comments");
+    }
+  }
+  if (typeof snapshot?.updated_at !== "string" || snapshot.updated_at.length === 0) {
+    fields.push("updated_at");
+  }
+  return fields;
 }
 
 function assertDependencySnapshot(selected, preflightResult, priorEntries) {
   const baseline = selected.record.review?.context?.issue_snapshot;
-  if (!baseline || !Array.isArray(baseline.comments)) {
-    throw dependencyRefreshError("Reviewed Issue snapshot is incomplete for safe dependency refresh", "conflict");
+  const baselineMissing = incompleteSnapshotFields(baseline);
+  if (baselineMissing.length > 0) {
+    throw dependencyRefreshError(
+      `Reviewed Issue snapshot is incomplete: ${baselineMissing.join(", ")}`,
+      "conflict",
+    );
   }
-  const observed = preflightResult;
+  let observed;
+  try {
+    observed = normalizeIssuePreflightSnapshot(preflightResult);
+  } catch {
+    throw dependencyRefreshError("Dependency preflight Issue snapshot is incomplete: comments", "conflict");
+  }
+  const observedMissing = incompleteSnapshotFields(observed);
+  if (observedMissing.length > 0) {
+    throw dependencyRefreshError(
+      `Dependency preflight Issue snapshot is incomplete: ${observedMissing.join(", ")}`,
+      "conflict",
+    );
+  }
   const expected = {
     title: baseline.title,
     body: baseline.body,
@@ -719,17 +759,22 @@ function assertDependencySnapshot(selected, preflightResult, priorEntries) {
       throw dependencyRefreshError(`Unsupported earlier Issue operation in dependency sequence: ${operation}`, "conflict");
     }
   }
-  if (observed.current_title !== expected.title
-    || observed.current_body !== expected.body
-    || observed.current_state !== expected.state
-    || JSON.stringify(observed.current_labels) !== JSON.stringify(expected.labels)) {
-    throw dependencyRefreshError("Issue title, body, state, or labels changed outside the approved sequence", "conflict");
+  const changedFields = [];
+  if (observed.title !== expected.title) changedFields.push("title");
+  if (observed.body !== expected.body) changedFields.push("body");
+  if (observed.state !== expected.state) changedFields.push("state");
+  if (JSON.stringify(observed.labels) !== JSON.stringify(expected.labels)) changedFields.push("labels");
+  if (changedFields.length > 0) {
+    throw dependencyRefreshError(
+      `Issue fields changed outside the approved sequence: ${changedFields.join(", ")}`,
+      "conflict",
+    );
   }
   let observedComments;
   try {
-    observedComments = snapshotCommentsForCompare(observed.current_comments);
-  } catch (error) {
-    throw dependencyRefreshError(error.message, "conflict");
+    observedComments = snapshotCommentsForCompare(observed.comments);
+  } catch {
+    throw dependencyRefreshError("Dependency preflight Issue snapshot is incomplete: comments", "conflict");
   }
   if (JSON.stringify(observedComments) !== JSON.stringify(expected.comments)) {
     throw dependencyRefreshError("Issue comments changed outside the approved sequence", "conflict");
@@ -766,7 +811,10 @@ async function refreshSelectedIssueHandoff(selected, priorEntries, dependencies 
   try {
     if (delegate.status !== "up-to-date") assertDependencySnapshot(selected, delegate, priorEntries);
   } catch (error) {
-    if (error?.handoffStatus) throw error;
+    if (error?.handoffStatus) {
+      if (error.preflightRunId == null) error.preflightRunId = refreshResult?.run_id ?? null;
+      throw error;
+    }
     throw dependencyRefreshError(error.message, "conflict", refreshResult);
   }
   try {
