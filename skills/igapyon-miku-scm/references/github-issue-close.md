@@ -30,7 +30,7 @@ first and then dependency-refresh this close operation under
 [approval-handoff.md](approval-handoff.md); it still invokes two distinct fixed
 helpers and never adds a comment to `gh issue close`.
 
-Its fixed READONLY command is `gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,stateReason,updatedAt,labels,comments`; it is distinct from the one close mutation.
+Its fixed READONLY commands are `gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,stateReason,updatedAt,labels` and the shared paginated GraphQL comment query described in [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md). The complete comments must match the Issue `updatedAt`; these reads are distinct from the one close mutation.
 
 ## Preflight
 

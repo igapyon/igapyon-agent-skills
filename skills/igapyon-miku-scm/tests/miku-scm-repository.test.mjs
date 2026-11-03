@@ -22,6 +22,17 @@ const issue = { number: 7, url: issueUrl, title: "Issue", body: "Body", state: "
   stateReason: null, updatedAt: "2026-10-27T00:00:00Z", labels: [], parent: null,
   comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false } } };
 const json = (value) => ({ ok: true, status: 0, stdout: JSON.stringify(value), stderr: "" });
+function issueReaderGh(args) {
+  if (args[0] === "api" && args[1] === "graphql") {
+    return json({ data: { repository: { issue: {
+      number: issue.number,
+      url: issue.url,
+      updatedAt: issue.updatedAt,
+      comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null } },
+    } } } });
+  }
+  return json(issue);
+}
 
 async function workspace(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), "miku-scm-host-test-"));
@@ -50,7 +61,7 @@ test("Issue readers accept Enterprise URLs while retaining target repository and
   for (const factory of [updateReader, labelReader, closeReader, commentReader,
     createGhParentReader, createGhCreatedIssueReader]) {
     const calls = [];
-    const read = factory((args) => { calls.push(args); return json(issue); });
+    const read = factory((args) => { calls.push(args); return issueReaderGh(args); });
     assert.equal((await read(repository, 7)).url, issueUrl);
     assert.equal(calls[0][calls[0].indexOf("--repo") + 1], repository);
     await assert.rejects(read("other.example.test/team/project", 7), /identify/);
@@ -66,7 +77,7 @@ test("the configured Enterprise host also applies to unqualified repository argu
   try {
     const options = parseCreate(["--repo", "team/project", "--draft", "issue.md"]);
     assert.equal(options.repository, repository);
-    const read = updateReader(() => json(issue));
+    const read = updateReader(issueReaderGh);
     assert.equal((await read("team/project", 7)).url, issueUrl);
     process.env.GH_HOST = "other.example.test";
     assert.equal((await read(options.repository, 7)).url, issueUrl);
@@ -108,6 +119,7 @@ test("Enterprise comment publication and verification use the same host and exac
   const calls = [];
   const gh = (args) => {
     calls.push(args);
+    if (args[0] === "api" && args[1] === "graphql") return issueReaderGh(args);
     if (args[0] === "api") return json({ id: 77, html_url: `${issueUrl}#issuecomment-77`, body: "A comment.\n" });
     if (args[1] === "comment") return { ok: true, stdout: `${issueUrl}#issuecomment-77` };
     return json(issue);
@@ -117,7 +129,7 @@ test("Enterprise comment publication and verification use the same host and exac
   const result = await runIssueComment(parseComment(preflight.apply_arguments), dependencies);
   assert.equal(result.status, "commented");
   assert.equal(result.comment_url, `${issueUrl}#issuecomment-77`);
-  assert.deepEqual(calls.find((args) => args[0] === "api"), ["api", "--method", "GET",
+  assert.deepEqual(calls.find((args) => args[0] === "api" && args[1] === "--method"), ["api", "--method", "GET",
     "repos/team/project/issues/comments/77", "--hostname", "ghe.example.test"]);
   assert.equal(calls.filter((args) => args[1] === "comment").length, 1);
 });

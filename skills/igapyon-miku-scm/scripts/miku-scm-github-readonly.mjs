@@ -3,14 +3,18 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { ghRepository, parseRepository, repositoryCacheParts } from "./miku-scm-repository.mjs";
 
-import { parseArgs as parseIssueReadArgs, runIssueRead } from "./github-issue-read.mjs";
+import {
+  parseArgs as parseIssueReadArgs,
+  runIssueRead,
+  validateCachedIssueList,
+} from "./github-issue-read.mjs";
 
 const QUERY = /^(?:labels|issue:[1-9]\d*|issues:(?:open|closed|all))$/;
 const DEFAULT_TTL_MS = 10 * 60 * 1000;
 const MAX_QUERIES = 20;
 const MAX_CONCURRENCY = 4;
 
-export const GITHUB_READONLY_SCHEMA_VERSION = "miku-scm.github-readonly/v1";
+export const GITHUB_READONLY_SCHEMA_VERSION = "miku-scm.github-readonly/v3";
 
 export function parseGitHubBatchArgs(argv, cwd = process.cwd()) {
   const options = {
@@ -54,13 +58,14 @@ function queryArgs(repository, query) {
   return ["--repo", repository, "--list", "--state", query.slice(7)];
 }
 
-async function readCache(file) {
+async function readCache(file, repository, query) {
   try {
     const record = JSON.parse(await readFile(file, "utf8"));
     if (record?.schema_version !== GITHUB_READONLY_SCHEMA_VERSION
-      || typeof record.repository !== "string" || typeof record.query !== "string"
+      || record.repository !== repository || record.query !== query
       || typeof record.fetched_at !== "string" || record.complete !== true
       || !("value" in record)) return null;
+    if (query.startsWith("issues:")) validateCachedIssueList(record.value, repository, query.slice(7));
     return record;
   } catch {
     return null;
@@ -101,7 +106,7 @@ export async function runGitHubBatch(options, dependencies = {}) {
 
   const entries = await parallelMap(uniqueQueries, MAX_CONCURRENCY, async (query) => {
     const file = path.join(cacheDirectory, `${queryDigest(options.repository, query)}.json`);
-    const cached = await readCache(file);
+    const cached = await readCache(file, options.repository, query);
     const ageMs = cached ? now.getTime() - new Date(cached.fetched_at).getTime() : null;
     if (!options.refresh && cached && Number.isFinite(ageMs) && ageMs >= 0 && ageMs <= options.ttlMs) {
       counters.cache_hits += 1;
@@ -109,7 +114,10 @@ export async function runGitHubBatch(options, dependencies = {}) {
     }
     try {
       counters.fixed_gh_reads += 1;
-      const value = runIssueRead(parseIssueReadArgs(queryArgs(options.repository, query)), { gh });
+      const value = runIssueRead(parseIssueReadArgs(queryArgs(options.repository, query)), {
+        gh,
+        ghComments: dependencies.ghComments ?? (dependencies.gh ? gh : undefined),
+      });
       const record = {
         schema_version: GITHUB_READONLY_SCHEMA_VERSION,
         repository: options.repository,

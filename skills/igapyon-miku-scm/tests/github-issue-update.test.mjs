@@ -301,17 +301,24 @@ test("gh issue reader uses one fixed read-only command and validates its JSON", 
         state: CURRENT.state,
         labels: CURRENT.labels.map((name) => ({ name })),
         updatedAt: CURRENT.updatedAt,
-        comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false } },
       }),
       stderr: "",
     };
+  }, (args) => {
+    calls.push(args);
+    return { ok: true, status: 0, stderr: "", stdout: JSON.stringify({ data: { repository: { issue: {
+      number: CURRENT.number, url: CURRENT.url, updatedAt: CURRENT.updatedAt,
+      comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null } },
+    } } } }) };
   });
   assert.deepEqual(await reader("igapyon/example", 42), CURRENT);
-  assert.deepEqual(calls, [[
+  assert.deepEqual(calls[0], [
     "issue", "view", "42",
     "--repo", "igapyon/example",
-    "--json", "number,url,title,body,state,labels,updatedAt,comments",
-  ]]);
+    "--json", "number,url,title,body,state,labels,updatedAt",
+  ]);
+  assert.equal(calls[1][0], "api");
+  assert.equal(calls[1][1], "graphql");
 });
 
 test("gh label reader uses one fixed read-only command", async () => {
@@ -390,6 +397,49 @@ test("approved apply uses read-only gh issue view before and after mutation", as
   assert.equal(anonymousReads, 0);
   assert.equal(ghReads, 2);
   assert.equal(ghEdits, 1);
+});
+
+test("a comment change after preflight is detected before the Issue update mutation", async (t) => {
+  const state = await scenario(t);
+  let graphReads = 0;
+  let mutationCalls = 0;
+  const gh = (args) => {
+    if (args[0] === "issue" && args[1] === "view") {
+      return { ok: true, status: 0, stderr: "", stdout: JSON.stringify({
+        number: CURRENT.number,
+        url: CURRENT.url,
+        title: CURRENT.title,
+        body: CURRENT.body,
+        state: CURRENT.state,
+        labels: CURRENT.labels.map((name) => ({ name })),
+        updatedAt: CURRENT.updatedAt,
+      }) };
+    }
+    if (args[0] === "api" && args[1] === "graphql") {
+      graphReads += 1;
+      const body = graphReads === 1 ? "Original comment" : "Changed after review";
+      return { ok: true, status: 0, stderr: "", stdout: JSON.stringify({ data: { repository: { issue: {
+        number: CURRENT.number,
+        url: CURRENT.url,
+        updatedAt: CURRENT.updatedAt,
+        comments: { nodes: [{
+          id: "IC_1",
+          url: `${CURRENT.url}#issuecomment-1`,
+          body,
+          createdAt: "2026-07-23T01:00:00Z",
+          author: { login: "reviewer" },
+        }], totalCount: 1, pageInfo: { hasNextPage: false, endCursor: null } },
+      } } } }) };
+    }
+    mutationCalls += 1;
+    return { ok: true, status: 0, stderr: "", stdout: "" };
+  };
+
+  const preflight = await runIssueUpdate(optionsFor(state), { gh });
+  assert.equal(preflight.status, "preflight-ok");
+  const applied = await runIssueUpdate(applyOptions(state, preflight), { gh });
+  assert.equal(applied.status, "conflict");
+  assert.equal(mutationCalls, 0);
 });
 
 test("gh issue view failure before edit is not-applied and can recover safely", async (t) => {

@@ -368,7 +368,7 @@ operation is based on the same evidence the user sees.
 - Require the complete handoff review and a separate exact `approve` after displaying the target Issue, full current and proposed content, body diff, current/added/removed/resulting labels, and operation. A preflight is not approval.
 - Permit only one `gh issue edit` call containing reviewed changes to the title, body, and existing-label membership. Do not create or edit label definitions or change other Issue metadata.
 - Immediately before `gh`, require the public Issue title/body/labels snapshot and `updated_at` to equal the reviewed values. Record `conflict` and stop without mutation when they differ.
-- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt,comments` and `gh label list --limit 1000 --json name` inside the helper from preflight through post-update verification.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt` plus the shared bounded paginated GraphQL comment query, and `gh label list --limit 1000 --json name` inside the helper from preflight through post-update verification. Bind all comment pages to the Issue's exact `updatedAt`.
 - Persist a `pending` attempt before mutation and verify the exact title, body, and complete label set afterward. Record a `gh issue view` failure before `gh issue edit` as `not-applied` with `gh_invoked: false`; preserve and archive that safe record when retrying the same reviewed operation. Record only post-mutation uncertainty as `unresolved`, and never retry it automatically.
 
 ## Human-Approved Issue Comment
@@ -376,7 +376,7 @@ operation is based on the same evidence the user sees.
 - Use [github-issue-comment.md](github-issue-comment.md) and the bundled `scripts/github-issue-comment.mjs`.
 - Permit only one `gh issue comment <number> --repo <[host/]owner/repo> --body-file <temporary-file>` call using the complete reviewed comment draft.
 - Require the complete handoff review and a separate exact `approve` after displaying the target Issue and complete proposed comment. A preflight is not approval.
-- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt,comments` for the reviewed Issue snapshot and `gh api --method GET repos/<owner/repo>/issues/comments/<comment-id> [--hostname <selected-host>]` for post-comment verification. Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body. A pre-mutation READONLY failure is `not-applied`; bounded READONLY verification retries must never repeat the mutation.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt` plus the shared bounded paginated GraphQL comment query for the reviewed Issue snapshot, and `gh api --method GET repos/<owner/repo>/issues/comments/<comment-id> [--hostname <selected-host>]` for post-comment verification. Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body. A pre-mutation READONLY failure is `not-applied`; bounded READONLY verification retries must never repeat the mutation.
 - Do not edit or delete comments, use interactive or browser modes, or combine a comment with another mutation in one helper or `gh` command. The exact ordered handoff batch may orchestrate separately reviewed helpers and dependency-refresh only the allowlisted snapshot expectations in [approval-handoff.md](approval-handoff.md).
 
 ## Human-Approved Existing Issue Label Update
@@ -385,7 +385,7 @@ operation is based on the same evidence the user sees.
 - Permit one `gh issue edit` containing only reviewed repeated `--add-label` and `--remove-label` arguments for one Issue.
 - Require additions to name existing repository labels. Reject overlap and label-definition changes. Already-present additions and absent removals are harmless; return no changes required when the full request is already satisfied.
 - Require the complete handoff review and a separate exact `approve` after displaying the target Issue and current/added/removed/resulting labels. A preflight is not approval.
-- Use fixed READONLY `gh label list --limit 1000 --json name` and `gh issue view --json number,url,title,body,state,labels,updatedAt,comments` from preflight through verification. Persist `pending`, detect an intervening Issue change as `conflict`, and verify the complete resulting label set. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
+- Use fixed READONLY `gh label list --limit 1000 --json name` and `gh issue view --json number,url,title,body,state,labels,updatedAt` plus the shared bounded paginated GraphQL comment query from preflight through verification. Bind all comment pages to the Issue's exact `updatedAt`. Persist `pending`, detect an intervening Issue change as `conflict`, and verify the complete resulting label set. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
 
 ## Human-Approved Issue Close
 
@@ -393,7 +393,7 @@ operation is based on the same evidence the user sees.
 - Permit one `gh issue close` for an Open Issue with exact reason `completed`, `not planned`, or `duplicate`.
 - For `duplicate`, require and display one different, fixed-`gh issue view` verified target Issue and fix its reviewed snapshot digest through apply. Reject a duplicate target for other reasons.
 - Require the complete handoff review and a separate exact `approve` after displaying the current Issue, close reason, and duplicate target when applicable. A preflight is not approval.
-- Use fixed READONLY `gh issue view --json number,url,title,body,state,stateReason,updatedAt,labels,comments` from preflight through verification. Persist `pending`, detect a non-Open or changed Issue as `conflict`, and verify the closed state and reason. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,stateReason,updatedAt,labels` plus the shared bounded paginated GraphQL comment query from preflight through verification. Bind all comment pages to the Issue's exact `updatedAt`. Persist `pending`, detect a non-Open or changed Issue as `conflict`, and verify the closed state and reason. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
 - Permit a fresh close preflight after a recorded `conflict` or pre-mutation `not-applied`. A newly approved apply archives that safe no-mutation record before claiming a new attempt. Never archive, replace, or retry a `pending`, `closed`, or `unresolved` attempt.
 - Do not add a closing comment in the close command and do not permit reopen under this workflow.
 

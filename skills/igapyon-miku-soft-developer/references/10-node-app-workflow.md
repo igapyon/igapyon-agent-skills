@@ -109,6 +109,42 @@ Then ask or record which release asset should be attached, unless the user has c
 
 Creating or editing a local workflow file is allowed repository work. Pushing branches, opening pull requests, publishing releases, running `npm publish`, configuring secrets, or uploading release assets remains a human GitHub or registry operation as described in [repo-operations.md](repo-operations.md).
 
+## Runtime Dependency Decisions
+
+Before adding or changing a production dependency, follow the
+[main application dependency principles](miku-soft-basic/miku-soft-10-mainapp-design.md#scratch-implementation-and-dependency-principles)
+and record the decision in the design or implementation plan. Keep runtime
+dependencies at zero where practical, and keep them small when a dependency
+provides clear user value. Separate production dependencies from tools used
+only for development, testing, building, or release.
+
+For each proposed runtime dependency, compare the built-in Node.js option and
+the external package against:
+
+- behavior required by the product and the complexity of implementing it
+- specification correctness, edge-case coverage, and security consequences
+- user value, maintenance health, compatibility, and the failure modes users
+  would inherit
+- license compatibility and any repository policy for distributing the
+  dependency
+- package installation and lockfile impact, supported Node.js versions, and
+  generated CLI/runtime bundle contents and size
+
+Choose the standard library when it meets the product contract with a clear,
+maintainable implementation. Accept an external package when it materially
+improves correctness or safety, handles domain complexity better, or is central
+to the ecosystem value of the product. Keep the product's core data model,
+policy, diagnostics, and user-facing output understandable and under project
+control where practical. Do not reject a useful dependency only to minimize a
+package count.
+
+State why the standard-library option was not selected when adopting a runtime
+dependency, or why a proposed package was deferred. Include its license review
+and the expected
+packaging and bundle impact. Check the lockfile and reproducible install path,
+then run the relevant build, tests, CLI/runtime smoke checks, and package check
+that cover the dependency's shipped behavior.
+
 ## Node.js Compatibility Policy
 
 Keep the compatibility floor, CI runtime set, Release build host, and each
@@ -342,6 +378,7 @@ repository.
 7. In maintenance mode, normally adjust repositories that lack either standard
    artifact toward the two-artifact shape before updating release automation.
 8. Update README, docs, TODO, tests, and indexes when the main application contract changes.
+9. Record a runtime dependency decision before changing production dependencies; distinguish them from development tools and check license, packaging, and bundle effects.
 
 ## Node-Specific Checklist
 
@@ -357,5 +394,6 @@ When a Node app change touches executable behavior, check the relevant local con
 - import runtime bundle smoke behavior for metadata and core API exports
 - tests for core API, CLI subprocess behavior, encoding, path security, limits, diagnostics, fixtures, golden output, or roundtrip behavior
 - generated artifacts that should be rebuilt instead of hand-edited
+- production versus development dependency classification, the standard-library comparison, and the resulting package and bundle contents
 
 Run the smallest relevant command first, then broader build or smoke commands when the changed contract warrants them.

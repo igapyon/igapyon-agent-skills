@@ -225,3 +225,54 @@ test("Issue prepare retrieves exact existing labels through the fixed reader", a
   assert.equal(result.github_evidence.labels[0].name, "enhancement");
   assert.equal(result.writing_contract.generation_passes, 1);
 });
+
+test("Issue prepare collects every GraphQL comment page before applying its bounded summary", async () => {
+  const issueUrl = "https://github.com/a/b/issues/7";
+  const updatedAt = "2026-07-28T11:00:00Z";
+  const comments = [];
+  const result = await prepareWritingEvidence(
+    parseWritingPrepareArgs("issue", ["--github-repo", "a/b", "--issue", "7"], "/tmp/repository"),
+    {
+      git: fakeGit(),
+      readFile: async () => {
+        const error = new Error("missing");
+        error.code = "ENOENT";
+        throw error;
+      },
+      gh(args) {
+        if (args[0] === "api" && args[1] === "graphql") {
+          comments.push(args);
+          const secondPage = args.includes("cursor=next-page");
+          const nodes = secondPage
+            ? [{ id: "IC_101", url: `${issueUrl}#issuecomment-101`, body: "comment 101", createdAt: updatedAt, author: { login: "writer" } }]
+            : Array.from({ length: 100 }, (_, index) => ({
+                id: `IC_${index + 1}`,
+                url: `${issueUrl}#issuecomment-${index + 1}`,
+                body: `comment ${index + 1}`,
+                createdAt: updatedAt,
+                author: { login: "writer" },
+              }));
+          return {
+            ok: true, status: 0, stderr: "",
+            stdout: JSON.stringify({ data: { repository: { issue: {
+              number: 7, url: issueUrl, updatedAt,
+              comments: { nodes, totalCount: 101, pageInfo: { hasNextPage: !secondPage, endCursor: secondPage ? null : "next-page" } },
+            } } } }),
+          };
+        }
+        return {
+          ok: true, status: 0, stderr: "",
+          stdout: JSON.stringify({ number: 7, url: issueUrl, title: "Issue", body: "body", state: "OPEN", updatedAt, labels: [] }),
+        };
+      },
+      now: () => new Date("2026-07-28T12:30:00Z"),
+    },
+  );
+
+  assert.equal(comments.length, 2);
+  assert.equal(result.github_evidence.issue.comments.length, 100);
+  assert.equal(result.github_evidence.issue.comments_truncated, true);
+  assert.equal(result.github_evidence.issue.comments[0].author, "writer");
+  assert.equal(result.github_evidence.issue.comments[0].created_at, updatedAt);
+  assert.equal(result.github_evidence.issue.comments[0].body, "comment 1");
+});

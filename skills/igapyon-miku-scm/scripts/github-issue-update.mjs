@@ -21,7 +21,8 @@ import { repositoryCacheParts, ghRepository, parseRepository, matchesIssueUrl } 
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
-import { normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
+import { issueCommentsSha256, normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
+import { createGhCommentsRunner, readCompleteIssueCommentConnection } from "./github-issue-comments.mjs";
 
 const ISSUE_UPDATE_APPLY_CONTRACT = workflowContractById().get("github.issue.update.apply");
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
@@ -182,6 +183,7 @@ function issueSnapshotSha256(issue) {
     title: issue.title,
     body: issue.body,
     labels: canonicalLabels(issue.labels),
+    comments_sha256: issueCommentsSha256(issue.comments),
   }));
 }
 
@@ -308,12 +310,14 @@ async function replaceAttemptRecord(attemptPath, record) {
   }
 }
 
-export function createGhIssueReader(gh = createGhRunner()) {
+export function createGhIssueReader(gh, ghComments) {
+  const issueGh = gh ?? createGhRunner();
+  const commentsGh = ghComments ?? (gh ? gh : createGhCommentsRunner());
   return async (repository, issueNumber) => {
-    const result = gh([
+    const result = issueGh([
       "issue", "view", String(issueNumber),
       "--repo", repository,
-      "--json", "number,url,title,body,state,labels,updatedAt,comments",
+      "--json", "number,url,title,body,state,labels,updatedAt",
     ]);
     if (!result?.ok) {
       throw new Error(`gh issue view failed: ${ghDetail(result)}`);
@@ -331,13 +335,16 @@ export function createGhIssueReader(gh = createGhRunner()) {
       || typeof issue?.body !== "string"
       || !["OPEN", "CLOSED"].includes(issue?.state)
       || !Array.isArray(issue?.labels)
-      || !issue?.comments || typeof issue.comments !== "object"
       || issue.labels.some((label) => typeof label?.name !== "string")
       || typeof issue?.updatedAt !== "string"
       || !issue.updatedAt
     ) {
       throw new Error("gh issue view does not exactly identify the requested Issue");
     }
+    const comments = readCompleteIssueCommentConnection(repository, issueNumber, {
+      gh: commentsGh,
+      expectedUpdatedAt: issue.updatedAt,
+    });
     return {
       number: issue.number,
       url: issue.url,
@@ -346,7 +353,7 @@ export function createGhIssueReader(gh = createGhRunner()) {
       state: issue.state,
       labels: issue.labels.map((label) => label.name),
       updatedAt: issue.updatedAt,
-      comments: normalizeIssueCommentConnection(issue.comments),
+      comments: normalizeIssueCommentConnection(comments),
     };
   };
 }
@@ -526,7 +533,8 @@ async function verifyUpdatedIssue({
 
 export async function runIssueUpdate(options, dependencies = {}) {
   const gh = dependencies.gh ?? createGhRunner();
-  const readIssue = dependencies.readIssue ?? createGhIssueReader(gh);
+  const ghComments = dependencies.ghComments ?? (dependencies.gh ? gh : createGhCommentsRunner());
+  const readIssue = dependencies.readIssue ?? createGhIssueReader(gh, ghComments);
   const readLabels = dependencies.readLabels ?? createGhLabelReader(gh);
   const readIssueForApply = dependencies.readIssueWithGh ?? readIssue;
   const applyReadSource = dependencies.readIssueWithGh || !dependencies.readIssue

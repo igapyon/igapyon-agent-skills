@@ -36,6 +36,8 @@ A miku-soft Node.js CLI should satisfy these principles:
   normal operations.
 - It keeps product semantics in shared core logic, with CLI code limited to
   option parsing, file I/O, stdout, stderr, process exit, and runtime adapters.
+- Before adding production packages, apply the
+  [Node App Workflow dependency decision](../10-node-app-workflow.md#runtime-dependency-decisions): compare the standard library with the package on correctness, safety, maintenance, compatibility, license, user value, and shipped bundle impact.
 
 ## Input and Option Checks
 
@@ -244,6 +246,12 @@ Check these points:
 Development-time dependency installation is not a normal CLI operation. Do not
 confuse `npm install` or maintenance scripts with the product execution
 contract.
+
+For existing and proposed packages, confirm which dependencies ship at
+runtime, why built-in Node.js APIs do or do not meet the product contract, and
+how package and bundle contents are affected. A small, well-supported runtime
+dependency is acceptable when it reduces meaningful correctness, security,
+or domain-complexity risk.
 
 ## File I/O Predictability Checks
 

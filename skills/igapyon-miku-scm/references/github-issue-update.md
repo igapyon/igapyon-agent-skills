@@ -24,7 +24,8 @@ duplicate-attempt protection.
 This workflow's static helper permits only these READONLY commands:
 
 ```text
-gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt,comments
+gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt
+gh api graphql --method POST [--hostname <selected-host>] -f query=<fixed IssueComments query> -f owner=<owner> -f name=<repo> -F number=<number> [-f cursor=<endCursor>]
 gh label list --repo <[host/]owner/repo> --limit 1000 --json name
 ```
 
@@ -63,7 +64,12 @@ node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \
   [--remove-label <existing-label>]...
 ```
 
-Preflight is READONLY and uses only the fixed `gh issue view` and, when label changes are requested, `gh label list` commands. It rejects Pull Requests; nonstandard draft names produce an import notice. The handoff retains:
+Preflight is READONLY. It reads Issue metadata with fixed `gh issue view`,
+retrieves all comments with the shared fixed GraphQL pagination query, and uses
+`gh label list` only when label changes are requested. It rejects Pull
+Requests; nonstandard draft names produce an import notice. The complete
+comment snapshot must match the Issue `updatedAt` read before it is accepted.
+The handoff retains:
 
 - exact `owner/repo#number` and Issue URL
 - current title and complete current body

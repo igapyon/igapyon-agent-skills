@@ -10,6 +10,7 @@ import { repositoryCacheParts, ghRepository, parseRepository, matchesIssueUrl } 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 import { issueCommentsSha256, normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
+import { createGhCommentsRunner, readCompleteIssueCommentConnection } from "./github-issue-comments.mjs";
 
 const ISSUE_CLOSE_APPLY_CONTRACT = workflowContractById().get("github.issue.close.apply");
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
@@ -147,10 +148,12 @@ function issueSnapshotSha256(issue) {
 
 function ghDetail(result) { return result?.stderr || result?.stdout || result?.error?.message || `exit ${result?.status}`; }
 
-export function createGhIssueReader(gh = createGhRunner()) {
+export function createGhIssueReader(gh, ghComments) {
+  const issueGh = gh ?? createGhRunner();
+  const commentsGh = ghComments ?? (gh ? gh : createGhCommentsRunner());
   return async (repository, issueNumber) => {
-    const result = gh(["issue", "view", String(issueNumber), "--repo", repository,
-      "--json", "number,url,title,body,state,stateReason,updatedAt,labels,comments"]);
+    const result = issueGh(["issue", "view", String(issueNumber), "--repo", repository,
+      "--json", "number,url,title,body,state,stateReason,updatedAt,labels"]);
     if (!result?.ok) throw new Error(`gh issue view failed: ${ghDetail(result)}`);
     let issue;
     try { issue = JSON.parse(result.stdout); } catch { throw new Error("gh issue view returned malformed JSON"); }
@@ -163,15 +166,18 @@ export function createGhIssueReader(gh = createGhRunner()) {
       || (typeof issue?.stateReason !== "string" && issue?.stateReason !== null)
       || !Array.isArray(issue?.labels)
       || issue.labels.some((label) => typeof label?.name !== "string")
-      || !issue?.comments || typeof issue.comments !== "object"
     ) {
       throw new Error("gh issue view does not exactly identify the requested Issue");
     }
+    const comments = readCompleteIssueCommentConnection(repository, issueNumber, {
+      gh: commentsGh,
+      expectedUpdatedAt: issue.updatedAt,
+    });
     return {
       number: issue.number, url: issue.url, title: issue.title, body: issue.body ?? "",
       state: issue.state, stateReason: issue.stateReason, updatedAt: issue.updatedAt,
       labels: issue.labels.map((label) => label.name),
-      comments: normalizeIssueCommentConnection(issue.comments),
+      comments: normalizeIssueCommentConnection(comments),
     };
   };
 }
@@ -322,8 +328,9 @@ async function verifyClosed(readIssue, sleep, repository, issueNumber, reason) {
 export async function runIssueClose(options, dependencies = {}) {
   const root = await realpath(path.resolve(options.root));
   const ghRead = dependencies.ghRead ?? createGhRunner();
+  const ghComments = dependencies.ghComments ?? (dependencies.ghRead ? ghRead : createGhCommentsRunner());
   const ghMutation = dependencies.ghMutation ?? dependencies.gh ?? createGhRunner();
-  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead);
+  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead, ghComments);
   const sleep = dependencies.sleep ?? wait;
   const digest = operationSha256(options);
   const attempt = attemptPath(root, options.repository, options.issueNumber, digest);
