@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
-import { ghRepository, parseRepository } from "./miku-scm-repository.mjs";
-
-import { normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
+import { ghRepository, matchesIssueUrl, parseRepository } from "./miku-scm-repository.mjs";
+import { createGhCommentsRunner, readCompleteIssueCommentConnection } from "./github-issue-comments.mjs";
 
 function usage() {
   return `Usage: github-issue-read.mjs --repo <[host/]owner/repo> (--list [--state <open|closed|all>] | --issue <number> | --labels)
@@ -80,22 +79,69 @@ function normalizeIssue(issue) {
   };
 }
 
-export function runIssueRead(options, { gh = defaultGh } = {}) {
+export function normalizeIssueLabels(labels) {
+  if (!Array.isArray(labels)) {
+    throw new Error("gh Issue list returned malformed labels");
+  }
+  const names = new Set();
+  return labels.map((label) => {
+    if (!label || typeof label.name !== "string" || label.name.trim() === ""
+      || typeof label.color !== "string" || !/^[0-9a-fA-F]{6}$/.test(label.color)
+      || (label.description !== null && typeof label.description !== "string")) {
+      throw new Error("gh Issue list returned malformed label metadata");
+    }
+    if (names.has(label.name)) throw new Error("gh Issue list returned duplicate label names");
+    names.add(label.name);
+    return { name: label.name, color: label.color, description: label.description };
+  });
+}
+
+export function validateCachedIssueList(value, repository, state) {
+  if (!value || value.mode !== "list" || value.repository !== repository || value.state !== state
+    || !Array.isArray(value.issues)) {
+    throw new Error("Cached Issue list does not match its repository and query");
+  }
+  for (const issue of value.issues) {
+    if (!issue || !Number.isSafeInteger(issue.number) || issue.number < 1
+      || typeof issue.state !== "string" || typeof issue.title !== "string"
+      || typeof issue.body !== "string" || typeof issue.html_url !== "string"
+      || typeof issue.updated_at !== "string") {
+      throw new Error("Cached Issue list contains malformed Issue metadata");
+    }
+    normalizeIssueLabels(issue.labels);
+  }
+  return value;
+}
+
+export function runIssueRead(options, dependencies = {}) {
+  const gh = dependencies.gh ?? defaultGh;
+  const ghComments = dependencies.ghComments ?? (dependencies.gh ? gh : createGhCommentsRunner());
   if (options.mode === "list") {
     const entries = runGh(gh, ["issue", "list", "--repo", options.repo, "--state", options.state,
-      "--limit", "1000", "--json", "number,state,title,body,url,updatedAt"]);
+      "--limit", "1000", "--json", "number,state,title,body,url,updatedAt,labels"]);
     if (!Array.isArray(entries)) throw new Error("gh issue list returned a non-array response");
-    return { mode: "list", repository: options.repo, state: options.state, issues: entries.map(normalizeIssue) };
+    return {
+      mode: "list",
+      repository: options.repo,
+      state: options.state,
+      issues: entries.map((issue) => ({ ...normalizeIssue(issue), labels: normalizeIssueLabels(issue.labels) })),
+    };
   }
   if (options.mode === "issue") {
     const issue = runGh(gh, ["issue", "view", String(options.issue), "--repo", options.repo,
-      "--json", "number,state,title,body,url,updatedAt,labels,comments"]);
+      "--json", "number,state,title,body,url,updatedAt,labels"]);
+    if (issue?.number !== options.issue || !matchesIssueUrl(issue?.url, options.repo, options.issue)) {
+      throw new Error("gh issue view does not exactly identify the requested Issue");
+    }
     const normalized = normalizeIssue(issue);
     if (!Array.isArray(issue.labels)) {
       throw new Error("gh issue view returned malformed labels");
     }
-    normalizeIssueCommentConnection(issue.comments);
-    const comments = issue.comments.nodes ?? issue.comments.Nodes;
+    const connection = readCompleteIssueCommentConnection(options.repo, options.issue, {
+      gh: ghComments,
+      expectedUpdatedAt: issue.updatedAt,
+    });
+    const comments = connection.nodes;
     return { mode: "issue", repository: options.repo, issue: { ...normalized, labels: issue.labels, comments } };
   }
   const labels = runGh(gh, ["label", "list", "--repo", options.repo, "--limit", "1000", "--json", "name,description,color"]);

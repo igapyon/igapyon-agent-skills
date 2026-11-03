@@ -175,17 +175,24 @@ test("gh Issue reader uses one fixed READONLY command and validates its JSON", a
       stdout: JSON.stringify({
         ...ISSUE,
         labels: ISSUE.labels.map((name) => ({ name })),
-        comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false } },
       }),
       stderr: "",
     };
+  }, (args) => {
+    calls.push(args);
+    return { ok: true, status: 0, stderr: "", stdout: JSON.stringify({ data: { repository: { issue: {
+      number: ISSUE.number, url: ISSUE.url, updatedAt: ISSUE.updatedAt,
+      comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null } },
+    } } } }) };
   });
   assert.deepEqual(await reader("igapyon/example", 42), ISSUE);
-  assert.deepEqual(calls, [[
+  assert.deepEqual(calls[0], [
     "issue", "view", "42",
     "--repo", "igapyon/example",
-    "--json", "number,url,title,body,state,labels,updatedAt,comments",
-  ]]);
+    "--json", "number,url,title,body,state,labels,updatedAt",
+  ]);
+  assert.equal(calls[1][0], "api");
+  assert.equal(calls[1][1], "graphql");
 });
 
 test("gh label reader uses one fixed READONLY command and validates its JSON", async () => {

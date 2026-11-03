@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { parseArgs, runIssueClose } from "../scripts/github-issue-close.mjs";
+import { createGhIssueReader, parseArgs, runIssueClose } from "../scripts/github-issue-close.mjs";
 
 const ISSUE = {
   number: 42,
@@ -17,6 +17,31 @@ const ISSUE = {
   labels: [],
   comments: [],
 };
+
+test("close Issue reader binds complete GraphQL comments to the fixed metadata read", async () => {
+  const calls = [];
+  const reader = createGhIssueReader((args) => {
+    calls.push(args);
+    const { comments: _comments, ...metadata } = ISSUE;
+    return { ok: true, status: 0, stdout: JSON.stringify({
+      ...metadata,
+      stateReason: null,
+      labels: [],
+    }) };
+  }, (args) => {
+    calls.push(args);
+    return { ok: true, status: 0, stderr: "", stdout: JSON.stringify({ data: { repository: { issue: {
+      number: ISSUE.number,
+      url: ISSUE.url,
+      updatedAt: ISSUE.updatedAt,
+      comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null } },
+    } } } }) };
+  });
+  assert.deepEqual(await reader("igapyon/example", ISSUE.number), ISSUE);
+  assert.ok(calls[0].includes("number,url,title,body,state,stateReason,updatedAt,labels"));
+  assert.equal(calls[1][0], "api");
+  assert.equal(calls[1][1], "graphql");
+});
 
 async function scenario(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), "miku-scm-close-test-"));

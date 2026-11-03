@@ -251,8 +251,8 @@ node skills/igapyon-miku-scm/scripts/miku-scm-run.mjs \
 For `github.issue.read --list`, the human output shows the Issue count and one
 line per result in the returned order. Each line contains the Issue number,
 state, and full title; title whitespace is collapsed to keep each Issue on one
-line. An empty list prints `Issues: none`. The structured JSON result and the
-fixed GitHub read command are unchanged.
+line. The structured JSON result also includes each Issue's validated label
+metadata. An empty list prints `Issues: none`.
 
     Issue count: 2
     Issues:

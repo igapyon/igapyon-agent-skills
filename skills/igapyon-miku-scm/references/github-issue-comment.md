@@ -41,13 +41,15 @@ mutation under [approval-handoff.md](approval-handoff.md).
 The helper's complete fixed `gh` command surface is:
 
 ```text
-gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt,comments
+gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt
+gh api graphql --method POST [--hostname <selected-host>] -f query=<fixed IssueComments query> -f owner=<owner> -f name=<repo> -F number=<number> [-f cursor=<endCursor>]
 gh issue comment <number> --repo <[host/]owner/repo> --body-file <generated-temporary-body-file>
 gh api --method GET repos/<owner/repo>/issues/comments/<comment-id> [--hostname <selected-host>]
 ```
 
-The first and third commands are READONLY and are separate from the one mutation
-command. `<owner/repo>`, `<number>`, and `<comment-id>` are validated values;
+The Issue view and GraphQL page reads are READONLY and separate from the one
+comment mutation. GraphQL pagination is bounded and rejects partial or
+snapshot-mismatched results before review. `<owner/repo>`, `<number>`, and `<comment-id>` are validated values;
 the comment ID is accepted only from the exact URL returned by the fixed mutation.
 
 ## Draft and Preflight

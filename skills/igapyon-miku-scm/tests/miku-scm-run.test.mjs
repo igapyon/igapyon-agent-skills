@@ -342,6 +342,19 @@ test("READONLY Issue workflow completes in one runner call with stable artifacts
     now: () => new Date("2026-07-27T14:00:00Z"),
     gh: (args) => {
       calls.push(args);
+      if (args[0] === "api") {
+        return {
+          ok: true,
+          status: 0,
+          stderr: "",
+          stdout: JSON.stringify({ data: { repository: { issue: {
+            number: 7,
+            url: "https://github.com/a/b/issues/7",
+            updatedAt: "2026-07-27T13:00:00Z",
+            comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null } },
+          } } } }),
+        };
+      }
       return {
         ok: true,
         status: 0,
@@ -354,7 +367,6 @@ test("READONLY Issue workflow completes in one runner call with stable artifacts
           url: "https://github.com/a/b/issues/7",
           updatedAt: "2026-07-27T13:00:00Z",
           labels: [],
-          comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false } },
         }),
       };
     },
@@ -364,16 +376,18 @@ test("READONLY Issue workflow completes in one runner call with stable artifacts
   assert.equal(result.status, "success");
   assert.equal(result.delegate_status, null);
   assert.equal(result.workflow_contract, "github.issue.read");
-  assert.equal(result.contract_version, 1);
+  assert.equal(result.contract_version, 3);
   assert.match(result.contract_pair_sha256, /^[0-9a-f]{64}$/);
   assert.equal(result.human_output_schema_version, HUMAN_OUTPUT_SCHEMA_VERSION);
   assert.match(result.human_output, /^\[SUCCESS\] GitHub Issue read/);
   assert.match(result.human_output, /Issue: #7/);
   assert.match(result.human_output, /URL: https:\/\/github\.com\/a\/b\/issues\/7/);
-  assert.deepEqual(calls, [[
+  assert.deepEqual(calls[0], [
     "issue", "view", "7", "--repo", "a/b",
-    "--json", "number,state,title,body,url,updatedAt,labels,comments",
-  ]]);
+    "--json", "number,state,title,body,url,updatedAt,labels",
+  ]);
+  assert.equal(calls[1][0], "api");
+  assert.equal(calls[1][1], "graphql");
   const request = JSON.parse(await readFile(path.join(root, "runs", "readonly-1", "request.json"), "utf8"));
   const plan = JSON.parse(await readFile(path.join(root, "runs", "readonly-1", "plan.json"), "utf8"));
   const snapshot = JSON.parse(await readFile(path.join(root, "runs", "readonly-1", "snapshot.json"), "utf8"));
@@ -396,6 +410,7 @@ test("READONLY Issue list includes number, state, and title in human output", as
       body: "Body must not appear in human output.",
       url: "https://github.com/a/b/issues/17",
       updatedAt: "2026-07-27T13:00:00Z",
+      labels: [{ name: "bug", color: "d73a4a", description: "Broken behavior" }],
     },
     {
       number: 4,
@@ -404,6 +419,7 @@ test("READONLY Issue list includes number, state, and title in human output", as
       body: "Second body must stay in structured data only.",
       url: "https://github.com/a/b/issues/4",
       updatedAt: "2026-07-27T12:00:00Z",
+      labels: [],
     },
   ];
   const result = await runWorkflow("github.issue.read", ["--repo", "a/b", "--list"], {
@@ -424,12 +440,12 @@ test("READONLY Issue list includes number, state, and title in human output", as
   assert.ok(result.human_output.includes("#4 [OPEN] Second title"));
   assert.doesNotMatch(result.human_output, /Body must not appear|Second body must stay/);
   assert.deepEqual(
-    result.result.issues.map(({ title, body }) => ({ title, body })),
-    issues.map(({ title, body }) => ({ title, body })),
+    result.result.issues.map(({ title, body, labels }) => ({ title, body, labels })),
+    issues.map(({ title, body, labels }) => ({ title, body, labels })),
   );
   assert.deepEqual(calls, [[
     "issue", "list", "--repo", "a/b", "--state", "open", "--limit", "1000",
-    "--json", "number,state,title,body,url,updatedAt",
+    "--json", "number,state,title,body,url,updatedAt,labels",
   ]]);
   const saved = JSON.parse(await readFile(path.join(root, "runs", "readonly-list-titles", "result.json"), "utf8"));
   assert.equal(saved.human_output, result.human_output);

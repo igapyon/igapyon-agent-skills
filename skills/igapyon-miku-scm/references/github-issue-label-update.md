@@ -31,7 +31,8 @@ The helper's complete fixed `gh` command surface is:
 
 ```text
 gh label list --repo <[host/]owner/repo> --limit 1000 --json name
-gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt,comments
+gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt
+gh api graphql --method POST [--hostname <selected-host>] -f query=<fixed IssueComments query> -f owner=<owner> -f name=<repo> -F number=<number> [-f cursor=<endCursor>]
 gh issue edit <number> --repo <[host/]owner/repo> [--add-label <name>]... [--remove-label <name>]...
 ```
 
@@ -40,8 +41,9 @@ Every variable is validated, and no arbitrary argument is accepted.
 
 ## Preflight
 
-Retrieve the Issue and complete repository label list with the fixed READONLY
-commands above. Reject:
+Retrieve Issue metadata, all comment pages, and the complete repository label
+list with the fixed READONLY commands above. The GraphQL comment snapshot must
+match the Issue `updatedAt`. Reject:
 
 - labels that do not exist exactly in the repository
 - a label requested for both addition and removal

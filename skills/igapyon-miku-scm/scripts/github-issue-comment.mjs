@@ -22,6 +22,7 @@ import { repositoryCacheParts, ghRepository, parseRepository, matchesIssueUrl, r
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 import { normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
+import { createGhCommentsRunner, readCompleteIssueCommentConnection } from "./github-issue-comments.mjs";
 
 const ISSUE_COMMENT_APPLY_CONTRACT = workflowContractById().get("github.issue.comment.apply");
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
@@ -208,12 +209,14 @@ function ghDetail(result) {
   return result?.stderr || result?.stdout || result?.error?.message || `exit ${result?.status}`;
 }
 
-export function createGhIssueReader(gh = createGhRunner()) {
+export function createGhIssueReader(gh, ghComments) {
+  const issueGh = gh ?? createGhRunner();
+  const commentsGh = ghComments ?? (gh ? gh : createGhCommentsRunner());
   return async (repository, issueNumber) => {
-    const result = gh([
+    const result = issueGh([
       "issue", "view", String(issueNumber),
       "--repo", repository,
-      "--json", "number,url,title,body,state,labels,updatedAt,comments",
+      "--json", "number,url,title,body,state,labels,updatedAt",
     ]);
     if (!result?.ok) throw new Error(`gh issue view failed: ${ghDetail(result)}`);
     let issue;
@@ -229,13 +232,16 @@ export function createGhIssueReader(gh = createGhRunner()) {
       || typeof issue?.body !== "string"
       || !["OPEN", "CLOSED"].includes(issue?.state)
       || !Array.isArray(issue?.labels)
-      || !issue?.comments || typeof issue.comments !== "object"
       || issue.labels.some((label) => typeof label?.name !== "string" || !label.name)
       || typeof issue?.updatedAt !== "string"
       || !issue.updatedAt
     ) {
       throw new Error("gh issue view does not exactly identify the requested Issue");
     }
+    const comments = readCompleteIssueCommentConnection(repository, issueNumber, {
+      gh: commentsGh,
+      expectedUpdatedAt: issue.updatedAt,
+    });
     return {
       number: issue.number,
       url: issue.url,
@@ -244,7 +250,7 @@ export function createGhIssueReader(gh = createGhRunner()) {
       body: issue.body,
       labels: issue.labels.map((label) => label.name),
       updatedAt: issue.updatedAt,
-      comments: normalizeIssueCommentConnection(issue.comments),
+      comments: normalizeIssueCommentConnection(comments),
     };
   };
 }
@@ -332,8 +338,9 @@ function applyArguments(options, draft, issue) {
 
 export async function runIssueComment(options, dependencies = {}) {
   const ghRead = dependencies.ghRead ?? createGhRunner();
+  const ghComments = dependencies.ghComments ?? (dependencies.ghRead ? ghRead : createGhCommentsRunner());
   const ghMutation = dependencies.ghMutation ?? dependencies.gh ?? createGhRunner();
-  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead);
+  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead, ghComments);
   const readComment = dependencies.readComment ?? createGhCommentReader(ghRead);
   const sleep = dependencies.sleep ?? wait;
   const draft = await resolveDraft(options);

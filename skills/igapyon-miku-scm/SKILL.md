@@ -239,7 +239,11 @@ current branch, and retained stash; preserve the partial state for recovery.
    second `--state all` read merely to calculate an Open/Closed breakdown.
    Use `--state closed` or `--state all` only when the user explicitly needs
    closed or historical Issues, completion metrics, or comparison with a
-   closed Issue.
+   closed Issue. Use exact returned labels such as `bug` to prioritize a
+   shortlist; inspect the Issue text for scope and dependencies, and do not
+   infer completion, duplication, or readiness from labels alone. Read
+   individual Issues only when the shortlist needs comments or other missing
+   context.
 5. Never issue `gh` directly. GitHub CLI access is allowed only inside the
    fixed bundled helpers. If no fixed helper or anonymous REST route exists,
    stop instead of inventing a command.

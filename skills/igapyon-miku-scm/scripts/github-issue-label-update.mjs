@@ -10,6 +10,7 @@ import { repositoryCacheParts, ghRepository, parseRepository, matchesIssueUrl } 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 import { normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
+import { createGhCommentsRunner, readCompleteIssueCommentConnection } from "./github-issue-comments.mjs";
 
 const ISSUE_LABEL_APPLY_CONTRACT = workflowContractById().get("github.issue.label.apply");
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
@@ -147,12 +148,14 @@ function ghDetail(result) {
   return result?.stderr || result?.stdout || result?.error?.message || `exit ${result?.status}`;
 }
 
-export function createGhIssueReader(gh = createGhRunner()) {
+export function createGhIssueReader(gh, ghComments) {
+  const issueGh = gh ?? createGhRunner();
+  const commentsGh = ghComments ?? (gh ? gh : createGhCommentsRunner());
   return async (repository, issueNumber) => {
-    const result = gh([
+    const result = issueGh([
       "issue", "view", String(issueNumber),
       "--repo", repository,
-      "--json", "number,url,title,body,state,labels,updatedAt,comments",
+      "--json", "number,url,title,body,state,labels,updatedAt",
     ]);
     if (!result?.ok) throw new Error(`gh issue view failed: ${ghDetail(result)}`);
     let issue;
@@ -170,7 +173,6 @@ export function createGhIssueReader(gh = createGhRunner()) {
       || typeof issue?.updatedAt !== "string"
       || !issue.updatedAt
       || !Array.isArray(issue?.labels)
-      || !issue?.comments || typeof issue.comments !== "object"
       || issue.labels.some((label) => typeof label?.name !== "string" || !label.name)
     ) {
       throw new Error("gh issue view does not exactly identify the requested Issue");
@@ -179,6 +181,10 @@ export function createGhIssueReader(gh = createGhRunner()) {
     if (new Set(labels).size !== labels.length) {
       throw new Error("gh issue view returned duplicate labels");
     }
+    const comments = readCompleteIssueCommentConnection(repository, issueNumber, {
+      gh: commentsGh,
+      expectedUpdatedAt: issue.updatedAt,
+    });
     return {
       number: issue.number,
       url: issue.url,
@@ -187,7 +193,7 @@ export function createGhIssueReader(gh = createGhRunner()) {
       state: issue.state,
       updatedAt: issue.updatedAt,
       labels,
-      comments: normalizeIssueCommentConnection(issue.comments),
+      comments: normalizeIssueCommentConnection(comments),
     };
   };
 }
@@ -355,8 +361,9 @@ function applyArguments(options, operationDigest, current) {
 export async function runIssueLabelUpdate(options, dependencies = {}) {
   const root = await realpath(path.resolve(options.root));
   const ghRead = dependencies.ghRead ?? createGhRunner();
+  const ghComments = dependencies.ghComments ?? (dependencies.ghRead ? ghRead : createGhCommentsRunner());
   const ghMutation = dependencies.ghMutation ?? dependencies.gh ?? createGhRunner();
-  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead);
+  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead, ghComments);
   const readLabels = dependencies.readLabels ?? createGhLabelReader(ghRead);
   const sleep = dependencies.sleep ?? wait;
   const digest = operationSha256(options);

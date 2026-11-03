@@ -39,25 +39,35 @@ Do not add direct `gh` use merely because an anonymous request failed. Add or re
 Use [../scripts/github-issue-read.mjs](../scripts/github-issue-read.mjs) for generic public Issue retrieval. The AI Agent invokes the helper, never `gh` directly. Its fixed READONLY command surface is:
 
 ```text
-gh issue list --repo <[host/]owner/repo> --state <open|closed|all> --limit 1000 --json number,state,title,body,url,updatedAt
-gh issue view <positive-number> --repo <[host/]owner/repo> --json number,state,title,body,url,updatedAt,labels,comments
+gh issue list --repo <[host/]owner/repo> --state <open|closed|all> --limit 1000 --json number,state,title,body,url,updatedAt,labels
+gh issue view <positive-number> --repo <[host/]owner/repo> --json number,state,title,body,url,updatedAt,labels
 gh label list --repo <[host/]owner/repo> --limit 1000 --json name,description,color
+gh api graphql --method POST [--hostname <selected-host>] -f query=<fixed IssueComments query> -f owner=<owner> -f name=<repo> -F number=<positive-number> [-f cursor=<validated-endCursor>]
 ```
 
-The operation-specific readers also request complete comment snapshots for
-review and composite-operation checks:
+The single-Issue readers fetch comments with the fixed GraphQL query in
+`scripts/github-issue-comments.mjs`. It requests at most 100 comments per page
+and uses only GitHub's `pageInfo.endCursor` for the next request. It rejects
+GraphQL errors, identity or `updatedAt` changes, malformed or duplicate nodes,
+invalid cursors, incomplete totals, 100 pages, 64 MiB aggregate response data,
+or a page subprocess exceeding 15 seconds / 16 MiB. It never uses GraphQL
+mutation fields or caller-supplied query text. The selected host is passed only
+through `--hostname` from the validated repository.
+
+Operation-specific REST readers fetch only Issue metadata; the shared comment
+query is then bound to that snapshot's exact `updatedAt`:
 
 ```text
-Issue update/comment/label view: number,url,title,body,state,labels,updatedAt,comments
-Issue close view: number,url,title,body,state,stateReason,updatedAt,labels,comments
+Issue update/comment/label view: number,url,title,body,state,labels,updatedAt
+Issue close view: number,url,title,body,state,stateReason,updatedAt,labels
 Issue create parent view: number,url,title,state,updatedAt
 Issue create verification: number,url,labels,parent
 ```
 
-For Issue views, `comments` is a paginated connection. Validate that it has a
-`nodes` array and integer `totalCount`, that the count equals the node length,
-and that `pageInfo.hasNextPage` is not true. Reject incomplete comment evidence
-before showing an approval review or applying a write.
+Reject incomplete comment evidence before showing an approval review or
+applying a write. Generic Issue reads and writing preparation return only the
+fully aggregated comment nodes; bounded writing summaries may truncate those
+nodes after retrieval and must preserve an explicit truncation flag.
 
 Every Issue write must be prepared and applied through `miku-scm-run.mjs`.
 Show the complete saved operation plan, then wait for a separate user message
