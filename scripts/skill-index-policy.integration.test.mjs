@@ -9,6 +9,7 @@ import { projectRoot, validateSkillIndexPolicy } from "./skill-index-policy.mjs"
 const repo = "https://example.test/external-skill.git";
 const externalSkill = "external-skill";
 const rootName = "index-policy-fixture-1.0";
+const fixtureTimestamp = "2026-11-02T00:00:00Z";
 const indexEntry = (skill) => ({
   skill, indexPath: "index.json", reason: "Fixture consumer", consumer: "Fixture reader", evidence: "Fixture evidence",
 });
@@ -17,7 +18,7 @@ function fixture(context, { skills = ["retained-skill", "without-index"], adopte
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "skill-index-integration-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, "scripts"));
-  for (const script of ["skill-index-policy.mjs", "generate-skill-indexes.mjs", "check-generated-indexes.mjs", "check-release-archive.mjs", "release-archive-files.mjs", "skill-reference-routes.mjs"]) {
+  for (const script of ["skill-index-policy.mjs", "generate-skill-indexes.mjs", "check-generated-indexes.mjs", "check-release-archive.mjs", "release-archive-files.mjs", "skill-reference-routes.mjs", "record-release-archive-timestamp.mjs", "zip-entry-timestamps.mjs"]) {
     const source = path.join(projectRoot, "scripts", script);
     if (fs.existsSync(source)) fs.copyFileSync(source, path.join(root, "scripts", script));
   }
@@ -43,6 +44,14 @@ function fixture(context, { skills = ["retained-skill", "without-index"], adopte
   fs.writeFileSync(path.join(root, "pom.xml"), `<project><artifactId>index-policy-fixture</artifactId><version>1.0</version><properties>
 <external.sample.repo>${repo}</external.sample.repo><external.sample.ref>v1.0</external.sample.ref>
 <external.sample.skillName>${externalSkill}</external.sample.skillName></properties></project>`);
+  const timestamp = "2026-11-02T00:00:00Z";
+  fs.mkdirSync(path.join(root, "target"), { recursive: true });
+  fs.writeFileSync(path.join(root, "target", "release-archive-timestamp.json"), JSON.stringify({
+    schema_version: "igapyon-agent-skills.release-archive-timestamp/v1",
+    project_version: "1.0",
+    output_timestamp: timestamp,
+    output_timestamp_epoch_seconds: Date.parse(timestamp) / 1000,
+  }));
   return { root, skills, adopted, external, policy };
 }
 
@@ -72,7 +81,18 @@ function entriesFor(material) {
       entries.push({ name: `${prefix}/index.json`, data: indexText() });
     }
   }
-  return entries;
+  const directories = new Set();
+  for (const entry of entries) {
+    let parent = path.posix.dirname(entry.name);
+    while (parent !== ".") {
+      directories.add(`${parent}/`);
+      parent = path.posix.dirname(parent);
+    }
+  }
+  return [
+    ...[...directories].sort().map((name) => ({ name, data: "", mode: 0o040755 })),
+    ...entries,
+  ];
 }
 
 // Small stored ZIPs let fault cases include duplicate names and unsafe paths
@@ -82,6 +102,10 @@ function writeZip(file, entries) {
   const local = [], central = [];
   for (const entry of entries) {
     const name = Buffer.from(entry.name), data = Buffer.from(entry.data);
+    const dateText = entry.timestamp ?? fixtureTimestamp;
+    const [year, month, day] = dateText.slice(0, 10).split("-").map(Number);
+    const timeBits = 0;
+    const dateBits = ((year - 1980) << 9) | (month << 5) | day;
     let crc = 0xffffffff;
     for (const byte of data) {
       crc ^= byte;
@@ -90,11 +114,13 @@ function writeZip(file, entries) {
     crc = (crc ^ 0xffffffff) >>> 0;
     const header = Buffer.alloc(30);
     header.writeUInt32LE(0x04034b50, 0); header.writeUInt16LE(20, 4);
+    header.writeUInt16LE(timeBits, 10); header.writeUInt16LE(dateBits, 12);
     header.writeUInt32LE(crc, 14); header.writeUInt32LE(data.length, 18); header.writeUInt32LE(data.length, 22);
     header.writeUInt16LE(name.length, 26);
     local.push(header, name, data);
     const record = Buffer.alloc(46);
     record.writeUInt32LE(0x02014b50, 0); record.writeUInt16LE(0x0314, 4); record.writeUInt16LE(20, 6);
+    record.writeUInt16LE(timeBits, 12); record.writeUInt16LE(dateBits, 14);
     record.writeUInt32LE(crc, 16); record.writeUInt32LE(data.length, 20); record.writeUInt32LE(data.length, 24);
     record.writeUInt16LE(name.length, 28); record.writeUInt32LE(((entry.mode ?? 0o100644) << 16) >>> 0, 38);
     record.writeUInt32LE(offset, 42); central.push(record, name);
@@ -150,6 +176,14 @@ test("Mikuku routes pass when checked in the extracted archive", (context) => {
   const result = runArchive(material, entries);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /representative-routes=1/);
+});
+
+test("real ZIP rejects an entry whose timestamp differs from the recorded UTC build date", (context) => {
+  const material = fixture(context), entries = entriesFor(material);
+  entries.find((entry) => entry.name.endsWith("/README.md")).timestamp = "2026-11-03T00:00:00Z";
+  const result = runArchive(material, entries);
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stderr, /ZIP entries do not all use 2026-11-02T00:00:00Z/);
 });
 
 for (const [label, pathInSkill] of [

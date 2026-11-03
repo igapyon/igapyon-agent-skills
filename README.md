@@ -83,6 +83,9 @@ skill directory and should be copied together during installation.
 | `EXTERNAL_SKILLS.lock` | The upstream repositories, pinned commit SHAs, and names included in that release bundle. |
 | `LICENSE` | The distribution license; preserve additional licenses and attribution within skills. |
 
+The release ZIP records every outer archive entry at `00:00:00 UTC` on the UTC
+date when the Maven build started. ZIP timestamps do not store a timezone.
+
 For Note articles, `igapyon-mikuku-agent` handles the article body, and
 `igapyon-note-writer` supports publishing metadata and canonical article
 management. The documented `miku-scm draft recommit push` workflow belongs to
