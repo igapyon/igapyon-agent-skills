@@ -12,6 +12,8 @@ update_when:
 
 # Handoff
 
+2026-11-06：利用者と合意し、activityの上書き対策を簡素化した。新規作成は同名を上書きせず次の英字へ進む。既存更新は書く直前に読み直し、元の内容と違えば保存せず再検討する。活動ごとのロック、権限管理、解除失敗の警告処理と専用テストは削除。旧Issue activity追記も同じ直前確認を使う。確認から保存までの競合は許容する合意であり、厳密な排他制御を追加し直さない。source runtime 77/77、実daybook runtime 75/75（統合コピーでも成功）、参照・配布79/79、skill形式・差分検査が成功。実daybookの6ファイルと配備済みskillへ反映し、ほかのtracked 122ファイルの不変とskill同期を確認。手順は[activity操作](skills/igapyon-miku-daybook/references/operations.md#add-an-activity)、実装は[更新CLI](skills/igapyon-miku-daybook/assets/daybook/scripts/update-activity.mjs)を参照。同日導入したロック方式とその自己レビュー修正は、この簡素化指示で撤回した。先行する版数更新 `1.20261106.1` / `20261106a` と今回の差分は未commit。
+
 ## 現在地（2026-11-05照合）
 
 最新作業は共通版を `.5` / `20261026e` へ更新した後のsync説明補完・Windows CRLF fixture修正と、候補版数human output修正。候補修正はhuman output v15、5ケースと実producer接続テストを含み、詳細は[計画・検証記録](skills/igapyon-miku-scm/docs/2026-10-26-version-candidate-output-fix-plan.md)を参照。sync pull/push本体はPR #409でmerge済み（このcheckoutのHEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`）。

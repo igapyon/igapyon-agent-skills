@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { parseFrontMatter, validateIsoDate } from "./day-plan.mjs";
 
 export const ACTIVITY_FILENAME_PATTERN = /^activity-(\d{8})([a-z]+)?\.md$/;
@@ -26,17 +26,80 @@ export function activityPath(date, suffix) {
   return `${date.slice(0, 4)}/${date.slice(0, 7).replace("-", "")}/activities/activity-${date.replaceAll("-", "")}${suffix}.md`;
 }
 
-export function validateActivityRecord(relativePath, text) {
+function parseActivityPath(relativePath) {
   const match = /^(\d{4})\/(\d{6})\/activities\/activity-(\d{8})([a-z]+)?\.md$/.exec(relativePath);
   if (!match) throw new Error(`Invalid activity path: ${relativePath}`);
   const date = `${match[3].slice(0, 4)}-${match[3].slice(4, 6)}-${match[3].slice(6, 8)}`;
   validateIsoDate(date, relativePath);
-  const { frontMatter } = parseFrontMatter(text, relativePath);
-  if (match[1] !== match[2].slice(0, 4) || match[2] !== match[3].slice(0, 6)
-    || frontMatter.type !== "activity" || frontMatter.date !== date) {
-    throw new Error(`Activity path, type and date must agree: ${relativePath}`);
+  if (match[1] !== match[2].slice(0, 4) || match[2] !== match[3].slice(0, 6)) {
+    throw new Error(`Activity path and date must agree: ${relativePath}`);
   }
   return { date, suffix: match[4] ?? "" };
+}
+
+export function validateActivityRecord(relativePath, text) {
+  const record = parseActivityPath(relativePath);
+  const { frontMatter } = parseFrontMatter(text, relativePath);
+  if (frontMatter.type !== "activity" || frontMatter.date !== record.date) {
+    throw new Error(`Activity path, type and date must agree: ${relativePath}`);
+  }
+  return record;
+}
+
+export const activityHash = (content) => createHash("sha256").update(content).digest("hex");
+
+export function readActivityInput({ file, stdin }) {
+  if (Boolean(file) === Boolean(stdin)) throw new Error("Specify exactly one of --stdin or --file DRAFT.md");
+  return fs.readFileSync(stdin ? 0 : file, "utf8");
+}
+
+function activityError(code, message, details = {}) {
+  return Object.assign(new Error(message), { code, ...details });
+}
+
+function activityTarget(repoRoot, relativePath) {
+  const { date } = parseActivityPath(relativePath);
+  return path.join(activityDirectory(repoRoot, date), path.basename(relativePath));
+}
+
+function readCurrentActivity(repoRoot, relativePath) {
+  const destination = activityTarget(repoRoot, relativePath);
+  try {
+    const stat = fs.lstatSync(destination);
+    if (stat.isSymbolicLink() || !stat.isFile()) {
+      throw activityError("PATH_OUTSIDE_REPO", "Activity must be a regular file", { path: relativePath });
+    }
+    const content = fs.readFileSync(destination);
+    return { destination, content, sha256: activityHash(content) };
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      throw activityError("ACTIVITY_UPDATE_CONFLICT", "Activity disappeared; reread before updating", { path: relativePath });
+    }
+    throw error;
+  }
+}
+
+// Return the exact snapshot whose hash must accompany a later update.
+export function readActivity({ repoRoot, path: relativePath }) {
+  const current = readCurrentActivity(repoRoot, relativePath);
+  const content = current.content.toString("utf8");
+  validateActivityRecord(relativePath, content);
+  return { path: relativePath, sha256: current.sha256, content };
+}
+
+export function updateActivity({ repoRoot, path: relativePath, expectedSha256, content }) {
+  parseActivityPath(relativePath);
+  if (typeof expectedSha256 !== "string" || !/^[a-f0-9]{64}$/.test(expectedSha256)) {
+    throw new Error("--expected-sha256 must be the SHA-256 returned with the original activity snapshot");
+  }
+  validateActivityRecord(relativePath, content);
+  // Reread immediately before saving. This detects intervening edits, not simultaneous writes.
+  const current = readCurrentActivity(repoRoot, relativePath);
+  if (current.sha256 !== expectedSha256) {
+    throw activityError("ACTIVITY_UPDATE_CONFLICT", "Activity changed; reread and reconsider the update", { path: relativePath });
+  }
+  fs.writeFileSync(current.destination, content, "utf8");
+  return { path: relativePath, sha256: activityHash(content) };
 }
 
 // Check every parent, including before reading the directory or creating a file.

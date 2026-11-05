@@ -112,17 +112,36 @@ Use the Asia/Tokyo calendar date unless the user gives another date. Resolve whe
 
 For new files, use the bundled [create-activity.mjs](../assets/daybook/scripts/create-activity.mjs), which shares [activity-files.mjs](../assets/daybook/scripts/activity-files.mjs) with Issue intake. It considers current files, local Git history and pending paths, avoids reusing deleted suffixes, and uses exclusive creation. A rejected candidate is reserved for this creation attempt, including a collision with a case variant such as `.MD`, so the next allocation advances. After 32 collisions it stops with `ACTIVITY_CREATE_CONFLICT` and the last candidate path; preserve existing files and retry after resolving the contention. It returns the final repository-relative path and any warning about unavailable history; read the returned path rather than predicting a filename. Allocation sees local Git history only, so a shallow checkout or unavailable branches may have an incomplete history.
 
-Use a matching installed `scripts/create-activity.mjs` in the target repository when available. Otherwise run the loaded skill bundle's CLI by absolute path with `--repo-root`, or integrate the matching `create-activity.mjs`, `activity-files.mjs`, and `day-plan.mjs`. The CLI requires Node.js and the bundle's `yaml` dependency. Check dependency availability first; install from the existing lockfile only when needed. This setup is needed for the new-activity CLI; other ordinary edits remain direct Markdown edits.
+Create and update activities only through the corresponding bundled CLI; direct Markdown writes bypass these checks. Use matching installed `scripts/create-activity.mjs` and [scripts/update-activity.mjs](../assets/daybook/scripts/update-activity.mjs) in the target repository when available. Otherwise run the loaded skill bundle's CLI by absolute path with `--repo-root`, or integrate the matching `create-activity.mjs`, `update-activity.mjs`, `activity-files.mjs`, and `day-plan.mjs`. Check the CLI and companion modules against the loaded bundle before using an installed copy; an older CLI may lack standard input or guarded updates. Preserve target-specific changes and use the bundle directly when safe integration is unclear. The CLIs require Node.js and the bundle's `yaml` dependency. Check dependency availability first; install from the existing lockfile only when needed. Tasks and schedules still use their ordinary Markdown editing workflows.
 
-Prepare complete Markdown with `type: activity`, the actual activity `date`, a descriptive title and the work account in an ignored temporary draft. For example, from the target repository root:
+Prepare complete Markdown with `type: activity`, the actual activity `date`, a descriptive title and the work account. Prefer standard input so each process carries its own draft. For example, from the target repository root (quote the heredoc delimiter to keep Markdown literal):
 
 ```sh
-node scripts/create-activity.mjs --date 2026-11-03 --file workplace/activity-draft.md
+node scripts/create-activity.mjs --date 2026-11-06 --stdin <<'ACTIVITY_MARKDOWN'
+---
+type: activity
+date: 2026-11-06
+---
+
+# 調査結果
+
+確認した内容を記録します。
+ACTIVITY_MARKDOWN
 ```
 
-The default date is today in Asia/Tokyo and the default repository root is the CLI's parent project. Always pass `--repo-root /absolute/daybook` when executing a CLI from a different project. The CLI validates the Markdown date against the requested date and writes without replacing an existing file. Use the final filename stem for any retained attachments and verify relative links from that location.
+Both write CLIs accept exactly one of `--stdin` or `--file DRAFT.md`. If a draft file is needed, allocate a unique per-operation directory or filename using exclusive creation in verified ignored temporary storage; never share a fixed draft path across sessions. Creation defaults to today's Asia/Tokyo date and the CLI's parent project as repository root. Always pass `--repo-root /absolute/daybook` when executing either CLI from a different project. Creation validates the Markdown date against the requested date and writes without replacing an existing file. Use the returned final filename stem for any retained attachments and verify relative links from that location.
 
-When editing an existing episode, reread its current contents and patch only the relevant text, preserving other sessions' contributions. If a conflicting edit is detected, read and integrate it before retrying. Rereading and diff checks alone do not guarantee protection against arbitrary simultaneous writers; do not save a stale full-file copy over another session's work. Keep a single coherent event together when its place, activity, and instrument belong to one event. For example, an afternoon ensemble at a named venue while playing violin is one activity item.
+When editing an existing episode, obtain one snapshot of the current content and its SHA-256 together:
+
+```sh
+node scripts/update-activity.mjs --path 2026/202611/activities/activity-20261106a.md --read
+```
+
+Read the returned JSON `content`, make the relevant edits while preserving other contributions, and submit the updated Markdown through `--stdin` with `--path` and `--expected-sha256` set to that snapshot's `sha256`. Immediately before writing, the CLI rereads the file and compares its hash with the original snapshot. A changed or missing file stops with `ACTIVITY_UPDATE_CONFLICT`; read the latest content and reconsider the edit before retrying. Never submit a stale draft with only a fresh hash attached. Successful updates return `path` and `sha256`.
+
+Activity updates use a normal file write after this check, with no per-activity lock or permission-management workflow. A concurrent write starting between the final check and save can still race; this procedure does not promise strict exclusion of simultaneous updates.
+
+Keep a single coherent event together when its place, activity, and instrument belong to one event. For example, an afternoon ensemble at a named venue while playing violin is one activity item.
 
 For work or investigation, include the purpose, approaches tried and changed, observations and results, conclusions and their reasons, remaining questions, and next actions when known. Ground the account in reported work, the conversation, and visible results; do not invent attempts, outcomes, alternatives, or motivations. Recording an inconclusive investigation is valid. Keep trial-and-error history in the same activity item while it remains readable; when supporting material obscures the account, use a stable external reference or a deliberately chosen text attachment under [attachments.md](attachments.md), while preserving the findings and decision reasons in the activity. Choose the detail needed to understand or resume the work rather than a fixed length or mandatory set of headings for every activity.
 
