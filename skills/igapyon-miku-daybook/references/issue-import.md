@@ -125,7 +125,7 @@ The Agent reads the Issue content and returned comments. The local program does 
 - `needs-info`: include concrete questions and do not create records or remote actions for that Issue;
 - `skip`: include a reason and do not create records or remote actions for that Issue.
 
-Do not import an Issue whose returned evidence is incomplete for the decision. Mark it `needs-info` when missing comments, dates, or context could change the meaning. For a task, keep external deadlines separate from the work period. Do not use a deadline as the work period. Every explicit task date needs `date_evidence`. `planning_state` is optional on a task with `action: create`: omit it or use `planned` for planned work, and use `backlog` only when the Issue is explicitly being kept for later planning. Omitted state remains compatible with existing manifests and produces a new task with `planning_state: planned`. For planned tasks, an omitted start or end is completed using the current task-date rule and becomes `planned_dates_status: provisional`; preserve the reason in history and the comment. A Backlog task keeps only the supplied endpoints and may have no dates; it does not receive provisional dates or `planned_dates_status` unless both endpoints are supplied. Both explicit endpoints produce `confirmed`. `planning_state` is invalid on schedule, activity, or `link-existing` records. A schedule requires an explicit event date and evidence. An activity requires an explicitly known past date and evidence; never turn an undated past activity into an event on the import date.
+Do not import an Issue whose returned evidence is incomplete for the decision. Mark it `needs-info` when missing comments, dates, or context could change the meaning. For a task, keep external deadlines separate from the work period; do not use a deadline as the work period. Every task date needs `date_evidence` describing an explicit source or a clearly labelled estimate. `planning_state` is optional on a task with `action: create`: omit it or use `planned` for planned work, and use `backlog` only when the Issue is explicitly being kept for later planning. Omitted state remains compatible with existing manifests and creates a task with `planning_state: planned`. Planned tasks with missing work dates use context to estimate missing endpoints; if there is no reasonable estimate, use the import date under the existing today/one-sided fallback. Any assumed endpoint makes the complete period `provisional`; do not wait for a date confirmation before preparing a clear task. An explicit `planned_dates_status` on a task-create record may preserve `provisional` when both estimated dates are present; without it, a complete supplied period remains `confirmed` for compatibility. Backlog tasks keep omitted endpoints unless the user asks to plan them. If a backlog period is explicitly marked provisional, both dates are required. `planned_dates_status` is invalid on schedule, activity, or `link-existing` records. A schedule still requires an explicit event date and evidence. An activity still requires an explicitly known past date and evidence; never turn an undated past activity into an event on the import date.
 
 Example manifest:
 
@@ -144,7 +144,7 @@ Example manifest:
           "title": "演奏会参加費を支払う",
           "planning_state": "planned",
           "content": "参加費3,000円を支払う。",
-          "priority": 5,
+          "priority": 7,
           "checklist": ["支払方法を確認する", "参加費を支払う"]
         }
       ]
@@ -163,7 +163,7 @@ For an Issue that should stay in Backlog without a date assumption, set `plannin
   "title": "録音整理の方法を見直す",
   "planning_state": "backlog",
   "content": "現行の整理手順を見直す。",
-  "priority": 5
+  "priority": 7
 }
 ```
 

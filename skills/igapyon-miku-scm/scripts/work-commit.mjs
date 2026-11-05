@@ -216,6 +216,7 @@ export async function runWorkCommit(options, dependencies = {}) {
     root = output(git, options.repo, ["rev-parse", "--show-toplevel"]).trim();
     branch = output(git, root, ["branch", "--show-current"]).trim();
     headBefore = output(git, root, ["rev-parse", "HEAD"]).trim();
+    if (!branch) throw new Error("Detached HEAD is outside work.commit; switch to a work branch");
     if (branch.endsWith("-done")) {
       return result("not-applied", {
         repository: root,
@@ -249,7 +250,14 @@ export async function runWorkCommit(options, dependencies = {}) {
 
   let staged = false;
   let stage = "stage";
+  const assertCommitLocation = () => {
+    if (output(git, root, ["branch", "--show-current"]).trim() !== branch
+      || output(git, root, ["rev-parse", "HEAD"]).trim() !== headBefore) {
+      throw new Error("Commit branch or HEAD changed; inspect the current work before retrying");
+    }
+  };
   try {
+    assertCommitLocation();
     const pathsToStage = changedPaths(root, git, false).filter((name) => paths.includes(name));
     if (pathsToStage.length) git(root, ["add", "--all", "--pathspec-from-file=-", "--pathspec-file-nul"], {
       input: pathsToStage.map((name) => `:(literal)${name}\0`).join(""),
@@ -283,9 +291,17 @@ export async function runWorkCommit(options, dependencies = {}) {
       throw failure;
     }
 
+    assertCommitLocation();
+    const expectedTree = output(git, root, ["write-tree"]).trim();
     stage = "commit";
     git(root, ["commit", "-F", "-"], { input: `${message}\n` });
     const head = output(git, root, ["rev-parse", "HEAD"]).trim();
+    const actualBranch = output(git, root, ["branch", "--show-current"]).trim();
+    const parents = output(git, root, ["show", "-s", "--format=%P", head]).trim();
+    const tree = output(git, root, ["rev-parse", `${head}^{tree}`]).trim();
+    if (actualBranch !== branch || parents !== headBefore || tree !== expectedTree) {
+      throw new Error("Commit postcondition failed: branch, parent or tree differs from the verified work");
+    }
     const finalPaths = changedPaths(root, git);
     const clean = finalPaths.length === 0;
     return result(clean ? "committed" : "partial", {
@@ -307,11 +323,13 @@ export async function runWorkCommit(options, dependencies = {}) {
       mutation_invoked: true,
     });
   } catch (error) {
-    if (!staged) throw error;
+    if (!staged) throw preMutationFailure(error);
     return result("partial", {
       repository: root,
       branch,
       head_before: headBefore,
+      final_branch: output(git, root, ["branch", "--show-current"]).trim(),
+      head: output(git, root, ["rev-parse", "HEAD"]).trim(),
       paths,
       version_notice: versionNotice,
       stage,

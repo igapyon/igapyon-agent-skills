@@ -26,8 +26,13 @@ test("every routed workflow fixes safety metadata and separates runtime referenc
     assert.equal(entry.contract_id, entry.id);
     const issueWriteContract = entry.id.startsWith("github.issue.") && entry.id !== "github.issue.read";
     const syncVersions = {
-      "repository.sync.push.prepare": 3,
-      "repository.sync.push.apply": 2,
+      "repository.sync.pull": 3,
+      "repository.sync.push.prepare": 4,
+      "repository.sync.push.apply": 3,
+      "pr.publish.preflight": 3,
+      "pr.publish.apply": 3,
+      "pr.recommit.push": 2,
+      "work.commit": 2,
       "github.issue.read": 3,
       "github.read.batch": 3,
       "github.issue.update.preflight": 3,

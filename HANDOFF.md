@@ -12,7 +12,7 @@ update_when:
 
 # Handoff
 
-## 現在地（2026-10-26照合）
+## 現在地（2026-11-05照合）
 
 最新作業は共通版を `.5` / `20261026e` へ更新した後のsync説明補完・Windows CRLF fixture修正と、候補版数human output修正。候補修正はhuman output v15、5ケースと実producer接続テストを含み、詳細は[計画・検証記録](skills/igapyon-miku-scm/docs/2026-10-26-version-candidate-output-fix-plan.md)を参照。sync pull/push本体はPR #409でmerge済み（このcheckoutのHEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`）。
 
@@ -22,6 +22,8 @@ update_when:
 - 現在版は共通 `1.20261026.5` / Mikuku `20261026e`。POM、VERSION.md、2つのrunnerの整合は `mvn validate` で確認済み。追加increment、package、配備、commit/pushは未実施。
 - 内製15件＋外部12件＝配布対象27スキル。外部skillはPOMの固定refからビルド時に取り込む。
 - 最新検証はfull **374/374**、focused **45/45**、contract 37件check、`mvn validate`、差分検査成功。提示されたWindows hosted CIログでは当時のsuite 368件中5件がCRLF差分で失敗していた。fixture修正後のWindows hosted CI再実行成功は未確認。native Windows 11の手動smokeも未確認。
+
+2026-11-05にdaybookの発火境界、既定priority 7、予定日の仮置き、weekly task整合を更新した。自己レビュー指摘も反映し、daybook runtime suite **69/69**、参照・配布suite **79/79**、skill形式検査、`git diff --check` は成功。実対話での発火・待機・Waypoint再開とデータ読み取り範囲は未検証で、詳細は[計画と検証記録](docs/plans/daybook-activation-priority-review-luna-implementation.md)を参照。
 
 ## 実装・マージ確認
 

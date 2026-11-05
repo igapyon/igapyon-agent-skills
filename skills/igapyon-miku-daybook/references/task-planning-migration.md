@@ -1,6 +1,6 @@
 # Separate planned tasks and Backlog
 
-Use this guide when adopting `planning_state` in an existing daybook or when the user asks to classify specific tasks as Backlog. This skill source supports the field; no release version is assigned here. Update the skill and the target daybook generator together before changing task records. For field definitions and day-plan behavior, read [records.md](records.md) and [operations.md](operations.md).
+Use this guide to introduce `planning_state` to an existing daybook, update the matching skill and generator, or carry out an explicit data migration. In an already compatible daybook, changing an identified task between planned and Backlog is an ordinary task update; use [operations.md](operations.md#update-a-task) and do not run this migration procedure. This skill source supports the field; no release version is assigned. For field definitions and day-plan behavior, read [records.md](records.md) and [operations.md](operations.md).
 
 ## Planning state
 
@@ -30,11 +30,11 @@ Backlog tasks can retain a complete, partial, or provisional reference period. D
 ## Change only the requested tasks
 
 1. Check the target daybook's README, Git status, task files, installed skill, and `scripts/day-plan.mjs`. Preserve unrelated changes and any customized behavior.
-2. Update the installed skill and the target repository's matching `scripts/day-plan.mjs` and `scripts/generate-day-plan.mjs`. If Issue intake is used, update its helper from the same source too. If notifications are used, make sure the workflow runs the updated generator. Do not add a release version that has not been assigned.
+2. As part of this adoption or migration, update the skill and the target repository's matching `scripts/day-plan.mjs` and `scripts/generate-day-plan.mjs`. If Issue intake or notifications are configured, check that their helpers use the matching generator. Preserve target-specific changes. Do not turn a single task classification in a compatible repository into a runtime update.
 3. Identify the exact tasks the user wants classified. Do not bulk-classify based on dates, status, title, or priority.
 4. Add `planning_state: backlog` or `planning_state: planned` to those task files. Keep the ID, filename, creation month, progress status, dates, certainty, deadlines, recurrence, schedules, attachments, and links. Add a short history entry for the change. Do not create another task for a classification change.
 5. When moving a task to Backlog, leave any known period as reference information and keep unknown endpoints empty. When moving it back to planned work, use the existing dates when still valid. If a complete planned period is not known, resolve it with the planned-date rules in [operations.md](operations.md#add-a-task), and record the basis of any provisional dates.
-6. Generate a representative day-plan into a separate output root, for example:
+6. For a requested adoption or multi-record migration, generate a representative day-plan into a separate output root, for example:
 
    ```sh
    node scripts/generate-day-plan.mjs --date YYYY-MM-DD --output-root workplace/task-planning-preview

@@ -6,6 +6,56 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
+test("commit rejects branch and HEAD drift during recognised checks", async (t) => {
+  for (const kind of ["branch", "done", "head"]) await t.test(kind, async (sub) => {
+    const root = await repository(sub);
+    const original = git(root, "branch", "--show-current");
+    const before = git(root, "rev-parse", "HEAD");
+    await writeFile(path.join(root, "change.txt"), "work\n");
+    if (kind !== "head") git(root, "branch", kind === "done" ? "another-done" : "another");
+    const r = await runWorkCommit({ repo: root, apply: true, message: "Work" }, {
+      resolveChecks: async () => [{ command: "check", args: [], label: "Check" }],
+      command: () => {
+        if (kind === "head") git(root, "-c", "core.hooksPath=", "commit", "--allow-empty", "--only", "-m", "Concurrent commit");
+        else git(root, "switch", kind === "done" ? "another-done" : "another");
+        return { ok: true };
+      },
+    });
+    assert.equal(r.status, "partial");
+    assert.match(r.message, /branch or HEAD changed/);
+    assert.equal(git(root, "log", "-1", "--format=%s"), kind === "head" ? "Concurrent commit" : "base");
+    if (kind !== "head") assert.equal(git(root, "rev-parse", original), before);
+    assert.equal(r.final_branch, git(root, "branch", "--show-current"));
+  });
+});
+
+test("commit rejects detached HEAD before staging", async (t) => {
+  const root = await repository(t);
+  git(root, "switch", "--detach");
+  await writeFile(path.join(root, "change.txt"), "work\n");
+  await assert.rejects(runWorkCommit({ repo: root, apply: true, message: "Work" }), (e) => e.mutationInvoked === false && /Detached HEAD/.test(e.message));
+  assert.equal(git(root, "diff", "--cached", "--name-only"), "");
+});
+
+test("commit reports a hook-mutated tree as partial", async (t) => {
+  const root = await repository(t);
+  await writeFile(path.join(root, "change.txt"), "work\n");
+  const native = createGitRunner();
+  const r = await runWorkCommit({ repo: root, apply: true, message: "Work" }, {
+    git: (cwd, args, options) => {
+      // Model a pre-commit hook that stages an extra path after the checks.
+      if (args[0] === "commit") {
+        writeFileSync(path.join(cwd, "hook.txt"), "hook\n");
+        git(cwd, "add", "hook.txt");
+      }
+      return native(cwd, args, options);
+    },
+  });
+  assert.equal(r.status, "partial");
+  assert.match(r.message, /postcondition/);
+  assert.equal(git(root, "show", "HEAD:hook.txt"), "hook");
+});
+
 import {
   commandForPlatform,
   createGitRunner,

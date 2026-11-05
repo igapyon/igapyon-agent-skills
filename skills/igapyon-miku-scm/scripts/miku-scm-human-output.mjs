@@ -472,9 +472,10 @@ function appendPostMergeNextWork(lines, result) {
 function appendWorkCommit(lines, result) {
   lines.push(`Repository: ${displayValue(result.repository)}`);
   lines.push(`Branch: ${displayValue(result.branch)}`);
+  if (result.final_branch) lines.push(`Final branch: ${displayValue(result.final_branch)}`);
   lines.push(`Delegate status: ${displayValue(result.status)}`);
   if (result.head_before) lines.push(`Previous HEAD: ${displayValue(result.head_before)}`);
-  if (result.head) lines.push(`New HEAD: ${displayValue(result.head)}`);
+  if (result.head) lines.push(`${result.status === "partial" ? "Current HEAD" : "New HEAD"}: ${displayValue(result.head)}`);
   if (result.commit_message) lines.push(`Commit message: ${oneLine(result.commit_message)}`);
   if (result.message_source) lines.push(`Commit message source: ${displayValue(result.message_source)}`);
   if (Array.isArray(result.paths)) lines.push(`Committed path count: ${result.paths.length}`);

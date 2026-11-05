@@ -12,6 +12,30 @@ const TERMINAL = new Set(["completed", "aborted", "cancelled", "superseded", "re
 export const hash = (value) => createHash("sha256").update(typeof value === "string" || Buffer.isBuffer(value) ? value : JSON.stringify(value)).digest("hex");
 export const zeros = (value) => value.split("\0").filter(Boolean);
 
+export function describeSyncGitFailure(args, result, stderr) {
+  const message = String(stderr).toLowerCase();
+  let category = "unknown";
+  if (result.error?.code === "ETIMEDOUT") category = "timeout";
+  else if (result.error?.code === "ENOENT") category = "missing-executable";
+  else if (/authentication failed|could not read username|publickey|invalid username or password|http basic: access denied|returned error: 401/.test(message)) category = "authentication";
+  else if (/could not resolve|name or service not known|nodename nor servname/.test(message)) category = "network-dns";
+  else if (/permission denied|access denied|forbidden|returned error: 403/.test(message)) category = "permission";
+  else if (/failed to connect|connection refused|connection reset|network is unreachable/.test(message)) category = "network-connect";
+  else if (/does not appear to be a git repository|repository .*not found|repository not found|could not read from remote repository/.test(message)) category = "repository-unavailable";
+  const guidance = {
+    timeout: ["Git command timed out", "Check the connection and the stopped stage before retrying."],
+    "missing-executable": ["Git executable was not found", "Check the Git installation and PATH."],
+    authentication: ["Git authentication failed", "Check existing authentication for the selected remote host."],
+    "network-dns": ["Remote host name could not be resolved", "Check the network connection and remote host configuration."],
+    "network-connect": ["Remote connection failed", "Check the network connection and remote service availability."],
+    "repository-unavailable": ["Remote repository is unavailable", "Check the remote URL and repository access permissions."],
+    permission: ["Git access was denied", "Check repository and filesystem permissions."],
+    unknown: ["Git command failed", "Inspect the exit code and stopped stage before starting sync again."],
+  };
+  return { command: args[0], exit_code: result.status ?? null, signal: result.signal ?? null,
+    spawn_error: result.error?.code ?? null, category, summary: guidance[category][0], next_action: guidance[category][1] };
+}
+
 export function syncGit(cwd, args, options = {}) {
   const r = spawnSync("git", args, {
     cwd, input: options.input, maxBuffer: 64 * 1024 * 1024, shell: false,
@@ -23,6 +47,8 @@ export function syncGit(cwd, args, options = {}) {
   const result = { ok: r.status === 0, code: r.status, bytes: stdout, stdout: stdout.toString("utf8"), out: stdout.toString("utf8").trimEnd(), err: stderr };
   if (!result.ok && !options.allowFailure) {
     const error = new Error(`git ${args[0]} failed (exit ${r.status ?? "unknown"}${r.error?.code ? `, ${r.error.code}` : ""})`);
+    error.gitDiagnostic = describeSyncGitFailure(args, r, stderr);
+    error.message += `: ${error.gitDiagnostic.summary}`;
     error.gitExit = r.status;
     throw error;
   }
@@ -213,6 +239,11 @@ export async function loadOperation(ctx, id) {
 export async function newOperation(ctx, type, id, initial, remote, base, baseSha) {
   const op = { schema: SYNC_SCHEMA, id, type, root: ctx.root, common: ctx.common, warnings: ctx.warnings, status: "running", phase: "inspect", original: initial, remote, base, base_sha: baseSha, mutation_invoked: false, created_at: new Date().toISOString() };
   await saveOperation(ctx, op);
+  if (ctx.syncLock) {
+    const current = await readJson(ctx.syncLock.file);
+    if (current?.token !== ctx.syncLock.token) throw new Error("Sync lock ownership changed before operation recording");
+    await writeJson(ctx.syncLock.file, { ...current, operation: id, phase: "operation-recorded" });
+  }
   return op;
 }
 
@@ -243,7 +274,7 @@ export async function checkPending(ctx, { pull = false, except = "" } = {}) {
   }
 }
 
-export async function lock(ctx, id, recover = false) {
+export async function lock(ctx, id, recover = false, { allowMissingInitialization = false } = {}) {
   const file = path.join(ctx.common, "miku-scm-sync.lock");
   const token = randomUUID();
   let handle;
@@ -254,22 +285,40 @@ export async function lock(ctx, id, recover = false) {
     let alive = true;
     try { process.kill(previous?.pid, 0); } catch (caught) { if (caught.code === "ESRCH") alive = false; }
     if (!recover || alive || previous?.operation !== id || previous.root !== ctx.root) throw new Error(`Another sync holds the repository lock${previous?.operation ? ` (${previous.operation})` : ""}`);
-    await loadOperation(ctx, id);
+    let missingDirectory = false;
+    try { await lstat(path.dirname(operationPath(ctx, id))); }
+    catch (caught) { if (caught.code !== "ENOENT") throw caught; missingDirectory = true; }
+    if (allowMissingInitialization && missingDirectory && previous.schema_version === 2 && previous.phase === "initializing") {
+      ctx.recoveredInitialization = true;
+    } else await loadOperation(ctx, id);
     const again = await readJson(file);
     if (hash(previous) !== hash(again)) throw new Error("Sync lock changed during recovery");
     await unlink(file);
     handle = await open(file, "wx", 0o600);
   }
-  await handle.writeFile(JSON.stringify({ token, pid: process.pid, operation: id, root: ctx.root }));
+  try {
+    let phase = "initializing";
+    let directoryExists = true;
+    try { await lstat(path.dirname(operationPath(ctx, id))); }
+    catch (error) { if (error.code !== "ENOENT") throw error; directoryExists = false; }
+    if (directoryExists) { await loadOperation(ctx, id); phase = "operation-recorded"; }
+    await handle.writeFile(JSON.stringify({ schema_version: 2, phase, token, pid: process.pid, operation: id, root: ctx.root }));
+    await handle.sync();
+  } catch (error) {
+    await handle.close();
+    await unlink(file);
+    throw error;
+  }
   await handle.close();
+  ctx.syncLock = { file, token };
   return async () => { if ((await readJson(file))?.token === token) await unlink(file); };
 }
 
 export function newId() { return randomUUID(); }
-export async function openSync(repo, dependencies, id, recover = false) {
+export async function openSync(repo, dependencies, id, recover = false, recoveryOptions = {}) {
   try {
     const ctx = await context(repo, dependencies);
-    const release = await lock(ctx, id, recover);
+    const release = await lock(ctx, id, recover, recoveryOptions);
     return { ctx, release };
   } catch (error) { error.mutationInvoked = false; throw error; }
 }
@@ -285,7 +334,7 @@ export async function failure(ctx, op, error) {
   const closed = op && TERMINAL.has(op.status);
   const status = !closed && op?.mutation_invoked ? "partial" : "not-applied";
   if (op && !closed) { op.status = op.mutation_invoked ? "partial" : "rejected"; op.error = error.message; await saveOperation(ctx, op); }
-  return { status, warnings: ctx.warnings, reason: error.message, mutation_invoked: closed ? false : op?.mutation_invoked ?? false, operation_id: op?.id ?? null, stage: op?.phase ?? "inspect", final_branch: branch(ctx), head: head(ctx), backup_branch: op?.backup_branch ?? null, stash_sha: op?.stash_sha ?? null, next_action: !closed && op?.mutation_invoked ? "Inspect the retained sync operation; resume or abort it explicitly" : "Resolve the reported condition before starting sync" };
+  return { status, warnings: ctx.warnings, reason: error.message, ...(error.gitDiagnostic ? { diagnostic: error.gitDiagnostic } : {}), mutation_invoked: closed ? false : op?.mutation_invoked ?? false, operation_id: op?.id ?? null, stage: op?.phase ?? "inspect", final_branch: branch(ctx), head: head(ctx), backup_branch: op?.backup_branch ?? null, stash_sha: op?.stash_sha ?? null, next_action: !closed && op?.mutation_invoked ? "Inspect the retained sync operation; resume or abort it explicitly" : error.gitDiagnostic?.next_action ?? "Resolve the reported condition before starting sync" };
 }
 
 function baseRecordFile(ctx, name) { return path.join(ctx.storage, "branches", `${hash(name)}.json`); }

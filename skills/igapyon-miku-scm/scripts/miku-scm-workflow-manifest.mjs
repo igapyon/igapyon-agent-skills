@@ -232,6 +232,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "repository.sync.pull",
+    contract_version: 3,
     triggers: ["miku-scm sync pull", "sync pull"],
     required_parameters: ["repository", "explicit_sync_pull_request"],
     mutation_level: "local",
@@ -242,7 +243,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "repository.sync.push.prepare",
-    contract_version: 3,
+    contract_version: 4,
     triggers: ["miku-scm sync push", "sync push"],
     required_parameters: ["repository", "explicit_sync_push_request"],
     mutation_level: "local",
@@ -253,7 +254,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "repository.sync.push.apply",
-    contract_version: 2,
+    contract_version: 3,
     triggers: ["Prepared sync push execution only"],
     required_parameters: ["repository", "operation", "plan_digest", "draft_digest"],
     mutation_level: "remote",
@@ -273,6 +274,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "work.commit",
+    contract_version: 2,
     triggers: ["miku-scm git add commit", "git add commit", "通常commit"],
     required_parameters: ["repository", "explicit_commit_request"],
     mutation_level: "local",
@@ -282,6 +284,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "pr.publish.preflight",
+    contract_version: 3,
     triggers: ["push事前確認", "publication plan作成"],
     required_parameters: ["repository", "reviewed_head"],
     mutation_level: "readonly",
@@ -291,6 +294,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "pr.publish.apply",
+    contract_version: 3,
     triggers: ["ok push", "承認済みpublication plan適用"],
     required_parameters: ["repository", "reviewed_plan", "reviewed_digest"],
     mutation_level: "remote",
@@ -318,6 +322,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "pr.recommit.push",
+    contract_version: 2,
     triggers: [
       "miku-scm draft recommit push",
       "draft recommit push",

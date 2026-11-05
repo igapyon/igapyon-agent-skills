@@ -5,7 +5,7 @@ import fsp from "node:fs/promises";
 import path from "node:path";
 
 import { stringify as stringifyYaml } from "yaml";
-import { parseFrontMatter, todayInTokyo, validateIsoDate } from "./day-plan.mjs";
+import { DEFAULT_TASK_PRIORITY, parseFrontMatter, todayInTokyo, validateIsoDate } from "./day-plan.mjs";
 import { ACTIVITY_FILENAME_PATTERN, nextActivityPath, validateActivityRecord } from "./activity-files.mjs";
 
 export const ISSUE_IMPORT_SCHEMA_VERSION = 1;
@@ -320,6 +320,15 @@ function validateRecord(record, issueNumber) {
       fail("INVALID_MANIFEST", "planning_state is only valid as planned or backlog on a created task", { issue: issueNumber, key: record.key });
     }
   }
+  if (Object.hasOwn(record, "planned_dates_status")) {
+    if (record.type !== "task" || record.action !== "create"
+      || !new Set(["confirmed", "provisional"]).has(record.planned_dates_status)) {
+      fail("INVALID_MANIFEST", "planned_dates_status is only valid as confirmed or provisional on a created task", { issue: issueNumber, key: record.key });
+    }
+    if (!record.planned_start_date || !record.planned_end_date) {
+      fail("INVALID_MANIFEST", "planned_dates_status requires a complete planned period", { issue: issueNumber, key: record.key });
+    }
+  }
   if (record.action === "link-existing" && (record.type === "activity" || typeof record.target_path !== "string")) {
     fail("INVALID_MANIFEST", "link-existing requires a task or schedule target_path", { issue: issueNumber, key: record.key });
   }
@@ -434,9 +443,13 @@ export function deriveTaskDates(record, importDate) {
   if (end) validateIsoDate(end, "planned_end_date");
   if (start && end && start > end) fail("INVALID_DATE_RANGE", "planned_start_date must not be after planned_end_date", { key: record.key });
   if (record.planning_state === "backlog") {
-    return { start, end, status: start && end ? "confirmed" : null, reasons: [] };
+    const status = start && end ? (record.planned_dates_status ?? "confirmed") : null;
+    return { start, end, status, reasons: provisionalDateReasons(record, status) };
   }
-  if (start && end) return { start, end, status: "confirmed", reasons: [] };
+  if (start && end) {
+    const status = record.planned_dates_status ?? "confirmed";
+    return { start, end, status, reasons: provisionalDateReasons(record, status) };
+  }
   if (!start && !end) return {
     start: importDate,
     end: importDate,
@@ -455,6 +468,18 @@ export function deriveTaskDates(record, importDate) {
     status: "provisional",
     reasons: [`開始日が未指定のため、${end < importDate ? "終了日" : "取り込み日"}を暫定設定した`],
   };
+}
+
+function provisionalDateReasons(record, status) {
+  if (status !== "provisional") return [];
+  const evidence = record.date_evidence ?? {};
+  const startEvidence = inlineDateEvidence(evidence.planned_start_date);
+  const endEvidence = inlineDateEvidence(evidence.planned_end_date);
+  return [`予定期間を暫定設定した（開始：${startEvidence}、終了：${endEvidence}）`];
+}
+
+function inlineDateEvidence(value) {
+  return value.replace(/[\r\n]+/g, " ").replaceAll("<!--", "&lt;!--").replaceAll("-->", "--&gt;").trim();
 }
 
 function recordReference(record, issueNumber, createdPath) {
@@ -612,7 +637,7 @@ function renderTask(record, context, id, targetPath) {
     id,
     status: "todo",
     planning_state: record.planning_state ?? "planned",
-    priority: record.priority ?? 5,
+    priority: record.priority ?? DEFAULT_TASK_PRIORITY,
     created: context.importDate,
     planned_action: plannedAction,
     source_issue_number: context.issue.number,
@@ -631,7 +656,8 @@ function renderTask(record, context, id, targetPath) {
       : period.end ? `参考終了日${period.end}を記録した。`
         : "作業予定日は設定していない。";
   const history = period.reasons.length
-    ? period.reasons.map((reason) => dateHistory(context.importDate, `${reason}。日程要確認。`, context.issue.number))
+    ? period.reasons.map((reason) => dateHistory(context.importDate,
+      `${reason}。${record.planning_state === "backlog" ? "参考期間は暫定。" : "日程要確認。"}`, context.issue.number))
     : [dateHistory(context.importDate, record.planning_state === "backlog"
       ? `Backlogとして登録した。${backlogDateMeaning}`
       : "作業予定期間をIssue本文・コメントに基づき登録した。", context.issue.number)];
@@ -719,7 +745,10 @@ function issueReceiptBody(issue, records, importId, repo, importDate) {
     const reason = period?.reasons.length ? `\n  - ${period.reasons.join(" / ")}` : "";
     return `- ${record.id}：${markdownEscape(record.title)}\n  - パス：${record.path}${stateInfo}${dateInfo}${reason}`;
   });
-  const provisional = records.some((record) => record.period?.status === "provisional");
+  const provisionalPlanned = records.some((record) => record.period?.status === "provisional"
+    && record.planning_state !== "backlog");
+  const provisionalBacklog = records.some((record) => record.period?.status === "provisional"
+    && record.planning_state === "backlog");
   const receipt = {
     import_id: importId,
     records: records.map(({ key, id, path: recordPath }) => ({ key, id, path: recordPath })),
@@ -733,7 +762,12 @@ function issueReceiptBody(issue, records, importId, repo, importDate) {
     "",
     ...recordLines,
   ];
-  if (provisional) lines.push("", `作業予定日が未確定のため、${importDate}などを暫定設定しました。日程表では「日程要確認」として扱います。予定日が決まったらdaybookを更新してください。`);
+  if (provisionalPlanned || provisionalBacklog) {
+    const notes = [];
+    if (provisionalPlanned) notes.push("作業予定期間は暫定値で、日程表では「日程要確認」に表示されます。");
+    if (provisionalBacklog) notes.push("Backlogの参考予定期間は暫定値です。");
+    lines.push("", notes.join(" "));
+  }
   lines.push(
     "",
     "このコメント時点ではローカル反映です。GitHub上の記録への反映は、別途commit・pushまたはPRの操作を行った時点になります。",

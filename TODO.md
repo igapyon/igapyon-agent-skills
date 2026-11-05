@@ -2,6 +2,57 @@
 
 ## AI Agent Current Tasks
 
+### miku-scm：自己レビュー2件の追加対応（2026-11-05・実装・検証済み）
+
+[Luna向け追加対応計画](docs/plans/miku-scm-self-review-followup-luna-implementation.md)に沿って、保存計画を使わない直接applyの公開先取り違えと、異なる未追跡pathで残るcheck-ignoreの大量process起動を修正した。[追加実施記録](docs/plans/miku-scm-self-review-followup-execution.md)に変更と計測を記載。fast 280/280、full 541/541成功、workflow contract 37件current。
+
+- [x] 残存経路の追加再現、呼び出し元、採用方式、移行案内、回帰条件、契約と検証手順を固定。
+- [x] SREV-00：実装開始状態と失敗する追加回帰を記録。
+- [x] SREV-01〜02：公開applyを保存計画経由に限定し、安全な返却引数と参照資料を揃える。
+- [x] SREV-03〜04：候補pathを収集してNUL区切りstdinでまとめて照会し、実pull・特殊path・性能を確認。
+- [x] SREV-05：契約再生成、fast/full、差分確認、実施記録と未確認環境を整理。
+
+### miku-scm：正確性・復旧・性能の改善（2026-11-05・実装・ローカル検証済み）
+
+レビュー6件と `guardIgnored()` の性能問題を、[Luna向け改善計画](docs/plans/miku-scm-reliability-performance-luna-implementation.md)に沿って実装した。[実施記録](docs/plans/miku-scm-reliability-performance-execution.md)に変更・検証・性能比較を記載。最終full 532/532、contract 37件current、差分チェック成功。
+
+- [x] 原因、再現条件、性能実測、変更箇所、作業順、完了条件を固定した計画を作成。
+- [x] LUNA-00〜02：開始記録、check-ignoreの同一path判定とdirectory一覧の再利用。
+- [x] LUNA-03〜04：保存公開計画のbranchとfetch/push URLを実行対象へ固定。
+- [x] LUNA-05：commit直前・直後のbranch/HEAD/tree確認。
+- [x] LUNA-06：既知のcheck失敗後のsync push再準備と案内。
+- [x] LUNA-07：初期化中の異常終了で残ったsync lockの明示取消。
+- [x] LUNA-08：sync Git失敗の原因分類と具体的な案内。
+- [x] LUNA-09：契約、full suite、性能再計測、差分確認、実施記録。
+
+3,000件のguard単発比較では、未追跡directoryのケースが35.428秒→0.128秒、check-ignoreが3,000回→1回。追跡済みcase照合は6.286秒→0.116秒。Windows実機/hosted CI、配備、版数更新、commit/pushは未実施。
+
+### daybook：発火条件・操作整合・既定優先度7（2026-11-05・実装・ローカル検証済み、実対話未検証）
+
+[Luna向け実装計画](docs/plans/daybook-activation-priority-review-luna-implementation.md)に、厳しい発火境界と発火後の円滑な操作、直前レビュー3件、既定優先度7、予定日の仮置きを実装した。通常task登録は日程・優先度を確認待ちにせず、文脈推測または今日〜今日・優先度7で完了する。明示値、Backlogの日付省略、既存レコードの明示priorityは保つ。
+
+- [x] 発火・待機・継続の条件、変更ファイル、手順、回帰テスト・対話ケースを具体化。
+- [x] 利用指示と言及・メタ依頼を区別し、HANDOFF経由の利用と待機を維持。
+- [x] 期間のある週次taskの生成拒否と、期間なし週次taskの不要な日程確認を修正。
+- [x] 通常のBacklog分類を導入・移行作業から分離。
+- [x] 未指定優先度を新規作成・表示・Issue取り込みで7へ統一。明示値と保存済み計画は維持。
+- [x] 未指定の予定日を文脈または今日〜今日で補い、provisionalと理由を保持。日程質問で通常task登録を止めない。
+- [x] daybook runtime suite 69/69、参照・配布suite 79/79、`quick_validate.py`、対象差分の `git diff --check` が成功。
+- [ ] 実対話での発火・待機・Waypoint再開とデータ読み取り範囲は未検証。
+
+### daybook：起動時の指示待ちとHANDOFF再開（2026-11-05・source実装・検証済み）
+
+仕様・レビュー反映・実装結果は[Luna向け実装計画](docs/plans/daybook-handoff-startup-luna-implementation.md)を参照。
+
+- [x] 現在のユーザー指示を優先し、会話・HANDOFFの有効な操作指示を引き継ぐ判断をSKILLの一段落に集約。操作指示がなければ準備完了を伝えて待機。
+- [x] HANDOFFからのactivationを追加し、指定Waypoint・子・必要な参照先をたどって作業へ進む手順を更新。追加・更新では再開を始めず、候補が曖昧なら範囲を確認。
+- [x] HANDOFFを入口、task/activity/Waypointを作業状態の正本として説明し、短い入口設定例とREADME二か所を整合。
+- [x] 計画レビューの3点を反映。明示的待機・引き継ぎ再開を含む11ケースを本文レビューし、対話検証の配置・開始方法を具体化。
+- [x] 追加の自己レビュー3点に対応。子Waypointの範囲確定を資料読み込みより先にし、検証開始文を中立化、計画冒頭の表にも待機条件を明記。
+- [x] `skill-creator` の `quick_validate.py`、参照・配布関連テスト79件、`git diff --check` が成功。
+
+対話実行による動作確認、実利用repoの入口変更、配備先への同期は未実施。
+
 ### miku-scm：コメント後クローズの誤衝突修正（2026-11-03・実装・検証済み）
 
 実装計画は[Luna向け修正計画](docs/plans/miku-scm-comment-close-luna-implementation.md)、作業・検証記録は[実施記録](docs/plans/miku-scm-comment-close-execution.md)を参照。実close preflightの `issue_title` をバッチが `current_title` として読んでしまい、承認どおりのコメント投稿後に誤って停止する問題を修正した。

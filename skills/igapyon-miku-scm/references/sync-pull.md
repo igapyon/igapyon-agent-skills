@@ -76,6 +76,16 @@ and untracked work once, identify that stash by its unique message and exact
 SHA, and retain it. Restore with `stash apply --index <exact-sha>` once.
 Restoration conflicts are partial completion, never success.
 
+Each ignored-path guard collects distinct candidate paths and checks them with
+`git check-ignore --stdin -z --no-index` in NUL-delimited batches of at most 512
+paths and 256 KiB of UTF-8 input, including the final NUL. It indexes each
+case-folded directory listing once. These caches belong to one guard call only;
+the checks before and after stash and before next-work checkout still collect
+fresh evidence. Exit code 1 is accepted only with empty output; exit code 0
+must report NUL-terminated ignored paths from that batch. Other exit codes or
+malformed output stop sync rather than treating an unavailable check as a
+non-ignored path. The guard never falls back to one process per path.
+
 Replay uses exactly:
 
 ```text
@@ -227,3 +237,22 @@ An interrupted integration whose completion cannot be proven requires manual
 inspection of the backup/stash. Do not guess or repeat a mutation. A stale
 execution lock can be reclaimed only for the same saved operation with a
 provably dead process; elapsed time alone is insufficient.
+
+A schema 2 lock explicitly marked `initializing`, owned by a provably dead
+process and with no operation directory, can be cancelled for that exact ID:
+
+```text
+repository.sync.pull --repo <path> --abort <reported-operation-id> --apply
+```
+
+The result is `cancelled`, with no work mutation; a fresh `miku-scm sync pull`
+can then start. An existing operation is locked as `operation-recorded` and
+uses normal recovery. Live owners, legacy/malformed records, different roots
+or IDs, and an existing operation directory with missing state remain blocked
+for inspection. The helper never infers safe cancellation from lock age.
+
+Git failures retain a fixed cause category and an actionable next step in the
+result. Diagnostics distinguish authentication, DNS, connection, repository,
+permission and timeout failures without exposing raw stderr or credentials.
+Partial operations still require their saved-operation recovery rather than
+automatic mutation retries.

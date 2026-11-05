@@ -189,6 +189,10 @@ export async function runRecommitPush(options, dependencies = {}) {
       ...expectation,
     }), publishDependencies);
     const root = await realpath(options.repo);
+    if (verifiedPublication.branch !== initialPublication.branch
+      || verifiedPublication.remote_urls_sha256 !== initialPublication.remote_urls_sha256) {
+      throw new Error("Publication branch or remote URLs changed since the initial preflight");
+    }
     savedPlan = await (dependencies.savePublicationPlan ?? savePublicationPlan)(root, verifiedPublication);
   } catch (error) {
     return { ...partialResult(recommitResult, initialPublication, "publication-preflight", error), warnings };

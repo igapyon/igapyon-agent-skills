@@ -147,6 +147,16 @@ again, so the result can name `miku-scm sync pull` instead of trapping later syn
 Old operation files and drafts are retained. Ambiguous operations, another
 branch/remote, corrupted evidence, or unknown publication outcomes remain blocked.
 
+A single pending ordinary-commit failure may also be superseded by plain
+`sync push` when it stopped in `pre-commit-check` or `post-check-verify`, the
+branch and HEAD are unchanged, Git is idle, and no backup, recommit, delegate
+or publication apply started. The saved `head_before` must match the original
+and current HEAD. Current work and staged content are retained and all normal
+checks, including sensitive-path consent, run again. A second failure stops;
+the helper does not loop. Commit-stage failures and changed history still
+require inspection. The initial failure names the check problem and gives
+`miku-scm sync push` as the next command for this supported case.
+
 The same-execution file read above is separate from resuming an interrupted
 workflow. Carry the returned operation ID in the conversation. Pass these workflow
 arguments are also available for explicit diagnostic selection:
@@ -193,3 +203,24 @@ routes cannot cancel or replay it. The verified preflight-only recovery above
 is the only automatic path after local recommit;
 all other outcomes require inspecting the saved publication result and retained
 backup before a separately designed recovery.
+
+## Interrupted initialization and diagnostics
+
+Lock schema 2 records `initializing` until the operation journal is saved,
+then `operation-recorded`. If the owner is provably dead and the operation
+directory was never created, explicitly cancel that exact initializing lock:
+
+```text
+repository.sync.push.prepare --repo <path> --cancel <reported-operation-id> --apply
+```
+
+After cancellation returns, repeat plain `miku-scm sync push`. This does not
+discard work. Live owners, another root/ID, legacy or malformed locks, and a
+missing state inside an existing directory are not eligible. Existing saved
+operations continue through the normal recovery rules.
+
+Git failure results include a fixed diagnostic category, exit/signal/spawn code
+and guidance for authentication, DNS, connectivity, repository availability,
+permissions or timeout. Raw transport stderr and URL credentials are not
+copied into the diagnostic. Partial or uncertain mutations keep their recovery
+requirements even when the environment error is retryable.

@@ -94,6 +94,11 @@ Native platform verification is reported separately from simulated paths.
 
 `rg` is not required by this transition.
 
+The publication preflight before and after recommit must name the same branch
+and fetch/push URL digest. A changed destination stops before publication; it
+does not become a new publication plan. The saved schema 2 publication plan
+then revalidates its exact branch, HEAD and URL binding before push.
+
 ## Source-Maintenance Verification
 
 When changing this workflow, run its focused test plus the miku-scm fast suite.

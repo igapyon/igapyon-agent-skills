@@ -7,6 +7,52 @@ import { runSyncPull } from "../scripts/sync-pull.mjs";
 import { context, hash, loadOperation, snapshot } from "../scripts/miku-scm-sync-state.mjs";
 import { fixture } from "./sync-fixture.mjs";
 
+test("sync push repeats fresh checks after a known pre-commit failure", async (t) => {
+  const f = await fixture(t);
+  await f.write("own.txt", "pending\n");
+  const before = f.git(["rev-parse", "HEAD"]);
+  let checks = 0;
+  const dependencies = { workCommitDependencies: {
+    resolveChecks: async () => [{ command: "check", args: [], label: "Repository check" }],
+    command: () => ({ ok: ++checks > 1, stderr: "Fix validation" }),
+  } };
+  const stopped = await prepareSyncPush(f.options, dependencies);
+  assert.equal(stopped.status, "partial");
+  assert.match(stopped.reason, /Fix validation/);
+  assert.equal(stopped.next_command, "miku-scm sync push");
+  assert.equal(f.git(["rev-parse", "HEAD"]), before);
+  const prepared = await prepareSyncPush(f.options, dependencies);
+  assert.equal(prepared.status, "prepared", JSON.stringify(prepared));
+  assert.equal(prepared.continuation, "refreshed-after-check-failure");
+  assert.equal(checks, 2);
+  assert.equal(f.git(["rev-list", "--count", `${before}..HEAD`]), "1");
+  assert.equal((await loadOperation(await context(f.repo), stopped.operation_id)).status, "superseded");
+});
+
+test("sync push check recovery rechecks sensitive paths and rejects changed history", async (t) => {
+  for (const change of ["sensitive", "head", "branch", "commit-stage"]) await t.test(change, async (sub) => {
+    const f = await fixture(sub);
+    await f.write("own.txt", "pending\n");
+    const stopped = await prepareSyncPush(f.options, { workCommitDependencies: {
+      resolveChecks: async () => [{ command: "check", args: [], label: "Check" }], command: () => ({ ok: false, stderr: "bad" }),
+    } });
+    if (change === "sensitive") await f.write("token.ts", "sensitive candidate\n");
+    if (change === "head") f.git(["commit", "-m", "Concurrent work"]);
+    if (change === "branch") f.git(["switch", "-c", "other-work"]);
+    if (change === "commit-stage") {
+      const ctx = await context(f.repo);
+      const op = await loadOperation(ctx, stopped.operation_id);
+      op.commit.result.stage = "commit";
+      const { saveOperation } = await import("../scripts/miku-scm-sync-state.mjs");
+      await saveOperation(ctx, op);
+    }
+    const r = await prepareSyncPush(f.options);
+    assert.equal(r.status, "not-applied");
+    if (change === "sensitive") assert.deepEqual(r.sensitive_paths, ["token.ts"]);
+    else assert.equal((await loadOperation(await context(f.repo), stopped.operation_id)).status, "partial");
+  });
+});
+
 async function draft(f, prepared) {
   const prose = "Improve example behavior\n\nPreserve the requested change and its verification.\n";
   await f.write(prepared.suggested_draft_path, prose);
