@@ -6,7 +6,7 @@ import path from "node:path";
 
 import { stringify as stringifyYaml } from "yaml";
 import { DEFAULT_TASK_PRIORITY, parseFrontMatter, todayInTokyo, validateIsoDate } from "./day-plan.mjs";
-import { ACTIVITY_FILENAME_PATTERN, nextActivityPath, validateActivityRecord } from "./activity-files.mjs";
+import { ACTIVITY_FILENAME_PATTERN, nextActivityPath, updateActivity, validateActivityRecord } from "./activity-files.mjs";
 
 export const ISSUE_IMPORT_SCHEMA_VERSION = 1;
 export const ISSUE_IMPORT_MARKER = "daybook-issue-import:v1";
@@ -1550,7 +1550,21 @@ async function applyOneWrite(repoRoot, write) {
   await ensureRecordParents(repoRoot, write.path);
   const before = getCurrentHash(repoRoot, write.path);
   if (before !== write.before_hash) fail("LOCAL_CONFLICT", "Record changed after apply preflight", { path: write.path });
-  if (write.before_hash === null) {
+  if (write.before_hash !== null && write.path.includes("/activities/")) {
+    try {
+      updateActivity({ repoRoot, path: write.path, expectedSha256: write.before_hash, content: write.content });
+    } catch (error) {
+      if (error.code === "ACTIVITY_UPDATE_CONFLICT") fail("LOCAL_CONFLICT", error.message, { path: write.path });
+      throw error;
+    }
+  } else if (write.before_hash === null && write.path.includes("/activities/")) {
+    // Readers must see complete Markdown, just as with ordinary activity creation.
+    try { await atomicWrite(destination, write.content, { exclusive: true }); }
+    catch (error) {
+      if (error.code === "EEXIST") fail("LOCAL_CONFLICT", "New activity path appeared during apply", { path: write.path });
+      throw error;
+    }
+  } else if (write.before_hash === null) {
     let handle;
     try {
       handle = await fsp.open(destination, "wx", 0o600);

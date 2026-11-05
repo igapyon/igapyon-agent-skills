@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import fsp from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -23,6 +24,7 @@ import {
   validateIssueSource,
 } from "./issue-import.mjs";
 import { buildDayPlan, loadRecords } from "./day-plan.mjs";
+import { updateActivity } from "./activity-files.mjs";
 
 const REPO = "acme/daybook";
 const IMPORT_DATE = "2026-10-06";
@@ -427,6 +429,30 @@ test("prepare generates all three canonical record types and a stable preview wi
   assert.equal(fs.existsSync(path.join(root, task.path)), false);
 });
 
+test("new intake activities become visible only as complete records and cannot replace a racing peer", async (t) => {
+  const root = makeRoot(t);
+  const { plan } = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord()] }]));
+  const write = plan.writes[0];
+  const target = path.join(root, write.path);
+  const peer = "---\ntype: activity\ndate: 2026-10-05\n---\n\n# Peer\n";
+  const link = fsp.link;
+  let observed = false;
+  t.mock.method(fsp, "link", async (from, to) => {
+    if (to === target) {
+      observed = true;
+      assert.equal(fs.existsSync(target), false);
+      assert.equal(fs.readFileSync(from, "utf8"), write.content);
+      fs.writeFileSync(target, peer);
+    }
+    return link(from, to);
+  });
+  await assert.rejects(applyIssueImport({ repoRoot: root, plan, refreshSource: source(),
+    resultPath: path.join(root, "workplace/issue-import/atomic-activity/result.json") }), { code: "LOCAL_CONFLICT" });
+  assert.equal(observed, true);
+  assert.equal(fs.readFileSync(target, "utf8"), peer);
+  assert.equal(fs.readdirSync(path.dirname(target)).some((name) => name.endsWith(".tmp")), false);
+});
+
 test("same-day activity records get separate letter paths and preserve each Issue source", async (t) => {
   const root = makeRoot(t);
   const input = source([issue(43), issue(42)]);
@@ -449,7 +475,7 @@ test("same-day activity records get separate letter paths and preserve each Issu
   assert.deepEqual(prepare(root, input, decisions).plan.issues.map((entry) => entry.outcome), ["already-imported", "already-imported"]);
 });
 
-test("saved legacy daily append plans apply, resume and remain discoverable", async (t) => {
+function legacyActivityFixture(t) {
   const root = makeRoot(t);
   const decisions = manifest([{ number: 42, decision: "import", records: [activityRecord()] }]);
   const prepared = prepare(root, source(), decisions).plan;
@@ -464,11 +490,27 @@ test("saved legacy daily append plans apply, resume and remain discoverable", as
   const { plan_id: ignored, ...contents } = plan;
   plan.plan_id = sha256(stableStringify(contents));
   const resultPath = path.join(root, "workplace/issue-import/legacy-activity/result.json");
+  return { root, decisions, plan, original, target, resultPath };
+}
+
+test("saved legacy daily append plans apply, resume and remain discoverable", async (t) => {
+  const { root, decisions, plan, target, resultPath } = legacyActivityFixture(t);
   await applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath });
   await applyIssueImport({ repoRoot: root, plan, resultPath });
   assert.match(fs.readFileSync(target, "utf8"), /先に記録した活動/);
   assert.equal(prepare(root, source(), decisions).plan.issues[0].outcome, "already-imported");
   assert.equal(fs.existsSync(path.join(root, "2026/202610/activities/activity-20261005a.md")), false);
+});
+
+test("an ordinary activity update after intake preflight survives a conflicting legacy append", async (t) => {
+  const { root, plan, original, target, resultPath } = legacyActivityFixture(t);
+  const peer = original + "\nPeer's retained contribution\n";
+  await assert.rejects(applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath,
+    dependencies: { beforeWrite: () => updateActivity({ repoRoot: root, path: plan.writes[0].path,
+      expectedSha256: sha256(original), content: peer }) },
+  }), { code: "LOCAL_CONFLICT" });
+  assert.equal(fs.readFileSync(target, "utf8"), peer);
+  assert.equal(JSON.parse(fs.readFileSync(resultPath, "utf8")).last_error.code, "LOCAL_CONFLICT");
 });
 
 test("one Issue allocates aa and ab after z without touching an existing daily file", (t) => {

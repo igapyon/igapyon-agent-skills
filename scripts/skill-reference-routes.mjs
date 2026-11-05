@@ -9,7 +9,7 @@ export const representativeRoutes = [
   ["igapyon-diary-writer", "write a diary entry", ["references/workflow.md"]],
   ["igapyon-ffmpeg-helper", "locate H4essential inputs", ["references/process/h4essential-input-discovery.md"]],
   ["igapyon-github-writer", "draft PR text", ["references/pr-writing.md"]],
-  ["igapyon-miku-daybook", "add a task or activity", ["references/records.md", "references/operations.md", "assets/daybook/scripts/create-activity.mjs", "assets/daybook/scripts/activity-files.mjs"]],
+  ["igapyon-miku-daybook", "add or update a task or activity", ["references/records.md", "references/operations.md", "assets/daybook/scripts/create-activity.mjs", "assets/daybook/scripts/update-activity.mjs", "assets/daybook/scripts/activity-files.mjs"]],
   ["igapyon-miku-scm", "read SCM operation contracts", ["references/workflow-contracts.md"]],
   ["igapyon-miku-soft-developer", "create an Agent Skill", ["references/40-agent-skills-workflow.md"]],
   ["igapyon-mikuku-agent", "look up version, representative image, and article rules", ["references/VERSION.md", "assets/mikuku/mikuku01.png", "references/article-writing.md"]],

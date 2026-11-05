@@ -4,7 +4,7 @@ import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { fixture } from "./sync-fixture.mjs";
 import { syncGit } from "../scripts/miku-scm-sync-state.mjs";
-import { chunkIgnorePaths, guardIgnored } from "../scripts/miku-scm-sync-worktree.mjs";
+import { assertNoIgnoredPaths, chunkIgnorePaths, guardIgnored } from "../scripts/miku-scm-sync-worktree.mjs";
 
 async function incoming(t, extraNames = [], count = 100) {
   const f = await fixture(t);
@@ -49,17 +49,17 @@ test("guard stops when ignore lookup fails", async (t) => {
 
 test("guard batches distinct existing paths and preserves NUL-delimited names", async (t) => {
   const special = ["space name.txt", "tab\tname.txt", "line\nbreak.txt", "日本語.txt", "keep.txt"];
-  const f = await incoming(t, special);
-  await f.write(".gitignore", "workplace/\nignored/\n*.cache\nincoming/keep.*\n!incoming/keep.txt\n");
-  for (let i = 0; i < 100; i++) await f.write(`incoming/file-${i}.txt`, "local\n");
-  for (const name of special) await f.write(`incoming/${name}`, "local\n");
+  const paths = ["incoming", ...Array.from({ length: 100 }, (_, i) => `incoming/file-${i}.txt`),
+    ...special.map((name) => `incoming/${name}`)];
   let calls = 0;
   let input;
-  const ctx = { root: f.repo, git(cwd, args, options) {
-    if (args[0] === "check-ignore") { calls++; input = options.input; }
-    return syncGit(cwd, args, options);
+  const ctx = { root: "unused", git(_cwd, args, options) {
+    calls++;
+    assert.deepEqual(args, ["check-ignore", "--stdin", "-z", "--no-index"]);
+    input = options.input;
+    return { code: 1, stdout: "" };
   } };
-  await guardIgnored(ctx, [f.target]);
+  assertNoIgnoredPaths(ctx, paths);
   assert.equal(calls, 1);
   assert.ok(input.endsWith("\0"));
   const names = input.slice(0, -1).split("\0");

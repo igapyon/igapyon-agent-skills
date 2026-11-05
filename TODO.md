@@ -2,6 +2,29 @@
 
 ## AI Agent Current Tasks
 
+### daybook：activityの上書き防止（2026-11-06・簡素化・反映済み）
+
+- [x] 新規作成は同名ファイルを上書きせず次の英字へ進む。標準入力を使い、固定名draftの共有を避ける。
+- [x] [既存更新CLI](skills/igapyon-miku-daybook/assets/daybook/scripts/update-activity.mjs)は、書く直前に本文を読み直し、元の内容と違えば保存せず再検討を求める。[操作手順](skills/igapyon-miku-daybook/references/operations.md#add-an-activity)も整合。
+- [x] 利用者の簡素化指示に従い、活動ごとのロック・権限管理・解除失敗の警告処理と専用テストを削除。旧Issue activity追記も同じ直前確認を使う。
+- [x] source runtime 77/77、実daybook runtime 75/75（統合コピーでも成功）、参照・配布79/79、skill形式・差分検査が成功。
+- [x] 実daybookの6ファイルへ反映し、ほかのtracked 122ファイルの不変と、配備済みskillの同期を確認。
+
+合意した範囲は直前の内容確認までとし、確認から保存までの間に始まる同時書き込みの競合は許容する。同日に一度導入した活動ロック・権限保持の実装とその自己レビュー修正は、この利用者判断で撤回した。
+
+### miku-repo-scale：Node.js による複数言語の規模計測（2026-11-05・設計・実装計画済み）
+
+[初期設計](docs/plans/miku-repo-scale-node-mvp.md)に、Issue #72・#319・#321・#322 を具体化した。Node.js の共通 core と薄い Agent Skill、Git tracked / worktree、指標・言語解析・coverage・CLI/JSON・配布・受入条件を定義。
+
+- [x] Node.js 限定の実現方式と、複数言語を計測する初期設計を保存。
+- [x] Markdown・JSON・YAML を含む、指示・実装・定義としてのソース規模と拡張子別集計を設計へ追加。
+- [x] [実装計画](docs/plans/miku-repo-scale-node-implementation.md)へ、変更ファイル・前提・完了条件・検証を備えた RSC-00〜15 を保存。
+- [x] 2つの作業branchへ初期ファイルを配置（CLI 20件、skills 26件）。製品別の設計・計画・README・TODO・共有規約参照を各repositoryに保存。配置後の内容・リンク・構文・skill形式・runtime欠損時の停止を確認。
+- [ ] RSC-00〜02：作業先・データ契約・fixture・字句解析方式を確定。
+- [ ] RSC-03〜07：Git収集・読取・分類・基本集計・CLIを実装し、M1を確認。
+- [ ] RSC-08〜12：共通接続と JS/TS・Python・Java・Shell の字句解析を実装し、M2を確認。
+- [ ] RSC-13〜15：runtime・スキル・bundleを構築し、隔離実行とM3の受入を確認。
+
 ### miku-scm：自己レビュー2件の追加対応（2026-11-05・実装・検証済み）
 
 [Luna向け追加対応計画](docs/plans/miku-scm-self-review-followup-luna-implementation.md)に沿って、保存計画を使わない直接applyの公開先取り違えと、異なる未追跡pathで残るcheck-ignoreの大量process起動を修正した。[追加実施記録](docs/plans/miku-scm-self-review-followup-execution.md)に変更と計測を記載。fast 280/280、full 541/541成功、workflow contract 37件current。

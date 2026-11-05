@@ -27,7 +27,7 @@ export function chunkIgnorePaths(paths, { maxPaths = 512, maxBytes = 256 * 1024 
   return chunks;
 }
 
-function assertNoIgnoredPaths(ctx, candidates) {
+export function assertNoIgnoredPaths(ctx, candidates) {
   for (const names of chunkIgnorePaths(candidates)) {
     const result = ctx.git(ctx.root, ["check-ignore", "--stdin", "-z", "--no-index"], {
       input: `${names.join("\0")}\0`, allowFailure: true,
