@@ -213,7 +213,7 @@ You need both a current view of your work and a dated account of how you reached
 - Keep date-planned work separate from a dedicated Backlog section; Backlog tasks can remain undated until they are scheduled.
 - Bring named GitHub Issues into the documented intake workflow and prepare the bundled GitHub Actions notification workflow when requested.
 
-**Scope and prerequisites:** Markdown records are the source of truth. Issue receipts and closure follow the miku-scm steps; notification delivery requires setup in the target repository.
+**Scope and prerequisites:** Markdown records are the source of truth. A clear daybook request or current repository handoff can direct use; a name mention or skill review alone does not start record operations. Without a concrete operation, the skill waits for instructions. Issue receipts and closure follow the miku-scm steps; notification delivery requires setup in the target repository.
 
 **Example:** Use igapyon-miku-daybook to record why we changed approach today, update the task's next action, and regenerate today's plan.
 

@@ -153,7 +153,7 @@ the available fixed commands. OS names alone never block execution.
 
 After a successful PR Soft Reset Recommit and the required `git log -1 | head -n 20` display, stop and wait for the human to inspect the commit log.
 
-Use [github-post-recommit-publish.md](github-post-recommit-publish.md) and the bundled `scripts/post-recommit-publish.mjs` as the authoritative implementation. Before asking for publication approval, run its read-only preflight with the reviewed full local commit SHA. Show the resulting exact remote state and apply arguments with the commit log. For an existing remote branch, the preflight full remote SHA is part of the human-reviewed publication plan; for a new remote branch, the reviewed plan records that the exact destination branch is absent.
+Use [github-post-recommit-publish.md](github-post-recommit-publish.md) and the bundled `scripts/post-recommit-publish.mjs` as the authoritative implementation. Before asking for publication approval, run its read-only preflight with the reviewed full local commit SHA and `--save-plan`. Show the saved plan path and digest, exact remote state, and returned `apply_arguments` with the commit log. For an existing remote branch, the preflight full remote SHA is part of the human-reviewed publication plan; for a new remote branch, the reviewed plan records that the exact destination branch is absent. A preflight without a saved plan has no usable apply arguments.
 
 Proceed only when all of these conditions hold:
 
@@ -162,7 +162,7 @@ Proceed only when all of these conditions hold:
 - the human explicitly says the displayed commit is OK and authorizes publication
 - the target `<current-branch>-done` local branch does not already exist
 
-After explicit approval, pass the exact preflight `apply_arguments` and `--apply` to the helper. Do not request another conversational approval after `ok push` while the reviewed local HEAD, branch, remote, and remote expectation remain unchanged. The helper must stop instead of guessing when any reviewed state changed.
+After explicit approval, pass the saved preflight's exact `apply_arguments` to the helper without adding `--apply`. The helper rejects ordinary direct apply; a saved plan is the only publication apply entry point. If its contract or reviewed state changed, prepare and review a new saved plan. Do not request another conversational approval after `ok push` while the reviewed local HEAD, branch, remote, and remote expectation remain unchanged. The helper must stop instead of guessing when any reviewed state changed.
 
 For a new remote branch, the helper uses `git push -u origin HEAD:refs/heads/<current-branch>`. For an existing reviewed recommit branch, it requires `--expected-remote-head <reviewed-full-sha>` and uses `git push --force-with-lease=refs/heads/<current-branch>:<reviewed-full-sha> origin HEAD:refs/heads/<current-branch>`. Never use a remote-tracking ref updated by the helper's own fetch as an implicit lease expectation. Do not replace the explicit lease with plain `--force`, and do not use force for a new remote branch.
 

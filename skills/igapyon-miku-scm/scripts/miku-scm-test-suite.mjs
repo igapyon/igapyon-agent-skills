@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url";
 const SYNC_PULL_GROUPS = [
   "sync pull (?:without gh|done|does not replace|squash)",
   "(?:human|a fresh pull|unmerged PR|TLS|sync pull (?:next-work|never retries|recovers))",
-  "sync pull (?:rebase|replays|identical|retains|directory|stash|refuses)",
+  "sync pull (?:rebase|replays|identical|retains|directory|stash|refuses|batches)",
 ];
 
 const SLOW_SHARDS = new Map([
@@ -23,8 +23,8 @@ const SLOW_SHARDS = new Map([
   ["post-recommit-publish.test.mjs", [
     "^(?:PR handoff|preflight|plan CLI|content VERSION)",
     "^post-merge",
-    "^(?:saved publication|apply rejects a changed|apply rejects a dirty)",
-    "^(?:saved plan remains|programmatic publication)",
+    "^(?:saved publication|legacy ordinary apply|documented ordinary arguments|apply rejects a changed|apply rejects a dirty)",
+    "^(?:saved plan (?:returns|remains|rejects|publishes)|programmatic publication)",
     "^(?:apply publishes|apply uses)",
     "^(?:apply stops when|apply stops before push|fetch failure)",
     "^(?:push failure|post-push)",

@@ -151,6 +151,16 @@ async function continuePendingPush(ctx, options) {
     await assertIdle(ctx);
     assertRemote(ctx, op.remote, true);
     if (options.base && resolveBase(ctx, options.remote, options.base).ref !== op.base.ref) throw new Error("Requested base differs from the saved operation");
+    const stoppedCommit = op.commit?.result;
+    if (op.status === "partial" && op.phase === "work-commit" && !op.apply_started
+      && stoppedCommit?.status === "partial" && ["pre-commit-check", "post-check-verify"].includes(stoppedCommit.stage)
+      && stoppedCommit.head_before === op.original.head && head(ctx) === op.original.head
+      && !op.backup_branch && !op.recommitted_head && !op.delegate) {
+      op.status = "superseded";
+      op.superseded_reason = "A repeated sync push requested fresh checks after a known pre-commit stop";
+      await saveOperation(ctx, op);
+      return { continuation: "refreshed-after-check-failure" };
+    }
     if (!op.apply_started && ["prepared", "needs-sync-pull"].includes(op.status)) {
       if (op.status === "prepared") {
         const plan = await readPlan(ctx, op);
@@ -180,13 +190,14 @@ async function continuePendingPush(ctx, options) {
 
 export async function prepareSyncPush(options, dependencies = {}) {
   let id = options.resume || options.cancel || options.recover || newId();
-  const { ctx, release } = await openSync(options.repo, dependencies, id, Boolean(options.resume || options.cancel || options.recover));
+  const { ctx, release } = await openSync(options.repo, dependencies, id, Boolean(options.resume || options.cancel || options.recover), { allowMissingInitialization: Boolean(options.cancel) });
   let op;
   let recoveryCompleted = false;
   let effectiveOptions = options;
   let continuation = "";
   try {
     runtimePlatform(dependencies, ctx);
+    if (ctx.recoveredInitialization && options.cancel) return { status: "cancelled", operation_id: id, reason: "Cancelled interrupted sync initialization; start a new sync", final_branch: branch(ctx), head: head(ctx), mutation_invoked: false };
     if (options.recover) {
       op = await loadOperation(ctx, options.recover);
       await checkPending(ctx, { except: op.id });
@@ -265,7 +276,10 @@ export async function prepareSyncPush(options, dependencies = {}) {
       if (committed.status !== "committed") {
         op.status = committed.mutation_invoked ? "partial" : "rejected";
         await saveOperation(ctx, op);
-        return { ...committed, warnings: [...ctx.warnings, ...(committed.warnings ?? [])], commit: op.commit, stage: "work-commit", operation_id: id };
+        const retryable = committed.status === "partial" && ["pre-commit-check", "post-check-verify"].includes(committed.stage)
+          && branch(ctx) === initial.branch && head(ctx) === initial.head;
+        return { ...committed, reason: committed.reason ?? committed.message, warnings: [...ctx.warnings, ...(committed.warnings ?? [])], commit: op.commit, stage: "work-commit", operation_id: id,
+          ...(retryable ? { next_command: "miku-scm sync push", next_action: "Resolve the reported check problem, then repeat miku-scm sync push. Current work and the index are retained." } : {}) };
       }
     }
     const current = await snapshot(ctx);

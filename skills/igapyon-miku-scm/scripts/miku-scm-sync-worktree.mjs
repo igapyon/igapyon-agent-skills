@@ -4,6 +4,50 @@ import { ORDINARY_PATHSPEC } from "./miku-scm-operational-storage.mjs";
 import path from "node:path";
 import { SHA, afterAction, beforeAction, branch, head, saveOperation, snapshot, zeros } from "./miku-scm-sync-state.mjs";
 
+// Exported for boundary tests; the workflow runner does not expose this helper.
+export function chunkIgnorePaths(paths, { maxPaths = 512, maxBytes = 256 * 1024 } = {}) {
+  if (!Number.isInteger(maxPaths) || maxPaths < 1 || !Number.isInteger(maxBytes) || maxBytes < 1) {
+    throw new Error("Git ignore batch limits must be positive integers");
+  }
+  const chunks = [];
+  let current = [];
+  let currentBytes = 0;
+  for (const name of paths) {
+    const bytes = Buffer.byteLength(name, "utf8") + 1;
+    if (bytes > maxBytes) throw new Error("A checkout path exceeds the bounded Git ignore query size");
+    if (current.length && (current.length >= maxPaths || currentBytes + bytes > maxBytes)) {
+      chunks.push(current);
+      current = [];
+      currentBytes = 0;
+    }
+    current.push(name);
+    currentBytes += bytes;
+  }
+  if (current.length) chunks.push(current);
+  return chunks;
+}
+
+function assertNoIgnoredPaths(ctx, candidates) {
+  for (const names of chunkIgnorePaths(candidates)) {
+    const result = ctx.git(ctx.root, ["check-ignore", "--stdin", "-z", "--no-index"], {
+      input: `${names.join("\0")}\0`, allowFailure: true,
+    });
+    if (result.code === 1) {
+      if (result.stdout !== "") throw new Error("Git ignore lookup returned unexpected output");
+      continue;
+    }
+    if (result.code !== 0 || typeof result.stdout !== "string" || !result.stdout.endsWith("\0")) {
+      throw new Error("Git ignore lookup failed; sync protection could not be verified");
+    }
+    const ignored = result.stdout.slice(0, -1).split("\0");
+    const candidates = new Set(names);
+    if (ignored.length === 0 || ignored.some((name) => !candidates.has(name))) {
+      throw new Error("Git ignore lookup returned an invalid path result");
+    }
+    throw new Error(`Ignored path would be overwritten by sync: ${ignored[0]}`);
+  }
+}
+
 // ort can relocate added files after inferring a directory rename, producing a
 // path absent from both input trees. Those writes can overwrite ignored files.
 // Keep checkout paths bounded by the checked trees on initial and resumed work.
@@ -20,7 +64,7 @@ export function requireGitCapabilities(ctx) {
 
 // Check every checkout tree, including intermediate replay commits. Only walk
 // paths Git may write: ignored dependency/cache trees otherwise remain untouched.
-export async function guardIgnored(ctx, commits) {
+export async function guardIgnored(ctx, commits, dependencies = {}) {
   const insensitive = ctx.git(ctx.root, ["config", "--bool", "core.ignorecase"], { allowFailure: true }).out === "true";
   const key = (name) => insensitive ? name.normalize("NFC").toLowerCase() : name;
   const trackedPaths = new Set(zeros(ctx.git(ctx.root, ["ls-files", "-z"]).stdout).map(key));
@@ -41,7 +85,21 @@ export async function guardIgnored(ctx, commits) {
       leaves.add(entry.slice(entry.indexOf("\t") + 1));
     }
   }
-  const ignored = (name) => ctx.git(ctx.root, ["check-ignore", "--quiet", "--no-index", "--", name], { allowFailure: true }).ok;
+  // Scope the case-folded directory cache to one guard call.
+  const directoryCache = new Map();
+  const ignoredCandidates = new Set();
+  const directoryAliases = async (relative) => {
+    if (!directoryCache.has(relative)) {
+      const names = new Map();
+      for (const entry of await (dependencies.readdir ?? readdir)(path.join(ctx.root, relative))) {
+        const folded = key(entry);
+        if (!names.has(folded)) names.set(folded, []);
+        names.get(folded).push(entry);
+      }
+      directoryCache.set(relative, names);
+    }
+    return directoryCache.get(relative);
+  };
   for (const name of leaves) {
     let relative = "";
     const pieces = name.split("/");
@@ -50,8 +108,8 @@ export async function guardIgnored(ctx, commits) {
       if (piece === ".." || piece === "." || !piece) throw new Error("Unsafe checkout tree path");
       if (insensitive) {
         let entries;
-        try { entries = await readdir(path.join(ctx.root, relative)); } catch (error) { if (error.code === "ENOENT" || error.code === "ENOTDIR") break; throw error; }
-        const aliases = entries.filter((entry) => key(entry) === key(piece));
+        try { entries = await directoryAliases(relative); } catch (error) { if (error.code === "ENOENT" || error.code === "ENOTDIR") break; throw error; }
+        const aliases = entries.get(key(piece)) ?? [];
         if (aliases.length > 1) throw new Error("Ambiguous case-folded checkout path");
         piece = aliases[0] ?? piece;
       }
@@ -61,7 +119,7 @@ export async function guardIgnored(ctx, commits) {
       // Ignore rules also match parent directories of tracked generated files.
       // Only real directories qualify; ignored file/symlink replacements remain protected.
       const managed = trackedPaths.has(key(relative)) || (stat.isDirectory() && trackedDirectories.has(key(relative)));
-      if (!managed && ignored(relative)) throw new Error(`Ignored path would be overwritten by sync: ${relative}`);
+      if (!managed) ignoredCandidates.add(relative);
       if (stat.isSymbolicLink() || !stat.isDirectory()) break;
       if (i === pieces.length - 1) {
         const children = ctx.git(ctx.root, ["ls-files", "--others", "--ignored", "--exclude-standard", "-z", "--", `${relative}/`]).stdout;
@@ -69,6 +127,7 @@ export async function guardIgnored(ctx, commits) {
       }
     }
   }
+  assertNoIgnoredPaths(ctx, [...ignoredCandidates]);
 }
 
 export async function createBackup(ctx, op) {

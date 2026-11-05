@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,6 +24,118 @@ import {
 import { runWorkflow } from "../scripts/miku-scm-run.mjs";
 
 const PUBLISH_SCRIPT = fileURLToPath(new URL("../scripts/post-recommit-publish.mjs", import.meta.url));
+
+test("saved publication rejects a different branch at the same HEAD", async (t) => {
+  const state = await scenario(t);
+  const p = await executePublish(optionsFor(state, "--save-plan"), { gh: null });
+  git(state.repo, "switch", "-c", "other-branch");
+  await assert.rejects(executePublish(parseArgs(["--repo", state.repo, "--apply-plan", p.plan_path,
+    "--expected-plan-sha256", p.plan_sha256]), { gh: null }), /branch changed/);
+  assert.equal(git(state.remote, "for-each-ref", "--format=%(refname)", "refs/heads/"), "refs/heads/devel");
+  assert.equal(git(state.repo, "branch", "--show-current"), "other-branch");
+});
+
+test("saved publication rejects changed fetch and push destinations", async (t) => {
+  for (const mode of ["fetch", "push", "multiple"]) await t.test(mode, async (sub) => {
+    const state = await scenario(sub);
+    const p = await executePublish(optionsFor(state, "--save-plan"), { gh: null });
+    const other = path.join(state.temporary, "other.git");
+    execFileSync("git", ["init", "--bare", other], { stdio: "ignore" });
+    if (mode === "fetch") git(state.repo, "remote", "set-url", "origin", other);
+    else git(state.repo, "remote", "set-url", ...(mode === "multiple" ? ["--add"] : []), "--push", "origin", other);
+    await assert.rejects(executePublish(parseArgs(["--repo", state.repo, "--apply-plan", p.plan_path,
+      "--expected-plan-sha256", p.plan_sha256]), { gh: null }), /remote URLs changed/);
+    assert.equal(git(other, "for-each-ref", "--format=%(refname)"), "");
+    assert.equal(git(state.remote, "for-each-ref", "--format=%(refname)", "refs/heads/"), "refs/heads/devel");
+  });
+});
+
+test("saved publication rejects branch and URL changes during fetch before an attempt", async (t) => {
+  for (const kind of ["branch", "url"]) await t.test(kind, async (sub) => {
+    const state = await scenario(sub);
+    const p = await executePublish(optionsFor(state, "--save-plan"), { gh: null });
+    const native = createGitRunner();
+    let sends = 0;
+    const intercepted = (cwd, args, options) => {
+      if (args[0] === "push") sends++;
+      const result = native(cwd, args, options);
+      if (args[0] === "fetch") {
+        if (kind === "branch") git(cwd, "switch", "-c", "changed-branch");
+        else git(cwd, "remote", "set-url", "--push", "origin", path.join(state.temporary, "different.git"));
+      }
+      return result;
+    };
+    await assert.rejects(executePublish(parseArgs(["--repo", state.repo, "--apply-plan", p.plan_path,
+      "--expected-plan-sha256", p.plan_sha256]), { git: intercepted, gh: null }), (e) => e.mutationInvoked === false && /changed/.test(e.message));
+    assert.equal(sends, 0);
+  });
+});
+
+test("saved publication rejects legacy plans without inventing a remote binding", async (t) => {
+  const state = await scenario(t);
+  const p = await executePublish(optionsFor(state, "--save-plan"), { gh: null });
+  const plan = { ...p.publication_plan, schema_version: 1 };
+  delete plan.remote_urls_sha256;
+  const content = JSON.stringify(plan);
+  await writeFile(path.join(state.repo, p.plan_path), content);
+  await assert.rejects(executePublish(parseArgs(["--repo", state.repo, "--apply-plan", p.plan_path,
+    "--expected-plan-sha256", createHash("sha256").update(content).digest("hex")]), { gh: null }), /preflight again/);
+});
+
+test("saved publication rechecks a branch changed by the mutation callback", async (t) => {
+  const state = await scenario(t);
+  const p = await executePublish(optionsFor(state, "--save-plan"), { gh: null });
+  await assert.rejects(executePublish(parseArgs(["--repo", state.repo, "--apply-plan", p.plan_path,
+    "--expected-plan-sha256", p.plan_sha256]), {
+    gh: null, beforeMutation: () => git(state.repo, "switch", "-c", "changed-in-callback"),
+  }), (e) => e.mutationInvoked === null && /branch changed/.test(e.message));
+  assert.equal(git(state.remote, "for-each-ref", "--format=%(refname)", "refs/heads/"), "refs/heads/devel");
+  const attempt = JSON.parse(await readFile(path.join(state.repo, `${p.plan_path}.attempt.json`), "utf8"));
+  assert.equal(attempt.status, "unresolved");
+});
+
+test("legacy ordinary apply arguments are rejected before any Git command", async (t) => {
+  const state = await scenario(t);
+  const args = ["--repo", state.repo, "--expected-head", state.expectedHead,
+    "--expect-new-remote-branch", "--apply"];
+  assert.throws(() => parseArgs(args), /save.*plan/i);
+  const unsafeOptions = { ...optionsFor(state, "--expect-new-remote-branch"), apply: true };
+  let calls = 0;
+  const gitRunner = () => { calls++; throw new Error("Git must not run"); };
+  await assert.rejects(runPublish(unsafeOptions, { git: gitRunner }), /save.*plan/i);
+  await assert.rejects(executePublish(unsafeOptions, { git: gitRunner }), /save.*plan/i);
+  assert.equal(calls, 0);
+  assert.equal(git(state.remote, "for-each-ref", "--format=%(refname)", "refs/heads/"), "refs/heads/devel");
+});
+
+test("saved plan returns the only supported apply arguments", async (t) => {
+  const state = await scenario(t);
+  const unplanned = await runPublish(optionsFor(state), { gh: null });
+  assert.equal(unplanned.apply_arguments, undefined);
+  assert.equal(unplanned.next_action, "Save and review a publication plan before applying.");
+  assert.ok(unplanned.save_plan_arguments.includes("--save-plan"));
+  const saved = await executePublish(optionsFor(state, "--save-plan"), { gh: null });
+  assert.deepEqual(saved.apply_arguments, ["--repo", await realpath(state.repo), "--apply-plan", saved.plan_path,
+    "--expected-plan-sha256", saved.plan_sha256]);
+  assert.ok(!saved.apply_arguments.includes("--apply"));
+});
+
+test("documented ordinary arguments cannot publish a changed branch to a changed remote", async (t) => {
+  const state = await scenario(t);
+  const preflight = await runPublish(optionsFor(state), { gh: null });
+  assert.equal(preflight.apply_arguments, undefined);
+  const different = path.join(state.temporary, "different.git");
+  execFileSync("git", ["clone", "--bare", state.remote, different], { stdio: "ignore" });
+  git(state.repo, "remote", "set-url", "origin", different);
+  git(state.repo, "switch", "-c", "different-branch");
+  const oldArguments = ["--repo", state.repo, "--expected-head", preflight.head,
+    "--expect-new-remote-branch", "--apply"];
+  assert.throws(() => parseArgs(oldArguments), /save.*plan/i);
+  const unsafeOptions = { ...optionsFor(state), apply: true };
+  await assert.rejects(executePublish(unsafeOptions, { gh: null }), /save.*plan/i);
+  assert.equal(git(different, "for-each-ref", "--format=%(refname)", "refs/heads/"), "refs/heads/devel");
+  assert.equal(git(state.repo, "branch", "--show-current"), "different-branch");
+});
 
 function git(cwd, ...args) {
   return execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
@@ -103,6 +215,16 @@ function optionsFor(state, ...extra) {
     state.expectedHead,
     ...extra,
   ]);
+}
+
+async function preparePublicationPlan(state, ...preflightArguments) {
+  const preflight = await runPublish(optionsFor(state, ...preflightArguments), { gh: null });
+  return savePublicationPlan(state.repo, preflight);
+}
+
+function applySavedPublication(state, saved, dependencies = { gh: null }) {
+  return executePublish(parseArgs(["--repo", state.repo, "--apply-plan", saved.plan_path,
+    "--expected-plan-sha256", saved.plan_sha256]), dependencies);
 }
 
 const applyDependencies = { platform: "darwin", fetchImpl: null };
@@ -213,14 +335,15 @@ test("PR handoff resolves GitHub URL results and deterministic fallbacks", () =>
   });
 });
 
-test("preflight is read-only and fixes the new-branch expectation", async (t) => {
+test("preflight is read-only and returns instructions to save a publication plan", async (t) => {
   const state = await scenario(t);
   const before = git(state.repo, "show-ref");
   const result = await runPublish(optionsFor(state), applyDependencies);
 
   assert.equal(result.status, "preflight-ok");
   assert.deepEqual(result.remote_branch, { state: "absent" });
-  assert.ok(result.apply_arguments.includes("--expect-new-remote-branch"));
+  assert.ok(result.save_plan_arguments.includes("--save-plan"));
+  assert.equal(result.apply_arguments, undefined);
   assert.equal(git(state.repo, "show-ref"), before);
   assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
   assert.equal(git(state.remote, "branch", "--list", state.branch), "");
@@ -243,7 +366,7 @@ test("saved publication plan applies once and publishes the reviewed branch", as
   assert.match(saved.plan_path, /^workplace\/miku-scm\/ok-push\/.*\.json$/);
   assert.match(saved.plan_sha256, /^[0-9a-f]{64}$/);
   assert.equal(saved.publication_plan.workflow_contract, "pr.publish.apply");
-  assert.equal(saved.publication_plan.contract_version, 1);
+  assert.equal(saved.publication_plan.contract_version, 3);
   assert.match(saved.publication_plan.contract_pair_sha256, /^[0-9a-f]{64}$/);
   const published = JSON.parse(execFileSync(process.execPath, [PUBLISH_SCRIPT,
     "--repo", state.repo, "--apply-plan", saved.plan_path,
@@ -681,10 +804,8 @@ test("content VERSION.md derives a v-prefixed tag and resets to a on a new date"
   git(state.repo, "commit", "-m", "add content version");
   state.expectedHead = git(state.repo, "rev-parse", "HEAD");
 
-  const result = await runPublish(
-    optionsFor(state, "--expect-new-remote-branch", "--apply"),
-    applyDependencies,
-  );
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
+  const result = await applySavedPublication(state, saved, applyDependencies);
 
   assert.equal(result.version, "20260726a");
   assert.equal(result.recommended_tag, "v20260726a");
@@ -707,37 +828,29 @@ test("post-merge helper derives a content VERSION.md tag after same-day overflow
   assert.equal(result.recommended_tag, "v20260725aa");
 });
 
-test("apply rejects a changed reviewed local HEAD before push", async (t) => {
+test("saved plan rejects a changed local HEAD before push", async (t) => {
   const state = await scenario(t);
-  const wrongHead = "0".repeat(40);
-  const options = parseArgs([
-    "--repo", state.repo,
-    "--expected-head", wrongHead,
-    "--expect-new-remote-branch",
-    "--apply",
-  ]);
-
-  await assert.rejects(runPublish(options, applyDependencies), /local HEAD changed/);
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
+  await writeFile(path.join(state.repo, "concurrent.txt"), "changed\n", "utf8");
+  git(state.repo, "add", "concurrent.txt");
+  git(state.repo, "commit", "-m", "concurrent change");
+  await assert.rejects(applySavedPublication(state, saved, applyDependencies), /local HEAD changed/);
   assert.equal(git(state.remote, "branch", "--list", state.branch), "");
 });
 
-test("apply rejects a dirty worktree before push", async (t) => {
+test("saved plan rejects a dirty worktree before push", async (t) => {
   const state = await scenario(t);
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
   await writeFile(path.join(state.repo, "dirty.txt"), "dirty\n", "utf8");
 
-  await assert.rejects(
-    runPublish(optionsFor(state, "--expect-new-remote-branch", "--apply"), applyDependencies),
-    /dirty/,
-  );
+  await assert.rejects(applySavedPublication(state, saved, applyDependencies), /dirty/);
   assert.equal(git(state.remote, "branch", "--list", state.branch), "");
 });
 
-test("apply publishes a new branch and renames locally only after equality", async (t) => {
+test("saved plan publishes a new branch and renames locally only after equality", async (t) => {
   const state = await scenario(t);
-  const result = await runPublish(
-    optionsFor(state, "--expect-new-remote-branch", "--apply"),
-    applyDependencies,
-  );
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
+  const result = await applySavedPublication(state, saved, applyDependencies);
 
   assert.equal(result.push_mode, "new-branch");
   assert.equal(result.comparison, "0 0");
@@ -747,12 +860,10 @@ test("apply publishes a new branch and renames locally only after equality", asy
   assert.equal(git(state.remote, "rev-parse", `refs/heads/${state.branch}`), state.expectedHead);
 });
 
-test("apply publishes on Windows and renames after equality", async (t) => {
+test("saved plan publishes on Windows and renames after equality", async (t) => {
   const state = await scenario(t);
-  const result = await runPublish(
-    optionsFor(state, "--expect-new-remote-branch", "--apply"),
-    windowsApplyDependencies,
-  );
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
+  const result = await applySavedPublication(state, saved, windowsApplyDependencies);
 
   assert.equal(result.status, "published");
   assert.equal(result.push_mode, "new-branch");
@@ -761,12 +872,10 @@ test("apply publishes on Windows and renames after equality", async (t) => {
   assert.equal(git(state.repo, "branch", "--show-current"), `${state.branch}-done`);
 });
 
-test("apply publishes on the native platform and verifies the remote", async (t) => {
+test("saved plan publishes on the native platform and verifies the remote", async (t) => {
   const state = await scenario(t);
-  const result = await runPublish(
-    optionsFor(state, "--expect-new-remote-branch", "--apply"),
-    nativeApplyDependencies,
-  );
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
+  const result = await applySavedPublication(state, saved, nativeApplyDependencies);
 
   assert.equal(result.status, "published");
   assert.equal(result.platform, nativeApplyDependencies.platform);
@@ -777,7 +886,8 @@ test("apply publishes on the native platform and verifies the remote", async (t)
 
 test("apply uses available commands on Linux with a warning", async (t) => {
   const state = await scenario(t);
-  const result = await runPublish(optionsFor(state, "--expect-new-remote-branch", "--apply"), { platform: "linux", gh: null });
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
+  const result = await applySavedPublication(state, saved, { platform: "linux", gh: null });
   assert.equal(result.status, "published");
   assert.ok(result.warnings.some((warning) => warning.includes("linux")));
   assert.equal(git(state.remote, "rev-parse", `refs/heads/${state.branch}`), state.expectedHead);
@@ -792,10 +902,8 @@ test("apply uses the reviewed remote SHA as an explicit force-with-lease", async
     calls.push(args);
     return realGit(cwd, args, options);
   };
-  const result = await runPublish(
-    optionsFor(state, "--expected-remote-head", state.expectedRemoteHead, "--apply"),
-    { ...applyDependencies, git: recordingGit },
-  );
+  const saved = await preparePublicationPlan(state, "--expected-remote-head", state.expectedRemoteHead);
+  const result = await applySavedPublication(state, saved, { ...applyDependencies, git: recordingGit });
 
   const destination = `refs/heads/${state.branch}`;
   assert.equal(result.push_mode, "force-with-explicit-lease");
@@ -814,10 +922,8 @@ test("apply uses an explicit force-with-lease on Windows for an existing branch"
     calls.push(args);
     return windowsGit(cwd, args, options);
   };
-  const result = await runPublish(
-    optionsFor(state, "--expected-remote-head", state.expectedRemoteHead, "--apply"),
-    { ...windowsApplyDependencies, git: recordingGit },
-  );
+  const saved = await preparePublicationPlan(state, "--expected-remote-head", state.expectedRemoteHead);
+  const result = await applySavedPublication(state, saved, { ...windowsApplyDependencies, git: recordingGit });
   const destination = `refs/heads/${state.branch}`;
   assert.equal(result.status, "published");
   assert.equal(result.push_mode, "force-with-explicit-lease");
@@ -829,8 +935,8 @@ test("apply uses an explicit force-with-lease on Windows for an existing branch"
 
 test("apply stops when the remote SHA changed after preflight", async (t) => {
   const state = await scenario(t, { existingRemoteBranch: true });
-  const preflight = await runPublish(optionsFor(state), applyDependencies);
-  const reviewedRemoteHead = preflight.remote_branch.head;
+  const saved = await preparePublicationPlan(state);
+  const reviewedRemoteHead = saved.remote_branch.head;
 
   const other = path.join(state.temporary, "other");
   git(state.temporary, "clone", state.remote, other);
@@ -843,68 +949,51 @@ test("apply stops when the remote SHA changed after preflight", async (t) => {
   git(other, "push", "origin", state.branch);
   const thirdPartyHead = git(other, "rev-parse", "HEAD");
 
-  await assert.rejects(
-    runPublish(
-      optionsFor(state, "--expected-remote-head", reviewedRemoteHead, "--apply"),
-      applyDependencies,
-    ),
-    /remote branch HEAD changed/,
-  );
+  await assert.rejects(applySavedPublication(state, saved, applyDependencies), /remote branch HEAD changed/);
   assert.equal(git(state.remote, "rev-parse", `refs/heads/${state.branch}`), thirdPartyHead);
   assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
 });
 
 test("apply stops before push when the completion branch already exists", async (t) => {
   const state = await scenario(t);
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
   git(state.repo, "branch", `${state.branch}-done`, "HEAD");
 
-  await assert.rejects(
-    runPublish(optionsFor(state, "--expect-new-remote-branch", "--apply"), applyDependencies),
-    /already exists/,
-  );
+  await assert.rejects(applySavedPublication(state, saved, applyDependencies), /already exists/);
   assert.equal(git(state.remote, "branch", "--list", state.branch), "");
 });
 
 test("fetch failure prevents push and rename through an injectable Git runner", async (t) => {
   const state = await scenario(t);
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
   const realGit = createGitRunner();
   const failingGit = (cwd, args, options) => {
     if (args[0] === "fetch") throw new Error("injected fetch failure");
     return realGit(cwd, args, options);
   };
 
-  await assert.rejects(
-    runPublish(
-      optionsFor(state, "--expect-new-remote-branch", "--apply"),
-      { ...applyDependencies, git: failingGit },
-    ),
-    /injected fetch failure/,
-  );
+  await assert.rejects(applySavedPublication(state, saved, { ...applyDependencies, git: failingGit }), /injected fetch failure/);
   assert.equal(git(state.remote, "branch", "--list", state.branch), "");
   assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
 });
 
 test("push failure prevents publication and rename", async (t) => {
   const state = await scenario(t);
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
   const realGit = createGitRunner();
   const failingGit = (cwd, args, options) => {
     if (args[0] === "push") throw new Error("injected push failure");
     return realGit(cwd, args, options);
   };
 
-  await assert.rejects(
-    runPublish(
-      optionsFor(state, "--expect-new-remote-branch", "--apply"),
-      { ...applyDependencies, git: failingGit },
-    ),
-    /injected push failure/,
-  );
+  await assert.rejects(applySavedPublication(state, saved, { ...applyDependencies, git: failingGit }), /injected push failure/);
   assert.equal(git(state.remote, "branch", "--list", state.branch), "");
   assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
 });
 
 test("post-push fetch failure leaves the successfully pushed branch unrenamed", async (t) => {
   const state = await scenario(t);
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
   const realGit = createGitRunner();
   let fetchCount = 0;
   const failingGit = (cwd, args, options) => {
@@ -914,19 +1003,14 @@ test("post-push fetch failure leaves the successfully pushed branch unrenamed", 
     return realGit(cwd, args, options);
   };
 
-  await assert.rejects(
-    runPublish(
-      optionsFor(state, "--expect-new-remote-branch", "--apply"),
-      { ...applyDependencies, git: failingGit },
-    ),
-    /injected post-push fetch failure/,
-  );
+  await assert.rejects(applySavedPublication(state, saved, { ...applyDependencies, git: failingGit }), /injected post-push fetch failure/);
   assert.equal(git(state.remote, "rev-parse", `refs/heads/${state.branch}`), state.expectedHead);
   assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
 });
 
 test("post-push mismatch prevents the local done rename", async (t) => {
   const state = await scenario(t);
+  const saved = await preparePublicationPlan(state, "--expect-new-remote-branch");
   const realGit = createGitRunner();
   const mismatchingGit = (cwd, args, options) => {
     const result = realGit(cwd, args, options);
@@ -936,13 +1020,7 @@ test("post-push mismatch prevents the local done rename", async (t) => {
     return result;
   };
 
-  await assert.rejects(
-    runPublish(
-      optionsFor(state, "--expect-new-remote-branch", "--apply"),
-      { ...applyDependencies, git: mismatchingGit },
-    ),
-    /comparison failed/,
-  );
+  await assert.rejects(applySavedPublication(state, saved, { ...applyDependencies, git: mismatchingGit }), /comparison failed/);
   assert.equal(git(state.remote, "rev-parse", `refs/heads/${state.branch}`), state.expectedHead);
   assert.equal(git(state.repo, "branch", "--show-current"), state.branch);
 });

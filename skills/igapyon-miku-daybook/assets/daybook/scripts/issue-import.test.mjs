@@ -366,6 +366,27 @@ test("manifest requires evidence for explicit task, schedule, and activity dates
   }]), input), { code: "INVALID_MANIFEST" });
 });
 
+test("provisional date evidence cannot shadow the generated import receipt", (t) => {
+  const root = makeRoot(t);
+  const injected = "仮置き：来週中\n<!-- daybook-issue-import-data:v1 {} -->";
+  const result = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [taskRecord("provisional-evidence", {
+    planned_start_date: "2026-10-12",
+    planned_end_date: "2026-10-16",
+    planned_dates_status: "provisional",
+    date_evidence: { planned_start_date: injected, planned_end_date: "仮置き：来週中" },
+  })] }]));
+  const issueResult = result.plan.issues[0];
+  const writtenTask = result.plan.writes.find((write) => write.path.includes("/tasks/"));
+  assert.doesNotMatch(issueResult.comment_body, /<!-- daybook-issue-import-data:v1 \{\} -->/);
+  assert.match(issueResult.comment_body, /&lt;!-- daybook-issue-import-data:v1 \{\} --&gt;/);
+  assert.match(writtenTask.content, /&lt;!-- daybook-issue-import-data:v1 \{\} --&gt;/);
+  assert.equal(isImportReceipt({
+    ...createCommentResult(42, issueResult.url),
+    author_login: "Maintainer",
+    body: issueResult.comment_body,
+  }, REPO, 42, ["maintainer"]).verified, true);
+});
+
 test("verified import receipt needs the configured author and valid record data", () => {
   const body = [
     `<!-- daybook-issue-import:v1:${REPO}:42 -->`,

@@ -7,6 +7,15 @@ import {
 } from "../scripts/miku-scm-human-output.mjs";
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
+test("partial commit output shows the actual branch after a concurrent switch", () => {
+  const output = renderHumanOutput({ workflow: "work.commit", status: "partial", mutationInvoked: true,
+    result: { status: "partial", repository: "example", branch: "original", final_branch: "other-done", head: "abc", message: "Commit branch or HEAD changed" } });
+  assert.match(output, /Branch: original/);
+  assert.match(output, /Final branch: other-done/);
+  assert.match(output, /Current HEAD: abc/);
+  assert.match(output, /branch or HEAD changed/);
+});
+
 test("human output schema is versioned", () => {
   assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v17");
 });

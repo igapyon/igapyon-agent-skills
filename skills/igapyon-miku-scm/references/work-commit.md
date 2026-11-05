@@ -28,7 +28,7 @@ change is in scope. The runner stages the complete ordinary path set with fixed
 literal pathspecs. Operational files under `workplace/miku-scm/` are excluded. It does
 not return to the Agent to select ordinary changed or untracked paths.
 
-It stops before staging only for a merge conflict, a `-done` branch, no
+It stops before staging for a merge conflict, detached HEAD, a `-done` branch, no
 non-ignored changes, a coupled-version mismatch, or an unapproved sensitive-path
 candidate. The fixed basename denylist is `.env`, `.env.*`, `.npmrc`,
 `.netrc`, `.pypirc`, `id_rsa`, `id_dsa`, `id_ecdsa`, `id_ed25519`,
@@ -70,8 +70,13 @@ working files untouched, including when the branch has no changes.
    tracked-path list and non-ignored untracked-path list to be empty. Any
    changed result stops before commit and reports `partial`; it never commits
    a check-mutated tree without a fresh invocation.
-7. Commit the fixed message bytes, then verify the new HEAD and that no
-   non-ignored path remains.
+7. Revalidate the initial branch and HEAD immediately before staging and again
+   before commit. Record the intended index tree with `git write-tree`.
+8. Commit the fixed message bytes. Verify that the branch is unchanged, the
+   new commit has exactly the initial HEAD as its parent, its tree equals the
+   recorded index tree, and no ordinary path remains. A hook or concurrent
+   operation changing these postconditions is partial, with actual final
+   branch/HEAD reported; it is never rolled back or recommitted automatically.
 
 The version notice records `increment_observed` when either fixed source
 (`pom.xml` or `skills/igapyon-mikuku-agent/references/VERSION.md`) is in the

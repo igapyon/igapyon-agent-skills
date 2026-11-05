@@ -8,6 +8,53 @@ import { context, hash, loadOperation, lock, newId, snapshot, syncGit, writeJson
 import { guardIgnored } from "../scripts/miku-scm-sync-worktree.mjs";
 import { fixture } from "./sync-fixture.mjs";
 
+test("sync pull bounds repeated ignore checks while retaining untracked carryover", async (t) => {
+  const f = await fixture(t);
+  for (let i = 0; i < 100; i++) await f.write(`incoming/file-${i}.txt`, "shared\n", f.other);
+  syncGit(f.other, ["add", "."]);
+  syncGit(f.other, ["commit", "-m", "Incoming files"]);
+  syncGit(f.other, ["push", "origin", "devel"]);
+  await f.write("incoming/local.txt", "private work\n");
+  let count = 0;
+  const r = await runSyncPull(f.options, { git: (cwd, args, options) => {
+    if (args[0] === "check-ignore" && args.includes("--no-index")) count++;
+    return syncGit(cwd, args, options);
+  } });
+  assert.equal(r.status, "completed", JSON.stringify(r));
+  assert.equal(count, 1);
+  assert.equal(await f.read("incoming/local.txt"), "private work\n");
+  assert.equal(await f.read("incoming/file-99.txt"), "shared\n");
+});
+
+test("sync pull batches distinct untracked collisions and retains exact recovery data", async (t) => {
+  const f = await fixture(t);
+  for (let i = 0; i < 100; i++) await f.write(`incoming/file-${i}.txt`, "upstream\n", f.other);
+  syncGit(f.other, ["add", "."]);
+  syncGit(f.other, ["commit", "-m", "Incoming collision files"]);
+  syncGit(f.other, ["push", "origin", "devel"]);
+  for (let i = 0; i < 100; i++) await f.write(`incoming/file-${i}.txt`, `private-${i}\n`);
+  const originalHead = f.git(["rev-parse", "HEAD"]);
+  let calls = 0;
+  let input = "";
+  const result = await runSyncPull(f.options, { git: (cwd, args, options) => {
+    if (args[0] === "check-ignore" && args.includes("--stdin")) {
+      calls++;
+      input = options.input;
+    }
+    return syncGit(cwd, args, options);
+  } });
+  assert.equal(result.status, "partial", JSON.stringify(result));
+  assert.equal(calls, 1);
+  const checked = input.slice(0, -1).split("\0");
+  assert.equal(checked.length, 101);
+  assert.equal(new Set(checked).size, checked.length);
+  assert.ok(checked.includes("incoming/file-99.txt"));
+  assert.ok(result.stash_sha);
+  assert.equal(f.git(["rev-parse", result.backup_branch]), originalHead);
+  assert.ok(f.git(["stash", "list", "--format=%H"]).split("\n").includes(result.stash_sha));
+  assert.equal(f.git(["show", `${result.stash_sha}^3:incoming/file-0.txt`]), "private-0");
+});
+
 test("sync pull FF preserves staged, unstaged, binary, deletion and untracked work without gh", async (t) => {
   const f = await fixture(t);
   await f.commit("edit.txt", "one\ntwo\n");

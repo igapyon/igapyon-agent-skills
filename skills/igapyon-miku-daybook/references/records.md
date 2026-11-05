@@ -64,7 +64,7 @@ type: task
 id: task-YYYYMM-NNNNN
 status: todo
 planning_state: planned # planned or backlog
-priority: 5
+priority: 7
 created: YYYY-MM-DD
 planned_start_date: YYYY-MM-DD
 planned_end_date: YYYY-MM-DD
@@ -76,7 +76,7 @@ completed: YYYY-MM-DD
 ---
 ```
 
-`priority` is required on newly created task records and is an integer from `1` to `9`: `1` is highest, `5` is normal, and `9` is lowest. Smaller numbers mean higher priority. Use `5` when the user does not specify a priority. Existing task records may omit the field, in which case treat it as `5`.
+`priority` is required on newly created task records and is an integer from `1` to `9`: `1` is highest and `9` is lowest. Smaller numbers mean higher priority. Use `7` when the user does not specify a priority. Existing task records may omit the field, in which case treat it as `7` without rewriting the file. Preserve any explicit value, including `5`.
 
 `planning_state` is required on newly created task records and must be the scalar string `planned` or `backlog`. An omitted value on an existing record is treated as `planned` without rewriting the file. Backlog is a separate planning group, not a task status or completion state.
 
@@ -84,7 +84,7 @@ New planned tasks require `planned_start_date` and `planned_end_date`. They form
 
 An explicitly classified Backlog task may omit both planned endpoints or keep only the endpoint that is known. Do not fill an omitted Backlog date provisionally. Any supplied dates must still be valid and ordered. If `planned_dates_status` is present, both endpoints are still required. Keep `due_month` and `planned_week` as coarse reference information; neither creates a work date nor changes the planning group. Do not classify a task as Backlog merely because its period is long, it has no dates, it has low priority, or its status is `todo`.
 
-For a new planned task, write both planned endpoints and `planned_dates_status`. Use `confirmed` only when both endpoints are explicit or the user confirms the complete period. If either endpoint is filled by an assumption, use `provisional`, even when the resulting period is one day. When dates are not specified, use Asia/Tokyo today as the provisional start and end date. If the user supplies only a start date, use it for both ends until adjusted. If the user supplies only an end date, use the earlier of today and that date as the provisional start. Never change a date the user specified. Identify each provisional value, the complete provisional period, and its basis in the task body/history and in the response. `planned_week` is the Monday of a coarse work-week plan; it does not replace either required date on a new planned task.
+For a new planned task, write both planned endpoints and `planned_dates_status`. Use context from the request, conversation, and task to make reasonable work-period estimates for unspecified endpoints; preserve explicit dates. Use `confirmed` only when both endpoints are explicit or the user confirms the complete period. If either endpoint is estimated or assumed, use `provisional`, even when the resulting period is one day. When neither date nor a reasonable estimate is available, use Asia/Tokyo today as both the provisional start and end. If only a start date is supplied and no end estimate is available, use it for both ends. If only an end date is supplied and no start estimate is available, use the earlier of today and that end date as the provisional start. Record the complete provisional period and briefly identify which values were estimated and why in the task body/history and response. Do not ask the user to confirm a provisional period before completing an otherwise clear task registration. `planned_week` is the Monday of a coarse work-week plan; it does not replace either required date on a new planned task.
 
 `planned_dates_status` must be a scalar YAML string, either `confirmed` or `provisional`, and requires both valid planned endpoints. `confirmed` describes confidence in the planned period, not task completion. An unbounded weekly recurring rule without a planned period must not carry this field. Existing records without the field keep their legacy behavior; do not add or infer statuses by bulk-editing existing tasks. When a user changes only one endpoint and has not confirmed the resulting full period, keep the period provisional. A user may confirm the current values without changing them.
 
@@ -151,4 +151,4 @@ For a task-list request, display this header and one row per selected task:
 ID / Priority / Status / Planning state / Planned start / Planned end / Title
 ```
 
-`Planning state` is `planning_state`, or `planned` when omitted. Include planned and Backlog tasks by default, in separate groups. Sort planned confirmed or legacy dated tasks by ascending priority, planned end date, planned start date, then full task ID. Put planned provisional tasks and tasks with incomplete planned periods in the `日程要確認` group after dated tasks, sorted by priority and ID. Sort Backlog by ascending priority and then full task ID; do not date-filter it unless requested. Read existing records across all year/month directories. For weekly tasks, also show `Next` from `next_occurrence`; do not substitute it for either end of the task's planned period or use it as a sort key. By default list active tasks across all year/month directories. Apply a date window only when the user asks for a window or asks for a day-plan.
+`Planning state` is `planning_state`, or `planned` when omitted. Include planned and Backlog tasks by default, in separate groups. Sort planned confirmed or legacy dated tasks by ascending priority, planned end date, planned start date, then full task ID. Show planned tasks with provisional or incomplete periods in `日程要確認`, sorted by priority and ID. Show an unbounded weekly task without a planned period after dated planned tasks and before `日程要確認`, sorted by priority and full task ID; do not flag it for date review. Sort Backlog by ascending priority and then full task ID; do not date-filter it unless requested. Treat an omitted legacy priority as `7` without changing its file. Read existing records across all year/month directories. For weekly tasks, also show `Next` from `next_occurrence`; do not substitute it for either end of the task's planned period or use it as a sort key. By default list active tasks across all year/month directories. Apply a date window only when the user asks for a window or asks for a day-plan.

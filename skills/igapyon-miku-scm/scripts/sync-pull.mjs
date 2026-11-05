@@ -178,9 +178,10 @@ async function recover(ctx, op, options) {
 
 export async function runSyncPull(options, dependencies = {}) {
   const id = options.confirmMerged || options.resume || options.abort || newId();
-  const { ctx, release } = await openSync(options.repo, dependencies, id, Boolean(options.confirmMerged || options.resume || options.abort));
+  const { ctx, release } = await openSync(options.repo, dependencies, id, Boolean(options.confirmMerged || options.resume || options.abort), { allowMissingInitialization: Boolean(options.abort) });
   let op;
   try {
+    if (ctx.recoveredInitialization && options.abort) return { status: "cancelled", operation_id: id, reason: "Cancelled interrupted sync initialization; start a new sync", final_branch: branch(ctx), head: head(ctx), mutation_invoked: false };
     if (options.resume || options.abort) {
       const loaded = await loadOperation(ctx, id);
       if (loaded.type !== "pull") throw new Error("Recovery operation is not a sync pull");

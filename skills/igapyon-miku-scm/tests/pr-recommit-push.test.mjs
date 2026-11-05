@@ -105,6 +105,25 @@ const macos = {
 };
 const nativePlatform = process.platform;
 
+test("recommit stops before publication when the destination changed during recommit", async (t) => {
+  const state = await scenario(t);
+  const other = path.join(state.temporary, "other.git");
+  execFileSync("git", ["init", "--bare", other], { stdio: "ignore" });
+  const r = await runRecommitPush(automaticOptions(state), { ...macos,
+    recommit: (options, dependencies) => {
+      const result = runRecommit(options, dependencies);
+      if (options.apply && result.status === "recommitted") git(state.repo, "remote", "set-url", "origin", other);
+      return result;
+    },
+  });
+  assert.equal(r.status, "partial");
+  assert.equal(r.publication.stage, "publication-preflight");
+  assert.equal(r.publication.push_started, false);
+  assert.match(r.publication.message, /branch or remote URLs changed/);
+  assert.equal(git(other, "for-each-ref", "--format=%(refname)"), "");
+  assert.equal(git(state.remote, "for-each-ref", "--format=%(refname)", "refs/heads/"), "refs/heads/devel");
+});
+
 test("parser permits automatic base and reviewed-draft resolution but requires apply", () => {
   const automatic = parseArgs(["--apply"]);
   assert.equal(automatic.base, "");

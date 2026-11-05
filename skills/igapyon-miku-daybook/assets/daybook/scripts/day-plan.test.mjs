@@ -375,7 +375,7 @@ test("provisional periods appear only in date review while confirmed periods kee
   assert.doesNotMatch(plan.markdown, /provisional-done|provisional-cancelled/);
 });
 
-test("planned_dates_status must be a supported scalar with a complete non-weekly period", () => {
+test("planned_dates_status must be a supported scalar with a complete period", () => {
   const root = fixtureRoot();
   const tasks = path.join(root, "2026/202609/tasks");
   const badValues = ["[provisional]", "{}", "null", "10", "true", '""', '"pending"'];
@@ -393,7 +393,7 @@ test("planned_dates_status must be a supported scalar with a complete non-weekly
 
   const weekly = path.join(tasks, "task-202609-00041-weekly-status.md");
   fs.writeFileSync(weekly, "---\ntype: task\nid: task-202609-00041\nstatus: todo\ncreated: 2026-09-01\nrecurrence: weekly\nplanned_start_date: 2026-09-14\nplanned_end_date: 2026-09-14\nplanned_dates_status: provisional\n---\n\n# Weekly\n");
-  assert.throws(() => loadRecords(root), /weekly recurrence must not use planned_dates_status/);
+  assert.doesNotThrow(() => loadRecords(root));
 });
 
 test("priority and date ordering are preserved in the dated task sections", () => {
@@ -407,7 +407,7 @@ test("priority and date ordering are preserved in the dated task sections", () =
   }, "今日の高優先度");
   writeRecord(tasks, "task-202609-00014-today-default.md", {
     type: "task", id: "task-202609-00014", status: "todo", priority: 5, created: "2026-09-01", planned_date: "2026-09-14", due: "2026-09-14",
-  }, "今日の通常優先度");
+  }, "今日の優先度5");
   writeRecord(tasks, "task-202609-00011-future-low.md", {
     type: "task", id: "task-202609-00011", status: "todo", priority: 9, created: "2026-09-01", planned_date: "2026-09-16", due: "2026-09-16",
   }, "後日の低優先度");
@@ -420,8 +420,9 @@ test("priority and date ordering are preserved in the dated task sections", () =
 
   const plan = buildDayPlan({ repoRoot: root, targetDate: "2026-09-14", generatedDate: "2026-09-14" });
   assert.deepEqual(plan.records.todayTasks.map((task) => task.frontMatter.id), [
-    "task-202609-00010", "task-202609-00001", "task-202609-00014", "task-202609-00016",
+    "task-202609-00010", "task-202609-00014", "task-202609-00001", "task-202609-00016",
   ]);
+  assert.match(plan.markdown, /task-202609-00001[^\n]*優先度 7/);
   assert.deepEqual(plan.records.upcomingStartTasks.map((task) => task.frontMatter.id), [
     "task-202609-00013", "task-202609-00012", "task-202609-00011",
   ]);

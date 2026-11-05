@@ -6,6 +6,7 @@ const TOKYO = "Asia/Tokyo";
 const TERMINAL_STATUSES = new Set(["done", "cancelled"]);
 const SCHEDULE_STATUSES = new Set(["scheduled", "cancelled"]);
 const TASK_PLANNING_STATES = new Set(["planned", "backlog"]);
+export const DEFAULT_TASK_PRIORITY = 7;
 
 export function validateIsoDate(value, label = "date") {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -121,9 +122,6 @@ function recordFromFile(repoRoot, filePath, expectedType) {
       if (!parsed.frontMatter.planned_start_date || !parsed.frontMatter.planned_end_date) {
         throw new Error(`planned_dates_status requires a complete planned period: ${filePath}`);
       }
-      if (parsed.frontMatter.recurrence === "weekly") {
-        throw new Error(`weekly recurrence must not use planned_dates_status: ${filePath}`);
-      }
     }
   }
   for (const key of ["date", "created", "due", "planned_date", "planned_start_date", "planned_end_date", "planned_week"]) {
@@ -212,7 +210,7 @@ function needsDateReview(task) {
 }
 
 function taskPriority(task) {
-  return task.frontMatter.priority === undefined ? 5 : Number(task.frontMatter.priority);
+  return task.frontMatter.priority === undefined ? DEFAULT_TASK_PRIORITY : Number(task.frontMatter.priority);
 }
 
 function taskId(task) {

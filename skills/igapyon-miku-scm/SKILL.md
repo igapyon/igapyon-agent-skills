@@ -131,6 +131,9 @@ repository.sync.push.prepare --repo <target-repo> --apply` with a concrete
 The helper automatically continues the single matching pending operation for
 this repository, branch and remote: it reuses unchanged preparations, replaces
 unapplied stale evidence, and recovers verified preflight-only unpublished work.
+A known ordinary-commit check failure can also prepare again on the same
+branch and unchanged HEAD after the check problem is fixed. It reruns all
+ordinary checks and sensitive-path consent checks against the current work.
 No extra recovery phrase or operation ID from the user is needed. Ambiguous or
 unverified publication outcomes stop for inspection by the Agent.
 If `prepared` has `existing_draft_sha256`, read the exact suggested draft,
