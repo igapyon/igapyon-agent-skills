@@ -239,9 +239,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "sync-pull.mjs",
     "contract_spec": "sync-pull.md",
     "contract_test": "sync-pull.test.mjs",
-    "runner_sha256": "1fb61636cbb7b301a5c99ee6e3c66b8fcf457a35d03bef5f6c278fe4c548fffb",
+    "runner_sha256": "e9bbd81e68b15d4845e44748c1f0615c4f67cf6768726a54be11f5b16fdc5cc3",
     "spec_sha256": "5a557b3190037903e107b3caaf0f6f299b7bea8df189f5d7e815812dc7f1265f",
-    "pair_sha256": "03011059179a334deebb350c9b4ab077aaa7f5f07cfc8989cd66b82668806a1d"
+    "pair_sha256": "f8472efe4233f305e5a4af9f82be41159ae40bf949672c935873d28cf8010825"
   },
   {
     "workflow": "repository.sync.push.prepare",
@@ -250,9 +250,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "sync-push.mjs",
     "contract_spec": "sync-push.md",
     "contract_test": "sync-push.test.mjs",
-    "runner_sha256": "8249d5a534a39e88c04c21d27213e4f3711c3d555e3909c5ffc44ed8e5d94011",
+    "runner_sha256": "6a6097dbbbd89db282f2ee99605376c893c0c696f3f02e7236eac0339f81ba0e",
     "spec_sha256": "9ccc8de5743edf9f44d2a7f639cecde86989d3515e832180dff0bd60ab17029a",
-    "pair_sha256": "5db95a869b9cbe1b6eb479dabc4a731554a762fae952a2ccedb64111a746262b"
+    "pair_sha256": "e49c6bce540e9a1eb19e2057529fb5e82cf4326b5f666878050e03f7b4a1b468"
   },
   {
     "workflow": "repository.sync.push.apply",
@@ -261,9 +261,9 @@ export const WORKFLOW_CONTRACT_LOCK = Object.freeze([
     "runner_entry": "sync-push.mjs",
     "contract_spec": "sync-push.md",
     "contract_test": "sync-push.test.mjs",
-    "runner_sha256": "8249d5a534a39e88c04c21d27213e4f3711c3d555e3909c5ffc44ed8e5d94011",
+    "runner_sha256": "6a6097dbbbd89db282f2ee99605376c893c0c696f3f02e7236eac0339f81ba0e",
     "spec_sha256": "9ccc8de5743edf9f44d2a7f639cecde86989d3515e832180dff0bd60ab17029a",
-    "pair_sha256": "cd40dc65c19f38c17723c18cae5218f0318b0b41e5028bb4c1bab2da2741ba30"
+    "pair_sha256": "7104e825ea0971e070e159d0fb0631a5c1b0bddb1d80b58b309da458312514c3"
   },
   {
     "workflow": "repository.post-merge.next-work",
