@@ -1,15 +1,17 @@
 ---
 title: miku-repo-scale Node.js 初期版の実装計画
-status: planned
+status: archived
 created: 2026-11-05
-updated: 2026-11-05
+updated: 2026-11-08
 ---
 
 # miku-repo-scale：Node.js 初期版の実装計画
 
+2026-11-08：利用者の指示により、本リポジトリでの進捗管理を終了した。本書は初期計画の履歴として保持する。今後の計画・TODO・実装状況は [miku-repo-scale](https://github.com/igapyon/miku-repo-scale) と [miku-repo-scale-skills](https://github.com/igapyon/miku-repo-scale-skills) の各リポジトリで管理する。
+
 ## 1. 対象と到達点
 
-[初期設計](miku-repo-scale-node-mvp.md)を実装可能な作業単位へ分解する。状態は計画作成済み、製品実装は未着手。以下の製品ファイル、コマンド、成果物名は実装予定である。
+[初期設計](miku-repo-scale-node-mvp.md)を実装可能な作業単位へ分解した、2026-11-05時点の計画。以下の未着手・実装予定等の記述は作成時点の状態であり、現在の進捗を示さない。
 
 2026-11-05：新設した `miku-repo-scale` と `miku-repo-scale-skills` の各checkoutへ初期ファイルを配置した。今後の製品別作業計画は、各repositoryの `docs/implementation-plan.md` を作業正本とする。本書は共通計画の起点として保持する。CLI・解析core・実runtimeは未実装。
 

@@ -1,6 +1,8 @@
 # miku-repo-scale：Node.js によるソフトウェア規模計測スキルの初期設計
 
-2026-11-05。状態：設計案。runtime と installable skill は未実装。
+2026-11-05作成の初期設計記録。2026-11-08以降は履歴資料として保持する。
+
+利用者の指示により、本リポジトリでの進捗管理を終了した。最新の仕様・計画・TODOは [miku-repo-scale](https://github.com/igapyon/miku-repo-scale) と [miku-repo-scale-skills](https://github.com/igapyon/miku-repo-scale-skills) の各リポジトリで管理する。以下は初期設計時点の内容である。
 
 実装作業は [Node.js 初期版の実装計画](miku-repo-scale-node-implementation.md) の RSC-00〜15 に分解した。
 
