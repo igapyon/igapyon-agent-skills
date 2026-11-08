@@ -11,11 +11,11 @@ Use this procedure only when the user explicitly asks to import one or more GitH
 - Comment posting and close are part of a requested full intake only after the existing miku-scm preflight and human approval. A read-only inspection or candidate request ends before these steps.
 - Do not commit, push, open a PR, or merge as part of intake. An intake close means that the request was recorded locally; it does not mean the underlying task is complete.
 
-## 1. Check local CLI prerequisites and prepare the intake files
+## 1. Check the local CLI and prepare the intake files
 
-Run this preparation only after an explicit Issue-intake request. Other daybook operations do not need the Issue-intake scripts. New activity creation uses its own CLI and the shared parsing dependency; see [operations.md](operations.md#add-an-activity).
+Run this preparation only after an explicit Issue-intake request. Other daybook operations do not need the Issue-intake scripts. New activity creation uses its own CLI; see [operations.md](operations.md#add-an-activity).
 
-Start at the target daybook repository root. Read its `README.md`, check its Git status, and inspect its `scripts/`, package manifest, lockfile, and dependency setup. Confirm Node.js is available with `node --version`. Do not assume that the installed skill directory and target repository are the same location.
+Start at the target daybook repository root. Read its `README.md`, check its Git status, and inspect its `scripts/`. Confirm Node.js is available with `node --version`. Do not assume that the installed skill directory and target repository are the same location. The bundled CLI runtime needs no package manifest, lockfile, installed dependency, or package-manager command.
 
 The source bundle is the `assets/daybook/` directory next to the `SKILL.md` that was actually loaded for this request. Use that directory as the source for the bundled files below. The bundled notification workflow currently uses Node.js 24; this intake procedure does not introduce a new minimum Node version.
 
@@ -23,21 +23,14 @@ The source bundle is the `assets/daybook/` directory next to the `SKILL.md` that
 | --- | --- |
 | Node.js | `node --version`; use the target repository's supported runtime. No new minimum is set here. |
 | `scripts/import-issues.mjs` | CLI entry point; bundle source `assets/daybook/scripts/import-issues.mjs`. |
-| `scripts/issue-import.mjs` | CLI core; imports the shared module and `yaml`; bundle source `assets/daybook/scripts/issue-import.mjs`. |
+| `scripts/issue-import.mjs` | CLI core; imports the shared modules; bundle source `assets/daybook/scripts/issue-import.mjs`. |
 | `scripts/activity-files.mjs` | Shared activity naming, path validation and guarded updates; bundle source `assets/daybook/scripts/activity-files.mjs`. |
 | `scripts/day-plan.mjs` | Shared parsing and day-plan module; bundle source `assets/daybook/scripts/day-plan.mjs`. |
-| `yaml` | From the target root, check `node --input-type=module -e "await import('yaml')"`. The bundle's `package.json` declares `yaml: ^2.8.1`. |
+| `scripts/vendor/yaml-runtime.mjs` | Self-contained YAML ESM runtime imported by the CLI modules; bundle source [assets/daybook/scripts/vendor/yaml-runtime.mjs](../assets/daybook/scripts/vendor/yaml-runtime.mjs). |
+| `scripts/vendor/yaml.LICENSE` | License for the bundled YAML runtime; bundle source [assets/daybook/scripts/vendor/yaml.LICENSE](../assets/daybook/scripts/vendor/yaml.LICENSE). |
 | miku-scm | Required for remote Issue reads, comments, and closes. Locate its installed skill and runner through that skill's own instructions/configuration. |
 
-Check all four target files. Add a missing file from the same bundle. If a target file already matches its bundle counterpart, leave it untouched. If it differs, compare the file and its callers; preserve target-specific behavior. If compatibility cannot be established, stop before replacing it and report the exact conflicting path and behavior that needs a decision. Never overwrite an existing customized `day-plan.mjs` merely because the intake CLI needs it.
-
-The intake core imports `yaml`; the bundle declares `yaml: ^2.8.1`. From the target repository root, check whether `yaml` can be imported by Node with `node --input-type=module -e "await import('yaml')"`, and whether the target dependency manager declares and installs it. If import succeeds and the target's dependency setup is already consistent, leave the manifest and lockfile unchanged. Otherwise:
-
-- For an npm-managed target with `package.json`, add only the compatible `yaml` dependency while preserving existing scripts and dependencies, then update the matching lockfile with npm. If the target already declares a conflicting `yaml` range, do not upgrade or downgrade it silently; report the conflict.
-- For an npm-managed target without `package.json`, create only the minimal private ESM package definition needed by these `.mjs` scripts and `yaml`, then generate its lockfile. Do not copy the notification bundle's package name, test script, workflow files, or other dependencies for Issue intake.
-- If the repository uses another package manager, follow its existing manifest and lockfile policy. If that policy cannot express or install the required dependency without conflict, stop and report the specific conflict rather than introducing a second package manager.
-
-When the manifest and lockfile already match an installed configuration, use that repository's normal clean-install command if `yaml` is missing from `node_modules` (for npm, `npm ci`). When adding the dependency to an npm-managed package, use npm to update both the manifest and lockfile (for example, `npm install yaml@^2.8.1`). Inspect the resulting diff and keep only the `yaml` addition and its required lock entries; if npm rewrites unrelated dependencies and you cannot reconcile those changes safely, stop and report the conflict. Inspect Git status before installing, and preserve pre-existing edits.
+Check every target file in the table. Add missing files from the same bundle. If a target file already matches its bundle counterpart, leave it untouched. If it differs, compare the file and its callers; preserve target-specific behavior. If compatibility cannot be established, stop before replacing it and report the exact conflicting path and behavior that needs a decision. Never overwrite an existing customized `day-plan.mjs` merely because the intake CLI needs it. Copy the complete `vendor/` directory when copying the scripts; keep any target `package.json` and lockfile unchanged.
 
 After the helpers and dependencies are ready, from the target repository root run:
 
@@ -45,7 +38,7 @@ After the helpers and dependencies are ready, from the target repository root ru
 node scripts/import-issues.mjs --help
 ```
 
-This verifies that the CLI and its imports load and only displays local help. A missing script or `yaml` import failure is a local setup error, not `GH_NOT_FOUND`. After help loads, locate the miku-scm skill and runner from the installed miku-scm skill instructions/configuration; do not guess a fixed absolute path. If miku-scm or its runner is unavailable, stop the remote Issue flow and report that local record management remains available. Do not replace it with direct `gh` or API calls. If the runner is available, continue to the capability check below.
+This verifies that the CLI and its bundled imports load and only displays local help. A missing script or bundled runtime file is a local setup error, not `GH_NOT_FOUND`. After help loads, locate the miku-scm skill and runner from the installed miku-scm skill instructions/configuration; do not guess a fixed absolute path. If miku-scm or its runner is unavailable, stop the remote Issue flow and report that local record management remains available. Do not replace it with direct `gh` or API calls. If the runner is available, continue to the capability check below.
 
 ## 2. Check Issue-intake capability
 

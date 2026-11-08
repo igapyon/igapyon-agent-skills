@@ -112,7 +112,7 @@ Use the Asia/Tokyo calendar date unless the user gives another date. Resolve whe
 
 For new files, use the bundled [create-activity.mjs](../assets/daybook/scripts/create-activity.mjs), which shares [activity-files.mjs](../assets/daybook/scripts/activity-files.mjs) with Issue intake. It considers current files, local Git history and pending paths, avoids reusing deleted suffixes, and uses exclusive creation. A rejected candidate is reserved for this creation attempt, including a collision with a case variant such as `.MD`, so the next allocation advances. After 32 collisions it stops with `ACTIVITY_CREATE_CONFLICT` and the last candidate path; preserve existing files and retry after resolving the contention. It returns the final repository-relative path and any warning about unavailable history; read the returned path rather than predicting a filename. Allocation sees local Git history only, so a shallow checkout or unavailable branches may have an incomplete history.
 
-Create and update activities only through the corresponding bundled CLI; direct Markdown writes bypass these checks. Use matching installed `scripts/create-activity.mjs` and [scripts/update-activity.mjs](../assets/daybook/scripts/update-activity.mjs) in the target repository when available. Otherwise run the loaded skill bundle's CLI by absolute path with `--repo-root`, or integrate the matching `create-activity.mjs`, `update-activity.mjs`, `activity-files.mjs`, and `day-plan.mjs`. Check the CLI and companion modules against the loaded bundle before using an installed copy; an older CLI may lack standard input or guarded updates. Preserve target-specific changes and use the bundle directly when safe integration is unclear. The CLIs require Node.js and the bundle's `yaml` dependency. Check dependency availability first; install from the existing lockfile only when needed. Tasks and schedules still use their ordinary Markdown editing workflows.
+Create and update activities only through the corresponding bundled CLI; direct Markdown writes bypass these checks. Use matching installed `scripts/create-activity.mjs` and [scripts/update-activity.mjs](../assets/daybook/scripts/update-activity.mjs) in the target repository when available. Otherwise run the loaded skill bundle's CLI by absolute path with `--repo-root`, or integrate the matching `create-activity.mjs`, `update-activity.mjs`, `activity-files.mjs`, `day-plan.mjs`, and [vendor/yaml-runtime.mjs](../assets/daybook/scripts/vendor/yaml-runtime.mjs). Include its [yaml.LICENSE](../assets/daybook/scripts/vendor/yaml.LICENSE) with copied scripts. The bundled `.mjs` tools use Node.js and local skill files only; no npm install, npm ci, package manifest, or target-repository YAML package is required. Check installed CLI and companion modules against the loaded bundle before using them; an older CLI may lack standard input or guarded updates. Preserve target-specific changes and use the bundle directly when safe integration is unclear. Tasks and schedules still use their ordinary Markdown editing workflows.
 
 Prepare complete Markdown with `type: activity`, the actual activity `date`, a descriptive title and the work account. Prefer standard input so each process carries its own draft. For example, from the target repository root (quote the heredoc delimiter to keep Markdown literal):
 
@@ -167,7 +167,7 @@ Use [url-task-lookup.md](url-task-lookup.md) only when the user explicitly asks 
 
 ## Explicitly import GitHub Issues
 
-Issue intake is not part of an ordinary record update or Issue read. Use [issue-import.md](issue-import.md) only when the user explicitly requests that named Issue(s), or a clearly specified repository backlog, be imported into this daybook. Follow its local CLI prerequisite and setup steps before running `node scripts/import-issues.mjs capabilities`; perform only the local preparation needed for the explicitly requested intake. If `gh` is missing, report Issue intake, comment posting, and intake close as disabled; continue ordinary daybook work normally.
+Issue intake is not part of an ordinary record update or Issue read. Use [issue-import.md](issue-import.md) only when the user explicitly requests that named Issue(s), or a clearly specified repository backlog, be imported into this daybook. Follow its local CLI file-copy and help checks before running `node scripts/import-issues.mjs capabilities`; perform only the local preparation needed for the explicitly requested intake. The bundled CLI does not need a target package dependency. If `gh` is missing, report Issue intake, comment posting, and intake close as disabled; continue ordinary daybook work normally.
 
 The Agent reads Issues and comments through the existing miku-scm `github.issue.read` workflow, interprets their meaning, writes the local source and manifest fixtures, and asks the local CLI to prepare and apply only the reviewed record changes. The CLI has no network or LLM behavior. Do not treat a failed read as an empty comment list, do not claim the helper returned full comment history, exclude Daily Briefing Issue #3, and reject Pull Requests.
 
@@ -178,9 +178,10 @@ After local apply, use the existing miku-scm Issue-comment workflow to prepare a
 Use the existing daybook script from the repository root:
 
 ```sh
-npm ci
 node scripts/generate-day-plan.mjs --date YYYY-MM-DD
 ```
+
+The bundled generator and its YAML runtime use only Node.js built-ins and included files; a target package manifest, lockfile, `node_modules`, `npm install`, and `npm ci` are not required.
 
 By default, the generator writes to the canonical path under the target repository root: `YYYY/YYYYMM/day-plan/day-plan-YYYYMMDD.md`. The date defaults to today in Asia/Tokyo when `--date` is omitted. Use `--output-root` only when a separate output directory is explicitly needed, such as the notification workflow's staging directory.
 

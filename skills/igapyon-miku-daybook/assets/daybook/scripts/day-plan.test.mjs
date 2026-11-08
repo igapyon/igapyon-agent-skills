@@ -82,6 +82,20 @@ function fixtureRoot() {
   return root;
 }
 
+test("binary front matter keeps the decoded planned action in the day-plan", (context) => {
+  const root = fixtureRoot();
+  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  writeRecord(path.join(root, "2026/202609/tasks"), "task-202609-00050-binary.md", {
+    type: "task", id: "task-202609-00050", status: "todo", created: "2026-09-01",
+    planned_start_date: "2026-09-14", planned_end_date: "2026-09-14",
+    planned_dates_status: "confirmed", planned_action: "!!binary SGVsbG8=",
+  }, "Binary action");
+  const plan = buildDayPlan({ repoRoot: root, targetDate: "2026-09-14", generatedDate: "2026-09-14" });
+  const task = plan.records.todayTasks.find((record) => record.frontMatter.id === "task-202609-00050");
+  assert.equal(task.frontMatter.planned_action, "Hello");
+  assert.match(plan.markdown, /：Hello\n/);
+});
+
 test("day-plan selects current work and includes unfinished overdue tasks", () => {
   const plan = buildDayPlan({ repoRoot: fixtureRoot(), targetDate: "2026-09-14", generatedDate: "2026-09-14" });
   assert.equal(plan.records.todayTasks.length, 1);
@@ -469,8 +483,7 @@ test("CLI uses the canonical default output and honors an output-root override w
   for (const filename of ["day-plan.mjs", "generate-day-plan.mjs"]) {
     fs.copyFileSync(path.join(bundleRoot, "scripts", filename), path.join(scripts, filename));
   }
-  fs.mkdirSync(path.join(root, "node_modules"), { recursive: true });
-  fs.cpSync(path.join(bundleRoot, "node_modules", "yaml"), path.join(root, "node_modules", "yaml"), { recursive: true });
+  fs.cpSync(path.join(bundleRoot, "scripts/vendor"), path.join(scripts, "vendor"), { recursive: true });
 
   function sourceSnapshot() {
     const { tasks, schedules } = loadRecords(root);

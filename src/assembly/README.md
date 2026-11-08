@@ -78,6 +78,9 @@ Individual workflows may require programs such as Node.js, Java, FFmpeg, or
 GitHub CLI. Their setup and supported versions are documented in the selected
 skill's `SKILL.md` and linked references.
 
+For example, the bundled daybook `.mjs` tools run with Node.js and their included
+files; they do not require a package installation in the target daybook.
+
 ## Install And Use
 
 Use the catalog tables to find a skill, then read its description and example

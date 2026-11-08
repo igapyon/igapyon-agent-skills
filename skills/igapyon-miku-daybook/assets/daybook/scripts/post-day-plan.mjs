@@ -2,7 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { canonicalPlanPath, parseFrontMatter, validateIsoDate } from "./day-plan.mjs";
 
 function parseArgs(args) {
@@ -153,7 +153,8 @@ async function main() {
   if (result.status === "dry-run") console.log(result.body);
 }
 
-if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+if (process.argv[1] && fs.existsSync(process.argv[1])
+  && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
   main().catch((error) => {
     console.error(error.message);
     process.exitCode = 1;

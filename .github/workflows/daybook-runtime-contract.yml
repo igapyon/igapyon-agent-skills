@@ -1,0 +1,56 @@
+name: Daybook runtime contract
+
+on:
+  pull_request:
+    paths:
+      - "skills/igapyon-miku-daybook/**"
+      - "scripts/build-daybook-yaml-runtime.mjs"
+      - "scripts/check-daybook-runtime.mjs"
+      - "scripts/daybook-runtime.test.mjs"
+      - "scripts/daybook-yaml-compatibility.test.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/daybook-runtime-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Run Node.js-only daybook checks
+        run: npm run test:daybook
+
+  generated-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Install runtime generation dependencies
+        run: npm ci
+
+      - name: Check generated YAML runtime
+        run: npm run check:daybook-yaml-runtime
+
+      - name: Check YAML compatibility
+        run: npm run test:daybook-yaml-compatibility
