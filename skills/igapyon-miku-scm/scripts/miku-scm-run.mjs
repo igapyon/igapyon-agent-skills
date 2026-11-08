@@ -31,6 +31,8 @@ import {
   runIssueClose,
 } from "./github-issue-close.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+import { parseArgs as parseSyncPullArgs, runSyncPull } from "./sync-pull.mjs";
+import { parseArgs as parseSyncPushArgs, prepareSyncPush, applySyncPush } from "./sync-push.mjs";
 import {
   applyMaintenancePlan,
   diagnose as diagnoseMaintenance,
@@ -101,16 +103,26 @@ import {
   createIssueApprovalHandoff,
   dismissPendingIssueHandoff,
   listPendingIssueHandoffs,
+  parseHandoffReviewArgs,
   parseHandoffApplyArgs,
   parseHandoffBatchApplyArgs,
   parseHandoffDismissArgs,
   parseHandoffListArgs,
+  reviewIssueApprovalHandoffs,
 } from "./miku-scm-handoff.mjs";
 import { failureEvent } from "./miku-scm-observability.mjs";
 
 export const RUNNER_SCHEMA_VERSION = "miku-scm.runner/v1";
 export const RESULT_SCHEMA_VERSION = "miku-scm.runner-result/v1";
-export const PRODUCT_VERSION = "1.20261017.1";
+export const PRODUCT_VERSION = "1.20261108.4";
+
+const ISSUE_APPLY_WORKFLOWS = new Set([
+  "github.issue.create.apply",
+  "github.issue.update.apply",
+  "github.issue.comment.apply",
+  "github.issue.label.apply",
+  "github.issue.close.apply",
+]);
 
 const RUN_ID = /^[A-Za-z0-9._-]+$/;
 const SECRET_OPTION = /(?:token|password|secret|authorization|credential)/i;
@@ -170,7 +182,10 @@ function normalizedStatus(delegateStatus, mutationLevel, error = false) {
   return mutationLevel === "remote" ? "unresolved" : "not-applied";
 }
 
-function mutationState(workflow, delegateStatus) {
+function mutationState(workflow, delegateStatus, delegateResult = null) {
+  if (delegateResult && Object.hasOwn(delegateResult, "mutation_invoked")) {
+    return delegateResult.mutation_invoked;
+  }
   if (workflow.approvalGate !== "apply" || workflow.mutationLevel === "readonly") return false;
   if (delegateStatus === "not-applied" || delegateStatus === "conflict") return false;
   if (delegateStatus === "unresolved") return null;
@@ -439,6 +454,7 @@ function workCommitWorkflow(dependencies) {
         operation: "work-commit",
         repository: path.resolve(options.repo),
         commit_message_supplied: Boolean(options.message.trim()),
+        allowed_sensitive_paths: options.allowSensitivePaths,
         mutation_invocation_allowed: true,
       };
     },
@@ -578,6 +594,21 @@ export function workflowRegistry(dependencies = {}) {
       }),
       execute: (options) => listPendingIssueHandoffs(options),
     }],
+    ["github.issue.handoff.review", {
+      version: 1,
+      mutationLevel: "readonly",
+      approvalGate: "none",
+      parse: parseHandoffReviewArgs,
+      plan: (options) => ({
+        operation: "github-issue-approval-handoff-review",
+        repository: path.resolve(options.root),
+        ordered_handoffs: [...options.handoffs],
+        mutation_invocation_allowed: false,
+      }),
+      execute: (options) => reviewIssueApprovalHandoffs(options, {
+        approvalContracts: workflowContractById(),
+      }),
+    }],
     ["github.issue.handoff.apply", {
       version: 1,
       mutationLevel: "remote",
@@ -591,10 +622,11 @@ export function workflowRegistry(dependencies = {}) {
       }),
       execute: (options) => applyPendingIssueHandoff(options, {
         now: dependencies.now,
+        approvalContracts: workflowContractById(),
         runApply: dependencies.handoffRunApply ?? ((applyWorkflow, applyArguments) => runWorkflow(
           applyWorkflow,
           applyArguments,
-          { cwd: options.root },
+          { cwd: options.root, issueHandoffApproval: true },
         )),
       }),
     }],
@@ -611,10 +643,11 @@ export function workflowRegistry(dependencies = {}) {
       }),
       execute: (options) => applyPendingIssueHandoffBatch(options, {
         now: dependencies.now,
+        approvalContracts: workflowContractById(),
         runApply: dependencies.handoffRunApply ?? ((applyWorkflow, applyArguments) => runWorkflow(
           applyWorkflow,
           applyArguments,
-          { cwd: options.root },
+          { cwd: options.root, issueHandoffApproval: true },
         )),
         runPreflight: dependencies.handoffRunPreflight
           ?? ((preflightWorkflow, preflightArguments) => runWorkflow(
@@ -642,6 +675,15 @@ export function workflowRegistry(dependencies = {}) {
     ["repository.maintenance.diagnose", maintenanceWorkflow("diagnose", dependencies)],
     ["repository.maintenance.plan", maintenanceWorkflow("plan", dependencies)],
     ["repository.maintenance.apply", maintenanceWorkflow("apply", dependencies)],
+    ...["pull", "push.prepare", "push.apply"].map((mode) => [`repository.sync.${mode}`, {
+      version: 1,
+      mutationLevel: mode === "push.apply" ? "remote" : "local",
+      approvalGate: "apply",
+      parse: (argv, cwd) => mode === "pull" ? parseSyncPullArgs(argv, cwd) : parseSyncPushArgs(mode.split(".")[1], argv, cwd),
+      plan: (options) => ({ operation: `sync-${mode}`, repository: path.resolve(options.repo), mutation_invocation_allowed: true }),
+      execute: (options) => mode === "pull" ? runSyncPull(options, dependencies.syncPullDependencies)
+        : mode === "push.prepare" ? prepareSyncPush(options, dependencies.syncPushDependencies) : applySyncPush(options, dependencies.syncPushDependencies),
+    }]),
     ["repository.post-merge.next-work", {
       version: 1,
       mutationLevel: "local",
@@ -759,6 +801,16 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       );
     }
     const options = workflow.parse(argv, cwd);
+    if (ISSUE_APPLY_WORKFLOWS.has(workflowId) && dependencies.issueHandoffApproval !== true) {
+      throw new MikuScmCliError(
+        "ISSUE_HANDOFF_APPROVAL_REQUIRED",
+        `${workflowId} can be invoked only through an approved Issue handoff`,
+        {
+          workflow: workflowId,
+          help_command: `${PORTABLE_RUNNER} github.issue.handoff.review --help`,
+        },
+      );
+    }
     phase = "plan";
     plan = {
       schema_version: RUNNER_SCHEMA_VERSION,
@@ -815,7 +867,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       started_at: startedAt,
       finished_at: finishedAt,
       duration_ms: Math.round((performance.now() - performanceStarted) * 1000) / 1000,
-      mutation_invoked: mutationState(workflow, delegateResult?.status),
+      mutation_invoked: mutationState(workflow, delegateResult?.status, delegateResult),
       run_directory: relativeOperationalPath(cwd, runDirectory),
       result: delegateResult,
     };
@@ -827,6 +879,7 @@ export async function runWorkflow(workflowId, argv, dependencies = {}) {
       delegateStatus: result.delegate_status,
       mutationInvoked: result.mutation_invoked,
       result: delegateResult,
+      resultFile: path.join(runDirectory, "result.json"),
     });
     await writeJsonAtomic(path.join(runDirectory, "snapshot.json"), {
       schema_version: RUNNER_SCHEMA_VERSION,

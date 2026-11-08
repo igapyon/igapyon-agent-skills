@@ -1,6 +1,6 @@
 ---
 title: miku-soft GitHub Actions profile plan
-description: "Canonical CI and Release profile proposal, Node 22/24 roles, artifact lifecycle, and high-priority workflow findings."
+description: "Canonical CI and Release profile proposal, approved Node compatibility roles, artifact lifecycle, and high-priority workflow findings."
 topics:
   - miku-soft
   - github-actions
@@ -13,7 +13,7 @@ audience:
   - maintainer
   - agent
 created: 2026-07-31
-updated: 2026-07-31
+updated: 2026-10-22
 sources:
   - type: local-file
     role: primary
@@ -93,15 +93,21 @@ Every workflow should be classified by:
 - Product compatibility, Release build host, and Action runtime are separate.
 - Exceptions state reason, owner, replacement verification, and exit condition.
 
-## Node Role Proposal
+## Node Role Policy
 
-| Role | Candidate |
+Approved 2026-10-22: select the oldest upstream-maintained LTS as the product
+compatibility floor, verify that floor and the newest LTS, and include
+maintained LTS lines between them when the matrix cost is reasonable. Refresh
+the numeric values against the [official release schedule](https://github.com/nodejs/Release#release-schedule).
+The following values are the 2026-10-22 snapshot, not permanent version pins.
+
+| Role | 2026-10-22 snapshot or separate item |
 | --- | --- |
 | Product minimum | engines.node >=22 for a Node product |
 | Ordinary CI | Node 22 and 24 |
 | Release build host | Node 24 |
-| Final JavaScript proof | staged artifact smoke on Node 22 when >=22 is claimed |
-| Bundle target | node22 only with the same public compatibility decision |
+| Final JavaScript proof | separate follow-up; not included in the approved floor/latest-LTS rule |
+| Bundle target | validate against each product's declared compatibility floor |
 | Action runtime | separately approved Node-24-aware major or immutable pin |
 
 Node 24-only, browser-only, Java-only, and non-Node Skill products remain

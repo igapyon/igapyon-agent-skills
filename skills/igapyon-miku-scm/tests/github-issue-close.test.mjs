@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { parseArgs, runIssueClose } from "../scripts/github-issue-close.mjs";
+import { createGhIssueReader, parseArgs, runIssueClose } from "../scripts/github-issue-close.mjs";
 
 const ISSUE = {
   number: 42,
@@ -14,7 +14,34 @@ const ISSUE = {
   state: "OPEN",
   stateReason: null,
   updatedAt: "2026-07-24T01:02:03Z",
+  labels: [],
+  comments: [],
 };
+
+test("close Issue reader binds complete GraphQL comments to the fixed metadata read", async () => {
+  const calls = [];
+  const reader = createGhIssueReader((args) => {
+    calls.push(args);
+    const { comments: _comments, ...metadata } = ISSUE;
+    return { ok: true, status: 0, stdout: JSON.stringify({
+      ...metadata,
+      stateReason: null,
+      labels: [],
+    }) };
+  }, (args) => {
+    calls.push(args);
+    return { ok: true, status: 0, stderr: "", stdout: JSON.stringify({ data: { repository: { issue: {
+      number: ISSUE.number,
+      url: ISSUE.url,
+      updatedAt: ISSUE.updatedAt,
+      comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null } },
+    } } } }) };
+  });
+  assert.deepEqual(await reader("igapyon/example", ISSUE.number), ISSUE);
+  assert.ok(calls[0].includes("number,url,title,body,state,stateReason,updatedAt,labels"));
+  assert.equal(calls[1][0], "api");
+  assert.equal(calls[1][1], "graphql");
+});
 
 async function scenario(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), "miku-scm-close-test-"));
@@ -34,10 +61,12 @@ function optionsFor(state, ...extra) {
 
 function applyOptions(state, preflight) {
   const contractIndex = preflight.apply_arguments.indexOf("--expected-contract-pair-sha256");
+  const commentsIndex = preflight.apply_arguments.indexOf("--expected-comments-sha256");
   return optionsFor(
     state,
     "--expected-operation-sha256", preflight.operation_sha256,
     "--expected-current-body-sha256", preflight.current_body_sha256,
+    "--expected-comments-sha256", preflight.apply_arguments[commentsIndex + 1],
     "--expected-updated-at", preflight.current_updated_at,
     "--expected-contract-pair-sha256", preflight.apply_arguments[contractIndex + 1],
     "--apply",
@@ -103,6 +132,9 @@ test("duplicate target changes after review are a conflict", async (t) => {
     "--reason", "duplicate", "--duplicate-of", "43", "--root", state.root,
     "--expected-operation-sha256", preflight.operation_sha256,
     "--expected-current-body-sha256", preflight.current_body_sha256,
+    "--expected-comments-sha256", preflight.apply_arguments[
+      preflight.apply_arguments.indexOf("--expected-comments-sha256") + 1
+    ],
     "--expected-duplicate-sha256", preflight.duplicate_target.snapshot_sha256,
     "--expected-updated-at", preflight.current_updated_at,
     "--apply",
@@ -143,14 +175,14 @@ test("apply invokes one exact close and verifies GitHub's uppercase state reason
   assert.equal(record.status, "closed");
 });
 
-test("already closed or changed Issue is rejected before gh", async (t) => {
+test("already closed Issue completes without mutation and changed Issue still conflicts", async (t) => {
   const state = await scenario(t);
-  await assert.rejects(
-    runIssueClose(optionsFor(state), {
-      readIssue: async () => ({ ...ISSUE, state: "CLOSED", stateReason: "COMPLETED" }),
-    }),
-    /Only an Open Issue/,
-  );
+  const noChange = await runIssueClose(optionsFor(state), {
+    readIssue: async () => ({ ...ISSUE, state: "CLOSED", stateReason: "COMPLETED" }),
+    gh: () => { throw new Error("No mutation expected"); },
+  });
+  assert.equal(noChange.status, "up-to-date");
+  assert.equal(noChange.mutation_invoked, false);
   const preflight = await runIssueClose(optionsFor(state), {
     readIssue: async () => ISSUE,
   });

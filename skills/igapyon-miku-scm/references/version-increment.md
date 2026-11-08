@@ -13,11 +13,12 @@ Increment a project's version only when the user explicitly requests it. Resolve
 7. Review the relevant diff and run `git status -sb`. Record the verified repository, branch, version-source paths and values, and successful validation in the current session so a later add or commit need not repeat the reminder. Leave the changes unstaged unless the user separately requests staging or committing.
 
 For `igapyon-agent-skills`, `pom.xml`, `skills/igapyon-mikuku-agent/references/VERSION.md`,
-and the `PRODUCT_VERSION` literal in
-`skills/igapyon-miku-scm/scripts/miku-scm-run.mjs` form one checked update set.
-The runner literal keeps an installed skill's `--version` self-contained; it
-must equal the project version. `mvn validate` checks all three values, so do
-not commit a partial update.
+and the `PRODUCT_VERSION` literals in
+`skills/igapyon-miku-scm/scripts/miku-scm-run.mjs` and
+`skills/igapyon-github-writer/scripts/github-writer-workflow-manifest.mjs`
+form one checked update set. The runner literals keep installed skills'
+`--version` self-contained; they must equal the project version.
+`mvn validate` checks all four values, so do not commit a partial update.
 
 ## Date-Based Versions
 

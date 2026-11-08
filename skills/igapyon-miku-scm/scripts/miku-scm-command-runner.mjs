@@ -2,6 +2,11 @@ import { spawnSync } from "node:child_process";
 
 const DEFAULT_MAX_BUFFER = 20 * 1024 * 1024;
 
+export function platformWarnings(platform = process.platform) {
+  return ["darwin", "win32"].includes(platform) ? []
+    : [`Platform ${platform}: continuing with the available Git and Node.js commands.`];
+}
+
 function diagnostic(args, result, stdout, stderr) {
   const detail = stderr || stdout || result.error?.message || "";
   return `command ${args.join(" ")} failed${detail ? `: ${detail}` : ""}`;

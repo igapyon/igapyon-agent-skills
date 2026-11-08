@@ -6,6 +6,11 @@ Detailed design guidance lives in [miku-soft-basic/miku-soft-40-agentskills-desi
 
 ## Required Initial Input
 
+First distinguish an upstream-product adapter from a Skill-only product
+described below. The upstream repository and runtime requirements in this
+section apply to adapters; a Skill-only product may have neither. Apply only
+the starter files and checks that fit the chosen deliverable.
+
 At the beginning of a new Agent Skills creation task,
 require the upstream miku main application GitHub repository URL: the product
 repository whose behavior, APIs, CLI contracts, runtime artifacts, diagnostics,
@@ -38,14 +43,21 @@ Bundled starter templates are available under `assets/agent-skills/`:
   - Starter npm metadata for build, test, and bundle orchestration.
   - Keep `private: true` unless the repository explicitly chooses npm
     publication.
-  - The starter declares `engines.node` as `>=20`; keep that lower bound only
-    while Node.js 20 remains covered by repository tests.
+  - `engines.node` declares the supported product runtime minimum. Keep the
+    package range aligned with the CI matrix and follow the current numeric
+    baseline in [the Agent Skills design](miku-soft-basic/miku-soft-40-agentskills-design.md).
   - Replace `__REPO_NAME__` and `__VERSION__`.
+  - Set `skillRuntimeArtifacts` to the exact required executable CLI paths,
+    relative to the installed skill, such as `runtime/<product>-<version>.mjs`
+    or `runtime/<product>-<version>.jar`. Keep `[]` only when the workflow
+    requires no bundled CLI. List both backends when both are required.
 - `scripts/build-skill-bundle.mjs`
   - Builds `bundle/<repo-name>/skills/<skill-name>/...` from
     `skills/<skill-name>/`.
-  - Excludes `.DS_Store` and nested temporary `tmp`, `output`, and `state`
-    contents.
+  - Fails before packaging if a declared CLI artifact is missing or empty.
+  - Excludes `.DS_Store` and the skill-root scratch directories `tmp`,
+    `output`, and `state`; same-named directories inside references or assets
+    remain eligible for packaging.
 - `scripts/build-skill-bundle-zip.mjs`
   - Builds the installable bundle first, then creates a release zip such as
     `bundle/igapyon-<repo-name>-<version>.zip`.
@@ -59,18 +71,21 @@ Bundled starter templates are available under `assets/agent-skills/`:
 - `tests/isolated-bundle-smoke.test.mjs`
   - Copies the generated bundle to a temporary directory and verifies the
     installed bundle shape.
-  - When runtime artifacts are present, smoke-tests the matching jar or mjs
-    with `--version`.
+  - Smoke-tests every declared CLI artifact with `--version`; runtime
+    discovery must not silently skip a missing required backend.
 - `.github/workflows/release-build.yml`
   - Standard release asset workflow template for building the skill bundle zip
     and attaching it to a GitHub Release.
   - Copy for new `-skills` repositories by default, then adapt runtime artifact
-    verification and zip naming to the target skill.
+    declarations and zip naming to the target skill. The build and isolated
+    tests verify the declared CLI files before upload.
   - Omit only when the repository intentionally does not use GitHub Release
     assets, and record that reason.
 - `.github/workflows/ci.yml`
-  - Tests the declared minimum Node.js 20 runtime and the Node.js 24 release
-    baseline independently.
+  - Tests the oldest maintained LTS declared by the product and the newest
+    LTS independently, following the baseline in the Agent Skills design.
+    Include maintained LTS lines between them when the matrix cost is
+    reasonable.
   - Keep the matrix synchronized with `package.json` compatibility claims.
 - `templates/skill/`
   - Minimal skill skeleton to copy to `skills/<skill-name>/`, with
@@ -85,7 +100,17 @@ Bundled starter templates are available under `assets/agent-skills/`:
 
 After copying these templates, place `templates/skill/` at
 `skills/<skill-name>/`, then replace `__REPO_NAME__`, `__SKILL_NAME__`,
-`__SKILL_TITLE__`, `__PRODUCT_NAME__`, and `__VERSION__`.
+`__SKILL_TITLE__`, `__SKILL_DESCRIPTION__`, `__PRODUCT_NAME__`, and `__VERSION__`.
+Use a 25–64 character UI description for `__SKILL_DESCRIPTION__` when keeping
+the optional `agents/openai.yaml`. Its `interface` fields describe the UI, and
+`policy.allow_implicit_invocation: false` preserves the starter's explicit-only
+activation. Remove optional metadata when the target environment does not use it.
+
+The starter's two test files both rebuild the same bundle directory, so
+`npm test` runs them serially. Keep that serialization until each test owns
+an independent output directory. Keep `skillRuntimeArtifacts` synchronized with
+the skill's documented runtime contract; presence checks alone do not prove the
+product operation works, so add a small real operation when appropriate.
 
 For newer miku-soft Agent Skills naming, distinguish repository naming from
 installable skill naming before replacing placeholders. A repository and
@@ -116,9 +141,9 @@ remain human GitHub or registry operations as described in
 [repo-operations.md](repo-operations.md).
 
 Keep the product runtime contract separate from the GitHub Actions runtime.
-The starter package supports Node.js `>=20`, CI verifies Node.js 20 and 24, and
-the release workflow builds with Node.js 24. The Action majors themselves must
-be Node 24-aware. Do not use `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` or
+The Agent Skills design owns the current product, CI, and release-host version
+values. The Action majors themselves must support the selected Actions runtime.
+Do not use `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` or
 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` as the maintained solution when supported
 Action majors are available.
 
@@ -152,11 +177,17 @@ Action majors are available.
 16. Verify bundle contents against the required references, skill files, runtime artifacts, and any adopted generated index while excluding development-only files.
 17. Test the declared index policy: an adopted index must be present and current; a skill without one must still pass structure and bundle checks.
 18. Add isolated bundle smoke when the skill depends on runtime artifacts.
-19. Treat the sister-reference summary as required implementation context for new creation work.
-20. Use sister projects as shape references only; do not copy `workplace/` contents into the target repository wholesale.
-21. Add the local GitHub Actions release asset workflow from the starter template by default, or record the explicit reason for omitting it.
-22. Keep `engines.node`, the Node.js 20/24 CI matrix, the Node.js 24 release build, and Node 24-aware Action majors as separate but synchronized contracts.
-23. After bundled files change, regenerate an adopted `skills/<skill-name>/index.json` with `miku-indexgen --refresh-index skills/<skill-name>/index.json` or the repository's documented equivalent. Do not create or refresh an index for a skill that has not adopted one.
+19. Before scaffolding, record the sister-reference summary required above; use
+    sister projects as shape references and adapt only the needed patterns.
+20. Add the local GitHub Actions release asset workflow from the starter
+    template by default, or record the explicit reason for omitting it.
+21. Keep `engines.node`, the CI matrix, the release build host, and Action
+    internal runtimes as separate but synchronized contracts; use the current
+    numeric values from the Agent Skills design.
+22. After bundled files change, regenerate an adopted
+    `skills/<skill-name>/index.json` with `miku-indexgen --refresh-index
+    skills/<skill-name>/index.json` or the repository's documented equivalent.
+    Do not create or refresh an index for a skill that has not adopted one.
 
 ## Skill-only Product Convention
 

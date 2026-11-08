@@ -17,6 +17,24 @@ macOS で開発していても、GitHub Actions を使えば、同じ変更を W
 
 対象は [post-recommit-publish.test.mjs](../../skills/igapyon-miku-scm/tests/post-recommit-publish.test.mjs) のテスト用リポジトリ作成処理。修正後、ローカルの macOS では miku-scm 全体の 293 件が成功した。Windows での修正確認は、Windows の CI 実行結果で行う。
 
+## syncテストへの適用
+
+2026-10-26に追加した`sync pull` / `sync push`でも、WindowsのCIで5件のLF/CRLF不一致が発生した。
+新しい共通fixtureがホストのGit設定を継承しており、macOSでも一時的なglobal設定を
+`core.autocrlf=true`、`core.eol=crlf`にすると同じ5件を再現できた。
+
+[sync-fixture.mjs](../../skills/igapyon-miku-scm/tests/sync-fixture.mjs)では、
+テスト用repoに`core.autocrlf=false`と`core.eol=lf`を明示する。
+相手側repoのcloneにも`--config`で初回checkout前から適用する。
+clone完了後の設定だけでは、最初にcheckoutされたファイルのCRLFが残るためである。
+
+[回帰テスト](../../skills/igapyon-miku-scm/tests/sync-fixture.test.mjs)は、独立した子processに
+CRLFを選ぶ一時global設定を渡し、clone・checkout・stash復元後の内容を改行も含めて比較する。
+ユーザーのGit設定や、並列テストの環境変数は書き換えない。
+期待値や実データを改行正規化して比較すると内容保持の検証が弱くなるため、LFの完全一致を維持する。
+修正後、macOS上でCRLF設定を継承させたsync関連50件と、通常設定のfull suite369件が成功した。
+これはGit設定を再現した確認であり、Windows実機の確認はCIの結果で行う。
+
 ## このリポジトリでの使い方
 
 [Miku SCM Contract](../../.github/workflows/miku-scm-contract.yml) と [GitHub Writer Contract](../../.github/workflows/github-writer-contract.yml) は、OS の matrix に `macos-latest` と `windows-latest` を指定している。それぞれの OS で同じ変更に対するテストを実行する構成になっている。

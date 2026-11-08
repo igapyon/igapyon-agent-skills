@@ -36,25 +36,9 @@ jobs:
         with:
           node-version: 24
 
-      - name: Verify runtime artifacts
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Replace these checks with the target skill's declared runtime artifact names.
-          # Keep at least one metadata smoke command for each required runtime path.
-          test -d "skills/__SKILL_NAME__/runtime"
-          if compgen -G "skills/__SKILL_NAME__/runtime/*.jar" > /dev/null; then
-            java_runtime="$(find skills/__SKILL_NAME__/runtime -maxdepth 1 -type f -name '*.jar' ! -name '*sources*.jar' | sort -V | tail -n 1)"
-            test -s "${java_runtime}"
-            java -jar "${java_runtime}" --version
-          fi
-          if compgen -G "skills/__SKILL_NAME__/runtime/*.mjs" > /dev/null; then
-            node_runtime="$(find skills/__SKILL_NAME__/runtime -maxdepth 1 -type f -name '*.mjs' | sort -V | tail -n 1)"
-            test -s "${node_runtime}"
-            node "${node_runtime}" --version
-          fi
-
       - name: Build release bundle
+        # npm test verifies every CLI artifact declared in package.json from
+        # an isolated install; the bundle build rejects missing declared files.
         run: npm run build
 
       - name: Verify release tag version
@@ -79,10 +63,13 @@ jobs:
       - name: Prepare release zip
         id: prepare_zip
         shell: bash
+        env:
+          PACKAGE_VERSION: ${{ steps.release_version.outputs.package_version }}
+          RELEASE_VERSION: ${{ steps.release_version.outputs.version }}
         run: |
           set -euo pipefail
-          source_zip="bundle/igapyon-__REPO_NAME__-${{ steps.release_version.outputs.package_version }}.zip"
-          target_zip="release-assets/igapyon-__REPO_NAME__-${{ steps.release_version.outputs.version }}.zip"
+          source_zip="bundle/igapyon-__REPO_NAME__-${PACKAGE_VERSION}.zip"
+          target_zip="release-assets/igapyon-__REPO_NAME__-${RELEASE_VERSION}.zip"
           if [[ ! -s "${source_zip}" ]]; then
             echo "release zip not found or empty: ${source_zip}" >&2
             exit 1
@@ -90,6 +77,16 @@ jobs:
           mkdir -p release-assets
           cp "${source_zip}" "${target_zip}"
           echo "zip_path=${target_zip}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup minimum supported Node.js for artifact smoke
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Smoke-test staged release zip on minimum supported Node.js
+        env:
+          STAGED_ZIP: ${{ steps.prepare_zip.outputs.zip_path }}
+        run: node scripts/verify-release-zip.mjs "$STAGED_ZIP"
 
       - name: Upload zip to GitHub Release
         uses: softprops/action-gh-release@v3

@@ -7,7 +7,8 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
-import { createGhCommandRunner, createGitCommandRunner } from "./miku-scm-command-runner.mjs";
+import { createGhCommandRunner, createGitCommandRunner, platformWarnings } from "./miku-scm-command-runner.mjs";
+import { ghRepository, repositoryFromRemote } from "./miku-scm-repository.mjs";
 import { isPathWithin, normalizeOperationalPath, relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 const SHA_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i;
@@ -18,18 +19,14 @@ export const usage = `Usage:
     --expected-head <reviewed-full-sha> [--repo <path>] [--remote <name>]
 
   node skills/igapyon-miku-scm/scripts/post-recommit-publish.mjs \\
-    --expected-head <reviewed-full-sha> \\
-    (--expected-remote-head <reviewed-full-sha> | --expect-new-remote-branch) \\
-    --apply [--repo <path>] [--remote <name>]
-
-  node skills/igapyon-miku-scm/scripts/post-recommit-publish.mjs \\
     --expected-head <reviewed-full-sha> --save-plan [--repo <path>] [--remote <name>]
 
   node skills/igapyon-miku-scm/scripts/post-recommit-publish.mjs \\
     --apply-plan <workplace/miku-scm/ok-push/*.json> --expected-plan-sha256 <sha256>
 
-Default mode is a read-only preflight. It resolves the exact remote branch
-state and returns the arguments that must be reviewed before apply mode.
+Default mode is a read-only preflight. Add --save-plan to store its exact
+branch, remote, URL binding, and remote branch state for reviewed publication.
+Direct --apply arguments are rejected; apply uses the saved plan path and digest.
 
 Apply mode pushes only the reviewed local HEAD. An existing remote branch
 also requires its previously reviewed full SHA and uses an explicit
@@ -90,6 +87,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
     if (!/^workplace\/miku-scm\/ok-push\/[A-Za-z0-9._-]+\.json$/.test(options.applyPlan)) throw new Error("--apply-plan must be a plan under workplace/miku-scm/ok-push");
     return options;
   }
+  if (options.apply) throw new Error("Direct publication apply is disabled; preflight with --save-plan and apply its returned plan path and digest.");
   if (!SHA_PATTERN.test(options.expectedHead)) {
     throw new Error("--expected-head must be a full 40- or 64-character hexadecimal object ID");
   }
@@ -110,11 +108,34 @@ export function parseArgs(argv, cwd = process.cwd()) {
 
 function sha256(value) { return createHash("sha256").update(value).digest("hex"); }
 
+function branchFileToken(branch) {
+  const slug = String(branch).replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 72) || "branch";
+  return `${slug}-${sha256(String(branch)).slice(0, 12)}`;
+}
+
 function planDirectory(root) { return path.join(root, "workplace", "miku-scm", "ok-push"); }
 
+async function writablePlanDirectory(root) {
+  const directory = planDirectory(root);
+  await mkdir(directory, { recursive: true });
+  const actual = await realpath(directory);
+  if (!isPathWithin(await realpath(root), actual)) throw new Error("Publication storage escapes the repository");
+  return directory;
+}
+
+export async function checkPublicationStorage(root) {
+  const directory = await writablePlanDirectory(root);
+  const probe = path.join(directory, `.write-probe-${randomUUID()}`);
+  await writeFile(probe, "", { flag: "wx", mode: 0o600 });
+  await rm(probe);
+}
+
 export async function savePublicationPlan(root, result) {
+  root = await realpath(gitText(createGitRunner(), root, ["rev-parse", "--show-toplevel"]));
+  if (!/^[0-9a-f]{64}$/.test(result.remote_urls_sha256 ?? "")) throw new Error("Publication remote binding is missing; run preflight again");
   const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 12);
-  const plan = { schema_version: 1, repository: result.repository, branch: result.branch, remote: result.remote,
+  const plan = { schema_version: 2, repository: result.repository, branch: result.branch, remote: result.remote,
+    remote_urls_sha256: result.remote_urls_sha256,
     reviewed_head: result.head, remote_branch: result.remote_branch, done_branch: `${result.branch}-done`,
     preflight_at: new Date().toISOString(), push_mode: result.remote_branch.state === "absent" ? "new-branch" : "force-with-explicit-lease",
     workflow_contract: PUBLISH_APPLY_CONTRACT.contract_id,
@@ -122,21 +143,22 @@ export async function savePublicationPlan(root, result) {
     contract_pair_sha256: PUBLISH_APPLY_CONTRACT.pair_sha256 };
   const content = `${JSON.stringify(plan, null, 2)}\n`;
   const digest = sha256(content);
-  const filename = `ok-push-${result.branch}-${result.head.slice(0, 12)}-${timestamp}.json`;
-  const directory = planDirectory(root);
-  await mkdir(directory, { recursive: true });
+  const filename = `ok-push-${branchFileToken(result.branch)}-${result.head.slice(0, 12)}-${timestamp}-${randomUUID()}.json`;
+  const directory = await writablePlanDirectory(root);
   const file = path.join(directory, filename);
   await writeFile(file, content, { encoding: "utf8", flag: "wx", mode: 0o600 });
   return {
     ...result,
     plan_path: relativeOperationalPath(root, file),
     plan_sha256: digest,
+    apply_arguments: ["--repo", root, "--apply-plan", relativeOperationalPath(root, file), "--expected-plan-sha256", digest],
     publication_plan: plan,
   };
 }
 
 async function loadPlan(options) {
-  const root = await realpath(options.repo);
+  const requestedRoot = await realpath(options.repo);
+  const root = await realpath(gitText(createGitRunner(), requestedRoot, ["rev-parse", "--show-toplevel"]));
   const file = path.resolve(root, options.applyPlan);
   const directory = await realpath(planDirectory(root));
   if (!isPathWithin(directory, file)) throw new Error("Plan path escapes the plan directory");
@@ -145,7 +167,8 @@ async function loadPlan(options) {
   const content = await readFile(file, "utf8");
   if (sha256(content) !== options.expectedPlanSha256.toLowerCase()) throw new Error("Publication plan SHA-256 changed");
   const plan = JSON.parse(content);
-  if (plan?.schema_version !== 1 || !SHA_PATTERN.test(plan.reviewed_head) || !/^[A-Za-z0-9._-]+$/.test(plan.remote)
+  if (plan?.schema_version === 1) throw new Error("Legacy publication plan has no remote binding; run preflight again");
+  if (plan?.schema_version !== 2 || !/^[0-9a-f]{64}$/.test(plan.remote_urls_sha256 ?? "") || !SHA_PATTERN.test(plan.reviewed_head) || !/^[A-Za-z0-9._-]+$/.test(plan.remote)
     || typeof plan.branch !== "string" || !["absent", "existing"].includes(plan?.remote_branch?.state)) throw new Error("Malformed publication plan");
   if (plan.workflow_contract !== PUBLISH_APPLY_CONTRACT.contract_id
     || plan.contract_version !== PUBLISH_APPLY_CONTRACT.contract_version
@@ -165,6 +188,14 @@ export function createGitRunner(options = {}) {
 
 function gitText(git, cwd, args, options) {
   return git(cwd, args, options).stdout.trim();
+}
+
+function publicationRemoteDigest(git, root, remote) {
+  const urls = (args) => git(root, args).stdout.replace(/[\r\n]+$/, "").split(/\r?\n/);
+  return sha256(JSON.stringify({
+    fetch_urls: urls(["remote", "get-url", "--all", remote]),
+    push_urls: urls(["remote", "get-url", "--push", "--all", remote]),
+  }));
 }
 
 function assertUnchanged(label, actual, expected) {
@@ -203,34 +234,6 @@ function validateRemoteExpectation(actualRemoteHead, options) {
   } else if (options.expectNewRemoteBranch && actualRemoteHead) {
     throw new Error(`Remote branch appeared after it was reviewed: ${actualRemoteHead}`);
   }
-}
-
-function canonicalGitHubRepository(remoteUrl) {
-  let owner = "";
-  let repository = "";
-  const scpMatch = remoteUrl.match(/^git@github\.com:([^/]+)\/(.+)$/i);
-  if (scpMatch) {
-    [, owner, repository] = scpMatch;
-  } else {
-    try {
-      const parsed = new URL(remoteUrl);
-      if (parsed.hostname.toLowerCase() !== "github.com") return null;
-      const parts = parsed.pathname.replace(/^\/+/, "").split("/");
-      if (parts.length !== 2) return null;
-      [owner, repository] = parts;
-    } catch {
-      return null;
-    }
-  }
-  repository = repository.replace(/\.git$/, "");
-  if (!owner || !repository || !/^[A-Za-z0-9_.-]+$/.test(owner) || !/^[A-Za-z0-9_.-]+$/.test(repository)) {
-    return null;
-  }
-  return {
-    owner,
-    repository,
-    url: `https://github.com/${owner}/${repository}`,
-  };
 }
 
 function encodeAlphabeticSequence(number) {
@@ -315,7 +318,7 @@ export function resolvePrHandoff(repository, branch, gh) {
     return { repository_url: repository.url, pr_creation_url: creationUrl, pr_lookup: "unconfirmed" };
   }
   try {
-    const result = gh(["pr", "list", "--repo", `${repository.owner}/${repository.repository}`,
+    const result = gh(["pr", "list", "--repo", ghRepository(repository),
       "--head", branch, "--state", "open", "--limit", "100", "--json", "url"]);
     if (!result?.ok) throw new Error(result?.stderr || result?.stdout || result?.error?.message || "gh pr list failed");
     const pulls = JSON.parse(result.stdout);
@@ -341,30 +344,36 @@ export function resolvePrHandoff(repository, branch, gh) {
   }
 }
 
-function preflightApplyArguments(options, head, actualRemoteHead) {
-  const result = ["--expected-head", head];
-  if (actualRemoteHead) result.push("--expected-remote-head", actualRemoteHead);
-  else result.push("--expect-new-remote-branch");
-  if (options.repo !== process.cwd()) result.push("--repo", options.repo);
+function preflightSavePlanArguments(root, options, head) {
+  const result = ["--repo", root, "--expected-head", head, "--save-plan"];
   if (options.remote !== "origin") result.push("--remote", options.remote);
-  result.push("--apply");
   return result;
 }
 
-export async function runPublish(options, dependencies = {}) {
+async function runPublication(options, dependencies = {}) {
   const git = dependencies.git ?? createGitRunner();
   const platform = dependencies.platform ?? process.platform;
   const gh = Object.hasOwn(dependencies, "gh") ? dependencies.gh : createGhRunner({ platform, spawn: dependencies.spawn });
   const root = gitText(git, options.repo, ["rev-parse", "--show-toplevel"]);
+  await dependencies.validateSyncSnapshot?.({ phase: "publication-inspect", root });
   const branch = gitText(git, root, ["branch", "--show-current"], { allowFailure: true });
   if (!branch) throw new Error("Current branch is detached or unresolved");
+  if (dependencies.expectedPublicationBranch && branch !== dependencies.expectedPublicationBranch) throw new Error("Reviewed publication branch changed; run preflight again");
   if (branch.endsWith("-done")) throw new Error(`Current branch is frozen: ${branch}`);
   gitText(git, root, ["check-ref-format", "--branch", branch]);
 
   const head = gitText(git, root, ["rev-parse", "HEAD"]).toLowerCase();
   assertUnchanged("local HEAD", head, options.expectedHead);
+  const remoteDigest = publicationRemoteDigest(git, root, options.remote);
+  if (dependencies.expectedPublicationRemoteSha256 && remoteDigest !== dependencies.expectedPublicationRemoteSha256) throw new Error("Reviewed publication remote URLs changed; run preflight again");
+  const assertPublicationState = (requireClean = true) => {
+    if (gitText(git, root, ["branch", "--show-current"]) !== branch) throw new Error("Publication branch changed");
+    assertUnchanged("local HEAD", gitText(git, root, ["rev-parse", "HEAD"]), head);
+    if (publicationRemoteDigest(git, root, options.remote) !== remoteDigest) throw new Error("Publication remote URLs changed");
+    if (requireClean && gitText(git, root, ["status", "--porcelain"])) throw new Error("Working tree or index became dirty during publication");
+  };
   const statusPorcelain = gitText(git, root, ["status", "--porcelain"]);
-  if (statusPorcelain) throw new Error("Working tree or index is dirty");
+  if (statusPorcelain && (options.apply || !dependencies.allowDirtyPreflight)) throw new Error("Working tree or index is dirty");
 
   const doneBranch = `${branch}-done`;
   if (git(root, ["show-ref", "--verify", "--quiet", `refs/heads/${doneBranch}`], { allowFailure: true }).ok) {
@@ -386,7 +395,9 @@ export async function runPublish(options, dependencies = {}) {
     repository: path.basename(root),
     branch,
     remote: options.remote,
+    remote_urls_sha256: remoteDigest,
     platform,
+    warnings: platformWarnings(platform),
     upstream: upstream || "none",
     head,
     remote_branch: initialRemoteHead
@@ -395,21 +406,21 @@ export async function runPublish(options, dependencies = {}) {
   };
 
   if (!options.apply) {
+    assertPublicationState(!dependencies.allowDirtyPreflight);
     return {
       status: "preflight-ok",
       mode: "preflight",
       readonly: true,
       platform,
       ...common,
-      apply_arguments: preflightApplyArguments(options, head, initialRemoteHead),
+      save_plan_arguments: preflightSavePlanArguments(root, options, head),
+      next_action: "Save and review a publication plan before applying.",
     };
   }
 
-  if (platform !== "darwin" && platform !== "win32") {
-    throw new Error(`Apply mode is supported only on macOS and Windows; current platform is ${platform}`);
-  }
-
+  await dependencies.validateSyncSnapshot?.({ phase: "publication-fetch", root });
   gitText(git, root, ["fetch", options.remote]);
+  assertPublicationState();
   const remoteHeadAfterFetch = remoteHead(git, root, options.remote, branch);
   validateRemoteExpectation(remoteHeadAfterFetch, options);
   assertUnchanged("local HEAD after fetch", gitText(git, root, ["rev-parse", "HEAD"]), head);
@@ -426,6 +437,8 @@ export async function runPublish(options, dependencies = {}) {
     destination,
     expected_remote_head: options.expectedRemoteHead || null,
   });
+  await dependencies.validateSyncSnapshot?.({ phase: "publication-push", root });
+  assertPublicationState();
   let pushMode;
   if (options.expectedRemoteHead) {
     pushMode = "force-with-explicit-lease";
@@ -440,7 +453,10 @@ export async function runPublish(options, dependencies = {}) {
     gitText(git, root, ["push", "-u", options.remote, `HEAD:${destination}`]);
   }
 
+  await dependencies.validateSyncSnapshot?.({ phase: "publication-verify", root });
   gitText(git, root, ["fetch", options.remote]);
+  await dependencies.validateSyncSnapshot?.({ phase: "publication-after-fetch", root });
+  assertPublicationState();
   const comparison = gitText(git, root, [
     "rev-list",
     "--left-right",
@@ -453,7 +469,7 @@ export async function runPublish(options, dependencies = {}) {
 
   gitText(git, root, ["branch", "-m", branch, doneBranch]);
   const finalStatus = gitText(git, root, ["status", "-sb"]);
-  const repository = canonicalGitHubRepository(remoteUrl);
+  const repository = repositoryFromRemote(remoteUrl);
   const prHandoff = resolvePrHandoff(repository, branch, gh);
   const recommended = await resolveRecommendedTag(root, git);
 
@@ -475,6 +491,15 @@ export async function runPublish(options, dependencies = {}) {
   };
 }
 
+export async function runPublish(options, dependencies = {}) {
+  if (options.apply) {
+    const error = new Error("Direct publication apply is disabled; preflight with --save-plan and apply its returned plan path and digest.");
+    error.mutationInvoked = false;
+    throw error;
+  }
+  return runPublication(options, dependencies);
+}
+
 export async function executePublish(options, dependencies = {}) {
   if (options.help) return null;
   if (options.applyPlan) {
@@ -491,8 +516,10 @@ export async function executePublish(options, dependencies = {}) {
         expectedRemoteHead: plan.remote_branch.state === "existing" ? plan.remote_branch.head : "",
         expectNewRemoteBranch: plan.remote_branch.state === "absent", apply: true, savePlan: false, applyPlan: "", expectedPlanSha256: "", help: false,
       };
-      const result = await runPublish(ordinary, {
+      const result = await runPublication(ordinary, {
         ...dependencies,
+        expectedPublicationBranch: plan.branch,
+        expectedPublicationRemoteSha256: plan.remote_urls_sha256,
         beforeMutation: async (context) => {
           await dependencies.beforeMutation?.(context);
           let handle;
@@ -526,6 +553,11 @@ export async function executePublish(options, dependencies = {}) {
       failure.mutationInvoked = attemptClaimed ? null : false;
       throw failure;
     }
+  }
+  if (options.apply) {
+    const error = new Error("Direct publication apply is disabled; preflight with --save-plan and apply its returned plan path and digest.");
+    error.mutationInvoked = false;
+    throw error;
   }
   let result = await runPublish(options, dependencies);
   if (options.savePlan) result = await savePublicationPlan(await realpath(options.repo), result);

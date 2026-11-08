@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 import { dateFromJstParts } from "./miku-scm-jst-time.mjs";
+import { repositoryFromRemote, repositoryApiArgs } from "./miku-scm-repository.mjs";
 import { normalizeOperationalPath, relativeOperationalPath } from "./miku-scm-operational-path.mjs";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
@@ -133,28 +134,6 @@ function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-function canonicalGitHubRepository(remoteUrl) {
-  let owner = "";
-  let repository = "";
-  const scp = remoteUrl.match(/^git@github\.com:([^/]+)\/(.+)$/i);
-  if (scp) {
-    [, owner, repository] = scp;
-  } else {
-    try {
-      const parsed = new URL(remoteUrl);
-      if (parsed.hostname.toLowerCase() !== "github.com") return null;
-      const parts = parsed.pathname.replace(/^\/+/, "").split("/");
-      if (parts.length !== 2) return null;
-      [owner, repository] = parts;
-    } catch {
-      return null;
-    }
-  }
-  repository = repository.replace(/\.git$/, "");
-  if (!/^[A-Za-z0-9_.-]+$/.test(owner) || !/^[A-Za-z0-9_.-]+$/.test(repository)) return null;
-  return { owner, repository, full_name: `${owner}/${repository}`, url: `https://github.com/${owner}/${repository}` };
-}
-
 function parseRefs(output) {
   return output.split("\n").filter(Boolean).map((line) => {
     const [name, object] = line.split("\0");
@@ -236,23 +215,18 @@ function ghJson(gh, args, label) {
 }
 
 function pullRequestsByHead(gh, repository, branch) {
-  const data = ghJson(gh, [
-    "api", "--method", "GET",
-    `repos/${repository.owner}/${repository.repository}/pulls`,
+  const data = ghJson(gh, repositoryApiArgs(repository, "pulls",
     "-f", "state=all",
     "-f", `head=${repository.owner}:${branch}`,
     "-f", "per_page=100",
-  ], "GitHub Pull Request head lookup");
+  ), "GitHub Pull Request head lookup");
   if (!Array.isArray(data)) throw new Error("GitHub Pull Request head lookup returned a non-array");
   return data;
 }
 
 function pullRequestByNumber(gh, repository, number) {
   if (!Number.isSafeInteger(number) || number <= 0) throw new Error("Reviewed Pull Request number is invalid");
-  const data = ghJson(gh, [
-    "api", "--method", "GET",
-    `repos/${repository.owner}/${repository.repository}/pulls/${number}`,
-  ], "GitHub Pull Request exact lookup");
+  const data = ghJson(gh, repositoryApiArgs(repository, `pulls/${number}`), "GitHub Pull Request exact lookup");
   if (!data || Array.isArray(data) || typeof data !== "object") {
     throw new Error("GitHub Pull Request exact lookup returned malformed data");
   }
@@ -391,7 +365,7 @@ export async function diagnose(options, dependencies = {}) {
   ]));
   const worktreeBranches = parseWorktreeBranches(gitText(git, root, ["worktree", "list", "--porcelain"]));
   const remoteUrl = gitText(git, root, ["remote", "get-url", options.remote], { allowFailure: true });
-  const github = canonicalGitHubRepository(remoteUrl);
+  const github = repositoryFromRemote(remoteUrl);
   const requestedDoneBranches = dependencies.doneBranchFilter;
   const doneRefs = refs.filter((value) => value.name.endsWith("-done")
     && (!requestedDoneBranches || requestedDoneBranches.has(value.name)));

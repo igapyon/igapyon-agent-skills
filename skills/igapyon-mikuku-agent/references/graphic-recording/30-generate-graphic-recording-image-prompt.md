@@ -166,12 +166,14 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 `{{MIKUKU_PROMPT_PATH}}` はパス文字列としてプロンプト内に書くだけでなく、事前に本文を `{{IMAGE_PROMPT_PATH}}` へ埋め込んでください。
 別の生成実行で使った描画プロンプトが今回の生成へ暗黙に引き継がれるとは扱わないでください。
 
-画像生成AI用プロンプト本文に持ち物の制約が明記されていない場合は、画像生成ツールへ渡す直前に次の補助制約を追加してください。
-既存プロンプトに、みくくが物を持つ指示が残っている場合も、次の補助制約を優先してください。
+どうしても必要な手指描写の理由が整理テキストと `Deviation Record` にある場合を除き、画像生成ツールへ渡す本文に次の制約を含めてください。手指は原則として描写対象外です。
 
 ```text
+Keep Mikuku's hands and fingers outside the frame. Do not add hand gestures.
 Do not let Mikuku hold any objects.
 ```
+
+どうしても必要な描写では画面外に隠す制約を使わず、必要な範囲の手指を描けることを優先します。不要な持ち物は加えません。プロンプトに必要な制約や理由が欠けている場合は20番へ戻って整え、再監査してください。
 
 組み込み `imagegen` が `prompt` しか受け取れない環境でも、`{{IMAGE_PROMPT_PATH}}` にみくく描画プロンプト本文が含まれていれば生成を実行できます。
 

@@ -7,8 +7,154 @@ import {
 } from "../scripts/miku-scm-human-output.mjs";
 import { WORKFLOW_MANIFEST } from "../scripts/miku-scm-workflow-manifest.mjs";
 
+test("partial commit output shows the actual branch after a concurrent switch", () => {
+  const output = renderHumanOutput({ workflow: "work.commit", status: "partial", mutationInvoked: true,
+    result: { status: "partial", repository: "example", branch: "original", final_branch: "other-done", head: "abc", message: "Commit branch or HEAD changed" } });
+  assert.match(output, /Branch: original/);
+  assert.match(output, /Final branch: other-done/);
+  assert.match(output, /Current HEAD: abc/);
+  assert.match(output, /branch or HEAD changed/);
+});
+
 test("human output schema is versioned", () => {
-  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v11");
+  assert.equal(HUMAN_OUTPUT_SCHEMA_VERSION, "miku-scm.human-output/v17");
+});
+
+test("prepared sync push output identifies its operation and saved evidence", () => {
+  const resultFile = "/tmp/workplace/miku-scm/runs/exact-run/result.json";
+  const output = renderHumanOutput({
+    workflow: "repository.sync.push.prepare",
+    status: "success",
+    resultFile,
+    mutationInvoked: false,
+    result: { status: "prepared", operation_id: "exact-operation", suggested_draft_path: "workplace/miku-scm/pr-drafts/example.md" },
+  });
+  assert.ok(output.includes("Operation: exact-operation\n"));
+  assert.ok(output.includes(`Result file: ${resultFile}\n`));
+  assert.match(output, /read result\.evidence from the saved result file/);
+  assert.doesNotMatch(output, /from the returned evidence/);
+});
+
+test("version candidates map proposed values to authoritative and coupled sources", () => {
+  const authoritative = [{ path: "pom.xml", value: "1.20261026.4" }];
+  const coupled = [{ path: "VERSION.md", value: "20261026d" }];
+  const result = {
+    policy: "miku-date-coupled", policy_resolved: true,
+    authoritative, coupled,
+    proposed: { authoritative: "1.20261026.5", coupled: "20261026e", date: "20261026", sequence: 5 },
+  };
+  const before = structuredClone(result);
+  const output = renderHumanOutput({ workflow: "version.increment.validate", status: "success", approvalGate: "preflight", delegateStatus: "validated", mutationInvoked: false, result });
+  assert.deepEqual(output.split("\n").filter((line) => line.startsWith("Candidate (")), [
+    "Candidate (pom.xml): 1.20261026.5",
+    "Candidate (VERSION.md): 20261026e",
+  ]);
+  assert.ok(output.includes("Current value (pom.xml): 1.20261026.4"));
+  assert.deepEqual(result, before);
+});
+
+test("content-date candidate is displayed for its authoritative source only", () => {
+  const output = renderHumanOutput({ workflow: "version.increment.validate", status: "success", approvalGate: "preflight", delegateStatus: "validated", mutationInvoked: false, result: { policy: "content-date", policy_resolved: true, authoritative: [{ path: "VERSION.md", value: "20260727z" }], coupled: [], proposed: { authoritative: "20260727aa", coupled: null, date: "20260727", sequence: 27 } } });
+  assert.deepEqual(output.split("\n").filter((line) => line.startsWith("Candidate (")), ["Candidate (VERSION.md): 20260727aa"]);
+});
+
+test("SemVer candidate is displayed for its authoritative source", () => {
+  const output = renderHumanOutput({ workflow: "version.increment.validate", status: "success", approvalGate: "preflight", delegateStatus: "validated", mutationInvoked: false, result: { policy: "semver", policy_resolved: true, authoritative: [{ path: "package.json", value: "1.2.3" }], coupled: [], proposed: { authoritative: "1.3.0", coupled: null, date: null, sequence: null } } });
+  assert.deepEqual(output.split("\n").filter((line) => line.startsWith("Candidate (")), ["Candidate (package.json): 1.3.0"]);
+});
+
+test("coupled candidates preserve source order", () => {
+  const output = renderHumanOutput({ workflow: "version.increment.validate", status: "success", approvalGate: "preflight", delegateStatus: "validated", mutationInvoked: false, result: { policy: "miku-date-coupled", policy_resolved: true, authoritative: [{ path: "pom.xml", value: "1.20261026.4" }], coupled: [{ path: "VERSION.md", value: "20261026d" }, { path: "docs/VERSION.md", value: "20261026d" }], proposed: { authoritative: "1.20261026.5", coupled: "20261026e", date: "20261026", sequence: 5 } } });
+  assert.deepEqual(output.split("\n").filter((line) => line.startsWith("Candidate (")), ["Candidate (pom.xml): 1.20261026.5", "Candidate (VERSION.md): 20261026e", "Candidate (docs/VERSION.md): 20261026e"]);
+});
+
+test("version status has no candidates and retains current values", () => {
+  const output = renderHumanOutput({ workflow: "version.status", status: "success", approvalGate: "none", delegateStatus: "inspected", mutationInvoked: false, result: { policy: "auto", policy_resolved: false, authoritative: [{ path: "VERSION.md", value: "20260727d" }], proposed: null } });
+  assert.deepEqual(output.split("\n").filter((line) => line.startsWith("Candidate (")), []);
+  assert.ok(output.includes("Current value (VERSION.md): 20260727d"));
+});
+
+test("Issue list displays number, state, and title in the returned order", () => {
+  const output = renderHumanOutput({
+    workflow: "github.issue.read",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "read",
+    mutationInvoked: false,
+    result: {
+      repository: "a/b",
+      mode: "list",
+      state: "all",
+      issues: [
+        {
+          number: 17,
+          state: "CLOSED",
+          title: "日本語のIssue\nタイトル",
+          body: "Body must not appear in the list.",
+        },
+        {
+          number: 4,
+          state: "OPEN",
+          title: "Second title",
+          body: "Second body must not appear either.",
+        },
+      ],
+    },
+  });
+
+  assert.equal(output, `[SUCCESS] GitHub Issue read
+
+Repository: a/b
+Read mode: list
+State filter: all
+Issue count: 2
+Issues:
+#17 [CLOSED] 日本語のIssue タイトル
+#4 [OPEN] Second title
+Mutation invoked: no
+`);
+});
+
+test("empty Issue list reports that it contains no Issues", () => {
+  const output = renderHumanOutput({
+    workflow: "github.issue.read",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "read",
+    mutationInvoked: false,
+    result: { repository: "a/b", mode: "list", state: "open", issues: [] },
+  });
+
+  assert.equal(output, `[SUCCESS] GitHub Issue read
+
+Repository: a/b
+Read mode: list
+State filter: open
+Issue count: 0
+Issues: none
+Mutation invoked: no
+`);
+});
+
+test("Issue list title is normalized to one line without truncation", () => {
+  const title = `長い題名 ${"説明".repeat(80)}\t末尾`;
+  const output = renderHumanOutput({
+    workflow: "github.issue.read",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "read",
+    mutationInvoked: false,
+    result: {
+      repository: "a/b",
+      mode: "list",
+      state: "open",
+      issues: [{ number: 22, state: "OPEN", title }],
+    },
+  });
+  const expectedTitle = title.replace(/\s+/g, " ").trim();
+
+  assert.ok(output.includes(`#22 [OPEN] ${expectedTitle}`));
+  assert.equal(output.split("\n").filter((line) => line.startsWith("#22 ")).length, 1);
 });
 
 test("every workflow uses English fixed output wording", () => {
@@ -62,7 +208,7 @@ Mutation invoked: no
   assert.doesNotMatch(output, /Users\/example/);
 });
 
-test("Issue create preflight output contains complete review identifiers", () => {
+test("Issue create preflight withholds apply identifiers until the full review", () => {
   const output = renderHumanOutput({
     workflow: "github.issue.create.preflight",
     status: "success",
@@ -86,9 +232,76 @@ test("Issue create preflight output contains complete review identifiers", () =>
   assert.match(output, /Repository: a\/b/);
   assert.match(output, /Labels: enhancement/);
   assert.match(output, /Parent Issue: #2 \(OPEN\) Parent/);
-  assert.match(output, new RegExp(`Draft SHA-256: ${"a".repeat(64)}`));
   assert.match(output, /Remote mutation: not invoked/);
-  assert.match(output, /miku-scm approve/);
+  assert.match(output, /Full Issue review: required before approval/);
+  assert.doesNotMatch(output, /Draft SHA-256|miku-scm approve|handoff/);
+});
+
+test("Issue approval review displays the complete proposal and the exact approval word", () => {
+  const output = renderHumanOutput({
+    workflow: "github.issue.handoff.review",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "reviewed",
+    mutationInvoked: false,
+    result: {
+      handoffs: [{ review: {
+        operation: "create",
+        repository: "a/b",
+        issue_title: null,
+        proposal: { title: "New issue", body: "First line\nSecond line", labels: ["bug"] },
+      } }],
+      review_binding: { review_sha256: "a".repeat(64) },
+    },
+  });
+
+  assert.match(output, /^\[READY FOR APPROVAL\] GitHub Issue operation review/);
+  assert.match(output, /Title: New issue/);
+  assert.match(output, /Body:\nFirst line\nSecond line/);
+  assert.match(output, /Labels: bug/);
+  assert.match(output, /Reply with exactly `approve` to execute\./);
+  assert.match(output, /Remote mutation: not invoked/);
+  assert.doesNotMatch(output, /review_sha256|handoff ID|a{64}/);
+});
+
+test("Issue review displays the full existing Issue snapshot and comment text", () => {
+  const output = renderHumanOutput({
+    workflow: "github.issue.handoff.review",
+    status: "success",
+    approvalGate: "none",
+    delegateStatus: "reviewed",
+    mutationInvoked: false,
+    result: {
+      handoffs: [{ review: {
+        operation: "close",
+        repository: "a/b",
+        issue_number: 9,
+        issue_title: "Current title",
+        issue_url: "https://github.com/a/b/issues/9",
+        context: {
+          issue_snapshot: {
+            title: "Current title",
+            body: "Current Issue body",
+            state: "OPEN",
+            updated_at: "2026-10-23T00:00:00Z",
+            labels: ["bug"],
+            comments: [{
+              url: "https://github.com/a/b/issues/9#issuecomment-1",
+              author: "reviewer",
+              created_at: "2026-10-23T00:00:00Z",
+              body: "Existing comment text",
+            }],
+          },
+        },
+        proposal: { current_state: "OPEN", reason: "completed", duplicate_target: null },
+      } }],
+    },
+  });
+  assert.match(output, /Current body:\nCurrent Issue body/);
+  assert.match(output, /Current labels: bug/);
+  assert.match(output, /Current updated at: 2026-10-23T00:00:00Z/);
+  assert.match(output, /Existing comment 1 body:\nExisting comment text/);
+  assert.match(output, /Close reason: completed/);
 });
 
 test("handoff recovery output exposes exact commands and dismissal state", () => {
@@ -159,11 +372,13 @@ test("handoff batch output preserves conflict diagnostics for a partial stop", (
           status: "applied",
           handoff: { id: "handoff-1" },
           apply_workflow: "github.issue.comment.apply",
+          review: { operation: "comment", repository: "a/b", issue_number: 7, issue_title: "Example" },
         },
         {
           status: "conflict",
           handoff: { id: "handoff-2" },
           apply_workflow: "github.issue.close.apply",
+          review: { operation: "close", repository: "a/b", issue_number: 7, issue_title: "Example" },
           apply_result: {
             status: "conflict",
             delegate_result: {
@@ -182,16 +397,16 @@ test("handoff batch output preserves conflict diagnostics for a partial stop", (
   });
 
   assert.match(output, /^\[PARTIAL\] GitHub Issue approval handoff batch apply/);
-  assert.match(output, /Step 1: handoff-1 \| github.issue.comment.apply \| applied/);
-  assert.match(output, /Step 2: handoff-2 \| github.issue.close.apply \| conflict/);
+  assert.match(output, /Step 1: comment \| applied/);
+  assert.match(output, /Step 2: close \| conflict/);
   assert.match(output, /Step 2 dependency refresh: refreshed/);
   assert.match(output, /Step 2 refreshed options: --expected-updated-at/);
-  assert.match(output, /Stopped handoff: handoff-2/);
   assert.match(output, /Stopped apply status: conflict/);
   assert.match(output, /Stopped stage: target-conflict/);
   assert.match(output, /Reviewed updated at: 2026-08-01T00:00:00Z/);
   assert.match(output, /Observed updated at: 2026-08-02T00:00:00Z/);
-  assert.match(output, /Remaining handoff: handoff-3/);
+  assert.match(output, /Remaining handoff count: 1/);
+  assert.doesNotMatch(output, /handoff-[123]/);
   assert.match(output, /Mutation invoked: yes/);
 });
 

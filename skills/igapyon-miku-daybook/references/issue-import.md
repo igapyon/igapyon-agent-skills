@@ -11,11 +11,11 @@ Use this procedure only when the user explicitly asks to import one or more GitH
 - Comment posting and close are part of a requested full intake only after the existing miku-scm preflight and human approval. A read-only inspection or candidate request ends before these steps.
 - Do not commit, push, open a PR, or merge as part of intake. An intake close means that the request was recorded locally; it does not mean the underlying task is complete.
 
-## 1. Check local CLI prerequisites and prepare the intake files
+## 1. Check the local CLI and prepare the intake files
 
-Run this preparation only after an explicit Issue-intake request. Ordinary daybook operations do not need these scripts or the `yaml` package.
+Run this preparation only after an explicit Issue-intake request. Other daybook operations do not need the Issue-intake scripts. New activity creation uses its own CLI; see [operations.md](operations.md#add-an-activity).
 
-Start at the target daybook repository root. Read its `README.md`, check its Git status, and inspect its `scripts/`, package manifest, lockfile, and dependency setup. Confirm Node.js is available with `node --version`. Do not assume that the installed skill directory and target repository are the same location.
+Start at the target daybook repository root. Read its `README.md`, check its Git status, and inspect its `scripts/`. Confirm Node.js is available with `node --version`. Do not assume that the installed skill directory and target repository are the same location. The bundled CLI runtime needs no package manifest, lockfile, installed dependency, or package-manager command.
 
 The source bundle is the `assets/daybook/` directory next to the `SKILL.md` that was actually loaded for this request. Use that directory as the source for the bundled files below. The bundled notification workflow currently uses Node.js 24; this intake procedure does not introduce a new minimum Node version.
 
@@ -23,20 +23,14 @@ The source bundle is the `assets/daybook/` directory next to the `SKILL.md` that
 | --- | --- |
 | Node.js | `node --version`; use the target repository's supported runtime. No new minimum is set here. |
 | `scripts/import-issues.mjs` | CLI entry point; bundle source `assets/daybook/scripts/import-issues.mjs`. |
-| `scripts/issue-import.mjs` | CLI core; imports the shared module and `yaml`; bundle source `assets/daybook/scripts/issue-import.mjs`. |
+| `scripts/issue-import.mjs` | CLI core; imports the shared modules; bundle source `assets/daybook/scripts/issue-import.mjs`. |
+| `scripts/activity-files.mjs` | Shared activity naming, path validation and guarded updates; bundle source `assets/daybook/scripts/activity-files.mjs`. |
 | `scripts/day-plan.mjs` | Shared parsing and day-plan module; bundle source `assets/daybook/scripts/day-plan.mjs`. |
-| `yaml` | From the target root, check `node --input-type=module -e "await import('yaml')"`. The bundle's `package.json` declares `yaml: ^2.8.1`. |
+| `scripts/vendor/yaml-runtime.mjs` | Self-contained YAML ESM runtime imported by the CLI modules; bundle source [assets/daybook/scripts/vendor/yaml-runtime.mjs](../assets/daybook/scripts/vendor/yaml-runtime.mjs). |
+| `scripts/vendor/yaml.LICENSE` | License for the bundled YAML runtime; bundle source [assets/daybook/scripts/vendor/yaml.LICENSE](../assets/daybook/scripts/vendor/yaml.LICENSE). |
 | miku-scm | Required for remote Issue reads, comments, and closes. Locate its installed skill and runner through that skill's own instructions/configuration. |
 
-Check all three target files. Add a missing file from the same bundle. If a target file already matches its bundle counterpart, leave it untouched. If it differs, compare the file and its callers; preserve target-specific behavior. If compatibility cannot be established, stop before replacing it and report the exact conflicting path and behavior that needs a decision. Never overwrite an existing customized `day-plan.mjs` merely because the intake CLI needs it.
-
-The intake core imports `yaml`; the bundle declares `yaml: ^2.8.1`. From the target repository root, check whether `yaml` can be imported by Node with `node --input-type=module -e "await import('yaml')"`, and whether the target dependency manager declares and installs it. If import succeeds and the target's dependency setup is already consistent, leave the manifest and lockfile unchanged. Otherwise:
-
-- For an npm-managed target with `package.json`, add only the compatible `yaml` dependency while preserving existing scripts and dependencies, then update the matching lockfile with npm. If the target already declares a conflicting `yaml` range, do not upgrade or downgrade it silently; report the conflict.
-- For an npm-managed target without `package.json`, create only the minimal private ESM package definition needed by these `.mjs` scripts and `yaml`, then generate its lockfile. Do not copy the notification bundle's package name, test script, workflow files, or other dependencies for Issue intake.
-- If the repository uses another package manager, follow its existing manifest and lockfile policy. If that policy cannot express or install the required dependency without conflict, stop and report the specific conflict rather than introducing a second package manager.
-
-When the manifest and lockfile already match an installed configuration, use that repository's normal clean-install command if `yaml` is missing from `node_modules` (for npm, `npm ci`). When adding the dependency to an npm-managed package, use npm to update both the manifest and lockfile (for example, `npm install yaml@^2.8.1`). Inspect the resulting diff and keep only the `yaml` addition and its required lock entries; if npm rewrites unrelated dependencies and you cannot reconcile those changes safely, stop and report the conflict. Inspect Git status before installing, and preserve pre-existing edits.
+Check every target file in the table. Add missing files from the same bundle. If a target file already matches its bundle counterpart, leave it untouched. If it differs, compare the file and its callers; preserve target-specific behavior. If compatibility cannot be established, stop before replacing it and report the exact conflicting path and behavior that needs a decision. Never overwrite an existing customized `day-plan.mjs` merely because the intake CLI needs it. Copy the complete `vendor/` directory when copying the scripts; keep any target `package.json` and lockfile unchanged.
 
 After the helpers and dependencies are ready, from the target repository root run:
 
@@ -44,7 +38,7 @@ After the helpers and dependencies are ready, from the target repository root ru
 node scripts/import-issues.mjs --help
 ```
 
-This verifies that the CLI and its imports load and only displays local help. A missing script or `yaml` import failure is a local setup error, not `GH_NOT_FOUND`. After help loads, locate the miku-scm skill and runner from the installed miku-scm skill instructions/configuration; do not guess a fixed absolute path. If miku-scm or its runner is unavailable, stop the remote Issue flow and report that local record management remains available. Do not replace it with direct `gh` or API calls. If the runner is available, continue to the capability check below.
+This verifies that the CLI and its bundled imports load and only displays local help. A missing script or bundled runtime file is a local setup error, not `GH_NOT_FOUND`. After help loads, locate the miku-scm skill and runner from the installed miku-scm skill instructions/configuration; do not guess a fixed absolute path. If miku-scm or its runner is unavailable, stop the remote Issue flow and report that local record management remains available. Do not replace it with direct `gh` or API calls. If the runner is available, continue to the capability check below.
 
 ## 2. Check Issue-intake capability
 
@@ -124,7 +118,7 @@ The Agent reads the Issue content and returned comments. The local program does 
 - `needs-info`: include concrete questions and do not create records or remote actions for that Issue;
 - `skip`: include a reason and do not create records or remote actions for that Issue.
 
-Do not import an Issue whose returned evidence is incomplete for the decision. Mark it `needs-info` when missing comments, dates, or context could change the meaning. For a task, keep external deadlines separate from the work period. Do not use a deadline as the work period. Every explicit task date needs `date_evidence`. An omitted start or end is completed using the current task-date rule and becomes `planned_dates_status: provisional`; preserve the reason in history and the comment. Both explicit endpoints produce `confirmed`. A schedule requires an explicit event date and evidence. An activity requires an explicitly known past date and evidence; never turn an undated past activity into an event on the import date.
+Do not import an Issue whose returned evidence is incomplete for the decision. Mark it `needs-info` when missing comments, dates, or context could change the meaning. For a task, keep external deadlines separate from the work period; do not use a deadline as the work period. Every task date needs `date_evidence` describing an explicit source or a clearly labelled estimate. `planning_state` is optional on a task with `action: create`: omit it or use `planned` for planned work, and use `backlog` only when the Issue is explicitly being kept for later planning. Omitted state remains compatible with existing manifests and creates a task with `planning_state: planned`. Planned tasks with missing work dates use context to estimate missing endpoints; if there is no reasonable estimate, use the import date under the existing today/one-sided fallback. Any assumed endpoint makes the complete period `provisional`; do not wait for a date confirmation before preparing a clear task. An explicit `planned_dates_status` on a task-create record may preserve `provisional` when both estimated dates are present; without it, a complete supplied period remains `confirmed` for compatibility. Backlog tasks keep omitted endpoints unless the user asks to plan them. If a backlog period is explicitly marked provisional, both dates are required. `planned_dates_status` is invalid on schedule, activity, or `link-existing` records. A schedule still requires an explicit event date and evidence. An activity still requires an explicitly known past date and evidence; never turn an undated past activity into an event on the import date.
 
 Example manifest:
 
@@ -141,8 +135,9 @@ Example manifest:
           "type": "task",
           "action": "create",
           "title": "演奏会参加費を支払う",
+          "planning_state": "planned",
           "content": "参加費3,000円を支払う。",
-          "priority": 5,
+          "priority": 7,
           "checklist": ["支払方法を確認する", "参加費を支払う"]
         }
       ]
@@ -151,7 +146,23 @@ Example manifest:
 }
 ```
 
-For an existing matching task or schedule, use `action: "link-existing"` with a canonical repository-relative `target_path`. This preserves its content and status and adds only Issue provenance and history. Do not merge two Issues into one existing record. Activity records cannot be linked this way. For activity, the program appends a marked source block to the dated activity file; use `date_evidence` and its actual activity date.
+For an Issue that should stay in Backlog without a date assumption, set `planning_state` to `backlog` and omit the planned date fields when none are known:
+
+```json
+{
+  "key": "review-recording-workflow",
+  "type": "task",
+  "action": "create",
+  "title": "録音整理の方法を見直す",
+  "planning_state": "backlog",
+  "content": "現行の整理手順を見直す。",
+  "priority": 7
+}
+```
+
+For an existing matching task or schedule, use `action: "link-existing"` with a canonical repository-relative `target_path`. This preserves its content and status and adds only Issue provenance and history. Do not merge two Issues into one existing record. Activity records cannot be linked this way. For activity, the program allocates one letter-suffixed file per manifest record, preserving its marked source block; use `date_evidence` and its actual activity date.
+
+For linked records, `prepare` derives the original hash from the same bytes used to build the update and verifies that hash before returning the plan. An intervening edit stops preparation with `SOURCE_CONFLICT`; preserve the edit and prepare again. When upgrading from a runtime without this snapshot check, prepare and review wholly unapplied `link-existing` runs again. Keep partially applied runs and their saved paths for the existing recovery procedure.
 
 Do not put Issue-provided text inside a daybook source marker. The program rejects reserved marker text in record content and generates its own provenance markers.
 
@@ -167,7 +178,9 @@ node scripts/import-issues.mjs prepare \
   --out-dir workplace/issue-import/20261006-review
 ```
 
-Review `preview.md` and `plan.json` before apply. Confirm every Issue outcome; each record kind, path, task ID, due/work-period distinction, and date evidence; every `provisional` range and reason; duplicate or linked record decisions; each activity append; and the complete comment body including its statement that records are local and the later close only completes intake. Daily Briefing #3 must be `excluded`. `needs-info`, `skip`, already-imported, remote-only, and excluded outcomes must have no write and must not receive an import comment.
+Review `preview.md` and `plan.json` before apply. Confirm every Issue outcome; each record kind, path, task ID, planning state, due/work-period distinction, and date evidence; every planned `provisional` range and reason; that Backlog records have not received invented dates; duplicate or linked record decisions; each activity file and its allocated suffix; and the complete comment body including its statement that records are local and the later close only completes intake. Daily Briefing #3 must be `excluded`. `needs-info`, `skip`, already-imported, remote-only, and excluded outcomes must have no write and must not receive an import comment.
+
+`prepare` reserves names across all pending activity writes and considers existing files and local Git history. Old unsuffixed and new suffixed files are both scanned for Issue provenance. Old saved plan/result paths remain valid on apply/resume. If a new target appears after review, apply stops with `LOCAL_CONFLICT`; prepare and review a new plan rather than renaming during apply.
 
 `prepare` only writes run artifacts; it must not change canonical daybook records. The task sequence comes from current files and local Git history without fetching. The plan stores the complete intended writes and before/after hashes. Do not hand-edit the plan. A changed plan fails its digest check.
 
@@ -183,7 +196,7 @@ node scripts/import-issues.mjs apply \
   --result workplace/issue-import/20261006-review/result.json
 ```
 
-The CLI locks one repo-level apply, verifies the refreshed source and all paths/hashes before record writes, then applies writes in path order. New records are exclusive creates. Existing activity appends and linked-record provenance use same-directory temporary files and an original-hash check. Each write is journaled to `result.json`. Review the final `result.json`, `comment-<number>.md` files, and every changed canonical record. Never comment or close an Issue unless all of its writes are `written`, its `local_status` is `local-written`, and each current record still matches its `after_hash`.
+The CLI locks one repo-level apply, verifies the refreshed source and all paths/hashes before record writes, then applies writes in path order. Under that lock it also scans current Issue provenance: a target Issue already imported outside this plan stops with `SOURCE_CONFLICT`, even when its record key or path differs. Exact matching paths, record keys, import IDs and after hashes from this plan are accepted for partial or lost-result recovery. It keeps the reviewed paths and content fixed; resolve a conflicting import before preparing and reviewing a new plan. New records are exclusive creates. Legacy saved activity-append plans use the same final content check as ordinary activity edits. A changed or missing activity stops intake with `LOCAL_CONFLICT`; preserve the current file and reconsider the plan instead of changing its saved hash to force it through. Activity updates take no per-file lock, so the final check does not exclude writes starting between that check and save. Linked task/schedule provenance uses same-directory temporary files and an original-hash check. Each write is journaled to `result.json`. Review the final `result.json`, `comment-<number>.md` files, and every changed canonical record. Never comment or close an Issue unless all of its writes are `written`, its `local_status` is `local-written`, and each current record still matches its `after_hash`.
 
 If apply returns `PARTIAL_WRITE`, retain all completed files and the same run. Do not delete or roll back successful writes. Re-run apply with the same `plan.json`, `result.json`, and a fresh `refresh-source.json` if writes remain; a file at its planned `after_hash` is recognized as applied. Any other current hash is a local conflict and requires user review.
 
@@ -196,9 +209,9 @@ The daybook CLI never posts. If `gh` is missing, record `pending-gh` with `reaso
 1. Confirm the current canonical record files still match the saved `after_hash` values.
 2. Read the Issue and comments again through miku-scm. If a valid receipt from a configured `receipt_author_logins` identity has the same `import_id`, record `already-posted` and its exact comment URL. A marker with malformed data or an unknown author is `UNVERIFIED_RECEIPT`; stop without recreating or reposting. A different import ID is a conflict.
 3. Copy the exact saved body from `comment-<number>.md` to the miku-scm required draft path `workplace/miku-scm/issue-comments/issue-<number>-comment-<YYYYMMDDHHMM>.md`. Do not edit its body during the copy.
-4. Use `github.issue.comment.preflight` from the existing runner. Show the exact Issue snapshot, draft body, digest, and planned operation and wait for the approval that the miku-scm workflow requires.
-5. Record `sending` with the returned handoff reference immediately before applying. Apply only that reviewed draft with `github.issue.comment.apply`. The miku-scm helper verifies the returned exact comment; record `posted`, exact comment URL, handoff ID, and attempt path only for a verified result.
-6. Map miku-scm `not-applied` to `failed`; map `unresolved` or other uncertain completion to `uncertain`. Save the reason and attempt reference. Never rerun a comment mutation after an attempt. On resume, read first and follow miku-scm's attempt recovery rules.
+4. Use `github.issue.comment.preflight`, then `github.issue.handoff.review` with its returned handoff. Show the complete Issue context and exact comment body, then wait for a separate user message whose full trimmed text is exactly `approve` or `miku-scm approve`.
+5. Record `sending` with the returned handoff reference immediately before applying. Apply only through `github.issue.handoff.apply` using that review binding and the exact approval. The miku-scm helper verifies the returned exact comment; record `posted`, exact comment URL, handoff ID, and attempt path only for a verified result.
+6. Map miku-scm `not-applied` to `failed`; map `unresolved` or other uncertain completion to `uncertain`. Save the reason and attempt reference. Never resend an uncertain comment. A resume is allowed only for the same reviewed plan and stored approval receipt when miku-scm proves that no comment mutation ran.
 
 For example, state updates use only the local CLI:
 
@@ -220,9 +233,9 @@ Do not put an Issue into `posted` from a successful process exit alone; use miku
 
 Do not close a `needs-info`, skipped, excluded, already-imported, failed, pending, or uncertain comment. After `posted` or `already-posted` is saved:
 
-1. Read the target Issue again through miku-scm. If already closed, record `already-closed` with its canonical Issue URL; do not reopen or re-close it.
+1. If comment and close were both part of the same import plan, prepare the close handoff before the review and include it after the comment in one ordered batch. The batch verifies the comment before closing; one `approve` covers the complete displayed plan. If close is a later, separate operation, prepare and approve it separately. Read the target Issue again through miku-scm. If already closed, record `already-closed` with its canonical Issue URL; do not reopen or re-close it.
 2. If open, verify the non-receipt Issue source still matches the saved `source_hash`. If it changed, stop and ask the user; do not close stale intake.
-3. Use the existing `github.issue.close.preflight` for the exact target with reason `completed`. Show the reviewed Issue state and planned close, then wait for its required approval. Apply the unchanged handoff through `github.issue.close.apply`; do not combine comment and close into a custom command.
+3. For a separate close operation, use `github.issue.close.preflight` for the exact target with reason `completed`, then `github.issue.handoff.review`. Show the complete Issue context and planned close and wait for a separate exact `approve`. Apply through `github.issue.handoff.apply`; never call the low-level close helper directly or combine comment and close into a custom command.
 4. Record `closing` immediately before apply, then record `closed` only after miku-scm verifies the closed state. Save its exact Issue URL, handoff, and attempt references. A miku-scm `not-applied` result is `failed`; unresolved completion is `uncertain`.
 
 Example verified close result:

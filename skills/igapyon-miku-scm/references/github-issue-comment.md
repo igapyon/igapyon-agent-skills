@@ -1,17 +1,34 @@
 # GitHub Issue Comment
 
+**Agent approval path:** run preparation through the fixed miku-scm runner,
+save the returned handoff, display its complete content with
+`github.issue.handoff.review`, then stop and wait for the user's exact
+`approve` message. Apply only through `github.issue.handoff.apply` or the
+reviewed batch workflow. The helper command examples below describe the
+internal operation contract; the Agent must not invoke this script's `--apply`
+mode directly.
+
 Add one comment to one existing public GitHub Issue only through the narrowly
 authorized, human-approved static-helper workflow in this document. Follow
 [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
 The AI Agent must not invoke `gh` directly. Drafting or preflight never
 authorizes publication.
 
+Draft paths and filenames below are preferred conventions. A readable UTF-8
+file with another name or location is imported into a canonical working copy
+with a warning; the source is retained. Review and apply use the returned
+working-copy path and digest. The explicit Issue option identifies the target,
+including when a source filename names a different Issue. Content, digest, and duplicate-attempt checks still apply. CRLF/CR line
+endings produce a notice and are read as LF for submitted text. Original bytes
+and the review digest are retained. Line-ending-only changes do not bypass
+duplicate-attempt protection.
+
 ## Scope
 
 The only allowed mutation is:
 
 ```text
-gh issue comment <number> --repo <owner/repo> --body-file <generated-temporary-body-file>
+gh issue comment <number> --repo <[host/]owner/repo> --body-file <generated-temporary-body-file>
 ```
 
 Use [scripts/github-issue-comment.mjs](../scripts/github-issue-comment.mjs).
@@ -24,13 +41,15 @@ mutation under [approval-handoff.md](approval-handoff.md).
 The helper's complete fixed `gh` command surface is:
 
 ```text
-gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,labels,updatedAt
-gh issue comment <number> --repo <owner/repo> --body-file <generated-temporary-body-file>
-gh api --method GET repos/<owner/repo>/issues/comments/<comment-id>
+gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt
+gh api graphql --method POST [--hostname <selected-host>] -f query=<fixed IssueComments query> -f owner=<owner> -f name=<repo> -F number=<number> [-f cursor=<endCursor>]
+gh issue comment <number> --repo <[host/]owner/repo> --body-file <generated-temporary-body-file>
+gh api --method GET repos/<owner/repo>/issues/comments/<comment-id> [--hostname <selected-host>]
 ```
 
-The first and third commands are READONLY and are separate from the one mutation
-command. `<owner/repo>`, `<number>`, and `<comment-id>` are validated values;
+The Issue view and GraphQL page reads are READONLY and separate from the one
+comment mutation. GraphQL pagination is bounded and rejects partial or
+snapshot-mismatched results before review. `<owner/repo>`, `<number>`, and `<comment-id>` are validated values;
 the comment ID is accepted only from the exact URL returned by the fixed mutation.
 
 ## Draft and Preflight
@@ -41,14 +60,20 @@ Save only the complete comment Markdown under:
 workplace/miku-scm/issue-comments/issue-<number>-comment-<YYYYMMDDHHMM>.md
 ```
 
-Run preflight without `--apply`. Show the human:
+Run preflight without `--apply`. The handoff retains:
 
 - exact repository, Issue number, URL, title, state, `updated_at`, and Issue snapshot SHA-256
 - complete proposed comment body
 - draft path and SHA-256 digest
 - the single planned `gh issue comment --body-file` operation
 
-Wait for explicit approval after displaying this evidence.
+The Agent's human-facing display comes from `github.issue.handoff.review` and
+shows the complete Issue context and comment body without internal digests,
+paths, IDs, or command arguments.
+
+The preflight is not approval. Display the complete operation with
+`github.issue.handoff.review`, then wait for a separate user message whose
+full trimmed text is exactly `approve` or `miku-scm approve`.
 
 ## Apply and Verification
 
@@ -66,7 +91,10 @@ failure is recorded as `not-applied`; a post-mutation verification failure is
 `unresolved`.
 
 Attempt states are `pending`, `commented`, `conflict`, `not-applied`, and `unresolved`.
-Never reuse a draft after any attempt state.
+Only a `not-applied` result at `pre-comment-read` proves that no comment
+mutation ran. Under the same stored approval receipt, resume may archive that
+record and retry the unchanged draft once. A conflict requires a fresh review;
+pending, commented, and unresolved attempts are never retried.
 
 ## Completion Report
 

@@ -12,298 +12,54 @@ update_when:
 
 # Handoff
 
-This file summarizes the current working state for the next human or AI agent.
-Keep it concise. Do not use this as a full work log or a replacement for `TODO.md` and `DECISIONS.md`.
+2026-11-08：daybook Node.js 単独実行の自己レビュー2件に対応。生成元を YAML の Node.js 配布コードへ切り替えて `!!binary` の Buffer/UTF-8 互換性を回復し、CLI の実パス比較とパス変換なしの別名実行 smoke を追加した。runtime suite 79/79、YAML互換性4/4、参照・配布79/79、生成差分・skill形式・差分検査が成功。Maven package と展開ZIPの別名CLI実行・binary表示検査も成功。[実施記録](docs/plans/daybook-node-only-runtime-implementation.md#自己レビュー2件への対応2026-11-08)を参照。初回実装は `b284076` でcommit済み、今回の修正は未commit。Node.js 22/24のhosted CIは未確認で、実daybook・配備先同期・版数incrementは未実施。
 
-## 最新指示：daybook のURL関連 task 探索を実装（2026-10-15）
+2026-11-06：daybook 同梱 CLI の [Node.js 単独実行計画・実施記録](docs/plans/daybook-node-only-runtime-implementation.md)を完了した。YAML ESMを同梱し、活動作成/読み取り/更新、day-plan、Issueローカル処理、通知dry-runを追加依存なしで確認。runtime suite 78/78、YAML互換性2/2、参照・配布79/79、skill形式、Maven package、展開ZIP runtime検査が成功。ローカル Node.js は26.12.1。Node.js 22/24のhosted CI結果は未確認で、workflowを追加済み。source差分と版数 `1.20261106.2` は未commit。実daybook・配備先同期、version increment、commit/push、tag/Releaseは未実施。
 
-利用者の後続指示に従い、[daybook-url-task-lookup.md](docs/plans/daybook-url-task-lookup.md) の URL-00〜05 を source skill に実装した。
+2026-11-06：利用者と合意し、activityの上書き対策を簡素化した。新規作成は同名を上書きせず次の英字へ進む。既存更新は書く直前に読み直し、元の内容と違えば保存せず再検討する。活動ごとのロック、権限管理、解除失敗の警告処理と専用テストは削除。旧Issue activity追記も同じ直前確認を使う。確認から保存までの競合は許容する合意であり、厳密な排他制御を追加し直さない。source runtime 77/77、実daybook runtime 75/75（統合コピーでも成功）、参照・配布79/79、skill形式・差分検査が成功。実daybookの6ファイルと配備済みskillへ反映し、ほかのtracked 122ファイルの不変とskill同期を確認。手順は[activity操作](skills/igapyon-miku-daybook/references/operations.md#add-an-activity)、実装は[更新CLI](skills/igapyon-miku-daybook/assets/daybook/scripts/update-activity.mjs)を参照。同日導入したロック方式とその自己レビュー修正は、この簡素化指示で撤回した。先行する版数更新 `1.20261106.1` / `20261106a` と今回の差分は未commit。
 
-- 振る舞い：関連確認を明示されたとき URL を読み、全年月の task から候補と根拠を返す。URL単独提示や要約依頼では task 探索をしない。
-- 変更：`skills/igapyon-miku-daybook/SKILL.md`、新規 `references/url-task-lookup.md`、`references/operations.md`、root `README.md`、TODO、HANDOFF、計画書。
-- 確認：U1〜U14 を静的照合。`quick_validate.py` は `Skill is valid!`、`git diff --check` は成功。モデル／tool mock による実行確認はしていない。
-- 実 daybook の更新、配備、version 更新、commit／push は未実施。
+## 現在地（2026-11-05照合）
 
-## 直前の作業：daybook レビュー指摘の修正を実装（2026-10-15）
+最新作業は共通版を `.5` / `20261026e` へ更新した後のsync説明補完・Windows CRLF fixture修正と、候補版数human output修正。候補修正はhuman output v15、5ケースと実producer接続テストを含み、詳細は[計画・検証記録](skills/igapyon-miku-scm/docs/2026-10-26-version-candidate-output-fix-plan.md)を参照。sync pull/push本体はPR #409でmerge済み（このcheckoutのHEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`）。
 
-利用者の指示に従い、[daybook-skill-review-fixes.md](docs/plans/daybook-skill-review-fixes.md)のDBR-00〜05を実装した。task 編集の範囲と完了根拠を operations.md に集約し、Issue 取り込み CLI のローカル前提と導入経路を追加した。MIT 出典・task／activities 分担を含む既存差分を保持。
+[自己レビュー](skills/igapyon-miku-scm/docs/2026-10-26-sync-plan-self-review.md)の5件を実装へ反映した。独立したbranch-base記録、ignored途中tree保護、固定rebase option、実際のfetch/push先binding、prepare再開/取消、競合時の同じoperationによる回復を追加。候補版数human output修正も実装し、full suite **374/374**、focused tests **45/45**、contract 37件check、`mvn validate`、`git diff --check`が成功。今回の版数整合は `1.20261026.5` / `20261026e`。
 
-- 変更：root README、daybook SKILL.md、operations.md、records.md、issue-import.md、notification.md、TODO.md、HANDOFF.md、計画書。
-- 検証：S1/S3/S5/S6 は成功。S2/S4 は `--help` とエラー分類を確認したが、`npm install --offline` は ENOTCACHED のため依存取得と lock 更新が未検証。詳細は計画書。
-- `quick_validate.py` は `Skill is valid!`、`git diff --check` は成功。C1〜C8 は規則へ静的照合。
-- 実 daybook、GitHub、スキル配備、version 更新、commit/push は未実施。現在の変更はローカル差分。
+- 現在branchは `devel-tiga1026wce`、実装開始時HEADは `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`。作業ツリーの版数更新・sync説明/fixture修正・候補版数表示修正は未stage・未commit。
+- 現在版は共通 `1.20261026.5` / Mikuku `20261026e`。POM、VERSION.md、2つのrunnerの整合は `mvn validate` で確認済み。追加increment、package、配備、commit/pushは未実施。
+- 内製15件＋外部12件＝配布対象27スキル。外部skillはPOMの固定refからビルド時に取り込む。
+- 最新検証はfull **374/374**、focused **45/45**、contract 37件check、`mvn validate`、差分検査成功。提示されたWindows hosted CIログでは当時のsuite 368件中5件がCRLF差分で失敗していた。fixture修正後のWindows hosted CI再実行成功は未確認。native Windows 11の手動smokeも未確認。
 
-下方は過去の別作業。今回の指示として再開しない。
+2026-11-05にdaybookの発火境界、既定priority 7、予定日の仮置き、weekly task整合を更新した。自己レビュー指摘も反映し、daybook runtime suite **69/69**、参照・配布suite **79/79**、skill形式検査、`git diff --check` は成功。実対話での発火・待機・Waypoint再開とデータ読み取り範囲は未検証で、詳細は[計画と検証記録](docs/plans/daybook-activation-priority-review-luna-implementation.md)を参照。
 
-## 最新指示：配布ZIPのsource照合補修を実装（2026-10-11）
+## 実装・マージ確認
 
-利用者の実装指示に従い、[release-archive-source-verification.md](docs/plans/release-archive-source-verification.md)のZIP-00〜05をroot repoに実装した。詳細なtaskと検証記録は[TODO.md](TODO.md)冒頭。
+以下は、このcheckoutのGit履歴とsourceで確認した状態。古い「未commit」「commit/push未実施」は、各作業当時の記録である。
 
-- `scripts/release-archive-files.mjs`が内部skillのsourceとZIP展開先を、相対path・通常file型・size・SHA-256で照合する。`.DS_Store`、`node_modules`、`.git`は従来の配布規則どおりsource側で除外する。
-- 14代表参照routeを`skill-reference-routes.mjs`へ共通化し、source単独testとZIP展開先の両方から確認する。root内部15 skillだけを全file照合する。外部10 skillは現行pinに対するlock/index検査を維持する。
-- 検証：`npm run test:skill-index-policy` 77/77 pass、`mvn package` BUILD SUCCESS、archive checkerはinternal=15 / external=10 / source-checked=15 / representative-routes=14。実ZIP一時コピーでVERSION.md・代表画像の欠落、同サイズ内容変更をそれぞれexit 1で検出。`git diff --check`成功。
-- 外部10件の新ref統合後も、source-to-ZIP全file比較の対象はroot内部15件。外部10件はfull-SHA lock/ref/index検査と実ZIP package確認を通過している。Qiita比較とroot package検証は親移行計画で完了。Release・配備は行わない。
+| 対象 | 確認できた状態・根拠 |
+| --- | --- |
+| miku-scm sync pull / sync push | PR #409でmerge済み。現在のHEAD `dc4c5b3`。後続の説明補完・CRLF fixture修正・候補human output・版数 `.5` の作業ツリー差分は未commit |
+| miku-toolbox同梱、Mikuku手指方針、daybook記録方針・task-id用語 | `38e73af`、PR #408のmerge `8d8f68c` に含まれる |
+| daybookの添付テキスト優先方針 | 案からsourceへ反映済み。同じ `38e73af` に [attachments.md](skills/igapyon-miku-daybook/references/attachments.md) と各入口を追加・更新 |
+| miku-scm Issueのapprove承認改善 | `2066b3d`、PR #398のmerge `ee88c7c` |
+| miku-soft Node.js / Java互換性方針 | `31a97dc`、PR #397のmerge `454ddb3` |
+| daybook Waypoints・Backlog・添付設計 | `1c22c5c`、PR #396のmerge `5a7376d` |
+| daybook URL検索・レビュー指摘修正 | `2232cec`、PR #389のmerge `fbe24e0` |
+| index任意化・配布ZIPのsource照合 | `dc2b288` / `c6d3299`、PR #383 / #384でmerge |
+| daybook Issue取り込み・配布ZIP整理 | `ec0ec0c`、PR #382のmerge `3eb211f` |
+| Work Cycleの最初の実装・連動版更新 | `0cc8aaa`、PR #344のmerge `044734b`。旧 `27a2ed7` の公開方法を再度選ぶ必要はない |
+| Windows publication・daybook初版 | `8849b69`、PR #366のmerge `4522ec4`。Windows実機の検証完了を意味しない |
 
-## 親計画：index.json方針移行の実装（2026-10-10）
+## 残件・保留の入口
 
-利用者は当初Luna想定の詳細計画を依頼し、その後、計画に従う実装を明示指示した。計画正本は[index-json-policy-migration.md](docs/plans/index-json-policy-migration.md)、task一覧と進捗は[TODO.md](TODO.md)冒頭。
+- `sync pull` / `sync push` 本体はPR #409でmerge済み。提示されたWindows hosted CIログで368件中5件のCRLF関連失敗を確認した（ログにPR番号・run URLの記載はない）。fixture修正後のWindows再CI成功は未確認。実GitHub上のsync実運用とモデル会話routingも未確認。後続の版数・説明・fixture・候補表示差分は未stage・未commit。
+- 現在版 `.5` のpackage/ZIP照合は未実施。候補版数表示修正のWindows hosted CI再確認とnative Windows 11手動smokeは未確認。
+- day-plan生成前の `npm ci` は2026-11-06のNode.js単独runtime対応で不要になった。[実装記録](docs/plans/daybook-node-only-runtime-implementation.md)。項目2〜4の記録方針・用語は反映済み。
+- native Windows 11のjunction / CRLF / publication smokeは未確認。提示されたWindows hosted CIログで5/368のCRLF失敗を確認した。fixture修正後の成功は未確認。[Windows計画](WINDOWS11-PUSH-PLAN.md)のW02・W05・W08・W09は未完了のまま扱う。
+- Work Cycle全体のcycle artifact、作業開始のone-shot化、PR evidence統合は継続候補。[設計記録](skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md)と現行sourceを再照合してから別途着手する。
+- モデル会話確認、実資料の変換、配備・運用反映、tag / Release、旧監査の残件は、この訂正で実施・完了したことにしない。個別の未確認事項と過去の検証件数は [TODO.md](TODO.md) を参照する。
 
-- 方針：index.jsonを全skill共通の必須・先読前提から外し、具体的なconsumerと維持価値があるもの、製品出力は残す。新しい全件INDEX.mdへの置換も必須にしない。
-- 内部14件の補助indexを削除。Qiita indexはLunaの3代表task比較で、アプリケーションarchitecture記事のoverviewとtopic bankを区別しやすくしたため、任意のcross-topic discovery用途でretain。known-topic taskの既定経路は直接参照・scoped searchのまま。indexにtopics/tagsはなく、一般的なsummaryもある。token/time削減は測定していない。
-- 自己レビュー後、実ZIPの欠落・混入・不正path・symlink・lock検査、ゼロ/複数生成、policy拒否、生成差分、単独配置14skillの静的参照到達性、indexなしstarterの検査を58件へ拡充。モデルの選択行動やtoken削減を測った検査ではない。Release workflowでもこのsuiteを実行する。
-- `mvn clean package`成功。外部10repoの追跡差分は74 source path（以前の73は誤り）。既存build/testは全repoで成功済み、今回変更したprompt-lintは10 source＋6 bundle tests、AI builderは34 source＋5 bundle testsを再検証。両repoのZIP検査はsourceから期待集合を作り、bundleとZIPで同じ参照が抜けた場合も検出する。text-file-opsのWindows専用test 1件はskip。
-- 外部10source repositoryは3作業列で並行移行し、各repoの既存build/test確認後にmiku-scm draft recommit pushを実行した。root pinsとpolicy dispositionを新しいfull SHAへ更新し、policy suite 77/77、`mvn clean package`、実ZIP checker（internal=15、external=10、source-checked=15、representative-routes=14）が成功。全refとrepo別test数はmaintenance inventoryに記録。
-- IDX-00〜07の作業・記録・検証は完了。miku-indexgenの製品生成機能、mikuku画像・記事・version正本、他製品JSON、配布provenanceを維持。利用者指定のmiku-scm draft recommit push方式でGitHub反映を進める。Release、tag、skill配備は対象外。
+## 次回の読み方
 
-下方には過去の別作業の状態が残っている。そこにあるbranch・未commit・優先作業の記述を、この移行の現在状態として扱わない。
+最新の利用者依頼、実際のGit状態、この文書とTODO冒頭を確認して対象を決める。旧branch名や「Current priority」から作業を自動選択しない。運用規則は [DEVELOPMENT.md](DEVELOPMENT.md)、利用者向け案内は [README.md](README.md) にある。
 
-## Daybook Issue受信のローカル実装（2026-10-06）
-
-利用者の実装指示に基づき、ISSUE-00→A→B→C→D→E→F→Gを実施した。チェックリストと詳細仕様は[TODO.md](TODO.md)と[daybook-issue-import.md](../daybook/docs/plans/daybook-issue-import.md)。
-
-- daybookの`planned_dates_status`対応、Issue source正規化・検証、manifest/plan/preview生成、task/schedule/activityのローカル適用、result journalと再開CLIを追加。resultコメント／closeの操作手順は新しいdaybook referenceに記載。
-- daybook READMEとskill SKILL.md/referencesを更新し、skill indexを再生成した。daybook側とskill bundle側の6スクリプト／テストを一致させた。miku-scmソース・通知workflowには変更を加えていない。
-- 検証：skill bundleの`node --test skills/igapyon-miku-daybook/assets/daybook/scripts/*.test.mjs`は42/42成功。daybookの`npm test`は41/41成功。両repoの`git diff --check`も成功。
-- 実GitHub取得・投稿・close、認証、skill配備、commit/pushは未実施。Issue取込の実運用は後続の明示依頼で行う。
-- worktreeにはこの作業以外の利用者変更がある。特に`pom.xml`、miku-scm/GitHub Writer、Mikuku VERSION、既存の別TODOおよび過去作業handoffをこの作業に含めず保持する。
-
-次の操作：差分を確認したうえで、必要なら別途skill配備または実Issue取り込みを明示依頼する。commit/pushは行っていない。
-
-## Priority Resume Context — miku-scm Work Cycle (2026-08-10)
-
-This is the active user-directed work; the older miku-soft reference-audit
-context below is preserved but deferred.
-
-- Objective: implement the responsive Work Cycle direction in
-  `skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md` without
-  weakening `-done`, backup, remote-expectation, or publication safeguards.
-- Completed: the design was merged by PR #343 (`origin/devel` = `af623c4a`).
-  The first implementation slice, `pr.recommit.push`, is now present but
-  uncommitted: it runs the macOS backup/recommit/publication sequence in one
-  fixed invocation. It verifies that the backup still points to the reviewed
-  HEAD before reset, and has success, remote-conflict, backup-integrity, and
-  platform-stop tests.
-- Current branch: `devel-tiga0810udh`. Local commit `27a2ed7` increments the coupled versions to
-  `1.20260810.1` / `20260810a`; it is one commit ahead of `origin/devel`, with
-  no push or PR. The worktree contains the `pr.recommit.push` implementation,
-  generated contracts/index, and this state update; inspect and commit them
-  deliberately before publication.
-- First decision: publish `27a2ed7` as its own PR or include it in the
-  implementation PR. Do not increment the version again on resume.
-- Next implementation slice: move the remaining expected fixed checks into
-  runners while keeping genuine human authorization boundaries. The completed
-  `pr recommit push` slice retains exact remote checks, `force-with-lease`,
-  post-push comparison, and the `-done` rename guard.
-- Platform rule: one Node.js core with OS adapters; `rg` is optional so Windows
-  11 is supported without a full script split.
-- Verification: this implementation passed `npm run test:miku-scm:fast`
-  (117 tests), `npm run test:miku-scm:full` (215 tests),
-  `mvn generate-resources`, contract drift check, and `git diff --check`.
-- Release note: `v20260809a` currently targets `42e557b`, not merged base
-  `af623c4a`. Do not move or create tags automatically; GitHub tag/Release
-  actions remain human work.
-
-## Historical State — miku-soft reference audit (deferred)
-
-- AI agent state management has been initialized for this repository.
-- Root `TODO.md` remains the repository's existing task memo.
-- `GOAL.md`, `DECISIONS.md`, and `HANDOFF.md` provide agent-oriented state, decisions, and resume context.
-- The then-active objective was the validity audit and structural improvement
-  of `skills/igapyon-miku-soft-developer/references/`.
-- The numbered references have been classified: product-layer codes are
-  `10/11/20/21/40/50`; `30` is a conversion method; `31/32` are separation
-  workflows; `00` is overview/concept work rather than a product layer.
-- The preferred future direction keeps layer numbers stable and separates
-  layers, workflows, methods, migrations, reviews, profiles, catalogs, and
-  dated baselines into explicit document roles. Typed IDs such as `L10`,
-  `M-L10-L20`, and `G-L10-L10+L11` remove cross-role ambiguity.
-- No product reference has been renamed or semantically changed yet. Content
-  validity is to be audited before any path migration.
-- The claim-evidence matrix contract and pilot repository set are now recorded
-  under `TODO.md`.
-- The local-only inventory found 56 direct sibling candidates. The primary
-  pilots are the `miku-indexgen`, `miku-xlsx2md`, and `miku-md2docx` families,
-  with explicit Java-only, Skill-only, minimal-Skill, combined-Web, and MCP
-  contrasts.
-- Detailed ignored working evidence is stored in
-  `workplace/miku-soft-reference-audit/`; the matrix currently contains 23
-  claims, with target structure, phased revision plan, and decision brief in
-  separate files.
-- Full reads are complete for all `00/10/11/20/21/30/40/50` basic documents
-  and all top-level numbered workflows.
-- High-confidence conflicts include layer 10 and Java release defaults,
-  release-review wording, straight-conversion multi-module Maven allowance,
-  and Java 8 compatibility versus source/target-only compilation.
-- High-confidence stale findings include the `miku-xlsx2md-java`
-  multi-module note, volatile product inventories, and Node.js 20 as the
-  maintained starter minimum.
-- Dated primary-source checks were completed for Node.js lifecycle, current
-  GitHub Action lines, Maven/JUnit Java compatibility, and MCP specification
-  revision 2025-11-25.
-- A read-only compatibility scan found 38 files across 25 sibling repositories
-  naming current reference paths; old-path stubs are therefore required for
-  any later migration.
-- GitHub Actions normalization is now an explicit audit track. The initial
-  read-only scan found 57 direct workflows in 47 of 56 sibling candidates:
-  10 CI and 47 release-oriented files, with 54 distinct exact contents.
-  Differences must be classified by product profile and contract before they
-  are treated as drift or defects.
-- The workflow plan defines a per-workflow inventory, normalized structural and
-  contract clustering, canonical profile candidates, shared invariants, an
-  exception registry, and a P0-P3 migration backlog. No sibling workflow has
-  been changed, fetched, dispatched, or published.
-- Node.js baseline migration is a named sub-track. A literal scan found Node 20
-  on `node-version` lines in 29 direct sibling workflow files, compared with
-  Node 22 in 3 and Node 24 in 14; matrix files can appear in two counts. The
-  maintained candidate to test is product minimum 22, CI on 22/24, release
-  build on 24, and a Node 22 smoke of released runtimes that claim `>=22`.
-- Release artifact normalization is also a named sub-track. Initial signals
-  include 13 workflows staging/copying `.mjs`, 14 staging/copying `.jar`, 15
-  referring to `sources*.tgz`, 10 referring to Skill bundle `.zip`, and only 3
-  uploading `.zip.sha256`. Counts overlap and artifact meaning still requires
-  profile-level classification.
-- The candidate lifecycle is build, verify, stage under final names, checksum
-  final bytes, verify the expected set, then upload. Reproducible Skill zip,
-  Node module/source staging, Java minimum-runtime smoke, npm pack surface
-  verification, and Web staging are exemplar controls rather than one universal
-  workflow template.
-- Release-page filename quality is now an explicit design concern. Node custom
-  assets mostly use role-before-version names, while Java sources jars mix
-  role-before-version and Maven-style version-before-classifier forms. Existing
-  download scripts, runtime resolvers, docs, and articles consume these names,
-  so filename cleanup requires a producer/consumer compatibility map.
-- The leading custom-asset grammar to evaluate is
-  `<release-family>[-<role>][-<platform>-<arch>]-<release-version>.<ext>`, with
-  sorted per-profile Release-page fixtures and narrow npm/Maven exceptions.
-- The next audit execution is intentionally parallel: one coordinator plus up
-  to three read-only subagents per wave. Workers receive disjoint scopes and
-  unique ignored reports; only the coordinator merges results. Actual workflow
-  changes remain serial representative pilots after approval.
-- Wave A is complete and integrated in
-  `workplace/miku-soft-reference-audit/wave-a-integration.md`. Its three
-  reports confirm the Node/asset/workflow evidence tracks and identify two
-  contract candidates for follow-up: manual tag checkout in `miku-indexgen-java`
-  and tag-driven Release creation in `miku-docx2md`.
-- Wave B is complete and integrated in
-  `workplace/miku-soft-reference-audit/wave-b-integration.md`. It groups all
-  direct workflows into 11 Release and 4 CI profile proposals, separates P0
-  source-identity corrections from estate policy gates, and records a
-  candidate Node/artifact/naming contract plus serial pilot order. The
-  candidate defaults remain unapproved; no sibling has been mutated.
-- Wave C is complete and integrated in the ignored audit workspace. It provides
-  a cross-checked W01–W57 workflow TSV, P0/P1 exception/control register,
-  producer/consumer evidence, and a 15-item Node reference/starter register.
-  The highest-impact naming finding is miku-ms-office-core: at least seven
-  fixed vendor/import consumers exist while its producer verifier names only
-  three. No public artifact name may be changed producer-first.
-- The durable audit/roadmap summary is now tracked under
-  `skills/igapyon-miku-soft-developer/docs/maintenance/2026-07-31-reference-actions-audit/`.
-  Raw Wave reports remain ignored workplace provenance; ordinary project
-  workflows continue to use `references/` as the normative source.
-- Routine miku-soft maintenance now includes an uplift check for approved,
-  adjacent improvements. Urgent, minimal, or explicitly narrow work may skip
-  only that additional uplift pass; the requested change and its verification
-  remain required. Public compatibility changes stay in dedicated migrations.
-- When maintenance mode has a known target repository but no named change, it
-  now selects and completes a bounded slice of one or more mutually compatible,
-  approved, locally verifiable improvements. The slice is limited by coherence
-  and verification rather than item count. If none is ready, it performs a
-  read-only assessment and identifies the exact pending decision instead of
-  claiming there is no maintenance work.
-- 2026-06-23 skill discovery maintenance is implemented, copied into `/Users/igapyon/.codex/skills`, and verified in a fresh Codex session.
-- `policy.allow_implicit_invocation: false` was removed from `igapyon-agent-state-management` and `igapyon-skill-compactor` `agents/openai.yaml` files.
-- The miku-soft Agent Skill starter skeleton was moved from `assets/agent-skills/skills/__SKILL_NAME__/SKILL.md` to `assets/agent-skills/templates/skill/SKILL.md.template`.
-- `DECISIONS.md` records the durable policy: avoid hidden discovery controls and keep skill templates outside discovery shapes.
-- 2026-06-29 release-bundled external skill refs were checked against upstream tags.
-  Only `miku-ms-office-skills` needed an update; `pom.xml` and README now pin
-  it at `v0.4.2`.
-
-## Historical Next Action — miku-soft reference audit (deferred)
-
-- Wave C is complete. Review the integrated decision packet in
-  `workplace/miku-soft-reference-audit/wave-c-integration.md`: Node roles,
-  checksum shape, custom/native naming rules, Web JSON visibility, Action
-  pinning, and Release ownership.
-- If authorized, prepare only the standalone P0 `miku-indexgen-java`
-  source-identity correction first; its acceptance fixture must bind manual
-  input tag, checkout SHA, POM version, staged names, and Release target.
-- After policy approval, update this repository's developer references/starters
-  as one coherent Node baseline change, then run exactly one serial profile
-  pilot. Do not parallelize sibling mutations that share templates, consumers,
-  release names, or GitHub state.
-- Continue systematic extraction for remaining product-specific/current-state
-  claims, but do not delay obvious conflict classification already backed by
-  the matrix.
-- After decisions, prepare semantic edits at current paths as a separate diff;
-  do not start the path migration in the same change set.
-
-## Relevant Files
-
-- `GOAL.md`: Current agent objective, done conditions, and stop conditions.
-- `TODO.md`: Existing repository TODO plus AI agent current tasks.
-- `DECISIONS.md`: Important decisions and reasons.
-- `HANDOFF.md`: Compact resume notes.
-- `README.md`: Repository operating rules and conventions.
-- `skills/igapyon-miku-soft-developer/SKILL.md`: Workflow router.
-- `skills/igapyon-miku-soft-developer/references/architecture-rules.md`: Basic-document selector and shared architecture rules.
-- `skills/igapyon-miku-soft-developer/references/miku-soft-basic/`: Current type-specific design documents.
-- `skills/igapyon-miku-soft-developer/references/review/`: Current review notes.
-- `workplace/miku-soft-reference-audit/claim-matrix.md`: Detailed audit claims.
-- `workplace/miku-soft-reference-audit/target-structure.md`: Candidate taxonomy
-  and target tree.
-- `workplace/miku-soft-reference-audit/revision-plan.md`: Phased implementation
-  and verification plan.
-- `workplace/miku-soft-reference-audit/decision-brief.md`: Pending product-owner
-  choices and recommendations.
-- `workplace/miku-soft-reference-audit/github-actions-audit-plan.md`:
-  Cross-repository workflow inventory, classification, profile, and migration
-  plan.
-
-## Watch Outs
-
-- Do not rewrite unrelated existing `TODO.md` sections while updating agent task state.
-- Keep state files concise; use repository documentation for durable project rules.
-
-## Last Verification
-
-- 2026-07-31: Read the numbered workflows, architecture router, new-project
-  router, current basic-document map, Git history for numbered workflows, and
-  the local sibling miku-soft directory inventory. Confirmed the worktree was
-  clean before updating these state files.
-- 2026-07-31: Completed full reads through layers 40/50, inspected bundled
-  starters and representative Skill/MCP repositories, checked current primary
-  sources, and scanned sibling hard links. Product references and sibling
-  repositories remain unmodified.
-- 2026-07-31: Completed the first read-only GitHub Actions inventory across all
-  56 direct sibling candidates and recorded the normalization audit plan.
-- 2026-07-31: Added the Node 20-to-22/24 decision track and recorded the first
-  workflow, package-engine, reference, and starter-assumption counts.
-- 2026-07-31: Added the release-artifact normalization track and recorded the
-  initial module, source, jar, Skill zip, Web, npm pack, and checksum patterns.
-- 2026-07-31: Elevated Release-page filename consistency to a public UX/API
-  contract and added producer/consumer compatibility planning.
-- 2026-07-31: Added the parallel subagent execution protocol: parallel
-  read-only evidence waves, serial integration, and serial mutation pilots.
-- 2026-07-31: Completed and integrated Wave A. The detailed reports and
-  evidence reconciliation are retained in the ignored audit workspace.
-- 2026-07-31: Completed and integrated Wave B. Its canonical-profile proposal,
-  migration backlog, and product-owner decision gates are retained in the
-  ignored audit workspace; the completed Wave C registers supply the remaining
-  machine-readable evidence.
-- 2026-07-31: Completed and integrated Wave C. The audit/design phase now has
-  complete direct-workflow rows and focused public-asset consumer evidence;
-  the next state-changing step needs an explicit decision packet and named
-  serial pilot authorization.
-- 2026-07-31: Added the routine maintenance adoption workflow and connected it
-  to the normative maintenance checklist, dated roadmap, and implementation
-  backlog, including the urgent/narrow uplift skip boundary.
-- 2026-07-31: Added Maintenance Opportunity Selection for maintenance sessions
-  with a known repository but no specific requested change.
-- 2026-06-22: Inspected `git status --short`, `README.md`, existing `TODO.md`, and state-management templates.
-- 2026-06-23: `mvn generate-resources` and `mvn package` passed.
-- 2026-06-23: Source and installed copies were checked: no `allow_implicit_invocation` remained in the two affected skills.
-- 2026-06-23: Source and installed `igapyon-miku-soft-developer/assets/agent-skills` trees were checked: no real `SKILL.md` template remained under the starter assets.
-- 2026-06-23: Fresh Codex session skill list includes `igapyon-agent-state-management` and `igapyon-skill-compactor`, and does not include `__SKILL_NAME__`.
-- 2026-06-29: `mvn package` passed after updating the release-bundled
-  `miku-ms-office-skills` ref to `v0.4.2`; the generated zip includes
-  `skills/igapyon-miku-ms-office/runtime/miku-xlsx2md-1.2.3.mjs`.
+整理前の引き継ぎ本文は [引き継ぎ履歴](docs/maintenance/2026-10-26-handoff-history.md) に保存した。そこにある「最新」「active」「次の操作」は当時の記録として読む。

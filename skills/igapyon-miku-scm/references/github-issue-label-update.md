@@ -1,5 +1,13 @@
 # GitHub Existing Issue Label Update
 
+**Agent approval path:** run preparation through the fixed miku-scm runner,
+save the returned handoff, display its complete content with
+`github.issue.handoff.review`, then stop and wait for the user's exact
+`approve` message. Apply only through `github.issue.handoff.apply` or the
+reviewed batch workflow. The helper command examples below describe the
+internal operation contract; the Agent must not invoke this script's `--apply`
+mode directly.
+
 Change labels on one existing public GitHub Issue only through the narrowly
 authorized, human-approved static-helper workflow in this document. Follow
 [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
@@ -10,7 +18,7 @@ The AI Agent must not invoke `gh` directly.
 The only allowed mutation is one command containing reviewed existing labels:
 
 ```text
-gh issue edit <number> --repo <owner/repo> [--add-label <name>]... [--remove-label <name>]...
+gh issue edit <number> --repo <[host/]owner/repo> [--add-label <name>]... [--remove-label <name>]...
 ```
 
 Use
@@ -22,9 +30,10 @@ Issue type, relationships, state, or label definitions.
 The helper's complete fixed `gh` command surface is:
 
 ```text
-gh label list --repo <owner/repo> --limit 1000 --json name
-gh issue view <number> --repo <owner/repo> --json number,url,title,state,labels,updatedAt
-gh issue edit <number> --repo <owner/repo> [--add-label <name>]... [--remove-label <name>]...
+gh label list --repo <[host/]owner/repo> --limit 1000 --json name
+gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt
+gh api graphql --method POST [--hostname <selected-host>] -f query=<fixed IssueComments query> -f owner=<owner> -f name=<repo> -F number=<number> [-f cursor=<endCursor>]
+gh issue edit <number> --repo <[host/]owner/repo> [--add-label <name>]... [--remove-label <name>]...
 ```
 
 The first two commands are READONLY and are distinct from the single mutation.
@@ -32,17 +41,19 @@ Every variable is validated, and no arbitrary argument is accepted.
 
 ## Preflight
 
-Retrieve the Issue and complete repository label list with the fixed READONLY
-commands above. Reject:
+Retrieve Issue metadata, all comment pages, and the complete repository label
+list with the fixed READONLY commands above. The GraphQL comment snapshot must
+match the Issue `updatedAt`. Reject:
 
 - labels that do not exist exactly in the repository
 - a label requested for both addition and removal
-- adding an already-present label or removing an absent label
-- an empty or otherwise no-op change
 
-Show the exact Issue, current labels, additions, removals, complete resulting
-labels, operation digest, current-label digest, `updated_at`, and planned
-command. Wait for explicit human approval.
+The handoff retains the exact Issue, current labels, additions, removals,
+complete resulting labels, operation digest, current-label digest, `updated_at`,
+and planned command. The preflight is not approval. Display the complete
+operation with
+`github.issue.handoff.review`, then wait for a separate user message whose
+full trimmed text is exactly `approve` or `miku-scm approve`.
 
 When this handoff is a later step in one explicitly ordered approval batch for
 the same Issue, the batch runner may perform the dependency preflight defined
@@ -69,3 +80,10 @@ Attempt states are `pending`, `updated`, `conflict`, `not-applied`, and `unresol
 Report the Issue URL, complete verified labels, operation digest, verification
 attempt count, and attempt-record path. Never imply success for a conflict or
 unresolved result.
+
+Already-present additions and absent removals require no change. Return
+`up-to-date` with `mutation_invoked: false` when the complete request is already
+satisfied. For a mixed request, keep the full reviewed intent but send only
+effective additions/removals to `gh`. A label removed from an Issue need not
+still exist in the repository's label definitions. Unknown additions remain
+an error. No new approval is requested for a read-confirmed no-op.

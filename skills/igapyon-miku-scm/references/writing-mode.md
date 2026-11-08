@@ -39,9 +39,11 @@ Pull Request on GitHub.
 
 Release mode requires an explicit start commit or range. A single Release
 start commit is inclusive through `HEAD`. About mode reads bounded repository
-documents. Issue mode requires an exact `owner/repository`; it retrieves either
+documents. Issue mode requires an exact `[host/]owner/repository`; it retrieves either
 the exact existing Issue or the repository's existing labels through the fixed
-Issue READONLY helper.
+Issue READONLY helper. For an Issue, it collects every comment page through the
+fixed GraphQL reader before the writing evidence limit is applied. A bounded
+summary may truncate comments and must retain `comments_truncated`.
 
 The evidence collector redacts lines that resemble common credential
 assignments and bounds patch and document excerpts. Truncation is explicit.

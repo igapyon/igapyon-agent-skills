@@ -21,8 +21,8 @@ const repoPath = option(
 );
 const repository = option(
   "--repo",
-  "<owner/repo>",
-  "Target GitHub repository in exact owner/repository form.",
+  "<[host/]owner/repo>",
+  "Target repository on GitHub or a compatible service, optionally qualified by host.",
   { required: true },
 );
 const root = option(
@@ -54,6 +54,29 @@ const apply = option(
   "",
   "Explicitly authorize the apply workflow after human review.",
   { required: true },
+);
+const handoffSelector = option(
+  "--handoff",
+  "<handoff-selector>",
+  "Exact full handoff ID or a unique listed 12-character suffix, in reviewed order.",
+);
+const reviewSha = option(
+  "--expected-review-sha256",
+  "<sha256>",
+  "Review binding digest returned by github.issue.handoff.review.",
+  { required: true },
+);
+const approvalCommand = option(
+  "--approval-command",
+  "<approve-command>",
+  "The exact current human approval command received after the full review was displayed.",
+  { required_when: "--resume is absent", required_group: "approval or resume" },
+);
+const resume = option(
+  "--resume",
+  "",
+  "Resume only from the stored approval receipt and known-safe prior attempt state.",
+  { required_group: "approval or resume" },
 );
 const addLabel = option(
   "--add-label",
@@ -198,6 +221,12 @@ const issueCloseApply = [
     { required: true },
   ),
   option(
+    "--expected-comments-sha256",
+    "<sha256>",
+    "Reviewed exact Issue comment snapshot digest.",
+    { required: true },
+  ),
+  option(
     "--expected-duplicate-sha256",
     "<sha256>",
     "Reviewed canonical duplicate Issue digest.",
@@ -258,6 +287,33 @@ function contract(summary, options, exampleArguments, extra = {}) {
 }
 
 export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
+  "repository.sync.pull": contract(
+    "Fetch the shared base and preserve local work; verify a merged PR only on a done branch.",
+    [repoPath, option("--remote", "<name>", "Selected Git remote.", { default: "origin" }), option("--base", "<branch>", "Shared base branch; inferred when omitted."),
+      option("--resume", "<operation-id>", "Resume this same interrupted pull without a fresh fetch or stash."),
+      option("--abort", "<operation-id>", "Abort this same rebase and restore its retained carryover."),
+      option("--confirm-merged", "<operation-id>", "Continue the saved sync pull only after the human confirms its displayed branch HEAD was merged into its base."),
+      option("--resolved-carryover", "", "With --resume, explicitly confirm every retained carryover path was reviewed and resolved."),
+      option("--resolved-next-work", "", "With --resume, explicitly confirm the saved next branch and interrupted checkout/hook were reviewed and resolved."),
+      option("--empty", "<keep|drop>", "Explicit treatment of an empty stopped replay commit, only with --resume.", { choices: ["keep", "drop"] }), apply],
+    ["--apply"],
+    { network_access: "Git fetch; fixed GitHub PR reads only for -done", authentication: "existing Git authentication; gh or anonymous PR reads, with human confirmation when reads are unavailable", operational_artifacts: ["workplace/miku-scm/sync"], notes: ["Git 2.45+; no remote writes. Branch-base provenance is required for divergent replay."] },
+  ),
+  "repository.sync.push.prepare": contract(
+    "Prepare sync push and automatically continue verified pending work for the current repository, branch and remote.",
+    [repoPath, option("--remote", "<name>", "Selected Git remote.", { default: "origin" }), option("--base", "<branch>", "Shared base branch."), option("--message", "<commit-message>", "Concise ordinary commit title; existing deterministic fallback applies when omitted."),
+      option("--allow-sensitive-path", "<reviewed-path>", "Include this potentially sensitive path only after explicit user consent.", { repeatable: true }),
+      option("--resume", "<operation-id>", "Return the same prepared evidence without committing again."), option("--cancel", "<operation-id>", "Revoke an unapplied prepared push while retaining all work."),
+      option("--recover", "<operation-id>", "Explicitly select a verified preflight-only unpublished partial for recovery; ordinary sync push selects an unambiguous matching operation automatically."), apply],
+    ["--message", "Update work", "--apply"],
+    { network_access: "Git fetch and remote branch reads", authentication: "existing Git authentication", operational_artifacts: ["workplace/miku-scm/sync"], notes: ["Repeated sync push reuses an unchanged preparation or supersedes an unapplied stale one. A structured preflight-only failure or the legacy branch-path ENOENT can be recovered after verifying plan integrity, backup, branch ancestry and remote absence. Existing drafts include their byte digest; fresh plans use distinct draft paths. Unknown publication outcomes remain blocked. No automatic sync pull or version increment."] },
+  ),
+  "repository.sync.push.apply": contract(
+    "Consume the exact sync push plan and draft, then recommit and publish once.",
+    [repoPath, option("--operation", "<operation-id>", "Exact prepared operation ID.", { required: true }), option("--expected-plan-sha256", "<sha256>", "Exact prepare result plan digest.", { required: true }), option("--pr-draft", "<repository-relative-path>", "Exact suggested PR draft path.", { required: true }), option("--expected-draft-sha256", "<sha256>", "SHA-256 of the saved draft bytes.", { required: true }), apply],
+    ["--operation", "<operation-id>", "--expected-plan-sha256", "<sha256>", "--pr-draft", "workplace/miku-scm/pr-drafts/<draft>.md", "--expected-draft-sha256", "<sha256>", "--apply"],
+    { network_access: "Git fetch, branch push and verification", authentication: "existing Git authentication", operational_artifacts: ["workplace/miku-scm/sync", "workplace/miku-scm/ok-push"], notes: ["Linux/other platforms produce a notice and continue with available commands. Creates no PR, merge, tag or Release. An unresolved push must never be resent automatically."] },
+  ),
   "repository.status": contract(
     "Inspect local branch, worktree, worktrees, and selected version files.",
     [
@@ -323,7 +379,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "GitHub read",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Use the returned immutable apply arguments or the approval handoff."],
+      notes: ["Preflight creates an immutable handoff. Display its complete review and wait for exact approve before the handoff apply workflow."],
     },
   ),
   "github.issue.create.apply": contract(
@@ -344,7 +400,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
         "workplace/miku-scm/issue-attempts",
         "workplace/miku-scm/created-issues",
       ],
-      notes: ["Consume the preflight apply arguments unchanged; never reconstruct digests."],
+      notes: ["Internal helper contract only; the runner blocks direct calls. Apply through the reviewed Issue handoff."],
     },
   ),
   "github.issue.update.preflight": contract(
@@ -418,7 +474,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "GitHub read",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["At least one --add-label or --remove-label is required."],
+      notes: ["At least one --add-label or --remove-label is required. Preflight saves a handoff; review and exact approve are still required."],
     },
   ),
   "github.issue.label.apply": contract(
@@ -436,7 +492,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "GitHub read and one Issue label mutation",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/issue-label-attempts"],
-      notes: ["At least one --add-label or --remove-label is required."],
+      notes: ["Internal helper contract only; the runner blocks direct calls. Apply through the reviewed Issue handoff."],
     },
   ),
   "github.issue.close.preflight": contract(
@@ -456,6 +512,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       "--repo", "owner/repository", "--issue", "123", "--reason", "completed",
       "--expected-operation-sha256", "<reviewed-sha256>",
       "--expected-current-body-sha256", "<reviewed-sha256>",
+      "--expected-comments-sha256", "<reviewed-sha256>",
       "--expected-updated-at", "<reviewed-timestamp>",
       "--expected-contract-pair-sha256", "<reviewed-sha256>",
       "--apply",
@@ -464,6 +521,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       network_access: "GitHub read and one Issue close mutation",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/issue-close-attempts"],
+      notes: ["Internal helper contract only; the runner blocks direct calls. Apply through the reviewed Issue handoff."],
     },
   ),
   "github.issue.handoff.list": contract(
@@ -476,47 +534,70 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     [],
     {
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Returns stable IDs, 12-character approval suffixes when available, and review summaries for pending handoffs only."],
+      notes: ["Returns pending summaries and attention-needed records. The list is not a full review or approval."],
+    },
+  ),
+  "github.issue.handoff.review": contract(
+    "Return the complete ordered Issue operation review and a digest bound to the repository, records, and current approval contracts.",
+    [
+      option("--root", "<path>", "Repository root containing the approval handoffs.", { default: "current directory" }),
+      option("--handoff", "<handoff-selector>", "Explicit full handoff ID or unique listed suffix in the intended order.", {
+        required: true,
+        repeatable: true,
+        minimum_occurrences: 1,
+        maximum_occurrences: 20,
+      }),
+    ],
+    ["--handoff", "<reviewed-handoff-id>"],
+    {
+      operational_artifacts: ["workplace/miku-scm/handoffs"],
+      notes: ["Displays full operation context, text, and metadata. Review is READONLY and never applies or consumes an attempt."],
     },
   ),
   "github.issue.handoff.apply": contract(
-    "Apply one pending reviewed Issue handoff without reconstructing its arguments.",
+    "Apply exactly one reviewed Issue handoff after an exact approve command and matching review digest.",
     [
       option("--root", "<path>", "Repository root containing the pending handoff.", {
         default: "current directory",
       }),
-      option("--handoff", "<handoff-selector>", "Human-supplied full pending ID, or a listed 12-character approval suffix that resolves uniquely."),
+      { ...handoffSelector, required: true },
+      reviewSha,
+      approvalCommand,
+      resume,
       apply,
     ],
-    ["--apply"],
+    ["--handoff", "<reviewed-handoff-id>", "--expected-review-sha256", "<review-sha256>", "--approval-command", "approve", "--apply"],
     {
       network_access: "Depends on the reviewed Issue apply workflow",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Without --handoff, exactly one pending handoff must exist. A suffix must resolve to exactly one pending handoff."],
+      notes: ["Requires an explicit reviewed handoff ID, the exact review digest, and either the actual approve command or --resume. Global pending selection is disabled."],
     },
   ),
   "github.issue.handoff.batch.apply": contract(
-    "Apply an explicit ordered batch of pending reviewed Issue handoffs.",
+    "Apply an explicit ordered batch of reviewed Issue handoffs after one exact approve command and matching review digest.",
     [
       option("--root", "<path>", "Repository root containing pending handoffs.", {
         default: "current directory",
       }),
-      option("--handoff", "<handoff-selector>", "Human-supplied full pending ID, or a uniquely resolving listed suffix, in approved order.", {
+      option("--handoff", "<handoff-selector>", "Explicit full handoff ID or unique listed suffix in reviewed order.", {
         required: true,
         repeatable: true,
         minimum_occurrences: 2,
         maximum_occurrences: 20,
       }),
+      reviewSha,
+      approvalCommand,
+      resume,
       apply,
     ],
-    ["--handoff", "<first-selector>", "--handoff", "<second-selector>", "--apply"],
+    ["--handoff", "<first-id>", "--handoff", "<second-id>", "--expected-review-sha256", "<review-sha256>", "--approval-command", "approve", "--apply"],
     {
       network_access: "Depends on each reviewed Issue apply workflow",
       authentication: "existing gh authentication",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
       notes: [
-        "Validates every unique pending handoff resolved from the supplied selectors before the first apply.",
+        "Validates the approval grammar, review digest, and every selected record before the first apply.",
         "Preserves the supplied order and stops before later handoffs after any non-applied result.",
       ],
     },
@@ -536,7 +617,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     {
       network_access: "none",
       operational_artifacts: ["workplace/miku-scm/handoffs"],
-      notes: ["Changes only the selected pending handoff to not-applied."],
+      notes: ["Changes only the selected pending v2 handoff to dismissed; this performs no GitHub mutation."],
     },
   ),
   "repository.maintenance.diagnose": contract(
@@ -611,6 +692,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     [
       repoPath,
       option("--message", "<commit-message>", "Optional reviewed commit message; a deterministic fallback is used when omitted."),
+      option("--allow-sensitive-path", "<reviewed-path>", "Include this potentially sensitive path only after explicit user consent.", { repeatable: true }),
       apply,
     ],
     ["--message", "Update work", "--apply"],
@@ -618,7 +700,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
       operational_artifacts: ["workplace/miku-scm/runs"],
       notes: [
         "Stages all current non-ignored changes; it never pushes, tags, or creates a Release.",
-        "Stops before staging conflicts, frozen -done branches, sensitive-path candidates, and coupled-version mismatches.",
+        "Stops before staging conflicts, frozen -done branches, unapproved sensitive-path candidates, and coupled-version mismatches.",
       ],
     },
   ),
@@ -752,7 +834,7 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     "Collect bounded repository and GitHub evidence for drafting Issue prose.",
     [
       repoPath,
-      option("--github-repo", "<owner/repo>", "Target GitHub repository.", { required: true }),
+      option("--github-repo", "<[host/]owner/repo>", "Target GitHub or compatible repository.", { required: true }),
       option("--issue", "<positive-integer>", "Existing Issue to include as evidence."),
     ],
     ["--github-repo", "owner/repository"],

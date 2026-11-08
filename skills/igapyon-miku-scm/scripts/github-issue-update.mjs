@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { normalizedDraftText, resolveIssueDraft } from "./miku-scm-draft.mjs";
+
 import { createHash, randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import {
@@ -15,18 +17,21 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { repositoryCacheParts, ghRepository, parseRepository, matchesIssueUrl } from "./miku-scm-repository.mjs";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+import { issueCommentsSha256, normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
+import { createGhCommentsRunner, readCompleteIssueCommentConnection } from "./github-issue-comments.mjs";
 
 const ISSUE_UPDATE_APPLY_CONTRACT = workflowContractById().get("github.issue.update.apply");
-const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const UPDATE_DRAFT_PATTERN = /^issue-(\d+)-update-\d{12}(?:-\d+)?\.md$/;
 const ATTEMPT_STATUSES = new Set([
   "pending",
   "not-applied",
   "updated",
+  "up-to-date",
   "conflict",
   "unresolved",
 ]);
@@ -35,12 +40,12 @@ const MAX_LABEL_CHANGES = 20;
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \\
-    --repo <owner/repo> --issue <number> --draft <path> \\
+    --repo <[host/]owner/repo> --issue <number> --draft <path> \\
     [--add-label <existing-label>]... [--remove-label <existing-label>]... \\
     [--root <repository-root>]
 
   node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \\
-    --repo <owner/repo> --issue <number> --draft <path> \\
+    --repo <[host/]owner/repo> --issue <number> --draft <path> \\
     [--add-label <existing-label>]... [--remove-label <existing-label>]... \\
     --expected-draft-sha256 <reviewed-draft-sha256> \\
     --expected-update-sha256 <reviewed-update-sha256> \\
@@ -106,9 +111,10 @@ export function parseArgs(argv, cwd = process.cwd()) {
   }
 
   if (options.help) return options;
-  if (!REPOSITORY_PATTERN.test(options.repository)) {
-    throw new Error("--repo must be exactly owner/repo");
+  if (!parseRepository(options.repository)) {
+    throw new Error("--repo must use [host/]owner/repo");
   }
+  options.repository = ghRepository(parseRepository(options.repository));
   if (!Number.isSafeInteger(options.issueNumber) || options.issueNumber < 1) {
     throw new Error("--issue must be a positive integer");
   }
@@ -177,12 +183,13 @@ function issueSnapshotSha256(issue) {
     title: issue.title,
     body: issue.body,
     labels: canonicalLabels(issue.labels),
+    comments_sha256: issueCommentsSha256(issue.comments),
   }));
 }
 
 function updateSha256(draft, options) {
   return sha256(JSON.stringify({
-    draft_sha256: draft.digest,
+    draft_sha256: draft.normalizedDigest,
     add_labels: canonicalLabels(options.addLabels),
     remove_labels: canonicalLabels(options.removeLabels),
   }));
@@ -190,26 +197,15 @@ function updateSha256(draft, options) {
 
 function targetLabels(currentLabels, options) {
   const removed = new Set(options.removeLabels);
-  return [
+  return [...new Set([
     ...currentLabels.filter((label) => !removed.has(label)),
     ...options.addLabels,
-  ];
+  ])];
 }
 
-function validateCurrentLabels(currentLabels, options) {
-  const current = new Set(currentLabels);
-  const alreadyPresent = options.addLabels.filter((label) => current.has(label));
-  const absent = options.removeLabels.filter((label) => !current.has(label));
-  if (alreadyPresent.length > 0) {
-    throw new Error(`Labels already present cannot be added: ${alreadyPresent.join(", ")}`);
-  }
-  if (absent.length > 0) {
-    throw new Error(`Absent labels cannot be removed: ${absent.join(", ")}`);
-  }
-}
 
 export function parseDraft(content) {
-  if (content.includes("\r")) throw new Error("Draft must use LF line endings");
+  content = normalizedDraftText(content);
   const separator = content.indexOf("\n\n");
   if (separator < 1) {
     throw new Error("Draft must contain a title, one blank line, and a body");
@@ -226,40 +222,17 @@ export function parseDraft(content) {
 }
 
 async function resolveDraft(options) {
-  const root = await realpath(path.resolve(options.root));
-  const draft = await realpath(path.resolve(root, options.draft));
-  const draftDirectory = path.join(root, "workplace", "miku-scm", "issue-updates");
-  const relative = path.relative(draftDirectory, draft);
-  if (!relative || relative.startsWith("..") || path.isAbsolute(relative) || relative.includes(path.sep)) {
-    throw new Error("--draft must name one file directly under workplace/miku-scm/issue-updates");
-  }
-  const match = relative.match(UPDATE_DRAFT_PATTERN);
-  if (!match) {
-    throw new Error("--draft must use the issue-<number>-update-<YYYYMMDDHHMM>.md naming form");
-  }
-  if (Number(match[1]) !== options.issueNumber) {
-    throw new Error("Draft filename Issue number must match --issue");
-  }
-  const content = await readFile(draft, "utf8");
-  return {
-    root,
-    draft,
-    relativeDraft: relativeOperationalPath(root, draft),
-    content,
-    digest: sha256(content),
-    ...parseDraft(content),
-  };
+  const draft = await resolveIssueDraft(options, "issue-updates", UPDATE_DRAFT_PATTERN, `issue-${options.issueNumber}-update`, options.issueNumber);
+  return { ...draft, ...parseDraft(draft.text) };
 }
 
 function operationalPaths(draft, repository, issueNumber, digest) {
-  const [owner, repo] = repository.split("/");
   const directory = path.join(
     draft.root,
     "workplace",
     "miku-scm",
     "issue-update-attempts",
-    owner,
-    repo,
+    ...repositoryCacheParts(repository),
     String(issueNumber),
   );
   return {
@@ -337,12 +310,14 @@ async function replaceAttemptRecord(attemptPath, record) {
   }
 }
 
-export function createGhIssueReader(gh = createGhRunner()) {
+export function createGhIssueReader(gh, ghComments) {
+  const issueGh = gh ?? createGhRunner();
+  const commentsGh = ghComments ?? (gh ? gh : createGhCommentsRunner());
   return async (repository, issueNumber) => {
-    const result = gh([
+    const result = issueGh([
       "issue", "view", String(issueNumber),
       "--repo", repository,
-      "--json", "number,url,title,body,labels,updatedAt",
+      "--json", "number,url,title,body,state,labels,updatedAt",
     ]);
     if (!result?.ok) {
       throw new Error(`gh issue view failed: ${ghDetail(result)}`);
@@ -353,12 +328,12 @@ export function createGhIssueReader(gh = createGhRunner()) {
     } catch {
       throw new Error("gh issue view returned malformed JSON");
     }
-    const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
     if (
       issue?.number !== issueNumber
-      || issue?.url !== expectedUrl
+      || !matchesIssueUrl(issue?.url, repository, issueNumber)
       || typeof issue?.title !== "string"
       || typeof issue?.body !== "string"
+      || !["OPEN", "CLOSED"].includes(issue?.state)
       || !Array.isArray(issue?.labels)
       || issue.labels.some((label) => typeof label?.name !== "string")
       || typeof issue?.updatedAt !== "string"
@@ -366,13 +341,19 @@ export function createGhIssueReader(gh = createGhRunner()) {
     ) {
       throw new Error("gh issue view does not exactly identify the requested Issue");
     }
+    const comments = readCompleteIssueCommentConnection(repository, issueNumber, {
+      gh: commentsGh,
+      expectedUpdatedAt: issue.updatedAt,
+    });
     return {
       number: issue.number,
       url: issue.url,
       title: issue.title,
       body: issue.body,
+      state: issue.state,
       labels: issue.labels.map((label) => label.name),
       updatedAt: issue.updatedAt,
+      comments: normalizeIssueCommentConnection(comments),
     };
   };
 }
@@ -403,7 +384,7 @@ export function createGhLabelReader(gh = createGhRunner()) {
 
 function validateExistingLabels(availableLabels, options) {
   const available = new Set(availableLabels);
-  const missing = [...options.addLabels, ...options.removeLabels]
+  const missing = options.addLabels
     .filter((label) => !available.has(label));
   if (missing.length > 0) {
     throw new Error(`Requested labels do not exist exactly: ${missing.join(", ")}`);
@@ -495,8 +476,8 @@ function ghArguments(options, draft, current, bodyFile = "<generated-temporary-b
   if (draft.title !== current.title) args.push("--title", draft.title);
   if (draft.body !== current.body) args.push("--body-file", bodyFile);
   args.push(
-    ...options.addLabels.flatMap((label) => ["--add-label", label]),
-    ...options.removeLabels.flatMap((label) => ["--remove-label", label]),
+    ...options.addLabels.filter((label) => !current.labels.includes(label)).flatMap((label) => ["--add-label", label]),
+    ...options.removeLabels.filter((label) => current.labels.includes(label)).flatMap((label) => ["--remove-label", label]),
   );
   return args;
 }
@@ -552,7 +533,8 @@ async function verifyUpdatedIssue({
 
 export async function runIssueUpdate(options, dependencies = {}) {
   const gh = dependencies.gh ?? createGhRunner();
-  const readIssue = dependencies.readIssue ?? createGhIssueReader(gh);
+  const ghComments = dependencies.ghComments ?? (dependencies.gh ? gh : createGhCommentsRunner());
+  const readIssue = dependencies.readIssue ?? createGhIssueReader(gh, ghComments);
   const readLabels = dependencies.readLabels ?? createGhLabelReader(gh);
   const readIssueForApply = dependencies.readIssueWithGh ?? readIssue;
   const applyReadSource = dependencies.readIssueWithGh || !dependencies.readIssue
@@ -568,7 +550,7 @@ export async function runIssueUpdate(options, dependencies = {}) {
     updateDigest,
   );
   const priorAttempt = await readAttemptRecord(operational.attempt);
-  if (priorAttempt && !isRetryableNotApplied(priorAttempt)) {
+  if (priorAttempt && !isRetryableNotApplied(priorAttempt) && (options.apply || !["updated", "up-to-date"].includes(priorAttempt.status))) {
     throw priorAttemptError(priorAttempt);
   }
 
@@ -579,6 +561,7 @@ export async function runIssueUpdate(options, dependencies = {}) {
     repository: options.repository,
     issue_number: options.issueNumber,
     draft: draft.relativeDraft,
+    warnings: draft.warnings,
     draft_sha256: draft.digest,
     update_sha256: updateDigest,
     proposed_title: draft.title,
@@ -592,18 +575,15 @@ export async function runIssueUpdate(options, dependencies = {}) {
 
   if (!options.apply) {
     const current = await readIssue(options.repository, options.issueNumber);
-    validateCurrentLabels(current.labels, options);
     const resultingLabels = targetLabels(current.labels, options);
-    if (
-      draft.title === current.title
-      && draft.body === current.body
-      && options.addLabels.length === 0
-      && options.removeLabels.length === 0
-    ) {
-      throw new Error("Issue update must change the title, body, or labels");
-    }
+    const noChanges = draft.title === current.title && draft.body === current.body
+      && labelsSha256(resultingLabels) === labelsSha256(current.labels);
+    if (priorAttempt && !isRetryableNotApplied(priorAttempt) && !noChanges) throw priorAttemptError(priorAttempt);
     return {
-      status: "preflight-ok",
+      status: noChanges ? "up-to-date" : "preflight-ok",
+      no_changes: noChanges,
+      mutation_invoked: false,
+      ...(noChanges ? { reason: "No changes required; the Issue already matches the requested content and labels" } : {}),
       ...common,
       issue_url: current.url,
       current_title: current.title,
@@ -611,13 +591,15 @@ export async function runIssueUpdate(options, dependencies = {}) {
       current_body: current.body,
       current_body_sha256: sha256(current.body),
       current_labels: current.labels,
+      current_state: current.state,
+      current_comments: current.comments,
       current_labels_sha256: labelsSha256(current.labels),
       resulting_labels: resultingLabels,
       resulting_labels_sha256: labelsSha256(resultingLabels),
       current_issue_sha256: issueSnapshotSha256(current),
       current_updated_at: current.updatedAt,
       body_diff: bodyDiff(current.body, draft.body),
-      planned_gh_arguments: ghArguments(options, draft, current),
+      planned_gh_arguments: noChanges ? [] : ghArguments(options, draft, current),
       apply_arguments: applyArguments(options, draft, current, updateDigest),
     };
   }
@@ -690,6 +672,12 @@ export async function runIssueUpdate(options, dependencies = {}) {
     };
   }
 
+  if (draft.title === current.title && draft.body === current.body
+    && labelsSha256(targetLabels(current.labels, options)) === labelsSha256(current.labels)) {
+    const record = { ...pendingRecord, status: "up-to-date", issue_url: current.url, mutation_invoked: false, reason: "No changes required; the Issue already matches the requested content and labels" };
+    await replaceAttemptRecord(operational.attempt, record);
+    return { ...common, ...record };
+  }
   const observedIssueSha256 = issueSnapshotSha256(current);
   if (
     current.updatedAt !== options.expectedUpdatedAt
@@ -722,7 +710,6 @@ export async function runIssueUpdate(options, dependencies = {}) {
     };
   }
 
-  validateCurrentLabels(current.labels, options);
   const resultingLabels = targetLabels(current.labels, options);
   const plannedGhArguments = ghArguments(options, draft, current);
   const temporary = await mkdtemp(path.join(os.tmpdir(), "miku-scm-issue-update-"));

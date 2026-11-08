@@ -15,6 +15,55 @@ update_when:
 This file records important decisions for the AI agent.
 Read this before making or revisiting decisions, especially when the work seems to loop.
 
+## 2026-10-26: Adopt sync pull And Composite sync push
+
+利用者合意:
+共有baseの変更を現在の作業branchへ一方向に取り込む操作を `miku-scm sync pull` とする。自分の作業を保持し、状態に応じてfast-forward、未公開commitのrebase、未commit変更の退避・復元を使う。競合時はbackup・退避データと停止状態を保持する。
+
+`miku-scm sync push` は、必要な `git add commit` と既存の `draft recommit push` をまとめた複合操作とする。変更がcommit済みなら最初のcommitを省略し、PR文案、backup、recommit、push、検証、`-done`化まで進む。途中失敗では停止する。既存の個別コマンドと互換名は維持する。
+
+実施状態:
+[合意仕様](skills/igapyon-miku-scm/docs/2026-10-26-sync-pull-push-spec.md)と[実装計画・検証記録](skills/igapyon-miku-scm/docs/2026-10-26-sync-implementation-plan.md)に基づきsource実装済み。fixed helper、SKILL・manifest・runner・CLI・生成契約を更新し、full suite 368/368を確認した。実repoへのsync、配備、commit/pushは別途依頼範囲とする。
+
+後続の検討結果:
+`sync pull` の現在branchが `-done` でなければ、PRのマージ済み確認は起動しない。`-done` のときだけ、対象PRのhead/repository/baseとマージ結果を検証できた場合に次branch作成へ自動で進む。現行の `--confirmed-merged` を推測で渡す方式は使わず、人間報告と検証済みPR証拠の経路を分けて実装した。
+
+自己レビュー:
+[記録](skills/igapyon-miku-scm/docs/2026-10-26-sync-plan-self-review.md)の5件を実装計画へ反映した。tracking refだけで作業開始点を推測せず、ignored fileと既存commitを保護し、実際の送信先とprepare後の再開/取消を明示する。名称・基本動作を変える追加機能ではなく、合意した作業保持と停止条件を実現するための補強とする。
+
+## 2026-10-23: Require approve After A Concrete Issue Operation Preview
+
+利用者合意:
+Issueへの書き込みは完成した作業案を提示した後、利用者の `approve` で承認する。「文面は任せるので登録まで」や明確なclose指示でも確認を省略しない。「はい」「OK」「お願いします」「いいね」「承認」および説明・引用中のapproveは書き込み承認にしない。一つの作業案にコメントとclose等をまとめ、承認は案全体に一度とする。
+
+設計:
+通常操作では利用者にIDをコピーさせず、提示した対象・内容・順序のID/digestへAgentが正確に束縛する。global pendingの件数や最新時刻から選ばない。変更された案には新しいapproveが必要。既存handoffを拡張し、固定helper・attempt・postconditionを活かす。
+
+実施状態:
+[計画と実施記録](skills/igapyon-miku-scm/docs/2026-10-23-issue-approval-implementation-plan.md)のUX-00〜08をsource skill、fixed helper、runner、contract、テストへ実装した。Issue書き込みは完全表示した一意な案への独立した完全一致 `approve` のみで許可し、複合操作は一回の承認でレビュー順に実行する。現在の利用者メッセージと提示済みreviewの対応はAgentが担い、runnerがID/digest/順序/契約と実行状態を検証する。本決定の記録だけを根拠に承認経路を迂回しない。競合判定の緩和、正当な同内容操作の再実行identity、動的な作成後操作は後続課題とする。検証と未実施事項は計画・実施記録とroot TODOに記録した。
+
+## 2026-10-22: Set Java 8 As The Compatibility Floor And Test The Newest LTS
+
+理由:
+Java 8 remains a practical compatibility target, and distributions such as
+Eclipse Temurin continue to publish Java 8 updates. Support duration is
+distribution-specific, so a Java version number alone does not establish a
+universal support commitment.
+
+影響:
+Use Java 8 as the default minimum runtime for miku Java CLI products. Verify
+packaged behavior on Java 8 and the newest LTS of the declared distribution;
+include both in an existing CI matrix and add intermediate maintained LTS
+lines when justified. Choose and document the build JDK separately from the
+product runtime. As of 2026-10-22, Java 25 is the newest LTS and Oracle lists
+Java 29 as the next planned LTS for September 2027. Eclipse Temurin lists Java
+8 availability through at least December 2030. Recheck the selected
+distribution's roadmap when refreshing the newest-LTS value.
+
+根拠:
+[Oracle Java SE Support Roadmap](https://www.oracle.com/java/technologies/java-se-support-roadmap.html)
+and [Eclipse Temurin Support](https://adoptium.net/support/).
+
 ## 2026-08-10: Make The miku-scm Work Cycle Responsive Without Removing Its Safety Model
 
 理由:
@@ -75,9 +124,13 @@ changes remain a separate authorized SCM phase.
 For Node-backed profiles, record the product minimum, CI build/test matrix,
 release-build runtime, released-artifact smoke runtime, and each JavaScript
 Action's internal runtime separately. Node.js 20 occurrences are migration
-inventory rather than evidence for the maintained target. The exact Node.js
-22/24 allocation remains a semantic-policy gate; using a Node 24-aware Action
-major does not by itself make the product Node 24-only.
+inventory rather than evidence for the maintained target. The approved
+compatibility rule is to use the oldest upstream-maintained LTS as the product
+floor and verify that floor plus the newest LTS; include maintained LTS lines
+between them when practical. The 2026-10-22 starter snapshot is Node.js 22 as
+the floor and Node.js 24 as the newest LTS / Release build host. Refresh those
+values against the official release schedule. A Node 24-aware Action major
+does not by itself make the product Node 24-only.
 
 Release files are normalized by artifact role and lifecycle, not merely by file
 extension. A CLI module, standalone runtime, curated sources archive, Java

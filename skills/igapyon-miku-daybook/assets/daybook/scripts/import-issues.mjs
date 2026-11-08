@@ -198,7 +198,8 @@ export async function main(argv = process.argv.slice(2)) {
   return run(command, args);
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (process.argv[1] && fs.existsSync(process.argv[1])
+  && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
   try { process.exitCode = await main(); }
   catch (error) {
     process.stderr.write(`${JSON.stringify({ code: error.code ?? "ERROR", message: error.message, details: error.details ?? {} })}\n`);

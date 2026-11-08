@@ -34,7 +34,11 @@ document. For Web surface references, use the `11 Web App` workflow.
 
 For new Node app creation, start from one or more similar existing miku-soft projects expanded under `workplace/`.
 
-If the user has not provided reference projects, ask them to provide the closest existing miku-soft examples before scaffolding the new app. Treat those examples as shape references for repository layout, package metadata, CLI contracts, tests, docs, and build artifacts.
+If the user has not provided reference projects, inspect available local
+checkouts first. When none fits, record the documented or public fallback as
+described in Required Initial Input. Ask for a reference only when an unresolved
+contract prevents useful progress. Treat examples as shape references for
+repository layout, package metadata, CLI contracts, tests, docs, and artifacts.
 
 When multiple references are available, prefer the newer project version or the project closest to the requested product shape. Use the basic documents as the source of design intent, and use `workplace/` references to confirm practical implementation details that are easy to miss.
 
@@ -105,25 +109,71 @@ Then ask or record which release asset should be attached, unless the user has c
 
 Creating or editing a local workflow file is allowed repository work. Pushing branches, opening pull requests, publishing releases, running `npm publish`, configuring secrets, or uploading release assets remains a human GitHub or registry operation as described in [repo-operations.md](repo-operations.md).
 
+## Runtime Dependency Decisions
+
+Before adding or changing a production dependency, follow the
+[main application dependency principles](miku-soft-basic/miku-soft-10-mainapp-design.md#scratch-implementation-and-dependency-principles)
+and record the decision in the design or implementation plan. Keep runtime
+dependencies at zero where practical, and keep them small when a dependency
+provides clear user value. Separate production dependencies from tools used
+only for development, testing, building, or release.
+
+For each proposed runtime dependency, compare the built-in Node.js option and
+the external package against:
+
+- behavior required by the product and the complexity of implementing it
+- specification correctness, edge-case coverage, and security consequences
+- user value, maintenance health, compatibility, and the failure modes users
+  would inherit
+- license compatibility and any repository policy for distributing the
+  dependency
+- package installation and lockfile impact, supported Node.js versions, and
+  generated CLI/runtime bundle contents and size
+
+Choose the standard library when it meets the product contract with a clear,
+maintainable implementation. Accept an external package when it materially
+improves correctness or safety, handles domain complexity better, or is central
+to the ecosystem value of the product. Keep the product's core data model,
+policy, diagnostics, and user-facing output understandable and under project
+control where practical. Do not reject a useful dependency only to minimize a
+package count.
+
+State why the standard-library option was not selected when adopting a runtime
+dependency, or why a proposed package was deferred. Include its license review
+and the expected
+packaging and bundle impact. Check the lockfile and reproducible install path,
+then run the relevant build, tests, CLI/runtime smoke checks, and package check
+that cover the dependency's shipped behavior.
+
 ## Node.js Compatibility Policy
 
-Keep three different version concerns separate.
+Keep the compatibility floor, CI runtime set, Release build host, and each
+GitHub JavaScript Action's internal runtime as separate contracts.
 
-- Product compatibility is the Node.js range declared by `package.json`
-  `engines.node`. Set its lower bound to the oldest runtime actually verified
-  by CI. For the current starter baseline, use `>=20` and avoid an upper bound
-  unless the product has a demonstrated incompatibility with newer Node.js.
-- CI compatibility is the set of product runtimes tested on every change. For
-  the current starter baseline, test Node.js 20 and 24 so the declared minimum
-  and the release baseline are both exercised.
-- GitHub JavaScript Action runtime is selected by each Action major version; it
-  is not the product runtime selected by `actions/setup-node`. Use Node 24-aware
-  majors such as `actions/checkout@v6`, `actions/setup-node@v6`,
+- Choose the product compatibility floor as the oldest Node.js LTS major that
+  is still maintained by Node.js and that the product intends to support.
+  Declare that lower bound in `package.json` `engines.node` and verify it in
+  CI. Do not make an EOL Node.js line the default; a product-specific need for
+  one requires a documented reason and an end condition.
+- CI must test the compatibility floor and the newest Node.js LTS. Include
+  maintained LTS lines between those endpoints when the matrix cost is
+  reasonable; test every supported line when native dependencies or observed
+  version-specific behavior make gaps risky.
+- Check the [official Node.js release schedule](https://github.com/nodejs/Release#release-schedule)
+  when creating or refreshing the starter baseline. Raise the compatibility
+  floor before its Node.js support ends, then update package metadata, CI,
+  documentation, and runtime artifact checks together.
+- The current starter snapshot, checked on 2026-10-22, uses Node.js 22 as the
+  compatibility floor and Node.js 24 as the newest LTS: `engines.node` is
+  `>=22`, CI tests 22 and 24, and Release builds use 24. Refresh the newest-LTS
+  value when Node.js designates a newer LTS line.
+- Use the newest LTS as the Release build host for a current, reproducible
+  baseline. Do not raise the product minimum merely because the Release build
+  uses a newer Node.js line.
+- GitHub JavaScript Action runtime is selected by each Action major version;
+  it is not the product runtime selected by `actions/setup-node`. Use
+  Node 24-aware majors such as `actions/checkout@v6`, `actions/setup-node@v6`,
   `actions/setup-java@v5`, and `softprops/action-gh-release@v3`.
-
-Use Node.js 24 for release builds to keep release artifact generation on one
-current, reproducible baseline. Do not narrow `engines.node` to Node.js 24 only
-merely because release automation builds with Node.js 24.
 
 Treat `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` and
 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` as temporary migration workarounds, not as
@@ -180,8 +230,9 @@ Check these points:
   and uploading `release-assets/*.tgz` unless the user explicitly asked for
   the npm package tarball as the release asset.
 - Do not add a broad repository source ZIP or generic source archive as a custom uploaded release asset.
-- The release build uses Node.js 24 while product compatibility remains defined
-  separately by `package.json` and the CI matrix.
+- The release build uses the newest Node.js LTS (Node.js 24 in the current
+  starter snapshot) while product compatibility remains defined separately by
+  `package.json` and the CI matrix.
 
 For a Release CLI/runtime bundle request, the expected release assets are normally:
 
@@ -235,7 +286,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: "24" # Current newest LTS; refresh when the LTS line changes.
           cache: npm
 
       - name: Install dependencies
@@ -327,6 +378,7 @@ repository.
 7. In maintenance mode, normally adjust repositories that lack either standard
    artifact toward the two-artifact shape before updating release automation.
 8. Update README, docs, TODO, tests, and indexes when the main application contract changes.
+9. Record a runtime dependency decision before changing production dependencies; distinguish them from development tools and check license, packaging, and bundle effects.
 
 ## Node-Specific Checklist
 
@@ -342,5 +394,6 @@ When a Node app change touches executable behavior, check the relevant local con
 - import runtime bundle smoke behavior for metadata and core API exports
 - tests for core API, CLI subprocess behavior, encoding, path security, limits, diagnostics, fixtures, golden output, or roundtrip behavior
 - generated artifacts that should be rebuilt instead of hand-edited
+- production versus development dependency classification, the standard-library comparison, and the resulting package and bundle contents
 
 Run the smallest relevant command first, then broader build or smoke commands when the changed contract warrants them.

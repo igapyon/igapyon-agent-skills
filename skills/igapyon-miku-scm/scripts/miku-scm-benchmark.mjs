@@ -32,6 +32,11 @@ const EXPECTED_MODEL_INVOCATIONS_AFTER_RUNNER = Object.freeze({
   "writing-issue-prepare": 1,
   "github-issue-create-preflight": 0,
 });
+const FIXED_GH_READS_PER_SAMPLE = Object.freeze({
+  "github-issue-read": 2,
+  "writing-issue-prepare": 1,
+  "github-issue-create-preflight": 1,
+});
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/miku-scm-benchmark.mjs \
@@ -114,6 +119,20 @@ function statistics(samples) {
 function fakeGh(counter, mode) {
   return (args) => {
     counter.gh += 1;
+    if (mode === "issue" && args[0] === "api" && args[1] === "graphql") {
+      return {
+        ok: true,
+        status: 0,
+        stderr: "",
+        stdout: JSON.stringify({ data: { repository: { issue: {
+          number: 293,
+          url: "https://github.com/igapyon/igapyon-agent-skills/issues/293",
+          updatedAt: "2026-07-27T13:00:00Z",
+          comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null } },
+        } } } }),
+        args,
+      };
+    }
     if (mode === "labels") {
       return {
         ok: true,
@@ -137,7 +156,6 @@ function fakeGh(counter, mode) {
         url: "https://github.com/igapyon/igapyon-agent-skills/issues/293",
         updatedAt: "2026-07-27T13:00:00Z",
         labels: [{ name: "enhancement" }],
-        comments: [],
       }),
       args,
     };
@@ -315,7 +333,7 @@ export async function benchmark(options, dependencies = {}) {
         expected_ai_tool_calls_per_sample: 1,
         expected_model_invocations_after_runner:
           EXPECTED_MODEL_INVOCATIONS_AFTER_RUNNER[options.scenario],
-        fixed_gh_reads_per_warm_sample: 1,
+        fixed_gh_reads_per_warm_sample: FIXED_GH_READS_PER_SAMPLE[options.scenario],
         actual_network_requests_per_sample: 0,
         input_tokens: null,
         output_tokens: null,
@@ -334,7 +352,8 @@ export async function benchmark(options, dependencies = {}) {
       warm: {
         ...warmStats,
         process_spawns_per_sample: 0,
-        observed_fixed_gh_reads: warmCounter.gh - options.warmup,
+        observed_fixed_gh_reads: warmCounter.gh
+          - options.warmup * FIXED_GH_READS_PER_SAMPLE[options.scenario],
       },
       budget: {
         max_warm_p50_ms: options.maxWarmP50Ms,

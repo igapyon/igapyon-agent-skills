@@ -4,6 +4,11 @@
   "type": "module",
   "scripts": {
     "test:skill-index-policy": "node --test scripts/skill-index-policy.test.mjs scripts/release-archive-files.test.mjs scripts/skill-index-policy.integration.test.mjs scripts/skill-reference-routing.test.mjs",
+    "test:release-archive-timestamp": "node --test scripts/release-archive-timestamp.test.mjs",
+    "build:daybook-yaml-runtime": "node scripts/build-daybook-yaml-runtime.mjs",
+    "check:daybook-yaml-runtime": "node scripts/build-daybook-yaml-runtime.mjs --check",
+    "test:daybook": "node --test skills/igapyon-miku-daybook/assets/daybook/scripts/*.test.mjs scripts/daybook-runtime.test.mjs",
+    "test:daybook-yaml-compatibility": "node --test scripts/daybook-yaml-compatibility.test.mjs",
     "benchmark:github-writer": "node skills/igapyon-github-writer/scripts/github-writer-benchmark.mjs",
     "test:github-writer": "node skills/igapyon-github-writer/scripts/github-writer-test-suite.mjs --full",
     "test:github-writer:fast": "node skills/igapyon-github-writer/scripts/github-writer-test-suite.mjs --fast",
@@ -11,5 +16,9 @@
     "test:miku-scm": "node skills/igapyon-miku-scm/scripts/miku-scm-test-suite.mjs --full",
     "test:miku-scm:fast": "node --test skills/igapyon-miku-scm/tests/miku-scm-*.test.mjs skills/igapyon-miku-scm/tests/github-issue-read.test.mjs skills/igapyon-miku-scm/tests/pr-draft-location.test.mjs skills/igapyon-miku-scm/tests/pr-recommit-push.test.mjs skills/igapyon-miku-scm/tests/work-commit.test.mjs",
     "test:miku-scm:full": "node skills/igapyon-miku-scm/scripts/miku-scm-test-suite.mjs --full"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "yaml": "2.9.1"
   }
 }

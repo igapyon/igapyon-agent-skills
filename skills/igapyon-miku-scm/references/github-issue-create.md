@@ -1,12 +1,29 @@
 # GitHub New Issue Creation
 
+**Agent approval path:** run preparation through the fixed miku-scm runner,
+save the returned handoff, display its complete content with
+`github.issue.handoff.review`, then stop and wait for the user's exact
+`approve` message. Apply only through `github.issue.handoff.apply` or the
+reviewed batch workflow. The helper command examples below describe the
+internal operation contract; the Agent must not invoke this script's `--apply`
+mode directly. A request to register the Issue is not approval of its draft.
+
 Create a new public GitHub Issue only through the narrowly authorized static-helper workflow. Follow [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md). The AI Agent must not invoke `gh` directly. Existing-Issue title, body, and existing-label updates use the separate workflow in [github-issue-update.md](github-issue-update.md).
+
+Draft paths and filenames below are preferred conventions. A readable UTF-8
+file with another name or location is imported into a canonical working copy
+with a warning; the source is retained. Review and apply use the returned
+working-copy path and digest. The explicit Issue option identifies the target,
+including when a source filename names a different Issue. Content, digest, and duplicate-attempt checks still apply. CRLF/CR line
+endings produce a notice and are read as LF for submitted text. Original bytes
+and the review digest are retained. Line-ending-only changes do not bypass
+duplicate-attempt protection.
 
 ## Authorization Boundary
 
-Issue drafting does not authorize Issue creation. After saving the draft, run the bundled helper in its default read-only preflight mode. Show the human:
+Issue drafting does not authorize Issue creation. After saving the draft, run the bundled helper in its default read-only preflight mode. The handoff retains:
 
-- exact `owner/repo`
+- exact `[host/]owner/repo`
 - reviewed title
 - complete reviewed body
 - complete ordered list of reviewed existing labels, including an empty list when none is justified
@@ -15,7 +32,15 @@ Issue drafting does not authorize Issue creation. After saving the draft, run th
 - label-selection SHA-256 digest
 - the single planned `gh issue create` operation
 
-Wait for explicit human approval after this display. Only that approval authorizes one apply attempt using the exact draft and label-selection digests. Earlier requests to draft, general permission to use this skill, or approval of a different Issue do not carry forward.
+The Agent's human-facing display comes from `github.issue.handoff.review`;
+that display contains the full title, body, labels, and optional parent, but
+omits digests, paths, opaque IDs, and command arguments.
+
+The preflight is not approval. Display the complete operation with
+`github.issue.handoff.review`, then wait for a separate user message whose
+full trimmed text is exactly `approve` or `miku-scm approve`. Earlier requests
+to draft/register, general permission to use this skill, or approval of a
+different review do not carry forward.
 
 Preflight must stop when the same repository and draft SHA-256 already has a `pending` or `created` attempt record. A copied or renamed draft with identical reviewed content does not bypass this check.
 
@@ -24,19 +49,19 @@ Preflight must stop when the same repository and draft SHA-256 already has a `pe
 The current helper permits these fixed READONLY commands:
 
 ```text
-gh label list --repo <owner/repo> --limit 1000 --json name
+gh label list --repo <[host/]owner/repo> --limit 1000 --json name
 
-gh issue view <parent-number> --repo <owner/repo> \
+gh issue view <parent-number> --repo <[host/]owner/repo> \
   --json number,url,title,state,updatedAt
 
-gh issue view <created-number> --repo <owner/repo> \
+gh issue view <created-number> --repo <[host/]owner/repo> \
   --json number,url,labels,parent
 ```
 
 Its only authorized mutation command is:
 
 ```text
-gh issue create --repo <owner/repo> --title <reviewed-title> \
+gh issue create --repo <[host/]owner/repo> --title <reviewed-title> \
   --body-file <generated-temporary-body-file> \
   [--label <reviewed-existing-label>]... [--parent <reviewed-parent-number>]
 ```
@@ -64,19 +89,21 @@ From the target repository root, run preflight:
 
 ```sh
 node skills/igapyon-miku-scm/scripts/github-issue-create.mjs \
-  --repo <owner/repo> \
+  --repo <[host/]owner/repo> \
   --draft workplace/miku-scm/new-issues/issue-new-<YYYYMMDDHHMM>.md \
   [--label <existing-label>]... \
   [--parent <parent-issue-number>]
 ```
 
-Repeat `--label` for each selected label, or omit it when no existing label is sufficiently supported. Add `--parent` only when the new Issue must be created as a reviewed sub-Issue. The helper accepts only new-Issue drafts beneath `workplace/miku-scm/new-issues/`, validates the paste-ready format and each selected label through fixed READONLY `gh`, checks for prior attempts, retrieves an optional parent through its fixed `gh issue view`, and returns every digest and exact apply arguments. It does not create attempt records or invoke the mutation command in preflight mode.
+Repeat `--label` for each selected label, or omit it when no existing label is sufficiently supported. Add `--parent` only when the new Issue must be created as a reviewed sub-Issue. The helper imports nonstandard locations/names with a warning, validates the paste-ready format and each selected label through fixed READONLY `gh`, checks for prior attempts, retrieves an optional parent through its fixed `gh issue view`, and returns every digest and exact apply arguments. It does not create attempt records or invoke the mutation command in preflight mode.
 
-After explicit approval, pass the exact preflight digest and apply arguments:
+After the exact approval, the runner passes the unchanged preflight arguments
+through the approved handoff. The command below describes the internal helper
+interface; the Agent must not invoke this script's `--apply` mode directly.
 
 ```sh
 node skills/igapyon-miku-scm/scripts/github-issue-create.mjs \
-  --repo <owner/repo> \
+  --repo <[host/]owner/repo> \
   --draft workplace/miku-scm/new-issues/issue-new-<YYYYMMDDHHMM>.md \
   [--label <reviewed-existing-label>]... \
   [--parent <reviewed-parent-number>] \

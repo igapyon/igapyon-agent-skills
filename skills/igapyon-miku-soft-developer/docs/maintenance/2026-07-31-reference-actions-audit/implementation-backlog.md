@@ -12,7 +12,7 @@ audience:
   - maintainer
   - agent
 created: 2026-07-31
-updated: 2026-07-31
+updated: 2026-10-22
 sources:
   - type: local-file
     role: primary
@@ -32,8 +32,12 @@ repositories or publish GitHub state.
 ## Decision Gates
 
 - [ ] Approve typed numbering and role-based document structure.
-- [ ] Approve product Node >=22, CI 22/24, Release build 24, and staged Node 22
-  artifact smoke.
+- [x] Approve the shared Node compatibility rule: oldest maintained LTS as the
+  product floor, verify the floor and newest LTS, and include intermediate
+  maintained LTS lines when practical. The 2026-10-22 snapshot is product
+  minimum >=22, CI 22/24, Release build 24.
+- [ ] Complete final staged-artifact smoke verification on the declared Node
+  floor where a product claims that compatibility.
 - [ ] Decide whether the two current >=24 <25 Skill products are intentional
   Node 24-only exceptions.
 - [ ] Approve SHA256SUMS or a documented profile split.

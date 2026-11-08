@@ -1,10 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import { parse as parseYaml } from "yaml";
+import { parse as parseYaml } from "./vendor/yaml-runtime.mjs";
 
 const TOKYO = "Asia/Tokyo";
 const TERMINAL_STATUSES = new Set(["done", "cancelled"]);
 const SCHEDULE_STATUSES = new Set(["scheduled", "cancelled"]);
+const TASK_PLANNING_STATES = new Set(["planned", "backlog"]);
+export const DEFAULT_TASK_PRIORITY = 7;
 
 export function validateIsoDate(value, label = "date") {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -68,6 +70,12 @@ function recordFromFile(repoRoot, filePath, expectedType) {
       throw new Error(`priority must be an integer from 1 to 9: ${filePath}`);
     }
   }
+  if (expectedType === "task" && Object.hasOwn(parsed.rawFrontMatter, "planning_state")) {
+    const planningState = parsed.rawFrontMatter.planning_state;
+    if (typeof planningState !== "string" || !TASK_PLANNING_STATES.has(planningState)) {
+      throw new Error(`planning_state must be planned or backlog: ${filePath}`);
+    }
+  }
   if (expectedType === "schedule") {
     const hasStatus = Object.hasOwn(parsed.rawFrontMatter, "status");
     const status = hasStatus ? parsed.rawFrontMatter.status : "scheduled";
@@ -113,9 +121,6 @@ function recordFromFile(repoRoot, filePath, expectedType) {
       }
       if (!parsed.frontMatter.planned_start_date || !parsed.frontMatter.planned_end_date) {
         throw new Error(`planned_dates_status requires a complete planned period: ${filePath}`);
-      }
-      if (parsed.frontMatter.recurrence === "weekly") {
-        throw new Error(`weekly recurrence must not use planned_dates_status: ${filePath}`);
       }
     }
   }
@@ -192,6 +197,10 @@ function isActiveTask(task) {
   return !TERMINAL_STATUSES.has(task.frontMatter.status);
 }
 
+function isBacklogTask(task) {
+  return task.frontMatter.planning_state === "backlog";
+}
+
 function needsDateReview(task) {
   const hasPlannedPeriod = task.frontMatter.planned_start_date || task.frontMatter.planned_end_date;
   const unboundedWeeklyRule = task.frontMatter.recurrence === "weekly" && !hasPlannedPeriod;
@@ -201,7 +210,7 @@ function needsDateReview(task) {
 }
 
 function taskPriority(task) {
-  return task.frontMatter.priority === undefined ? 5 : Number(task.frontMatter.priority);
+  return task.frontMatter.priority === undefined ? DEFAULT_TASK_PRIORITY : Number(task.frontMatter.priority);
 }
 
 function taskId(task) {
@@ -274,6 +283,28 @@ function dateReviewLine(date, task) {
   return taskLine(date, task, `日程要確認${details.length ? `：${details.join(" / ")}` : "：予定期間未設定"}`);
 }
 
+function backlogLine(date, task) {
+  const { planned_start_date: start, planned_end_date: end } = task.frontMatter;
+  const details = [];
+  if (start && end) {
+    details.push(`参考予定期間 ${start}〜${end}${task.frontMatter.planned_dates_status === "provisional" ? "（暫定）" : ""}`);
+  } else if (start) {
+    details.push(`参考開始 ${start}`);
+  } else if (end) {
+    details.push(`参考終了 ${end}`);
+  } else {
+    details.push("予定期間未設定");
+  }
+  if (task.frontMatter.due_month) details.push(`期限月 ${task.frontMatter.due_month}`);
+  if (task.frontMatter.planned_week) details.push(`参考予定週 ${task.frontMatter.planned_week}`);
+  if (task.frontMatter.recurrence === "weekly" && task.frontMatter.next_occurrence) {
+    details.push(`次回 ${task.frontMatter.next_occurrence}`);
+  }
+  const state = task.frontMatter.status || "—";
+  const line = `- ${taskId(task)}：${taskLink(date, task)}（優先度 ${taskPriority(task)} / 状態 ${state}）`;
+  return `${line}\n  - ${details.join(" / ")}`;
+}
+
 function scheduleLine(date, schedule) {
   const time = formatScheduleTime(schedule);
   const when = `${schedule.frontMatter.date}（${formatWeekday(schedule.frontMatter.date)}）${time ? ` ${time}` : ""}`;
@@ -301,9 +332,11 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
   const windowEnd = addDays(targetDate, 6);
   const { tasks, schedules } = loadRecords(repoRoot);
   const activeTasks = tasks.filter(isActiveTask);
-  const datedTasks = activeTasks.filter((task) => task.frontMatter.planned_start_date
+  const backlogTasks = activeTasks.filter(isBacklogTask).sort(comparePriorityThenId);
+  const plannedTasks = activeTasks.filter((task) => !isBacklogTask(task));
+  const datedTasks = plannedTasks.filter((task) => task.frontMatter.planned_start_date
     && task.frontMatter.planned_end_date && !needsDateReview(task));
-  const dateReviewTasks = activeTasks.filter(needsDateReview);
+  const dateReviewTasks = plannedTasks.filter(needsDateReview);
   const todayTasks = datedTasks.filter((task) =>
     task.frontMatter.planned_start_date <= targetDate && targetDate <= task.frontMatter.planned_end_date)
     .sort(comparePriorityThenId);
@@ -314,7 +347,7 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
     .sort(compareDateThenPriority("planned_end_date"));
   const nearEndTasks = datedTasks.filter((task) =>
     inWindow(task.frontMatter.planned_end_date, targetDate, windowEnd));
-  const plannedWeekTasks = activeTasks.filter((task) => {
+  const plannedWeekTasks = plannedTasks.filter((task) => {
     if (task.frontMatter.planned_dates_status === "provisional") return false;
     const week = task.frontMatter.planned_week;
     return week && inWindow(addDays(week, 6), targetDate, windowEnd) || week && inWindow(week, targetDate, windowEnd);
@@ -357,9 +390,11 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
       .sort(compareDateThenPriority("planned_week"))
       .map((task) => `- ${task.frontMatter.planned_week}週：${taskLink(targetDate, task)}（優先度 ${taskPriority(task)}）`)),
     "",
+    section("Backlog", backlogTasks.map((task) => backlogLine(targetDate, task))),
+    "",
     "## 参照方針",
     "",
-    "このファイルは、当日の予定作業と対象日を含む7日間の予定を書き出したスナップショット。taskとscheduleの内容が変わった場合は、元ファイルを正とする。",
+    "このファイルは、当日の作業予定、対象日を含む7日間の予定、未完了のBacklogを書き出したスナップショット。taskとscheduleの内容が変わった場合は、元ファイルを正とする。",
     "",
   ];
   return {
@@ -367,7 +402,7 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
     generatedDate,
     relativePath: canonicalPlanPath(targetDate),
     markdown: lines.join("\n"),
-    records: { todayTasks, overdueTasks, upcomingStartTasks, nearEndTasks, dateReviewTasks, nearSchedules, plannedWeekTasks },
+    records: { todayTasks, overdueTasks, upcomingStartTasks, nearEndTasks, dateReviewTasks, nearSchedules, plannedWeekTasks, backlogTasks },
   };
 }
 

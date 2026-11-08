@@ -2,24 +2,39 @@ name: GitHub Writer Contract
 
 on:
   pull_request:
-    paths:
-      - ".github/workflows/github-writer-contract.yml"
-      - "package.json"
-      - "skills/igapyon-github-writer/**"
-  push:
-    branches:
-      - devel
-    paths:
-      - ".github/workflows/github-writer-contract.yml"
-      - "package.json"
-      - "skills/igapyon-github-writer/**"
   workflow_dispatch:
 
 permissions:
   contents: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  select:
+    name: Select changed files
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      required: ${{ steps.select.outputs.required }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: node --test scripts/contract-ci.test.mjs
+      - uses: actions/github-script@v8
+        id: select
+        with:
+          script: |
+            await require('./.github/scripts/contract-ci.cjs').select(
+              { github, context, core }, 'igapyon-github-writer');
+
   contract:
+    needs: select
+    if: needs.select.outputs.required == 'true'
     name: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -28,6 +43,7 @@ jobs:
           - macos-latest
           - windows-latest
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,3 +51,19 @@ jobs:
           node-version: "22"
       - run: npm run test:github-writer
       - run: npm run benchmark:github-writer
+
+  required:
+    name: GitHub Writer required
+    if: always()
+    needs: [select, contract]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/github-script@v8
+        env:
+          CONTRACT_NEEDS: ${{ toJSON(needs) }}
+        with:
+          script: |
+            require('./.github/scripts/contract-ci.cjs').assertGate(
+              JSON.parse(process.env.CONTRACT_NEEDS));

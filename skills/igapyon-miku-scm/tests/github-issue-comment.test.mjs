@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { access, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -20,6 +21,7 @@ const ISSUE = {
   state: "OPEN",
   labels: ["enhancement"],
   updatedAt: "2026-07-24T01:02:03Z",
+  comments: [],
 };
 
 async function scenario(t) {
@@ -68,6 +70,40 @@ test("preflight returns complete comment review evidence without gh", async (t) 
   assert.ok(result.apply_arguments.includes("--expected-contract-pair-sha256"));
   assert.equal(calls, 0);
   await assert.rejects(access(path.join(state.root, result.attempt_record)), /ENOENT/);
+});
+
+test("comment drafts with an ordinary filename are imported with a notice", async (t) => {
+  const state = await scenario(t);
+  const source = path.join(state.root, "comment.md");
+  await writeFile(source, "An imported comment.\n");
+  const result = await runIssueComment(parseArgs([
+    "--repo", "igapyon/example", "--issue", "42", "--draft", source, "--root", state.root,
+  ]), { readIssue: async () => ISSUE });
+  assert.equal(result.status, "preflight-ok");
+  assert.equal(result.comment_body, "An imported comment.\n");
+  assert.equal(result.warnings.length, 1);
+  assert.equal(await readFile(source, "utf8"), "An imported comment.\n");
+});
+
+test("CRLF comments continue with a notice and submit LF without rewriting the source", async (t) => {
+  const state = await scenario(t);
+  const original = "A reviewed comment.\r\nSecond line.\r\n";
+  const normalized = "A reviewed comment.\nSecond line.\n";
+  await writeFile(state.draft, original);
+  const preflight = await runIssueComment(optionsFor(state), { readIssue: async () => ISSUE });
+  assert.equal(preflight.comment_body, normalized);
+  assert.equal(preflight.draft_sha256, createHash("sha256").update(original).digest("hex"));
+  assert.ok(preflight.warnings.some((warning) => warning.includes("CRLF")));
+  const result = await runIssueComment(parseArgs(preflight.apply_arguments), {
+    readIssue: async () => ISSUE,
+    readComment: async () => ({ id: 77, url: `${ISSUE.url}#issuecomment-77`, body: normalized }),
+    gh: (args) => {
+      assert.equal(readFileSync(args[args.indexOf("--body-file") + 1], "utf8"), normalized);
+      return { ok: true, stdout: `${ISSUE.url}#issuecomment-77` };
+    },
+  });
+  assert.equal(result.status, "commented");
+  assert.equal(await readFile(state.draft, "utf8"), original);
 });
 
 test("apply invokes one body-file comment and verifies its exact URL and body", async (t) => {
@@ -134,6 +170,13 @@ test("gh failure is unresolved and the same draft cannot be retried", async (t) 
     runIssueComment(optionsFor(state), { readIssue: async () => ISSUE }),
     /Do not retry/,
   );
+  const original = await readFile(state.draft, "utf8");
+  await writeFile(state.draft, original.replaceAll("\n", "\r\n"));
+  await assert.rejects(
+    runIssueComment(optionsFor(state), { readIssue: async () => ISSUE }),
+    /Do not retry/,
+  );
+  assert.equal(calls, 1);
 });
 
 test("post-comment verification retries reads but never mutation", async (t) => {
@@ -179,13 +222,21 @@ test("gh Issue reader uses one fixed READONLY command and validates its JSON", a
       }),
       stderr: "",
     };
+  }, (args) => {
+    calls.push(args);
+    return { ok: true, status: 0, stderr: "", stdout: JSON.stringify({ data: { repository: { issue: {
+      number: ISSUE.number, url: ISSUE.url, updatedAt: ISSUE.updatedAt,
+      comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null } },
+    } } } }) };
   });
   assert.deepEqual(await reader("igapyon/example", 42), ISSUE);
-  assert.deepEqual(calls, [[
+  assert.deepEqual(calls[0], [
     "issue", "view", "42",
     "--repo", "igapyon/example",
     "--json", "number,url,title,body,state,labels,updatedAt",
-  ]]);
+  ]);
+  assert.equal(calls[1][0], "api");
+  assert.equal(calls[1][1], "graphql");
 });
 
 test("gh comment reader uses one fixed READONLY command and validates its JSON", async () => {
@@ -226,4 +277,39 @@ test("pre-mutation READONLY failure is not-applied and invokes no mutation", asy
   });
   assert.equal(result.status, "not-applied");
   assert.equal(mutationCalls, 0);
+});
+
+test("a proven pre-comment read failure can resume the unchanged approved operation", async (t) => {
+  const state = await scenario(t);
+  const preflight = await runIssueComment(optionsFor(state), {
+    readIssue: async () => ISSUE,
+  });
+  const apply = applyOptions(state, preflight);
+  const failed = await runIssueComment(apply, {
+    readIssue: async () => { throw new Error("read unavailable"); },
+    gh: () => assert.fail("comment mutation must not run after a failed pre-read"),
+  });
+  assert.equal(failed.status, "not-applied");
+  assert.equal(failed.stage, "pre-comment-read");
+
+  let mutationCalls = 0;
+  const resumed = await runIssueComment(apply, {
+    readIssue: async () => ISSUE,
+    readComment: async () => ({
+      id: 77,
+      url: `${ISSUE.url}#issuecomment-77`,
+      body: "A reviewed comment.\n",
+    }),
+    gh: () => {
+      mutationCalls += 1;
+      return { ok: true, stdout: `${ISSUE.url}#issuecomment-77`, stderr: "" };
+    },
+  });
+  assert.equal(resumed.status, "commented");
+  assert.equal(mutationCalls, 1);
+  const record = JSON.parse(await readFile(path.join(state.root, resumed.attempt_record), "utf8"));
+  assert.equal(record.status, "commented");
+  assert.match(record.recovered_from_attempt, /pre-comment-read-/);
+  const files = await readdir(path.dirname(path.join(state.root, resumed.attempt_record)));
+  assert.ok(files.some((file) => file.includes("pre-comment-read-")));
 });

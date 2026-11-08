@@ -1,10 +1,14 @@
 # Daybook operations
 
-Read this reference for an add, update, list, activity, schedule, or day-plan request. Use the target repository's README and current files as the final local contract.
+Read this reference for an add, update, list, activity, schedule, or day-plan request. For a waypoint request, read [waypoints.md](waypoints.md). Use the target repository's README and current files as the final local contract.
 
 ## Task and activity responsibilities
 
-Keep a task focused on its current purpose, latest conclusion or adopted approach, status, unresolved issues, and next actions. A brief dated history can explain material changes. Keep the work leading to those changes in dated activities: attempted approaches, observations, unsuccessful or inconclusive trials, options considered, and decision reasons. A task follows one work item across dates; an activity records what happened on a date, including investigations that have not reached a conclusion or do not need a task.
+Use activities as the primary record of daily work, investigations, observations, and reflections, including unfinished or inconclusive work. If the activity/task choice is unclear and there is no clear intent to register future work or edit a task, choose an activity without a classification question. A concrete action mentioned in a report of work, or the existence of a related task, does not by itself request a task edit.
+
+Keep detailed attempts, observations, unsuccessful trials, options considered, and decision reasons in dated activities. Keep enough context and findings in the activity to understand the work and its decisions without opening every linked artifact. A lengthy but readable account may stay there; length alone does not require an attachment. Keep a task focused on its current purpose, latest conclusion or adopted approach, status, unresolved issues, and concrete next actions that make the first step clear, with a brief dated history for material changes. Avoid copying the same detailed account into both record types. When the user asks for help starting, suggest one small first step that fits any time or effort constraints they provide.
+
+When task editing is in scope and consolidation is needed, review the relevant activities across dates and summarize the current conclusions, state, unresolved issues, and next actions in the task. Link to the supporting activities for the detailed accounts, and preserve those activities in place. Recording an activity does not trigger automatic task consolidation or synchronization.
 
 When both task and activity updates are in scope and a later decision changes the approach, update the task's current summary and record the new decision and reasons in the corresponding activity. Preserve earlier activities as accounts of what was tried and understood at the time. Correct factual errors explicitly so the correction remains distinguishable from a later change of approach. Use full task IDs and relative links to connect related records; when both records are being updated, link the task's brief history to the activity and the activity back to the task.
 
@@ -33,20 +37,21 @@ Examples:
 
 1. Search all `YYYY/YYYYMM/tasks/task-*.md` files and recent Git history for the intended task or its ID.
 2. If it is a concrete action, choose the month of creation and assign the next unused five-digit number in that month. Do not reuse a deleted number or close a gap.
-3. Write front matter with `type`, full `id`, `status: todo`, `created`, `priority`, both planned endpoints, and `planned_dates_status`. Priority is an integer from `1` to `9`, using `5` when unspecified. Use user-provided dates when known. Set the status to `confirmed` only when both endpoints are explicit or the user confirms the complete period. For a one-day task, set both planned dates to the same date; if either value was assumed, mark the result `provisional`. If neither date is specified, provisionally use today's Asia/Tokyo date for both. If only a start is supplied, provisionally set the end to that date; if only an end is supplied, set the start to the earlier of today and that end date. Never replace an explicitly supplied date. Record the complete provisional period and its basis in the body/history and mention it in the response. Do not put a made-up date into an external-deadline field. An unbounded weekly recurring rule is exempt from the planned-period and status fields; use its `next_occurrence` and dated schedules.
+3. Write front matter with `type`, full `id`, `status: todo`, `planning_state`, `created`, and `priority`. Use `planning_state: planned` by default; use `backlog` when the user asks to keep the task out of scheduled work. Do not infer Backlog from missing dates, low priority, a long period, or `todo` status. A Backlog task may omit either or both planned endpoints; preserve that choice and do not fill dates unless the user asks to plan it. For a planned task, include both planned endpoints and `planned_dates_status`. Use priority `7` when the user does not specify one; keep its allowed range at `1` to `9`. Use explicit dates when supplied, then use request and conversation context to estimate missing endpoints. If a missing endpoint has no reasonable estimate, use today in Asia/Tokyo when neither endpoint is known, the start when only a start is known, or the earlier of today and the end when only an end is known. Set `planned_dates_status: provisional` if either endpoint is estimated or assumed; use `confirmed` only for two explicit endpoints or when the user confirms the complete period. Do not ask for approval of a provisional period before completing a clear registration. Record the complete period and a brief reason for estimated values in the body/history, and mention provisional dates in the response. Never replace a supplied date or put a made-up date into an external deadline. An unbounded weekly recurring rule is exempt from the planned-period and status fields; use its `next_occurrence` and dated schedules.
 4. Add a Japanese title, concise content, checklist, and history entry. Store supplied email or source links under a related section.
 5. Use one task for work the user explicitly asks to combine; put the components in a checklist.
 
-“TODO” is a useful input phrase, not a file type. Create a task for concrete expense claims, applications, renewals, confirmations, payments, or work items. Keep a planning idea in the repository TODO only while it lacks an actionable unit.
+“TODO” is a useful input phrase, not a file type. For a request to register future work, create a task for concrete expense claims, applications, renewals, confirmations, payments, or work items. Keep a planning idea in the repository TODO only while it lacks an actionable unit.
 
 ## Update a task
 
-Identify the file by full ID first. If only a short number is supplied, search the creation month, title, and links before editing. Preserve the ID, creation date, filename, directory, and unrelated user changes. Mark completion with `status: done` and cancellation with `status: cancelled`; keep the task file in its creation-month directory instead of moving it to an archive or closed folder.
+Identify the file by its full `task-id` first. If only a short number is supplied, search the creation month, title, and links before editing. Preserve the task-id, creation date, filename, directory, and unrelated user changes. Mark completion with `status: done` and cancellation with `status: cancelled`; keep the task file in its creation-month directory instead of moving it to an archive or closed folder.
 
 Update all representations that the request affects:
 
 - status and the one checked state in the body;
 - `priority` when the user changes the task's importance;
+- `planning_state` when the user explicitly moves the task between planned work and Backlog;
 - `planned_start_date` and `planned_end_date` for the inclusive planned work period;
 - `planned_dates_status` when both endpoints have been confirmed, or when a date assumption makes the period provisional;
 - `planned_action` for the work planned within that period;
@@ -55,11 +60,15 @@ Update all representations that the request affects:
 
 Separate a task's planned work period from its actual completion and any firm external deadline. Separate “draft sent” from “presentation complete”. If the user supplies an implementation target and a final migration deadline, retain both with explicit labels.
 
-When the user changes only one endpoint, keep or set `planned_dates_status: provisional` unless the user confirms the full resulting period. When the user confirms the current complete range without changing dates, update the status to `confirmed` and add a history entry. Do not bulk-add this field to existing records. Never put it on an unbounded weekly recurring rule.
+Changing `planning_state` does not change `status`, task identity, dates, deadlines, weekly schedules, or recurrence. When moving a task to Backlog, preserve existing dates and their confirmed/provisional status; add a short history entry. When moving it back to `planned`, keep any valid dates and status. If a complete work period is still unknown, use the planned-task provisional-date rules above and record their basis. Do not create another task for a classification change.
+
+When the user changes only one endpoint, preserve the other endpoint if known. If this request places the task in planned work and leaves the period incomplete, estimate the missing endpoint from context; if there is no reasonable estimate, use the add-task fallback for a one-sided period. Keep or set `planned_dates_status: provisional` unless the user confirms the full resulting period. When the user confirms the current complete range without changing dates, update the status to `confirmed` and add a history entry. Do not fill dates during a task-only text edit or read-only operation. Do not bulk-add this field to existing records. Never put it on an unbounded weekly recurring rule.
 
 ## Store an attachment
 
-When a supplied local file is intended as supporting material for a daybook record, store it under the same month's `attachments/` directory as that record, inside a record-key folder: the full task ID for a task, or the schedule/activity filename stem for those records. Preserve the supplied filename when possible; if a same-name file already exists, do not overwrite it. Add a relative link to the file from the record and verify the target. Keep one copy when multiple records refer to the same file, and link to that copy. Do not create empty attachment directories or copy files into generated day-plans.
+Before retaining supplied files or generated results, follow [attachments.md](attachments.md). Prefer the activity body for the work account and necessary findings. For separate materials, prefer a designated durable location outside daybook, including another Git repository. Choose a text attachment when keeping that artifact with daybook has a concrete benefit; an explicit request to keep a text artifact here is sufficient. A missing external destination alone does not require an attachment. Keep originals and valuable final or human-edited results distinguishable from temporary outputs. The reference defines how to record an undecided storage destination and the extremely rare binary exception; “attach this” alone does not authorize binary storage.
+
+Keep source copies and conversion intermediates in a verified Git-ignored `workplace/` path or outside the repository. After choosing an in-repository attachment, place only the final necessary text in `attachments/`. For a retained task attachment, use `attachments/<task-id>/`, where `task-id` is its existing front matter `id` (`task-YYYYMM-NNNNN`). For an activity or schedule, use its filename without `.md` as the folder name: `attachments/activity-YYYYMMDDa/` (or the existing activity filename stem) or `attachments/schedule-YYYYMMDD-name/`. Preserve a useful supplied filename when possible; if a same-name file exists, do not overwrite it. Add a relative link and verify the target. Keep one copy of shared text, create directories only when needed, and do not copy attachments into generated day-plans.
 
 ## Register a weekly recurring task
 
@@ -99,23 +108,58 @@ Do not infer attendance, ticket purchase, registration, or a rehearsal role from
 
 ## Add an activity
 
-Use the Asia/Tokyo calendar date unless the user gives another date. Create the day's `activities/activity-YYYYMMDD.md` if it does not exist; otherwise append under `## やったこと` or the existing equivalent section. Keep a single coherent event together when its place, activity, and instrument belong to one event. For example, an afternoon ensemble at a named venue while playing violin is one activity item.
+Use the Asia/Tokyo calendar date unless the user gives another date. Resolve whether this is a new episode or an update to an existing episode by reading the relevant activity titles and links for that date. Create a new `activities/activity-YYYYMMDDa.md` for a new episode; continue the resolved file for a follow-up or correction to that episode. Use `a…z, aa…az, ba…zz, aaa…`, restarting each date. Existing unsuffixed daily files remain valid; preserve them and their links. Multiple episodes in one file after parallel editing are acceptable.
 
-For work or investigation, include the purpose, approaches tried and changed, observations and results, conclusions and their reasons, remaining questions, and next actions when known. Ground the account in reported work, the conversation, and visible results; do not invent attempts, outcomes, alternatives, or motivations. Recording an inconclusive investigation is valid. Keep trial-and-error history in the same activity item while it remains readable; move lengthy supporting detail to a linked document or attachment when it obscures the account. Choose the detail needed to understand or resume the work rather than a fixed length or mandatory set of headings for every activity.
+For new files, use the bundled [create-activity.mjs](../assets/daybook/scripts/create-activity.mjs), which shares [activity-files.mjs](../assets/daybook/scripts/activity-files.mjs) with Issue intake. It considers current files, local Git history and pending paths, avoids reusing deleted suffixes, and uses exclusive creation. A rejected candidate is reserved for this creation attempt, including a collision with a case variant such as `.MD`, so the next allocation advances. After 32 collisions it stops with `ACTIVITY_CREATE_CONFLICT` and the last candidate path; preserve existing files and retry after resolving the contention. It returns the final repository-relative path and any warning about unavailable history; read the returned path rather than predicting a filename. Allocation sees local Git history only, so a shallow checkout or unavailable branches may have an incomplete history.
+
+Create and update activities only through the corresponding bundled CLI; direct Markdown writes bypass these checks. Use matching installed `scripts/create-activity.mjs` and [scripts/update-activity.mjs](../assets/daybook/scripts/update-activity.mjs) in the target repository when available. Otherwise run the loaded skill bundle's CLI by absolute path with `--repo-root`, or integrate the matching `create-activity.mjs`, `update-activity.mjs`, `activity-files.mjs`, `day-plan.mjs`, and [vendor/yaml-runtime.mjs](../assets/daybook/scripts/vendor/yaml-runtime.mjs). Include its [yaml.LICENSE](../assets/daybook/scripts/vendor/yaml.LICENSE) with copied scripts. The bundled `.mjs` tools use Node.js and local skill files only; no npm install, npm ci, package manifest, or target-repository YAML package is required. Check installed CLI and companion modules against the loaded bundle before using them; an older CLI may lack standard input or guarded updates. Preserve target-specific changes and use the bundle directly when safe integration is unclear. Tasks and schedules still use their ordinary Markdown editing workflows.
+
+Prepare complete Markdown with `type: activity`, the actual activity `date`, a descriptive title and the work account. Prefer standard input so each process carries its own draft. For example, from the target repository root (quote the heredoc delimiter to keep Markdown literal):
+
+```sh
+node scripts/create-activity.mjs --date 2026-11-06 --stdin <<'ACTIVITY_MARKDOWN'
+---
+type: activity
+date: 2026-11-06
+---
+
+# 調査結果
+
+確認した内容を記録します。
+ACTIVITY_MARKDOWN
+```
+
+Both write CLIs accept exactly one of `--stdin` or `--file DRAFT.md`. If a draft file is needed, allocate a unique per-operation directory or filename using exclusive creation in verified ignored temporary storage; never share a fixed draft path across sessions. Creation defaults to today's Asia/Tokyo date and the CLI's parent project as repository root. Always pass `--repo-root /absolute/daybook` when executing either CLI from a different project. Creation validates the Markdown date against the requested date and writes without replacing an existing file. Use the returned final filename stem for any retained attachments and verify relative links from that location.
+
+When editing an existing episode, obtain one snapshot of the current content and its SHA-256 together:
+
+```sh
+node scripts/update-activity.mjs --path 2026/202611/activities/activity-20261106a.md --read
+```
+
+Read the returned JSON `content`, make the relevant edits while preserving other contributions, and submit the updated Markdown through `--stdin` with `--path` and `--expected-sha256` set to that snapshot's `sha256`. Immediately before writing, the CLI rereads the file and compares its hash with the original snapshot. A changed or missing file stops with `ACTIVITY_UPDATE_CONFLICT`; read the latest content and reconsider the edit before retrying. Never submit a stale draft with only a fresh hash attached. Successful updates return `path` and `sha256`.
+
+Activity updates use a normal file write after this check, with no per-activity lock or permission-management workflow. A concurrent write starting between the final check and save can still race; this procedure does not promise strict exclusion of simultaneous updates.
+
+Keep a single coherent event together when its place, activity, and instrument belong to one event. For example, an afternoon ensemble at a named venue while playing violin is one activity item.
+
+For work or investigation, include the purpose, approaches tried and changed, observations and results, conclusions and their reasons, remaining questions, and next actions when known. Ground the account in reported work, the conversation, and visible results; do not invent attempts, outcomes, alternatives, or motivations. Recording an inconclusive investigation is valid. Keep trial-and-error history in the same activity item while it remains readable; when supporting material obscures the account, use a stable external reference or a deliberately chosen text attachment under [attachments.md](attachments.md), while preserving the findings and decision reasons in the activity. Choose the detail needed to understand or resume the work rather than a fixed length or mandatory set of headings for every activity.
 
 When the user says work was done, record the fact. Activity-only requests update the activity only. Update a related task only when task editing is in scope under [Task completion and scope](#task-completion-and-scope), and apply that section's completion evidence rule.
 
 ## Task list
 
-Search every year/month `tasks/` directory. By default include active and unfinished tasks and show:
+Search every year/month `tasks/` directory. By default include active and unfinished tasks in planned and Backlog groups and show:
 
 ```text
-ID / Priority / Status / Planned start / Planned end / Title
+ID / Priority / Status / Planning state / Planned start / Planned end / Title
 ```
 
-`Priority` comes from `priority`, or is `5` when omitted. Sort confirmed or legacy dated tasks by ascending priority, planned end, planned start, then full task ID. Put `provisional` tasks and tasks with an incomplete period in `日程要確認` after them, sorted by priority and ID. `Planned start` and `Planned end` come from `planned_start_date` and `planned_end_date`; display `—` for a missing value. `due_month` remains separate month-only deadline information and does not fill `Planned end`. For a weekly task, add `Next` from `next_occurrence` without changing the meaning of the planned period or using it as a sort key. Include the full `task-YYYYMM-NNNNN` ID so identical short numbers cannot be confused. Include completed or cancelled tasks only when requested.
+`Planning state` is `planned` when omitted on an existing task. `Priority` comes from `priority`, or is `7` when omitted. Sort planned confirmed or legacy dated tasks by ascending priority, planned end, planned start, then full task ID. Put planned `provisional` tasks and tasks with an incomplete period in `日程要確認` after them, sorted by priority and ID. Show unbounded weekly tasks without a planned period after dated planned tasks and before `日程要確認`, sorted by priority and full task ID; do not flag them for date review. Show Backlog separately, sorted by priority and full task ID without a date window. `Planned start` and `Planned end` come from `planned_start_date` and `planned_end_date`; display `—` for a missing value. `due_month` remains separate month-only deadline information and does not fill `Planned end`. For a weekly task, add `Next` from `next_occurrence` without changing the meaning of the planned period or using it as a sort key. Include the full `task-YYYYMM-NNNNN` ID so identical short numbers cannot be confused. Include completed or cancelled tasks only when requested.
 
 Do not edit files for a list request. Report provisional and incomplete periods as needing date review, then wait for an update request.
+
+When introducing the Backlog group or classifying existing tasks, use [task-planning-migration.md](task-planning-migration.md). It preserves omitted-state compatibility and limits edits to tasks the user identifies.
 
 ## Find tasks related to a URL
 
@@ -123,7 +167,7 @@ Use [url-task-lookup.md](url-task-lookup.md) only when the user explicitly asks 
 
 ## Explicitly import GitHub Issues
 
-Issue intake is not part of an ordinary record update or Issue read. Use [issue-import.md](issue-import.md) only when the user explicitly requests that named Issue(s), or a clearly specified repository backlog, be imported into this daybook. Follow its local CLI prerequisite and setup steps before running `node scripts/import-issues.mjs capabilities`; perform only the local preparation needed for the explicitly requested intake. If `gh` is missing, report Issue intake, comment posting, and intake close as disabled; continue ordinary daybook work normally.
+Issue intake is not part of an ordinary record update or Issue read. Use [issue-import.md](issue-import.md) only when the user explicitly requests that named Issue(s), or a clearly specified repository backlog, be imported into this daybook. Follow its local CLI file-copy and help checks before running `node scripts/import-issues.mjs capabilities`; perform only the local preparation needed for the explicitly requested intake. The bundled CLI does not need a target package dependency. If `gh` is missing, report Issue intake, comment posting, and intake close as disabled; continue ordinary daybook work normally.
 
 The Agent reads Issues and comments through the existing miku-scm `github.issue.read` workflow, interprets their meaning, writes the local source and manifest fixtures, and asks the local CLI to prepare and apply only the reviewed record changes. The CLI has no network or LLM behavior. Do not treat a failed read as an empty comment list, do not claim the helper returned full comment history, exclude Daily Briefing Issue #3, and reject Pull Requests.
 
@@ -134,13 +178,14 @@ After local apply, use the existing miku-scm Issue-comment workflow to prepare a
 Use the existing daybook script from the repository root:
 
 ```sh
-npm ci
 node scripts/generate-day-plan.mjs --date YYYY-MM-DD
 ```
 
+The bundled generator and its YAML runtime use only Node.js built-ins and included files; a target package manifest, lockfile, `node_modules`, `npm install`, and `npm ci` are not required.
+
 By default, the generator writes to the canonical path under the target repository root: `YYYY/YYYYMM/day-plan/day-plan-YYYYMMDD.md`. The date defaults to today in Asia/Tokyo when `--date` is omitted. Use `--output-root` only when a separate output directory is explicitly needed, such as the notification workflow's staging directory.
 
-The current implementation selects active tasks from all canonical year/month `tasks/` directories and schedules from canonical year/month `schedules/` directories. It ignores other Markdown files, nested folders, backups, and attachment contents. It checks that task IDs and filenames match their creation-month directory, and checks any supplied `created` month against that directory. Schedule filenames, front matter dates, and event-month directories must agree. Path or schema mismatches stop generation with the offending file path.
+The current implementation selects active tasks from all canonical year/month `tasks/` directories and schedules from canonical year/month `schedules/` directories. It ignores other Markdown files, nested folders, backups, and attachment contents. It treats an omitted legacy `planning_state` as `planned`; an explicit `backlog` task is selected for the separate Backlog section. It checks that task IDs and filenames match their creation-month directory, and checks any supplied `created` month against that directory. Schedule filenames, front matter dates, and event-month directories must agree. Path or schema mismatches stop generation with the offending file path.
 
 It shows active tasks with:
 
@@ -152,13 +197,14 @@ It shows active tasks with:
 - active tasks with `planned_dates_status: provisional` in the date-review section, showing the provisional range;
 - schedules dated in the window as upcoming schedules;
 - `planned_week` periods that overlap the window as planned weeks.
+- active Backlog tasks from all months in their own section, regardless of their dates; Backlog tasks are omitted from all six date-based task groups, including date review and planned weeks.
 
-It excludes `done` and `cancelled` tasks and does not turn `due_month` into a guessed date. Provisional tasks appear only in date review, including when their provisional period contains the target day, and are omitted from date-specific task sections and `planned_week`. An unbounded weekly recurring rule without a planned period is not flagged for date review; its dated schedules represent individual occurrences. It includes schedules with the scalar string `status: scheduled` and legacy schedules with no status, and omits schedules with the scalar string `status: cancelled`. Invalid explicit schedule statuses fail generation. Treat the generated output as a snapshot: generation overwrites the canonical file for that date. Keep lasting notes in the source task or schedule instead of editing the generated day-plan.
+It excludes `done` and `cancelled` tasks and does not turn `due_month` into a guessed date. Planned provisional tasks appear only in date review, including when their provisional period contains the target day, and are omitted from date-specific task sections and `planned_week`. Backlog tasks do not appear in date review, even with incomplete or provisional dates; their dates are shown only as reference information in Backlog. The Backlog section is present with `- なし` when empty. Schedules remain date-based, including schedules linked from a weekly Backlog task. An unbounded weekly recurring rule without a planned period is not flagged for date review; its dated schedules represent individual occurrences. It includes schedules with the scalar string `status: scheduled` and legacy schedules with no status, and omits schedules with the scalar string `status: cancelled`. Invalid explicit schedule statuses fail generation. Treat the generated output as a snapshot: generation overwrites the canonical file for that date. Keep lasting notes in the source task or schedule instead of editing the generated day-plan.
 
-Display each task's priority and planned period in the generated day-plan, treating an omitted legacy priority as `5`. Sort today's tasks by ascending priority, then task ID. In planned-end, planned-start, and planned-week sections, sort by the section's date first, then ascending priority, then task ID. Priority changes ordering only; it does not change which tasks are selected for the plan. The generator rejects a present priority that is not an integer from `1` to `9`.
+Display each planned task's priority and planned period in the date-based sections, treating an omitted legacy priority as `7`. Sort today's tasks by ascending priority, then task ID. In planned-end, planned-start, and planned-week sections, sort by the section's date first, then ascending priority, then task ID. Backlog shows the full task ID, linked title, priority, status, and any saved period, due month, planned week, or weekly next occurrence as reference information; sort it by priority and ID. Priority changes ordering only; it does not change which tasks are selected for the plan. The generator rejects a present priority that is not an integer from `1` to `9` and a present planning state other than `planned` or `backlog.
 
 After generation, inspect the output for expected inclusions and exclusions, and report its path. Use the existing tests for code behavior; do not add a second generator in the skill.
 
 ## Finish the operation
 
-Run `git diff --check`, inspect changed paths, and verify links and front matter. For a read-only list or explanation, do not modify the repository. For a record update, report the file path and material change. Leave commit, push, PR, merge, Issue comments, and email actions to explicit requests and their appropriate workflows.
+Run `git diff --check`, inspect changed paths, and verify links and front matter. For a read-only list or explanation, do not modify the repository. For a record update, briefly report the material change and any next step or clarification relevant to the request, with a link to the record. Leave commit, push, PR, merge, Issue comments, and email actions to explicit requests and their appropriate workflows.

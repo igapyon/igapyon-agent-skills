@@ -1,5 +1,251 @@
 # TODO
 
+## AI Agent Current Tasks
+
+### daybook：同梱CLIのNode.js単独実行（2026-11-08・自己レビュー2件を修正・検証済み）
+
+[実装計画と実施記録](docs/plans/daybook-node-only-runtime-implementation.md)に沿ってDBN-00〜07を完了した。YAML ESMとlicenseを同梱し、Node.jsだけで活動作成・更新、day-plan、Issueローカル取り込み、通知dry-runが動く。開発用生成依存はrepo rootのdevDependenciesに分け、配布後の `npm install` / `npm ci` は不要。
+
+- [x] scriptsを隔離コピーし、活動作成・更新・day-plan生成・Issue取り込みの4 CLIが `--help` で `ERR_MODULE_NOT_FOUND` になることを確認。
+- [x] DBN-00〜02：開始確認、生成済みYAML runtimeとlicense、2か所のimportと依存定義を更新。
+- [x] DBN-03〜04：既存YAML・CLIの互換性と、Node.jsのみでの活動作成・更新等を隔離検証。
+- [x] DBN-05〜07：操作・導入手順、通知workflow、CI・ZIP検査を整合し、検証結果を記録。
+- [x] 自己レビュー：YAML の Node.js 配布コードを同梱し、`!!binary` の Buffer/UTF-8 と表示互換性を回復。
+- [x] 自己レビュー：CLI の起動判定を実パス比較へ変更し、パス変換なしの smoke で別名経由の実処理を確認。
+
+初回実装は `b284076` でcommit済み。11月8日の修正後は `npm run test:daybook` 79/79、YAML互換性4/4、参照・配布79/79、生成差分・skill形式・差分検査が成功。Maven package と展開ZIPの別名CLI実行・binary表示検査も成功。ローカル Node.js は26.12.1で、Node.js 22/24のhosted CI結果は未確認。今回の修正差分は未commitで、実daybook・配備先同期・版数incrementは未実施。活動更新の直前確認と保存の間の競合を許容する11月6日の合意を保ち、活動ロックを再導入しない。
+
+### daybook：activityの上書き防止（2026-11-06・簡素化・反映済み）
+
+- [x] 新規作成は同名ファイルを上書きせず次の英字へ進む。標準入力を使い、固定名draftの共有を避ける。
+- [x] [既存更新CLI](skills/igapyon-miku-daybook/assets/daybook/scripts/update-activity.mjs)は、書く直前に本文を読み直し、元の内容と違えば保存せず再検討を求める。[操作手順](skills/igapyon-miku-daybook/references/operations.md#add-an-activity)も整合。
+- [x] 利用者の簡素化指示に従い、活動ごとのロック・権限管理・解除失敗の警告処理と専用テストを削除。旧Issue activity追記も同じ直前確認を使う。
+- [x] source runtime 77/77、実daybook runtime 75/75（統合コピーでも成功）、参照・配布79/79、skill形式・差分検査が成功。
+- [x] 実daybookの6ファイルへ反映し、ほかのtracked 122ファイルの不変と、配備済みskillの同期を確認。
+
+合意した範囲は直前の内容確認までとし、確認から保存までの間に始まる同時書き込みの競合は許容する。同日に一度導入した活動ロック・権限保持の実装とその自己レビュー修正は、この利用者判断で撤回した。
+
+### miku-scm：自己レビュー2件の追加対応（2026-11-05・実装・検証済み）
+
+[Luna向け追加対応計画](docs/plans/miku-scm-self-review-followup-luna-implementation.md)に沿って、保存計画を使わない直接applyの公開先取り違えと、異なる未追跡pathで残るcheck-ignoreの大量process起動を修正した。[追加実施記録](docs/plans/miku-scm-self-review-followup-execution.md)に変更と計測を記載。fast 280/280、full 541/541成功、workflow contract 37件current。
+
+- [x] 残存経路の追加再現、呼び出し元、採用方式、移行案内、回帰条件、契約と検証手順を固定。
+- [x] SREV-00：実装開始状態と失敗する追加回帰を記録。
+- [x] SREV-01〜02：公開applyを保存計画経由に限定し、安全な返却引数と参照資料を揃える。
+- [x] SREV-03〜04：候補pathを収集してNUL区切りstdinでまとめて照会し、実pull・特殊path・性能を確認。
+- [x] SREV-05：契約再生成、fast/full、差分確認、実施記録と未確認環境を整理。
+
+### miku-scm：正確性・復旧・性能の改善（2026-11-05・実装・ローカル検証済み）
+
+レビュー6件と `guardIgnored()` の性能問題を、[Luna向け改善計画](docs/plans/miku-scm-reliability-performance-luna-implementation.md)に沿って実装した。[実施記録](docs/plans/miku-scm-reliability-performance-execution.md)に変更・検証・性能比較を記載。最終full 532/532、contract 37件current、差分チェック成功。
+
+- [x] 原因、再現条件、性能実測、変更箇所、作業順、完了条件を固定した計画を作成。
+- [x] LUNA-00〜02：開始記録、check-ignoreの同一path判定とdirectory一覧の再利用。
+- [x] LUNA-03〜04：保存公開計画のbranchとfetch/push URLを実行対象へ固定。
+- [x] LUNA-05：commit直前・直後のbranch/HEAD/tree確認。
+- [x] LUNA-06：既知のcheck失敗後のsync push再準備と案内。
+- [x] LUNA-07：初期化中の異常終了で残ったsync lockの明示取消。
+- [x] LUNA-08：sync Git失敗の原因分類と具体的な案内。
+- [x] LUNA-09：契約、full suite、性能再計測、差分確認、実施記録。
+
+3,000件のguard単発比較では、未追跡directoryのケースが35.428秒→0.128秒、check-ignoreが3,000回→1回。追跡済みcase照合は6.286秒→0.116秒。Windows実機/hosted CI、配備、版数更新、commit/pushは未実施。
+
+### daybook：発火条件・操作整合・既定優先度7（2026-11-05・実装・ローカル検証済み、実対話未検証）
+
+[Luna向け実装計画](docs/plans/daybook-activation-priority-review-luna-implementation.md)に、厳しい発火境界と発火後の円滑な操作、直前レビュー3件、既定優先度7、予定日の仮置きを実装した。通常task登録は日程・優先度を確認待ちにせず、文脈推測または今日〜今日・優先度7で完了する。明示値、Backlogの日付省略、既存レコードの明示priorityは保つ。
+
+- [x] 発火・待機・継続の条件、変更ファイル、手順、回帰テスト・対話ケースを具体化。
+- [x] 利用指示と言及・メタ依頼を区別し、HANDOFF経由の利用と待機を維持。
+- [x] 期間のある週次taskの生成拒否と、期間なし週次taskの不要な日程確認を修正。
+- [x] 通常のBacklog分類を導入・移行作業から分離。
+- [x] 未指定優先度を新規作成・表示・Issue取り込みで7へ統一。明示値と保存済み計画は維持。
+- [x] 未指定の予定日を文脈または今日〜今日で補い、provisionalと理由を保持。日程質問で通常task登録を止めない。
+- [x] daybook runtime suite 69/69、参照・配布suite 79/79、`quick_validate.py`、対象差分の `git diff --check` が成功。
+- [ ] 実対話での発火・待機・Waypoint再開とデータ読み取り範囲は未検証。
+
+### daybook：起動時の指示待ちとHANDOFF再開（2026-11-05・source実装・検証済み）
+
+仕様・レビュー反映・実装結果は[Luna向け実装計画](docs/plans/daybook-handoff-startup-luna-implementation.md)を参照。
+
+- [x] 現在のユーザー指示を優先し、会話・HANDOFFの有効な操作指示を引き継ぐ判断をSKILLの一段落に集約。操作指示がなければ準備完了を伝えて待機。
+- [x] HANDOFFからのactivationを追加し、指定Waypoint・子・必要な参照先をたどって作業へ進む手順を更新。追加・更新では再開を始めず、候補が曖昧なら範囲を確認。
+- [x] HANDOFFを入口、task/activity/Waypointを作業状態の正本として説明し、短い入口設定例とREADME二か所を整合。
+- [x] 計画レビューの3点を反映。明示的待機・引き継ぎ再開を含む11ケースを本文レビューし、対話検証の配置・開始方法を具体化。
+- [x] 追加の自己レビュー3点に対応。子Waypointの範囲確定を資料読み込みより先にし、検証開始文を中立化、計画冒頭の表にも待機条件を明記。
+- [x] `skill-creator` の `quick_validate.py`、参照・配布関連テスト79件、`git diff --check` が成功。
+
+対話実行による動作確認、実利用repoの入口変更、配備先への同期は未実施。
+
+### miku-scm：コメント後クローズの誤衝突修正（2026-11-03・実装・検証済み）
+
+実装計画は[Luna向け修正計画](docs/plans/miku-scm-comment-close-luna-implementation.md)、作業・検証記録は[実施記録](docs/plans/miku-scm-comment-close-execution.md)を参照。実close preflightの `issue_title` をバッチが `current_title` として読んでしまい、承認どおりのコメント投稿後に誤って停止する問題を修正した。
+
+- [x] 実行記録とsourceを照合し、項目名不整合・実形式と異なるmock・診断run ID欠落を特定。
+- [x] 公開JSONを維持する共通snapshotを実装。reviewとbatch refreshで共有し、欠落field・外部差分・preflight run IDを診断。
+- [x] 実helper接続で修正前の誤停止を再現。単一Issueと3件6操作を一回のreview/approveで完了する回帰テストを追加。
+- [x] 外部変更・不完全read・不正receipt・unresolved結果でcloseを止め、成功済みコメントを再投稿しないことを検証。
+- [x] batch.apply contract v3、reference、生成lock/tableを更新。focused 44/44、関連suite 62/62、miku-scm full 487、skill-index policy 79/79、contract 37件、`mvn validate`、差分検査に成功。
+
+source skill配備、version increment、package、commit/push、Windows実機/hosted CIは今回の実装対象外。[実施記録](docs/plans/miku-scm-comment-close-execution.md)に未実施として記録した。
+
+### Issues #318・#400・#405：Luna向け対応（2026-11-03・実装・検証済み）
+
+実装手順は[実装計画](docs/plans/issues-318-400-405-luna-implementation.md)、実施内容・検証・実GitHub読取は[実施記録](docs/plans/issues-318-400-405-execution.md)を参照。計画作成時点では実装未着手で、#400はIssue #399の読み取り失敗を再現した。
+
+- [x] 3件の本文と現行sourceを照合し、Luna向け計画を保存。
+- [x] #318：Issue一覧のlabels、cache失効、候補選定規則を実装・検証。
+- [x] #400：全ページのコメント取得をgeneric readerと4種類の操作へ接続し、契約・回帰確認を整合。
+- [x] #405：Node実行時依存の判断・例外・追加時確認を文書化。
+- [x] full suite・参照検査・版数整合と実GitHubの読取結果を記録。
+
+開始時の利用者依頼による共通版 `1.20261103.7` / 連動値 `20261103g` の4ファイルの未stage変更を保持する。
+
+### daybook：並列書き込みの自己レビュー指摘対応（2026-11-03・実装済み）
+
+- [x] 既存task・scheduleの本文と変更前ハッシュを同じ読み取りに結び付けた。
+- [x] apply時の出典再確認で同一Issueの重複を防ぎ、同じplanの途中再開・旧形式互換を検証した。
+- [x] 衝突したactivity名を予約し、次候補への前進と最大32回での停止を実装した。
+- [x] 実daybookの5ファイルへ反映。source 68/68、実daybook 67/67、参照・配布78/78成功。既存記録等104ファイルの不変を確認した。
+
+[対応記録](docs/plans/daybook-concurrency-fixes.md)を参照。両repoとも今回の修正は未commit。
+
+### daybook：activity分割とBacklog実運用への反映（2026-11-03・実装済み）
+
+- [x] 内容ごとのactivityファイルを `activity-YYYYMMDDa.md`、`…z.md`、`…aa.md` の順で作成する規約とhelperを実装した。
+- [x] Issue取り込みの探索・採番・再実行を新旧形式に対応させた。
+- [x] 実daybookへactivity対応と既存Backlog実装を統合し、README・検証を揃えた。
+
+合意事項と実装記録は[実装計画](docs/plans/daybook-activity-files-and-runtime-alignment.md)を参照。source suite 60/60、実daybook suite 59/59、参照・配布関連78/78成功。実データのBacklog分離・15リンク・Git管理下の記録等104ファイルの不変を確認。インストール済みskill同期、commit/push、GitHub運用反映は未実施。
+
+### Contract CI改善（2026-10-30・source反映済み）
+
+- [x] PR/manualにContract起動を一本化し、変更判定・常時最終gate・古いPR実行取消・job上限を追加。
+- [x] miku-scm suiteのファイル別時間・即時進捗・30秒heartbeat・同時実行上限4を実装。
+- [x] 計測で最長だったsync pullを4分割。full 445/445を維持し、ローカル単発比較で158.862秒から76.250秒へ短縮。
+- [x] GitHub Writer full 34/34、CI helper 3/3、契約37件、YAML/JS構文と差分検査成功。
+- [ ] この変更を反映したPRでWindows/macOSのCIと最終gateを確認し、develの必須チェックを新gateへ移行する。
+- [ ] Windowsのファイル別時間と並列数を比較し、改善の実測結果を記録する。
+
+設定移行・リリース順序・検証範囲は[Contract CI運用](docs/maintenance/2026-10-30-contract-ci.md)を参照。
+下の10月26日の現在地は当時の記録であり、この作業のbranch・版数・検証結果を表さない。
+
+### 現在地（2026-10-26照合）
+
+TODO・HANDOFFの矛盾確認と訂正はHEAD `8d8f68c` から始め、commit `9e9fec5` で完了した。その後の依頼で版数を `.5` / `20261026e` に更新し、続けて候補版数human output修正を実装した。現在branchは `devel-tiga1026wce`、HEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`。
+
+`miku-scm sync pull` / `sync push` はsourceへ実装し、PR #409でmerge済み（現HEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`）。続く依頼でsync説明補完とWindows CRLF fixture修正を行い、候補版数human output修正を追加実装した。現在の作業ツリー差分（版数 `.5` / `20261026e`、説明・fixture、候補表示）は未commit。
+
+自己レビューの5件をコードへ反映。続くsync説明・Windows CRLF fixture修正を含む変更と、候補版数表示修正後のfull suiteは **374/374** 成功。候補修正のfocused testsは **45/45**、contract 37件のcheckと `mvn validate`、`git diff --check` も成功。提示されたWindows hosted CIログで当時368件中5件のCRLF失敗を確認した（ログにPR番号・run URLの記載はない）。fixture修正後のWindows hosted CI再実行成功とnative Windows 11手動smokeは未確認。
+
+- 現在版は共通 `1.20261026.5` / Mikuku `20261026e`。POM、VERSION.md、2つのrunnerの整合は `mvn validate` で確認した。
+- 版数更新・sync説明/fixture修正・候補版数表示修正を含む作業ツリーは未stage・未commit。実装時点branch `devel-tiga1026wce`、HEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`。追加version increment、package、配備、commit/pushは未実施。
+- 配布対象は内製15件＋外部12件＝27スキル。
+- 下の作業記録にあるbranch、未commit、commit/push未実施、テスト件数、環境制約は、明示的な更新がなければ記録当時の状態。現在地はこの節と [HANDOFF.md](HANDOFF.md) を入口に確認する。
+- 過去計画の未チェック欄は、未実装と未検証を一律には区別していない。source・後続の記録で確認できた箇所だけ訂正し、実行証拠がない検証や配備を完了扱いにしない。
+
+### 残件・保留の入口
+
+- [x] `sync pull` / `sync push` の実装計画を作成。`-done` のときだけ対象PRを確認し、マージ済みと正確に検証できれば次branchへ進める案を含む。通常branchではこのPR確認を省略する。
+- [x] 計画を自己レビューし、base記録、ignored保護、rebase option、接続先binding、prepare後の再開/取消を修正。3種類のGit挙動を一時fixtureで再現した。
+- [x] SYNC-00〜07：共通状態/退避、PR確認、共有post-merge core、pull、push、SKILL・manifest・CLI/help・human output・生成契約をsourceへ実装。今回のfull suite 374/374、候補版数修正focused 45/45、contract check、`mvn validate`を確認。
+- [x] 候補版数human output修正：実producerのproposed schema対応、human output v15、5ケースと実producer接続テスト、contract lock/table更新。[計画と検証記録](skills/igapyon-miku-scm/docs/2026-10-26-version-candidate-output-fix-plan.md)
+- [ ] SYNC-08の残り：native Windows実機、fixture修正後のhosted CI成功、実GitHub上のsync、実モデルでのsync会話routingを確認。提示されたWindows hosted CIログで368件中5件のCRLF失敗を確認済み（PR番号・run URLは不明）。修正後の成功とローカルfixtureの成功を混同しない。
+- [ ] 現在版 `1.20261026.5` をpackageし、配布ZIPを検査する。`.3` のZIPはincrement前の成果物である。
+- [x] day-plan生成前の `npm ci` をなくし、Node.jsだけで実行できる同梱YAML runtimeへ置換した。[実装・検証記録](docs/plans/daybook-node-only-runtime-implementation.md)。項目2〜4の記録方針・用語は `38e73af` / PR #408で反映済み。
+- [ ] native Windows 11のjunction / CRLF / publication smokeを確認する。[Windows計画](WINDOWS11-PUSH-PLAN.md)のW02・W05・W08・W09は未完了。提示されたWindows hosted CIログで368件中5件のCRLF失敗を確認済み（PR番号・run URLは不明）。fixture修正後の再CI成功は未確認。
+- [ ] Work Cycleのcycle artifact、作業開始のone-shot化、PR evidence統合を、着手時に現行sourceと再照合する。[設計記録](skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md)。初期実装とWindows publication経路はすでにマージ済み。
+- [ ] 旧draft系コマンド全体の文案再利用とbase・HEADの対応付けは継続候補。新しいsync pushではevidence/plan/draft digestへ固定したが、既存コマンド全体の意味変更には広げていない。
+- [ ] 旧計画に残るモデル会話確認、実資料の品質確認、配備・運用反映、参照監査などは、対象を指定して再照合する。今回の記録訂正から自動着手しない。
+
+### 状態文書監査の訂正と確認（commit 9e9fec5）
+
+- Git履歴とsourceを照合し、Issue承認改善、Java方針、Waypoints、Backlog、URL検索、Issue取り込み等の「未commit」を履歴へ訂正した。対応commitとmergeはHANDOFFの表を参照。
+- 添付テキスト優先ルールの実装済み状態と、初版daybook計画の古い日付・通知・一覧仕様を区別した。
+- 8月のWork Cycleを現在の最優先とする記述と、旧version commit `27a2ed7` の選択待ちを解除し、GOALも訂正した。
+- HANDOFFを現在地の入口へ整理。旧本文は [引き継ぎ履歴](docs/maintenance/2026-10-26-handoff-history.md) に保存し、移動に伴う相対リンクを修正した。
+- 確認：版整合、参照した22コミットがHEADの祖先であること、対象4文書のローカルMarkdownリンク42件、配布件数15＋12、旧HANDOFF本文の保存を確認。`git diff --check` も成功。過去の実装テスト件数を今回の実行結果としては扱わない。
+- 今回は状態文書と履歴だけを変更。実装テスト、最新版のpackage、配備、実daybook編集、commit/push、GitHub操作は行っていない。
+
+## 作業別の実施記録
+
+以下は各作業の計画と実施時点の記録。現行の規範はsourceのSKILL・references・runnerで確認する。完了した実装の検証不足や、別途依頼が必要な運用作業を、同じ未完了状態として読み替えない。
+
+## miku-scm：sync pull / sync push（2026-10-26・source実装済み）
+
+- [x] 通常pullではghを呼ばず、FF/no-opと未公開commitのrebase、indexを含む作業保持を実装。base記録欠落・書換え・公開履歴・ignored衝突・競合で停止する。
+- [x] `-done` だけ正確なPR head/base/merge結果を確認し、取得baseから一度だけ次branchを作る。旧 `github merge done` の確認方式は維持。
+- [x] pushの必要な通常commit、根拠とplanの固定、Agent文案、既存recommit/pushへの委譲、prepare resume/cancel、古いplan拒否、不明結果の再送禁止を実装。
+- [x] backup・exact stash・operation journalとcommon-dir実行lock、同じrebaseのresume/abortと明示したcarryover解決を実装。
+- [x] runner 3 workflow追加、契約37件、human output v14、README/配布README/DEVELOPMENTと運用referenceを整合。
+- [x] full suite 368/368、policy 78/78、skill validator、`mvn validate`。実行環境はmacOS、APIはfixture、pushは一時bare remoteのみ。
+- [x] 最終fast 204/204、契約37件のdriftなし。rename推測によるignored上書きを追加再現し、sync内では推測を無効化して3経路を回帰確認。
+- [x] increment前のsourceについて配布ZIP照合が成功。`target/igapyon-agent-skills-1.20261026.3.zip` を生成。文書リンク45件と差分検査も成功。
+- [ ] version increment後の `1.20261026.5` ZIPを生成・照合する。実repoへのsync、配備、commit/pushは今回の依頼に含めず未実施。
+
+## miku-toolbox を外部スキルとして同梱（2026-10-26）
+
+- [x] igapyon-miku-toolbox を外部取り込み対象へ追加。v0.4.0 のコミット ecc03c3dec6019845535140d3b920ade9909d7c2 に固定。
+- [x] Maven の取得設定、index policy、配布 README の件数・カタログを更新。配布対象は合計27件（内製15件、外部12件）。
+- [x] 上流の固定コミットに index.json がないため、既存の外部 index policy に従って索引検査対象外とした。
+- [x] 2026-10-26のsync実装時に `1.20261026.3` をpackageし、miku-toolboxを含む27スキルのZIPを検査した。
+
+## mikuku-agent：手指は原則対象外、どうしても必要な描写は妨げない（2026-10-26）
+
+- [x] 手指は原則描写対象外とする。どうしても必要な場合は画面外に隠す制約を外し、必要な描写を妨げない。制作上の判断として理由を短く残す。
+- [x] 共通スタイル、10〜60番の制作・検品手順、セクションプロンプト合成、生成前監査へ方針を反映。
+- [x] 「物を持たせない」だけでは監査を通さず、合成出力と例外理由の引き継ぎも確認。対象Nodeテスト13件とskill validatorが成功。
+
+## miku-scm：Issue操作とapprove承認の改善（2026-10-23・source実装済み）
+
+計画と実施記録：[2026-10-23-issue-approval-implementation-plan.md](skills/igapyon-miku-scm/docs/2026-10-23-issue-approval-implementation-plan.md)。利用者の実装指示に基づきUX-00〜08をmiku-scm sourceへ反映した。
+
+- [x] UX-00：現在のbranch/HEAD/worktreeを確認し、既存の計画差分を保持。
+- [x] UX-01：完全一致 `approve` 文法、review正規化、repository・順序・契約・内容digestのbindingとテスト。
+- [x] UX-02：handoff schema v2、explicit-ID READONLY review workflow、v1記録のlist/dismiss互換。
+- [x] UX-03：単独/batch apply gate、exclusive claim、approval receipt、global pendingからの自動選択禁止。
+- [x] UX-04：検証済みの順序付き複合操作と同Issue依存snapshot確認。
+- [x] UX-05：applied/not-applied/conflict/unresolvedの区別、証明済み未実施だけのreceipt付きresume、attention一覧。
+- [x] UX-06：ID/digest/内部引数を通常表示から外し、完全なIssue・コメント・提案内容をreviewに表示。SKILL/referencesとDaybook callerを整合。
+- [x] UX-07：manifest/CLI/help/contract lockと生成referenceを更新し、受け入れテストを追加。
+- [x] UX-08：fast 197/197、full 312/312、skill index policy 78/78、Maven validate、skill validator、contract drift、`git diff --check`を確認。
+
+approveはこの会話で完全表示済みの案にAgent側で束縛し、ID入力やglobal pending選択を求めない。GitHub CLIのcomments接続形式も件数・node数を照合し、不完全なレビューを止める。miku-scm human outputはv12、workflow manifestはv2、Issue approval workflow contractはv2。
+
+2026-10-26照合：source変更は `2066b3d` にまとまり、PR #398（`ee88c7c`）でマージ済み。共通版はその後 `1.20261026.2` へ更新されている。モデル会話確認、Windows実機確認、実GitHub操作、skill配備の実施証拠は今回確認していない。上記のテスト件数は10月23日の実装時の記録。
+
+## daybook：Waypointsの名称・基本方針・source実装（2026-10-20・完了）
+
+仕様記録：[daybook-waypoints.md](docs/plans/daybook-waypoints.md)。ルート`waypoints/`にJSTの作成日時付きの短い再開メモを複数保存する。task・activitiesを正本とし、Git状態は具体的な実行に必要な段階で確認する。関連スレッドは担当範囲と最終確認時点を添えた参照として扱う。
+
+- [x] 名称`waypoints`と、ここまでの合意を文書化。
+- [x] `updated_at`と`status: ready | in_use | closed`を新規waypointのfront matterとして実装。
+- [x] 保存、選択、再開、中断、役割終了時の手順をDaybookスキルへ追加。READMEや稼働監視を必須にしない。
+- [x] サブ作業を独立して再開する番号付きwaypointを実装。共通日時・topicと固定番号を使い、計画・依存関係・進捗はtaskまたは計画書を正本とする。
+- [x] `SKILL.md`、records/operations reference、root READMEに入口・配置・用途を反映。
+- [x] 自己レビュー2件を修正。既存メモの更新と新規作成の同名回避を区別し、全体・子メモの相互リンクと追加時の案内更新を明記。
+- [x] 実daybookの既存データは変更せず、仕様案・TODO・HANDOFFに実装範囲を記録。
+
+## daybook：添付をテキスト中心にする方針（2026-10-20設計・2026-10-26 source反映済み）
+
+設計記録：[daybook-text-first-attachments.md](docs/plans/daybook-text-first-attachments.md)。運用上の正本は [attachments.md](skills/igapyon-miku-daybook/references/attachments.md)。画像・音声・動画・Office・PDFの原本格納を避け、必要情報と原本参照、必要な本文のテキスト化を優先する。Officeはmiku-ms-office、PDFはローカル文字抽出/OCRを検討し、中間物やbase64の流入、重複保存も防ぐ。
+
+- [x] 現行の添付保存案内と変換側の制約を調査。
+- [x] 保存判断・形式別の扱い・変換制約・個別例外・既存データ・確認例を仕様案へ記録。
+- [x] source skillの操作規則と関連説明へ反映。`38e73af` / PR #408（`8d8f68c`）に `attachments.md` とSKILL・records・operations・DEVELOPMENTの更新を含む。実資料の変換や既存添付の移行を実施したことにはしない。
+
+## daybook：今日の作業と Backlog を分ける（2026-10-19・source実装済み）
+
+計画作成後の実装指示に従い、[daybook-backlog-separation.md](docs/plans/daybook-backlog-separation.md) のBLG-00〜05をsource skillとfixtureへ実装した。task に `planning_state: planned | backlog` を追加。day-plan は今日の作業と `Backlog` を分け、属性省略はplannedとして互換性を維持し、Backlogの日付は補わない。
+
+- [x] BLG-00：実際のGit状態・既存差分・sourceとtestsを確認し、既存作業を保持。
+- [x] BLG-01：reader・選択・Backlog表示とday-planテストを実装。
+- [x] BLG-02：Issue manifest・日付導出・preview/receipt・schema v1再開互換を実装。
+- [x] BLG-03：schema・作成/更新/一覧・移行手順を整合。
+- [x] BLG-04：README/DEVELOPMENT・通知説明とrenderer確認を整合。
+- [x] BLG-05：対象suiteと静的照合を実施し、実績と制約を記録。
+
+実装時の確認：daybook suite 51/51、`npm run test:skill-index-policy` 77/77。`git diff --check` と変更ファイル・文書リンクの確認を完了。2026-10-26照合：Waypointsとともに `1c22c5c` にまとまり、連動版更新を含めてPR #396（`5a7376d`）でマージ済み。実daybookデータの分類、配備、運用確認は今回確認していない。
+
 ## daybook：URLから関連 task を探す（2026-10-15・source 実装済み）
 
 計画・実装記録：[daybook-url-task-lookup.md](docs/plans/daybook-url-task-lookup.md)。利用者の後続指示に従い source skill を実装した。URLと task の関連確認を明示された場合だけ内容を読み、全年月の task から候補と理由を返す。探索だけでは記録を変更せず、記録まで依頼された場合は既存の編集範囲を適用する。
@@ -11,7 +257,7 @@
 - [x] URL-04：U1〜U14 を静的照合。skill validator と `git diff --check` が成功。
 - [x] URL-05：実装・確認結果と未実施のモデル挙動確認を記録。
 
-モデル／tool mock による挙動確認、実 daybook への適用、skill 配備、version 更新、commit／push は未実施。
+2026-10-26照合：source変更はレビュー指摘修正とともに `2232cec` / PR #389（`fbe24e0`）でマージ済み。モデル／tool mockによる挙動確認、実daybookへの適用、skill配備は今回確認していない。共通版は後続更新済み。
 
 ## daybook スキルのレビュー指摘修正（2026-10-15・実装済み）
 
@@ -24,9 +270,9 @@
 - [x] DBR-04：C1〜C8を静的照合。一時 fixture S1/S3/S5/S6 成功。S2/S4 は CLI 読込確認まで成功したが、`npm install --offline` は registry cache 不足（`ENOTCACHED`）で失敗し、`yaml` の導入・lock 更新は未検証。`quick_validate.py` と `git diff --check` は成功。
 - [x] DBR-05：この TODO、HANDOFF、計画書に変更・検証結果を反映。
 
-実 daybook、GitHub、配備先、version、commit/push は変更していない。S2/S4 の npm 依存取得と lock 更新はネットワーク利用可能な環境での確認事項。
+実装時は実daybook、GitHub、配備先を変更していない。source変更は `2232cec` / PR #389でマージ済みで、共通版は後続更新済み。S2/S4のnpm依存取得とlock更新の実施証拠は今回確認していない。
 
-## 配布ZIPのsource照合補修（2026-10-11・ローカル実装済み）
+## 配布ZIPのsource照合補修（2026-10-11実装・マージ済み）
 
 利用者の実装指示に従い、正本：[release-archive-source-verification.md](docs/plans/release-archive-source-verification.md)のZIP-00〜05をroot repoへ反映した。内部sourceから配布対象を決め、ZIP展開先の集合・型・内容と照合し、14代表参照も展開先で確認する。この補修はindex.json移行と同じroot SCM反映に含める。
 
@@ -58,7 +304,7 @@
 
 ## GitHub Issue受信・daybook取り込み（Luna向け実装計画・実装済み）
 
-登録日：2026-10-06。状態：2026-10-06の実装指示に基づくローカル実装・fixture検証を完了。実GitHub操作、skill配備、commit/pushは未実施。
+登録日：2026-10-06。状態：同日の実装指示に基づくローカル実装・fixture検証を完了。sourceは `ec0ec0c` / PR #382（`3eb211f`）でマージ済み。実GitHubのIssue操作・skill配備は今回未確認。以下は実装時の計画・検証記録。
 
 ユーザー指定により、この実装計画はigapyon-agent-skillsのTODO.mdで管理する。daybookのTODO.mdや月別taskへ追加しない。
 
@@ -358,7 +604,7 @@ git diff --check
 
 ## Release ZIPをスキル配布用に整理する実装計画（Luna向け、2026-10-05）
 
-状態：実装済み（2026-10-06、Codex）。最終ZIPをローカル生成・検査済み。配備、commit/push、タグ作成、GitHub Release公開は未実施。
+状態：実装済み（2026-10-06、Codex）。当時の最終ZIPをローカル生成・検査済み。sourceは `ec0ec0c` / PR #382でマージ済み。配備、tag、GitHub Releaseの現在の状態は今回未確認。以下のZIP件数・検証結果は当時の記録であり、最新版 `1.20261026.2` の確認結果ではない。
 
 目的：カスタムRelease ZIPを、導入するスキル一式と配布用の案内・ライセンス・外部スキルの出典情報に絞る。ビルド用ソースはリポジトリとGitHub標準のソースアーカイブから参照する。
 
@@ -740,9 +986,11 @@ node scripts/check-release-archive.mjs target/igapyon-agent-skills-*.zip
 
 ## igapyon-miku-daybook 作成計画（Luna向け・2026-09-14）
 
-目的：daybookのtask・schedule・activity・day-planを、自然文の依頼から一貫したルールで管理できるスキルを作る。基本実装は完了し、受入検証・配備・commit/pushを残す。既存の他スキルの作業計画と未コミット変更は保持する。
+当初の目的：daybookのtask・schedule・activity・day-planを、自然文の依頼から管理できるスキルを作る。初版sourceは `8849b69` / PR #366（`4522ec4`）でマージ済み。
 
-実装済み：`SKILL.md`、3つのreference、`agents/openai.yaml`、生成`index.json`、READMEのskill一覧を追加した。`quick_validate.py`、`mvn generate-resources`、`git diff --check`は成功。forward test、Codex配備、commit/pushは未実施。
+初版時は `SKILL.md`、3つのreference、`agents/openai.yaml`、生成 `index.json`、READMEのskill一覧を追加し、validator・生成・diff確認が成功していた。現在は後続変更でreferenceとassetを拡張し、補助 `index.json` は任意化方針に従って削除済み。
+
+以下は2026-09-14の初版計画として保持する。当時の新規記録の日付キー、5列一覧、1日3回通知、手書きday-plan保持などを現行の既定として使わない。旧 `planned_date` / `due` は互換用aliasとして残る。現行は [records.md](skills/igapyon-miku-daybook/references/records.md)・[operations.md](skills/igapyon-miku-daybook/references/operations.md)・[notification.md](skills/igapyon-miku-daybook/references/notification.md) を確認する。未チェック欄を一括で未実装とは判定せず、モデル動作・配備等の証拠不足は別に残す。
 
 ### 0. 作成先と初版の範囲
 
@@ -760,10 +1008,10 @@ node scripts/check-release-archive.mjs target/igapyon-agent-skills-*.zip
 
 ### 2. 成果物を作る
 
-- [ ] `SKILL.md`：目的、対象repoの決定、発火条件、操作の振り分け、正本の優先順、編集後の確認を短く記載する。descriptionでは正式名・短縮名による依頼、および対象がdaybookと明確な記録管理を扱う。一般的なTODO相談や別のdiary管理を無条件で引き受けない。スキル自体の命名相談・説明・作成は管理操作と区別する。
-- [ ] `references/records.md`：配置、命名、採番、front matter、状態、日付解釈、リンク更新、4種類の最小記録例を書く。例は架空のものにし、実在の領収書・口座・メール本文などをコピーしない。
-- [ ] `references/operations.md`：task追加・更新・一覧、scheduleの追加・訂正、activityの追記、day-plan生成の手順と完了判定を書く。以下の仕様と受入ケースを反映する。
-- [ ] `references/notification.md`：既存ActionsとIssue通知の仕組み、設定箇所、実行履歴→投稿結果→メール受信の切り分けを書く。通知相談時だけ読む参照先とし、毎回読み込ませない。
+- [x] `SKILL.md`：目的、対象repoの決定、発火条件、操作の振り分け、正本の優先順、編集後の確認を記載済み。正式名・短縮名、daybookの記録操作、一般的なTODO相談や公開diaryとの境界を設けた。2026-10-26にsourceで再確認。
+- [x] `references/records.md`：配置、命名、採番、front matter、状態、日付解釈、リンク、4種類の最小記録例を記載済み。後続の予定期間・Backlog等を含む現行sourceで再確認。
+- [x] `references/operations.md`：task・schedule・activity・day-planの操作と完了判定を記載済み。以下の初版仕様からの変更は現行referenceを優先する。
+- [x] `references/notification.md`：Actions・Issue通知、設定、実行履歴・投稿・メール受信の切り分けを記載済み。通知操作時に読む入口はSKILLに実装済み。
 - [ ] `SKILL.md`から各referenceを読む条件を明記する。daybook READMEと説明が食い違う場合はユーザーの最新指示を優先し、現行README・実装を確認して差異を報告する。個人のタスク本文や変更されやすい設定値をスキルの固定仕様として持たない。
 - [ ] UI metadataを作る場合はskill-creatorの`references/openai_yaml.md`を読んで整合させる。単に既存スキルが明示呼び出し中心だからという理由で、非表示につながるdiscovery設定を追加しない。
 
@@ -817,6 +1065,8 @@ node scripts/check-release-archive.mjs target/igapyon-agent-skills-*.zip
 - [ ] 配備を依頼された場合は`sh scripts/sync-codex-skill.sh igapyon-miku-daybook`と`--check`を使う。配備先への書き込み権限と既存差分を確認する。
 - [ ] 完了条件：Lunaが会話履歴なしでSKILL.mdから必要なreferenceを選べ、追加・期限更新・部分進捗・活動記録・5列一覧・7日間day-plan生成を正しく実行できる。仕様上の差異と未実装事項を完成済みとして扱わない。
 
+
+### 当時の検討候補（採否未照合）
 
 - [ ] 必要性が明確になったら writer skill を追加する
 - [ ] skill 配布先が必要になったら mirror 方針を決める
@@ -949,12 +1199,11 @@ node scripts/check-release-archive.mjs target/igapyon-agent-skills-*.zip
     明示レビューは `REVIEWER WORKFLOW`、単純言及、存在確認、self-review は `META WORK` と
     なることを確認した。multi-lens test でも canonical report と safety-first を確認した
 
-## AI Agent Current Tasks
+## 過去のAI Agent作業記録（2026-07〜09）
 
-This section tracks active work items for AI agents.
-Update this section while working. Do not rewrite unrelated TODO items.
+以下は当時の計画・実施記録。現在の優先作業は本ファイル冒頭の `AI Agent Current Tasks` を参照する。各Stepの実行順、当時のbranch・未commit・配備状態を、今の実行指示へ読み替えない。
 
-### Tasks
+### 当時のタスク
 
 - [ ] miku-scm Windows 11 publication 対応
   - [詳細実装計画](WINDOWS11-PUSH-PLAN.md) の W00 → W09 を順番に処理する。
@@ -1209,8 +1458,13 @@ Update this section while working. Do not rewrite unrelated TODO items.
       contract drift check、`mvn generate-resources`、Skill validation、`git diff --check`を成功
       させた。sourceの`index.json`は更新済み。hosted macOS/Windows CI、commit、push、
       `~/.codex/skills`同期はユーザー指示がないため未実施であり、実装の未完了ではない。
+    - 2026-10-24: contract driftを検出して12 workflow分のgenerated lock/tableを再生成した。
+      `npm run test:github-writer`（34 pass）、contract drift check、generated index check、
+      Skill validation、`git diff --check`が成功。macOS arm64のbenchmarkを取得した。hosted
+      macOS/Windows CIとWindows 11実機acceptance smokeはこの環境から未実施。
 
-- [ ] [Current priority: miku-scm `work.commit` staged diff failure]
+- [ ] [実装修正はマージ済み・追加検証は保留: miku-scm `work.commit` staged diff failure]
+  2026-10-26照合：修正は `c6a4656` / PR #349（`c914b1a`）でマージ済み。残る未チェックは当時のWindows/hosted CI等の検証証拠であり、修正そのものの未実装を意味しない。以下は当時の計画。
   stage済みの正当な変更を固定runnerがcommit前に`partial`として停止し、巨大な
   `git diff --cached` stdoutを結果へ含める不具合を再現して修正する。以下のStep 0から
   Step 4までを順番に実行し、focused testが成功してから次へ進む。
@@ -1298,8 +1552,9 @@ Update this section while working. Do not rewrite unrelated TODO items.
       Skill validationはすべて成功した。hosted macOS/Windows CIと`~/.codex/skills`同期は
       この作業では未実施のまま残す。
 
-- [ ] [Current priority: miku-scm 高速化の自己レビュー対応] 以下のStep 0から
-  Step 8までを番号順に実行する。後続Stepを先行実装しない。各Stepのfocused testが
+- [ ] [source実装はマージ済み・hosted CI証拠は未確認: miku-scm 高速化の自己レビュー対応]
+  2026-10-26照合：実装は `a334855` / PR #347（`c443638`）でマージ済み。hosted CIの実行証拠は今回取得していない。以下の順序・未commit状態・同期結果は当時の計画と記録。
+  当時の手順はStep 0からStep 8までを番号順に実行するものだった。各Stepのfocused testが
   成功してから次へ進み、失敗時はそのStep内で修正する。
   - 作業規則:
     - この項目の実装中は、ユーザーが明示するまで`git commit`、`git push`、PR作成、
@@ -1553,10 +1808,8 @@ Update this section while working. Do not rewrite unrelated TODO items.
       Skillとの一致を確認。branchは`devel-tiga0810vdc`、`origin/devel`より2 commits先行。
       この実装によるcommit/pushは未実行。Step 7のhosted Windows CI初回成功だけは外部実行待ち。
 
-- [ ] [Current priority: miku-scm Work Cycle] Decide whether version commit
-  `27a2ed7` is published as a standalone PR or kept as the first commit of the
-  miku-scm implementation PR.
-- [ ] [Current priority: miku-scm Work Cycle] Implement the approved redesign
+- [x] [履歴訂正: miku-scm Work Cycle] 旧version commit `27a2ed7` の公開方法の選択待ちを解除。連動版更新と最初の実装は `0cc8aaa` / PR #344（`044734b`）に含まれる。旧commitを今から公開する判断は不要。
+- [ ] [Backlog: miku-scm Work Cycleの残りの設計] Implement the approved redesign
   in small slices from
   `skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md`.
   - [x] Add the explicit `pr recommit push` transition and its fixed runner
@@ -1564,8 +1817,10 @@ Update this section while working. Do not rewrite unrelated TODO items.
     post-push comparison, and the `-done` rename guard.
     - 2026-08-10: macOS fixed runner and success, remote-conflict,
       backup-integrity, and unsupported-platform tests are complete. Windows
-      publication remains a safe pre-backup stop until the shared adapter
-      migration is implemented. Fast suite: 117; full suite: 215.
+      publication was then a safe pre-backup stop. The shared adapter and
+      Windows publication path were later merged by PR #366; native Windows 11
+      acceptance evidence remains unconfirmed. Historical fast suite: 117;
+      full suite: 215.
   - Move expected fixed checks into the runner while retaining a human pause
     for actual safety boundaries and failed validation.
   - Keep version reminders non-blocking and isolate macOS/Windows differences
@@ -1627,8 +1882,8 @@ Update this section while working. Do not rewrite unrelated TODO items.
       allowance, and Java 8 compatibility versus source/target-only compilation.
     - Confirmed initial high-confidence stale statements: current
       `miku-xlsx2md-java` multi-module shape and the dated layer 10 repository
-      scope list. Node.js 20 is also stale as the maintained starter minimum
-      because the official lifecycle lists it EOL since 2026-03-24.
+      scope list. Node.js 20 is also stale as the maintained starter minimum;
+      the official release schedule gives its EOL as 2026-04-30.
     - Continue extraction before treating the pilot set as complete.
   - [x] Refresh the local-only sibling repository inventory and classify the
     first-pass candidates by naming layer.
@@ -1694,8 +1949,12 @@ Update this section while working. Do not rewrite unrelated TODO items.
         smoke gates, timeout/concurrency controls, and artifact staging.
       - Treat these counts as observations, not findings; repository naming is
         only a discovery hint and workflow absence is not automatically a defect.
-    - [ ] Complete the Node.js 20-to-22/24 baseline decision and migration
-      inventory as a dedicated part of the workflow audit.
+    - [ ] Complete the Node.js sibling compatibility inventory and migrations
+      as a dedicated part of the workflow audit.
+      - [x] Approve and apply the shared starter rule: oldest upstream-
+        maintained LTS as the product floor, with verification on that floor
+        and the newest LTS. Include maintained LTS lines between them when
+        practical. The 2026-10-22 snapshot is minimum 22 and newest LTS 24.
       - The first literal scan found Node 20 on a `node-version` line in 29
         direct sibling workflow files, Node 22 in 3, and Node 24 in 14; counts
         overlap where a matrix names more than one version.
@@ -1703,12 +1962,20 @@ Update this section while working. Do not rewrite unrelated TODO items.
         `engines.node` range: 3 use `>=18.19.1`, 5 use `>=20`, 3 use `>=22`,
         and 2 use `>=24 <25`. Confirm applicability before calling older ranges
         defects.
-      - The developer references still express Node 20 assumptions in the
-        layer 10 and layer 40 workflows, layer 40 basic design, Agent Skills
-        and Web `package.json` starters, and the Agent Skills CI starter.
-      - Evaluate the preferred maintained default: product minimum `>=22`, CI
-        build/test on 22 and 24, release artifact build on 24, and smoke the
-        released runtime on 22 as well when `>=22` compatibility is claimed.
+      - The initial inventory found Node 20 assumptions in the layer 10 and
+        layer 40 workflows, layer 40 basic design, Agent Skills and Web
+        `package.json` starters, and the Agent Skills CI starter. The shared
+        references and first-party starter metadata/CI have since been updated;
+        sibling repository applicability remains to be classified.
+      - The first-party Agent Skills starter now uses `engines.node: ">=22"`
+        and CI `[22, 24]`; its Release build host remains 24. The Web starter
+        treats Node as build tooling and matches `engines.node` to its verified
+        Node 24 Release build.
+      - The Agent Skills Release workflow now stages the final release-named
+        ZIP and invokes a shared smoke verifier under Node 22 before upload.
+        The same verifier is covered by the starter tests. GitHub Actions is
+        the formal cross-version check; no Actions run occurred in this task.
+        Local Node 22/24 execution is not required by this strategy.
       - Evaluate Node 24-only as an explicit product profile or exception, not
         as an accidental consequence of using Node 24 for release builds.
       - Keep product runtime, dependency-install/build runtime, release-build
@@ -1719,9 +1986,10 @@ Update this section while working. Do not rewrite unrelated TODO items.
         unsupported compatibility note where useful, or document a bounded
         repository-specific exception with an end condition.
       - Wave C completed the 15-item reference/starter change register. The
-        candidate policy is now reviewable as separate product, CI, release
-        host, final-artifact smoke, compiler target, and Action-runtime fields;
-        the actual public-support decision remains pending.
+        shared support policy is approved; sibling applicability, exceptions,
+        and migrations remain pending. Keep product, CI, release host,
+        final-artifact smoke, compiler target, and Action-runtime fields
+        separate.
     - [ ] Audit and design a canonical release-artifact contract by product
       profile, taking the strongest existing patterns from sibling workflows.
       - Initial workflow signals: 13 files stage/copy `.mjs`, 14 stage/copy
@@ -2354,20 +2622,23 @@ prompt test が成功しても実動作が保証されたとは扱わず、肥�
 
 ## igapyon-miku-soft-developer review 整理
 
-- [ ] Node.js 20 EOL後のスターター互換性方針を更新する
-  - 2026-07-20時点でNode.js 20はEOLだが、新規スターターが
-    `engines.node: ">=20"`、CIマトリクス `[20, 24]` を採用している
-  - 最低対応版をNode.js 22へ引き上げ、`engines.node`、CIマトリクス、
-    関連ドキュメントを `>=22` / `[22, 24]` へ同期することを検討する
-  - ReleaseビルドのNode.js 24は維持する
-  - `actions/checkout@v6`、`actions/setup-node@v6`、
-    `actions/setup-java@v5`、`softprops/action-gh-release@v3` は
-    Node.js 24対応世代として現行方針と整合している
-  - この項目の棚卸し、役割分離、判断基準、移行順序は
-    `## AI Agent Current Tasks` の GitHub Actions 監査と
-    `workplace/miku-soft-reference-audit/github-actions-audit-plan.md` を正本とする
-  - ReleaseをNode.js 24で一度だけ構築し、対応下限を`>=22`とする成果物は
-    Node.js 22でもsmokeする案を検証する
+- [x] 2026-10-22: LUNA-00〜04とLUNA-06を実施した。
+  - ルールの担当箇所・例外・workflow上の要約を一覧化し、overviewの文書一覧とAgent Skills workflow内のNode版説明を整理した。
+  - Agent Skillsの隔離smokeを最終ZIPの展開後に変更し、ZIP内CLIのversionと小さな実操作を確認するfixtureを追加した。runtime欠落・空ファイル・2つ目のbackend欠落・壊れたCLI・欠落ZIP entry・名前変更後のZIPを検査した。
+  - Release workflowに、Node 24で作成して最終名にstageしたZIPをNode 22で検査するstepと、正常・名前変更・破損ZIPを直接検証する共通scriptを追加した。
+  - Node v26.12.0、OpenJDK 17.0.21、Maven 3.10.0で作業。ローカルのNode 22/24実行は必須にせず、GitHub Actionsを正式な確認先とする。Actions、Java 8 runtimeは未実行。
+  - 検証：routing suite 16/16、skill policy/archive suite 78/78、skill-creator quick_validate成功、git diff --check成功。
+  - D-NODEを反映し、最終artifact smokeをworkflowへ実装した。正式な確認先はNode 22/24のGitHub ActionsとRelease smokeであり、今回Actionsを起動していないため実結果は未確認。ローカルのNode 22/24実行は必須にしない。D-PATH、公開checksum・asset名、ローカル配備同期、独立モデル評価、GitHub操作は保留。詳細はskills/igapyon-miku-soft-developer/docs/maintenance/2026-10-22-luna-execution-record.md。
+- [x] Node.js 20 EOL後のスターター互換性方針を更新する
+  - 最低対応版はNode.jsが保守中のLTSのうち製品が対応を約束する最古のラインとし、CIではその最低版と最新LTSを検証する。中間の保守中LTSは可能な範囲で含める
+  - 2026-10-22時点のNode CLI / Agent Skillsスターターは `engines.node: ">=22"`、CI `[22, 24]`、Release build 24。Web starterはNodeをbuild-tool requirementとして扱い、現行検証host 24に合わせる
+  - 新しいLTS指定や最低版のEOL前に、公式release scheduleを確認して数値・CI・文書を一緒に更新する
+  - 最終staged artifactをNode 22で検査するRelease workflow stepとfixtureは実装済み。workflow未実行のためGitHub Actions上のmatrixとsmoke結果は未確認。ローカルのNode 22/24実行は不要とし、兄弟repository migrationは未完了
+- [x] Java CLIの互換性下限と検証対象を定める
+  - Java 8を標準の最低実行環境とし、実行対象はJava 8と選択したJDK配布元の最新LTS。中間の保守中LTSは必要性とCIコストに応じて追加する
+  - ビルドJDKと製品の実行環境を分け、Java 8向けのコンパイル設定だけで実行互換性を証明した扱いにしない。配布元によってサポート期間が異なるため、必要な場合はJDK distributionを明記する
+  - 2026-10-22時点の最新LTSはJava 25。TemurinはJava 8を少なくとも2030年12月まで提供予定。値と提供期間は各配布元の公式roadmapで更新する
+  - Java設計とstraight-conversion workflowへ反映済み。この仕様記録の更新ではJava 8 / 25 runtime、製品ビルド、GitHub Actionsを実行していない
 - [x] `skills/igapyon-miku-soft-developer/references/review/node-cli.md` に、他の review note と同じ `Severity Guidance` と `Review Output` を追加するか検討する
 - [x] `skills/igapyon-miku-soft-developer/references/review/` の入口として、各 review note の使い分けを説明する `README.md` または index 的な案内を追加するか検討する
 - [x] `skills/igapyon-miku-soft-developer/references/review/` 以下の review note 全体を整理し、ファイル粒度、見出し構成、分類条件、`Severity Guidance`、`Review Output` の揃い方を確認する

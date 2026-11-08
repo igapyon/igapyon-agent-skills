@@ -5,13 +5,14 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20261017.1</version>
+  <version>1.20261108.4</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
 
   <properties>
-    <project.build.outputTimestamp>2020-01-01T00:00:00Z</project.build.outputTimestamp>
+    <maven.build.timestamp.format>yyyy-MM-dd'T'00:00:00'Z'</maven.build.timestamp.format>
+    <project.build.outputTimestamp>${maven.build.timestamp}</project.build.outputTimestamp>
     <external.miku-indexgen-skills.repo>https://github.com/igapyon/miku-indexgen-skills.git</external.miku-indexgen-skills.repo>
     <external.miku-indexgen-skills.ref>cc6578a2aea71aea71955398231e249a96561e29</external.miku-indexgen-skills.ref>
     <external.miku-indexgen-skills.skillName>igapyon-miku-indexgen</external.miku-indexgen-skills.skillName>
@@ -25,32 +26,118 @@
     <external.miku-text-file-ops-skills.ref>cd270f0736c9a7b5760a6a2b28942e6ddb1c5692</external.miku-text-file-ops-skills.ref>
     <external.miku-text-file-ops-skills.skillName>igapyon-miku-text-file-ops</external.miku-text-file-ops-skills.skillName>
     <external.miku-prompt-lint-skills.repo>https://github.com/igapyon/miku-prompt-lint-skills.git</external.miku-prompt-lint-skills.repo>
-    <external.miku-prompt-lint-skills.ref>86850112fdb173037c5780c984d36d8f7e33bfd7</external.miku-prompt-lint-skills.ref>
+    <external.miku-prompt-lint-skills.ref>e550a2fd3d252f18b468f5514640a218f1aeafb8</external.miku-prompt-lint-skills.ref>
     <external.miku-prompt-lint-skills.skillName>igapyon-miku-prompt-lint</external.miku-prompt-lint-skills.skillName>
     <external.miku-ai-assistant-builder-skills.repo>https://github.com/igapyon/miku-ai-assistant-builder-skills.git</external.miku-ai-assistant-builder-skills.repo>
     <external.miku-ai-assistant-builder-skills.ref>cf1f0bbe42ca9ea8af9a1c6f09c2956a85224b80</external.miku-ai-assistant-builder-skills.ref>
     <external.miku-ai-assistant-builder-skills.skillName>igapyon-miku-ai-assistant-builder</external.miku-ai-assistant-builder-skills.skillName>
     <external.miku-ms-office-skills.repo>https://github.com/igapyon/miku-ms-office-skills.git</external.miku-ms-office-skills.repo>
-    <external.miku-ms-office-skills.ref>96c2af303865389a28735e0d53e08e8789c600d5</external.miku-ms-office-skills.ref>
+    <external.miku-ms-office-skills.ref>1b2dbd8ea7e7d7681664a0f12a954b61d8130e17</external.miku-ms-office-skills.ref>
     <external.miku-ms-office-skills.skillName>igapyon-miku-ms-office</external.miku-ms-office-skills.skillName>
+    <external.miku-md2formats-skills.repo>https://github.com/igapyon/miku-md2formats-skills.git</external.miku-md2formats-skills.repo>
+    <external.miku-md2formats-skills.ref>181b25087a82b52c35fb86e12003c087583119dd</external.miku-md2formats-skills.ref>
+    <external.miku-md2formats-skills.skillName>igapyon-miku-md2formats</external.miku-md2formats-skills.skillName>
     <external.miku-json2xlsx-skills.repo>https://github.com/igapyon/miku-json2xlsx-skills.git</external.miku-json2xlsx-skills.repo>
     <external.miku-json2xlsx-skills.ref>aab690d54a55022a7366b5325b103a5832d85a99</external.miku-json2xlsx-skills.ref>
     <external.miku-json2xlsx-skills.skillName>igapyon-miku-json2xlsx</external.miku-json2xlsx-skills.skillName>
     <external.miku-project-skills.repo>https://github.com/igapyon/miku-project-skills.git</external.miku-project-skills.repo>
-    <external.miku-project-skills.ref>2aa84147d11539d77b92a9bd12c9291cc8f9866b</external.miku-project-skills.ref>
+    <external.miku-project-skills.ref>7a855f3695d1f8143db6e8ce6fe0c50362d98566</external.miku-project-skills.ref>
     <external.miku-project-skills.skillName>igapyon-miku-project</external.miku-project-skills.skillName>
     <external.miku-score-skills.repo>https://github.com/igapyon/miku-score-skills.git</external.miku-score-skills.repo>
     <external.miku-score-skills.ref>f40727cb87df3123ea26e055fe616d421860d423</external.miku-score-skills.ref>
     <external.miku-score-skills.skillName>igapyon-miku-score</external.miku-score-skills.skillName>
+    <external.miku-toolbox-skills.repo>https://github.com/igapyon/miku-toolbox-skills.git</external.miku-toolbox-skills.repo>
+    <external.miku-toolbox-skills.ref>ecc03c3dec6019845535140d3b920ade9909d7c2</external.miku-toolbox-skills.ref>
+    <external.miku-toolbox-skills.skillName>igapyon-miku-toolbox</external.miku-toolbox-skills.skillName>
   </properties>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.5.0</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.codehaus.plexus</groupId>
+              <artifactId>plexus-utils</artifactId>
+              <version>4.0.3</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.16.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.5.0</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.codehaus.plexus</groupId>
+              <artifactId>plexus-utils</artifactId>
+              <version>3.6.1</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.6.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.5.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.22.0</version>
+          <dependencies>
+            <dependency>
+              <groupId>commons-beanutils</groupId>
+              <artifactId>commons-beanutils</artifactId>
+              <version>1.11.0</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.6.2</version>
         <executions>
+          <execution>
+            <id>record-release-archive-timestamp</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>node</executable>
+              <arguments>
+                <argument>${project.basedir}/scripts/record-release-archive-timestamp.mjs</argument>
+                <argument>${project.build.outputTimestamp}</argument>
+                <argument>${project.version}</argument>
+              </arguments>
+            </configuration>
+          </execution>
           <execution>
             <id>validate-version-alignment</id>
             <phase>validate</phase>
@@ -114,6 +201,9 @@
                 <argument>${external.miku-ms-office-skills.repo}</argument>
                 <argument>${external.miku-ms-office-skills.ref}</argument>
                 <argument>${external.miku-ms-office-skills.skillName}</argument>
+                <argument>${external.miku-md2formats-skills.repo}</argument>
+                <argument>${external.miku-md2formats-skills.ref}</argument>
+                <argument>${external.miku-md2formats-skills.skillName}</argument>
                 <argument>${external.miku-json2xlsx-skills.repo}</argument>
                 <argument>${external.miku-json2xlsx-skills.ref}</argument>
                 <argument>${external.miku-json2xlsx-skills.skillName}</argument>
@@ -123,6 +213,9 @@
                 <argument>${external.miku-score-skills.repo}</argument>
                 <argument>${external.miku-score-skills.ref}</argument>
                 <argument>${external.miku-score-skills.skillName}</argument>
+                <argument>${external.miku-toolbox-skills.repo}</argument>
+                <argument>${external.miku-toolbox-skills.ref}</argument>
+                <argument>${external.miku-toolbox-skills.skillName}</argument>
               </arguments>
             </configuration>
           </execution>
@@ -131,7 +224,19 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.7.1</version>
+        <version>3.8.0</version>
+        <dependencies>
+          <dependency>
+            <groupId>io.airlift</groupId>
+            <artifactId>aircompressor</artifactId>
+            <version>2.0.3</version>
+          </dependency>
+          <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-utils</artifactId>
+            <version>4.0.3</version>
+          </dependency>
+        </dependencies>
         <configuration>
           <descriptors>
             <descriptor>src/assembly/release.xml</descriptor>

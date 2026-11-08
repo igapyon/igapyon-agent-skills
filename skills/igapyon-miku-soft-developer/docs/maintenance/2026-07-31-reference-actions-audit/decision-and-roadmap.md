@@ -1,6 +1,6 @@
 ---
 title: miku-soft developer audit decisions and roadmap
-description: "Durable design principles, pending policy choices, and authorized-order roadmap for reference and workflow normalization."
+description: "Durable design principles, approved Node compatibility policy, remaining policy choices, and roadmap for reference and workflow normalization."
 topics:
   - miku-soft
   - decisions
@@ -12,7 +12,7 @@ audience:
   - maintainer
   - agent
 created: 2026-07-31
-updated: 2026-07-31
+updated: 2026-10-22
 sources:
   - type: local-file
     role: primary
@@ -28,8 +28,8 @@ sources:
 
 ## Design Principles Already Selected
 
-These principles govern the next work even while numeric policy values remain
-pending.
+These principles govern the next work. The shared Node compatibility rule was
+approved on 2026-10-22; other numeric policy values remain pending.
 
 1. Separate implementation practice, target-state guidance, and dated external
    constraints.
@@ -47,11 +47,25 @@ pending.
 9. Treat published Release assets, URLs, checksums, vendor metadata, and
    released Skill ZIPs as immutable historical records.
 
-## Pending Product-Owner Decision Packet
+## Approved Node Baseline
+
+Use the oldest Node.js LTS line still maintained upstream as the product
+compatibility floor. Verify the floor and the newest LTS in CI, and include
+maintained LTS lines between them when the matrix cost is reasonable. The
+Release build host follows the newest LTS. Check the
+[official Node.js release schedule](https://github.com/nodejs/Release#release-schedule)
+when selecting or refreshing the values.
+
+The current shared starter snapshot, checked 2026-10-22, is product minimum
+`>=22`, CI on Node 22 and 24, and Release build on Node 24. Web-only Node
+requirements are build-tool requirements and must match their actual verified
+build environment. The final staged-artifact smoke policy remains a separate
+verification item.
+
+## Remaining Product-Owner Decision Packet
 
 | Decision | Leading recommendation | Explicit alternatives |
 | --- | --- | --- |
-| Node product baseline | product >=22; CI 22/24; Release build 24; final staged runtime smoke 22 | justified Node 24-only, browser build-tool-only, Java/non-Node |
 | Release integrity | one SHA256SUMS for future multi-asset Releases | documented singleton sidecar exception |
 | Custom asset naming | retain role-before-version grammar | documented compatibility exception |
 | Native artifact names | retain Maven classifier and npm pack names | none without a concrete ecosystem migration |
@@ -65,7 +79,7 @@ pending.
 
 1. numbering and typed taxonomy;
 2. Release orchestration profiles;
-3. Node and Java baselines;
+3. remaining Node exceptions and Java baselines;
 4. artifact roles, naming, checksum, and reproducibility;
 5. MCP baseline and evidence-strength rules;
 6. starter asset and discovery contracts; and

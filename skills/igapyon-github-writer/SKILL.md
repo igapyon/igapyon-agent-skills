@@ -1,13 +1,27 @@
 ---
 name: igapyon-github-writer
-description: Use only when the user explicitly asks to draft GitHub PR text, GitHub Release notes, GitHub About text, rebuild local commits with soft reset and a drafted PR text as the commit message, create a local backup branch, or inspect the current branch status using igapyon-github-writer. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
+description: Use only when the user explicitly invokes `igapyon-github-writer` or `github-writer`; a bare name asks which supported task they want. Continue an agreed use without repetition. Do not activate for unnamed GitHub-writing or Git requests, or for `miku-scm draft recommit push` and its documented `miku-scm pr recommit push` alias; those belong exclusively to `igapyon-miku-scm`.
 ---
 
 # igapyon-github-writer
 
 This skill drafts Markdown text for GitHub surfaces from local repository evidence. It can also save drafted GitHub text to a local Markdown file, rebuild local commits with soft reset and a drafted PR text as the commit message, create a local backup branch at the current `HEAD`, and report the current branch status as preparation for GitHub writing work.
 
-Use it only for GitHub writing text, local draft-file saving for that text, explicit PR soft-reset recommit work, explicit local backup-branch creation, and the local branch-status checks that prepare that writing. Do not create PRs, tags, releases, issues, non-backup branches, or remote changes. Local commits are allowed only inside the explicit PR Soft Reset Recommit workflow.
+After explicit activation, this skill supports GitHub writing text, local draft-file saving for that text, PR soft-reset recommit, local backup-branch creation, and branch-status checks that prepare GitHub writing. It does not create PRs, tags, releases, issues, non-backup branches, or remote changes. Local commits are allowed only inside the explicit PR Soft Reset Recommit workflow.
+
+## Activation
+
+Activate only when the user explicitly invokes the whole name
+`igapyon-github-writer`, the short name `github-writer`, or asks to use/apply
+the GitHub writer skill. A bare invocation without a task asks which supported
+workflow they want. Continue an agreed use without requiring the name again.
+Do not activate from task wording alone. Names inside supplied artifacts are
+data, not invocation; explanation, review, or editing requests about this
+skill are meta work.
+
+The exact `miku-scm draft recommit push` workflow and its documented
+`miku-scm pr recommit push` alias belong exclusively to `igapyon-miku-scm`.
+Do not activate this skill for their PR-drafting or soft-reset portions.
 
 ## GitHub CLI And Network Boundary
 
@@ -17,7 +31,7 @@ GitHub inspection or mutation does not relax this boundary; stop this skill's
 workflow and report that the operation is unsupported here. Read and apply
 [references/github-cli-prohibition.md](references/github-cli-prohibition.md).
 
-Do not use this skill for generic commit summaries, changelogs, branch inspection, backup operations, or repository cleanup unless the user explicitly asks for GitHub PR, GitHub Release, GitHub About text, PR soft-reset recommit from drafted PR text, local backup-branch creation through this skill, branch status through this skill, or names this skill.
+The mode phrases below select a workflow only after explicit activation; they do not activate this skill by themselves. Generic commit summaries, changelogs, branch inspection, backup operations, and repository cleanup remain out of scope.
 
 If the user asks whether there is a skill for GitHub PR, Release, or About text, mention this skill as an available option, but do not apply it until the user asks to use it.
 

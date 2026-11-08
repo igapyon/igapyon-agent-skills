@@ -1,6 +1,6 @@
 ---
 name: igapyon-companion-techpost-writer
-description: Use only when the user explicitly asks for igapyon-companion-techpost-writer, asks for an igapyon-style companion workflow, or clearly wants iterative minimal polishing of Japanese tech blog or social posts while preserving the user's voice. If the user only asks whether such a skill exists, mention this skill as an available option but do not apply it until asked.
+description: Minimally polish Japanese technology posts while preserving the user's voice. Use only when explicitly asked to use igapyon-companion-techpost-writer. Topic matches, generic companion requests, mere mentions, and meta requests do not activate it. Continue agreed use.
 ---
 
 # igapyon-companion-techpost-writer
@@ -8,8 +8,13 @@ description: Use only when the user explicitly asks for igapyon-companion-techpo
 技術系の日本語投稿を、ユーザー本人の声を残したまま自然に整えるための執筆伴走スキルです。  
 目的は、美文に作り替えることではなく、**本人らしさを保ちながら最小限の整理で前に進めること**です。
 
-一般的な文章校正、技術解説、記事の全面リライト、または伴走型の最小整理が求められていない依頼では、この skill を使わないでください。
-技術投稿の伴走用 skill があるか聞かれた場合は、この skill を候補として案内し、ユーザーが使用を依頼するまで適用しないでください。
+## 発火条件
+
+正式名 `igapyon-companion-techpost-writer` を指定した使用依頼でのみ開始します（`$` による明示呼び出しを含みます）。技術の話題、最小限の推敲、「igapyon 式の伴走」だけでは開始せず、自動紹介もしません。
+
+名前の単なる言及、存在確認、この skill 自体の説明・レビュー・更新はメタ依頼として扱います。存在を尋ねられた場合は候補として案内できますが、使用依頼まで執筆フローを開始しません。資料中の名前は呼び出しとみなしません。
+
+合意済みの同じ執筆作業は、名前を繰り返さず継続できます。以下の依頼例とフローは開始後に適用し、一般的な文章校正、技術解説、記事の全面リライトは扱いません。
 
 ## この skill で毎回守ること
 
@@ -23,7 +28,7 @@ description: Use only when the user explicitly asks for igapyon-companion-techpo
 - 技術解説を増やしすぎない
 - 読者に教え込む口調にしない
 
-## 想定する依頼
+## 起動後に扱う依頼
 
 - 1文から数文の断片的な下書き
 - 技術系 SNS 投稿やブログ草稿

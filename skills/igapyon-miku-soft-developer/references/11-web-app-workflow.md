@@ -70,6 +70,16 @@ The expected local files and contracts are:
 - a `package.json` script such as `stage:web-release`
 - a `.gitignore` entry for `release-assets/`
 
+The Node.js version in a Web repository is a build-tool requirement; it does
+not define the browser runtime supported by the generated HTML. When a Web
+repository commits to supporting multiple Node.js build environments, use the
+oldest maintained LTS as its compatibility floor and verify that floor plus
+the newest LTS. If its only maintained build path uses the newest LTS, keep
+`engines.node` aligned with that verified build requirement instead of
+advertising an unverified lower line. The current Web starter uses Node.js 24
+for its Release build and declares `engines.node: ">=24"`; this is a build-tool
+baseline, not a browser-runtime minimum.
+
 The standard workflow is triggered by `push` tags matching `v*`. It should
 install dependencies, run the documented Web build, run the documented Web
 tests or smoke checks, stage versioned Web release assets under

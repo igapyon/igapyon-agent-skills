@@ -17,24 +17,25 @@ conversation. The agent passes `--apply` only after the human explicitly says
 
 ## Human Review Boundary
 
-Resolve the full reviewed local commit SHA, then run read-only preflight before
-asking for publication approval:
+Resolve the full reviewed local commit SHA, then run read-only preflight with
+`--save-plan` before asking for publication approval:
 
 ```sh
 node skills/igapyon-miku-scm/scripts/post-recommit-publish.mjs \
-  --expected-head <reviewed-full-sha>
+  --expected-head <reviewed-full-sha> \
+  --save-plan
 ```
 
 Preflight verifies the repository, branch, exact local `HEAD`, clean status,
 local `-done` collision, remote, optional upstream, and exact remote branch
 state. It uses `git ls-remote` but does not fetch, push, create or rename a
-branch, or change a file.
+branch. Saving the plan writes only its ignored operational record. A preflight
+without `--save-plan` returns `save_plan_arguments` and never returns usable
+`apply_arguments`.
 
-To save the reviewed state as the one-time publication plan used by the normal
-`ok push` handoff, append `--save-plan`. The helper stores JSON only below
-`workplace/miku-scm/ok-push/`, returns its relative path and SHA-256, and does
-not publish in that mode. After the human says `ok push`, apply that exact plan
-in one helper invocation:
+The saved preflight returns the one-time plan path and SHA-256. Review those
+along with the commit and exact remote state. After the human says `ok push`,
+apply the returned plan arguments exactly as provided:
 
 ```sh
 node skills/igapyon-miku-scm/scripts/post-recommit-publish.mjs \
@@ -49,10 +50,20 @@ attempt record only after every pre-mutation check succeeds and immediately
 before push. A failure before that claim leaves the reviewed plan unconsumed;
 after the claim, it never retries the push automatically.
 
-The JSON result contains `apply_arguments`. Show the preflight result together
-with the reviewed commit log. Treat the local `HEAD`, pushed branch, remote,
-and either the existing remote full SHA or the assertion that the remote branch
-is absent as one review unit.
+Publication plan schema 2 binds the exact branch and `remote_urls_sha256`, a
+SHA-256 of the ordered, expanded fetch and push URL arrays. URL contents are
+not added to the plan or diagnostics. Apply verifies this binding at entry,
+after fetch, and immediately before push, including after callbacks. The
+branch, HEAD and clean state are checked at those boundaries and before rename.
+A schema 1 plan requires a fresh preflight and review; current URLs are never
+silently substituted into an older reviewed plan.
+
+The saved-plan JSON result contains `apply_arguments` with the canonical
+repository root, returned plan path, and digest. Pass that list as-is; do not
+append `--apply` or rebuild arguments from the current branch or remote. The
+ordinary direct `--apply` form is rejected. Treat the local `HEAD`, pushed
+branch, remote, and either the existing remote full SHA or the assertion that
+the remote branch is absent as one review unit.
 
 After the human says `ok push`, invoke the helper once with the exact returned
 arguments. Do not ask another conversational confirmation while the verified
@@ -102,7 +113,7 @@ the reviewed remote SHA.
 
 Apply mode performs these operations in order:
 
-1. Require macOS or native Windows and resolve the repository.
+1. Resolve the repository and select native command handling. On Linux or other platforms, report a notice and continue with the available commands.
 2. Verify the current non-`-done` branch and clean worktree/index.
 3. Verify exact `HEAD` equality with `--expected-head`.
 4. Refuse an existing local `<branch>-done`.

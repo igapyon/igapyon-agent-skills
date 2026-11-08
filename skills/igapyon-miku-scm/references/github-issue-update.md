@@ -1,20 +1,38 @@
 # GitHub Existing Issue Content Update
 
+**Agent approval path:** run preparation through the fixed miku-scm runner,
+save the returned handoff, display its complete content with
+`github.issue.handoff.review`, then stop and wait for the user's exact
+`approve` message. Apply only through `github.issue.handoff.apply` or the
+reviewed batch workflow. The helper command examples below describe the
+internal operation contract; the Agent must not invoke this script's `--apply`
+mode directly.
+
 Update the title, body, and existing labels of one public GitHub Issue through the narrowly authorized, human-approved static-helper workflow in this document. Follow [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md). The AI Agent must not invoke `gh` directly. Keep drafting and preflight READONLY, and do not treat either as approval to mutate GitHub.
+
+Draft paths and filenames below are preferred conventions. A readable UTF-8
+file with another name or location is imported into a canonical working copy
+with a warning; the source is retained. Review and apply use the returned
+working-copy path and digest. The explicit Issue option identifies the target,
+including when a source filename names a different Issue. Content, digest, and duplicate-attempt checks still apply. CRLF/CR line
+endings produce a notice and are read as LF for submitted text. Original bytes
+and the review digest are retained. Line-ending-only changes do not bypass
+duplicate-attempt protection.
 
 ## Scope
 
 This workflow's static helper permits only these READONLY commands:
 
 ```text
-gh issue view <number> --repo <owner/repo> --json number,url,title,body,labels,updatedAt
-gh label list --repo <owner/repo> --limit 1000 --json name
+gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,labels,updatedAt
+gh api graphql --method POST [--hostname <selected-host>] -f query=<fixed IssueComments query> -f owner=<owner> -f name=<repo> -F number=<number> [-f cursor=<endCursor>]
+gh label list --repo <[host/]owner/repo> --limit 1000 --json name
 ```
 
 and this one mutation command:
 
 ```text
-gh issue edit <number> --repo <owner/repo> \
+gh issue edit <number> --repo <[host/]owner/repo> \
   [--title <reviewed-title>] \
   [--body-file <generated-temporary-body-file>] \
   [--add-label <reviewed-existing-label>]... \
@@ -23,7 +41,7 @@ gh issue edit <number> --repo <owner/repo> \
 
 Use [scripts/github-issue-update.mjs](../scripts/github-issue-update.mjs); do not assemble or invoke the command independently. The helper may update the title, body, and existing-label membership of exactly one Issue in one command. It must not create or edit label definitions or update assignees, milestone, project, Issue type, state, comments, relationships, or any other metadata.
 
-At least one of the title, body, or label membership must change. Every requested label must already exist exactly in the repository. Reject overlap, adding a present label, removing an absent label, and more than 20 label changes.
+If title, body, and requested label membership already match, report no changes required. Additions must name existing repository labels. Reject overlap and more than 20 label changes; already-present additions and absent removals are harmless.
 
 Use the fixed READONLY commands from preflight through post-update verification. Validate every complete response. Do not assemble these commands outside the helper, add fields, enter interactive mode, or use them for authentication management. If a read fails before `gh issue edit`, record `not-applied`; do not imply an uncertain remote result.
 
@@ -39,14 +57,19 @@ Run the helper without `--apply`:
 
 ```sh
 node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \
-  --repo <owner/repo> \
+  --repo <[host/]owner/repo> \
   --issue <number> \
   --draft workplace/miku-scm/issue-updates/issue-<number>-update-<YYYYMMDDHHMM>.md \
   [--add-label <existing-label>]... \
   [--remove-label <existing-label>]...
 ```
 
-Preflight is READONLY and uses only the fixed `gh issue view` and, when label changes are requested, `gh label list` commands. It rejects Pull Requests and a draft whose filename identifies another Issue. Show the human:
+Preflight is READONLY. It reads Issue metadata with fixed `gh issue view`,
+retrieves all comments with the shared fixed GraphQL pagination query, and uses
+`gh label list` only when label changes are requested. It rejects Pull
+Requests; nonstandard draft names produce an import notice. The complete
+comment snapshot must match the Issue `updatedAt` read before it is accepted.
+The handoff retains:
 
 - exact `owner/repo#number` and Issue URL
 - current title and complete current body
@@ -59,17 +82,27 @@ Preflight is READONLY and uses only the fixed `gh issue view` and, when label ch
 - current `updated_at`
 - the single exact planned `gh issue edit` operation
 
-Wait for explicit human approval after displaying all of this evidence. Approval authorizes one attempt for only the displayed repository, Issue, draft digest, current body digest, `updated_at`, and apply workflow contract pair. Editing the draft, changing the workflow contract, or observing a changed Issue invalidates that approval.
+The Agent's human-facing display comes from `github.issue.handoff.review` and
+shows the full current context, complete proposed content, diff, and label
+result without internal digests, paths, IDs, or command arguments.
+
+The preflight is not approval. Display the complete operation with
+`github.issue.handoff.review`, then wait for a separate user message whose
+full trimmed text is exactly `approve` or `miku-scm approve`. Any change to
+the draft, target, workflow contract, or reviewed Issue invalidates that
+approval and requires a new review.
 
 When this handoff is a later step in one explicitly ordered approval batch for the same Issue, the batch runner may perform the dependency preflight defined in [approval-handoff.md](approval-handoff.md). It may refresh only the state expectations permitted there; the reviewed repository, Issue, draft and operation digests, label operations, and contract pair remain fixed.
 
 ## Apply and Conflict Detection
 
-After explicit approval, use the exact `apply_arguments` returned by preflight:
+After exact approval, the runner passes the unchanged `apply_arguments`
+through the approved handoff. The command below describes the internal helper
+interface; the Agent must not invoke this script's `--apply` mode directly.
 
 ```sh
 node skills/igapyon-miku-scm/scripts/github-issue-update.mjs \
-  --repo <owner/repo> \
+  --repo <[host/]owner/repo> \
   --issue <number> \
   --draft workplace/miku-scm/issue-updates/issue-<number>-update-<YYYYMMDDHHMM>.md \
   [--add-label <existing-label>]... \
@@ -136,3 +169,7 @@ For a confirmed update, report:
 - local attempt-record path
 
 For `not-applied`, `conflict`, or `unresolved`, name the state and evidence without implying success. For `not-applied`, explicitly report `gh issue edit: 未実行`.
+
+When title, body, and requested labels already match, return `up-to-date`
+without mutation or a new handoff. Already-present additions and absent
+removals are harmless; a mixed update sends only effective label changes.

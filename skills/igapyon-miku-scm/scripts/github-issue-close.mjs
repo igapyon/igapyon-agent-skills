@@ -5,24 +5,27 @@ import { spawnSync } from "node:child_process";
 import { mkdir, open, readFile, realpath, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { repositoryCacheParts, ghRepository, parseRepository, matchesIssueUrl } from "./miku-scm-repository.mjs";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+import { issueCommentsSha256, normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
+import { createGhCommentsRunner, readCompleteIssueCommentConnection } from "./github-issue-comments.mjs";
 
 const ISSUE_CLOSE_APPLY_CONTRACT = workflowContractById().get("github.issue.close.apply");
-const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const REASONS = new Set(["completed", "not planned", "duplicate"]);
-const ATTEMPT_STATUSES = new Set(["pending", "closed", "conflict", "not-applied", "unresolved"]);
+const ATTEMPT_STATUSES = new Set(["pending", "closed", "up-to-date", "conflict", "not-applied", "unresolved"]);
 const VERIFICATION_DELAYS_MS = [0, 250, 1_000];
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/github-issue-close.mjs \\
-    --repo <owner/repo> --issue <number> --reason <completed|not planned|duplicate> \\
+    --repo <[host/]owner/repo> --issue <number> --reason <completed|not planned|duplicate> \\
     [--duplicate-of <number>] [--root <root>]
 
 Apply mode additionally requires --expected-operation-sha256,
---expected-current-body-sha256, --expected-updated-at, and --apply.`;
+--expected-current-body-sha256, --expected-comments-sha256,
+--expected-updated-at, and --apply.`;
 
 export function parseArgs(argv, cwd = process.cwd()) {
   const options = {
@@ -33,6 +36,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
     root: cwd,
     expectedOperationSha256: "",
     expectedCurrentBodySha256: "",
+    expectedCommentsSha256: "",
     expectedDuplicateSha256: "",
     expectedUpdatedAt: "",
     expectedContractPairSha256: "",
@@ -51,6 +55,8 @@ export function parseArgs(argv, cwd = process.cwd()) {
       options.expectedOperationSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-current-body-sha256") {
       options.expectedCurrentBodySha256 = argv[++index] ?? "";
+    } else if (arg === "--expected-comments-sha256") {
+      options.expectedCommentsSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-duplicate-sha256") {
       options.expectedDuplicateSha256 = argv[++index] ?? "";
     } else if (arg === "--expected-updated-at") {
@@ -61,9 +67,10 @@ export function parseArgs(argv, cwd = process.cwd()) {
     else throw new Error(`Unknown argument: ${arg}`);
   }
   if (options.help) return options;
-  if (!REPOSITORY_PATTERN.test(options.repository)) {
-    throw new Error("--repo must be exactly owner/repo");
+  if (!parseRepository(options.repository)) {
+    throw new Error("--repo must use [host/]owner/repo");
   }
+  options.repository = ghRepository(parseRepository(options.repository));
   if (!Number.isSafeInteger(options.issueNumber) || options.issueNumber < 1) {
     throw new Error("--issue must be a positive integer");
   }
@@ -84,6 +91,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
   for (const [name, value] of [
     ["--expected-operation-sha256", options.expectedOperationSha256],
     ["--expected-current-body-sha256", options.expectedCurrentBodySha256],
+    ["--expected-comments-sha256", options.expectedCommentsSha256],
     ["--expected-duplicate-sha256", options.expectedDuplicateSha256],
     ["--expected-contract-pair-sha256", options.expectedContractPairSha256],
   ]) {
@@ -92,6 +100,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
   const expected = [
     options.expectedOperationSha256,
     options.expectedCurrentBodySha256,
+    options.expectedCommentsSha256,
     options.expectedUpdatedAt,
   ];
   if (options.apply && expected.some((value) => !value)) {
@@ -105,7 +114,7 @@ export function parseArgs(argv, cwd = process.cwd()) {
   }
   if (!options.apply
     && (expected.some(Boolean) || options.expectedDuplicateSha256
-      || options.expectedContractPairSha256)) {
+      || options.expectedCommentsSha256 || options.expectedContractPairSha256)) {
     throw new Error("expected values are used only with --apply");
   }
   return options;
@@ -139,27 +148,36 @@ function issueSnapshotSha256(issue) {
 
 function ghDetail(result) { return result?.stderr || result?.stdout || result?.error?.message || `exit ${result?.status}`; }
 
-export function createGhIssueReader(gh = createGhRunner()) {
+export function createGhIssueReader(gh, ghComments) {
+  const issueGh = gh ?? createGhRunner();
+  const commentsGh = ghComments ?? (gh ? gh : createGhCommentsRunner());
   return async (repository, issueNumber) => {
-    const result = gh(["issue", "view", String(issueNumber), "--repo", repository,
-      "--json", "number,url,title,body,state,stateReason,updatedAt"]);
+    const result = issueGh(["issue", "view", String(issueNumber), "--repo", repository,
+      "--json", "number,url,title,body,state,stateReason,updatedAt,labels"]);
     if (!result?.ok) throw new Error(`gh issue view failed: ${ghDetail(result)}`);
     let issue;
     try { issue = JSON.parse(result.stdout); } catch { throw new Error("gh issue view returned malformed JSON"); }
-    const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}`;
     if (
-      issue?.number !== issueNumber || issue?.url !== expectedUrl
+      issue?.number !== issueNumber || !matchesIssueUrl(issue?.url, repository, issueNumber)
       || typeof issue?.title !== "string"
       || (typeof issue?.body !== "string" && issue?.body !== null)
       || !["OPEN", "CLOSED"].includes(issue?.state)
       || typeof issue?.updatedAt !== "string" || !issue.updatedAt
       || (typeof issue?.stateReason !== "string" && issue?.stateReason !== null)
+      || !Array.isArray(issue?.labels)
+      || issue.labels.some((label) => typeof label?.name !== "string")
     ) {
       throw new Error("gh issue view does not exactly identify the requested Issue");
     }
+    const comments = readCompleteIssueCommentConnection(repository, issueNumber, {
+      gh: commentsGh,
+      expectedUpdatedAt: issue.updatedAt,
+    });
     return {
       number: issue.number, url: issue.url, title: issue.title, body: issue.body ?? "",
       state: issue.state, stateReason: issue.stateReason, updatedAt: issue.updatedAt,
+      labels: issue.labels.map((label) => label.name),
+      comments: normalizeIssueCommentConnection(comments),
     };
   };
 }
@@ -178,14 +196,12 @@ export function createGhRunner() {
 }
 
 function attemptPath(root, repository, issueNumber, digest) {
-  const [owner, repo] = repository.split("/");
   return path.join(
     root,
     "workplace",
     "miku-scm",
     "issue-close-attempts",
-    owner,
-    repo,
+    ...repositoryCacheParts(repository),
     String(issueNumber),
     `${digest}.json`,
   );
@@ -269,6 +285,7 @@ function applyArguments(options, digest, current, duplicate) {
     ...(options.reason === "duplicate" ? ["--duplicate-of", String(options.duplicateOf)] : []),
     "--expected-operation-sha256", digest,
     "--expected-current-body-sha256", sha256(current.body),
+    "--expected-comments-sha256", issueCommentsSha256(current.comments),
     ...(duplicate ? ["--expected-duplicate-sha256", issueSnapshotSha256(duplicate)] : []),
     "--expected-updated-at", current.updatedAt,
     "--expected-contract-pair-sha256", ISSUE_CLOSE_APPLY_CONTRACT.pair_sha256,
@@ -311,13 +328,14 @@ async function verifyClosed(readIssue, sleep, repository, issueNumber, reason) {
 export async function runIssueClose(options, dependencies = {}) {
   const root = await realpath(path.resolve(options.root));
   const ghRead = dependencies.ghRead ?? createGhRunner();
+  const ghComments = dependencies.ghComments ?? (dependencies.ghRead ? ghRead : createGhCommentsRunner());
   const ghMutation = dependencies.ghMutation ?? dependencies.gh ?? createGhRunner();
-  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead);
+  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead, ghComments);
   const sleep = dependencies.sleep ?? wait;
   const digest = operationSha256(options);
   const attempt = attemptPath(root, options.repository, options.issueNumber, digest);
   const prior = await readAttempt(attempt);
-  if (prior && !isRecoverableAttempt(prior)) throw priorAttemptError(prior);
+  if (prior && !isRecoverableAttempt(prior) && (options.apply || !["closed", "up-to-date"].includes(prior.status))) throw priorAttemptError(prior);
   const common = {
     repository: options.repository,
     issue_number: options.issueNumber,
@@ -331,18 +349,24 @@ export async function runIssueClose(options, dependencies = {}) {
 
   if (!options.apply) {
     const current = await readIssue(options.repository, options.issueNumber);
-    if (current.state !== "OPEN") throw new Error("Only an Open Issue can be closed");
+    const noChanges = current.state === "CLOSED";
+    if (prior && !isRecoverableAttempt(prior) && !noChanges) throw priorAttemptError(prior);
     let duplicate;
     if (options.reason === "duplicate") {
       duplicate = await readIssue(options.repository, options.duplicateOf);
     }
     return {
-      status: "preflight-ok",
+      status: noChanges ? "up-to-date" : "preflight-ok",
+      no_changes: noChanges,
+      mutation_invoked: false,
+      ...(noChanges ? { reason_detail: "No changes required; the Issue is already closed and its existing close reason is retained" } : {}),
       ...common,
       issue_url: current.url,
       issue_title: current.title,
       current_body: current.body,
       current_body_sha256: sha256(current.body),
+      current_labels: current.labels,
+      current_comments: current.comments,
       current_state: current.state,
       current_updated_at: current.updatedAt,
       duplicate_target: duplicate
@@ -398,10 +422,16 @@ export async function runIssueClose(options, dependencies = {}) {
     await replaceAttempt(attempt, record);
     return { status: "not-applied", ...common, ...record };
   }
+  if (current.state === "CLOSED") {
+    const record = { ...pending, status: "up-to-date", issue_url: current.url, verified_state: current.state, verified_state_reason: current.stateReason, mutation_invoked: false, reason_detail: "No changes required; the Issue is already closed and its existing close reason is retained" };
+    await replaceAttempt(attempt, record);
+    return { ...common, ...record };
+  }
   if (
     current.state !== "OPEN"
     || current.updatedAt !== options.expectedUpdatedAt
     || sha256(current.body) !== options.expectedCurrentBodySha256.toLowerCase()
+    || issueCommentsSha256(current.comments) !== options.expectedCommentsSha256.toLowerCase()
   ) {
     const record = {
       ...pending,
@@ -409,6 +439,7 @@ export async function runIssueClose(options, dependencies = {}) {
       stage: "target-conflict",
       observed_state: current.state,
       observed_body_sha256: sha256(current.body),
+      observed_comments_sha256: issueCommentsSha256(current.comments),
       observed_updated_at: current.updatedAt,
       result_recorded_at: new Date().toISOString(),
     };

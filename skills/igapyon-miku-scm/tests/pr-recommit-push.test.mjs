@@ -103,7 +103,26 @@ const macos = {
   recommitDependencies: { now: () => new Date("2026-07-25T21:00:00+09:00") },
   publishDependencies: { gh: null },
 };
-const nativePlatform = process.platform === "win32" ? "win32" : "darwin";
+const nativePlatform = process.platform;
+
+test("recommit stops before publication when the destination changed during recommit", async (t) => {
+  const state = await scenario(t);
+  const other = path.join(state.temporary, "other.git");
+  execFileSync("git", ["init", "--bare", other], { stdio: "ignore" });
+  const r = await runRecommitPush(automaticOptions(state), { ...macos,
+    recommit: (options, dependencies) => {
+      const result = runRecommit(options, dependencies);
+      if (options.apply && result.status === "recommitted") git(state.repo, "remote", "set-url", "origin", other);
+      return result;
+    },
+  });
+  assert.equal(r.status, "partial");
+  assert.equal(r.publication.stage, "publication-preflight");
+  assert.equal(r.publication.push_started, false);
+  assert.match(r.publication.message, /branch or remote URLs changed/);
+  assert.equal(git(other, "for-each-ref", "--format=%(refname)"), "");
+  assert.equal(git(state.remote, "for-each-ref", "--format=%(refname)", "refs/heads/"), "refs/heads/devel");
+});
 
 test("parser permits automatic base and reviewed-draft resolution but requires apply", () => {
   const automatic = parseArgs(["--apply"]);
@@ -268,12 +287,11 @@ test("native publication completes the recommit and remote verification sequence
   assert.equal(git(state.repo, "branch", "--show-current"), `${state.branch}-done`);
 });
 
-test("unsupported platform still stops before backup creation", async (t) => {
+test("Linux uses the available commands and publishes with a platform notice", async (t) => {
   const state = await scenario(t);
-  await assert.rejects(
-    runRecommitPush(automaticOptions(state), { platform: "linux" }),
-    (error) => error?.mutationInvoked === false && /macOS and Windows/.test(error.message),
-  );
-  assert.equal(git(state.repo, "branch", "--list", "backup/*"), "");
-  assert.equal(git(state.remote, "branch", "--list", state.branch), "");
+  const result = await runRecommitPush(automaticOptions(state), { ...macos, platform: "linux" });
+  assert.equal(result.status, "published");
+  assert.ok(result.warnings.some((warning) => warning.includes("linux")));
+  assert.equal(git(state.remote, "rev-parse", `refs/heads/${state.branch}`), result.new_head);
+  assert.equal(git(state.repo, "branch", "--show-current"), `${state.branch}-done`);
 });

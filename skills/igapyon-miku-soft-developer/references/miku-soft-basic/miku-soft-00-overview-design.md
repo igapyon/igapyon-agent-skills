@@ -41,27 +41,10 @@ When a specification is unclear, read this overview as the product-family map, t
 
 ## Document Set
 
-This overview is the entry point for the shared miku software design document
-set maintained under `igapyon-miku-soft-developer`.
-
-The detailed documents are organized by layer and concern.
-
-- `references/miku-soft-basic/miku-soft-00-overview-design.md`
-  - provides the top-level product-family overview and explains how the design documents relate to each other
-- `references/miku-soft-basic/miku-soft-10-mainapp-design.md`
-  - describes the TypeScript / Node.js main application layer, including product core, CLI, structured artifacts, diagnostics, and runtime bundles
-- `references/miku-soft-basic/miku-soft-11-web-design.md`
-  - describes the Web App layer, including Single-file Web App distribution, browser adapters, `lht-cmn`, preview, diagnostics, and download behavior
-- `references/miku-soft-basic/miku-soft-20-javaapp-design.md`
-  - describes Java application versions, especially Java 1.8 CLI/runtime artifacts, packaging, testing, and build integration
-- `references/miku-soft-basic/miku-soft-21-java-maven-design.md`
-  - describes separated Maven plugin repositories for Java runtimes
-- `references/miku-soft-basic/miku-soft-30-straight-conversion.md`
-  - describes how TypeScript / Node.js products are converted into Java while preserving upstream traceability and behavior
-- `references/miku-soft-basic/miku-soft-40-agentskills-design.md`
-  - describes Agent Skills packages, including local instructions, operation maps, references, and bundled CLI runtime artifacts for AI agents
-- `references/miku-soft-basic/miku-soft-50-mcp-design.md`
-  - describes Node.js / TypeScript MCP server versions that expose product operations to MCP clients through tools, resources, and prompts
+This overview is the product-family map for the shared miku software design
+documents maintained under `igapyon-miku-soft-developer`. For a task-specific
+list of the layer documents and their detailed subjects, use the
+[architecture reference selector](../architecture-rules.md#basic-document-selection).
 
 Project repositories should not copy these shared documents. They should keep a
 short `docs/miku-soft-reference.md` link document and record the checked skill
@@ -272,7 +255,6 @@ The miku software series starts from small local products, usually implemented i
 
 The main application provides the upstream semantic center and Node.js CLI.
 The Web App provides a dependent human-facing browser surface when useful. Java
-versions provide Java 1.8 CLI runtimes through straight conversion. Agent
 versions provide Java 1.8 CLI runtimes through straight conversion. Separated
 Maven plugin repositories expose Java runtimes to Maven builds as build-tool
 adapters when useful. Agent Skills package instructions and executable runtime

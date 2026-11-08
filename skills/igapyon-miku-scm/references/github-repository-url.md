@@ -13,26 +13,28 @@ git remote get-url origin
 
 If `origin` does not exist, inspect configured remotes with `git remote -v`.
 
-- Use the only GitHub remote when exactly one exists.
-- When multiple GitHub remotes are plausible, show their names and URLs and ask which remote the user means.
-- When no GitHub remote exists, report that no GitHub URL is configured. Do not guess from the directory name.
+- Use the only GitHub or similar hosted remote when exactly one exists.
+- When multiple hosted remotes are plausible, show their names and URLs and ask which remote the user means.
+- When no hosted remote exists, report that no GitHub URL is configured. Do not guess from the directory name.
 
 ## Format the Answer
 
 Recognize common GitHub remote forms, including:
 
 ```text
-git@github.com:OWNER/REPOSITORY.git
-ssh://git@github.com/OWNER/REPOSITORY.git
-https://github.com/OWNER/REPOSITORY.git
+git@HOST:OWNER/REPOSITORY.git
+ssh://git@HOST/OWNER/REPOSITORY.git
+https://HOST/OWNER/REPOSITORY.git
 ```
 
 Convert the selected remote to this canonical browser URL:
 
 ```text
-https://github.com/OWNER/REPOSITORY
+https://HOST/OWNER/REPOSITORY
 ```
 
+Preserve the selected host, including Enterprise or other compatible services;
+do not restrict it to `github.com`. Preserve an existing HTTP(S) browser origin.
 Strip only the transport-specific prefix and a trailing `.git`. Preserve the owner and repository path exactly. Report the canonical browser URL first and the configured remote URL second. Do not expose embedded credentials or tokens; redact them if present.
 
 ## Boundary

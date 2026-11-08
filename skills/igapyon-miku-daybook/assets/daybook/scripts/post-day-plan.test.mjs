@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import test from "node:test";
 import { markerForDate, postDayPlan, renderComment } from "./post-day-plan.mjs";
+import { buildDayPlan } from "./day-plan.mjs";
 
 test("renderComment omits an unset or empty mention and keeps commit-pinned source links", () => {
   const previousMention = process.env.DAYBOOK_MENTION;
@@ -79,6 +83,37 @@ generated: 2026-09-14
   });
   assert.doesNotMatch(body, /^@[^\n]+$/m);
   assert.match(body, /<!-- daybook-briefing:2026-09-14 -->\n\n# 9月14日/);
+});
+
+test("renderComment preserves planned and Backlog sections and converts both task links", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "daybook-notification-backlog-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const taskDirectory = path.join(root, "2026/202610/tasks");
+  fs.mkdirSync(taskDirectory, { recursive: true });
+  fs.writeFileSync(path.join(taskDirectory, "task-202610-00001-planned.md"), [
+    "---", "type: task", "id: task-202610-00001", "status: todo", "priority: 2", "created: 2026-10-01",
+    "planning_state: planned", "planned_start_date: 2026-10-19", "planned_end_date: 2026-10-19", "planned_dates_status: confirmed", "planned_action: 実装を進める", "---", "", "# 今日の実装", "",
+  ].join("\n"));
+  fs.writeFileSync(path.join(taskDirectory, "task-202610-00002-backlog.md"), [
+    "---", "type: task", "id: task-202610-00002", "status: in_progress", "priority: 4", "created: 2026-10-01",
+    "planning_state: backlog", "planned_start_date: 2026-10-01", "planned_end_date: 2026-12-31", "planned_dates_status: confirmed", "---", "", "# 資料を整理する", "",
+  ].join("\n"));
+  const plan = buildDayPlan({ repoRoot: root, targetDate: "2026-10-19", generatedDate: "2026-10-19" });
+  const comment = renderComment({
+    markdown: plan.markdown,
+    date: "2026-10-19",
+    repo: "igapyon/daybook",
+    sha: "abc123",
+    mention: "",
+  });
+
+  assert.match(comment, /## 今日の作業予定/);
+  assert.match(comment, /## Backlog/);
+  assert.match(comment, /task-202610-00002/);
+  assert.match(comment, /優先度 4 \/ 状態 in_progress/);
+  assert.match(comment, /参考予定期間 2026-10-01〜2026-12-31/);
+  assert.match(comment, /https:\/\/github\.com\/igapyon\/daybook\/blob\/abc123\/2026\/202610\/tasks\/task-202610-00001-planned\.md/);
+  assert.match(comment, /https:\/\/github\.com\/igapyon\/daybook\/blob\/abc123\/2026\/202610\/tasks\/task-202610-00002-backlog\.md/);
 });
 
 function response(body, status = 200, link = null) {

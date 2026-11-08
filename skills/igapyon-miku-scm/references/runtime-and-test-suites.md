@@ -39,12 +39,24 @@ npm run test:miku-scm:full
 before committing or publishing changes to miku-scm itself. `test:miku-scm`
 remains a compatibility alias for the full safety suite.
 
-The fixed `miku-scm-test-suite.mjs` runner divides the slow publication and
-repository-maintenance files into non-overlapping name shards. It validates
+The fixed `miku-scm-test-suite.mjs` runner divides the slow sync-pull,
+publication and repository-maintenance files into non-overlapping name shards. It validates
 that every test matches exactly one shard before starting concurrent Node
-processes. Every sharded case owns a separate temporary Git repository.
+processes. Every other test file gets its own job and timing. Four child
+processes run concurrently by default; `--full --jobs <1..16>` allows bounded
+comparisons on the same runner. The process limit covers both file jobs and
+name shards. Every sharded case owns a separate temporary Git repository.
 Do not shard tests that share a repository, attempt record, cache directory,
 mock queue, or mutable process state.
+
+Starts, completions and failure details are printed to stderr immediately.
+A heartbeat every 30 seconds reports active jobs, elapsed time and queued work.
+Stdout retains the final JSON result, including `concurrency` and
+`job_durations_ms` keyed by file or shard. Spawn failures fail the suite while
+remaining jobs still run. The CI contract job has a 20-minute limit; the local
+runner has no implicit deadline. Compare Windows timings before increasing
+parallelism or splitting another file; CPU and disk contention can increase
+elapsed time. File timings include process startup and fixture cleanup.
 
 Both suites retain contract assertions for exact command arrays, approval
 boundaries, digest conflicts, attempt records, and mutation non-retry.

@@ -25,6 +25,11 @@ or `assets/`.
 
 ## No Specific Change Requested
 
+This branch requires a request to perform project maintenance. A request to
+inspect, explain, or review is not an open-ended maintenance assignment. Follow
+the requested read-only scope, or correct only the issues the user has also
+authorized fixing. Work about this skill itself does not activate this branch.
+
 When maintenance mode is active for a known repository but no defect, feature,
 or concrete maintenance item was named, do not stop at inspection. Run
 Maintenance Opportunity Selection in the
@@ -47,6 +52,10 @@ For every existing miku-soft repository maintenance task, check whether an
 already-approved shared improvement fits the requested scope. Follow the
 [maintenance adoption workflow](../docs/maintenance/adoption-workflow.md) for
 the applicability, verification, recording, and deferral rules.
+
+An item labelled proposed, pending, or awaiting approval in a dated audit is
+not an approved improvement. Use the owning current reference or an explicit
+recorded user decision as evidence of approval.
 
 The check is the default; adopting an improvement is conditional. Do not add
 an unrelated public-contract change merely because the repository is already

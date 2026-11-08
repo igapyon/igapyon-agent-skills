@@ -1,7 +1,10 @@
 import { workflowCliContractById } from "./miku-scm-cli-contracts.mjs";
 
-export const WORKFLOW_MANIFEST_VERSION = "miku-scm.workflow-manifest/v1";
+export const WORKFLOW_MANIFEST_VERSION = "miku-scm.workflow-manifest/v2";
 export const WORKFLOW_CONTRACT_VERSION = 1;
+const ISSUE_APPROVAL_CONTRACT_VERSION = 2;
+const SYNC_SOURCES = ["miku-scm-sync-state.mjs", "miku-scm-sync-worktree.mjs", "miku-scm-sync-merge-check.mjs", "post-merge-next-work.mjs", "miku-scm-command-runner.mjs", "miku-scm-jst-time.mjs", "miku-scm-repository.mjs", "miku-scm-operational-storage.mjs"];
+const SYNC_PUSH_SOURCES = [...SYNC_SOURCES, "work-commit.mjs", "miku-scm-fixed-command-runner.mjs", "miku-scm-operational-path.mjs", "miku-scm-writing-prepare.mjs", "pr-soft-reset-recommit-preflight.mjs", "pr-recommit-push.mjs", "post-recommit-publish.mjs"];
 
 const WORKFLOW_DEFINITIONS = [
   {
@@ -19,8 +22,10 @@ const WORKFLOW_DEFINITIONS = [
     required_parameters: ["repository", "mode"],
     mutation_level: "readonly",
     approval_gate: "none",
+    contract_version: 3,
     runner_entry: "github-issue-read.mjs",
     references: ["github-cli-static-helper-policy.md", "deterministic-workflow-runner.md"],
+    contract_runtime_sources: ["github-issue-comments.mjs"],
   },
   {
     id: "github.read.batch",
@@ -28,8 +33,10 @@ const WORKFLOW_DEFINITIONS = [
     required_parameters: ["repository", "queries"],
     mutation_level: "readonly",
     approval_gate: "none",
+    contract_version: 3,
     runner_entry: "miku-scm-github-readonly.mjs",
     references: ["github-cli-static-helper-policy.md", "github-readonly-cache.md", "deterministic-workflow-runner.md"],
+    contract_runtime_sources: ["github-issue-read.mjs", "github-issue-comments.mjs"],
   },
   {
     id: "github.issue.create.preflight",
@@ -39,15 +46,19 @@ const WORKFLOW_DEFINITIONS = [
     approval_gate: "preflight",
     runner_entry: "github-issue-create.mjs",
     references: ["github-issue-create.md", "deterministic-workflow-runner.md"],
+    contract_version: ISSUE_APPROVAL_CONTRACT_VERSION,
+    contract_runtime_sources: ["miku-scm-handoff.mjs", "miku-scm-issue-approval.mjs"],
   },
   {
     id: "github.issue.create.apply",
-    triggers: ["Issue登録OK", "子Issue登録OK"],
+    triggers: ["Approved Issue handoff execution only"],
     required_parameters: ["repository", "draft", "reviewed_digests"],
     mutation_level: "remote",
     approval_gate: "apply",
     runner_entry: "github-issue-create.mjs",
     references: ["github-issue-create.md", "deterministic-workflow-runner.md"],
+    contract_version: ISSUE_APPROVAL_CONTRACT_VERSION,
+    contract_runtime_sources: ["miku-scm-handoff.mjs", "miku-scm-issue-approval.mjs"],
   },
   {
     id: "github.issue.update.preflight",
@@ -57,15 +68,19 @@ const WORKFLOW_DEFINITIONS = [
     approval_gate: "preflight",
     runner_entry: "github-issue-update.mjs",
     references: ["github-issue-update.md", "deterministic-workflow-runner.md"],
+    contract_version: 3,
+    contract_runtime_sources: ["miku-scm-handoff.mjs", "miku-scm-issue-approval.mjs", "github-issue-comments.mjs"],
   },
   {
     id: "github.issue.update.apply",
-    triggers: ["Issue更新OK", "承認済みIssue更新"],
+    triggers: ["Approved Issue handoff execution only"],
     required_parameters: ["repository", "issue", "draft", "reviewed_digests"],
     mutation_level: "remote",
     approval_gate: "apply",
     runner_entry: "github-issue-update.mjs",
     references: ["github-issue-update.md", "deterministic-workflow-runner.md"],
+    contract_version: 3,
+    contract_runtime_sources: ["miku-scm-handoff.mjs", "miku-scm-issue-approval.mjs", "github-issue-comments.mjs"],
   },
   {
     id: "github.issue.comment.preflight",
@@ -75,15 +90,19 @@ const WORKFLOW_DEFINITIONS = [
     approval_gate: "preflight",
     runner_entry: "github-issue-comment.mjs",
     references: ["github-issue-comment.md", "deterministic-workflow-runner.md"],
+    contract_version: 3,
+    contract_runtime_sources: ["miku-scm-handoff.mjs", "miku-scm-issue-approval.mjs", "github-issue-comments.mjs"],
   },
   {
     id: "github.issue.comment.apply",
-    triggers: ["IssueコメントOK", "承認済みIssueコメント"],
+    triggers: ["Approved Issue handoff execution only"],
     required_parameters: ["repository", "issue", "draft", "reviewed_digests"],
     mutation_level: "remote",
     approval_gate: "apply",
     runner_entry: "github-issue-comment.mjs",
     references: ["github-issue-comment.md", "deterministic-workflow-runner.md"],
+    contract_version: 3,
+    contract_runtime_sources: ["miku-scm-handoff.mjs", "miku-scm-issue-approval.mjs", "github-issue-comments.mjs"],
   },
   {
     id: "github.issue.label.preflight",
@@ -93,15 +112,19 @@ const WORKFLOW_DEFINITIONS = [
     approval_gate: "preflight",
     runner_entry: "github-issue-label-update.mjs",
     references: ["github-issue-label-update.md", "deterministic-workflow-runner.md"],
+    contract_version: 3,
+    contract_runtime_sources: ["miku-scm-handoff.mjs", "miku-scm-issue-approval.mjs", "github-issue-comments.mjs"],
   },
   {
     id: "github.issue.label.apply",
-    triggers: ["Issueラベル更新OK", "承認済みIssue label変更"],
+    triggers: ["Approved Issue handoff execution only"],
     required_parameters: ["repository", "issue", "label_changes", "reviewed_digests"],
     mutation_level: "remote",
     approval_gate: "apply",
     runner_entry: "github-issue-label-update.mjs",
     references: ["github-issue-label-update.md", "deterministic-workflow-runner.md"],
+    contract_version: 3,
+    contract_runtime_sources: ["miku-scm-handoff.mjs", "miku-scm-issue-approval.mjs", "github-issue-comments.mjs"],
   },
   {
     id: "github.issue.close.preflight",
@@ -111,15 +134,19 @@ const WORKFLOW_DEFINITIONS = [
     approval_gate: "preflight",
     runner_entry: "github-issue-close.mjs",
     references: ["github-issue-close.md", "deterministic-workflow-runner.md"],
+    contract_version: 3,
+    contract_runtime_sources: ["miku-scm-handoff.mjs", "miku-scm-issue-approval.mjs", "github-issue-comments.mjs"],
   },
   {
     id: "github.issue.close.apply",
-    triggers: ["Issue close OK", "承認済みIssueクローズ"],
+    triggers: ["Approved Issue handoff execution only"],
     required_parameters: ["repository", "issue", "reason", "reviewed_digests"],
     mutation_level: "remote",
     approval_gate: "apply",
     runner_entry: "github-issue-close.mjs",
     references: ["github-issue-close.md", "deterministic-workflow-runner.md"],
+    contract_version: 3,
+    contract_runtime_sources: ["miku-scm-handoff.mjs", "miku-scm-issue-approval.mjs", "github-issue-comments.mjs"],
   },
   {
     id: "github.issue.handoff.list",
@@ -129,15 +156,30 @@ const WORKFLOW_DEFINITIONS = [
     approval_gate: "none",
     runner_entry: "miku-scm-handoff.mjs",
     references: ["approval-handoff.md", "deterministic-workflow-runner.md"],
+    contract_version: ISSUE_APPROVAL_CONTRACT_VERSION,
+    contract_runtime_sources: ["miku-scm-issue-approval.mjs", "miku-scm-human-output.mjs"],
+  },
+  {
+    id: "github.issue.handoff.review",
+    triggers: ["完全なIssue操作案を確認", "Issue操作の確認表示"],
+    required_parameters: ["repository", "explicit_ordered_handoff_selectors"],
+    mutation_level: "readonly",
+    approval_gate: "none",
+    runner_entry: "miku-scm-handoff.mjs",
+    references: ["approval-handoff.md", "deterministic-workflow-runner.md"],
+    contract_version: ISSUE_APPROVAL_CONTRACT_VERSION,
+    contract_runtime_sources: ["miku-scm-issue-approval.mjs", "miku-scm-human-output.mjs"],
   },
   {
     id: "github.issue.handoff.apply",
-    triggers: ["miku-scm approve", "miku-scm approve <handoff-selector>", "miku-scm 承認"],
-    required_parameters: ["repository", "explicit_apply_request", "optional_handoff_selector"],
+    triggers: ["approve after a complete Issue operation review", "approve", "miku-scm approve"],
+    required_parameters: ["repository", "explicit_handoff_selector", "review_digest", "approve_command_or_resume"],
     mutation_level: "remote",
     approval_gate: "apply",
     runner_entry: "miku-scm-handoff.mjs",
     references: ["approval-handoff.md", "deterministic-workflow-runner.md"],
+    contract_version: ISSUE_APPROVAL_CONTRACT_VERSION,
+    contract_runtime_sources: ["miku-scm-issue-approval.mjs", "miku-scm-human-output.mjs"],
   },
   {
     id: "github.issue.handoff.batch.apply",
@@ -147,6 +189,8 @@ const WORKFLOW_DEFINITIONS = [
     approval_gate: "apply",
     runner_entry: "miku-scm-handoff.mjs",
     references: ["approval-handoff.md", "deterministic-workflow-runner.md"],
+    contract_version: 3,
+    contract_runtime_sources: ["miku-scm-issue-approval.mjs", "miku-scm-human-output.mjs"],
   },
   {
     id: "github.issue.handoff.dismiss",
@@ -156,6 +200,8 @@ const WORKFLOW_DEFINITIONS = [
     approval_gate: "apply",
     runner_entry: "miku-scm-handoff.mjs",
     references: ["approval-handoff.md", "deterministic-workflow-runner.md"],
+    contract_version: ISSUE_APPROVAL_CONTRACT_VERSION,
+    contract_runtime_sources: ["miku-scm-issue-approval.mjs"],
   },
   {
     id: "repository.maintenance.diagnose",
@@ -185,6 +231,39 @@ const WORKFLOW_DEFINITIONS = [
     references: ["repository-maintenance.md", "deterministic-workflow-runner.md"],
   },
   {
+    id: "repository.sync.pull",
+    contract_version: 3,
+    triggers: ["miku-scm sync pull", "sync pull"],
+    required_parameters: ["repository", "explicit_sync_pull_request"],
+    mutation_level: "local",
+    approval_gate: "apply",
+    runner_entry: "sync-pull.mjs",
+    references: ["sync-pull.md", "deterministic-workflow-runner.md"],
+    contract_runtime_sources: SYNC_SOURCES,
+  },
+  {
+    id: "repository.sync.push.prepare",
+    contract_version: 4,
+    triggers: ["miku-scm sync push", "sync push"],
+    required_parameters: ["repository", "explicit_sync_push_request"],
+    mutation_level: "local",
+    approval_gate: "apply",
+    runner_entry: "sync-push.mjs",
+    references: ["sync-push.md", "deterministic-workflow-runner.md"],
+    contract_runtime_sources: SYNC_PUSH_SOURCES,
+  },
+  {
+    id: "repository.sync.push.apply",
+    contract_version: 3,
+    triggers: ["Prepared sync push execution only"],
+    required_parameters: ["repository", "operation", "plan_digest", "draft_digest"],
+    mutation_level: "remote",
+    approval_gate: "apply",
+    runner_entry: "sync-push.mjs",
+    references: ["sync-push.md", "deterministic-workflow-runner.md"],
+    contract_runtime_sources: SYNC_PUSH_SOURCES,
+  },
+  {
     id: "repository.post-merge.next-work",
     triggers: ["GitHub merge done", "PRマージ完了", "次作業branch作成"],
     required_parameters: ["repository", "confirmed_merge"],
@@ -195,6 +274,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "work.commit",
+    contract_version: 2,
     triggers: ["miku-scm git add commit", "git add commit", "通常commit"],
     required_parameters: ["repository", "explicit_commit_request"],
     mutation_level: "local",
@@ -204,6 +284,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "pr.publish.preflight",
+    contract_version: 3,
     triggers: ["push事前確認", "publication plan作成"],
     required_parameters: ["repository", "reviewed_head"],
     mutation_level: "readonly",
@@ -213,6 +294,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "pr.publish.apply",
+    contract_version: 3,
     triggers: ["ok push", "承認済みpublication plan適用"],
     required_parameters: ["repository", "reviewed_plan", "reviewed_digest"],
     mutation_level: "remote",
@@ -240,6 +322,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "pr.recommit.push",
+    contract_version: 2,
     triggers: [
       "miku-scm draft recommit push",
       "draft recommit push",
@@ -276,8 +359,10 @@ const WORKFLOW_DEFINITIONS = [
     required_parameters: ["repository", "github_repository"],
     mutation_level: "readonly",
     approval_gate: "none",
+    contract_version: 2,
     runner_entry: "miku-scm-writing-prepare.mjs",
     references: ["writing-mode.md", "github-issue-rewrite-handoff.md", "deterministic-workflow-runner.md"],
+    contract_runtime_sources: ["github-issue-read.mjs", "github-issue-comments.mjs"],
   },
   {
     id: "writing.pr.prepare",
@@ -309,6 +394,8 @@ const WORKFLOW_DEFINITIONS = [
 ];
 
 const CONTRACT_TEST_BY_RUNNER = Object.freeze({
+  "sync-pull.mjs": "sync-pull.test.mjs",
+  "sync-push.mjs": "sync-push.test.mjs",
   "miku-scm-local-snapshot.mjs": "miku-scm-local-snapshot.test.mjs",
   "github-issue-read.mjs": "github-issue-read.test.mjs",
   "miku-scm-github-readonly.mjs": "miku-scm-github-readonly.test.mjs",
@@ -334,11 +421,35 @@ if (cliContracts.size !== WORKFLOW_DEFINITIONS.length
   throw new Error("Workflow manifest and CLI help contracts are inconsistent");
 }
 
+const REPOSITORY_HOST_RUNNERS = new Set([
+  "github-issue-read.mjs", "miku-scm-github-readonly.mjs",
+  "github-issue-create.mjs", "github-issue-update.mjs", "github-issue-comment.mjs",
+  "github-issue-label-update.mjs", "github-issue-close.mjs",
+  "repository-maintenance.mjs", "post-recommit-publish.mjs", "pr-recommit-push.mjs",
+  "miku-scm-writing-prepare.mjs",
+]);
+
+const SUPPORT_SOURCES = {
+  "github-issue-create.mjs": ["miku-scm-draft.mjs", "miku-scm-jst-time.mjs"],
+  "github-issue-update.mjs": ["miku-scm-draft.mjs", "miku-scm-jst-time.mjs"],
+  "github-issue-comment.mjs": ["miku-scm-draft.mjs", "miku-scm-jst-time.mjs"],
+  "work-commit.mjs": ["miku-scm-operational-storage.mjs"],
+  "post-recommit-publish.mjs": ["miku-scm-command-runner.mjs"],
+  "pr-recommit-push.mjs": ["miku-scm-command-runner.mjs"],
+};
+
 export const WORKFLOW_MANIFEST = Object.freeze(WORKFLOW_DEFINITIONS.map((entry) => Object.freeze({
   ...entry,
   cli: cliContracts.get(entry.id),
   contract_id: entry.id,
-  contract_version: WORKFLOW_CONTRACT_VERSION,
+  contract_version: entry.contract_version ?? WORKFLOW_CONTRACT_VERSION,
+  ...(entry.contract_runtime_sources || REPOSITORY_HOST_RUNNERS.has(entry.runner_entry) || SUPPORT_SOURCES[entry.runner_entry]
+    ? { contract_runtime_sources: Object.freeze([...new Set([
+      ...(entry.contract_runtime_sources ?? []),
+      ...(SUPPORT_SOURCES[entry.runner_entry] ?? []),
+      ...(REPOSITORY_HOST_RUNNERS.has(entry.runner_entry) ? ["miku-scm-repository.mjs"] : []),
+    ])]) }
+    : {}),
   contract_spec: entry.references.find((reference) => reference !== "deterministic-workflow-runner.md"),
   contract_test: CONTRACT_TEST_BY_RUNNER[entry.runner_entry],
   // Runtime routing intentionally needs no detailed Markdown. The references

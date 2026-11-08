@@ -1,5 +1,9 @@
 # Draft Recommit Push
 
+For the separate `sync push` command, see [sync-push.md](sync-push.md): it
+precedes this shared recommit/publication core with an ordinary commit only
+when dirty. This command's existing meaning does not change.
+
 `pr.recommit.push` is the fixed remote-mutation transition behind the exact
 user-facing command `miku-scm draft recommit push`. The older
 `miku-scm pr recommit push` spelling is a compatible alias. In this command,
@@ -50,7 +54,8 @@ approval pause between successful steps:
    for automatic base resolution as well as publication.
 2. Read the destination branch on the selected remote and fix its exact state:
    absent, or one full remote SHA.
-3. Create the local backup branch and verify it still points to the old HEAD.
+3. Probe the publication storage for writability before creating the local
+   backup branch, then verify the backup still points to the old HEAD.
 4. Soft-reset to the verified base and create the PR-draft commit.
 5. Re-read the remote destination while requiring the state fixed in step 2.
    A changed or newly appeared branch stops before push.
@@ -58,6 +63,11 @@ approval pause between successful steps:
    the existing publication apply path. That path rechecks the expectation,
    uses a new-branch push or explicit `--force-with-lease`, records its attempt,
    fetches, verifies `0 0`, and only then renames the local branch to `-done`.
+
+Plan filenames use a safe branch token and a UUID to avoid path separators and
+same-minute collisions. A failure before publication apply is invoked records
+`publication.push_started: false` with `evidence_version: 1`. Sync push can use
+that structured result for verified recovery on the next explicit request.
 
 The backup-success boundary is intentionally inside this one invocation: no
 second approval is requested after backup when the fixed state remains valid.
@@ -76,14 +86,18 @@ second approval is requested after backup when the fixed state remains valid.
 
 ## Platform Boundary
 
-Current apply support covers macOS and native Windows (`darwin` and `win32`).
-The shared argv-based command runner keeps the publication contract identical on
-both platforms. Linux, WSL-as-Linux, and other platforms stop before backup
-creation and report no mutation. Windows enablement requires the native Windows
-smoke evidence recorded in the repository plan before a release claim is made;
-it is not a shell-script split.
+The shared argv-based runner uses Windows command handling on `win32` and the
+same executable/argv path on other platforms. Linux, WSL-as-Linux, and other
+platforms produce a notice and continue. Required commands and workflow checks
+determine the outcome; the platform name alone never blocks execution.
+Native platform verification is reported separately from simulated paths.
 
 `rg` is not required by this transition.
+
+The publication preflight before and after recommit must name the same branch
+and fetch/push URL digest. A changed destination stops before publication; it
+does not become a new publication plan. The saved schema 2 publication plan
+then revalidates its exact branch, HEAD and URL binding before push.
 
 ## Source-Maintenance Verification
 

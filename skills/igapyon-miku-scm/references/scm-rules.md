@@ -2,6 +2,12 @@
 
 This is the initial rule entry point for `igapyon-miku-scm`. Add detailed rules incrementally as concrete workflows are decided.
 
+GitHub means GitHub and similar repository hosting services, including GitHub
+Enterprise. There is no `github.com` hostname allowlist. Preserve the selected
+remote's host and repository path when constructing browser URLs, comparing
+repository identities, and calling compatible APIs. Use the service's actual
+Git/CLI/API capabilities; do not reject a different hostname in advance.
+
 ## Current Development Policy
 
 - Keep public GitHub inspection READONLY by default.
@@ -45,7 +51,7 @@ Do not apply Startup Work Branch Checkout for:
 - READONLY inspection, status, URL, tag, Release, asset, source, branch, Issue, or Actions queries
 - PR, Release, About, or Issue drafting that writes only under `workplace/` or `temp/`
 - standalone backup-branch creation
-- PR Soft Reset Recommit, post-recommit publication, or Next Work Branch After PR Completion, which have their own branch rules
+- PR Soft Reset Recommit, post-recommit publication, sync pull/push, or Next Work Branch After PR Completion, which have their own branch rules
 
 For these excluded workflows, keep the current branch checked out and apply only their operation-specific rules.
 
@@ -83,13 +89,18 @@ When the branch name ends in `-done`:
 - Treat it as frozen. Do not edit files, stage, commit, reset, recommit, or begin other new work on that branch.
 - Allow READONLY inspection and local GitHub draft writing under `workplace/` or `temp/` without asking whether the Pull Request was merged.
 - Treat `-done` only as evidence that the post-recommit publication flow probably reached its local rename. It does not prove that GitHub received a Pull Request or that the Pull Request was merged.
+- For an explicit `sync pull`, use the fixed [sync-pull.md](sync-pull.md) exception: verify the exact merged PR and fetched merge result before next-branch creation and carryover. If the helper returns `confirmation_required`, ask its saved merge question and continue the same sync only after the user's clear affirmative reply. Never infer that reply or override contradictory PR evidence. A normal non-`-done` branch does not run that PR check.
 - If the user's activating message explicitly reports that the Pull Request was merged, run the Next Work Branch After PR Completion workflow before doing any new work.
-- If merge completion has not been explicitly reported, stop only before a tracked-content or history-mutating workflow and ask `GitHubのPRはマージ済みですか？` Do not infer the answer from local Git state, remote branch state, or the `-done` suffix.
+- Outside that explicit sync pull exception, if merge completion has not been explicitly reported, stop only before a tracked-content or history-mutating workflow and ask `GitHubのPRはマージ済みですか？` Do not infer the answer from local Git state, remote branch state, or the `-done` suffix.
 - If the user says the Pull Request is not merged, keep the branch frozen. Allow read-only inspection and reporting, but require an explicitly documented recovery path before applying a correction.
 
 After the human confirms that the Pull Request was merged, treat that confirmation as authorization to refresh the base and create the next work branch under the documented workflow. Continue other requested work only after switching to that new branch.
 
 ## PR Soft Reset Recommit Delegation
+
+Explicit `sync push` follows [sync-push.md](sync-push.md): necessary ordinary
+commit, one evidence-based draft, then fixed recommit/publication. It does not
+change the separate recommit commands below or automatically pull/increment.
 
 - Treat bare `recommit`, `pr recommit`, `pr soft reset recommit`, and `pr reset recommit` as explicit requests to run the PR Soft Reset Recommit workflow built into `igapyon-miku-scm`. Bare `recommit` implicitly includes PR writing; do not require a separate PR request.
 - Treat the exact request `draft recommit push` as the distinct one-shot local
@@ -122,7 +133,7 @@ git log -1 | head -n 20
 - Run this post-check only after successful recommit. If recommit fails, report the failure instead of presenting the previous commit log as the new result.
 - Do not push or create a Pull Request as part of this delegated workflow.
 
-## One-Shot PR Recommit Push On macOS or Windows
+## One-Shot PR Recommit Push
 
 Use the fixed `pr.recommit.push` runner workflow after the reviewed PR draft is
 available. It validates the local candidate and fixes the remote branch state
@@ -135,23 +146,23 @@ a remote mutation and leaves the ordinary work branch checked out. Do not retry
 or force-push automatically. Use the reported backup and candidate HEAD for a
 separately authorized recovery.
 
-Current apply support covers macOS and native Windows. Linux, WSL-as-Linux, and
-other platforms stop before backup; retain that guard for unsupported platforms.
+Linux, WSL-as-Linux, and other platforms produce a notice and continue through
+the available fixed commands. OS names alone never block execution.
 
-## Human-Approved Post-Recommit Publication On macOS or Windows
+## Human-Approved Post-Recommit Publication
 
 After a successful PR Soft Reset Recommit and the required `git log -1 | head -n 20` display, stop and wait for the human to inspect the commit log.
 
-Use [github-post-recommit-publish.md](github-post-recommit-publish.md) and the bundled `scripts/post-recommit-publish.mjs` as the authoritative implementation. Before asking for publication approval, run its read-only preflight with the reviewed full local commit SHA. Show the resulting exact remote state and apply arguments with the commit log. For an existing remote branch, the preflight full remote SHA is part of the human-reviewed publication plan; for a new remote branch, the reviewed plan records that the exact destination branch is absent.
+Use [github-post-recommit-publish.md](github-post-recommit-publish.md) and the bundled `scripts/post-recommit-publish.mjs` as the authoritative implementation. Before asking for publication approval, run its read-only preflight with the reviewed full local commit SHA and `--save-plan`. Show the saved plan path and digest, exact remote state, and returned `apply_arguments` with the commit log. For an existing remote branch, the preflight full remote SHA is part of the human-reviewed publication plan; for a new remote branch, the reviewed plan records that the exact destination branch is absent. A preflight without a saved plan has no usable apply arguments.
 
 Proceed only when all of these conditions hold:
 
-- the environment is macOS or native Windows
+- the required Git/Node.js commands can execute; other platforms produce a notice
 - the working tree is clean
 - the human explicitly says the displayed commit is OK and authorizes publication
 - the target `<current-branch>-done` local branch does not already exist
 
-After explicit approval, pass the exact preflight `apply_arguments` and `--apply` to the helper. Do not request another conversational approval after `ok push` while the reviewed local HEAD, branch, remote, and remote expectation remain unchanged. The helper must stop instead of guessing when any reviewed state changed.
+After explicit approval, pass the saved preflight's exact `apply_arguments` to the helper without adding `--apply`. The helper rejects ordinary direct apply; a saved plan is the only publication apply entry point. If its contract or reviewed state changed, prepare and review a new saved plan. Do not request another conversational approval after `ok push` while the reviewed local HEAD, branch, remote, and remote expectation remain unchanged. The helper must stop instead of guessing when any reviewed state changed.
 
 For a new remote branch, the helper uses `git push -u origin HEAD:refs/heads/<current-branch>`. For an existing reviewed recommit branch, it requires `--expected-remote-head <reviewed-full-sha>` and uses `git push --force-with-lease=refs/heads/<current-branch>:<reviewed-full-sha> origin HEAD:refs/heads/<current-branch>`. Never use a remote-tracking ref updated by the helper's own fetch as an implicit lease expectation. Do not replace the explicit lease with plain `--force`, and do not use force for a new remote branch.
 
@@ -181,7 +192,7 @@ Do not present local tag creation and push as the default continuation. Normally
 
 ## Next Work Branch After PR Completion
 
-The fixed helper `scripts/post-merge-next-work.mjs --confirmed-merged --apply` is the authoritative one-command implementation of this workflow. It requires a `-done` branch with no staged changes, fetches the base, performs the advisory exact-tag check, creates the prescribed next branch, and verifies `0 0`. It also carries remaining unstaged changes and untracked files through a retained stash as described below. Do not run a separate `git switch -c` when this helper is available.
+The fixed helper `scripts/post-merge-next-work.mjs --confirmed-merged --apply` is the authoritative one-command implementation of this workflow. It requires a `-done` branch with no staged changes, fetches the base, performs the advisory exact-tag check, prepares the prescribed next branch and its tracking configuration before checkout, and verifies `0 0`. Git's `branch.autoSetupMerge` and `branch.autoSetupRebase` settings apply as when creating a branch directly from the shared remote ref; default settings track that base, while settings that disable tracking remain effective. The shared ref and new branch must match the pinned fetched SHA before checkout, so post-checkout hooks see the prepared configuration. It also carries remaining unstaged changes and untracked files through a retained stash as described below. Do not run a separate `git switch -c` when this helper is available.
 
 Run this workflow when the human explicitly reports that the Pull Request was merged. Treat a clear report such as `GitHubでマージした`, `PRをマージした`, or `マージ完了` as both confirmation of the merge and authorization to refresh the base and create the next work branch; do not require a second instruction to create it. Do not infer merge completion from local Git state, push output, or branch naming. Do not create the next work branch immediately after push or local `-done` rename while the PR is still open or its merge is unconfirmed.
 
@@ -319,13 +330,31 @@ branch is published.
 - Do not rewrite history, force-push, move or delete tags, publish or delete releases, or change versions without a documented workflow and explicit authorization.
 - Verify repository state after an operation.
 
+## Human-Approved GitHub Issue Writes
+
+All Issue creation, title/body updates, comments, label changes, and closure
+use the miku-scm runner's approval handoff. Finish every requested preflight,
+run `github.issue.handoff.review` with only handoffs from the current request,
+display the complete review, and wait for a separate user message whose full
+trimmed text is exactly `approve` or `miku-scm approve`. The original request,
+`はい`, `OK`, `お願いします`, `いいね`, `承認`, quoted or negated text, and
+prose containing the word do not approve a write. For one reviewed multi-step
+plan, use one ordered batch and one approval. Do not call a low-level helper's
+`--apply` mode directly or infer a target from global pending work. See
+[approval-handoff.md](approval-handoff.md).
+Every reader that requests `comments` must validate the complete connection:
+`nodes.length` must equal `totalCount`, and an explicit `hasNextPage: true`
+invalidates the snapshot. If the response is incomplete, stop before review or
+mutation. The human review includes the existing comment text so a composite
+operation is based on the same evidence the user sees.
+
 ## Human-Approved New Issue Creation
 
 - Keep drafting and label discovery READONLY. The creation helper uses fixed `gh label list` and `gh issue view` reads plus its fixed `gh issue create` mutation; any future command-surface additions require matching code, documentation, and tests.
 - Use [github-issue-rewrite-handoff.md](github-issue-rewrite-handoff.md) to create the local paste-ready draft.
 - Inspect the target repository's existing labels with the documented fixed Issue READONLY helper while drafting. When one or more labels clearly match the Issue evidence and repository semantics, actively propose them instead of omitting labels by default. Do not guess when classification is ambiguous, and never create or edit label definitions.
 - When the user explicitly requests registration, use [github-issue-create.md](github-issue-create.md) and the bundled `scripts/github-issue-create.mjs` preflight/apply workflow.
-- Require approval after displaying the exact repository, title, body, selected labels, optional parent Issue snapshot, every required digest, and planned operation. The helper may invoke only `gh issue create` with the reviewed title, body file, selected existing labels, and optional same-repository `--parent`, and must not retry automatically.
+- Require the complete handoff review and a separate exact `approve` after displaying the repository, title, full body, selected labels, and optional parent Issue. The helper may invoke only `gh issue create` with the reviewed title, body file, selected existing labels, and optional same-repository `--parent`, and must not retry automatically.
 - For sub-Issue creation, require one positive same-repository parent Issue number. Retrieve and fix the Open parent snapshot during preflight, revalidate it immediately before mutation, and verify the created Issue's exact parent afterward through documented fixed `gh issue view` commands.
 - Require the helper to verify every selected label through fixed `gh label list` before creating the attempt record. Fix the ordered label selection with its own SHA-256 digest, then verify the exact created Issue, requested labels, and optional parent together through one fixed `gh issue view` after successful creation.
 - Require the helper to persist a `pending` attempt before the remote request, block repeated repository-plus-digest attempts, record the confirmed Issue URL plus label and parent verification, and archive the unchanged draft under `created-issues/`. A pending or malformed attempt record is a stop condition, not permission to retry.
@@ -336,35 +365,35 @@ branch is published.
 - Keep drafting evidence READONLY. The content-update helper uses its documented fixed READONLY `gh` commands from preflight through verification.
 - Create the local paste-ready update under [github-issue-rewrite-handoff.md](github-issue-rewrite-handoff.md).
 - When the user explicitly requests application, use [github-issue-update.md](github-issue-update.md) and the bundled `scripts/github-issue-update.mjs` preflight/apply workflow.
-- Require approval after displaying the exact Issue; complete current and proposed titles and bodies; body diff; current, added, removed, and resulting labels; draft and update digests; current Issue snapshot digest; current `updated_at`; and planned command.
+- Require the complete handoff review and a separate exact `approve` after displaying the target Issue, full current and proposed content, body diff, current/added/removed/resulting labels, and operation. A preflight is not approval.
 - Permit only one `gh issue edit` call containing reviewed changes to the title, body, and existing-label membership. Do not create or edit label definitions or change other Issue metadata.
 - Immediately before `gh`, require the public Issue title/body/labels snapshot and `updated_at` to equal the reviewed values. Record `conflict` and stop without mutation when they differ.
-- Use fixed READONLY `gh issue view --json number,url,title,body,labels,updatedAt` and `gh label list --limit 1000 --json name` inside the helper from preflight through post-update verification.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt` plus the shared bounded paginated GraphQL comment query, and `gh label list --limit 1000 --json name` inside the helper from preflight through post-update verification. Bind all comment pages to the Issue's exact `updatedAt`.
 - Persist a `pending` attempt before mutation and verify the exact title, body, and complete label set afterward. Record a `gh issue view` failure before `gh issue edit` as `not-applied` with `gh_invoked: false`; preserve and archive that safe record when retrying the same reviewed operation. Record only post-mutation uncertainty as `unresolved`, and never retry it automatically.
 
 ## Human-Approved Issue Comment
 
 - Use [github-issue-comment.md](github-issue-comment.md) and the bundled `scripts/github-issue-comment.mjs`.
-- Permit only one `gh issue comment <number> --repo <owner/repo> --body-file <temporary-file>` call using the complete reviewed comment draft.
-- Require approval after displaying the exact Issue state, complete comment, draft digest, Issue snapshot digest, `updated_at`, and planned command.
-- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt` for the reviewed Issue snapshot and `gh api --method GET repos/<owner/repo>/issues/comments/<comment-id>` for post-comment verification. Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body. A pre-mutation READONLY failure is `not-applied`; bounded READONLY verification retries must never repeat the mutation.
+- Permit only one `gh issue comment <number> --repo <[host/]owner/repo> --body-file <temporary-file>` call using the complete reviewed comment draft.
+- Require the complete handoff review and a separate exact `approve` after displaying the target Issue and complete proposed comment. A preflight is not approval.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,labels,updatedAt` plus the shared bounded paginated GraphQL comment query for the reviewed Issue snapshot, and `gh api --method GET repos/<owner/repo>/issues/comments/<comment-id> [--hostname <selected-host>]` for post-comment verification. Persist `pending`, detect an intervening Issue update as `conflict`, and verify the exact new comment URL and body. A pre-mutation READONLY failure is `not-applied`; bounded READONLY verification retries must never repeat the mutation.
 - Do not edit or delete comments, use interactive or browser modes, or combine a comment with another mutation in one helper or `gh` command. The exact ordered handoff batch may orchestrate separately reviewed helpers and dependency-refresh only the allowlisted snapshot expectations in [approval-handoff.md](approval-handoff.md).
 
 ## Human-Approved Existing Issue Label Update
 
 - Use [github-issue-label-update.md](github-issue-label-update.md) and the bundled `scripts/github-issue-label-update.mjs`.
 - Permit one `gh issue edit` containing only reviewed repeated `--add-label` and `--remove-label` arguments for one Issue.
-- Require every label to exist exactly in the repository. Reject overlap, no-op additions or removals, and label-definition changes.
-- Require approval after displaying current, added, removed, and complete resulting labels plus operation, current-label, and resulting-label digests.
-- Use fixed READONLY `gh label list --limit 1000 --json name` and `gh issue view --json number,url,title,state,labels,updatedAt` from preflight through verification. Persist `pending`, detect an intervening Issue change as `conflict`, and verify the complete resulting label set. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
+- Require additions to name existing repository labels. Reject overlap and label-definition changes. Already-present additions and absent removals are harmless; return no changes required when the full request is already satisfied.
+- Require the complete handoff review and a separate exact `approve` after displaying the target Issue and current/added/removed/resulting labels. A preflight is not approval.
+- Use fixed READONLY `gh label list --limit 1000 --json name` and `gh issue view --json number,url,title,body,state,labels,updatedAt` plus the shared bounded paginated GraphQL comment query from preflight through verification. Bind all comment pages to the Issue's exact `updatedAt`. Persist `pending`, detect an intervening Issue change as `conflict`, and verify the complete resulting label set. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
 
 ## Human-Approved Issue Close
 
 - Use [github-issue-close.md](github-issue-close.md) and the bundled `scripts/github-issue-close.mjs`.
 - Permit one `gh issue close` for an Open Issue with exact reason `completed`, `not planned`, or `duplicate`.
 - For `duplicate`, require and display one different, fixed-`gh issue view` verified target Issue and fix its reviewed snapshot digest through apply. Reject a duplicate target for other reasons.
-- Require approval after displaying the complete current Issue, reason, duplicate target when applicable, operation digest, body digest, `updated_at`, and planned command.
-- Use fixed READONLY `gh issue view --json number,url,title,body,state,stateReason,updatedAt` from preflight through verification. Persist `pending`, detect a non-Open or changed Issue as `conflict`, and verify the closed state and reason. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
+- Require the complete handoff review and a separate exact `approve` after displaying the current Issue, close reason, and duplicate target when applicable. A preflight is not approval.
+- Use fixed READONLY `gh issue view --json number,url,title,body,state,stateReason,updatedAt,labels` plus the shared bounded paginated GraphQL comment query from preflight through verification. Bind all comment pages to the Issue's exact `updatedAt`. Persist `pending`, detect a non-Open or changed Issue as `conflict`, and verify the closed state and reason. A pre-mutation READONLY failure is `not-applied`; never retry the mutation.
 - Permit a fresh close preflight after a recorded `conflict` or pre-mutation `not-applied`. A newly approved apply archives that safe no-mutation record before claiming a new attempt. Never archive, replace, or retry a `pending`, `closed`, or `unresolved` attempt.
 - Do not add a closing comment in the close command and do not permit reopen under this workflow.
 

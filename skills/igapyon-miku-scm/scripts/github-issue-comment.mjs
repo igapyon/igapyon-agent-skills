@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { resolveIssueDraft } from "./miku-scm-draft.mjs";
+
 import { createHash, randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import {
@@ -15,12 +17,14 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { repositoryCacheParts, ghRepository, parseRepository, matchesIssueUrl, repositoryApiArgs } from "./miku-scm-repository.mjs";
 
 import { workflowContractById } from "./miku-scm-workflow-contract-lock.mjs";
 import { relativeOperationalPath } from "./miku-scm-operational-path.mjs";
+import { normalizeIssueCommentConnection } from "./miku-scm-issue-approval.mjs";
+import { createGhCommentsRunner, readCompleteIssueCommentConnection } from "./github-issue-comments.mjs";
 
 const ISSUE_COMMENT_APPLY_CONTRACT = workflowContractById().get("github.issue.comment.apply");
-const REPOSITORY_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
 const DRAFT_PATTERN = /^issue-(\d+)-comment-\d{12}(?:-\d+)?\.md$/;
 const ATTEMPT_STATUSES = new Set(["pending", "commented", "conflict", "not-applied", "unresolved"]);
@@ -28,10 +32,10 @@ const VERIFICATION_DELAYS_MS = [0, 250, 1_000];
 
 export const usage = `Usage:
   node skills/igapyon-miku-scm/scripts/github-issue-comment.mjs \\
-    --repo <owner/repo> --issue <number> --draft <path> [--root <root>]
+    --repo <[host/]owner/repo> --issue <number> --draft <path> [--root <root>]
 
   node skills/igapyon-miku-scm/scripts/github-issue-comment.mjs \\
-    --repo <owner/repo> --issue <number> --draft <path> \\
+    --repo <[host/]owner/repo> --issue <number> --draft <path> \\
     --expected-draft-sha256 <sha256> --expected-issue-sha256 <sha256> \\
     --expected-updated-at <timestamp> \\
     --apply [--root <root>]`;
@@ -68,9 +72,10 @@ export function parseArgs(argv, cwd = process.cwd()) {
     else throw new Error(`Unknown argument: ${arg}`);
   }
   if (options.help) return options;
-  if (!REPOSITORY_PATTERN.test(options.repository)) {
-    throw new Error("--repo must be exactly owner/repo");
+  if (!parseRepository(options.repository)) {
+    throw new Error("--repo must use [host/]owner/repo");
   }
+  options.repository = ghRepository(parseRepository(options.repository));
   if (!Number.isSafeInteger(options.issueNumber) || options.issueNumber < 1) {
     throw new Error("--issue must be a positive integer");
   }
@@ -118,40 +123,20 @@ function issueSha256(issue) {
 }
 
 async function resolveDraft(options) {
-  const root = await realpath(path.resolve(options.root));
-  const draft = await realpath(path.resolve(root, options.draft));
-  const directory = path.join(root, "workplace", "miku-scm", "issue-comments");
-  const relative = path.relative(directory, draft);
-  if (!relative || relative.startsWith("..") || path.isAbsolute(relative) || relative.includes(path.sep)) {
-    throw new Error("--draft must name one file directly under workplace/miku-scm/issue-comments");
-  }
-  const match = relative.match(DRAFT_PATTERN);
-  if (!match || Number(match[1]) !== options.issueNumber) {
-    throw new Error("Comment draft filename must identify the exact --issue");
-  }
-  const body = await readFile(draft, "utf8");
-  if (body.includes("\r")) throw new Error("Comment draft must use LF line endings");
-  if (!body.trim()) throw new Error("Comment draft must not be empty");
-  return {
-    root,
-    draft,
-    relativeDraft: relativeOperationalPath(root, draft),
-    body,
-    digest: sha256(body),
-  };
+  const draft = await resolveIssueDraft(options, "issue-comments", DRAFT_PATTERN, `issue-${options.issueNumber}-comment`, options.issueNumber);
+  if (!draft.text.trim()) throw new Error("Comment draft must not be empty");
+  return { ...draft, body: draft.text };
 }
 
 function attemptPath(draft, repository, issueNumber) {
-  const [owner, repo] = repository.split("/");
   return path.join(
     draft.root,
     "workplace",
     "miku-scm",
     "issue-comment-attempts",
-    owner,
-    repo,
+    ...repositoryCacheParts(repository),
     String(issueNumber),
-    `${draft.digest}.json`,
+    `${draft.normalizedDigest}.json`,
   );
 }
 
@@ -179,6 +164,16 @@ function priorAttemptError(record) {
   return new Error(
     `This comment draft already has a ${record.status} attempt for ${record.repository}#${record.issue_number}. Do not retry it.`,
   );
+}
+
+function recoverableAttempt(record) {
+  return record?.status === "not-applied" && record.stage === "pre-comment-read";
+}
+
+async function archiveRecoverableAttempt(file) {
+  const archived = `${file}.pre-comment-read-${new Date().toISOString().replaceAll(":", "-")}-${randomUUID()}`;
+  await rename(file, archived);
+  return archived;
 }
 
 async function claimAttempt(file, record) {
@@ -214,9 +209,11 @@ function ghDetail(result) {
   return result?.stderr || result?.stdout || result?.error?.message || `exit ${result?.status}`;
 }
 
-export function createGhIssueReader(gh = createGhRunner()) {
+export function createGhIssueReader(gh, ghComments) {
+  const issueGh = gh ?? createGhRunner();
+  const commentsGh = ghComments ?? (gh ? gh : createGhCommentsRunner());
   return async (repository, issueNumber) => {
-    const result = gh([
+    const result = issueGh([
       "issue", "view", String(issueNumber),
       "--repo", repository,
       "--json", "number,url,title,body,state,labels,updatedAt",
@@ -228,10 +225,9 @@ export function createGhIssueReader(gh = createGhRunner()) {
     } catch {
       throw new Error("gh issue view returned malformed JSON");
     }
-    const url = `https://github.com/${repository}/issues/${issueNumber}`;
     if (
       issue?.number !== issueNumber
-      || issue?.url !== url
+      || !matchesIssueUrl(issue?.url, repository, issueNumber)
       || typeof issue?.title !== "string"
       || typeof issue?.body !== "string"
       || !["OPEN", "CLOSED"].includes(issue?.state)
@@ -242,6 +238,10 @@ export function createGhIssueReader(gh = createGhRunner()) {
     ) {
       throw new Error("gh issue view does not exactly identify the requested Issue");
     }
+    const comments = readCompleteIssueCommentConnection(repository, issueNumber, {
+      gh: commentsGh,
+      expectedUpdatedAt: issue.updatedAt,
+    });
     return {
       number: issue.number,
       url: issue.url,
@@ -250,16 +250,14 @@ export function createGhIssueReader(gh = createGhRunner()) {
       body: issue.body,
       labels: issue.labels.map((label) => label.name),
       updatedAt: issue.updatedAt,
+      comments: normalizeIssueCommentConnection(comments),
     };
   };
 }
 
 export function createGhCommentReader(gh = createGhRunner()) {
   return async (repository, issueNumber, commentId) => {
-    const result = gh([
-      "api", "--method", "GET",
-      `repos/${repository}/issues/comments/${commentId}`,
-    ]);
+    const result = gh(repositoryApiArgs(repository, `issues/comments/${commentId}`));
     if (!result?.ok) throw new Error(`gh api Issue comment GET failed: ${ghDetail(result)}`);
     let comment;
     try {
@@ -267,12 +265,11 @@ export function createGhCommentReader(gh = createGhRunner()) {
     } catch {
       throw new Error("gh api Issue comment GET returned malformed JSON");
     }
-    const expectedUrl = `https://github.com/${repository}/issues/${issueNumber}#issuecomment-${commentId}`;
     if (
       !Number.isSafeInteger(comment?.id)
       || comment.id <= 0
       || comment.id !== commentId
-      || comment?.html_url !== expectedUrl
+      || !matchesIssueUrl(comment?.html_url, repository, issueNumber, commentId)
       || typeof comment?.body !== "string"
     ) {
       throw new Error("gh api response does not identify the requested Issue comment");
@@ -341,18 +338,25 @@ function applyArguments(options, draft, issue) {
 
 export async function runIssueComment(options, dependencies = {}) {
   const ghRead = dependencies.ghRead ?? createGhRunner();
+  const ghComments = dependencies.ghComments ?? (dependencies.ghRead ? ghRead : createGhCommentsRunner());
   const ghMutation = dependencies.ghMutation ?? dependencies.gh ?? createGhRunner();
-  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead);
+  const readIssue = dependencies.readIssue ?? createGhIssueReader(ghRead, ghComments);
   const readComment = dependencies.readComment ?? createGhCommentReader(ghRead);
   const sleep = dependencies.sleep ?? wait;
   const draft = await resolveDraft(options);
   const attempt = attemptPath(draft, options.repository, options.issueNumber);
-  const prior = await readAttempt(attempt);
-  if (prior) throw priorAttemptError(prior);
+  let prior = await readAttempt(attempt);
+  if (prior && !recoverableAttempt(prior)) throw priorAttemptError(prior);
+  let recoveredFrom = null;
+  if (prior) {
+    recoveredFrom = await archiveRecoverableAttempt(attempt);
+    prior = null;
+  }
   const common = {
     repository: options.repository,
     issue_number: options.issueNumber,
     draft: draft.relativeDraft,
+    warnings: draft.warnings,
     draft_sha256: draft.digest,
     comment_body: draft.body,
     attempt_record: relativeOperationalPath(draft.root, attempt),
@@ -371,6 +375,11 @@ export async function runIssueComment(options, dependencies = {}) {
       issue_url: issue.url,
       issue_title: issue.title,
       issue_state: issue.state,
+      current_title: issue.title,
+      current_body: issue.body,
+      current_labels: issue.labels,
+      current_comments: issue.comments,
+      current_updated_at: issue.updatedAt,
       current_issue_sha256: issueSha256(issue),
       current_updated_at: issue.updatedAt,
       apply_arguments: applyArguments(options, draft, issue),
@@ -393,6 +402,7 @@ export async function runIssueComment(options, dependencies = {}) {
     reviewed_issue_sha256: options.expectedIssueSha256.toLowerCase(),
     reviewed_updated_at: options.expectedUpdatedAt,
     attempt_started_at: new Date().toISOString(),
+    ...(recoveredFrom ? { recovered_from_attempt: relativeOperationalPath(draft.root, recoveredFrom) } : {}),
   };
   await claimAttempt(attempt, pending);
 
@@ -451,9 +461,9 @@ export async function runIssueComment(options, dependencies = {}) {
       await replaceAttempt(attempt, record);
       return { status: "unresolved", ...common, stage: record.stage, detail };
     }
-    const escaped = options.repository.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escaped = issue.url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const pattern = new RegExp(
-      `https://github\\.com/${escaped}/issues/${options.issueNumber}#issuecomment-(\\d+)`,
+      `${escaped}#issuecomment-([1-9]\\d*)(?!\\d)`,
       "i",
     );
     const match = result.stdout?.match(pattern);

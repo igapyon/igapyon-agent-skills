@@ -9,6 +9,7 @@ import {
   numberToSuffix,
   parseArgs,
 } from "../scripts/miku-scm-version.mjs";
+import { renderHumanOutput } from "../scripts/miku-scm-human-output.mjs";
 
 async function workspace(t, files) {
   const root = await mkdtemp(path.join(os.tmpdir(), "miku-scm-version-test-"));
@@ -65,6 +66,18 @@ test("miku date validation checks coupling and computes the same-day candidate",
   assert.equal(result.proposed.authoritative, "1.20260727.5");
   assert.equal(result.proposed.coupled, "20260727e");
   assert.equal(result.mutation_invoked, false);
+  const output = renderHumanOutput({
+    workflow: "version.increment.validate",
+    status: "success",
+    approvalGate: "preflight",
+    delegateStatus: "validated",
+    mutationInvoked: false,
+    result,
+  });
+  assert.deepEqual(output.split("\n").filter((line) => line.startsWith("Candidate (")), [
+    "Candidate (pom.xml): 1.20260727.5",
+    "Candidate (VERSION.md): 20260727e",
+  ]);
 });
 
 test("date validation resets the sequence on a new maintenance date", async (t) => {

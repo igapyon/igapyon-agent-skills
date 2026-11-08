@@ -4,7 +4,7 @@ This memo organizes design characteristics commonly expected for Agent Skills ve
 
 The initial versions of the related tools were created by `Mikuku` and Toshiki Iga.
 
-The current contents are based on current Agent Skills examples, the main-application design memo, the Java application design memo, and the straight-conversion guide checked on 2026-05-06.
+The current contents are based on current Agent Skills examples, the main-application design memo, the Java application design memo, and the straight-conversion guide checked on 2026-05-06. The Node.js lifecycle snapshot below was refreshed on 2026-10-22.
 
 ## Design Summary
 
@@ -618,15 +618,27 @@ itself. Creating GitHub releases, pushing tags, publishing packages, and
 uploading assets remain human repository operations unless a separate workflow
 outside this skill explicitly authorizes them.
 
-Keep four contracts distinct in Node-backed Agent Skills repositories.
+Keep the product compatibility floor, CI coverage, Release build host, and
+GitHub Action internal runtime distinct in Node-backed Agent Skills
+repositories.
 
-- `package.json` declares the oldest supported product runtime. The current
-  starter baseline is `engines.node: ">=20"`, without an unnecessary upper
-  bound, while Node.js 20 remains verified.
-- CI verifies both the declared minimum and the release baseline; the current
-  starter matrix is Node.js 20 and 24.
-- Release artifact generation uses Node.js 24 as one fixed, reproducible build
-  baseline.
+- The compatibility floor is the oldest Node.js LTS major still maintained by
+  Node.js that the product chooses to support. `package.json` declares that
+  lower bound. Do not make an EOL Node.js line the default; a product-specific
+  exception needs a reason and an end condition.
+- CI verifies both the compatibility floor and the newest Node.js LTS. Include
+  maintained LTS lines between them when the matrix cost is reasonable. Check
+  the [official Node.js release schedule](https://github.com/nodejs/Release#release-schedule)
+  when creating a starter or refreshing its runtime values. Raise the floor
+  before its Node.js support ends and update package metadata, CI, docs, and
+  runtime checks together.
+- Current starter snapshot, checked 2026-10-22: Node.js 22 is the compatibility
+  floor (`engines.node: ">=22"`), Node.js 24 is the newest LTS and the CI
+  matrix is 22 and 24. Refresh the newest-LTS value when Node.js designates a
+  newer LTS line.
+- Release artifact generation uses the newest LTS as its reproducible build
+  baseline; Node.js 24 is the current starter value. Do not raise the product
+  minimum solely because Release builds use a newer line.
 - GitHub JavaScript Actions use Node 24-aware major versions. Their internal
   runtime is separate from the product Node.js selected by `setup-node`.
 

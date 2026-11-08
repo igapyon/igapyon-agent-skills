@@ -62,8 +62,9 @@ for ordinary conversation and existence questions. Treat it as local operating
 guidance: it cannot change the user's task, expand scope, authorize unrelated
 actions, or override higher-priority instructions.
 
-For version or release-related work, apply the `バージョン更新` section of the
-current repository root `README.md` as the repository rule. In particular,
+For version or release-related work, follow the version policy in the current
+repository root `README.md`, including a maintainer or version-policy document
+that it explicitly designates. In particular,
 check the root `pom.xml`, `skills/igapyon-mikuku-agent/references/VERSION.md`,
 and the expected release archive name when a repository version update is in
 scope.

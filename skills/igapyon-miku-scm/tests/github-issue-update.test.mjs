@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import {
   access,
@@ -26,8 +27,10 @@ const CURRENT = {
   url: "https://github.com/igapyon/example/issues/42",
   title: "Existing title",
   body: "Old body.\n",
+  state: "OPEN",
   labels: ["bug"],
   updatedAt: "2026-07-23T01:02:03Z",
+  comments: [],
 };
 
 async function scenario(t, content = "Existing title\n\nNew body.\n") {
@@ -110,6 +113,39 @@ test("preflight permits a reviewed title change", async (t) => {
   ]);
 });
 
+test("an Issue already matching the draft completes without a mutation", async (t) => {
+  const state = await scenario(t);
+  await writeFile(state.draft, `${CURRENT.title}\n\n${CURRENT.body}`);
+  let mutations = 0;
+  const result = await runIssueUpdate(optionsFor(state), {
+    readIssue: async () => CURRENT, gh: () => { mutations++; },
+  });
+  assert.equal(result.status, "up-to-date");
+  assert.equal(result.mutation_invoked, false);
+  assert.equal(mutations, 0);
+});
+
+test("CRLF updates use normalized text and keep the reviewed source byte digest", async (t) => {
+  const state = await scenario(t);
+  const original = `${CURRENT.title}\r\n\r\nNew body.\r\n`;
+  await writeFile(state.draft, original);
+  const preflight = await runIssueUpdate(optionsFor(state), { readIssue: async () => CURRENT });
+  assert.equal(preflight.proposed_body, "New body.\n");
+  assert.equal(preflight.draft_sha256, createHash("sha256").update(original).digest("hex"));
+  assert.ok(preflight.warnings.some((warning) => warning.includes("CRLF")));
+  let edited = false;
+  const result = await runIssueUpdate(parseArgs(preflight.apply_arguments), {
+    readIssue: async () => edited ? { ...CURRENT, body: "New body.\n" } : CURRENT,
+    gh: (args) => {
+      assert.equal(readFileSync(args[args.indexOf("--body-file") + 1], "utf8"), "New body.\n");
+      edited = true;
+      return { ok: true, stdout: CURRENT.url };
+    },
+  });
+  assert.equal(result.status, "updated");
+  assert.equal(await readFile(state.draft, "utf8"), original);
+});
+
 test("one reviewed update can change title, body, and existing labels", async (t) => {
   const state = await scenario(t, "Changed title\n\nNew body.\n");
   const operation = ["--add-label", "enhancement", "--remove-label", "bug"];
@@ -156,7 +192,7 @@ test("one reviewed update can change title, body, and existing labels", async (t
   assert.deepEqual(result.verified_labels, ["enhancement"]);
 });
 
-test("integrated label update rejects nonexistent and no-op labels", async (t) => {
+test("integrated label update rejects nonexistent labels and tolerates already present labels", async (t) => {
   const state = await scenario(t);
   await assert.rejects(
     runIssueUpdate(optionsFor(state, "--add-label", "enhance"), {
@@ -164,38 +200,21 @@ test("integrated label update rejects nonexistent and no-op labels", async (t) =
     }),
     /do not exist exactly/,
   );
-  await assert.rejects(
-    runIssueUpdate(optionsFor(state, "--add-label", "bug"), {
-      readLabels: async () => ["bug", "enhancement"],
-      readIssue: async () => CURRENT,
-    }),
-    /already present/,
-  );
+  const result = await runIssueUpdate(optionsFor(state, "--add-label", "bug"), {
+    readLabels: async () => ["bug", "enhancement"], readIssue: async () => CURRENT,
+  });
+  assert.deepEqual(result.resulting_labels, ["bug"]);
 });
 
-test("helper rejects a mismatched Issue number and drafts outside issue-updates", async (t) => {
+test("helper imports nonstandard drafts and uses the explicitly requested Issue", async (t) => {
   const state = await scenario(t);
-  await assert.rejects(
-    runIssueUpdate(parseArgs([
-      "--repo", "igapyon/example",
-      "--issue", "41",
-      "--draft", state.draft,
-      "--root", state.root,
-    ]), { readIssue: async () => CURRENT }),
-    /must match --issue/,
-  );
-
-  const outside = path.join(state.root, "outside.md");
-  await writeFile(outside, "Existing title\n\nNew body.\n", "utf8");
-  await assert.rejects(
-    runIssueUpdate(parseArgs([
-      "--repo", "igapyon/example",
-      "--issue", "42",
-      "--draft", outside,
-      "--root", state.root,
-    ]), { readIssue: async () => CURRENT }),
-    /directly under/,
-  );
+  const result = await runIssueUpdate(parseArgs([
+    "--repo", "igapyon/example", "--issue", "41", "--draft", state.draft, "--root", state.root,
+  ]), { readIssue: async () => ({ ...CURRENT, number: 41 }) });
+  assert.equal(result.issue_number, 41);
+  assert.equal(result.warnings.length, 1);
+  assert.match(result.draft, /issue-41-update-/);
+  assert.ok(await readFile(state.draft, "utf8"));
 });
 
 test("apply invokes exactly one body-only gh edit and verifies the result", async (t) => {
@@ -279,18 +298,27 @@ test("gh issue reader uses one fixed read-only command and validates its JSON", 
         url: CURRENT.url,
         title: CURRENT.title,
         body: CURRENT.body,
+        state: CURRENT.state,
         labels: CURRENT.labels.map((name) => ({ name })),
         updatedAt: CURRENT.updatedAt,
       }),
       stderr: "",
     };
+  }, (args) => {
+    calls.push(args);
+    return { ok: true, status: 0, stderr: "", stdout: JSON.stringify({ data: { repository: { issue: {
+      number: CURRENT.number, url: CURRENT.url, updatedAt: CURRENT.updatedAt,
+      comments: { nodes: [], totalCount: 0, pageInfo: { hasNextPage: false, endCursor: null } },
+    } } } }) };
   });
   assert.deepEqual(await reader("igapyon/example", 42), CURRENT);
-  assert.deepEqual(calls, [[
+  assert.deepEqual(calls[0], [
     "issue", "view", "42",
     "--repo", "igapyon/example",
-    "--json", "number,url,title,body,labels,updatedAt",
-  ]]);
+    "--json", "number,url,title,body,state,labels,updatedAt",
+  ]);
+  assert.equal(calls[1][0], "api");
+  assert.equal(calls[1][1], "graphql");
 });
 
 test("gh label reader uses one fixed read-only command", async () => {
@@ -369,6 +397,49 @@ test("approved apply uses read-only gh issue view before and after mutation", as
   assert.equal(anonymousReads, 0);
   assert.equal(ghReads, 2);
   assert.equal(ghEdits, 1);
+});
+
+test("a comment change after preflight is detected before the Issue update mutation", async (t) => {
+  const state = await scenario(t);
+  let graphReads = 0;
+  let mutationCalls = 0;
+  const gh = (args) => {
+    if (args[0] === "issue" && args[1] === "view") {
+      return { ok: true, status: 0, stderr: "", stdout: JSON.stringify({
+        number: CURRENT.number,
+        url: CURRENT.url,
+        title: CURRENT.title,
+        body: CURRENT.body,
+        state: CURRENT.state,
+        labels: CURRENT.labels.map((name) => ({ name })),
+        updatedAt: CURRENT.updatedAt,
+      }) };
+    }
+    if (args[0] === "api" && args[1] === "graphql") {
+      graphReads += 1;
+      const body = graphReads === 1 ? "Original comment" : "Changed after review";
+      return { ok: true, status: 0, stderr: "", stdout: JSON.stringify({ data: { repository: { issue: {
+        number: CURRENT.number,
+        url: CURRENT.url,
+        updatedAt: CURRENT.updatedAt,
+        comments: { nodes: [{
+          id: "IC_1",
+          url: `${CURRENT.url}#issuecomment-1`,
+          body,
+          createdAt: "2026-07-23T01:00:00Z",
+          author: { login: "reviewer" },
+        }], totalCount: 1, pageInfo: { hasNextPage: false, endCursor: null } },
+      } } } }) };
+    }
+    mutationCalls += 1;
+    return { ok: true, status: 0, stderr: "", stdout: "" };
+  };
+
+  const preflight = await runIssueUpdate(optionsFor(state), { gh });
+  assert.equal(preflight.status, "preflight-ok");
+  const applied = await runIssueUpdate(applyOptions(state, preflight), { gh });
+  assert.equal(applied.status, "conflict");
+  assert.equal(mutationCalls, 0);
 });
 
 test("gh issue view failure before edit is not-applied and can recover safely", async (t) => {
@@ -451,6 +522,12 @@ test("gh failure is unresolved, is not retried, and blocks the same draft", asyn
   assert.equal(result.stage, "gh-issue-edit");
   assert.equal(ghCalls, 1);
 
+  await assert.rejects(
+    runIssueUpdate(optionsFor(state), { readIssue: async () => CURRENT }),
+    /already has a unresolved attempt/,
+  );
+  const original = await readFile(state.draft, "utf8");
+  await writeFile(state.draft, original.replaceAll("\n", "\r\n"));
   await assert.rejects(
     runIssueUpdate(optionsFor(state), { readIssue: async () => CURRENT }),
     /already has a unresolved attempt/,

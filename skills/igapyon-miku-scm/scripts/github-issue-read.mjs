@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
+import { ghRepository, matchesIssueUrl, parseRepository } from "./miku-scm-repository.mjs";
+import { createGhCommentsRunner, readCompleteIssueCommentConnection } from "./github-issue-comments.mjs";
 
 function usage() {
-  return `Usage: github-issue-read.mjs --repo <owner>/<repo> (--list [--state <open|closed|all>] | --issue <number> | --labels)
+  return `Usage: github-issue-read.mjs --repo <[host/]owner/repo> (--list [--state <open|closed|all>] | --issue <number> | --labels)
 
 Options:
-  --repo <owner>/<repo>             Repository to inspect
+  --repo <[host/]owner/repo>             Repository to inspect
   --list                            List Issues (default state: open)
   --state <open|closed|all>         State for --list
   --issue <positive-number>         Read one Issue with its comments
@@ -29,9 +31,10 @@ export function parseArgs(argv) {
     } else if (arg === "--labels") options.mode = options.mode ? "invalid" : "labels";
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(options.repo)) {
-    throw new Error("--repo must use the owner/repository form");
+  if (!parseRepository(options.repo)) {
+    throw new Error("--repo must use [host/]owner/repository");
   }
+  options.repo = ghRepository(parseRepository(options.repo));
   if (!new Set(["list", "issue", "labels"]).has(options.mode)) {
     throw new Error("Specify exactly one of --list, --issue, or --labels");
   }
@@ -76,21 +79,70 @@ function normalizeIssue(issue) {
   };
 }
 
-export function runIssueRead(options, { gh = defaultGh } = {}) {
+export function normalizeIssueLabels(labels) {
+  if (!Array.isArray(labels)) {
+    throw new Error("gh Issue list returned malformed labels");
+  }
+  const names = new Set();
+  return labels.map((label) => {
+    if (!label || typeof label.name !== "string" || label.name.trim() === ""
+      || typeof label.color !== "string" || !/^[0-9a-fA-F]{6}$/.test(label.color)
+      || (label.description !== null && typeof label.description !== "string")) {
+      throw new Error("gh Issue list returned malformed label metadata");
+    }
+    if (names.has(label.name)) throw new Error("gh Issue list returned duplicate label names");
+    names.add(label.name);
+    return { name: label.name, color: label.color, description: label.description };
+  });
+}
+
+export function validateCachedIssueList(value, repository, state) {
+  if (!value || value.mode !== "list" || value.repository !== repository || value.state !== state
+    || !Array.isArray(value.issues)) {
+    throw new Error("Cached Issue list does not match its repository and query");
+  }
+  for (const issue of value.issues) {
+    if (!issue || !Number.isSafeInteger(issue.number) || issue.number < 1
+      || typeof issue.state !== "string" || typeof issue.title !== "string"
+      || typeof issue.body !== "string" || typeof issue.html_url !== "string"
+      || typeof issue.updated_at !== "string") {
+      throw new Error("Cached Issue list contains malformed Issue metadata");
+    }
+    normalizeIssueLabels(issue.labels);
+  }
+  return value;
+}
+
+export function runIssueRead(options, dependencies = {}) {
+  const gh = dependencies.gh ?? defaultGh;
+  const ghComments = dependencies.ghComments ?? (dependencies.gh ? gh : createGhCommentsRunner());
   if (options.mode === "list") {
     const entries = runGh(gh, ["issue", "list", "--repo", options.repo, "--state", options.state,
-      "--limit", "1000", "--json", "number,state,title,body,url,updatedAt"]);
+      "--limit", "1000", "--json", "number,state,title,body,url,updatedAt,labels"]);
     if (!Array.isArray(entries)) throw new Error("gh issue list returned a non-array response");
-    return { mode: "list", repository: options.repo, state: options.state, issues: entries.map(normalizeIssue) };
+    return {
+      mode: "list",
+      repository: options.repo,
+      state: options.state,
+      issues: entries.map((issue) => ({ ...normalizeIssue(issue), labels: normalizeIssueLabels(issue.labels) })),
+    };
   }
   if (options.mode === "issue") {
     const issue = runGh(gh, ["issue", "view", String(options.issue), "--repo", options.repo,
-      "--comments", "--json", "number,state,title,body,url,updatedAt,labels,comments"]);
-    const normalized = normalizeIssue(issue);
-    if (!Array.isArray(issue.labels) || !Array.isArray(issue.comments)) {
-      throw new Error("gh issue view returned malformed labels or comments");
+      "--json", "number,state,title,body,url,updatedAt,labels"]);
+    if (issue?.number !== options.issue || !matchesIssueUrl(issue?.url, options.repo, options.issue)) {
+      throw new Error("gh issue view does not exactly identify the requested Issue");
     }
-    return { mode: "issue", repository: options.repo, issue: { ...normalized, labels: issue.labels, comments: issue.comments } };
+    const normalized = normalizeIssue(issue);
+    if (!Array.isArray(issue.labels)) {
+      throw new Error("gh issue view returned malformed labels");
+    }
+    const connection = readCompleteIssueCommentConnection(options.repo, options.issue, {
+      gh: ghComments,
+      expectedUpdatedAt: issue.updatedAt,
+    });
+    const comments = connection.nodes;
+    return { mode: "issue", repository: options.repo, issue: { ...normalized, labels: issue.labels, comments } };
   }
   const labels = runGh(gh, ["label", "list", "--repo", options.repo, "--limit", "1000", "--json", "name,description,color"]);
   if (!Array.isArray(labels) || labels.some((label) => !label || typeof label.name !== "string")) {

@@ -9,7 +9,7 @@ import {
 } from "../scripts/miku-scm-workflow-manifest.mjs";
 
 test("workflow manifest is versioned and IDs are unique", () => {
-  assert.equal(WORKFLOW_MANIFEST_VERSION, "miku-scm.workflow-manifest/v1");
+  assert.equal(WORKFLOW_MANIFEST_VERSION, "miku-scm.workflow-manifest/v2");
   assert.equal(WORKFLOW_CONTRACT_VERSION, 1);
   const ids = WORKFLOW_MANIFEST.map((entry) => entry.id);
   assert.equal(new Set(ids).size, ids.length);
@@ -24,7 +24,29 @@ test("every routed workflow fixes safety metadata and separates runtime referenc
     assert.ok(entry.required_parameters.length > 0);
     assert.ok(entry.references.includes("deterministic-workflow-runner.md"));
     assert.equal(entry.contract_id, entry.id);
-    assert.equal(entry.contract_version, 1);
+    const issueWriteContract = entry.id.startsWith("github.issue.") && entry.id !== "github.issue.read";
+    const syncVersions = {
+      "repository.sync.pull": 3,
+      "repository.sync.push.prepare": 4,
+      "repository.sync.push.apply": 3,
+      "pr.publish.preflight": 3,
+      "pr.publish.apply": 3,
+      "pr.recommit.push": 2,
+      "work.commit": 2,
+      "github.issue.read": 3,
+      "github.read.batch": 3,
+      "github.issue.update.preflight": 3,
+      "github.issue.update.apply": 3,
+      "github.issue.comment.preflight": 3,
+      "github.issue.comment.apply": 3,
+      "github.issue.label.preflight": 3,
+      "github.issue.label.apply": 3,
+      "github.issue.close.preflight": 3,
+      "github.issue.close.apply": 3,
+      "github.issue.handoff.batch.apply": 3,
+      "writing.issue.prepare": 2,
+    };
+    assert.equal(entry.contract_version, syncVersions[entry.id] ?? (issueWriteContract ? 2 : 1));
     assert.match(entry.contract_spec, /\.md$/);
     assert.match(entry.contract_test, /\.test\.mjs$/);
     assert.deepEqual(entry.runtime_references, []);

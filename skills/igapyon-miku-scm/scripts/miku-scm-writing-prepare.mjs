@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { ghRepository, parseRepository } from "./miku-scm-repository.mjs";
 
 import { runIssueRead } from "./github-issue-read.mjs";
 import { jstTimestamp } from "./miku-scm-jst-time.mjs";
@@ -9,7 +10,6 @@ import { jstTimestamp } from "./miku-scm-jst-time.mjs";
 export const WRITING_EVIDENCE_SCHEMA_VERSION = "miku-scm.writing-evidence/v1";
 
 const GIT_TARGET = /^[^\s\u0000-\u001f\u007f]{1,240}$/;
-const GITHUB_REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const MAX_PATCH_CHARS = 120_000;
 const MAX_DOCUMENT_CHARS = 40_000;
 const MAX_COMMITS = 200;
@@ -64,9 +64,10 @@ export function parseWritingPrepareArgs(mode, argv, cwd = process.cwd()) {
     throw new Error("writing.release.prepare requires --target");
   }
   if (mode === "issue") {
-    if (!GITHUB_REPOSITORY.test(options.githubRepository)) {
-      throw new Error("writing.issue.prepare requires --github-repo owner/repository");
+    if (!parseRepository(options.githubRepository)) {
+      throw new Error("writing.issue.prepare requires --github-repo [host/]owner/repository");
     }
+    options.githubRepository = ghRepository(parseRepository(options.githubRepository));
     if (options.issue !== null
       && (!Number.isSafeInteger(options.issue) || options.issue < 1)) {
       throw new Error("--issue must be a positive integer");

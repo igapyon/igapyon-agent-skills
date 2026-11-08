@@ -25,6 +25,32 @@ export function contractSha256(value) {
   return createHash("sha256").update(canonicalContractText(value)).digest("hex");
 }
 
+export function runtimeContractSha256(entry, runnerContent, runtimeContentByName = new Map()) {
+  const sources = entry.contract_runtime_sources;
+  if (!sources) return contractSha256(runnerContent);
+  if (!Array.isArray(sources)) throw new Error(`${entry.id} contract_runtime_sources must be an array`);
+  const names = new Set();
+  for (const source of sources) {
+    assertSafeBasename(source, `${entry.id} contract runtime source`);
+    if (source === entry.runner_entry || names.has(source)) {
+      throw new Error(`${entry.id} contract runtime sources must be unique and exclude runner_entry`);
+    }
+    names.add(source);
+  }
+  const ordered = [...names].sort();
+  const entries = [
+    { path: entry.runner_entry, sha256: contractSha256(runnerContent) },
+    ...ordered.map((source) => {
+      const content = runtimeContentByName instanceof Map
+        ? runtimeContentByName.get(source)
+        : runtimeContentByName[source];
+      if (content === undefined) throw new Error(`${entry.id} contract runtime source is unavailable: ${source}`);
+      return { path: source, sha256: contractSha256(content) };
+    }),
+  ];
+  return contractSha256(JSON.stringify(entries));
+}
+
 function canonicalPair(entry, runnerSha256, specSha256) {
   return JSON.stringify({
     contract_id: entry.contract_id,
@@ -56,15 +82,24 @@ export async function calculateWorkflowContracts() {
     assertSafeBasename(entry.contract_spec, `${entry.id} contract_spec`);
     assertSafeBasename(entry.contract_test, `${entry.id} contract_test`);
 
+    const sourceNames = [...new Set(entry.contract_runtime_sources ?? [])].sort();
+    if (sourceNames.length !== (entry.contract_runtime_sources?.length ?? 0)) {
+      throw new Error(`${entry.id} contract runtime sources must be unique`);
+    }
     const runnerPath = path.join(SCRIPT_DIRECTORY, entry.runner_entry);
     const specPath = path.join(SKILL_DIRECTORY, "references", entry.contract_spec);
     const testPath = path.join(SKILL_DIRECTORY, "tests", entry.contract_test);
-    const [runner, spec] = await Promise.all([
+    const [runner, spec, _test, ...runtimeContents] = await Promise.all([
       readFile(runnerPath),
       readFile(specPath),
       readFile(testPath),
+      ...[...sourceNames].sort().map((source) => readFile(path.join(SCRIPT_DIRECTORY, source))),
     ]);
-    const runnerSha256 = contractSha256(runner);
+    const runtimeContentByName = new Map(sourceNames.map((source, index) => [
+      source,
+      runtimeContents[index],
+    ]));
+    const runnerSha256 = runtimeContractSha256(entry, runner, runtimeContentByName);
     const specSha256 = contractSha256(spec);
     contracts.push(Object.freeze({
       workflow: entry.id,

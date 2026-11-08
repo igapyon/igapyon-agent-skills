@@ -1,5 +1,13 @@
 # GitHub Issue Close
 
+**Agent approval path:** run preparation through the fixed miku-scm runner,
+save the returned handoff, display its complete content with
+`github.issue.handoff.review`, then stop and wait for the user's exact
+`approve` message. Apply only through `github.issue.handoff.apply` or the
+reviewed batch workflow. The helper command examples below describe the
+internal operation contract; the Agent must not invoke this script's `--apply`
+mode directly.
+
 Close one existing public GitHub Issue only through the narrowly authorized,
 human-approved static-helper workflow in this document. Follow
 [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md).
@@ -10,7 +18,7 @@ The AI Agent must not invoke `gh` directly.
 The only allowed mutation is:
 
 ```text
-gh issue close <number> --repo <owner/repo> --reason <completed|not planned|duplicate> [--duplicate-of <number>]
+gh issue close <number> --repo <[host/]owner/repo> --reason <completed|not planned|duplicate> [--duplicate-of <number>]
 ```
 
 Use [scripts/github-issue-close.mjs](../scripts/github-issue-close.mjs).
@@ -22,27 +30,31 @@ first and then dependency-refresh this close operation under
 [approval-handoff.md](approval-handoff.md); it still invokes two distinct fixed
 helpers and never adds a comment to `gh issue close`.
 
-Its fixed READONLY command is `gh issue view <number> --repo <owner/repo> --json number,url,title,body,state,stateReason,updatedAt`; it is distinct from the one close mutation.
+Its fixed READONLY commands are `gh issue view <number> --repo <[host/]owner/repo> --json number,url,title,body,state,stateReason,updatedAt,labels` and the shared paginated GraphQL comment query described in [github-cli-static-helper-policy.md](github-cli-static-helper-policy.md). The complete comments must match the Issue `updatedAt`; these reads are distinct from the one close mutation.
 
 ## Preflight
 
-Retrieve the target Issue with that fixed READONLY command and require it to be Open. Show its
+Retrieve the target Issue with that fixed READONLY command and inspect its state. An already Closed target returns `up-to-date`
+without mutation or an approval handoff; its existing close reason is retained. The handoff retains its
 repository, number, URL, title, complete body, state, `updated_at`, selected
 reason, operation digest, and planned command.
 
 For `duplicate`, require exactly one different Issue number and retrieve that
-Issue with that fixed READONLY command. Show its URL, title, state, and snapshot SHA-256. Fix that
+Issue with that fixed READONLY command. Retain its URL, title, state, and snapshot SHA-256. Fix that
 snapshot in the apply arguments and stop on an intervening change. Reject
 `--duplicate-of` for other reasons.
 
-Wait for explicit human approval after displaying all evidence.
+The preflight is not approval. Display the complete operation with
+`github.issue.handoff.review`, then wait for a separate user message whose
+full trimmed text is exactly `approve` or `miku-scm approve`.
 
 ## Apply and Verification
 
-Apply requires the reviewed operation digest, target body digest, `updated_at`,
+Apply requires the reviewed operation digest, target body digest, exact current-comments digest, `updated_at`,
 and reviewed apply workflow contract pair digest. Persist `pending`, retrieve
 the target again, and record
-`conflict` without `gh` if it is no longer Open or the reviewed state changed.
+`up-to-date` without mutation if it is already Closed. Other reviewed-state
+changes remain `conflict` before a close mutation.
 
 A `conflict` or pre-mutation `not-applied` attempt proves that `gh issue close`
 was not invoked. A later preflight may therefore read and display the latest

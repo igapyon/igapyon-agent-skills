@@ -2,7 +2,11 @@
 
 Use this short repository note only after `igapyon-miku-soft-developer` has been explicitly activated.
 
-`igapyon-repo-conventions` is a prerequisite baseline for this skill. Apply its repository rules for `.gitignore`, `.DS_Store`, `workplace/`, `workplace/.gitkeep`, `.codex/skills/`, Java / Maven `.mvn/jvm.config`, and README documentation of repository operation rules.
+For repository creation or edits, `igapyon-repo-conventions` is the prerequisite
+baseline. Apply its rules for `.gitignore`, `.DS_Store`, `workplace/`,
+`workplace/.gitkeep`, `.codex/skills/`, Java / Maven `.mvn/jvm.config`, and README
+documentation of repository operation rules. Read-only work does not by itself
+authorize applying those conventions.
 
 This file only records miku-soft-specific additions.
 
