@@ -12,6 +12,10 @@ update_when:
 
 # Handoff
 
+2026-11-08：daybook Node.js 単独実行の自己レビュー2件に対応。生成元を YAML の Node.js 配布コードへ切り替えて `!!binary` の Buffer/UTF-8 互換性を回復し、CLI の実パス比較とパス変換なしの別名実行 smoke を追加した。runtime suite 79/79、YAML互換性4/4、参照・配布79/79、生成差分・skill形式・差分検査が成功。Maven package と展開ZIPの別名CLI実行・binary表示検査も成功。[実施記録](docs/plans/daybook-node-only-runtime-implementation.md#自己レビュー2件への対応2026-11-08)を参照。初回実装は `b284076` でcommit済み、今回の修正は未commit。Node.js 22/24のhosted CIは未確認で、実daybook・配備先同期・版数incrementは未実施。
+
+2026-11-06：daybook 同梱 CLI の [Node.js 単独実行計画・実施記録](docs/plans/daybook-node-only-runtime-implementation.md)を完了した。YAML ESMを同梱し、活動作成/読み取り/更新、day-plan、Issueローカル処理、通知dry-runを追加依存なしで確認。runtime suite 78/78、YAML互換性2/2、参照・配布79/79、skill形式、Maven package、展開ZIP runtime検査が成功。ローカル Node.js は26.12.1。Node.js 22/24のhosted CI結果は未確認で、workflowを追加済み。source差分と版数 `1.20261106.2` は未commit。実daybook・配備先同期、version increment、commit/push、tag/Releaseは未実施。
+
 2026-11-06：利用者と合意し、activityの上書き対策を簡素化した。新規作成は同名を上書きせず次の英字へ進む。既存更新は書く直前に読み直し、元の内容と違えば保存せず再検討する。活動ごとのロック、権限管理、解除失敗の警告処理と専用テストは削除。旧Issue activity追記も同じ直前確認を使う。確認から保存までの競合は許容する合意であり、厳密な排他制御を追加し直さない。source runtime 77/77、実daybook runtime 75/75（統合コピーでも成功）、参照・配布79/79、skill形式・差分検査が成功。実daybookの6ファイルと配備済みskillへ反映し、ほかのtracked 122ファイルの不変とskill同期を確認。手順は[activity操作](skills/igapyon-miku-daybook/references/operations.md#add-an-activity)、実装は[更新CLI](skills/igapyon-miku-daybook/assets/daybook/scripts/update-activity.mjs)を参照。同日導入したロック方式とその自己レビュー修正は、この簡素化指示で撤回した。先行する版数更新 `1.20261106.1` / `20261106a` と今回の差分は未commit。
 
 ## 現在地（2026-11-05照合）
@@ -49,7 +53,7 @@ update_when:
 
 - `sync pull` / `sync push` 本体はPR #409でmerge済み。提示されたWindows hosted CIログで368件中5件のCRLF関連失敗を確認した（ログにPR番号・run URLの記載はない）。fixture修正後のWindows再CI成功は未確認。実GitHub上のsync実運用とモデル会話routingも未確認。後続の版数・説明・fixture・候補表示差分は未stage・未commit。
 - 現在版 `.5` のpackage/ZIP照合は未実施。候補版数表示修正のWindows hosted CI再確認とnative Windows 11手動smokeは未確認。
-- day-plan生成前の `npm ci` を必要時だけにする案は未反映。[実運用改善メモ](docs/plans/daybook-operation-feedback.md)の項目1。項目2〜4の記録方針・用語は反映済み。
+- day-plan生成前の `npm ci` は2026-11-06のNode.js単独runtime対応で不要になった。[実装記録](docs/plans/daybook-node-only-runtime-implementation.md)。項目2〜4の記録方針・用語は反映済み。
 - native Windows 11のjunction / CRLF / publication smokeは未確認。提示されたWindows hosted CIログで5/368のCRLF失敗を確認した。fixture修正後の成功は未確認。[Windows計画](WINDOWS11-PUSH-PLAN.md)のW02・W05・W08・W09は未完了のまま扱う。
 - Work Cycle全体のcycle artifact、作業開始のone-shot化、PR evidence統合は継続候補。[設計記録](skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md)と現行sourceを再照合してから別途着手する。
 - モデル会話確認、実資料の変換、配備・運用反映、tag / Release、旧監査の残件は、この訂正で実施・完了したことにしない。個別の未確認事項と過去の検証件数は [TODO.md](TODO.md) を参照する。

@@ -88,6 +88,9 @@ GitHub側の必須チェックに登録し、成功後にmerge、tag、Release�
 | --- | --- |
 | `npm run test:skill-index-policy` | 索引方針、配布ファイル照合、代表参照経路 |
 | `npm run test:release-archive-timestamp` | UTC日付の検証とZIP全エントリの更新日時 |
+| `npm run test:daybook` | 依存なしの同梱 CLI 実処理と既存 daybook suite |
+| `npm run check:daybook-yaml-runtime` | 開発用 YAML runtime とライセンスの生成差分 |
+| `npm run test:daybook-yaml-compatibility` | 同梱 YAML runtime と固定した開発参照版の互換性 |
 | `npm run test:miku-scm` | miku-scm の full suite |
 | `npm run test:github-writer` | GitHub Writer の full suite |
 | `mvn generate-resources` | バージョン整合と採用した内部索引の再生成 |
@@ -95,6 +98,21 @@ GitHub側の必須チェックに登録し、成功後にmerge、tag、Release�
 | `node scripts/check-release-archive.mjs target/igapyon-agent-skills-<version>.zip` | 生成した配布 ZIP の検査 |
 
 `<version>` は `pom.xml` のプロジェクト版に置き換えます。`mvn clean package` の後に ZIP 検査を実行します。外部 skill の取得にはネットワーク接続を使います。
+
+## daybook YAML runtime の保守
+
+配布する `igapyon-miku-daybook` の `.mjs` は Node.js 組み込み機能と同梱ファイルだけで動かし、利用者側の `npm install` / `npm ci` に依存させません。YAML 実装を更新するときだけ、root の固定 devDependencies を使って runtime を生成します。
+
+生成元は `yaml` の Node.js 配布コードとし、`buffer` / `process` は Node.js 組み込みへの静的 ESM import に接続します。ブラウザー版は `!!binary` の戻り値が `Buffer` と異なるため使用しません。生成チェックでは第三者パッケージの外部 import と未解決の dynamic require を拒否します。
+
+```sh
+npm ci
+npm run build:daybook-yaml-runtime
+npm run check:daybook-yaml-runtime
+npm run test:daybook-yaml-compatibility
+```
+
+通常の変更確認は依存導入なしで `npm run test:daybook` を実行します。隔離 smoke は渡された実行パスをそのまま使い、ディレクトリの別名を経由した CLI の help・活動作成/更新・Issue ローカル処理・通知 dry-run も検査します。CLI の起動判定では引数のパスと自身の実パスを比較します。Node.js 22/24 の runtime job と、生成・互換性検査を行う別の開発依存 job を GitHub Actions で分けています。Release ZIP 検査は展開した daybook スキルから同じ隔離 smoke を実行します。
 
 ## 記事公開の優先順位
 
@@ -292,7 +310,7 @@ task の `planning_state` は `planned` と `backlog` を分けます。planned 
 
 利用者は「録音整理を日付なしのBacklogとして登録して」「Backlogのこのtaskを10月20日に予定して」のように依頼できます。既存taskを予定化する時は同じIDの分類・予定日を更新し、別taskを重複作成しません。既存データを分類するときは、対象daybookのgeneratorを更新した後に明示された記録だけを変更します。手順は [task planning migration guide](skills/igapyon-miku-daybook/references/task-planning-migration.md) を参照してください。
 
-GitHub Issue を daybook に取り込む場合のローカル CLI の前提確認と導入手順は、[Issue 取り込み手順](skills/igapyon-miku-daybook/references/issue-import.md#1-check-local-cli-prerequisites-and-prepare-the-intake-files)を参照してください。
+GitHub Issue を daybook に取り込む場合の CLI ファイル準備と確認手順は、[Issue 取り込み手順](skills/igapyon-miku-daybook/references/issue-import.md#1-check-the-local-cli-and-prepare-the-intake-files)を参照してください。
 
 ### URLから関連する task を探す
 

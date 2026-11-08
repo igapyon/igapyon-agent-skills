@@ -18,7 +18,7 @@ function fixture(context, { skills = ["retained-skill", "without-index"], adopte
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "skill-index-integration-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, "scripts"));
-  for (const script of ["skill-index-policy.mjs", "generate-skill-indexes.mjs", "check-generated-indexes.mjs", "check-release-archive.mjs", "release-archive-files.mjs", "skill-reference-routes.mjs", "record-release-archive-timestamp.mjs", "zip-entry-timestamps.mjs"]) {
+  for (const script of ["skill-index-policy.mjs", "generate-skill-indexes.mjs", "check-generated-indexes.mjs", "check-release-archive.mjs", "check-daybook-runtime.mjs", "release-archive-files.mjs", "skill-reference-routes.mjs", "record-release-archive-timestamp.mjs", "zip-entry-timestamps.mjs"]) {
     const source = path.join(projectRoot, "scripts", script);
     if (fs.existsSync(source)) fs.copyFileSync(source, path.join(root, "scripts", script));
   }

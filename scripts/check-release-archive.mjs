@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { assertIndexPresence, readSkillIndexPolicy } from "./skill-index-policy.mjs";
 import { assertSkillFilesMatchSource } from "./release-archive-files.mjs";
+import { checkDaybookRuntime } from "./check-daybook-runtime.mjs";
 import { assertRepresentativeRoutes } from "./skill-reference-routes.mjs";
 import { parseOutputTimestamp, TIMESTAMP_RECORD_SCHEMA } from "./record-release-archive-timestamp.mjs";
 import { assertZipEntryTimestamps } from "./zip-entry-timestamps.mjs";
@@ -324,6 +325,7 @@ function validateArchive(archivePath) {
 
     let sourceChecked = 0;
     let representativeRouteCount = 0;
+    let daybookRuntimeChecked = false;
     for (const skillName of expectedNames) {
       const indexIsAdopted = internalNames.has(skillName)
         ? internalIndexes.has(skillName)
@@ -341,6 +343,10 @@ function validateArchive(archivePath) {
           skillDir: path.join(skillRoot, skillName),
         });
         if (routes.checked) representativeRouteCount++;
+        if (skillName === "igapyon-miku-daybook") {
+          const runtime = checkDaybookRuntime(path.join(skillRoot, skillName, "assets/daybook"));
+          daybookRuntimeChecked = runtime.checked;
+        }
       }
     }
 
@@ -351,6 +357,7 @@ function validateArchive(archivePath) {
       ", total=" + expectedNames.size +
       ", source-checked=" + sourceChecked +
       ", representative-routes=" + representativeRouteCount +
+      ", daybook-runtime=" + (daybookRuntimeChecked ? "checked" : "not-checked") +
       ", timestamp=" + timestampCheck.output_timestamp +
       ", timestamped-entries=" + timestampCheck.entry_count + ")"
     );

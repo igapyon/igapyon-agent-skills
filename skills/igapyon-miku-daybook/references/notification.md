@@ -22,11 +22,13 @@ For an explicit request to create or update this workflow, use [assets/daybook](
 - `scripts/post-day-plan.mjs`
 - `scripts/day-plan.test.mjs`
 - `scripts/post-day-plan.test.mjs`
-- `package.json` and `package-lock.json`
+- [scripts/vendor/yaml-runtime.mjs](../assets/daybook/scripts/vendor/yaml-runtime.mjs)
+- [scripts/vendor/yaml.LICENSE](../assets/daybook/scripts/vendor/yaml.LICENSE)
+- `package.json` (optional; only to use the bundled `npm test` command)
 
-The bundle is self-contained. It does not require the source daybook repository or a network-fetched script at runtime. Preserve an existing target repository's package scripts and dependencies when integrating it. Set `DAYBOOK_ISSUE_NUMBER` and `DAYBOOK_NOTIFY_ENABLED` as repository variables. Optionally set `DAYBOOK_MENTION` to the account mention that should receive notifications; if it is unset or empty, no account is mentioned. Do not copy the source repository's Issue number or account-specific values without checking the target.
+The bundle is self-contained and its `.mjs` tools run with Node.js and included files; no target package manifest, lockfile, installed dependency, or `npm ci` is required. Preserve an existing target repository's package files and dependencies when integrating it. Set `DAYBOOK_ISSUE_NUMBER` and `DAYBOOK_NOTIFY_ENABLED` as repository variables. Optionally set `DAYBOOK_MENTION` to the account mention that should receive notifications; if it is unset or empty, no account is mentioned. Do not copy the source repository's Issue number or account-specific values without checking the target.
 
-This list is the notification workflow bundle only. Do not copy Issue-intake helpers as part of notification setup. If Issue intake is separately requested, follow the local prerequisite and integration steps in [issue-import.md](issue-import.md#1-check-local-cli-prerequisites-and-prepare-the-intake-files).
+This list is the notification workflow bundle only. Do not copy Issue-intake helpers as part of notification setup. If Issue intake is separately requested, follow the local file-copy and integration steps in [issue-import.md](issue-import.md#1-check-the-local-cli-and-prepare-the-intake-files).
 
 After copying the bundle, run its day-plan tests and generate a representative plan into a staging output root. Confirm that the `Backlog` heading and its relative links are present before updating the target workflow. The posting script's deduplication, marker, permissions, and posting behavior do not change for this section.
 

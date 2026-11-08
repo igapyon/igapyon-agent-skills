@@ -2,6 +2,19 @@
 
 ## AI Agent Current Tasks
 
+### daybook：同梱CLIのNode.js単独実行（2026-11-08・自己レビュー2件を修正・検証済み）
+
+[実装計画と実施記録](docs/plans/daybook-node-only-runtime-implementation.md)に沿ってDBN-00〜07を完了した。YAML ESMとlicenseを同梱し、Node.jsだけで活動作成・更新、day-plan、Issueローカル取り込み、通知dry-runが動く。開発用生成依存はrepo rootのdevDependenciesに分け、配布後の `npm install` / `npm ci` は不要。
+
+- [x] scriptsを隔離コピーし、活動作成・更新・day-plan生成・Issue取り込みの4 CLIが `--help` で `ERR_MODULE_NOT_FOUND` になることを確認。
+- [x] DBN-00〜02：開始確認、生成済みYAML runtimeとlicense、2か所のimportと依存定義を更新。
+- [x] DBN-03〜04：既存YAML・CLIの互換性と、Node.jsのみでの活動作成・更新等を隔離検証。
+- [x] DBN-05〜07：操作・導入手順、通知workflow、CI・ZIP検査を整合し、検証結果を記録。
+- [x] 自己レビュー：YAML の Node.js 配布コードを同梱し、`!!binary` の Buffer/UTF-8 と表示互換性を回復。
+- [x] 自己レビュー：CLI の起動判定を実パス比較へ変更し、パス変換なしの smoke で別名経由の実処理を確認。
+
+初回実装は `b284076` でcommit済み。11月8日の修正後は `npm run test:daybook` 79/79、YAML互換性4/4、参照・配布79/79、生成差分・skill形式・差分検査が成功。Maven package と展開ZIPの別名CLI実行・binary表示検査も成功。ローカル Node.js は26.12.1で、Node.js 22/24のhosted CI結果は未確認。今回の修正差分は未commitで、実daybook・配備先同期・版数incrementは未実施。活動更新の直前確認と保存の間の競合を許容する11月6日の合意を保ち、活動ロックを再導入しない。
+
 ### daybook：activityの上書き防止（2026-11-06・簡素化・反映済み）
 
 - [x] 新規作成は同名ファイルを上書きせず次の英字へ進む。標準入力を使い、固定名draftの共有を避ける。
@@ -151,7 +164,7 @@ TODO・HANDOFFの矛盾確認と訂正はHEAD `8d8f68c` から始め、commit `9
 - [x] 候補版数human output修正：実producerのproposed schema対応、human output v15、5ケースと実producer接続テスト、contract lock/table更新。[計画と検証記録](skills/igapyon-miku-scm/docs/2026-10-26-version-candidate-output-fix-plan.md)
 - [ ] SYNC-08の残り：native Windows実機、fixture修正後のhosted CI成功、実GitHub上のsync、実モデルでのsync会話routingを確認。提示されたWindows hosted CIログで368件中5件のCRLF失敗を確認済み（PR番号・run URLは不明）。修正後の成功とローカルfixtureの成功を混同しない。
 - [ ] 現在版 `1.20261026.5` をpackageし、配布ZIPを検査する。`.3` のZIPはincrement前の成果物である。
-- [ ] day-plan生成前の `npm ci` を必要時だけにする案を検討する。[実運用改善メモ](docs/plans/daybook-operation-feedback.md)の項目1。項目2〜4の記録方針・用語は `38e73af` / PR #408で反映済み。
+- [x] day-plan生成前の `npm ci` をなくし、Node.jsだけで実行できる同梱YAML runtimeへ置換した。[実装・検証記録](docs/plans/daybook-node-only-runtime-implementation.md)。項目2〜4の記録方針・用語は `38e73af` / PR #408で反映済み。
 - [ ] native Windows 11のjunction / CRLF / publication smokeを確認する。[Windows計画](WINDOWS11-PUSH-PLAN.md)のW02・W05・W08・W09は未完了。提示されたWindows hosted CIログで368件中5件のCRLF失敗を確認済み（PR番号・run URLは不明）。fixture修正後の再CI成功は未確認。
 - [ ] Work Cycleのcycle artifact、作業開始のone-shot化、PR evidence統合を、着手時に現行sourceと再照合する。[設計記録](skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md)。初期実装とWindows publication経路はすでにマージ済み。
 - [ ] 旧draft系コマンド全体の文案再利用とbase・HEADの対応付けは継続候補。新しいsync pushではevidence/plan/draft digestへ固定したが、既存コマンド全体の意味変更には広げていない。

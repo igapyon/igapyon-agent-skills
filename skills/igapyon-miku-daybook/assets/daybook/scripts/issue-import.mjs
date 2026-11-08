@@ -4,7 +4,7 @@ import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
 
-import { stringify as stringifyYaml } from "yaml";
+import { stringify as stringifyYaml } from "./vendor/yaml-runtime.mjs";
 import { DEFAULT_TASK_PRIORITY, parseFrontMatter, todayInTokyo, validateIsoDate } from "./day-plan.mjs";
 import { ACTIVITY_FILENAME_PATTERN, nextActivityPath, updateActivity, validateActivityRecord } from "./activity-files.mjs";
 

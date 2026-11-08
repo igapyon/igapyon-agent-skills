@@ -32,7 +32,7 @@ The bundled generator reads old keys as aliases while migration is in progress. 
 
 ## Migration steps
 
-1. Update the installed daybook skill and copy the matching bundled `scripts/day-plan.mjs` and `scripts/generate-day-plan.mjs` into the target daybook repository. Confirm the target has the `yaml` dependency used by the scripts. An older generator may not understand the new keys.
+1. Update the installed daybook skill and copy the matching bundled `scripts/day-plan.mjs`, `scripts/generate-day-plan.mjs`, [scripts/vendor/yaml-runtime.mjs](../assets/daybook/scripts/vendor/yaml-runtime.mjs), and [scripts/vendor/yaml.LICENSE](../assets/daybook/scripts/vendor/yaml.LICENSE) into the target daybook repository. No package installation is needed. An older generator may not understand the new keys.
 2. Check the target repository's README and Git status. Back up the task records or create a separate branch before editing. Do not overwrite unrelated local changes.
 3. Review every `YYYY/YYYYMM/tasks/task-*.md`, including `done` and `cancelled` records. Classify each as a clear key rename, missing date, unclear meaning, or recurring rule. Read `planning_state` when present. Apply the missing-date completion rules below only to planned tasks; a Backlog task may retain no date or a single known endpoint. Keep each task's ID, file name, creation month, status, `completed`, links, attachments, and body history.
 4. Edit task front matter record by record. Rename the relevant keys; do not run a repository-wide text replacement. If both old and new keys exist, compare their values. Stop and resolve a mismatch instead of choosing one silently. Validate that both dates are real `YYYY-MM-DD` dates and that `planned_start_date <= planned_end_date`.

@@ -7,6 +7,8 @@ description: Use when the user clearly requests a daybook task, activity, schedu
 
 Manage the Markdown records in a daybook repository. The records are the source of truth; generated day-plans and GitHub notifications are derived views.
 
+The bundled `.mjs` command-line tools run with Node.js and the files in this skill; they do not require `npm install` or `npm ci`.
+
 The task/activity recording policy is informed by both the user's practical daybook experience and MIT OpenCourseWare's [Guidelines for Keeping a Laboratory Notebook](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/b4c64ac11fc0a68466af7e025e29bf3e_lab_notebook.pdf), a course resource for *7.16 Experimental Molecular Biology: Biotechnology II* (Spring 2005). Use the material's guidance on prompt recording, observations and results, and review and next steps as supporting rationale for recording decisions. The preference for activity capture followed by task consolidation when needed is a daybook-specific judgment developed from that guidance and experience.
 
 Keep a task's latest conclusion, state, and next actions with a brief history; keep dated work, trials, observations, and decision reasons in activities. See [task and activity responsibilities](references/operations.md#task-and-activity-responsibilities) for the editing rules.

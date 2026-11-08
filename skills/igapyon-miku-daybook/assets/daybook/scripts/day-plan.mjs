@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { parse as parseYaml } from "yaml";
+import { parse as parseYaml } from "./vendor/yaml-runtime.mjs";
 
 const TOKYO = "Asia/Tokyo";
 const TERMINAL_STATUSES = new Set(["done", "cancelled"]);
