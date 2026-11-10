@@ -561,6 +561,7 @@ and structured definitions.
 - Review code/comment line metrics where supported, with coverage and
   diagnostics that distinguish partial or unavailable measurements from zero.
 - Include untracked or ignored paths as metadata only when requested.
+- Save requested JSON reports only to an agreed destination outside Git administrative data.
 
 **Scope and prerequisites:** Requires Node.js 22+ and Git. The installed skill
 uses its pinned local CLI runtime and does not require `npm install`. Invoke it
