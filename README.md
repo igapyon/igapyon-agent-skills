@@ -564,6 +564,7 @@ and structured definitions.
 - Review code/comment line metrics where supported, with coverage and
   diagnostics that distinguish partial or unavailable measurements from zero.
 - Include untracked or ignored paths as metadata only when requested.
+- Save requested JSON reports only to an agreed destination outside Git administrative data.
 
 **Scope and prerequisites:** Requires Node.js 22+ and Git. The installed skill
 uses its pinned local CLI runtime and does not require `npm install`. Invoke it
@@ -572,7 +573,7 @@ explicitly by the product or skill name.
 **Example:** Use miku-repo-scale to measure this repository's source footprint,
 show tests and generated files separately, and explain any coverage gaps.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-repo-scale-skills/blob/3ea3f2820adbdd23292a80ad4c3e2570c4e00e27/skills/igapyon-miku-repo-scale/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-repo-scale-skills/blob/dc369d2c512b433cc6062b6bf9dcedeb92af21c0/skills/igapyon-miku-repo-scale/SKILL.md).
 
 ### igapyon-miku-score
 
