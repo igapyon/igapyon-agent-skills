@@ -48,7 +48,10 @@ Do not inspect the repository or load detailed references yet.
 
 ## Normal Work Flow
 
-The usual sequence is:
+The basic sequence is `miku-scm sync push` → human PR creation/merge →
+`miku-scm sync pull`.
+
+When the user wants to control each stage separately, use:
 
 1. `miku-scm git add commit`: run `work.commit --apply` to stage and commit
    the current changes.
@@ -78,8 +81,8 @@ In user requests, `miku-scm` names this Skill; `sync pull`, `sync push` and
 `github merge done` are instructions passed to it, not standalone shell commands.
 The Skill invokes the documented Node.js runner and its CLI arguments below.
 
-The combined cycle is `sync pull` → edit work and explicitly increment the
-version when needed → `sync push` → human PR creation/merge → `sync pull`.
+After editing work and explicitly incrementing the version when needed, the
+basic cycle is `sync push` → human PR creation/merge → `sync pull`.
 Both commands use Node.js, Git, and local operational files under
 `workplace/miku-scm/sync/`. The helper configures local exclusion with a notice
 when necessary. The default remote is
