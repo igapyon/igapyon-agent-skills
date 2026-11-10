@@ -5,14 +5,14 @@ connected task records, reviewable GitHub changes, reusable knowledge files,
 Office document text, portable HTML conversions, project plans, score or audio
 deliverables, and local utilities.
 
-The release bundle contains **27 skills**: **15 maintained in this repository**
-and **12 bundled from pinned upstream repositories**. Each skill combines
+The release bundle contains **28 skills**: **15 maintained in this repository**
+and **13 bundled from pinned upstream repositories**. Each skill combines
 instructions for an AI agent with the references, templates, assets, or
 executable helpers needed for its workflow. Many writing workflows target
 Japanese content; the catalog explains their purpose in English.
 
 Download the bundle from [GitHub Releases](https://github.com/igapyon/igapyon-agent-skills/releases)
-to choose from all 27 skills. A source checkout contains the 15 internal skill
+to choose from all 28 skills. A source checkout contains the 15 internal skill
 directories; external skills are incorporated when the release bundle is built.
 
 ## Skill Catalog
@@ -40,7 +40,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-reviewer](#igapyon-reviewer) | Identify concrete issues before merging or publishing, with evidence and a clear fixing order. |
 | [igapyon-skill-compactor](#igapyon-skill-compactor) | Make an Agent Skill easier to load and maintain while checking what behavior is preserved. |
 
-### Bundled From Upstream Repositories (12)
+### Bundled From Upstream Repositories (13)
 
 | Skill | What it helps you achieve |
 | --- | --- |
@@ -52,6 +52,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-miku-project](#igapyon-miku-project) | Turn project ideas or existing plans into a structured WBS, revise them through conversation, and share Gantt charts and reports. |
 | [igapyon-miku-prompt-lint](#igapyon-miku-prompt-lint) | Find instruction and context problems that can make an agent choose the wrong task or execute it inconsistently. |
 | [igapyon-miku-repo-bundle](#igapyon-miku-repo-bundle) | Prepare a portable repository reference package with source, documentation, and provenance. |
+| [igapyon-miku-repo-scale](#igapyon-miku-repo-scale) | **Experimental.** Measure a repository's file, line, role, and language mix with a pinned local CLI. |
 | [igapyon-miku-score](#igapyon-miku-score) | Move a score between supported formats, prepare AI-editable score text, and inspect a rendered result. |
 | [igapyon-miku-text-bundle](#igapyon-miku-text-bundle) | Turn a directory of text files into manageable Markdown parts for AI handoff or knowledge preparation. |
 | [igapyon-miku-text-file-ops](#igapyon-miku-text-file-ops) | **Experimental.** Search and edit encoding-sensitive text without silently changing its encoding or line-ending conventions. |
@@ -77,7 +78,7 @@ skill directory and should be copied together during installation.
 
 | Path | Contents |
 | --- | --- |
-| `README.md` | A guide to the 27 skills and how to choose one. |
+| `README.md` | A guide to the 28 skills and how to choose one. |
 | `INSTALL.md` | Installation, update, and drift-check instructions. |
 | `skills/` | Complete installable skill directories, each with a `SKILL.md` entry point. |
 | `EXTERNAL_SKILLS.lock` | The upstream repositories, pinned commit SHAs, and names included in that release bundle. |
@@ -544,6 +545,34 @@ You want to hand a repository's relevant material to an AI workflow or another r
 **Example:** Use miku-repo-bundle to package this Java project's source, design notes, and selected existing JAR as a reference folder for a separate review.
 
 [Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-repo-bundle-skills/blob/f2bf8522f8ec87ff261bbe4d0ebf1d6a790c9089/skills/igapyon-miku-repo-bundle/SKILL.md).
+
+### igapyon-miku-repo-scale
+
+**Status:** Experimental. The pinned upstream package still lists hosted OS/Node
+verification and its final release review as pending.
+
+**When it helps**
+
+You want a measured view of a Git repository's size and composition, including
+its implementation, tests, generated files, documentation, Agent instructions,
+and structured definitions.
+
+**What you can achieve**
+
+- Measure tracked files by file count, bytes, and physical lines, then inspect
+  role, category, extension, and language breakdowns.
+- Review code/comment line metrics where supported, with coverage and
+  diagnostics that distinguish partial or unavailable measurements from zero.
+- Include untracked or ignored paths as metadata only when requested.
+
+**Scope and prerequisites:** Requires Node.js 22+ and Git. The installed skill
+uses its pinned local CLI runtime and does not require `npm install`. Invoke it
+explicitly by the product or skill name.
+
+**Example:** Use miku-repo-scale to measure this repository's source footprint,
+show tests and generated files separately, and explain any coverage gaps.
+
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-repo-scale-skills/blob/3ea3f2820adbdd23292a80ad4c3e2570c4e00e27/skills/igapyon-miku-repo-scale/SKILL.md).
 
 ### igapyon-miku-score
 
