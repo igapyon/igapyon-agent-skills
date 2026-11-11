@@ -1,6 +1,6 @@
 # Daybook operations
 
-Read this reference for an add, update, list, activity, schedule, or day-plan request. For a waypoint request, read [waypoints.md](waypoints.md). Use the target repository's README and current files as the final local contract.
+Read this reference for an add, update, list, activity, schedule, or day-plan request. During active use, follow [activity-capture.md](activity-capture.md) for common recording of conversations, URLs, and operation outcomes. For a waypoint request, read [waypoints.md](waypoints.md). Use the target repository's README and current files as the final local contract, with the user's current instructions taking precedence.
 
 ## Task and activity responsibilities
 
@@ -12,7 +12,7 @@ When task editing is in scope and consolidation is needed, review the relevant a
 
 When both task and activity updates are in scope and a later decision changes the approach, update the task's current summary and record the new decision and reasons in the corresponding activity. Preserve earlier activities as accounts of what was tried and understood at the time. Correct factual errors explicitly so the correction remains distinguishable from a later change of approach. Use full task IDs and relative links to connect related records; when both records are being updated, link the task's brief history to the activity and the activity back to the task.
 
-This division is implemented through the Agent's Markdown editing instructions and the existing record paths and links. The day-plan generator reads task and schedule fields to produce its snapshot; it does not reconstruct task state from activity prose. Apply the division within the requested recordkeeping scope; it does not start background logging or add an activity to every task-only edit.
+This division is implemented through the Agent's Markdown editing instructions and the existing record paths and links. The day-plan generator reads task and schedule fields to produce its snapshot; it does not reconstruct task state from activity prose. During active daybook use, activity is the common record of meaningful conversations and operation outcomes, including task-only edits. Record progress at response checkpoints under [activity-capture.md](activity-capture.md), while keeping task changes within their scope. This operates within turns, without background logging.
 
 ## Task completion and scope
 
@@ -21,7 +21,7 @@ Decide separately whether a task edit is within the request and whether the task
 1. **Scope:** the user's current request and conversation clearly include updating that task. An explicit request to update a task is sufficient scope; no special phrase is required.
 2. **Completion evidence:** the user explicitly says the task is complete, or the reported result clearly satisfies every completion condition already recorded for that task.
 
-Apply only the record types the request covers. “Record this in activities” updates the activity only; it does not add a task edit. A task-only update does not add an activity automatically. If both are requested, update each and link them. When the task update is in scope but completion evidence is incomplete, record the supported progress and remaining condition, and keep the task active. If the task or the applicable completion condition is unclear, ask only about that ambiguity. When the task update is in scope and the evidence establishes completion, mark it done without an extra approval step.
+Keep task changes within the request's scope. “Record this in activities” updates the activity without adding a task edit. A task-only operation also receives the normal activity record during active use; link the task's brief history and activity when both are being updated. Explicit no-recording, read-only, or named-file-only instructions override this default as defined in [activity-capture.md](activity-capture.md#active-use-and-recording-scope). When the task update is in scope but completion evidence is incomplete, record the supported progress and remaining condition, and keep the task active. If the task or the applicable completion condition is unclear, ask only about that ambiguity. When the task update is in scope and the evidence establishes completion, mark it done without an extra approval step.
 
 An activity report, a closed GitHub Issue, or a planned date that has passed is not by itself completion evidence. Do not infer completion from a partially checked checklist. For a weekly recurring task, completing one occurrence does not complete the recurring rule and does not trigger rollover.
 
@@ -31,7 +31,7 @@ Examples:
 
 - “今日、参加費を振り込んだ。activities に記録して” → add the activity only; leave the task unchanged.
 - “振込が済んだので、この task の状態と今日の活動を更新して” → update both and link them. If payment is its only completion condition, mark the task done; if receipt confirmation is also required, keep it active and note what remains.
-- “task-202610-00001 を完了にして。今日振り込んだ” → update that task as done, align its checked state and actual completion date, and do not create an activity unless requested.
+- “task-202610-00001 を完了にして。今日振り込んだ” → update that task as done, align its checked state and actual completion date, and record the task operation and payment fact in the episode's activity under the active-use default.
 
 ## Add a task
 
@@ -68,7 +68,7 @@ When the user changes only one endpoint, preserve the other endpoint if known. I
 
 Before retaining supplied files or generated results, follow [attachments.md](attachments.md). Prefer the activity body for the work account and necessary findings. For separate materials, prefer a designated durable location outside daybook, including another Git repository. Choose a text attachment when keeping that artifact with daybook has a concrete benefit; an explicit request to keep a text artifact here is sufficient. A missing external destination alone does not require an attachment. Keep originals and valuable final or human-edited results distinguishable from temporary outputs. The reference defines how to record an undecided storage destination and the extremely rare binary exception; “attach this” alone does not authorize binary storage.
 
-Keep source copies and conversion intermediates in a verified Git-ignored `workplace/` path or outside the repository. After choosing an in-repository attachment, place only the final necessary text in `attachments/`. For a retained task attachment, use `attachments/<task-id>/`, where `task-id` is its existing front matter `id` (`task-YYYYMM-NNNNN`). For an activity or schedule, use its filename without `.md` as the folder name: `attachments/activity-YYYYMMDDa/` (or the existing activity filename stem) or `attachments/schedule-YYYYMMDD-name/`. Preserve a useful supplied filename when possible; if a same-name file exists, do not overwrite it. Add a relative link and verify the target. Keep one copy of shared text, create directories only when needed, and do not copy attachments into generated day-plans.
+Keep source copies and conversion intermediates in a verified Git-ignored `workplace/` path or outside the repository. After choosing an in-repository attachment, place only the final necessary text in `attachments/`. Follow [Store text attachments](attachments.md#store-text-attachments): a new activity attachment uses the activity's month and, when task-related, its existing task-id as the folder name, even if that task was created in an earlier month. Updating existing material keeps its saved path. The reference also defines activity-only, task-only, and schedule-only placement. Preserve a useful supplied filename when possible; if a same-name file exists, do not overwrite it. Add a relative link and verify the target. Keep one copy of shared text, create directories only when needed, and do not copy attachments into generated day-plans.
 
 ## Register a weekly recurring task
 
@@ -129,7 +129,7 @@ date: 2026-11-06
 ACTIVITY_MARKDOWN
 ```
 
-Both write CLIs accept exactly one of `--stdin` or `--file DRAFT.md`. If a draft file is needed, allocate a unique per-operation directory or filename using exclusive creation in verified ignored temporary storage; never share a fixed draft path across sessions. Creation defaults to today's Asia/Tokyo date and the CLI's parent project as repository root. Always pass `--repo-root /absolute/daybook` when executing either CLI from a different project. Creation validates the Markdown date against the requested date and writes without replacing an existing file. Use the returned final filename stem for any retained attachments and verify relative links from that location.
+Both write CLIs accept exactly one of `--stdin` or `--file DRAFT.md`. If a draft file is needed, allocate a unique per-operation directory or filename using exclusive creation in verified ignored temporary storage; never share a fixed draft path across sessions. Creation defaults to today's Asia/Tokyo date and the CLI's parent project as repository root. Always pass `--repo-root /absolute/daybook` when executing either CLI from a different project. Creation validates the Markdown date against the requested date and writes without replacing an existing file. Use the returned final filename stem for activity-only attachment folders; use the related task-id for task-related material, following [attachments.md](attachments.md#store-text-attachments). Verify relative links from the final activity path.
 
 When editing an existing episode, obtain one snapshot of the current content and its SHA-256 together:
 
@@ -157,13 +157,13 @@ ID / Priority / Status / Planning state / Planned start / Planned end / Title
 
 `Planning state` is `planned` when omitted on an existing task. `Priority` comes from `priority`, or is `7` when omitted. Sort planned confirmed or legacy dated tasks by ascending priority, planned end, planned start, then full task ID. Put planned `provisional` tasks and tasks with an incomplete period in `日程要確認` after them, sorted by priority and ID. Show unbounded weekly tasks without a planned period after dated planned tasks and before `日程要確認`, sorted by priority and full task ID; do not flag them for date review. Show Backlog separately, sorted by priority and full task ID without a date window. `Planned start` and `Planned end` come from `planned_start_date` and `planned_end_date`; display `—` for a missing value. `due_month` remains separate month-only deadline information and does not fill `Planned end`. For a weekly task, add `Next` from `next_occurrence` without changing the meaning of the planned period or using it as a sort key. Include the full `task-YYYYMM-NNNNN` ID so identical short numbers cannot be confused. Include completed or cancelled tasks only when requested.
 
-Do not edit files for a list request. Report provisional and incomplete periods as needing date review, then wait for an update request.
+Keep task records unchanged for a list request. Report provisional and incomplete periods as needing date review without filling them. Capture the check and useful observations concisely in the episode's activity, without copying the entire list. An explicit read-only or no-recording instruction suppresses activity writes too.
 
 When introducing the Backlog group or classifying existing tasks, use [task-planning-migration.md](task-planning-migration.md). It preserves omitted-state compatibility and limits edits to tasks the user identifies.
 
 ## Find tasks related to a URL
 
-Use [url-task-lookup.md](url-task-lookup.md) only when the user explicitly asks to check or find existing daybook tasks related to a URL. The procedure reads the source and searches task records across all year/month directories, then reports candidates with reasons. URL presentation, reading, or summarization alone does not trigger the lookup. Treat lookup as read-only unless the user also requests a record update.
+Use [url-task-lookup.md](url-task-lookup.md) only when the user explicitly asks to check or find existing daybook tasks related to a URL. The procedure reads the source and searches task records across all year/month directories, then reports candidates with reasons without editing tasks. During active use, URL presentation, reading, or summarization follows [activity-capture.md](activity-capture.md#receive-and-read-a-url), including URL recording and past-activity comparison; it does not itself start task lookup. Share that activity record with an explicit task lookup, respecting explicit restrictions on recording.
 
 ## Explicitly import GitHub Issues
 
@@ -207,4 +207,4 @@ After generation, inspect the output for expected inclusions and exclusions, and
 
 ## Finish the operation
 
-Run `git diff --check`, inspect changed paths, and verify links and front matter. For a read-only list or explanation, do not modify the repository. For a record update, briefly report the material change and any next step or clarification relevant to the request, with a link to the record. Leave commit, push, PR, merge, Issue comments, and email actions to explicit requests and their appropriate workflows.
+Run `git diff --check`, inspect changed paths, and verify links and front matter. Lists and explanations keep the records being inspected unchanged and follow common activity capture. An explicit instruction to use read-only access or change no files also suppresses activity writes. Briefly report material changes and the actual saved record path after successful writing; identify any unsaved progress if saving failed. Leave commit, push, PR, merge, Issue comments, and email actions to explicit requests and their appropriate workflows.

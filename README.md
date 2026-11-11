@@ -209,12 +209,15 @@ You need both a current view of your work and a dated account of how you reached
 **What you can achieve**
 
 - Create and update tasks, activities, and schedules with priorities, planned periods, current conclusions, next actions, and links to supporting material. Record distinct work episodes in separate activity files with daily letter suffixes (`a` through `z`, then `aa`, `ab`, and onward).
+- During active use, capture conversation progress, URLs, and operation outcomes in activities, including task-only changes and URLs that cannot be read. Use past URL references as context while leaving uncertain relationships open.
+- At the start of a substantive topic during active use, consider existing daybook records as context and consult them as needed, keeping speculative connections unconfirmed.
 - Save short Waypoints that resume a task or an independently resumable subtask across sessions.
+- Resume daybook-managed work in another directory or repository, keeping references from daybook to the work repository without adding pointers back to daybook there.
 - Generate day-plan snapshots from those source records, or explicitly check whether a supplied URL relates to an existing task.
 - Keep date-planned work separate from a dedicated Backlog section; Backlog tasks can remain undated until they are scheduled.
 - Bring named GitHub Issues into the documented intake workflow and prepare the bundled GitHub Actions notification workflow when requested.
 
-**Scope and prerequisites:** Markdown records are the source of truth. The bundled `.mjs` tools need Node.js and the included skill files; they do not require `npm install` or `npm ci`. A clear daybook request or current repository handoff can direct use; a name mention or skill review alone does not start record operations. Without a concrete operation, the skill waits for instructions. Issue receipts and closure follow the miku-scm steps; notification delivery requires setup in the target repository.
+**Scope and prerequisites:** Markdown records are the source of truth. The bundled `.mjs` tools need Node.js and the included skill files; they do not require `npm install` or `npm ci`. A clear daybook request or current repository handoff can direct use; a name mention or skill review alone does not initially start record operations. On activation without an operation, the skill waits for input; subsequent substantive discussion or a user-provided URL starts activity capture. Explicit no-recording and file restrictions take precedence. Issue receipts and closure follow the miku-scm steps; notification delivery requires setup in the target repository.
 
 **Example:** Use igapyon-miku-daybook to record why we changed approach today, update the task's next action, and regenerate today's plan.
 

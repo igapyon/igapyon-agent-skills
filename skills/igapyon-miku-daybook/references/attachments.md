@@ -6,7 +6,7 @@ Read this reference before retaining supplied files, generated results, or suppo
 
 Use the following preference order within the requested recordkeeping scope:
 
-1. **Activity body:** Keep the work account, attempts, observations, findings, decision reasons, and remaining questions together while readable. Include enough context to understand the work without opening every linked artifact. Length alone does not require a separate file. Task-only and schedule-only requests still update only those records; this preference does not create an activity automatically.
+1. **Activity body:** Keep the work account, attempts, observations, findings, decision reasons, and remaining questions together while readable. Include enough context to understand the work without opening every linked artifact. Length alone does not require a separate file. During active use, task-only and schedule-only operations also receive the common [activity record](activity-capture.md); this does not authorize other task or schedule changes.
 2. **Durable storage outside daybook:** For material that needs a separate home, prefer a user-designated managed location outside this repository, including another Git repository. This applies to original material and valuable generated or human-edited results, whether text or binary. Keep the relevant findings and a stable reference in daybook.
 3. **Daybook attachments:** Choose a necessary text artifact when keeping it versioned with the record has a concrete benefit: for example, a dated investigation snapshot that supports a decision, or a compact reproduction script. An explicit request for an in-repository text attachment is sufficient. Neither receiving a file nor lacking an external destination automatically requires an attachment. Record the purpose briefly where it is not evident from the account or link label.
 
@@ -34,11 +34,22 @@ File extensions do not determine whether content is text. Do not use base64, `da
 
 ## Store text attachments
 
-After choosing an in-repository text attachment, place it under the same month as its primary record:
+For a new attachment arising from an activity, use the year/month of that activity's `date`, including when recording past work later. Choose the folder name separately:
 
-- Task: `YYYY/YYYYMM/attachments/<task-id>/`, where `task-id` is the task's existing front matter `id`.
-- Activity: `YYYY/YYYYMM/attachments/activity-YYYYMMDDa/`, using the primary activity filename stem (including its letter suffix). Existing unsuffixed attachment folders remain valid.
-- Schedule: `YYYY/YYYYMM/attachments/schedule-YYYYMMDD-name/`.
+- Task-related material: `YYYY/YYYYMM/attachments/<task-id>/`, using the related task's existing front matter `id`.
+- Material belonging only to the activity: `YYYY/YYYYMM/attachments/activity-YYYYMMDDa/`, using that activity's filename stem (including its letter suffix). Existing unsuffixed attachment folders remain valid.
+
+The parent year/month records the activity month; the month inside a task-id records when the task was created. They may differ. For example, a November activity concerning an October task can create:
+
+```text
+2026/202611/attachments/task-202610-00014/findings.md
+```
+
+The task itself stays in its October `tasks/` directory. The same task-id may have attachment folders in multiple activity months; this is valid and does not require renaming the folder, moving the task, or creating another task. Link the material from the activity being recorded. When task editing is also in scope, use the task's links to relevant activities or material to make its supporting records discoverable. An activity-only request does not add a task edit just because the attachment folder uses a task-id.
+
+If an attachment request has no activity, for example because the user restricted written files, use the requested date of the work that produced a task attachment, defaulting to today in Asia/Tokyo, and the task-id folder. The common recording rules still apply during ordinary active use; do not create a dummy activity solely to choose an attachment location. For schedule-only material, use the event month and `attachments/schedule-YYYYMMDD-name/`.
+
+When updating or referring to an existing attachment, keep its saved path and reference that copy across months. A new activity or month does not move or duplicate existing material. A distinct new artifact or explicitly requested dated snapshot uses the new activity's month.
 
 Use UTF-8 text, normally `.md` or `.txt`; preserve a useful native text format for reproduction scripts or selected command logs. Preserve a supplied filename when practical, avoid overwriting an existing file, create directories only when needed, and add a relative link from the record. Keep one copy of shared material and link to it from other records. Never copy attachments into generated day-plans.
 

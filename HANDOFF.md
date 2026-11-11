@@ -12,6 +12,10 @@ update_when:
 
 # Handoff
 
+2026-11-11追加：daybook利用中、話題の発端で既存記録との関係を考える方針をsourceへ実装した。省略された参照を含む会話理解に必要な記録を絞って読み、不確かな関係や過去の推測リンクを確定扱いしない。URLからのtask候補探索には引き続き明示依頼を求め、必要な文脈参照との境界を整合した。skill形式、参照・配布79/79、相対リンク先94件・節リンク30件、差分検査が成功。[追加実装記録](docs/plans/daybook-url-and-conversation-activity-capture.md#11-話題の発端で既存記録を考慮する追加実装2026-11-11)に追加6ケースの本文レビューと、実対話検証が未実施であることを記載した。
+
+2026-11-11：daybookのURL受領と会話・操作過程のactivity逐次記録をsourceへ実装した。新規`activity-capture.md`に、利用中の共通記録、結論前からの保存、URLの取得不能・過去参照・判断保留、task-onlyも記録する規則を集約。SKILL・operations・URL検索・Waypoints・添付説明と利用者向け案内・代表routeを整合した。skill形式、参照・配布79/79、相対リンク先90件、差分検査が成功。20ケースは本文へ照合済みで、別セッションでの実対話検証は未実施。[仕様・実施記録](docs/plans/daybook-url-and-conversation-activity-capture.md)のCAP-05を残し、statusを`in_progress`としている。活動月の添付と一方向参照の先行差分を保持した。
+
 2026-11-08：daybook Node.js 単独実行の自己レビュー2件に対応。生成元を YAML の Node.js 配布コードへ切り替えて `!!binary` の Buffer/UTF-8 互換性を回復し、CLI の実パス比較とパス変換なしの別名実行 smoke を追加した。runtime suite 79/79、YAML互換性4/4、参照・配布79/79、生成差分・skill形式・差分検査が成功。Maven package と展開ZIPの別名CLI実行・binary表示検査も成功。[実施記録](docs/plans/daybook-node-only-runtime-implementation.md#自己レビュー2件への対応2026-11-08)を参照。初回実装は `b284076` でcommit済み、今回の修正は未commit。Node.js 22/24のhosted CIは未確認で、実daybook・配備先同期・版数incrementは未実施。
 
 2026-11-06：daybook 同梱 CLI の [Node.js 単独実行計画・実施記録](docs/plans/daybook-node-only-runtime-implementation.md)を完了した。YAML ESMを同梱し、活動作成/読み取り/更新、day-plan、Issueローカル処理、通知dry-runを追加依存なしで確認。runtime suite 78/78、YAML互換性2/2、参照・配布79/79、skill形式、Maven package、展開ZIP runtime検査が成功。ローカル Node.js は26.12.1。Node.js 22/24のhosted CI結果は未確認で、workflowを追加済み。source差分と版数 `1.20261106.2` は未commit。実daybook・配備先同期、version increment、commit/push、tag/Releaseは未実施。
