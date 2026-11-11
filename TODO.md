@@ -2,6 +2,22 @@
 
 ## AI Agent Current Tasks
 
+### daybook：URL受領と会話・操作過程のactivity逐次記録（2026-11-11・source実装・形式参照検証済み）
+
+[仕様と実施記録](docs/plans/daybook-url-and-conversation-activity-capture.md)に沿ってsourceへ実装。発火後はURL受領・会話途中・taskだけの操作もactivityへ記録し、過去URLとの一致は関連候補として文脈で判断する。関係未確定でも記録を進める。初回発火の境界と、明示された記録禁止・ファイル制約を維持する。
+
+- [x] 現行のread-only・task-only規則との矛盾、記録時点、URL照合、taskとの責務分担を検討し、変更ファイル・実装順・対話検証ケースを計画。
+- [x] CAP-00〜04・06：source skillと関連資料、代表参照routeを更新。`quick_validate.py`、参照・配布suite 79/79、相対リンク先90件、`git diff --check`が成功。
+- [x] 20ケースをsource本文と照合。task-only・activity-onlyの方向、URLの取得不能・部分一致・判断保留、記録禁止区間、既存CLIへの接続をレビュー。`rg -F`の部分ヒットを完全一致としない規則を補足。
+- [x] 追加合意をsourceへ実装：話題の発端で既存記録との関係を考慮し、必要な文脈を絞って参照。省略された参照も扱い、推測リンクを確定根拠にしない。URL関連task候補探索との境界を整合。追加6ケースを本文レビューし、形式・参照・配布79/79、相対リンク先94件・節リンク30件、差分検査が成功。
+- [ ] CAP-05：隔離fixtureと取得結果の制御を使った20ケースと追加6ケースの実対話検証。本文レビューと形式検査は実対話検証に数えない。
+
+### daybook：活動月の添付と他リポジトリへの一方向参照（2026-11-11）
+
+- [x] [添付規則](skills/igapyon-miku-daybook/references/attachments.md#store-text-attachments)を活動月基準へ更新。関連task-id内の作成月が保存先の月と異なる場合を正常として説明し、既存添付の更新・参照は保存済みの場所を維持する。
+- [x] 別ディレクトリ・リポジトリでの作業をスキルの対応範囲へ明記。参照はdaybookから作業対象への一方向とし、[HANDOFFの例](skills/igapyon-miku-daybook/references/waypoints.md#entering-from-a-daybook-handoff)をdaybook自身の入口へ修正。関連する規則と利用者向け案内も整合。
+- [x] `quick_validate.py`、既存の参照・配布suite（79/79）、`git diff --check`が成功。文書の分岐・例を確認した。実対話による動作確認は未実施。
+
 ### daybook：同梱CLIのNode.js単独実行（2026-11-08・自己レビュー2件を修正・検証済み）
 
 [実装計画と実施記録](docs/plans/daybook-node-only-runtime-implementation.md)に沿ってDBN-00〜07を完了した。YAML ESMとlicenseを同梱し、Node.jsだけで活動作成・更新、day-plan、Issueローカル取り込み、通知dry-runが動く。開発用生成依存はrepo rootのdevDependenciesに分け、配布後の `npm install` / `npm ci` は不要。

@@ -12,15 +12,17 @@ Keep the work's canonical state in the existing records:
 - **Activity:** dated work, trials, observations, failed or inconclusive approaches, and reasons for decisions.
 - **Waypoint:** the scope to resume, links to the relevant records and material, and the first thing to check.
 
-Some short overlap between the task's next action and the Waypoint's resume instruction is useful. Do not copy a full task, activity, plan, conversation, or execution log into a Waypoint. Do not change a task's status or planning state merely because a Waypoint is created, resumed, or closed. Record work in activities only when the request covers recording that work.
+Some short overlap between the task's next action and the Waypoint's resume instruction is useful. Do not copy a full task, activity, plan, conversation, or execution log into a Waypoint. Do not change a task's status or planning state merely because a Waypoint is created, resumed, or closed. During active use, record resumed work and conversation progress under [activity-capture.md](activity-capture.md), including work in another repository.
 
-A repository `HANDOFF.md` may provide the entry instruction and select a Waypoint. Recover the current work state from the canonical records above; consult separate `GOAL.md` and other repository notes when relevant or required by local instructions.
+The daybook repository's `HANDOFF.md` may provide the entry instruction and select a Waypoint. Recover the current work state from the canonical records above; consult separate `GOAL.md` and other repository notes when relevant or required by local instructions.
+
+The work resumed from daybook may be in another directory or repository. Keep its location, scope, and useful references in the daybook task, activities, or Waypoint. Daybook may link to that repository and its results. Do not add links, paths, or resume pointers back to daybook in the work repository's files or repository-facing text, including its `README.md`, `AGENTS.md`, or `HANDOFF.md`. Follow the work repository's own instructions and inspect its Git state before editing there; keep its documentation and handoff usable on their own.
 
 Git state helps protect files before an edit or other concrete operation. It does not establish the work's purpose, progress, or completion. Resolve those from the user's request and the task, activities, and linked material. Before changing files in the target daybook, follow the skill's required checks: read the target `README.md` and current Git status, and preserve unrelated changes.
 
-## Entering from a repository handoff
+## Entering from a daybook handoff
 
-A repository's normal entrypoint, such as `AGENTS.md`, can arrange to read `HANDOFF.md` at the start of work:
+The following examples belong in the daybook repository. Its normal entrypoint, such as `AGENTS.md`, can arrange to read its own `HANDOFF.md` at the start of work:
 
 ```markdown
 作業開始時に HANDOFF.md があれば読み、現在のユーザー指示に沿って、そこに書かれた引き継ぎ指示に従う。
@@ -35,10 +37,10 @@ The handoff can name the skill without specifying an operation:
 To direct a resume, it can name a Waypoint:
 
 ```markdown
-igapyon-miku-daybook スキルを使い、../daybook/waypoints/20261105-0900-example-00001.md から作業を再開してください。
+igapyon-miku-daybook スキルを使い、waypoints/20261105-0900-example-00001.md から作業を再開してください。
 ```
 
-Resolve this example's relative path from the `HANDOFF.md` file. Adapt it to the actual repository and entry; `../daybook/` is not a fixed discovery path.
+Resolve this example's relative path from the daybook's `HANDOFF.md` file. The selected Waypoint can then identify work in another repository; it does not require a corresponding pointer from that repository back to daybook.
 
 ## Location and names
 
@@ -110,11 +112,11 @@ When saving a Waypoint:
 
 For selection, use an explicitly named file from the active instructions first. Otherwise narrow candidates by the user's requested work, established conversation, and filenames, then read only the relevant notes. If the intended work remains ambiguous, show candidate filenames and clarify the scope before loading linked task and activity contents or changing a note. Do not select a note only because it has the newest timestamp.
 
-Reading a note or listing candidates is read-only: do not alter `status` or `updated_at`. For a resume operation, read the selected Waypoint and follow any specifically designated child entries to identify the resume scope. Then inspect only the task, relevant activities, linked material, and recorded thread scope needed for that work. Rebuild the current state from those sources and the current request, then continue into the specified work under its applicable workflow. Before beginning the actual subwork, set the entry for that scope to `in_use` and update `updated_at`. If only reviewing or explaining the note, leave metadata unchanged.
+Reading a note or listing candidates keeps its `status` and `updated_at` unchanged; the check can still receive the common activity record during active use. An explicit no-file-changes or read-only instruction also suppresses activity writes. For a resume operation, read the selected Waypoint and follow any specifically designated child entries to identify the resume scope. Then inspect only the task, relevant activities, linked material, and recorded thread scope needed for that work. Rebuild the current state from those sources and the current request, then continue into the specified work under its applicable workflow. Before beginning the actual subwork, set the entry for that scope to `in_use` and update `updated_at`. If only reviewing or explaining the note, leave its metadata unchanged.
 
 ## Pause, finish, and thread references
 
-When the user asks to pause or hand off the current scope, update the canonical task or activity only as requested, revise the resume instruction to reflect supported facts and the next step, and set this entry to `ready` with a new `updated_at`.
+When the user asks to pause or hand off the current scope, capture meaningful unsaved progress under the active-use recording rules and any current restrictions. Keep task edits within their scope, revise the resume instruction to reflect supported facts and the next step, and set this entry to `ready` with a new `updated_at`.
 
 When this entry no longer serves as a resume point, set it to `closed` and update `updated_at`. Keep the file. Do not close related entries or change the task's status as a side effect.
 
