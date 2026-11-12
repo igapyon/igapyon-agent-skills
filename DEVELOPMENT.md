@@ -388,7 +388,7 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 - `miku-repo-bundle-skills` `v0.6.0` (experimental): `skills/igapyon-miku-repo-bundle/`
 - `miku-repo-scale-skills` `v0.2.10` (experimental): `skills/igapyon-miku-repo-scale/`
 - `miku-text-file-ops-skills` `v0.6.0`: `skills/igapyon-miku-text-file-ops/`
-- `miku-prompt-lint-skills` `v0.8.0`: `skills/igapyon-miku-prompt-lint/`
+- `miku-prompt-lint-skills` `v0.9.0`: `skills/igapyon-miku-prompt-lint/`
 - `miku-ai-assistant-builder-skills` `v0.14.0`: `skills/igapyon-miku-ai-assistant-builder/`
 - `miku-ms-office-skills` `v0.7.3`: `skills/igapyon-miku-ms-office/`
 - `miku-md2formats-skills` `v0.3.6`: `skills/igapyon-miku-md2formats/`
