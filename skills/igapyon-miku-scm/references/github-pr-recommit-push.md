@@ -61,7 +61,8 @@ approval pause between successful steps:
    A changed or newly appeared branch stops before push.
 6. Save the verified publication plan, then consume its exact digest through
    the existing publication apply path. That path rechecks the expectation,
-   uses a new-branch push or explicit `--force-with-lease`, records its attempt,
+   uses a new-branch push with an empty expected-value lease, or an existing-branch
+   push with explicit `--force-with-lease`; it records its attempt,
    fetches, verifies `0 0`, and only then renames the local branch to `-done`.
 
 Plan filenames use a safe branch token and a UUID to avoid path separators and

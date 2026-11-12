@@ -82,3 +82,19 @@ GitHub Writer #115のfull suiteはmacOS 8秒、Windows 24秒。benchmarkはさ�
 GitHub Writerは34/34成功。selector 3/3、Miku SCM workflow contract 37件、
 GitHub Writer workflow contract 12件も成功し、対象workflow 3つのYAML構文とtriggerを確認した。
 固定Maven checkと`git diff --check`も成功。変更後のWindows hosted CIはまだ実行していない。
+
+## 2026-11-12 版数専用経路
+
+PR selectorは`none` / `versions` / `full`の3modeを返す。`versions`は4つの版数
+sourceだけが変更され、GitHub APIで固定base/headの全文blobを取得でき、各ファイルの
+既知の値を一意なplaceholderへ置き換えた全文が一致し、headの4値が整合するときだけ
+選ぶ。API失敗・変更一覧の不足・移動したPRは選択失敗、値以外の差分・rename・不正な
+literalはfullへ倒す。未知の`.github/`変更もfull、確認済みdaybook/release/benchmark
+専用workflowだけは両skillと独立として対象外にする。
+
+両required check名は維持する。`versions`はUbuntuで版数整合とMiku SCM / GitHub Writer
+両contract lockを検査し、`full`は従来のmacOS/Windows suiteと版数整合を実行する。
+`none`はselector成功後に限ってsuite jobのskipを許す。`required` gateはmodeごとに
+期待したjob成功/skipを照合し、failure/cancelledや矛盾した出力を失敗にする。
+GITHUB Actions上の版数専用PRとWindows hosted結果は未実行のため、ローカルfixtureで
+selector条件を検証した段階では配備・必須check設定を完了扱いにしない。

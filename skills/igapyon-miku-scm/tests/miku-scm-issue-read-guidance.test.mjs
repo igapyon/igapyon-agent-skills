@@ -8,10 +8,12 @@ import { readNormalizedText } from "./miku-scm-test-text.mjs";
 const SKILL_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 test("current Issue status guidance reads Open Issues once by default", async () => {
-  const skill = await readNormalizedText(path.join(SKILL_ROOT, "SKILL.md"));
+  const [skill, helper] = await Promise.all([
+    readNormalizedText(path.join(SKILL_ROOT, "SKILL.md")),
+    readNormalizedText(path.join(SKILL_ROOT, "scripts", "github-issue-read.mjs")),
+  ]);
 
-  assert.match(skill, /current Issue status, backlog, or progress request/);
-  assert.match(skill, /github\.issue\.read --list.*default Open state/s);
-  assert.match(skill, /Do not add a\n   second `--state all` read merely to calculate an Open\/Closed breakdown/);
-  assert.match(skill, /only when the user explicitly needs\n   closed or historical Issues, completion metrics, or comparison with a\n   closed Issue/);
+  assert.match(skill, /For current Issue status, read the default Open set once/);
+  assert.match(skill, /Read closed\/all only\n  when explicitly needed for history or completion metrics/);
+  assert.match(helper, /--list\s+List Issues \(default state: open\)/);
 });

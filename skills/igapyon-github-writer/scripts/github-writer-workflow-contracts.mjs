@@ -25,9 +25,16 @@ export function canonicalText(value) {
   return String(value).replace(/\r\n?/g, "\n");
 }
 
+function canonicalSourceText(relativePath, value) {
+  const text = canonicalText(value);
+  if (relativePath !== "scripts/github-writer-workflow-manifest.mjs") return text;
+  return text.replace(/^export const PRODUCT_VERSION = "[^"\n]+";$/m,
+    'export const PRODUCT_VERSION = "<product-version>";');
+}
+
 function sourceSetDigest(relativePaths, readText = readFileSync) {
   return sha256(relativePaths.map((relativePath) => (
-    `${relativePath}\u0000${canonicalText(readText(path.join(skillRoot, relativePath), "utf8"))}`
+    `${relativePath}\u0000${canonicalSourceText(relativePath, readText(path.join(skillRoot, relativePath), "utf8"))}`
   )).join("\u0000"));
 }
 

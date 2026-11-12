@@ -61,8 +61,8 @@ baseが進んでいれば、明示依頼の`sync pull`と再準備へ案内す�
 バージョン更新は必要に応じて別途依頼し、PR作成とmergeは引き続き人間が行う。
 
 両操作ともNode.js・Gitと、対象repoでの`workplace/miku-scm/sync/`のGit除外が必要。
-pullはGit 2.45以降、pushはmacOSまたはnative Windowsに対応する。
-`-done`の自動PR確認には対象repoへアクセス可能なGitHub CLIも必要。詳細と回復は
+pullはGit 2.45以降。pushはmacOSまたはnative Windowsを主な対応環境とし、それ以外でもnoticeを表示して同じ固定Git/Node.js処理を試みる。
+`-done`の自動PR確認はGitHub CLIを使い、未導入なら選択hostの匿名APIを試す。読取不能時は利用者に確認する。詳細と回復は
 [sync pull](skills/igapyon-miku-scm/references/sync-pull.md) /
 [sync push](skills/igapyon-miku-scm/references/sync-push.md) を参照する。
 新規の一時bare remoteテストはfull suiteへ自動収集される。実repoへのsyncやpushを
@@ -72,7 +72,7 @@ source変更の検証として実行しない。
 
 miku-scm と GitHub Writer は、GitHub Actions で macOS と Windows の両方に対してテストを実行します。Windows の改行コードの違いを見つけた実例と、この構成の価値を [複数 OS でテストする価値](docs/maintenance/github-actions-cross-platform-testing.md) に記録しています。
 
-ContractはPR時と手動実行で検証します。devel pushでは重複実行しません。
+ContractはPR時と手動実行で検証します。PRは変更範囲に応じて対象外・版数専用・fullの3経路を選び、版数専用ではUbuntuで4つの値と両skillのcontractを確認し、それ以外のskill変更はmacOS/Windows fullで検証します。devel pushでは重複実行しません。
 対象外変更でも最終判定を返す`Miku SCM required`と`GitHub Writer required`を
 GitHub側の必須チェックに登録し、成功後にmerge、tag、Releaseの順で進めます。
 既存必須チェックからの移行とWindowsの計測方法は

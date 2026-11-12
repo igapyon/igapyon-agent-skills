@@ -1,381 +1,173 @@
 ---
 name: igapyon-miku-scm
-description: Use only when the user explicitly requests an `igapyon-miku-scm` or `miku-scm` workflow, explicitly says `recommit` or `draft recommit push` to invoke the miku-soft PR-text drafting, soft-reset, and optional push flow, or requests Git/GitHub/version/repository-maintenance work under miku-soft SCM rules. Supports `miku-scm sync pull` for shared-base integration, `miku-scm sync push` for commit/draft/recommit/push, individual work-cycle stages, approved Issue operations, PR/Release/About drafting, repository maintenance, and version/tag/Release/asset audits. Do not activate for generic Git/GitHub questions, ordinary repository inspection, or release-note writing without an explicit miku-soft SCM request.
+description: Use only when the user explicitly requests an `igapyon-miku-scm` or `miku-scm` workflow, explicitly says `recommit` or `draft recommit push` to invoke the miku-soft PR-text drafting, soft-reset, and optional push flow, or requests Git/GitHub/version/repository-maintenance work under miku-soft SCM rules. Supports sync pull/push, individual work-cycle stages, approved Issue operations, PR/Release/About drafting, repository maintenance, and version/tag/Release audits. Do not activate for generic Git/GitHub questions, ordinary repository inspection, or release-note writing without an explicit miku-soft SCM request.
 ---
 
 # igapyon-miku-scm
 
-Run documented miku-soft source-control workflows with a small runtime context.
-Detailed policy remains under `references/` for design, maintenance, legacy
-operations, and exceptions; migrated workflows execute through the fixed runner.
+Run the fixed miku-soft SCM workflows. This Skill's directory is the **skill
+root**; a workflow's `--repo` is the **target repository**. Never derive the
+runner path from `--repo`. GitHub includes Enterprise and compatible hosts;
+use the selected remote's host and stop at the operation that cannot access it.
 
-## Current Scope
+If no concrete SCM task was requested, acknowledge activation and ask what the
+user wants. Explanations, review, planning, and naming questions do not authorize
+repository inspection or mutation.
 
-Support repository status and maintenance; PR-text, Release, About, and Issue work;
-recommit, publication, backup, and post-merge work; version and release audits;
-and deterministic READONLY, preflight, and apply workflows.
-Also support explicit `miku-scm sync pull` and `miku-scm sync push` requests.
+## Route the request
 
-Here, GitHub includes GitHub Enterprise and similar hosting services. Do not
-restrict execution to `github.com`. Derive the host from the selected remote
-for local workflows; for Issue workflows use `[host/]owner/repo`, retaining the
-host when it is known. Fixed helpers use that host for URL checks and compatible
-GitHub CLI/API calls. An unavailable command or incompatible API is reported at
-that operation, rather than rejecting a service by hostname.
+| User request | Workflow |
+| --- | --- |
+| `miku-scm sync pull` | `repository.sync.pull --apply` |
+| `miku-scm sync push` | `repository.sync.push.prepare --apply`, draft once, `repository.sync.push.draft.prepare`, then the exact returned apply workflow and argument array |
+| `miku-scm git add commit` | `work.commit --apply` |
+| `miku-scm draft recommit push` or its `pr recommit push` alias | `pr.recommit.push` fixed flow; keep its explicit rewrite gate |
+| bare `recommit` | PR text drafting and preflight; keep the local history rewrite gate |
+| `miku-scm github merge done` | `repository.post-merge.next-work --confirmed-merged --apply`; preserve its merged-branch rules |
+| `miku-scm pending` / `miku-scm dismiss <selector>` | `github.issue.handoff.list` / `github.issue.handoff.dismiss` |
+| GitHub Issue create/update/comment/label/close | Complete all preflights, review the exact handoff, then wait for exact approval before the matching apply |
+| Other supported request | Select one exact ID from `scripts/miku-scm-workflow-manifest.mjs` |
 
-Potentially sensitive filenames stop an ordinary commit before staging. Show
-the returned paths and wait for explicit user consent. After consent, rerun
-the same requested stage with `--allow-sensitive-path <path>` for each agreed
-path; pass these options to `work.commit` or `repository.sync.push.prepare`.
-Do not infer this consent from the original commit/push request or reuse it
-for additional paths. This local consent does not authorize an Issue write.
+For exact compound requests, finish their listed successful steps in the same
+turn without asking between them. A failed gate or uncertain result stops the
+sequence. Do not infer a different workflow from similar wording. `draft` means
+saved PR text; the human creates and merges PRs. This Skill alone owns the
+`draft recommit push` aliases; do not route them through `igapyon-github-writer`.
 
-Draft locations and names are conventions: warn and import a working copy when
-they differ, retaining the source. An already satisfied operation returns
-`up-to-date` without a mutation or a new approval handoff. Missing operational
-ignore setup is reported and handled through Git's local `info/exclude`, so it
-does not stop the requested workflow or edit tracked `.gitignore` files.
+## Fixed runner rules
 
-Platform names and line-ending conventions are advisory. On Linux or other
-platforms, report a notice and attempt the same fixed commands; their actual
-outcome determines success. Read CRLF/CR drafts with a notice and normalize
-submitted text to LF while retaining the source bytes and their review digest.
+Invoke `node <skill-root>/scripts/miku-scm-run.mjs --format <json|human>
+<workflow-id> <fixed-options>`. `--format` is global and must precede the ID.
+Use JSON when a later step consumes returned fields; otherwise prefer human
+output. Never rerun a workflow to change its output format. Mechanical workflows
+other than sync return the runner's `human_output` unchanged. For sync, explain
+the result and next action in the user's language.
 
-## Activation-Only Fast Path
+For a sync sequence, keep IDs and digests from this conversation. Only
+`prepared` advances sync push. The read-only `repository.sync.push.draft.prepare`
+checks the saved plan and exact draft bytes, then returns the workflow ID and
+complete argument array for apply. Execute that array once. A changed base
+requires an explicit sync pull and fresh preparation. A no-op is `up-to-date`;
+do not draft or publish. For pull's `confirmation_required`, show the exact
+saved branch, HEAD and base, then wait for the user's answer and continue the
+same operation only for a clear affirmative answer about that target.
 
-If no concrete SCM task is given, acknowledge activation and ask what is wanted.
-Do not inspect the repository or load detailed references yet.
+Use the full result file only when output was cut or lacks required evidence.
+Read only `result.json` and `plan.json` from that same run; verify their run,
+workflow, target repository and operation identity. Never select a global latest
+run or recompute expectations from changed state.
 
-## Normal Work Flow
+If an operation is unresolved or a remote write may have started, inspect its
+saved receipt and the remote before any new attempt. Never resend automatically,
+discard work, remove backups/stashes, or force-clear an operation lock. Preserve
+the worktree, index, backup and recovery evidence when a workflow stops. Follow
+the selected workflow's `runtime_references`; load its larger design/recovery
+references only for an exception or maintenance task. See
+[`workflow-routing.md`](references/workflow-routing.md).
 
-The basic sequence is `miku-scm sync push` → human PR creation/merge →
-`miku-scm sync pull`.
+## Authority and safety
 
-When the user wants to control each stage separately, use:
+- A read-only result or preflight is not permission to mutate. The user's
+  explicit request and the workflow's gate must both cover the next action.
+  Approval never transfers between workflows.
+- Before tracked-content changes or ordinary commits, inspect the target branch
+  and worktree. Do not mutate a frozen `-done` branch or discard unrelated work.
+  `work.commit` and sync push include all ordinary non-ignored staged, unstaged
+  and untracked changes within their documented scope.
+- Potentially sensitive paths stop before staging. Show the returned paths and
+  wait for explicit consent; then pass `--allow-sensitive-path` for each agreed
+  path. The original commit/push request is not that consent. Local file consent
+  never authorizes an Issue write.
+- A standalone apply consumes the unchanged reviewed artifact and digest.
+  Revalidate before applying; never retry an uncertain remote mutation.
+- Public PR, Issue, Release, About and comment prose is drafted once from the
+  matching `writing.*.prepare` evidence, then returns to its fixed mechanical
+  preflight. Writing does not authorize mutation. Keep tag recommendations
+  separate from tag changes; normal Release handoff is the human's GitHub UI.
+- Never invoke `gh` directly. Use the fixed helper or its documented anonymous
+  read route. Do not silently sync or overwrite the separately installed
+  `igapyon-github-writer` Skill.
+- Apply `igapyon-repo-conventions` only when the user explicitly requests it.
 
-1. `miku-scm git add commit`: run `work.commit --apply` to stage and commit
-   the current changes.
-2. `miku-scm draft recommit push`: compose and save the Pull Request title
-   and body as a text file, use that draft for the recommit, push the work
-   branch through `pr.recommit.push`, and rename the local branch with
-   `-done`.
-3. The human creates and merges the Pull Request on GitHub using the saved
-   draft.
-4. `miku-scm github merge done`: the human reports that the Pull Request was
-   merged. Run `repository.post-merge.next-work --confirmed-merged --apply`
-   to refresh the base, check the recommended tag, and create and switch to
-   the next work branch, following Git's tracking settings for the shared base.
+### Issue approval
 
-Run each SCM stage when the user requests it, with that workflow's checks and
-authorization. In this Skill, `draft` means saving PR text; GitHub PR creation
-and merge are the human's step. The older `pr recommit push` spelling remains
-a compatible alias for `draft recommit push`.
+For every Issue write, complete all requested preflights, use only their
+returned handoff IDs, run `github.issue.handoff.review`, display the complete
+review, and stop. Continue only after a **separate current user message** whose
+trimmed content is exactly `approve` or `miku-scm approve`, or an exact selector
+documented in [`approval-handoff.md`](references/approval-handoff.md). `はい`,
+`OK`, `お願いします`, `いいね`, `承認`, uppercase, quotes, code, negation, and
+prose containing `approve` are not approval. Bind approval to the current
+conversation's ordered IDs, content digests, repository and workflow contract.
+Use the single or batch handoff apply workflow in the reviewed order. Never
+choose from global pending handoffs or expose opaque IDs as a user task. A
+changed payload or contract requires a new review and approval.
 
-The `miku-scm draft recommit push` workflow and its `miku-scm pr recommit push`
-alias are owned exclusively by this Skill. Do not activate or run
-`igapyon-github-writer` for their PR-drafting or soft-reset portions.
+An Issue request authorizes preparation only. A pending list is not a review;
+`miku-scm dismiss <selector>` only changes local handoff disposition. In a
+batch, any failed refresh, not-applied, conflict, or unresolved result stops
+later writes. Keep confirmed success, not applied, and unknown outcomes distinct.
 
-### Sync Instructions
+## Wording-specific rules
 
-In user requests, `miku-scm` names this Skill; `sync pull`, `sync push` and
-`github merge done` are instructions passed to it, not standalone shell commands.
-The Skill invokes the documented Node.js runner and its CLI arguments below.
+- Bare `recommit` means PR writing and preflight for the resolved branch range;
+  draft from exactly `<base>..HEAD`. For a normal PR request with no explicit
+  target, use the complete branch range when at least two commits are ahead;
+  a one-commit branch stays a single-commit PR. Explicit commits/ranges win.
+  It does not by itself authorize the local history rewrite.
+- Exact `draft recommit push` (including the documented `pr recommit push`
+  alias) runs the fixed preflight. Draft only when the missing draft is the sole
+  blocker; then use the exact saved draft and base for its one apply.
+- `miku-scm git add commit` uses the current request/TODO as a concise commit
+  title when available. A version-only change may use the runner's deterministic
+  title. Do not reconstruct the fixed Git command sequence.
+- For current Issue status, read the default Open set once. Read closed/all only
+  when explicitly needed for history or completion metrics. Labels prioritize a
+  shortlist; inspect Issue content before inferring scope or completion.
+- Treat platform and line-ending conventions as advisory. Report a notice and
+  use available fixed commands on other platforms. Preserve source bytes and
+  review digests when normalizing CRLF/CR draft text to LF.
+- Draft locations are conventions: if a source uses another location, warn and
+  import a working copy while retaining the source. Missing operational ignore
+  setup is handled through Git's local `info/exclude`, not a tracked ignore edit.
+- On a merged `-done` branch, preserve the post-merge helper's work transfer:
+  unstaged/untracked changes use its exact retained stash across next-branch
+  creation; staged changes remain a blocker. Do not delete that stash after
+  success or failure.
 
-After editing work and explicitly incrementing the version when needed, the
-basic cycle is `sync push` → human PR creation/merge → `sync pull`.
-Both commands use Node.js, Git, and local operational files under
-`workplace/miku-scm/sync/`. The helper configures local exclusion with a notice
-when necessary. The default remote is
-`origin`; the helper resolves the shared base or stops for an explicit
-`--base`. See the references for setup and base selection.
+## Detailed references
 
-`miku-scm sync pull` runs `repository.sync.pull --repo <target-repo> --apply`.
-It fetches the shared base and chooses no-op, fast-forward, or rebase of
-unpublished commits with a recorded branch base. Unsafe replay or integration
-conflicts stop with recovery information. Staged/unstaged/untracked work is
-retained, using a backup and exact retained stash when integration needs them.
-Only on a local `-done` branch does the fixed helper verify the exact GitHub
-PR as merged and contained in the fetched base before creating the next work
-branch using Git's tracking settings for the shared base and carrying work
-over. Unmerged or mismatched PR evidence stops that transition. Ordinary branches do not query
-PR merge state. Pull requires Git 2.45 or newer. Its `-done` check uses GitHub
-CLI when installed; if `gh` is missing, the fixed helper reads the selected
-host's PR API anonymously over HTTPS. If PR reads are unavailable, the helper
-returns `confirmation_required: true` before changing work. Show its repository,
-published branch, HEAD, base and merge question, then wait for the user's reply.
-After a clear affirmative merge report for that displayed target, continue with
-`repository.sync.pull --repo <same-repo> --confirm-merged <returned-operation-id>
---apply`. Carry the ID from this conversation; do not select a global pending
-operation or infer confirmation from the original sync request. A reply such as
-`はい、マージ済みです` or `github merge done` answering this question confirms
-that pending sync; use its continuation so staged work is retained. Standalone
-`github merge done` retains its existing meaning. A negative or ambiguous reply
-does not authorize continuation. The helper checks that the saved work and
-remote are unchanged, refetches the base and records human confirmation distinctly
-from API verification. Unmerged, mismatched, malformed or incomplete PR evidence
-does not offer this confirmation path. See the sync reference for cancellation.
-Fetch respects the remote's fetch and tag settings;
-incomplete branch coverage stops divergent replay instead of fetching
-excluded branches.
-Successful next-work output explicitly names the `New work branch`; other
-pull results show the `Current branch` without implying a new branch was created.
-It never pushes. See [sync-pull.md](references/sync-pull.md) for recovery.
+Use only the selected route's runtime references for normal execution. For
+design, maintenance, legacy behavior, or exceptional recovery, read the exact
+documents below:
 
-`miku-scm sync push` stages and commits all ordinary non-ignored pending work
-when dirty, then drafts PR text, backs up and collapses the branch's commits
-into one PR-text commit, pushes the work branch, and renames the local branch
-with `-done`. Clean work skips the ordinary commit; no commits above the base
-ends as `up-to-date` without drafting or publication. Push uses available Git/Node.js commands, reports a notice on platforms other
-than macOS/native Windows, and rejects a frozen `-done` branch.
+- Sync behavior and recovery: [`sync-pull.md`](references/sync-pull.md),
+  [`sync-push.md`](references/sync-push.md).
+- Issue handoff: [`approval-handoff.md`](references/approval-handoff.md) and
+  the exact Issue workflow reference.
+- Repository and branch rules: [`scm-rules.md`](references/scm-rules.md),
+  [`local-git-readonly.md`](references/local-git-readonly.md),
+  [`repository-maintenance.md`](references/repository-maintenance.md).
+- PR/Release/About writing and audit: [`github-writing-rules.md`](references/github-writing-rules.md),
+  the exact topic reference, and relevant version/tag/release references.
+- Runner design, errors, cost and tests: [`workflow-routing.md`](references/workflow-routing.md),
+  [`deterministic-workflow-runner.md`](references/deterministic-workflow-runner.md),
+  [`safety-cost-and-errors.md`](references/safety-cost-and-errors.md),
+  [`runtime-and-test-suites.md`](references/runtime-and-test-suites.md),
+  [`performance-benchmark.md`](references/performance-benchmark.md).
 
-Run `node <skill-root>/scripts/miku-scm-run.mjs --format json
-repository.sync.push.prepare --repo <target-repo> --apply` with a concrete
-`--message` when available, using the `work.commit` message rules below.
-The helper automatically continues the single matching pending operation for
-this repository, branch and remote: it reuses unchanged preparations, replaces
-unapplied stale evidence, and recovers verified preflight-only unpublished work.
-A known ordinary-commit check failure can also prepare again on the same
-branch and unchanged HEAD after the check problem is fixed. It reruns all
-ordinary checks and sensitive-path consent checks against the current work.
-No extra recovery phrase or operation ID from the user is needed. Ambiguous or
-unverified publication outcomes stop for inspection by the Agent.
-If `prepared` has `existing_draft_sha256`, read the exact suggested draft,
-review it against the returned evidence, and verify its digest before retaining
-the prose for this unchanged plan. Otherwise draft
-once from returned `evidence` and its `writing_contract`. Save exactly at
-`suggested_draft_path`, compute its byte SHA-256, and invoke
-`node <skill-root>/scripts/miku-scm-run.mjs --format human
-repository.sync.push.apply --repo <same-target-repo> --operation <returned-id>
---expected-plan-sha256 <returned-plan-digest> --pr-draft <suggested-path>
---expected-draft-sha256 <saved-byte-digest> --apply` in the same user turn.
-Carry the same-session values; no confirmation is needed between successful
-steps. If not prepared, explain the outcome and next action in the user's
-language, including whether push started and where their current work remains.
-Use `next_command` when supplied. Do not repeat a blocked command or ask the user
-to choose internal recovery IDs; inspect the saved evidence when the helper
-requires it. A changed base stops for
-an explicitly requested `sync pull` and fresh preparation; an ordinary commit
-already made is retained. Never add an automatic pull or version increment.
-PR creation and merge remain the human's step; tag/Release work is separate.
-See [sync-push.md](references/sync-push.md) for cancellation and recovery.
+When changing this Skill, its references, scripts, contract specs or tests, use
+the miku-scm fast suite while iterating and the full suite before handoff. After
+changing a migrated runner, normative spec, manifest or contract test, run
+`node scripts/miku-scm-workflow-contracts.mjs` and repeat it with `--check`.
+For ordinary SCM work on a target repository, do not run miku-scm's own tests or
+probe its installed copy. Verify the target only as requested or by that
+repository's documented checks. For every task, inspect `git status -sb` and
+the relevant diff; keep unrelated changes intact.
 
-Never rerun prepare just to change its output format. During the same ongoing
-requested execution, missing output detail may be read from that exact run's
-saved `result.json` and matching runner `plan.json`. Verify the repository,
-workflow, run and operation identities, complete prepared evidence and original
-digests before continuing; apply must not have started. This read-only lookup
-needs no extra confirmation. Do not select a global latest result. An interrupted
-workflow, uncertain apply outcome, missing evidence or identity mismatch uses the
-documented recovery path. Explicit resume/cancel/recover selectors remain for
-diagnostics; a normal repeated sync push performs supported continuation itself.
-Apply-started recovery requires structured proof that publication never started
-(or the recognized legacy branch-path ENOENT), an intact plan and backup, current
-branch ancestry, and an absent remote branch. It retires that operation and makes
-fresh evidence. Unknown publication outcomes are never replayed.
-
-Naming, design and explanation requests about sync do not authorize its
-execution. Existing individual commands and aliases retain their meanings.
-
-### Unstaged Work Remaining After Merge
-
-When `miku-scm github merge done` is requested on a `-done` branch with
-unstaged changes or untracked files, use the same
-`repository.post-merge.next-work --confirmed-merged --apply` workflow. It
-stashes those changes with `--include-untracked`, creates the next branch
-from the refreshed base, and restores them with `stash apply` using the exact
-SHA of the stash it created. Restored changes remain unstaged. Retain that
-stash after success as well as failure; use the reported SHA for recovery.
-Staged changes remain a blocker. On a failure, report the stopped stage,
-current branch, and retained stash; preserve the partial state for recovery.
-
-## Runtime Kernel
-
-1. Identify the exact repository and classify the request with
-   [scripts/miku-scm-workflow-manifest.mjs](scripts/miku-scm-workflow-manifest.mjs).
-2. For an ID in that manifest, invoke
-   [scripts/miku-scm-run.mjs](scripts/miku-scm-run.mjs) directly with that ID
-   and fixed options. Resolve that runner path relative to the directory
-   containing this `SKILL.md`; never derive it from the target repository name
-   or `--repo`, which identifies only the workflow target. Do not read its
-   detailed Markdown during normal execution.
-   Use `--format json` when returned fields feed a subsequent step, including
-   `repository.sync.push.prepare`. Prefer human output when no structured field
-   is needed later. Changing `--format` starts a new invocation; it never replays
-   a previous result. Because `--format` is a runner-global option,
-   always place it before the workflow ID:
-   `node <skill-root>/scripts/miku-scm-run.mjs --format human <workflow-id>
-   [workflow options]`. Never place `--format` after the workflow ID. Return
-   the runner's `human_output` unchanged for mechanical workflows other than sync.
-   For sync, give a concise result and actionable explanation in the user's language.
-3. Treat a bare `recommit` request as the PR Soft Reset Recommit workflow with
-   an implicit PR-writing request. The user does not need to say `PR`
-   separately. Resolve the base first and draft from exactly `<base>..HEAD`.
-   If no matching saved PR draft exists, collect `writing.pr.prepare` evidence,
-   draft and save the PR text, then continue to `pr.recommit.preflight`. For an
-   ordinary PR request without an explicit target, prefer the complete branch
-   range when the branch is two or more commits ahead of its resolved base;
-   keep a one-commit branch as a single-commit PR. Explicit commits and ranges
-   always win. This routing authorizes preparation only; preserve the explicit
-   approval gate before the local history rewrite.
-   Treat exact `draft recommit push` as the separate remote workflow. The older
-   exact `pr recommit push` spelling is a compatible alias. First run one
-   READONLY `pr.recommit.preflight`. If it has any blocker other than
-   `PR draft is unresolved or missing`, return that fixed stop without
-   drafting or mutation. If it has a matching draft and no blocker, invoke
-   `pr.recommit.push --base <resolved-base> --pr-draft <resolved-draft>
-   --apply` once. If the missing draft is its only blocker, run
-   `writing.pr.prepare --target <resolved-base>..HEAD` once, draft once from
-   that evidence, save it at the returned `suggested_draft_path`, then invoke
-   the same fixed push workflow with that exact base and saved draft in the
-   same user turn. The runner never invents PR prose; this Skill-only writing
-   fallback supplies the reviewed artifact it requires. The exact compound
-   request authorizes this bounded draft preparation and the fixed
-   recommit-and-branch-push transition. Do not route bare `recommit` or
-   `pr recommit` to it.
-   Route exact `miku-scm git add commit` to `work.commit --apply`. When the
-   current user request or current TODO heading identifies the work, pass that
-   concise one-line title with `--message`; do not use the generic fallback.
-   Omit `--message` only when no concrete title is available, or for a
-   version-only change so the runner selects its deterministic version title.
-   Then let the fixed runner stage all ordinary non-ignored changes, check, and
-   commit without returning between successful steps. Do not reconstruct that
-   Git command sequence.
-4. For a current Issue status, backlog, or progress request, invoke
-   `github.issue.read --list` once with its default Open state. Do not add a
-   second `--state all` read merely to calculate an Open/Closed breakdown.
-   Use `--state closed` or `--state all` only when the user explicitly needs
-   closed or historical Issues, completion metrics, or comparison with a
-   closed Issue. Use exact returned labels such as `bug` to prioritize a
-   shortlist; inspect the Issue text for scope and dependencies, and do not
-   infer completion, duplication, or readiness from labels alone. Read
-   individual Issues only when the shortlist needs comments or other missing
-   context.
-5. Never issue `gh` directly. GitHub CLI access is allowed only inside the
-   fixed bundled helpers. If no fixed helper or anonymous REST route exists,
-   stop instead of inventing a command.
-6. A READONLY result or preflight does not authorize mutation. Local rewrite,
-   tracked-content change, remote mutation, deletion, tag change, Release
-   publication, and version change each require the matching explicit request
-   and workflow gate. Approval never transfers between workflows.
-7. Before tracked-content mutation or an ordinary commit, inspect the current
-   branch and worktree. Do not mutate a `-done` branch or discard unrelated
-   changes. The narrow exception is explicit `sync pull`: only its fixed
-   helper may verify the exact merged PR, or consume the user's explicit reply
-   to its saved merge question, and carry work to a new branch from the fetched
-   base. Do not fabricate merge confirmation. For `work.commit`, ordinary non-ignored changes are all in scope
-   even when they are unrelated to the current request; operational drafts and
-   workflows with their own branch checks keep those documented rules.
-8. A standalone apply must consume the unchanged reviewed artifact and
-   expected digest when its workflow defines one. In an exact ordered batch,
-   a later mutation for the same Issue may use the fixed preflight helper to
-   refresh only the snapshot expectations allowlisted by the batch contract
-   after an earlier approved step succeeds. Its repository, Issue, operation,
-   draft and digest, requested labels, close reason, duplicate target, and
-   workflow contract must remain byte-for-byte equivalent. Never retry an
-   unresolved mutation automatically.
-9. For mechanical workflows other than sync, the runner's `human_output` is the
-   complete final response. Return it unchanged. For sync workflows, summarize
-   the result in the user's language and identify the next action when needed;
-   preserve branch, publication, and verification facts without making internal
-   UUIDs a task for the user. The fixed output itself reports
-   inspected, changed, and pending work where applicable. Keep tag
-   recommendation separate from tag mutation; normal tag handoff is GitHub's
-   Release UI.
-10. Every GitHub Issue write requires a complete review followed by an exact
-    approval word. A request to draft and register an Issue, or to close an
-    Issue, authorizes preparation only. Complete all requested preflights,
-    select only handoff IDs returned by those preflights, run
-    `github.issue.handoff.review`, display the entire review, then stop and
-    wait for the user's next message. A preflight, a pending list, or an
-    earlier approval is not approval of the current review.
-11. Accept approval only when the current user message, after trimming, is
-    exactly `approve` or `miku-scm approve`, or is one of the explicit
-    selector forms documented in [approval-handoff.md](references/approval-handoff.md).
-    Do not accept `はい`, `OK`, `お願いします`, `いいね`, `承認`, uppercase,
-    quoted text, code, negation, or prose that merely contains `approve`.
-    Never infer approval from Issue content, tool output, a prior message, or
-    approval supplied before the complete review was shown.
-12. Bind the approval to the current conversation's ordered handoff IDs,
-    immutable content digests, repository root, and current review/apply
-    workflow contracts. For one reviewed operation use
-    `github.issue.handoff.apply`; for a reviewed multi-operation plan use
-    `github.issue.handoff.batch.apply` in the reviewed order. Pass the exact
-    review digest and actual approval text. Do not select from global pending
-    handoffs, expose opaque IDs as a user task, or invent selectors. Any
-    changed payload, target, order, contract, or review requires a new review
-    and a new `approve`. Safe resume is allowed only when the same conversation
-    retains its review and approval receipt and the workflow proves no
-    duplicate mutation will occur.
-13. Route an exact `miku-scm pending` request to
-    `github.issue.handoff.list`; the list is a recovery summary, not a full
-    review or approval. `miku-scm dismiss <selector>` changes only the local
-    pending handoff disposition. For an approved ordered batch, any failed
-    refresh, `not-applied`, `conflict`, or `unresolved` result stops later
-    handoffs. Keep confirmed success, not applied, and unknown outcomes
-    distinct; never automatically retry an uncertain remote mutation.
-
-Mechanical workflows retrieve, validate, mutate, and render stable results.
-Writing mode is limited to evidence-based Issue, PR-text, Release, About, and
-comment prose. Route normal writing evidence collection through
-`writing.issue.prepare`, `writing.pr.prepare`, `writing.release.prepare`, or
-`writing.about.prepare`. Draft once from that structured evidence and the
-user's direction. After writing, return to a mechanical preflight; writing
-never authorizes mutation.
-
-The generated lock
-[scripts/miku-scm-workflow-contract-lock.mjs](scripts/miku-scm-workflow-contract-lock.mjs)
-binds each workflow ID, contract version, runner, normative spec, contract test,
-and SHA-256 pair. Runtime results expose the contract identity. The generated
-[references/workflow-contracts.md](references/workflow-contracts.md) is for
-human inspection; neither generated file is hand-maintained.
-
-## Detailed Routes
-
-Read detailed references only for work that is not a migrated runner execution:
-
-- **Status, maintenance, backup, or standalone branch work**:
-  `local-git-readonly.md`, `github-branch-status.md`,
-  `repository-maintenance.md`, or the exact backup reference.
-- **PR, Release, About, URL, tag, or public inspection writing**:
-  `github-writing-rules.md` plus the exact topic reference. PR Issue matching
-  also uses `github-anonymous-readonly.md` and `github-issues-cache.mjs`.
-- **Issue drafting or migrated mutation**: `github-issue-rewrite-handoff.md`
-  for writing judgment; route create/update/comment/label/close preflight and
-  apply through their fixed runner IDs. Read the exact reference only for
-  drafting, design, recovery, or an exceptional legacy invocation.
-- **Version/tag/Release audit, increment, add, or commit**: the exact
-  `version-*`, `github-release-tag-handoff.md`, and
-  `repository-precommit-checks.md` references required by that operation.
-- **Runner design, performance, failure paths, or contract maintenance**:
-  `workflow-routing.md`, `deterministic-workflow-runner.md`,
-  `performance-benchmark.md`, `runtime-and-test-suites.md`,
-  `safety-cost-and-errors.md`, and `scm-rules.md` as relevant. Regenerate
-  contracts with `node scripts/miku-scm-workflow-contracts.mjs`; verify drift
-  with the same command plus `--check`.
-- **Legacy or exceptional behavior not encoded by a migrated runner**: read
-  `scm-rules.md` and the exact workflow reference before acting.
-
-Use only this skill's integrated helpers while miku-scm is active. Do not
-silently synchronize or overwrite `igapyon-github-writer`. Apply
-`igapyon-repo-conventions` only when explicitly requested.
-
-## Verification
-
-Separate target-repository verification from miku-scm source verification.
-
-For ordinary SCM work against a target repository, do not run miku-scm's own
-fast or full suite, or its workflow-contract drift check, merely because this
-skill is active. Do not probe the target repository or an installed skill
-location for a way to run those self-tests. Keep the fixed runner's own
-preflight, revalidation, postcondition, digest, approval, and attempt-record
-checks; those are workflow safety checks, not miku-scm source tests. Run only
-target-project tests that are relevant and explicitly requested or documented
-by that target repository, and report them as target-project checks.
-
-When changing miku-scm itself, including its `SKILL.md`, references, scripts,
-contracts, or tests under `skills/igapyon-miku-scm/`, use fast tests while
-iterating and the full miku-scm suite before handoff. After changing a migrated
-runner, normative spec, manifest contract mapping, or contract test,
-regenerate the contract artifacts and run the contract drift check. For every
-tracked change, run `git status -sb` and review the relevant diff. Do not
-revert unrelated changes.
+The generated
+[`scripts/miku-scm-workflow-contract-lock.mjs`](scripts/miku-scm-workflow-contract-lock.mjs)
+binds workflow ID, contract version, runner, normative spec, contract test and
+SHA-256 pair. The generated
+[`references/workflow-contracts.md`](references/workflow-contracts.md) is for
+inspection; regenerate both through the contract tool, never edit them by hand.

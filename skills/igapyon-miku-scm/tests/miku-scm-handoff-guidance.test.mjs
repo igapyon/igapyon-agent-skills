@@ -15,8 +15,8 @@ test("handoff guidance requires a complete current review and exact approve", as
 
   assert.match(skill, /github\.issue\.handoff\.review/);
   assert.match(skill, /exactly `approve` or `miku-scm approve`/);
-  assert.match(skill, /Do not select from global pending/);
-  assert.match(skill, /Safe resume is allowed only when the same conversation/);
+  assert.match(skill, /Never\nchoose from global pending handoffs/);
+  assert.match(approval, /resume request may use `--resume` only when the same conversation retains the/);
   assert.doesNotMatch(skill, /legacy `miku-scm 承認` input remains accepted/);
   assert.match(approval, /Show the full review, including full text and metadata/);
   assert.match(approval, /message is approval only if its trimmed full text is exactly/);

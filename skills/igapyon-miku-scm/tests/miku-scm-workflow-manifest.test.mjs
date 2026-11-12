@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { access } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
 
 import { workflowRegistry } from "../scripts/miku-scm-run.mjs";
@@ -15,7 +17,7 @@ test("workflow manifest is versioned and IDs are unique", () => {
   assert.equal(new Set(ids).size, ids.length);
 });
 
-test("every routed workflow fixes safety metadata and separates runtime references", () => {
+test("every routed workflow fixes safety metadata and separates runtime references", async () => {
   for (const entry of WORKFLOW_MANIFEST) {
     assert.match(entry.id, /^[a-z]+(?:[.-][a-z]+)+$/);
     assert.ok(["readonly", "local", "remote"].includes(entry.mutation_level));
@@ -26,12 +28,13 @@ test("every routed workflow fixes safety metadata and separates runtime referenc
     assert.equal(entry.contract_id, entry.id);
     const issueWriteContract = entry.id.startsWith("github.issue.") && entry.id !== "github.issue.read";
     const syncVersions = {
-      "repository.sync.pull": 3,
-      "repository.sync.push.prepare": 4,
-      "repository.sync.push.apply": 3,
+      "repository.sync.pull": 4,
+      "repository.sync.push.prepare": 5,
+      "repository.sync.push.draft.prepare": 1,
+      "repository.sync.push.apply": 4,
       "pr.publish.preflight": 3,
-      "pr.publish.apply": 3,
-      "pr.recommit.push": 2,
+      "pr.publish.apply": 4,
+      "pr.recommit.push": 3,
       "work.commit": 2,
       "github.issue.read": 3,
       "github.read.batch": 3,
@@ -49,7 +52,12 @@ test("every routed workflow fixes safety metadata and separates runtime referenc
     assert.equal(entry.contract_version, syncVersions[entry.id] ?? (issueWriteContract ? 2 : 1));
     assert.match(entry.contract_spec, /\.md$/);
     assert.match(entry.contract_test, /\.test\.mjs$/);
-    assert.deepEqual(entry.runtime_references, []);
+    const expectedRuntime = entry.id === "repository.sync.pull" ? ["runtime-sync-pull.md"]
+      : entry.id.startsWith("repository.sync.push.") ? ["runtime-sync-push.md"]
+        : entry.id === "repository.post-merge.next-work" ? ["runtime-post-merge.md"]
+          : entry.id.startsWith("github.issue.") && entry.id !== "github.issue.read" ? ["runtime-issue-approval.md"] : [];
+    assert.deepEqual(entry.runtime_references, expectedRuntime);
+    for (const reference of entry.runtime_references) await access(path.join(import.meta.dirname, "..", "references", reference));
     assert.deepEqual(entry.design_references, entry.references);
     assert.doesNotMatch(entry.runner_entry, /[;&|`$]/);
   }

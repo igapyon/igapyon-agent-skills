@@ -1,54 +1,83 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import test from "node:test";
 import { EventEmitter } from "node:events";
-import { readdir } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 
 import {
   buildFullJobs,
-  extractTestNames,
-  validateShards,
+  buildFastJobs,
+  FAST_FILES,
   parseSuiteArgs,
   runJobs,
+  validateFastFiles,
 } from "../scripts/miku-scm-test-suite.mjs";
 
-test("test-name extraction and shard validation require exactly one match", () => {
-  const names = extractTestNames('test("alpha", () => {});\ntest("beta", async () => {});\n');
-  assert.deepEqual(names, ["alpha", "beta"]);
-  assert.doesNotThrow(() => validateShards(names, ["^alpha$", "^beta$"], "fixture"));
-  assert.throws(() => validateShards(names, ["a", "alpha"], "fixture"), /exactly one/);
-  assert.throws(() => validateShards(names, ["^alpha$"], "fixture"), /exactly one/);
-});
-
-test("full suite build keeps regular files and fixed slow shards separate", async () => {
+test("full suite discovers each test file once without test-name filtering", async () => {
   const jobs = await buildFullJobs(process.cwd());
-  const files = (await readdir("skills/igapyon-miku-scm/tests")).filter((name) => name.endsWith(".test.mjs"));
-  assert.deepEqual([...new Set(jobs.map((job) => path.basename(job.args.at(-1))))].sort(), files.sort());
+  const files = (await readdir("skills/igapyon-miku-scm/tests")).filter((name) => name.endsWith(".test.mjs")).sort();
+  assert.deepEqual(jobs.map((job) => job.id), files);
   assert.equal(new Set(jobs.map((job) => job.id)).size, jobs.length);
-  for (const file of files.filter((name) => !["sync-pull.test.mjs", "post-recommit-publish.test.mjs", "repository-maintenance.test.mjs"].includes(name))) {
+  assert.ok(jobs.every((job) => !job.args.includes("--test-name-pattern")));
+  for (const file of ["sync-pull.test.mjs", "post-recommit-publish.test.mjs", "repository-maintenance.test.mjs"]) {
     assert.equal(jobs.filter((job) => job.id === file).length, 1);
   }
-  assert.ok(jobs.some((job) => job.id.startsWith("post-recommit-publish.test.mjs:")));
-  assert.ok(jobs.some((job) => job.id.startsWith("repository-maintenance.test.mjs:")));
-  const syncPatterns = jobs.filter((job) => job.id.startsWith("sync-pull.test.mjs:"))
-    .map((job) => job.args[job.args.indexOf("--test-name-pattern") + 1]);
-  validateShards([
-    "sync pull without gh verifies PRs on github.com and carries work to the next branch",
-    "sync pull without gh stops before changing work for 404 anonymous evidence",
-    "human merge confirmation rejects changed worktree",
-    "sync pull directory rename cannot overwrite ignored contents during commit integration",
-    "sync pull protects an ignored symlink replacing a tracked directory",
-  ], syncPatterns, "sync-pull.test.mjs");
-  for (const pattern of syncPatterns) {
-    assert.equal(new RegExp(pattern).test(path.resolve("skills/igapyon-miku-scm/tests/sync-pull.test.mjs")), false);
-  }
-  assert.throws(() => validateShards(["unclassified future test"], syncPatterns, "sync-pull.test.mjs"));
+});
+
+test("fast suite is a unique subset of full and rejects missing or duplicate entries", async () => {
+  const full = await buildFullJobs(process.cwd());
+  const fast = await buildFastJobs(process.cwd());
+  assert.deepEqual(fast.map((job) => job.id), FAST_FILES);
+  assert.equal(new Set(FAST_FILES).size, FAST_FILES.length);
+  assert.ok(fast.every((job) => full.some((fullJob) => fullJob.id === job.id)));
+  const fullFiles = full.map((job) => job.id);
+  assert.throws(() => validateFastFiles(["missing.test.mjs"], fullFiles), /missing from the full suite/);
+  assert.throws(() => validateFastFiles([fullFiles[0], fullFiles[0]], fullFiles), /duplicate/);
+  assert.throws(() => validateFastFiles(["not-a-test.js"], fullFiles), /test file names/);
+});
+
+test("dynamic, single-quoted and arbitrary test names run in one discovered job", async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "miku-suite-dynamic-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const directory = path.join(root, "skills", "igapyon-miku-scm", "tests");
+  await mkdir(directory, { recursive: true });
+  const marker = path.join(root, "executed.txt");
+  await writeFile(path.join(directory, "future-names.test.mjs"), [
+    'import test from "node:test";',
+    'import { appendFile } from "node:fs/promises";',
+    `const mark = () => appendFile(${JSON.stringify(marker)}, "ran\\n");`,
+    'for (const [kind, label] of [["generated", "name"]]) test(`${kind} ${label}`, mark);',
+    "test('single-quoted name with no old prefix', mark);",
+    "test('★ arbitrary / punctuation: [future]', mark);",
+    "",
+  ].join("\n"));
+  const jobs = await buildFullJobs(root);
+  assert.equal(jobs.length, 1);
+  assert.deepEqual(jobs[0].args.slice(0, 2), ["--test", "--test-reporter=spec"]);
+  assert.ok(!jobs[0].args.includes("--test-name-pattern"));
+  let launches = 0;
+  let output = "";
+  const result = await runJobs(jobs, root, { progress: () => {}, spawn: (...args) => {
+    launches++;
+    const child = spawn(...args);
+    child.stdout.on("data", (chunk) => { output += chunk; });
+    child.stderr.on("data", (chunk) => { output += chunk; });
+    return child;
+  } });
+  assert.equal(launches, 1);
+  assert.equal(result.jobs, 1);
+  assert.equal(result.status, "passed", output);
+  const markerText = await readFile(marker, "utf8").catch((error) => { throw new Error(`${error.message}\n${output}`); });
+  assert.equal(markerText.trim().split("\n").length, 3);
 });
 
 test("suite CLI validates its process limit", () => {
-  assert.equal(parseSuiteArgs(["--full"]).concurrency, 4);
+  assert.deepEqual(parseSuiteArgs(["--full"]), { mode: "full", concurrency: 4 });
+  assert.deepEqual(parseSuiteArgs(["--fast", "--jobs", "2"]), { mode: "fast", concurrency: 2 });
   assert.equal(parseSuiteArgs(["--full", "--jobs", "2"]).concurrency, 2);
-  for (const args of [[], ["--full", "--jobs"], ["--full", "--jobs", "0"], ["--full", "--jobs", "17"], ["--full", "--jobs", "2.5"], ["--full", "--exec", "4"]]) {
+  for (const args of [[], ["--full", "--jobs"], ["--fast", "--jobs", "0"], ["--full", "--jobs", "17"], ["--full", "--jobs", "2.5"], ["--full", "--exec", "4"]]) {
     assert.throws(() => parseSuiteArgs(args));
   }
 });

@@ -23,9 +23,8 @@ test("verification guidance scopes self-tests to miku-scm source maintenance", a
     guidance("references/github-post-recommit-publish.md"),
   ]);
 
-  assert.match(skill, /Separate target-repository verification from miku-scm source verification/);
-  assert.match(skill, /do not run miku-scm's own\nfast or full suite, or its workflow-contract drift check/);
-  assert.match(skill, /When changing miku-scm itself/);
+  assert.match(skill, /When changing this Skill, its references, scripts, contract specs or tests/);
+  assert.match(skill, /For ordinary SCM work on a target repository, do not run miku-scm's own tests or/);
   assert.match(suites, /validate miku-scm while developing it from its\nsource repository/);
   assert.match(suites, /not completion checks for an ordinary miku-scm\noperation against another repository/);
   assert.match(recommit, /Do not\nrun miku-scm's source test suite or contract drift check merely because this\nworkflow completed/);

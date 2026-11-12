@@ -13,7 +13,8 @@ export function parseArgs(mode, argv, cwd = process.cwd()) {
   const o = { repo: cwd, remote: "origin", base: "", message: "", allowSensitivePaths: [], operation: "", resume: "", cancel: "", recover: "", expectedPlanSha256: "", prDraft: "", expectedDraftSha256: "", apply: false, help: false };
   const common = { "--repo": "repo" };
   const fields = mode === "prepare" ? { ...common, "--remote": "remote", "--base": "base", "--message": "message", "--resume": "resume", "--cancel": "cancel", "--recover": "recover" }
-    : { ...common, "--operation": "operation", "--expected-plan-sha256": "expectedPlanSha256", "--pr-draft": "prDraft", "--expected-draft-sha256": "expectedDraftSha256" };
+    : mode === "draft.prepare" ? { ...common, "--operation": "operation", "--expected-plan-sha256": "expectedPlanSha256" }
+      : { ...common, "--operation": "operation", "--expected-plan-sha256": "expectedPlanSha256", "--pr-draft": "prDraft", "--expected-draft-sha256": "expectedDraftSha256" };
   const seen = new Set();
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -31,15 +32,16 @@ export function parseArgs(mode, argv, cwd = process.cwd()) {
     else throw new Error(`Unknown argument: ${a}`);
   }
   if (o.help) return o;
-  if (!o.apply || !o.repo) throw new Error("sync push requires --apply");
+  if (!o.repo || (mode !== "draft.prepare" && !o.apply) || (mode === "draft.prepare" && o.apply)) throw new Error(mode === "draft.prepare" ? "sync push draft preparation is read-only and rejects --apply" : "sync push requires --apply");
   if ([o.resume, o.cancel, o.recover].filter(Boolean).length > 1) throw new Error("--resume, --cancel and --recover are exclusive");
   if ((o.resume || o.cancel) && o.allowSensitivePaths.length) throw new Error("Recovery uses the saved push options");
   if ((o.resume || o.cancel) && ["--remote", "--base", "--message"].some((v) => seen.has(v))) throw new Error("Recovery uses the saved push options");
   if (o.recover && ["--remote", "--base"].some((v) => seen.has(v))) throw new Error("Partial recovery uses the saved remote and base");
   if (o.recover) checkedId(o.recover);
-  if (mode === "apply") {
+  if (mode === "apply" || mode === "draft.prepare") {
     checkedId(o.operation);
-    if (!o.prDraft || !/^[0-9a-f]{64}$/.test(o.expectedPlanSha256) || !/^[0-9a-f]{64}$/.test(o.expectedDraftSha256)) throw new Error("Push apply requires the exact plan and draft SHA-256");
+    if (!/^[0-9a-f]{64}$/.test(o.expectedPlanSha256)) throw new Error("Push workflow requires the exact plan SHA-256");
+    if (mode === "apply" && (!o.prDraft || !/^[0-9a-f]{64}$/.test(o.expectedDraftSha256))) throw new Error("Push apply requires the exact draft SHA-256");
   }
   return o;
 }
@@ -256,6 +258,13 @@ export async function prepareSyncPush(options, dependencies = {}) {
       await saveOperation(ctx, op);
       return { status: "not-applied", stage: "base", reason: "Base advanced; run sync pull before sync push", operation_id: id, publication_state: "not-started", next_command: "miku-scm sync pull", next_action: "Run miku-scm sync pull, then repeat miku-scm sync push. Local work is retained.", mutation_invoked: false };
     }
+    if (!initial.dirty && initial.head === op.base_sha) {
+      op.commit = { status: "skipped" };
+      op.status = "completed";
+      op.mutation_invoked = false;
+      await saveOperation(ctx, op);
+      return { status: "up-to-date", warnings: ctx.warnings, commit: op.commit, operation_id: op.id, head: initial.head, mutation_invoked: false };
+    }
     if (initial.dirty || initial.head !== op.base_sha) requireFetchBranch(ctx, remote, initial.branch);
     // Publication blockers that are knowable now must precede an ordinary commit.
     if (ctx.git(ctx.root, ["show-ref", "--verify", "--quiet", `refs/heads/${initial.branch}-done`], { allowFailure: true }).ok) throw new Error("The local completion branch already exists");
@@ -289,7 +298,7 @@ export async function prepareSyncPush(options, dependencies = {}) {
     if (current.head === op.base_sha) {
       op.status = "completed";
       await saveOperation(ctx, op);
-      return { status: "up-to-date", warnings: ctx.warnings, commit: op.commit, head: current.head, mutation_invoked: op.mutation_invoked };
+      return { status: "up-to-date", warnings: ctx.warnings, commit: op.commit, operation_id: op.id, head: current.head, mutation_invoked: op.mutation_invoked };
     }
     const { evidence_sha256: _previousEvidenceDigest, ...evidenceFields } = await (dependencies.prepareWriting ?? prepareWritingEvidence)({ mode: "pr", repo: ctx.root, target: `${op.base_sha}..${current.head}` }, { ...dependencies.writingDependencies, now: dependencies.now });
     // Fresh preparations must not overwrite a draft retained from the same minute.
@@ -319,6 +328,35 @@ async function draftBytes(ctx, relative) {
   const bytes = await readFile(file);
   if (!bytes.length || bytes.length > 1024 * 1024) throw new Error("PR draft is empty or too large");
   return bytes;
+}
+
+export async function prepareSyncPushDraft(options, dependencies = {}) {
+  const { ctx, release } = await openSync(options.repo, dependencies, options.operation);
+  try {
+    const op = await loadOperation(ctx, options.operation);
+    if (op.type !== "push" || op.status !== "prepared" || op.apply_started
+      || op.root !== ctx.root || op.common !== ctx.common) throw new Error("This sync push is not an unused prepared operation for this repository");
+    const plan = await readPlan(ctx, op);
+    if (!plan || hash(plan) !== options.expectedPlanSha256 || op.plan_sha256 !== options.expectedPlanSha256
+      || plan.operation !== op.id || plan.root !== ctx.root || plan.common !== ctx.common || plan.contract !== pushContract()) {
+      throw new Error("Push plan digest, identity or workflow contract changed");
+    }
+    const bytes = await draftBytes(ctx, plan.draft_path);
+    const draftSha256 = hash(bytes);
+    return {
+      status: "draft-ready",
+      warnings: ctx.warnings,
+      operation_id: op.id,
+      plan_sha256: op.plan_sha256,
+      draft_path: plan.draft_path,
+      draft_sha256: draftSha256,
+      workflow_id: "repository.sync.push.apply",
+      apply_arguments: ["--repo", ctx.root, "--operation", op.id,
+        "--expected-plan-sha256", op.plan_sha256, "--pr-draft", plan.draft_path,
+        "--expected-draft-sha256", draftSha256, "--apply"],
+      mutation_invoked: false,
+    };
+  } finally { await release(); }
 }
 
 export async function applySyncPush(options, dependencies = {}) {

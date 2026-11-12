@@ -232,7 +232,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "repository.sync.pull",
-    contract_version: 3,
+    contract_version: 4,
     triggers: ["miku-scm sync pull", "sync pull"],
     required_parameters: ["repository", "explicit_sync_pull_request"],
     mutation_level: "local",
@@ -243,7 +243,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "repository.sync.push.prepare",
-    contract_version: 4,
+    contract_version: 5,
     triggers: ["miku-scm sync push", "sync push"],
     required_parameters: ["repository", "explicit_sync_push_request"],
     mutation_level: "local",
@@ -253,8 +253,19 @@ const WORKFLOW_DEFINITIONS = [
     contract_runtime_sources: SYNC_PUSH_SOURCES,
   },
   {
+    id: "repository.sync.push.draft.prepare",
+    contract_version: 1,
+    triggers: ["Prepared sync push draft validation", "sync push draft hash and apply arguments"],
+    required_parameters: ["repository", "operation", "plan_digest"],
+    mutation_level: "readonly",
+    approval_gate: "preflight",
+    runner_entry: "sync-push.mjs",
+    references: ["sync-push.md", "deterministic-workflow-runner.md"],
+    contract_runtime_sources: SYNC_PUSH_SOURCES,
+  },
+  {
     id: "repository.sync.push.apply",
-    contract_version: 3,
+    contract_version: 4,
     triggers: ["Prepared sync push execution only"],
     required_parameters: ["repository", "operation", "plan_digest", "draft_digest"],
     mutation_level: "remote",
@@ -294,7 +305,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "pr.publish.apply",
-    contract_version: 3,
+    contract_version: 4,
     triggers: ["ok push", "承認済みpublication plan適用"],
     required_parameters: ["repository", "reviewed_plan", "reviewed_digest"],
     mutation_level: "remote",
@@ -322,7 +333,7 @@ const WORKFLOW_DEFINITIONS = [
   },
   {
     id: "pr.recommit.push",
-    contract_version: 2,
+    contract_version: 3,
     triggers: [
       "miku-scm draft recommit push",
       "draft recommit push",
@@ -435,7 +446,7 @@ const SUPPORT_SOURCES = {
   "github-issue-comment.mjs": ["miku-scm-draft.mjs", "miku-scm-jst-time.mjs"],
   "work-commit.mjs": ["miku-scm-operational-storage.mjs"],
   "post-recommit-publish.mjs": ["miku-scm-command-runner.mjs"],
-  "pr-recommit-push.mjs": ["miku-scm-command-runner.mjs"],
+  "pr-recommit-push.mjs": ["miku-scm-command-runner.mjs", "post-recommit-publish.mjs"],
 };
 
 export const WORKFLOW_MANIFEST = Object.freeze(WORKFLOW_DEFINITIONS.map((entry) => Object.freeze({
@@ -452,9 +463,14 @@ export const WORKFLOW_MANIFEST = Object.freeze(WORKFLOW_DEFINITIONS.map((entry) 
     : {}),
   contract_spec: entry.references.find((reference) => reference !== "deterministic-workflow-runner.md"),
   contract_test: CONTRACT_TEST_BY_RUNNER[entry.runner_entry],
-  // Runtime routing intentionally needs no detailed Markdown. The references
-  // above remain the design, maintenance, and exception documentation.
-  runtime_references: Object.freeze([]),
+  runtime_references: Object.freeze(entry.runtime_references ?? (entry.id === "repository.sync.pull"
+    ? ["runtime-sync-pull.md"]
+    : entry.id.startsWith("repository.sync.push.")
+      ? ["runtime-sync-push.md"]
+      : entry.id === "repository.post-merge.next-work"
+        ? ["runtime-post-merge.md"]
+        : entry.id.startsWith("github.issue.") && entry.id !== "github.issue.read"
+          ? ["runtime-issue-approval.md"] : [])),
   design_references: Object.freeze([...entry.references]),
 })));
 

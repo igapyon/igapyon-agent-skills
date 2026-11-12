@@ -56,6 +56,10 @@ For a normal branch there are **no GitHub PR reads**. Fetch once, then:
   recorded branch creation/sync base. Require that base to remain an ancestor
   of both HEAD and the fetched base. Missing provenance, local merges, fetched
   refs sharing replay commits, or publication receipts stop automatic replay.
+  The replay commits are checked against deduplicated fetched remote tips and
+  matching local receipt heads with at most one `rev-list --stdin` query per
+  group, excluding the recorded base in each query. Malformed or failed history
+  evidence stops the pull; unresolved publication attempts remain in scope.
 
 An exact-base no-op or safe FF records provenance. An ahead no-op with no
 record does not invent one. Verified successful runner records from the older

@@ -19,6 +19,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       required: ${{ steps.select.outputs.required }}
+      mode: ${{ steps.select.outputs.mode }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,7 +35,7 @@ jobs:
 
   contract:
     needs: select
-    if: needs.select.outputs.required == 'true'
+    if: needs.select.outputs.mode == 'full'
     name: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -54,14 +55,30 @@ jobs:
           distribution: temurin
           java-version: "17"
       - run: mvn --version
+      - run: node scripts/validate-version-alignment.mjs --repo .
       - run: npm run test:miku-scm:full
       - run: node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs --check
       - run: git diff --check
 
+  versions:
+    needs: select
+    if: needs.select.outputs.mode == 'versions'
+    name: Version alignment and contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: node scripts/validate-version-alignment.mjs --repo .
+      - run: node skills/igapyon-miku-scm/scripts/miku-scm-workflow-contracts.mjs --check
+      - run: node skills/igapyon-github-writer/scripts/github-writer-workflow-contracts.mjs --check
+
   required:
     name: Miku SCM required
     if: always()
-    needs: [select, contract]
+    needs: [select, contract, versions]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

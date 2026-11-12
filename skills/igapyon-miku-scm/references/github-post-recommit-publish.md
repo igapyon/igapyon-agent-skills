@@ -103,11 +103,18 @@ The new-branch push also names its exact destination:
 git push -u origin HEAD:refs/heads/<branch>
 ```
 
-If the branch appears after review, apply mode stops. If it appears in the
-remaining race before push, normal non-force push rejection stops the workflow.
+The new branch's absence is also an atomic push precondition:
 
-Never use plain `--force`. Never use an implicit `--force-with-lease` without
-the reviewed remote SHA.
+```sh
+git push -u --force-with-lease=refs/heads/<branch>: origin HEAD:refs/heads/<branch>
+```
+
+The empty expected value means the destination ref must still be absent when
+the server accepts the push. A branch created after fetch is preserved and the
+push stops as unresolved; do not refresh the expectation or resend automatically.
+
+Never use plain `--force`. For an existing branch, use the reviewed remote SHA;
+for a new branch, use the explicit empty lease to require absence.
 
 ## Apply Sequence
 

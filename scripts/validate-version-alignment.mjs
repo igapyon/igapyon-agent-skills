@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 function requireMatch(value, expression, label, format) {
@@ -76,10 +77,27 @@ export function assertVersionAlignment({ projectVersion, mikukuText, runnerText,
   return result;
 }
 
+export function projectVersionFromPom(pomText) {
+  const matches = [...String(pomText).matchAll(/^  <version>([^<\r\n]+)<\/version>[\t ]*\r?$/gm)];
+  if (matches.length !== 1) throw new Error("Expected exactly one top-level project.version in pom.xml");
+  return matches[0][1];
+}
+
 export async function validateVersionAlignment(argv, read = readFile) {
+  if (argv[0] === "--repo" && argv.length === 2 && argv[1]) {
+    const root = path.resolve(argv[1]);
+    const files = [
+      path.join(root, "pom.xml"),
+      path.join(root, "skills/igapyon-mikuku-agent/references/VERSION.md"),
+      path.join(root, "skills/igapyon-miku-scm/scripts/miku-scm-run.mjs"),
+      path.join(root, "skills/igapyon-github-writer/scripts/github-writer-workflow-manifest.mjs"),
+    ];
+    const [pom, mikukuText, runnerText, githubWriterText] = await Promise.all(files.map((file) => read(file, "utf8")));
+    return assertVersionAlignment({ projectVersion: projectVersionFromPom(pom), mikukuText, runnerText, githubWriterText });
+  }
   const [projectVersion, mikukuVersionFile, runnerFile, githubWriterFile] = argv;
   if (!projectVersion || !mikukuVersionFile || !runnerFile || (argv.length !== 3 && argv.length !== 4)) {
-    throw new Error("Usage: validate-version-alignment.mjs <project-version> <mikuku-version-file> <runner-file> [github-writer-runner-file]");
+    throw new Error("Usage: validate-version-alignment.mjs --repo <repository-root> | <project-version> <mikuku-version-file> <runner-file> [github-writer-runner-file]");
   }
   const [mikukuText, runnerText, githubWriterText] = await Promise.all([
     read(mikukuVersionFile, "utf8"),

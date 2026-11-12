@@ -31,19 +31,36 @@ export function parseArgs(argv, cwd = process.cwd()) {
   return o;
 }
 
+function sharedReplayCommit(ctx, replayCommits, tips, recordedBase) {
+  const uniqueTips = [...new Set(tips)];
+  if (!uniqueTips.length) return false;
+  if (!SHA.test(recordedBase ?? "") || uniqueTips.some((tip) => !SHA.test(tip))) {
+    throw new Error("Published-history evidence contains an invalid full commit SHA");
+  }
+  const input = `${uniqueTips.join("\n")}\n^${recordedBase}\n`;
+  const result = ctx.git(ctx.root, ["rev-list", "--stdin"], { input });
+  const reachable = result.out.split("\n").filter(Boolean);
+  if (reachable.some((oid) => !SHA.test(oid))) throw new Error("Published-history query returned a malformed commit SHA");
+  return reachable.some((oid) => replayCommits.has(oid));
+}
+
 async function refusePublished(ctx, op) {
   if (ctx.git(ctx.root, ["show-ref", "--verify", "--quiet", `refs/remotes/${op.remote.name}/${op.original.branch}`], { allowFailure: true }).ok) throw new Error("Published work branches cannot be automatically rebased");
+  const replayCommits = new Set(op.commits);
   const refs = ctx.git(ctx.root, ["for-each-ref", "--format=%(objectname)", "refs/remotes/"]).out.split("\n").filter(Boolean);
-  if (op.commits.some((commit) => refs.some((ref) => ancestor(ctx, commit, ref)))) throw new Error("A replay commit is already shared on a fetched remote ref");
+  if (refs.some((ref) => !SHA.test(ref))) throw new Error("Fetched remote refs contain an invalid full commit SHA");
+  if (sharedReplayCommit(ctx, replayCommits, refs, op.record_base)) throw new Error("A replay commit is already shared on a fetched remote ref");
   const directory = path.join(ctx.root, "workplace/miku-scm/ok-push");
   let names = [];
   try { names = await readdir(directory); } catch (error) { if (error.code !== "ENOENT") throw error; }
+  const receiptTips = [];
   for (const name of names.filter((n) => n.endsWith(".json") && !n.endsWith(".attempt.json"))) {
     const plan = await readJson(path.join(directory, name));
     if (plan?.branch !== op.original.branch || !SHA.test(plan.reviewed_head ?? "")) continue;
     const attempt = await readJson(path.join(directory, `${name}.attempt.json`));
-    if (attempt && op.commits.some((commit) => ancestor(ctx, commit, plan.reviewed_head))) throw new Error("A publication receipt or unresolved attempt covers the replay history");
+    if (attempt) receiptTips.push(plan.reviewed_head);
   }
+  if (sharedReplayCommit(ctx, replayCommits, receiptTips, op.record_base)) throw new Error("A publication receipt or unresolved attempt covers the replay history");
 }
 
 async function refuseDuplicateNext(ctx, op) {

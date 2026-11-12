@@ -25,6 +25,7 @@ const WORKFLOW_TITLES = Object.freeze({
   "repository.post-merge.next-work": "Post-merge next-work preparation",
   "repository.sync.pull": "Sync pull",
   "repository.sync.push.prepare": "Sync push preparation",
+  "repository.sync.push.draft.prepare": "Sync push draft validation",
   "repository.sync.push.apply": "Sync push",
   "work.commit": "Work commit",
   "pr.publish.preflight": "PR publication",

@@ -11,10 +11,13 @@ test("sync routes keep separate local prepare and remote apply gates", () => {
   const registry = workflowRegistry();
   assert.equal(registry.get("repository.sync.pull").mutationLevel, "local");
   assert.equal(registry.get("repository.sync.push.prepare").mutationLevel, "local");
+  assert.equal(registry.get("repository.sync.push.draft.prepare").mutationLevel, "readonly");
+  assert.equal(registry.get("repository.sync.push.draft.prepare").approvalGate, "preflight");
   assert.equal(registry.get("repository.sync.push.apply").mutationLevel, "remote");
   assert.throws(() => parsePull([]), /requires/);
   assert.throws(() => parsePush("prepare", []), /requires/);
   assert.throws(() => parsePush("apply", ["--apply"]), /operation ID/);
+  assert.throws(() => parsePush("draft.prepare", ["--operation", "00000000-0000-4000-8000-000000000000", "--expected-plan-sha256", "a".repeat(64), "--apply"]), /read-only/);
   assert.equal(parsePull(["--apply", "--confirm-merged", "saved-id"]).confirmMerged, "saved-id");
   assert.throws(() => parsePull(["--apply", "--confirm-merged", "saved-id", "--resume", "other-id"]), /cannot be combined/);
   assert.throws(() => parsePull(["--apply", "--confirm-merged", "saved-id", "--base", "main"]), /saved remote and base/);

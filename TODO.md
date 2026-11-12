@@ -2,6 +2,19 @@
 
 ## AI Agent Current Tasks
 
+### miku-scm：2026-11-12レビュー指摘への対応（完了）
+
+[Luna向け対応計画](docs/plans/miku-scm-review-20261112-luna-implementation.md)に沿って、公開時の競合、Git timeout、no-op、履歴照会、テスト・CI負荷、生成AI向け手順を改善する。既存の版数更新4ファイル（`1.20261112.4` / `20261112d`）を保持する。[実施記録](docs/plans/miku-scm-review-20261112-execution.md)
+
+- [x] レビュー根拠、作業順、変更箇所、回帰条件、検証・引き渡し条件を固定。
+- [x] SC12-00：開始状態・既存差分・検証台帳の記録。
+- [x] SC12-01〜04：新規branchの不存在lease、委譲後のtimeout/no-retry、no-op、公開済み履歴の一括照会。
+- [x] SC12-05〜06：名前shardの物理分割、fast suiteと重複テストの整理。
+- [x] SC12-07〜08：草案の固定検証helper、SKILL・reference・対話ケースの整合。
+- [x] SC12-09：前回hosted Windows full成功をREADONLY確認し、厳密な版数専用CI経路とworkflow依存範囲を実装。
+- [x] SC12-10：fetch/process costをlocal bare remoteで計測し、各検査の変更検出対象を確認。fetch削除はしない。
+- [x] SC12-11：fast 6 jobs / 22 cases、full 60 jobs / 553 cases、selector 6件、参照routing 16件、両skill contracts、版数整合、`mvn validate`、`git diff --check`が成功。今回の変更後のWindows hosted CI・native Windows・実モデル対話・配備は未実施として記録。
+
 ### daybook：URL受領と会話・操作過程のactivity逐次記録（2026-11-11・source実装・形式参照検証済み）
 
 [仕様と実施記録](docs/plans/daybook-url-and-conversation-activity-capture.md)に沿ってsourceへ実装。発火後はURL受領・会話途中・taskだけの操作もactivityへ記録し、過去URLとの一致は関連候補として文脈で判断する。関係未確定でも記録を進める。初回発火の境界と、明示された記録禁止・ファイル制約を維持する。
