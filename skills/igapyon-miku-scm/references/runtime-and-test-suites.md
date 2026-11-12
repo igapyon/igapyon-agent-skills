@@ -61,6 +61,11 @@ elapsed time. File timings include process startup and fixture cleanup.
 Both suites retain contract assertions for exact command arrays, approval
 boundaries, digest conflicts, attempt records, and mutation non-retry.
 
+The Miku SCM GitHub Actions workflow runs the full suite on both macOS and
+Windows for pull requests. Slow, repository-isolated files are split into
+independent jobs while the worker limit stays at four. Keep every test in the
+full suite so platform-specific Git behavior remains covered in PR feedback.
+
 After changing a migrated runner, normative spec, manifest contract mapping, or
 contract test, regenerate and verify the tracked contract artifacts:
 
