@@ -529,7 +529,7 @@ A prompt, Agent Skill, or repository instruction set seems ambiguous, overbroad,
 
 **Example:** Use miku-prompt-lint to check why this skill activates for unrelated requests and identify the instructions that need tightening.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-prompt-lint-skills/blob/e550a2fd3d252f18b468f5514640a218f1aeafb8/skills/igapyon-miku-prompt-lint/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-prompt-lint-skills/blob/de4dd1747c567b5705dcfa8ea7fb75fe7c0800c3/skills/igapyon-miku-prompt-lint/SKILL.md).
 
 ### igapyon-miku-repo-bundle
 
