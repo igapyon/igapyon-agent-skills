@@ -37,7 +37,12 @@ CRLFを選ぶ一時global設定を渡し、clone・checkout・stash復元後の�
 
 ## このリポジトリでの使い方
 
-[Miku SCM Contract](../../.github/workflows/miku-scm-contract.yml) と [GitHub Writer Contract](../../.github/workflows/github-writer-contract.yml) は、OS の matrix に `macos-latest` と `windows-latest` を指定している。それぞれの OS で同じ変更に対するテストを実行する構成になっている。
+[Miku SCM Contract](../../.github/workflows/miku-scm-contract.yml) と
+[GitHub Writer Contract](../../.github/workflows/github-writer-contract.yml) は、OSのmatrixに
+`macos-latest`と`windows-latest`を指定している。PRではMiku SCMとGitHub Writerのfull suiteを
+両OSで実行する。Miku SCMは`sync-push.test.mjs`を4つの独立したテストファイルへ分け、
+既存の並列数を保って全ケースを走らせる。GitHub Writerの
+[benchmark](../../.github/workflows/github-writer-benchmark.yml)はPRから分離して手動実行にする。
 
 複数 OS で実行する意味は、今回のように、普段の開発環境では見えにくい差を見つけられることにある。改行コード、パスの扱い、シェルや Git の設定などが、実際のテスト結果として現れる。
 

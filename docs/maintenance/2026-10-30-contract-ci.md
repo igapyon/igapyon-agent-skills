@@ -60,3 +60,25 @@ rulesetはリポジトリのファイルではなくGitHubの設定である。Y
 job名だけではmergeは制限されない。変更の配備、ruleset設定、Windows上の計測は
 それぞれ実際の結果を確認してから完了とする。Release archive自体にはContract待機を
 追加していないため、タグを先行させると従来通り配布処理が起動する。
+
+## 2026-11-12 Miku SCM待ち時間の再調査
+
+再調査の結論と実装順は[テストとCIの負荷を見直す計画](../plans/contract-ci-balance-plan.md)を参照。
+PRではMiku SCMとGitHub Writerのfull suiteをmacOS/Windowsの両方で維持する。
+Miku SCMで最も遅かった`sync-push.test.mjs`は、動的テストを名前で選別せず、独立した4ファイルへ分割する。
+GitHub Writerの反復benchmarkはPRから外し、手動workflowへ分離する。
+
+GitHub Actionsの実測では、#154のMiku SCM full suiteは541/541、57ジョブ、並列数4。
+macOSは188秒、Windowsは516秒で、`sync-push.test.mjs`だけでそれぞれ172.0秒と476.7秒を使った。
+GitHub Writer #115のfull suiteはmacOS 8秒、Windows 24秒。benchmarkはさらに8秒、28秒だった。
+
+以前の試案でWindows fullをPRから外す判断は採らない。fast suiteにはsync fixtureとGit公開・復旧の実ケースが
+含まれず、既知のWindows改行問題への継続確認が弱くなるためである。Java/Maven setupも維持する。
+`work-commit.test.mjs`はfixture上で実際に`mvn validate`を起動する。
+
+変更後、macOS / Node.js v26.12.1のMiku SCM full suiteは541/541成功、60ジョブ、
+同時実行数4、107.152秒。sync-push、preflight、continuation、recovery群は
+26.737、38.273、18.722、54.716秒だった。
+GitHub Writerは34/34成功。selector 3/3、Miku SCM workflow contract 37件、
+GitHub Writer workflow contract 12件も成功し、対象workflow 3つのYAML構文とtriggerを確認した。
+固定Maven checkと`git diff --check`も成功。変更後のWindows hosted CIはまだ実行していない。

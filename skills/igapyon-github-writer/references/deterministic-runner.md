@@ -247,8 +247,9 @@ Run the local contract suite with:
 npm run test:github-writer
 ```
 
-The CI matrix also runs `npm run benchmark:github-writer`. It records cold and
-warm timings for the mechanical, writing, and approval scenarios separately on
-macOS and Windows without a shared hard threshold. The benchmark includes normal
-run-record writes and reports expected Agent/model participation. Compare a
-platform only with its own prior baseline.
+The benchmark workflow runs `npm run benchmark:github-writer` on manual
+dispatch, separately from pull request checks. It records cold and warm
+timings for the mechanical, writing, and approval scenarios on macOS and Windows
+without a shared hard threshold. The benchmark includes normal run-record
+writes and reports expected Agent/model participation. Compare a platform only
+with its own prior baseline.

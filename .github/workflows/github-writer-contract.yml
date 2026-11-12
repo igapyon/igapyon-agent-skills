@@ -50,7 +50,6 @@ jobs:
         with:
           node-version: "22"
       - run: npm run test:github-writer
-      - run: npm run benchmark:github-writer
 
   required:
     name: GitHub Writer required
