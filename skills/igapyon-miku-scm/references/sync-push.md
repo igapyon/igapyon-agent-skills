@@ -47,14 +47,16 @@ recommit, push or local `-done` rename.
    `existing_draft_sha256` is supplied. Otherwise compose once from its returned
    `evidence` and `writing_contract`. Save at `suggested_draft_path` and compute
    its byte SHA-256. An older draft from a superseded plan remains unbound.
-3. In the same requested workflow, invoke
-   `node <skill-root>/scripts/miku-scm-run.mjs --format human
-   repository.sync.push.apply --repo <path> --operation <operation-id>
-   --expected-plan-sha256 <prepare-plan-digest> --pr-draft <suggested-path>
-   --expected-draft-sha256 <saved-bytes-digest> --apply` once. Carry the IDs
-   and digests from this conversation; do not choose a global latest plan.
-   Report the result in the user's language. When stopped, explain whether push
-   started, what work is retained, and the supplied `next_command` or inspection.
+3. In the same requested workflow, invoke the read-only
+   `repository.sync.push.draft.prepare` with this operation ID and plan digest.
+   It reads the path only from the verified plan, hashes the exact contained
+   draft bytes, and returns the complete apply argument array.
+4. Invoke exactly the returned `repository.sync.push.apply` workflow and
+   argument array once. Apply rechecks the plan, draft hash and publication
+   conditions. Carry the IDs and digests from this conversation; do not choose
+   a global latest plan. Report the result in the user's language. When stopped,
+   explain whether push started, what work is retained, and the supplied
+   `next_command` or inspection.
 
 Successful steps need no extra conversational confirmation. The Agent writes
 PR prose; fixed helpers own all Git mechanics. A writing failure leaves the
@@ -92,7 +94,10 @@ require an active work branch, no conflicting
 Git operation and no other pending sync. Fetch once and stop **before an
 ordinary commit** if the fetched base is not an ancestor of HEAD. Run fixed
 publication preflight (allow dirty only for this read-only preparation) to
-check the destination/upstream/completion branch before committing.
+check the destination/upstream/completion branch before committing. If the
+worktree is clean and HEAD equals that fetched base, save a completed
+`up-to-date` operation immediately; skip the work-branch mapping, local done
+branch collision check and publication preflight because no publication follows.
 
 Dirty work calls existing `work.commit` once; carry its scope, sensitive-path
 checks, version notice, title fallback and repository checks unchanged.
@@ -121,7 +126,7 @@ fetch/push/verification. Bind the prepared remote branch expectation too.
 Fetch again before apply; a changed base stops with a fresh-evidence /
 `sync pull` instruction while preserving the ordinary commit. Delegate to
 `pr.recommit.push` with the pinned base and draft. Share its backup, explicit
-remote lease/new-branch expectation, publication attempt receipt, exact
+remote lease/new-branch absence expectation, publication attempt receipt, exact
 post-push `0 0` check and `-done` rename. Do not reconstruct this sequence in
 the Agent. Do not retry a consumed plan or an unknown remote mutation.
 The remote branch keeps its published name; only the local branch receives

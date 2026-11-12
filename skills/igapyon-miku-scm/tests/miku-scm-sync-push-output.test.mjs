@@ -95,10 +95,22 @@ for (const format of ["human", "json"]) test(`sync push ${format} CLI retrieves 
 
   const prose = "Implement requested work\n\nPreserve the requested content.\n";
   await f.write(p.suggested_draft_path, prose);
-  const applyArgs = ["--repo", f.repo, "--operation", operation,
+  const beforeDraftPrepare = await readFile(stateFile, "utf8");
+  const draftPrepared = cli(caller, "json", "repository.sync.push.draft.prepare", ["--repo", f.repo,
+    "--operation", operation, "--expected-plan-sha256", p.plan_sha256]);
+  assert.equal(draftPrepared.status, 0, draftPrepared.stdout + draftPrepared.stderr);
+  const draftResult = JSON.parse(draftPrepared.stdout).result;
+  assert.equal(draftResult.status, "draft-ready");
+  assert.equal(draftResult.workflow_id, "repository.sync.push.apply");
+  assert.equal(draftResult.draft_path, p.suggested_draft_path);
+  assert.equal(draftResult.draft_sha256, createHash("sha256").update(prose).digest("hex"));
+  assert.deepEqual(draftResult.apply_arguments, ["--repo", await realpath(f.repo), "--operation", operation,
     "--expected-plan-sha256", p.plan_sha256, "--pr-draft", p.suggested_draft_path,
-    "--expected-draft-sha256", createHash("sha256").update(prose).digest("hex"), "--apply"];
-  const published = cli(caller, "human", "repository.sync.push.apply", applyArgs);
+    "--expected-draft-sha256", draftResult.draft_sha256, "--apply"]);
+  assert.equal(await readFile(stateFile, "utf8"), beforeDraftPrepare);
+  assert.equal(f.git(["rev-parse", "HEAD"]), p.head);
+
+  const published = cli(caller, "human", draftResult.workflow_id, draftResult.apply_arguments);
   assert.equal(published.status, 0, published.stdout + published.stderr);
   assert.match(published.stdout, /Result: published/);
   assert.equal(f.git(["branch", "--show-current"]), `${branch}-done`);
@@ -109,10 +121,14 @@ for (const format of ["human", "json"]) test(`sync push ${format} CLI retrieves 
   const completedState = await readFile(stateFile, "utf8");
   assert.equal(JSON.parse(completedState).status, "completed");
 
-  const repeatedApply = cli(caller, "json", "repository.sync.push.apply", applyArgs);
+  const repeatedApply = cli(caller, "json", "repository.sync.push.apply", draftResult.apply_arguments);
   assert.equal(repeatedApply.status, 1, repeatedApply.stdout + repeatedApply.stderr);
   assert.equal(JSON.parse(repeatedApply.stdout).result.status, "not-applied");
   assert.equal(await readFile(stateFile, "utf8"), completedState);
   assert.equal(f.git(["rev-parse", "HEAD"]), publishedHead);
   assert.equal(f.git(["ls-remote", "--heads", "origin", `refs/heads/${branch}`]).split(/\s+/)[0], publishedHead);
+  const consumedDraftPrepare = cli(caller, "json", "repository.sync.push.draft.prepare", ["--repo", f.repo,
+    "--operation", operation, "--expected-plan-sha256", p.plan_sha256]);
+  assert.equal(consumedDraftPrepare.status, 1);
+  assert.match(JSON.parse(consumedDraftPrepare.stdout).error.message, /unused prepared operation/);
 });

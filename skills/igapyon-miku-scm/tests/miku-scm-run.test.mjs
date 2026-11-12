@@ -162,6 +162,7 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
     "repository.maintenance.apply",
     "repository.sync.pull",
     "repository.sync.push.prepare",
+    "repository.sync.push.draft.prepare",
     "repository.sync.push.apply",
     "repository.post-merge.next-work",
     "work.commit",
@@ -182,7 +183,7 @@ test("registry exposes fixed workflow IDs and no free-form command workflow", ()
 });
 
 test("manifest exposes complete AI-readable CLI help contracts", () => {
-  assert.equal(WORKFLOW_MANIFEST.length, 37);
+  assert.equal(WORKFLOW_MANIFEST.length, 38);
   for (const workflow of WORKFLOW_MANIFEST) {
     assert.equal(typeof workflow.cli.summary, "string", workflow.id);
     assert.ok(workflow.cli.summary.length > 0, workflow.id);

@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 
 const DEFAULT_MAX_BUFFER = 20 * 1024 * 1024;
+export const DEFAULT_GIT_TIMEOUT_MS = 120_000;
 
 export function platformWarnings(platform = process.platform) {
   return ["darwin", "win32"].includes(platform) ? []
@@ -18,11 +19,16 @@ function diagnostic(args, result, stdout, stderr) {
  * needed here.  Keeping this boundary shared prevents platform-specific shell
  * quoting from entering a workflow.
  */
-export function createCommandRunner({ executable, maxBuffer = DEFAULT_MAX_BUFFER, platform = process.platform, spawn = spawnSync } = {}) {
+export function createCommandRunner({ executable, maxBuffer = DEFAULT_MAX_BUFFER, platform = process.platform, spawn = spawnSync,
+  defaultTimeout, env, forceEnv, failureMessage = diagnostic } = {}) {
   if (!executable || typeof executable !== "string") throw new Error("executable is required");
   return (cwd, args, options = {}) => {
     if (!Array.isArray(args) || args.some((value) => typeof value !== "string")) {
       throw new Error("command arguments must be a string array");
+    }
+    const timeout = options.timeout ?? defaultTimeout;
+    if (timeout !== undefined && (!Number.isFinite(timeout) || timeout <= 0)) {
+      throw new Error("timeout must be a positive finite number");
     }
     const spawnOptions = {
       cwd,
@@ -31,8 +37,9 @@ export function createCommandRunner({ executable, maxBuffer = DEFAULT_MAX_BUFFER
       maxBuffer,
       shell: false,
     };
+    if (env || options.env || forceEnv) spawnOptions.env = { ...process.env, ...env, ...options.env, ...forceEnv };
     if (platform === "win32") spawnOptions.windowsHide = true;
-    if (Number.isFinite(options.timeout) && options.timeout > 0) spawnOptions.timeout = options.timeout;
+    if (timeout !== undefined) spawnOptions.timeout = timeout;
     const result = spawn(executable, args, spawnOptions);
     const stdout = result.stdout ? String(result.stdout) : "";
     const stderr = result.stderr ? String(result.stderr) : "";
@@ -44,13 +51,16 @@ export function createCommandRunner({ executable, maxBuffer = DEFAULT_MAX_BUFFER
       stderr,
       error: result.error,
     };
-    if (!response.ok && !options.allowFailure) throw new Error(diagnostic(args, result, stdout, stderr));
+    if (!response.ok && !options.allowFailure) throw new Error(failureMessage(args, result, stdout, stderr));
     return response;
   };
 }
 
 export function createGitCommandRunner(options = {}) {
-  return createCommandRunner({ ...options, executable: "git" });
+  const { timeout = DEFAULT_GIT_TIMEOUT_MS, ...runnerOptions } = options;
+  return createCommandRunner({ ...runnerOptions, defaultTimeout: timeout, forceEnv: { GIT_TERMINAL_PROMPT: "0" },
+    failureMessage: (args, result) => `git ${args[0] ?? "command"} failed (exit ${result.status ?? "unknown"}`
+      + `${result.signal ? `, signal ${result.signal}` : ""}${result.error?.code ? `, ${result.error.code}` : ""})`, executable: "git" });
 }
 
 export function createGhCommandRunner(options = {}) {

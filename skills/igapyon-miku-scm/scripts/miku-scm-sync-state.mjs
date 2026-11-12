@@ -37,19 +37,24 @@ export function describeSyncGitFailure(args, result, stderr) {
 }
 
 export function syncGit(cwd, args, options = {}) {
-  const r = spawnSync("git", args, {
+  const timeout = options.timeout ?? 120_000;
+  if (!Number.isFinite(timeout) || timeout <= 0) throw new Error("timeout must be a positive finite number");
+  const r = (options.spawn ?? spawnSync)("git", args, {
     cwd, input: options.input, maxBuffer: 64 * 1024 * 1024, shell: false,
-    windowsHide: true, timeout: options.timeout ?? 120_000,
-    env: { ...process.env, LC_ALL: "C", GIT_TERMINAL_PROMPT: "0", GIT_MERGE_AUTOEDIT: "no", GIT_EDITOR: "true" },
+    windowsHide: true, timeout,
+    env: { ...process.env, LC_ALL: "C", GIT_TERMINAL_PROMPT: "0", GIT_MERGE_AUTOEDIT: "no", GIT_EDITOR: "true", ...options.env, GIT_TERMINAL_PROMPT: "0" },
   });
   const stdout = Buffer.isBuffer(r.stdout) ? r.stdout : Buffer.from(r.stdout ?? "");
   const stderr = Buffer.isBuffer(r.stderr) ? r.stderr.toString("utf8") : String(r.stderr ?? "");
-  const result = { ok: r.status === 0, code: r.status, bytes: stdout, stdout: stdout.toString("utf8"), out: stdout.toString("utf8").trimEnd(), err: stderr };
+  const result = { ok: r.status === 0, code: r.status, signal: r.signal ?? null, spawn_error: r.error?.code ?? null,
+    bytes: stdout, stdout: stdout.toString("utf8"), out: stdout.toString("utf8").trimEnd(), err: stderr };
   if (!result.ok && !options.allowFailure) {
     const error = new Error(`git ${args[0]} failed (exit ${r.status ?? "unknown"}${r.error?.code ? `, ${r.error.code}` : ""})`);
     error.gitDiagnostic = describeSyncGitFailure(args, r, stderr);
     error.message += `: ${error.gitDiagnostic.summary}`;
     error.gitExit = r.status;
+    error.gitSignal = r.signal ?? null;
+    error.gitSpawnError = r.error?.code ?? null;
     throw error;
   }
   return result;
@@ -237,7 +242,7 @@ export async function loadOperation(ctx, id) {
 }
 
 export async function newOperation(ctx, type, id, initial, remote, base, baseSha) {
-  const op = { schema: SYNC_SCHEMA, id, type, root: ctx.root, common: ctx.common, warnings: ctx.warnings, status: "running", phase: "inspect", original: initial, remote, base, base_sha: baseSha, mutation_invoked: false, created_at: new Date().toISOString() };
+  const op = { schema: SYNC_SCHEMA, id, type, root: ctx.root, common: ctx.common, warnings: ctx.warnings, status: "running", phase: "inspect", original: initial, remote, base, base_sha: baseSha, mutation_invoked: false, ...(type === "push" ? { apply_started: false } : {}), created_at: new Date().toISOString() };
   await saveOperation(ctx, op);
   if (ctx.syncLock) {
     const current = await readJson(ctx.syncLock.file);

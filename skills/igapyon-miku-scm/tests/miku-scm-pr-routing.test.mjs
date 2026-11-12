@@ -17,9 +17,9 @@ test("bare recommit implicitly enters PR writing before the rewrite approval gat
     skillText("references/github-pr-writing.md"),
   ]);
 
-  assert.match(skill, /bare `recommit` request as the PR Soft Reset Recommit workflow with\n   an implicit PR-writing request/);
+  assert.match(skill, /\| bare `recommit` \| PR text drafting and preflight; keep the local history rewrite gate \|/);
   assert.match(skill, /explicitly says `recommit` or `draft recommit push` to invoke the miku-soft PR-text drafting/);
-  assert.match(skill, /This routing authorizes preparation only; preserve the explicit\n   approval gate/);
+  assert.match(skill, /It does not by itself authorize the local history rewrite/);
   assert.match(recommit, /bare `recommit` request implicitly includes PR writing/);
   assert.match(recommit, /Do not stop merely to ask the user to request PR writing separately/);
   assert.match(prWriting, /bare `recommit` request implicitly requests PR writing/);
@@ -32,12 +32,12 @@ test("exact recommit push writes only for the sole missing-draft blocker then ap
     skillText("references/writing-mode.md"),
   ]);
 
-  assert.match(skill, /one\s+READONLY `pr\.recommit\.preflight`/);
-  assert.match(skill, /any blocker other than\n   `PR draft is unresolved or missing`/);
-  assert.match(skill, /`writing\.pr\.prepare --target <resolved-base>\.\.HEAD` once/);
-  assert.match(skill, /returned `suggested_draft_path`/);
-  assert.match(skill, /same user turn/);
-  assert.match(skill, /Do not route bare `recommit` or\n   `pr recommit` to it/);
+  assert.match(recommitPush, /one\s+READONLY recommit preflight first/);
+  assert.match(recommitPush, /When the missing draft is the only blocker/);
+  assert.match(recommitPush, /exactly `<resolved-base>\.\.HEAD`/);
+  assert.match(recommitPush, /saves the returned `suggested_draft_path`, and immediately runs/);
+  assert.match(skill, /Exact `draft recommit push`[\s\S]*?runs the fixed preflight/);
+  assert.match(skill, /Bare `recommit` means PR writing and preflight/);
   assert.match(recommitPush, /Any other preflight\n+blocker stops the entire route before writing, backup, reset, or push/);
   assert.match(writingMode, /exact `miku-scm draft recommit push` request/);
   assert.match(writingMode, /older `miku-scm pr recommit push` spelling is a/);

@@ -6,6 +6,8 @@ import { runSyncPull } from "../scripts/sync-pull.mjs";
 import { context, hash, loadOperation, snapshot } from "../scripts/miku-scm-sync-state.mjs";
 import { fixture } from "./sync-fixture.mjs";
 import { draft, preflightPartial } from "./sync-push-support.mjs";
+import { createGitRunner } from "../scripts/post-recommit-publish.mjs";
+import { syncGit } from "../scripts/miku-scm-sync-state.mjs";
 
 for (const change of ["draft", "plan", "head", "push-url", "fetch-refspec", "tag-policy"]) test(`sync push rejects changed ${change} before recommit`, async (t) => {
   const f = await fixture(t); await f.commit("own.txt", "pending\n"); const p = await prepareSyncPush(f.options); const options = await draft(f, p);
@@ -96,4 +98,96 @@ test("sync push publishes through configured base and work-branch fetch mappings
   const result = await applySyncPush(await draft(f, prepared));
   assert.equal(result.status, "published", JSON.stringify(result));
   assert.equal(f.git(["rev-list", "--left-right", "--count", "HEAD...origin/devel-tiga1026aaa"]).replace(/\s+/g, " "), "0 0");
+});
+
+test("sync push preserves a branch created between absence check and push", async (t) => {
+  const f = await fixture(t);
+  await f.write("own.txt", "work\n");
+  const prepared = await prepareSyncPush(f.options);
+  const applyOptions = await draft(f, prepared);
+  const branch = f.git(["branch", "--show-current"]);
+  const baseHead = f.git(["rev-parse", "devel"]);
+  let inserted = false;
+  let pushCalls = 0;
+  const publicationGit = createGitRunner();
+  const result = await applySyncPush(applyOptions, {
+    beforeCheckpoint: (phase) => {
+      if (phase === "publication-push" && !inserted) {
+        f.git(["push", "origin", `devel:refs/heads/${branch}`]);
+        inserted = true;
+      }
+    },
+    recommitPushDependencies: {
+      publishDependencies: {
+        git: (cwd, args, options) => {
+          if (args[0] === "push") pushCalls++;
+          return publicationGit(cwd, args, options);
+        },
+      },
+    },
+  });
+  assert.equal(result.status, "unresolved", JSON.stringify(result));
+  assert.equal(result.mutation_invoked, null);
+  assert.equal(inserted, true);
+  assert.equal(pushCalls, 1);
+  assert.equal(syncGit(f.remote, ["rev-parse", `refs/heads/${branch}`]).out, baseHead);
+  assert.equal(f.git(["branch", "--show-current"]), branch);
+  assert.equal(f.git(["show-ref", "--verify", "--quiet", `refs/heads/${branch}-done`], { allowFailure: true }), "");
+  const operation = await loadOperation(await context(f.repo), prepared.operation_id);
+  assert.ok(operation.backup_branch);
+  assert.equal(f.git(["rev-parse", operation.backup_branch]), prepared.head);
+
+  const repeated = await prepareSyncPush(f.options);
+  assert.equal(repeated.status, "not-applied");
+  assert.equal(pushCalls, 1);
+});
+
+test("sync push no-op skips publication checks and completion collisions", async (t) => {
+  const f = await fixture(t);
+  const branch = f.git(["branch", "--show-current"]);
+  f.git(["branch", `${branch}-done`]);
+  f.git(["config", "remote.origin.fetch", "+refs/heads/devel:refs/remotes/origin/devel"]);
+  let publicationCalls = 0;
+  const result = await prepareSyncPush(f.options, {
+    publish: async () => { publicationCalls++; throw new Error("publication must not run for no-op"); },
+  });
+  assert.equal(result.status, "up-to-date", JSON.stringify(result));
+  assert.equal(result.commit.status, "skipped");
+  assert.equal(result.mutation_invoked, false);
+  assert.equal(publicationCalls, 0);
+  const operation = await loadOperation(await context(f.repo), result.operation_id);
+  assert.equal(operation.status, "completed");
+  assert.equal(operation.plan_sha256, undefined);
+});
+
+test("sync push fetch timeout before commit preserves the original worktree and index", async (t) => {
+  const f = await fixture(t);
+  await f.write("own.txt", "uncommitted\n");
+  const before = await snapshot(await context(f.repo));
+  const timeoutGit = (cwd, args, options) => args[0] === "fetch"
+    ? syncGit(cwd, args, { ...options, spawn: () => ({ status: null, signal: "SIGTERM", stdout: Buffer.alloc(0), stderr: Buffer.alloc(0), error: { code: "ETIMEDOUT" } }) })
+    : syncGit(cwd, args, options);
+  const result = await prepareSyncPush(f.options, { git: timeoutGit });
+  assert.equal(result.status, "not-applied", JSON.stringify(result));
+  assert.equal(result.mutation_invoked, false);
+  assert.match(result.reason, /timed out/);
+  assert.equal((await snapshot(await context(f.repo))).digest, before.digest);
+});
+
+test("sync push apply fetch timeout leaves the prepared plan unconsumed", async (t) => {
+  const f = await fixture(t);
+  await f.commit("own.txt", "committed\n");
+  const prepared = await prepareSyncPush(f.options);
+  const options = await draft(f, prepared);
+  const timeoutGit = (cwd, args, gitOptions) => args[0] === "fetch"
+    ? syncGit(cwd, args, { ...gitOptions, spawn: () => ({ status: null, signal: "SIGTERM", stdout: Buffer.alloc(0), stderr: Buffer.alloc(0), error: { code: "ETIMEDOUT" } }) })
+    : syncGit(cwd, args, gitOptions);
+  const result = await applySyncPush(options, { git: timeoutGit });
+  assert.equal(result.status, "not-applied", JSON.stringify(result));
+  assert.equal(result.mutation_invoked, false);
+  assert.match(result.reason, /timed out/);
+  const operation = await loadOperation(await context(f.repo), prepared.operation_id);
+  assert.equal(operation.status, "prepared");
+  assert.equal(operation.apply_started, false);
+  assert.equal(operation.plan_sha256, prepared.plan_sha256);
 });

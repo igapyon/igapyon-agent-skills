@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
-import { applySyncPush, prepareSyncPush, parseArgs } from "../scripts/sync-push.mjs";
+import { applySyncPush, prepareSyncPush, prepareSyncPushDraft, parseArgs } from "../scripts/sync-push.mjs";
 import { runSyncPull } from "../scripts/sync-pull.mjs";
 import { context, hash, loadOperation, snapshot } from "../scripts/miku-scm-sync-state.mjs";
 import { fixture } from "./sync-fixture.mjs";
@@ -21,8 +21,11 @@ test("sync push parser requires immutable apply evidence and no arbitrary option
 });
 
 test("sync push preserves a prepared dirty commit after a draft rejection and permits cancel", async (t) => {
-  const f = await fixture(t); await f.write("own.txt", "own\n"); const p = await prepareSyncPush({ ...f.options, message: "Own work" }); const options = await draft(f, p);
-  await f.write(options.prDraft, "Changed\n"); const r = await applySyncPush(options); assert.equal(r.status, "not-applied"); assert.equal(r.commit.status, "created"); assert.equal(f.git(["rev-parse", "HEAD"]), p.head);
+  const f = await fixture(t); await f.write("own.txt", "own\n"); const p = await prepareSyncPush({ ...f.options, message: "Own work" }); await draft(f, p);
+  const ready = await prepareSyncPushDraft({ repo: f.repo, operation: p.operation_id, expectedPlanSha256: p.plan_sha256 });
+  await f.write(ready.draft_path, "Changed\n");
+  const options = { repo: f.repo, operation: p.operation_id, expectedPlanSha256: p.plan_sha256, prDraft: ready.draft_path, expectedDraftSha256: ready.draft_sha256, apply: true };
+  const r = await applySyncPush(options); assert.equal(r.status, "not-applied"); assert.equal(r.commit.status, "created"); assert.equal(f.git(["rev-parse", "HEAD"]), p.head);
   assert.equal((await prepareSyncPush({ repo: f.repo, cancel: p.operation_id, apply: true })).status, "cancelled");
 });
 
@@ -30,6 +33,7 @@ test("sync push unknown publication cannot be cleared by pull or a resend", asyn
   const f = await fixture(t); await f.commit("own.txt", "own\n"); const p = await prepareSyncPush(f.options); const options = await draft(f, p); let sends = 0;
   const dependencies = { recommitPush: async () => { sends++; const error = new Error("Unknown publication result"); error.mutationInvoked = null; throw error; } };
   const r = await applySyncPush(options, dependencies); assert.equal(r.status, "unresolved"); assert.equal(r.mutation_invoked, null);
+  await assert.rejects(prepareSyncPushDraft({ repo: f.repo, operation: p.operation_id, expectedPlanSha256: p.plan_sha256 }), /unused prepared operation/);
   const pull = await runSyncPull(f.options); assert.equal(pull.status, "not-applied"); assert.match(pull.reason, /requires explicit recovery/);
   const again = await applySyncPush(options, dependencies); assert.equal(again.status, "not-applied"); assert.equal(sends, 1);
   assert.equal((await loadOperation(await context(f.repo), p.operation_id)).status, "unresolved");

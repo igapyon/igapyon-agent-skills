@@ -30,12 +30,14 @@ wait. A clear human merge report answering that question continues the same
 This includes a `github merge done` reply to that question; retain staged work
 through the sync helper. Standalone `github merge done` keeps its original route.
 Exact `sync push` routes to `repository.sync.push.prepare --apply`, one
-Agent-authored draft from the returned evidence, then
-`repository.sync.push.apply` with that same operation and plan/draft digests.
-Only `prepared` advances to drafting/apply; other results stop, including an
-`up-to-date` result that needs no publication. A changed base requires an
-explicit `sync pull` request and fresh push preparation, while preserving any
-ordinary commit already made. No intermediate success confirmation is needed.
+Agent-authored draft from the returned evidence, then the read-only
+`repository.sync.push.draft.prepare` for that same operation and plan digest.
+It validates the saved draft bytes and returns the exact
+`repository.sync.push.apply` workflow ID and argument array. Only `prepared`
+advances to drafting; other results stop, including an `up-to-date` result that
+needs no publication. A changed base requires an explicit `sync pull` request
+and fresh push preparation, while preserving any ordinary commit already made.
+No intermediate success confirmation is needed.
 Explanations about these commands do not execute them. See [sync-pull.md](sync-pull.md) and
 [sync-push.md](sync-push.md) for exceptions/recovery.
 

@@ -46,3 +46,13 @@ test("workflow contracts are stable for CRLF checkouts", () => {
   assert.deepEqual(buildContracts({ readText: readAsCrLf }), buildContracts());
   assert.equal(generate({ check: true, readText: readAsCrLf }).length, WORKFLOW_DEFINITIONS.length);
 });
+
+test("workflow contract identity ignores only the informational product version value", () => {
+  const readWithDifferentProductVersion = (file, encoding) => {
+    const text = readFileSync(file, encoding);
+    return file.endsWith("github-writer-workflow-manifest.mjs")
+      ? text.replace(/(export const PRODUCT_VERSION = ")[^"]+(";)/, (_match, prefix, suffix) => `${prefix}1.20991231.7${suffix}`)
+      : text;
+  };
+  assert.deepEqual(buildContracts({ readText: readWithDifferentProductVersion }), buildContracts());
+});

@@ -1,89 +1,66 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
-import { readFile, readdir } from "node:fs/promises";
+import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { pathToFileURL } from "node:url";
 
-const SYNC_PULL_GROUPS = [
-  "sync pull (?:without gh|done|does not replace|squash)",
-  "(?:human|a fresh pull|unmerged PR|TLS|sync pull (?:next-work|never retries|recovers))",
-  "sync pull (?:rebase|replays|identical|retains|directory|stash|refuses|batches)",
-];
-
-const SLOW_SHARDS = new Map([
-  // Each case creates its own fixture. Anchor every shard to a test-name
-  // prefix: a bare negative lookahead also matches Node's file container and
-  // would run all of its tests, including ones selected by another shard.
-  ["sync-pull.test.mjs", [
-    ...SYNC_PULL_GROUPS.map((pattern) => `^${pattern}`),
-    `^(?!(?:${SYNC_PULL_GROUPS.join("|")}))(?:sync pull |sync locks )`,
-  ]],
-  ["post-recommit-publish.test.mjs", [
-    "^(?:PR handoff|preflight|plan CLI|content VERSION)",
-    "^post-merge",
-    "^(?:saved publication|legacy ordinary apply|documented ordinary arguments|apply rejects a changed|apply rejects a dirty)",
-    "^(?:saved plan (?:returns|remains|rejects|publishes)|programmatic publication)",
-    "^(?:apply publishes|apply uses)",
-    "^(?:apply stops when|apply stops before push|fetch failure)",
-    "^(?:push failure|post-push)",
-  ]],
-  ["repository-maintenance.test.mjs", [
-    "^(?:argument parser|backup name|maintenance plan repository paths|diagnosis keeps|backup reachability)",
-    "^(?:diagnosis classifies|diagnosis queries|publication provenance|one hundred)",
-    "^(?:gh failure|gh timeout|open or mismatched|current done)",
-    "^(?:saved plan|apply rejects|apply rechecks|apply stops)",
-  ]],
+export const FAST_FILES = Object.freeze([
+  "miku-scm-command-runner.test.mjs",
+  "miku-scm-fixed-command-runner.test.mjs",
+  "miku-scm-jst-time.test.mjs",
+  "miku-scm-workflow-manifest.test.mjs",
+  "miku-scm-workflow-contracts.test.mjs",
+  "miku-scm-test-suite.test.mjs",
 ]);
 
 export const usage = `Usage:
-  node skills/igapyon-miku-scm/scripts/miku-scm-test-suite.mjs --full
+  node skills/igapyon-miku-scm/scripts/miku-scm-test-suite.mjs --full|--fast
     [--jobs <1..16>]
 
-Runs the complete miku-scm safety suite. Slow, repository-isolated Git tests
-are divided into fixed non-overlapping name shards. Other files run separately.
-At most four child processes run at once by default. Progress goes to stderr;
-the final JSON on stdout includes timings for every file or shard.`;
-
-export function extractTestNames(content) {
-  return [...content.matchAll(/^test\("([^"]+)"/gm)].map((match) => match[1]);
-}
-
-export function validateShards(names, patterns, file) {
-  const regexes = patterns.map((pattern) => new RegExp(pattern));
-  for (const name of names) {
-    const count = regexes.filter((regex) => regex.test(name)).length;
-    if (count !== 1) throw new Error(`${file}: test must match exactly one shard: ${name}`);
-  }
-}
+Runs one job per test file. --fast uses an explicit allowlist of pure tests;
+--full discovers every test file. At most four child processes run at once by default. Progress goes to stderr;
+the final JSON on stdout includes timings for every file.`;
 
 export async function buildFullJobs(root) {
   const directory = path.join(root, "skills", "igapyon-miku-scm", "tests");
   const files = (await readdir(directory)).filter((file) => file.endsWith(".test.mjs")).sort();
-  const regular = files.filter((file) => !SLOW_SHARDS.has(file));
-  const jobs = regular.map((file) => ({
+  return files.map((file) => ({
     id: file,
     args: ["--test", "--test-reporter=spec", path.join(directory, file)],
   }));
-  for (const [file, patterns] of SLOW_SHARDS) {
-    const absolute = path.join(directory, file);
-    validateShards(extractTestNames(await readFile(absolute, "utf8")), patterns, file);
-    patterns.forEach((pattern, index) => {
-      jobs.push({
-        id: `${file}:${index + 1}`,
-        args: ["--test", "--test-reporter=spec", "--test-name-pattern", pattern, absolute],
-      });
-    });
+}
+
+export function validateFastFiles(files, fullFiles) {
+  if (!Array.isArray(files) || files.some((file) => typeof file !== "string" || !file.endsWith(".test.mjs"))) {
+    throw new Error("Fast suite must list test file names");
   }
-  return jobs;
+  if (new Set(files).size !== files.length) throw new Error("Fast suite contains duplicate files");
+  const available = new Set(fullFiles);
+  const missing = files.filter((file) => !available.has(file));
+  if (missing.length) throw new Error(`Fast suite files are missing from the full suite: ${missing.join(", ")}`);
+  return [...files];
+}
+
+export async function buildFastJobs(root) {
+  const fullJobs = await buildFullJobs(root);
+  const fullFiles = fullJobs.map((job) => job.id);
+  const files = validateFastFiles(FAST_FILES, fullFiles);
+  const byId = new Map(fullJobs.map((job) => [job.id, job]));
+  return files.map((file) => byId.get(file));
 }
 
 function runJob(job, root, spawnProcess = spawn) {
   return new Promise((resolve) => {
     const started = performance.now();
+    const env = { ...process.env };
+    // A suite launched by node --test must give its child test process a fresh
+    // test-runner context instead of inheriting the parent's recursion guard.
+    delete env.NODE_TEST_CONTEXT;
     const child = spawnProcess(process.execPath, job.args, {
       cwd: root,
+      env,
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
@@ -106,11 +83,11 @@ function runJob(job, root, spawnProcess = spawn) {
 }
 
 export function parseSuiteArgs(argv) {
-  if (argv[0] !== "--full" || ![1, 3].includes(argv.length)
+  if (!["--full", "--fast"].includes(argv[0]) || ![1, 3].includes(argv.length)
     || (argv.length === 3 && (argv[1] !== "--jobs" || !/^(?:[1-9]|1[0-6])$/.test(argv[2])))) {
-    throw new Error("Specify --full [--jobs <1..16>]");
+    throw new Error("Specify --full|--fast [--jobs <1..16>]");
   }
-  return { concurrency: argv.length === 3 ? Number(argv[2]) : 4 };
+  return { mode: argv[0] === "--fast" ? "fast" : "full", concurrency: argv.length === 3 ? Number(argv[2]) : 4 };
 }
 
 export async function runJobs(jobs, root, dependencies = {}) {
@@ -171,13 +148,21 @@ export async function runFullSuite(root = process.cwd(), dependencies = {}) {
   return runJobs(await buildFullJobs(resolved), resolved, dependencies);
 }
 
+export async function runFastSuite(root = process.cwd(), dependencies = {}) {
+  const resolved = path.resolve(root);
+  return runJobs(await buildFastJobs(resolved), resolved, dependencies);
+}
+
 async function main() {
   const argv = process.argv.slice(2);
   if (argv.includes("--help") || argv.includes("-h")) {
     process.stdout.write(`${usage}\n`);
     return;
   }
-  const result = await runFullSuite(process.cwd(), parseSuiteArgs(argv));
+  const options = parseSuiteArgs(argv);
+  const result = options.mode === "fast"
+    ? await runFastSuite(process.cwd(), options)
+    : await runFullSuite(process.cwd(), options);
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   if (result.status !== "passed") process.exitCode = 1;
 }

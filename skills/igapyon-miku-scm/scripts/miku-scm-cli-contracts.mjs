@@ -314,6 +314,12 @@ export const WORKFLOW_CLI_CONTRACTS = Object.freeze({
     ["--operation", "<operation-id>", "--expected-plan-sha256", "<sha256>", "--pr-draft", "workplace/miku-scm/pr-drafts/<draft>.md", "--expected-draft-sha256", "<sha256>", "--apply"],
     { network_access: "Git fetch, branch push and verification", authentication: "existing Git authentication", operational_artifacts: ["workplace/miku-scm/sync", "workplace/miku-scm/ok-push"], notes: ["Linux/other platforms produce a notice and continue with available commands. Creates no PR, merge, tag or Release. An unresolved push must never be resent automatically."] },
   ),
+  "repository.sync.push.draft.prepare": contract(
+    "Validate the exact saved sync push plan and draft bytes, then return arguments for the existing apply workflow without consuming the operation.",
+    [repoPath, option("--operation", "<operation-id>", "Exact unused prepared operation ID.", { required: true }), option("--expected-plan-sha256", "<sha256>", "Exact prepare result plan digest.", { required: true })],
+    ["--operation", "<operation-id>", "--expected-plan-sha256", "<sha256>"],
+    { network_access: "none", authentication: "none", operational_artifacts: ["workplace/miku-scm/sync"], notes: ["Read-only; derives the draft path only from the verified plan, checks contained nonempty draft bytes up to 1 MiB, and returns a workflow ID plus argv array. It does not modify the draft, publish, or consume the plan."] },
+  ),
   "repository.status": contract(
     "Inspect local branch, worktree, worktrees, and selected version files.",
     [

@@ -450,7 +450,9 @@ async function runPublication(options, dependencies = {}) {
     ]);
   } else {
     pushMode = "new-branch";
-    gitText(git, root, ["push", "-u", options.remote, `HEAD:${destination}`]);
+    // The preflight's absence check improves the error message, while the
+    // empty expected value makes absence an atomic push precondition.
+    gitText(git, root, ["push", "-u", `--force-with-lease=${destination}:`, options.remote, `HEAD:${destination}`]);
   }
 
   await dependencies.validateSyncSnapshot?.({ phase: "publication-verify", root });
