@@ -5,14 +5,14 @@ connected task records, reviewable GitHub changes, reusable knowledge files,
 Office document text, portable HTML conversions, project plans, score or audio
 deliverables, and local utilities.
 
-The release bundle contains **28 skills**: **15 maintained in this repository**
+The release bundle contains **26 skills**: **13 maintained in this repository**
 and **13 bundled from pinned upstream repositories**. Each skill combines
 instructions for an AI agent with the references, templates, assets, or
 executable helpers needed for its workflow. Many writing workflows target
 Japanese content; the catalog explains their purpose in English.
 
 Download the bundle from [GitHub Releases](https://github.com/igapyon/igapyon-agent-skills/releases)
-to choose from all 28 skills. A source checkout contains the 15 internal skill
+to choose from all 26 skills. A source checkout contains the 13 internal skill
 directories; external skills are incorporated when the release bundle is built.
 
 ## Skill Catalog
@@ -20,7 +20,7 @@ directories; external skills are incorporated when the release bundle is built.
 Both tables describe the complete set shipped in the release bundle. Use a skill
 name to jump to its detailed explanation, expected results, and example.
 
-### Maintained In This Repository (15)
+### Maintained In This Repository (13)
 
 | Skill | What it helps you achieve |
 | --- | --- |
@@ -29,9 +29,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-companion-techpost-writer](#igapyon-companion-techpost-writer) | **Experimental.** Turn rough technical observations into a readable Japanese post while preserving your voice. |
 | [igapyon-diary-writer](#igapyon-diary-writer) | Turn daily notes into diary source ready for igapyon's existing publishing process. |
 | [igapyon-ffmpeg-helper](#igapyon-ffmpeg-helper) | Turn an orchestra recording into a retained WAV master and a YouTube-ready video. |
-| [igapyon-github-writer](#igapyon-github-writer) | Give reviewers a clear explanation of your changes and save a ready-to-use GitHub draft. |
 | [igapyon-miku-daybook](#igapyon-miku-daybook) | Keep current tasks, the reasons behind decisions, and the next work plan connected. |
-| [igapyon-miku-scm](#igapyon-miku-scm) | Bring shared changes into your work branch and publish work through a repeatable Git/GitHub cycle. |
 | [igapyon-miku-soft-developer](#igapyon-miku-soft-developer) | Turn an application idea or maintenance request into a project following miku-soft's design rules. |
 | [igapyon-mikuku-agent](#igapyon-mikuku-agent) | Create Japanese technical essays and explanatory visuals with Mikuku's recognizable voice. |
 | [igapyon-note-writer](#igapyon-note-writer) | **Experimental.** Keep a Note article's publishable Markdown, metadata, and publication state in sync. |
@@ -65,6 +63,10 @@ name to jump to its detailed explanation, expected results, and example.
 3. Follow [INSTALL.md](INSTALL.md) from the extracted archive root to install or update the complete selected `skills/<skill-name>/` directory in your Codex skills directory.
 4. Read the skill's `SKILL.md` for its invocation rules, setup, and required tools, then request the workflow you want to run.
 
+`igapyon-miku-scm` and `igapyon-github-writer` are distributed separately from
+the [miku-scm-skills Releases](https://github.com/igapyon/miku-scm-skills/releases).
+Follow that repository's installation instructions to use either skill.
+
 For example, `Use miku-ms-office to extract this DOCX into Markdown` requests
 Office text extraction, while `Use miku-project to prepare an Excel Gantt for
 this release plan` requests a project-planning deliverable. Use the exact
@@ -78,7 +80,7 @@ skill directory and should be copied together during installation.
 
 | Path | Contents |
 | --- | --- |
-| `README.md` | A guide to the 28 skills and how to choose one. |
+| `README.md` | A guide to the 26 skills and how to choose one. |
 | `INSTALL.md` | Installation, update, and drift-check instructions. |
 | `skills/` | Complete installable skill directories, each with a `SKILL.md` entry point. |
 | `EXTERNAL_SKILLS.lock` | The upstream repositories, pinned commit SHAs, and names included in that release bundle. |
@@ -89,8 +91,8 @@ date when the Maven build started. ZIP timestamps do not store a timezone.
 
 For Note articles, `igapyon-mikuku-agent` handles the article body, and
 `igapyon-note-writer` supports publishing metadata and canonical article
-management. The documented `miku-scm draft recommit push` workflow belongs to
-`igapyon-miku-scm`.
+management. The `miku-scm draft recommit push` workflow is part of the separately
+distributed `igapyon-miku-scm` skill.
 
 ## Detailed Skill Descriptions
 
@@ -182,24 +184,6 @@ You have a copied ZOOM H4essential rehearsal recording and want to preserve a us
 
 [Full workflow, setup, and invocation rules](skills/igapyon-ffmpeg-helper/SKILL.md).
 
-### igapyon-github-writer
-
-**When it helps**
-
-The implementation is available in a local repository, but its purpose and effect still need to be explained to another person. The skill turns the relevant commit or branch evidence into text that can be reviewed before being used on GitHub.
-
-**What you can achieve**
-
-- Draft a PR title and body for a commit or branch range, Release notes for a selected range, or About text describing a repository.
-- Save and validate the Markdown draft so the reviewed text remains available for a later publishing step.
-- When explicitly requested through this skill, inspect local branch status, create a backup branch, or rebuild local commits using the reviewed PR text as the commit message.
-
-**Scope and prerequisites:** The skill works with local evidence and drafts. The compound `miku-scm draft recommit push` workflow is handled by `igapyon-miku-scm`.
-
-**Example:** Use github-writer to explain this branch's change to a reviewer who has not seen our conversation, and save the PR draft.
-
-[Full workflow, setup, and invocation rules](skills/igapyon-github-writer/SKILL.md).
-
 ### igapyon-miku-daybook
 
 **When it helps**
@@ -217,40 +201,11 @@ You need both a current view of your work and a dated account of how you reached
 - Keep date-planned work separate from a dedicated Backlog section; Backlog tasks can remain undated until they are scheduled.
 - Bring named GitHub Issues into the documented intake workflow and prepare the bundled GitHub Actions notification workflow when requested.
 
-**Scope and prerequisites:** Markdown records are the source of truth. The bundled `.mjs` tools need Node.js and the included skill files; they do not require `npm install` or `npm ci`. A clear daybook request or current repository handoff can direct use; a name mention or skill review alone does not initially start record operations. On activation without an operation, the skill waits for input; subsequent substantive discussion or a user-provided URL starts activity capture. Explicit no-recording and file restrictions take precedence. Issue receipts and closure follow the miku-scm steps; notification delivery requires setup in the target repository.
+**Scope and prerequisites:** Markdown records are the source of truth. The bundled `.mjs` tools need Node.js and the included skill files; they do not require `npm install` or `npm ci`. A clear daybook request or current repository handoff can direct use; a name mention or skill review alone does not initially start record operations. On activation without an operation, the skill waits for input; subsequent substantive discussion or a user-provided URL starts activity capture. Explicit no-recording and file restrictions take precedence. GitHub Issue intake requires the separately installed miku-scm skill from [miku-scm-skills](https://github.com/igapyon/miku-scm-skills/releases). Notification delivery requires setup in the target repository.
 
 **Example:** Use igapyon-miku-daybook to record why we changed approach today, update the task's next action, and regenerate today's plan.
 
 [Full workflow, setup, and invocation rules](skills/igapyon-miku-daybook/SKILL.md).
-
-### igapyon-miku-scm
-
-**When it helps**
-
-You want miku-soft's documented source-control process applied consistently, from local work and backups through publication preparation and the next work branch. Fixed runners carry the mechanical steps and checks, while the draft explains the change to a reviewer.
-
-GitHub includes GitHub Enterprise and similar hosting services. The skill uses
-the selected remote's host without a `github.com` restriction; API operations
-use the service's compatible GitHub CLI/API capabilities.
-
-**What you can achieve**
-
-- Use `miku-scm sync pull` to bring the shared base into your work branch while retaining local commits and staged, unstaged, and untracked work. Safe fast-forward or unpublished-commit rebase is chosen from the recorded state; unsafe integration stops with recovery information.
-- Use `miku-scm sync push` to commit all ordinary non-ignored pending changes when needed, save PR text, back up and collapse the branch commits into one PR-text commit, push the work branch, and mark the local branch `-done`. Already committed work skips the ordinary commit; no commits above the base ends without drafting or publication.
-- Prepare GitHub text, make local commits and backups, inspect branches, and perform the individual recommit/push and post-merge transitions.
-- Run supported Issue creation, editing, label, comment, and closure workflows with their required preflight and approval steps.
-- Update date-based or Semantic Versions, check coupled values, maintain repositories, and inspect tags, Releases, and assets.
-
-**Scope and prerequisites:** Give these requests to the AI agent with this skill installed. Sync uses Node.js, Git, and local `workplace/miku-scm/sync/` storage. Missing ignore setup is handled with
-a notice and a local Git exclusion rule. Pull requires Git 2.45 or newer; push uses the available commands and reports a notice on Linux/other platforms. Automatic PR merge verification uses GitHub CLI when installed. If `gh` is missing, the helper uses anonymous HTTPS reads against the selected GitHub or GHE host's PR API. When PR reads are unavailable, it asks the human to confirm the displayed branch HEAD was merged into the displayed base, then continues the same sync workflow with staged, unstaged and untracked work preserved.
-
-Only a local `-done` branch triggers `sync pull`'s PR check. Before a new work branch is created, the exact PR is verified as merged into the fetched base, or the human explicitly answers a saved merge question when PR reads are unavailable. Unmerged, mismatched or malformed evidence stops the transition. Ordinary work branches skip that PR check. If the shared base has advanced beyond the work branch, `sync push` stops for an explicitly requested `sync pull`.
-
-**Example:** Ask the agent for `miku-scm sync pull`, edit your work, request a version increment when needed, then ask for `miku-scm sync push`. Create and merge the PR on GitHub using the saved draft, then request `miku-scm sync pull` again from the local `-done` branch to start the next cycle.
-
-Existing `git add commit`, `draft recommit push` and `github merge done` requests remain available. `sync push` includes the ordinary commit stage that `draft recommit push` omits. Version increments, tags and Releases are separate requests.
-
-[Full workflow and invocation rules](skills/igapyon-miku-scm/SKILL.md) · [Pull setup and recovery](skills/igapyon-miku-scm/references/sync-pull.md) · [Push setup and recovery](skills/igapyon-miku-scm/references/sync-push.md).
 
 ### igapyon-miku-soft-developer
 

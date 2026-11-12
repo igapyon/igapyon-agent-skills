@@ -9,13 +9,7 @@
     "check:daybook-yaml-runtime": "node scripts/build-daybook-yaml-runtime.mjs --check",
     "test:daybook": "node --test skills/igapyon-miku-daybook/assets/daybook/scripts/*.test.mjs scripts/daybook-runtime.test.mjs",
     "test:daybook-yaml-compatibility": "node --test scripts/daybook-yaml-compatibility.test.mjs",
-    "benchmark:github-writer": "node skills/igapyon-github-writer/scripts/github-writer-benchmark.mjs",
-    "test:github-writer": "node skills/igapyon-github-writer/scripts/github-writer-test-suite.mjs --full",
-    "test:github-writer:fast": "node skills/igapyon-github-writer/scripts/github-writer-test-suite.mjs --fast",
-    "test:github-writer:full": "node skills/igapyon-github-writer/scripts/github-writer-test-suite.mjs --full",
-    "test:miku-scm": "node skills/igapyon-miku-scm/scripts/miku-scm-test-suite.mjs --full",
-    "test:miku-scm:fast": "node skills/igapyon-miku-scm/scripts/miku-scm-test-suite.mjs --fast",
-    "test:miku-scm:full": "node skills/igapyon-miku-scm/scripts/miku-scm-test-suite.mjs --full"
+    "test:version-alignment": "node --test scripts/validate-version-alignment.test.mjs"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

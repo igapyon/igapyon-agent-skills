@@ -6,7 +6,7 @@
 
 ## 最新作業：miku-scm Issue承認の改善をsource実装（2026-10-23）
 
-利用者の実装指示により、[計画と実施記録](../../skills/igapyon-miku-scm/docs/2026-10-23-issue-approval-implementation-plan.md)のUX-00〜08を実装した。実行状態と検証結果はroot TODOの同題sectionを参照。
+利用者の実装指示により、[計画と実施記録](https://github.com/igapyon/igapyon-agent-skills/blob/23a2e492fd957d1ac051943fce341689ec1025a1/skills/igapyon-miku-scm/docs/2026-10-23-issue-approval-implementation-plan.md)のUX-00〜08を実装した。実行状態と検証結果はroot TODOの同題sectionを参照。
 
 - 固定要件：完成した作業案の提示後に `approve` 必須。文面の委任・明確なclose依頼でも確認を省略しない。一つの案の複数操作を一回承認し、通常はID入力不要。
 - 対象の固定：review済みID/digest/順序へ束縛し、global pendingから選ばない。コメント一覧は全件の接続件数を検証。partial/unknownを区別し、証明済み未実施だけreceipt付きresume可能。
@@ -113,7 +113,7 @@ This is the active user-directed work; the older miku-soft reference-audit
 context below is preserved but deferred.
 
 - Objective: implement the responsive Work Cycle direction in
-  `skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md` without
+  the [Work Cycle design](https://github.com/igapyon/igapyon-agent-skills/blob/23a2e492fd957d1ac051943fce341689ec1025a1/skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md) without
   weakening `-done`, backup, remote-expectation, or publication safeguards.
 - Completed: the design was merged by PR #343 (`origin/devel` = `af623c4a`).
   The first implementation slice, `pr.recommit.push`, is now present but

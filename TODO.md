@@ -2,19 +2,6 @@
 
 ## AI Agent Current Tasks
 
-### miku-scm：2026-11-12レビュー指摘への対応（完了）
-
-[Luna向け対応計画](docs/plans/miku-scm-review-20261112-luna-implementation.md)に沿って、公開時の競合、Git timeout、no-op、履歴照会、テスト・CI負荷、生成AI向け手順を改善する。既存の版数更新4ファイル（`1.20261112.4` / `20261112d`）を保持する。[実施記録](docs/plans/miku-scm-review-20261112-execution.md)
-
-- [x] レビュー根拠、作業順、変更箇所、回帰条件、検証・引き渡し条件を固定。
-- [x] SC12-00：開始状態・既存差分・検証台帳の記録。
-- [x] SC12-01〜04：新規branchの不存在lease、委譲後のtimeout/no-retry、no-op、公開済み履歴の一括照会。
-- [x] SC12-05〜06：名前shardの物理分割、fast suiteと重複テストの整理。
-- [x] SC12-07〜08：草案の固定検証helper、SKILL・reference・対話ケースの整合。
-- [x] SC12-09：前回hosted Windows full成功をREADONLY確認し、厳密な版数専用CI経路とworkflow依存範囲を実装。
-- [x] SC12-10：fetch/process costをlocal bare remoteで計測し、各検査の変更検出対象を確認。fetch削除はしない。
-- [x] SC12-11：fast 6 jobs / 22 cases、full 60 jobs / 553 cases、selector 6件、参照routing 16件、両skill contracts、版数整合、`mvn validate`、`git diff --check`が成功。今回の変更後のWindows hosted CI・native Windows・実モデル対話・配備は未実施として記録。
-
 ### daybook：URL受領と会話・操作過程のactivity逐次記録（2026-11-11・source実装・形式参照検証済み）
 
 [仕様と実施記録](docs/plans/daybook-url-and-conversation-activity-capture.md)に沿ってsourceへ実装。発火後はURL受領・会話途中・taskだけの操作もactivityへ記録し、過去URLとの一致は関連候補として文脈で判断する。関係未確定でも記録を進める。初回発火の境界と、明示された記録禁止・ファイル制約を維持する。
@@ -54,31 +41,6 @@
 
 合意した範囲は直前の内容確認までとし、確認から保存までの間に始まる同時書き込みの競合は許容する。同日に一度導入した活動ロック・権限保持の実装とその自己レビュー修正は、この利用者判断で撤回した。
 
-### miku-scm：自己レビュー2件の追加対応（2026-11-05・実装・検証済み）
-
-[Luna向け追加対応計画](docs/plans/miku-scm-self-review-followup-luna-implementation.md)に沿って、保存計画を使わない直接applyの公開先取り違えと、異なる未追跡pathで残るcheck-ignoreの大量process起動を修正した。[追加実施記録](docs/plans/miku-scm-self-review-followup-execution.md)に変更と計測を記載。fast 280/280、full 541/541成功、workflow contract 37件current。
-
-- [x] 残存経路の追加再現、呼び出し元、採用方式、移行案内、回帰条件、契約と検証手順を固定。
-- [x] SREV-00：実装開始状態と失敗する追加回帰を記録。
-- [x] SREV-01〜02：公開applyを保存計画経由に限定し、安全な返却引数と参照資料を揃える。
-- [x] SREV-03〜04：候補pathを収集してNUL区切りstdinでまとめて照会し、実pull・特殊path・性能を確認。
-- [x] SREV-05：契約再生成、fast/full、差分確認、実施記録と未確認環境を整理。
-
-### miku-scm：正確性・復旧・性能の改善（2026-11-05・実装・ローカル検証済み）
-
-レビュー6件と `guardIgnored()` の性能問題を、[Luna向け改善計画](docs/plans/miku-scm-reliability-performance-luna-implementation.md)に沿って実装した。[実施記録](docs/plans/miku-scm-reliability-performance-execution.md)に変更・検証・性能比較を記載。最終full 532/532、contract 37件current、差分チェック成功。
-
-- [x] 原因、再現条件、性能実測、変更箇所、作業順、完了条件を固定した計画を作成。
-- [x] LUNA-00〜02：開始記録、check-ignoreの同一path判定とdirectory一覧の再利用。
-- [x] LUNA-03〜04：保存公開計画のbranchとfetch/push URLを実行対象へ固定。
-- [x] LUNA-05：commit直前・直後のbranch/HEAD/tree確認。
-- [x] LUNA-06：既知のcheck失敗後のsync push再準備と案内。
-- [x] LUNA-07：初期化中の異常終了で残ったsync lockの明示取消。
-- [x] LUNA-08：sync Git失敗の原因分類と具体的な案内。
-- [x] LUNA-09：契約、full suite、性能再計測、差分確認、実施記録。
-
-3,000件のguard単発比較では、未追跡directoryのケースが35.428秒→0.128秒、check-ignoreが3,000回→1回。追跡済みcase照合は6.286秒→0.116秒。Windows実機/hosted CI、配備、版数更新、commit/pushは未実施。
-
 ### daybook：発火条件・操作整合・既定優先度7（2026-11-05・実装・ローカル検証済み、実対話未検証）
 
 [Luna向け実装計画](docs/plans/daybook-activation-priority-review-luna-implementation.md)に、厳しい発火境界と発火後の円滑な操作、直前レビュー3件、既定優先度7、予定日の仮置きを実装した。通常task登録は日程・優先度を確認待ちにせず、文脈推測または今日〜今日・優先度7で完了する。明示値、Backlogの日付省略、既存レコードの明示priorityは保つ。
@@ -105,30 +67,6 @@
 
 対話実行による動作確認、実利用repoの入口変更、配備先への同期は未実施。
 
-### miku-scm：コメント後クローズの誤衝突修正（2026-11-03・実装・検証済み）
-
-実装計画は[Luna向け修正計画](docs/plans/miku-scm-comment-close-luna-implementation.md)、作業・検証記録は[実施記録](docs/plans/miku-scm-comment-close-execution.md)を参照。実close preflightの `issue_title` をバッチが `current_title` として読んでしまい、承認どおりのコメント投稿後に誤って停止する問題を修正した。
-
-- [x] 実行記録とsourceを照合し、項目名不整合・実形式と異なるmock・診断run ID欠落を特定。
-- [x] 公開JSONを維持する共通snapshotを実装。reviewとbatch refreshで共有し、欠落field・外部差分・preflight run IDを診断。
-- [x] 実helper接続で修正前の誤停止を再現。単一Issueと3件6操作を一回のreview/approveで完了する回帰テストを追加。
-- [x] 外部変更・不完全read・不正receipt・unresolved結果でcloseを止め、成功済みコメントを再投稿しないことを検証。
-- [x] batch.apply contract v3、reference、生成lock/tableを更新。focused 44/44、関連suite 62/62、miku-scm full 487、skill-index policy 79/79、contract 37件、`mvn validate`、差分検査に成功。
-
-source skill配備、version increment、package、commit/push、Windows実機/hosted CIは今回の実装対象外。[実施記録](docs/plans/miku-scm-comment-close-execution.md)に未実施として記録した。
-
-### Issues #318・#400・#405：Luna向け対応（2026-11-03・実装・検証済み）
-
-実装手順は[実装計画](docs/plans/issues-318-400-405-luna-implementation.md)、実施内容・検証・実GitHub読取は[実施記録](docs/plans/issues-318-400-405-execution.md)を参照。計画作成時点では実装未着手で、#400はIssue #399の読み取り失敗を再現した。
-
-- [x] 3件の本文と現行sourceを照合し、Luna向け計画を保存。
-- [x] #318：Issue一覧のlabels、cache失効、候補選定規則を実装・検証。
-- [x] #400：全ページのコメント取得をgeneric readerと4種類の操作へ接続し、契約・回帰確認を整合。
-- [x] #405：Node実行時依存の判断・例外・追加時確認を文書化。
-- [x] full suite・参照検査・版数整合と実GitHubの読取結果を記録。
-
-開始時の利用者依頼による共通版 `1.20261103.7` / 連動値 `20261103g` の4ファイルの未stage変更を保持する。
-
 ### daybook：並列書き込みの自己レビュー指摘対応（2026-11-03・実装済み）
 
 - [x] 既存task・scheduleの本文と変更前ハッシュを同じ読み取りに結び付けた。
@@ -146,45 +84,9 @@ source skill配備、version increment、package、commit/push、Windows実機/h
 
 合意事項と実装記録は[実装計画](docs/plans/daybook-activity-files-and-runtime-alignment.md)を参照。source suite 60/60、実daybook suite 59/59、参照・配布関連78/78成功。実データのBacklog分離・15リンク・Git管理下の記録等104ファイルの不変を確認。インストール済みskill同期、commit/push、GitHub運用反映は未実施。
 
-### Contract CI改善（2026-10-30・source反映済み）
+### miku-scm skill migration cleanup (2026-11-13)
 
-- [x] PR/manualにContract起動を一本化し、変更判定・常時最終gate・古いPR実行取消・job上限を追加。
-- [x] miku-scm suiteのファイル別時間・即時進捗・30秒heartbeat・同時実行上限4を実装。
-- [x] 計測で最長だったsync pullを4分割。full 445/445を維持し、ローカル単発比較で158.862秒から76.250秒へ短縮。
-- [x] GitHub Writer full 34/34、CI helper 3/3、契約37件、YAML/JS構文と差分検査成功。
-- [ ] この変更を反映したPRでWindows/macOSのCIと最終gateを確認し、develの必須チェックを新gateへ移行する。
-- [ ] Windowsのファイル別時間と並列数を比較し、改善の実測結果を記録する。
-
-設定移行・リリース順序・検証範囲は[Contract CI運用](docs/maintenance/2026-10-30-contract-ci.md)を参照。
-下の10月26日の現在地は当時の記録であり、この作業のbranch・版数・検証結果を表さない。
-
-### 現在地（2026-10-26照合）
-
-TODO・HANDOFFの矛盾確認と訂正はHEAD `8d8f68c` から始め、commit `9e9fec5` で完了した。その後の依頼で版数を `.5` / `20261026e` に更新し、続けて候補版数human output修正を実装した。現在branchは `devel-tiga1026wce`、HEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`。
-
-`miku-scm sync pull` / `sync push` はsourceへ実装し、PR #409でmerge済み（現HEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`）。続く依頼でsync説明補完とWindows CRLF fixture修正を行い、候補版数human output修正を追加実装した。現在の作業ツリー差分（版数 `.5` / `20261026e`、説明・fixture、候補表示）は未commit。
-
-自己レビューの5件をコードへ反映。続くsync説明・Windows CRLF fixture修正を含む変更と、候補版数表示修正後のfull suiteは **374/374** 成功。候補修正のfocused testsは **45/45**、contract 37件のcheckと `mvn validate`、`git diff --check` も成功。提示されたWindows hosted CIログで当時368件中5件のCRLF失敗を確認した（ログにPR番号・run URLの記載はない）。fixture修正後のWindows hosted CI再実行成功とnative Windows 11手動smokeは未確認。
-
-- 現在版は共通 `1.20261026.5` / Mikuku `20261026e`。POM、VERSION.md、2つのrunnerの整合は `mvn validate` で確認した。
-- 版数更新・sync説明/fixture修正・候補版数表示修正を含む作業ツリーは未stage・未commit。実装時点branch `devel-tiga1026wce`、HEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`。追加version increment、package、配備、commit/pushは未実施。
-- 配布対象は内製15件＋外部12件＝27スキル。
-- 下の作業記録にあるbranch、未commit、commit/push未実施、テスト件数、環境制約は、明示的な更新がなければ記録当時の状態。現在地はこの節と [HANDOFF.md](HANDOFF.md) を入口に確認する。
-- 過去計画の未チェック欄は、未実装と未検証を一律には区別していない。source・後続の記録で確認できた箇所だけ訂正し、実行証拠がない検証や配備を完了扱いにしない。
-
-### 残件・保留の入口
-
-- [x] `sync pull` / `sync push` の実装計画を作成。`-done` のときだけ対象PRを確認し、マージ済みと正確に検証できれば次branchへ進める案を含む。通常branchではこのPR確認を省略する。
-- [x] 計画を自己レビューし、base記録、ignored保護、rebase option、接続先binding、prepare後の再開/取消を修正。3種類のGit挙動を一時fixtureで再現した。
-- [x] SYNC-00〜07：共通状態/退避、PR確認、共有post-merge core、pull、push、SKILL・manifest・CLI/help・human output・生成契約をsourceへ実装。今回のfull suite 374/374、候補版数修正focused 45/45、contract check、`mvn validate`を確認。
-- [x] 候補版数human output修正：実producerのproposed schema対応、human output v15、5ケースと実producer接続テスト、contract lock/table更新。[計画と検証記録](skills/igapyon-miku-scm/docs/2026-10-26-version-candidate-output-fix-plan.md)
-- [ ] SYNC-08の残り：native Windows実機、fixture修正後のhosted CI成功、実GitHub上のsync、実モデルでのsync会話routingを確認。提示されたWindows hosted CIログで368件中5件のCRLF失敗を確認済み（PR番号・run URLは不明）。修正後の成功とローカルfixtureの成功を混同しない。
-- [ ] 現在版 `1.20261026.5` をpackageし、配布ZIPを検査する。`.3` のZIPはincrement前の成果物である。
-- [x] day-plan生成前の `npm ci` をなくし、Node.jsだけで実行できる同梱YAML runtimeへ置換した。[実装・検証記録](docs/plans/daybook-node-only-runtime-implementation.md)。項目2〜4の記録方針・用語は `38e73af` / PR #408で反映済み。
-- [ ] native Windows 11のjunction / CRLF / publication smokeを確認する。[Windows計画](WINDOWS11-PUSH-PLAN.md)のW02・W05・W08・W09は未完了。提示されたWindows hosted CIログで368件中5件のCRLF失敗を確認済み（PR番号・run URLは不明）。fixture修正後の再CI成功は未確認。
-- [ ] Work Cycleのcycle artifact、作業開始のone-shot化、PR evidence統合を、着手時に現行sourceと再照合する。[設計記録](skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md)。初期実装とWindows publication経路はすでにマージ済み。
-- [ ] 旧draft系コマンド全体の文案再利用とbase・HEADの対応付けは継続候補。新しいsync pushではevidence/plan/draft digestへ固定したが、既存コマンド全体の意味変更には広げていない。
-- [ ] 旧計画に残るモデル会話確認、実資料の品質確認、配備・運用反映、参照監査などは、対象を指定して再照合する。今回の記録訂正から自動着手しない。
+The new source and public v0.8.1 Release are verified. The old-repository cleanup is complete in the working tree: the two Skill trees, dedicated CI/tests, and migration-specific maintenance documents were removed; the catalog now describes 13 internal plus 13 external Skills; and daybook Issue intake explicitly requires separately installed miku-scm. A later explicit version-increment request updated `pom.xml` to `1.20261113.1` and Mikuku `VERSION.md` to `20261113a`; the candidate tag `v20261113a` was absent from the checked public tag list. Version alignment passed 5/5, index-policy/routes 77/77, daybook 79/79, and the isolated Maven package/archive check accepted the 13+13=26 archive with 12 representative routes. Text-bundle generation and `git diff --check` passed. Package/archive and text-bundle checks ran from `/private/tmp`; in-checkout `mvn validate` refreshed only generated `target/release-archive-timestamp.json` for the earlier `.4` version/date. Existing ZIPs and external staging were preserved. Existing `workplace/` records were retained; version validation added its normal local run artifact. Changes remain uncommitted and unpublished; no tag, Release, or installed Skill sync was done.
 
 ### 状態文書監査の訂正と確認（commit 9e9fec5）
 
@@ -196,6 +98,8 @@ TODO・HANDOFFの矛盾確認と訂正はHEAD `8d8f68c` から始め、commit `9
 - 今回は状態文書と履歴だけを変更。実装テスト、最新版のpackage、配備、実daybook編集、commit/push、GitHub操作は行っていない。
 
 ## 作業別の実施記録
+
+The miku-scm and GitHub Writer entries below are historical implementation records; their current source and maintenance instructions live in miku-scm-skills. Do not use old paths as local commands.
 
 以下は各作業の計画と実施時点の記録。現行の規範はsourceのSKILL・references・runnerで確認する。完了した実装の検証不足や、別途依頼が必要な運用作業を、同じ未完了状態として読み替えない。
 
@@ -226,7 +130,7 @@ TODO・HANDOFFの矛盾確認と訂正はHEAD `8d8f68c` から始め、commit `9
 
 ## miku-scm：Issue操作とapprove承認の改善（2026-10-23・source実装済み）
 
-計画と実施記録：[2026-10-23-issue-approval-implementation-plan.md](skills/igapyon-miku-scm/docs/2026-10-23-issue-approval-implementation-plan.md)。利用者の実装指示に基づきUX-00〜08をmiku-scm sourceへ反映した。
+計画と実施記録：[2026-10-23-issue-approval-implementation-plan.md](https://github.com/igapyon/miku-scm-skills/blob/v0.8.1/skills/igapyon-miku-scm/docs/2026-10-23-issue-approval-implementation-plan.md)。利用者の実装指示に基づきUX-00〜08をmiku-scm sourceへ反映した。
 
 - [x] UX-00：現在のbranch/HEAD/worktreeを確認し、既存の計画差分を保持。
 - [x] UX-01：完全一致 `approve` 文法、review正規化、repository・順序・契約・内容digestのbindingとテスト。
@@ -1235,7 +1139,7 @@ node scripts/check-release-archive.mjs target/igapyon-agent-skills-*.zip
 ### 当時のタスク
 
 - [ ] miku-scm Windows 11 publication 対応
-  - [詳細実装計画](WINDOWS11-PUSH-PLAN.md) の W00 → W09 を順番に処理する。
+  - [詳細実装計画](https://github.com/igapyon/miku-scm-skills/blob/v0.8.1/WINDOWS11-PUSH-PLAN.md) の W00 → W09 を順番に処理する。
   - 2026-09-12: 共通 runner、path containment、publication/recommit の `win32` 経路を実装済み。
     native Windows 11 smoke と hosted CI 実行結果は未取得。進捗と検証結果の正本は上記計画。
 
