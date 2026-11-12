@@ -12,7 +12,7 @@ update_when:
 
 # Handoff
 
-## Current: move two Skills to their independent repository (2026-11-13)
+## Current: complete the two-Skill repository separation (2026-11-13)
 
 The canonical source for `igapyon-miku-scm` and `igapyon-github-writer` is now
 [miku-scm-skills](https://github.com/igapyon/miku-scm-skills). The v0.8.1 Release
@@ -20,11 +20,13 @@ ZIP and SHA-256 sidecar were downloaded and verified against the tag source:
 2 Skills, 203 files. The migration PR's required gate and platform jobs passed
 in [Actions run 43258029683](https://github.com/igapyon/miku-scm-skills/actions/runs/43258029683).
 
-This source checkout is branch `devel-tiga1112wfh`, starting at
-`23a2e492fd957d1ac051943fce341689ec1025a1`. Both Skill trees, their dedicated
-workflows and tests, and their maintenance references have been removed from
-the worktree. Catalog/archive counts are 13 internal plus 13 external Skills;
-daybook Issue intake names the separate miku-scm prerequisite.
+The old-repository cleanup commit `e400291ce85a3ed117d9f114f25d8465a222ee14`
+was merged by [PR #442](https://github.com/igapyon/igapyon-agent-skills/pull/442)
+at `b20a37b9690fa54984c0432a72a810f695b7ac18`. Both Skill trees, their
+dedicated workflows and tests, and their maintenance references are removed.
+Catalog/archive counts are 13 internal plus 13 external Skills; daybook Issue
+intake names the separate miku-scm prerequisite. Current work branch:
+`devel-tiga1113hcc`, based on `devel` at the merge commit.
 
 Verification passed: version alignment 5/5, index-policy and route checks
 77/77, daybook 79/79, `mvn validate`, and isolated `mvn package`. The generated
@@ -36,17 +38,21 @@ passed. Package/archive and text-bundle checks used an isolated copy under
 ZIPs and external staging were preserved. Existing `workplace/` records were
 retained; version validation added its normal result files under
 `workplace/miku-scm/runs/20261112221012406-edd4b141-6ae7-4339-ab4e-d98c3e829a3e/`.
-The old-repository changes remain uncommitted. No push, Release, or
-installed-Skill sync has been performed.
+The public v0.8.1 Release ZIP and sidecar were verified, and the migration PR's
+required gate and platform jobs passed in Actions run 43258029683. The installed
+`igapyon-miku-scm` and `igapyon-github-writer` directories have since been
+synchronized one way from the `miku-scm-skills` source; all four source/installed
+runner version checks report `0.8.2`, and the follow-up rsync dry-run reports no
+content differences. The `miku-scm-skills` README's documented
+`scripts/sync-codex-skill.sh` is absent from that repository and should be fixed
+there before relying on that command again.
 
-After cleanup, the user explicitly requested a version increment. Current
-values are `pom.xml` `1.20261113.1` and Mikuku `VERSION.md` `20261113a`.
-`version.increment.validate`, the five alignment tests, and direct alignment
-check passed. Candidate tag `v20261113a` was not present in the public tag list.
-An isolated Maven package produced
-`igapyon-agent-skills-1.20261113.1.zip`; the archive checker accepted it with
-the same 13+13=26 counts and 12 routes. The in-checkout timestamp record still
-describes the earlier `.4` build; no tag or Release was created.
+After cleanup, the user requested another version increment. Current values are
+`pom.xml` `1.20261113.2` and Mikuku `VERSION.md` `20261113b`. The miku-scm
+candidate validation produced these values; direct version alignment and
+`git diff --check` passed. Remote tag `v20261113b` is absent. The `.2` package
+was not built, and no tag or Release was created. The version changes remain
+unstaged on `devel-tiga1113hcc`.
 
 The old repository has no rulesets and `devel` has no branch protection. The new
 repository owns both Skills' source, tests, contracts, and CI. Do not resume
@@ -63,8 +69,9 @@ source; see [TODO.md](TODO.md) for retained verification status.
 
 ## Next
 
-The migration cleanup and version increment are complete in the worktree.
-Review the diff before any separately requested commit, push, tag, or Release.
+The cleanup is merged; the `.2` version increment remains unstaged. Review the
+diff before any separately requested commit, push, tag, or Release. The
+remaining migration-related follow-up is to restore the one-way sync helper
+that the new repository README documents but does not contain.
 
-Do not change the user's installed Skills or local `workplace/` data as part of
-this repository migration.
+Do not delete the user's installed Skills or unrelated local `workplace/` data.
