@@ -15,32 +15,15 @@ update_when:
 This file records important decisions for the AI agent.
 Read this before making or revisiting decisions, especially when the work seems to loop.
 
-## 2026-10-26: Adopt sync pull And Composite sync push
+## 2026-11-13: Move miku-scm and GitHub Writer into Their Own Repository
 
-利用者合意:
-共有baseの変更を現在の作業branchへ一方向に取り込む操作を `miku-scm sync pull` とする。自分の作業を保持し、状態に応じてfast-forward、未公開commitのrebase、未commit変更の退避・復元を使う。競合時はbackup・退避データと停止状態を保持する。
-
-`miku-scm sync push` は、必要な `git add commit` と既存の `draft recommit push` をまとめた複合操作とする。変更がcommit済みなら最初のcommitを省略し、PR文案、backup、recommit、push、検証、`-done`化まで進む。途中失敗では停止する。既存の個別コマンドと互換名は維持する。
-
-実施状態:
-[合意仕様](skills/igapyon-miku-scm/docs/2026-10-26-sync-pull-push-spec.md)と[実装計画・検証記録](skills/igapyon-miku-scm/docs/2026-10-26-sync-implementation-plan.md)に基づきsource実装済み。fixed helper、SKILL・manifest・runner・CLI・生成契約を更新し、full suite 368/368を確認した。実repoへのsync、配備、commit/pushは別途依頼範囲とする。
-
-後続の検討結果:
-`sync pull` の現在branchが `-done` でなければ、PRのマージ済み確認は起動しない。`-done` のときだけ、対象PRのhead/repository/baseとマージ結果を検証できた場合に次branch作成へ自動で進む。現行の `--confirmed-merged` を推測で渡す方式は使わず、人間報告と検証済みPR証拠の経路を分けて実装した。
-
-自己レビュー:
-[記録](skills/igapyon-miku-scm/docs/2026-10-26-sync-plan-self-review.md)の5件を実装計画へ反映した。tracking refだけで作業開始点を推測せず、ignored fileと既存commitを保護し、実際の送信先とprepare後の再開/取消を明示する。名称・基本動作を変える追加機能ではなく、合意した作業保持と停止条件を実現するための補強とする。
-
-## 2026-10-23: Require approve After A Concrete Issue Operation Preview
-
-利用者合意:
-Issueへの書き込みは完成した作業案を提示した後、利用者の `approve` で承認する。「文面は任せるので登録まで」や明確なclose指示でも確認を省略しない。「はい」「OK」「お願いします」「いいね」「承認」および説明・引用中のapproveは書き込み承認にしない。一つの作業案にコメントとclose等をまとめ、承認は案全体に一度とする。
-
-設計:
-通常操作では利用者にIDをコピーさせず、提示した対象・内容・順序のID/digestへAgentが正確に束縛する。global pendingの件数や最新時刻から選ばない。変更された案には新しいapproveが必要。既存handoffを拡張し、固定helper・attempt・postconditionを活かす。
-
-実施状態:
-[計画と実施記録](skills/igapyon-miku-scm/docs/2026-10-23-issue-approval-implementation-plan.md)のUX-00〜08をsource skill、fixed helper、runner、contract、テストへ実装した。Issue書き込みは完全表示した一意な案への独立した完全一致 `approve` のみで許可し、複合操作は一回の承認でレビュー順に実行する。現在の利用者メッセージと提示済みreviewの対応はAgentが担い、runnerがID/digest/順序/契約と実行状態を検証する。本決定の記録だけを根拠に承認経路を迂回しない。競合判定の緩和、正当な同内容操作の再実行identity、動的な作成後操作は後続課題とする。検証と未実施事項は計画・実施記録とroot TODOに記録した。
+The canonical source, tests, contracts, and CI for `igapyon-miku-scm` and
+`igapyon-github-writer` live in [miku-scm-skills](https://github.com/igapyon/miku-scm-skills).
+Its v0.8.1 Release ZIP and checksum were verified; the migration PR's required
+gate and platform jobs passed. This repository no longer maintains or bundles
+those two Skills. The daybook's GitHub Issue intake remains supported and
+requires miku-scm to be installed separately. Existing releases and history in
+this repository remain unchanged.
 
 ## 2026-10-22: Set Java 8 As The Compatibility Floor And Test The Newest LTS
 
@@ -63,24 +46,6 @@ distribution's roadmap when refreshing the newest-LTS value.
 根拠:
 [Oracle Java SE Support Roadmap](https://www.oracle.com/java/technologies/java-se-support-roadmap.html)
 and [Eclipse Temurin Support](https://adoptium.net/support/).
-
-## 2026-08-10: Make The miku-scm Work Cycle Responsive Without Removing Its Safety Model
-
-理由:
-The user identified excessive conversational waiting as a quality risk in the
-normal branch-to-PR flow. The merged Work Cycle design separates checks that a
-deterministic runner can complete from genuine human authorization boundaries.
-
-影響:
-Keep `-done`, backup creation, exact remote expectations, `force-with-lease`,
-post-push comparison, and human GitHub tag/Release work. Introduce a clearly
-named `pr recommit push` operation rather than changing the meaning of
-`pr recommit`. After a successful backup and expected fixed checks, the runner
-should continue locally and, when authorized, through its fixed publication
-checks without returning to the AI agent between each successful command.
-Version-increment reminders are informational, not a hard gate. Implement one
-Node.js workflow core with platform adapters; make `rg` optional so Windows 11
-does not require a separate full workflow implementation.
 
 ## 2026-07-31: Separate Practice, Target State, And External Constraint
 

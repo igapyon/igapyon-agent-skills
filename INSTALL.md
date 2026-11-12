@@ -3,6 +3,10 @@
 This archive contains complete Agent Skill directories under `skills/`.
 Install one skill at a time from the extracted archive root.
 
+`igapyon-miku-scm` and `igapyon-github-writer` are not included in this archive.
+Install them separately from the [miku-scm-skills Releases](https://github.com/igapyon/miku-scm-skills/releases)
+using that repository's instructions.
+
 ## Install or Update One Skill
 
 Choose a name from the `skills/` directory and set it below. The example

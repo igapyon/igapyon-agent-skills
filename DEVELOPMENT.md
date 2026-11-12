@@ -31,52 +31,23 @@ repo 全体のバージョンを更新するときは、日付部分に合わせ
 `みくく` のバージョンは `YYYYMMDDx` 形式で、`YYYYMMDD` を repo 全体のバージョンの日付部分と揃えます。  
 同じ日付内の更新は、`みくく` 側では `a`, `b`, `c` ... と suffix を進め、repo 全体のバージョンでは対応する `N` を `1`, `2`, `3` ... と進めます。
 
-あわせて `skills/igapyon-miku-scm/scripts/miku-scm-run.mjs` と `skills/igapyon-github-writer/scripts/github-writer-workflow-manifest.mjs` の `PRODUCT_VERSION` も同じ値へ更新します。これらは各skillの `--version` 応答に使う連動値です。
-
 バージョン更新時は、次の値が揃っていることを確認します。
 
 - root の `pom.xml`
   - 例: `<version>1.20260604.1</version>`
 - `skills/igapyon-mikuku-agent/references/VERSION.md`
   - 例: `Version: 20260604a`
-- `skills/igapyon-miku-scm/scripts/miku-scm-run.mjs` と `skills/igapyon-github-writer/scripts/github-writer-workflow-manifest.mjs`
-  - 例: `PRODUCT_VERSION = "1.20260604.1"`
 - `mvn clean package` で生成される release archive 名
   - 例: `target/igapyon-agent-skills-1.20260604.1.zip`
 
 `みくく` 側だけを更新したい場合でも、repo 全体の保守更新として扱うなら `pom.xml` も同じ日付に更新します。逆に、repo 全体のリリースや保守更新ではない一時的な確認だけなら、バージョンを更新しません。
 
-`mvn validate`、`mvn generate-resources`、`mvn clean package` では、root版、`みくく` の日付・suffix、2つのskill runnerの `PRODUCT_VERSION` が対応していることを確認します。たとえば `1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
+`mvn validate`、`mvn generate-resources`、`mvn clean package` では、root版と
+`みくく` の日付・suffixが対応していることを確認します。たとえば
+`1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
 
-## miku-scm の同期操作
-
-`miku-scm sync pull` は共有baseを取り込み、`-done` の場合だけ正確なPRの
-マージ済み証拠と取得baseへの反映を確認して次branchへ移る。通常branchではPR確認を行わない。
-安全にrebaseできない履歴や競合では、backup・stash等の回復情報を保持して停止する。
-
-`miku-scm sync push` は未commitの通常の非ignored変更をまとめてcommitし、
-PR文案作成、backup、既存recommit/push、ローカルbranchの`-done`化を一回の依頼で行う。
-cleanなら通常commitを省略し、baseより先のcommitもなければ文案作成・公開を行わない。
-baseが進んでいれば、明示依頼の`sync pull`と再準備へ案内する。
-バージョン更新は必要に応じて別途依頼し、PR作成とmergeは引き続き人間が行う。
-
-両操作ともNode.js・Gitと、対象repoでの`workplace/miku-scm/sync/`のGit除外が必要。
-pullはGit 2.45以降。pushはmacOSまたはnative Windowsを主な対応環境とし、それ以外でもnoticeを表示して同じ固定Git/Node.js処理を試みる。
-`-done`の自動PR確認はGitHub CLIを使い、未導入なら選択hostの匿名APIを試す。読取不能時は利用者に確認する。詳細と回復は
-[sync pull](skills/igapyon-miku-scm/references/sync-pull.md) /
-[sync push](skills/igapyon-miku-scm/references/sync-push.md) を参照する。
-新規の一時bare remoteテストはfull suiteへ自動収集される。実repoへのsyncやpushを
-source変更の検証として実行しない。
-
-## 複数 OS でのテスト
-
-miku-scm と GitHub Writer は、GitHub Actions で macOS と Windows の両方に対してテストを実行します。Windows の改行コードの違いを見つけた実例と、この構成の価値を [複数 OS でテストする価値](docs/maintenance/github-actions-cross-platform-testing.md) に記録しています。
-
-ContractはPR時と手動実行で検証します。PRは変更範囲に応じて対象外・版数専用・fullの3経路を選び、版数専用ではUbuntuで4つの値と両skillのcontractを確認し、それ以外のskill変更はmacOS/Windows fullで検証します。devel pushでは重複実行しません。
-対象外変更でも最終判定を返す`Miku SCM required`と`GitHub Writer required`を
-GitHub側の必須チェックに登録し、成功後にmerge、tag、Releaseの順で進めます。
-既存必須チェックからの移行とWindowsの計測方法は
-[Contract CI運用](docs/maintenance/2026-10-30-contract-ci.md)を参照してください。
+`igapyon-miku-scm` と `igapyon-github-writer` の正本・個別テスト・CIは
+[miku-scm-skills](https://github.com/igapyon/miku-scm-skills) で保守します。
 
 ## 保守時の確認
 
@@ -89,10 +60,9 @@ GitHub側の必須チェックに登録し、成功後にmerge、tag、Release�
 | `npm run test:skill-index-policy` | 索引方針、配布ファイル照合、代表参照経路 |
 | `npm run test:release-archive-timestamp` | UTC日付の検証とZIP全エントリの更新日時 |
 | `npm run test:daybook` | 依存なしの同梱 CLI 実処理と既存 daybook suite |
+| `npm run test:version-alignment` | root版と `みくく` VERSION の整合規則 |
 | `npm run check:daybook-yaml-runtime` | 開発用 YAML runtime とライセンスの生成差分 |
 | `npm run test:daybook-yaml-compatibility` | 同梱 YAML runtime と固定した開発参照版の互換性 |
-| `npm run test:miku-scm` | miku-scm の full suite |
-| `npm run test:github-writer` | GitHub Writer の full suite |
 | `mvn generate-resources` | バージョン整合と採用した内部索引の再生成 |
 | `mvn clean package` | バージョン整合、索引生成、外部 skill 取得、配布 ZIP 作成 |
 | `node scripts/check-release-archive.mjs target/igapyon-agent-skills-<version>.zip` | 生成した配布 ZIP の検査 |
@@ -251,9 +221,7 @@ Note / Qiita 記事 Markdown は、媒体ごとの正本置き場で管理しま
 │  ├─ igapyon-companion-techpost-writer/
 │  ├─ igapyon-diary-writer/
 │  ├─ igapyon-ffmpeg-helper/
-│  ├─ igapyon-github-writer/
 │  ├─ igapyon-miku-daybook/
-│  ├─ igapyon-miku-scm/
 │  ├─ igapyon-miku-soft-developer/
 │  ├─ igapyon-mikuku-agent/
 │  ├─ igapyon-note-writer/
@@ -431,7 +399,7 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
 生成されたzipの内容を検査してからGitHub Release assetとして添付します。archiveのindex要件は採用状態に従い、未採用indexをpackage処理で生成しません。配布zipからMaven packageを再実行する構成ではありません。
-archive検査では、内部15 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内で14 skillの代表参照経路も確認します。外部13 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
+archive検査では、内部13 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内で12 skillの代表参照経路も確認します。外部13 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
 
 ## 同梱スキル・ライブラリの更新確認と取り込み
 
@@ -477,6 +445,5 @@ scripts/build-text-bundle-selection.sh
 - `skills/igapyon-mikuku-agent/`
 - `skills/igapyon-skill-compactor/`
 - `skills/igapyon-agent-state-management/`
-- `skills/igapyon-github-writer/`
 
 `igapyon-miku-text-bundle` runtime がまだ release staging にない場合は、スクリプト内で `mvn package` を実行して staging を準備します。通常の release archive は利用者向けの skill 配布物であり、この厳選 text bundle はブラウザ上のチャットや Web UI へ貼り付けて使いやすくするための、AI 参照・確認・持ち運び用の小さな補助成果物です。

@@ -12,58 +12,59 @@ update_when:
 
 # Handoff
 
-2026-11-11追加：daybook利用中、話題の発端で既存記録との関係を考える方針をsourceへ実装した。省略された参照を含む会話理解に必要な記録を絞って読み、不確かな関係や過去の推測リンクを確定扱いしない。URLからのtask候補探索には引き続き明示依頼を求め、必要な文脈参照との境界を整合した。skill形式、参照・配布79/79、相対リンク先94件・節リンク30件、差分検査が成功。[追加実装記録](docs/plans/daybook-url-and-conversation-activity-capture.md#11-話題の発端で既存記録を考慮する追加実装2026-11-11)に追加6ケースの本文レビューと、実対話検証が未実施であることを記載した。
+## Current: move two Skills to their independent repository (2026-11-13)
 
-2026-11-11：daybookのURL受領と会話・操作過程のactivity逐次記録をsourceへ実装した。新規`activity-capture.md`に、利用中の共通記録、結論前からの保存、URLの取得不能・過去参照・判断保留、task-onlyも記録する規則を集約。SKILL・operations・URL検索・Waypoints・添付説明と利用者向け案内・代表routeを整合した。skill形式、参照・配布79/79、相対リンク先90件、差分検査が成功。20ケースは本文へ照合済みで、別セッションでの実対話検証は未実施。[仕様・実施記録](docs/plans/daybook-url-and-conversation-activity-capture.md)のCAP-05を残し、statusを`in_progress`としている。活動月の添付と一方向参照の先行差分を保持した。
+The canonical source for `igapyon-miku-scm` and `igapyon-github-writer` is now
+[miku-scm-skills](https://github.com/igapyon/miku-scm-skills). The v0.8.1 Release
+ZIP and SHA-256 sidecar were downloaded and verified against the tag source:
+2 Skills, 203 files. The migration PR's required gate and platform jobs passed
+in [Actions run 43258029683](https://github.com/igapyon/miku-scm-skills/actions/runs/43258029683).
 
-2026-11-08：daybook Node.js 単独実行の自己レビュー2件に対応。生成元を YAML の Node.js 配布コードへ切り替えて `!!binary` の Buffer/UTF-8 互換性を回復し、CLI の実パス比較とパス変換なしの別名実行 smoke を追加した。runtime suite 79/79、YAML互換性4/4、参照・配布79/79、生成差分・skill形式・差分検査が成功。Maven package と展開ZIPの別名CLI実行・binary表示検査も成功。[実施記録](docs/plans/daybook-node-only-runtime-implementation.md#自己レビュー2件への対応2026-11-08)を参照。初回実装は `b284076` でcommit済み、今回の修正は未commit。Node.js 22/24のhosted CIは未確認で、実daybook・配備先同期・版数incrementは未実施。
+This source checkout is branch `devel-tiga1112wfh`, starting at
+`23a2e492fd957d1ac051943fce341689ec1025a1`. Both Skill trees, their dedicated
+workflows and tests, and their maintenance references have been removed from
+the worktree. Catalog/archive counts are 13 internal plus 13 external Skills;
+daybook Issue intake names the separate miku-scm prerequisite.
 
-2026-11-06：daybook 同梱 CLI の [Node.js 単独実行計画・実施記録](docs/plans/daybook-node-only-runtime-implementation.md)を完了した。YAML ESMを同梱し、活動作成/読み取り/更新、day-plan、Issueローカル処理、通知dry-runを追加依存なしで確認。runtime suite 78/78、YAML互換性2/2、参照・配布79/79、skill形式、Maven package、展開ZIP runtime検査が成功。ローカル Node.js は26.12.1。Node.js 22/24のhosted CI結果は未確認で、workflowを追加済み。source差分と版数 `1.20261106.2` は未commit。実daybook・配備先同期、version increment、commit/push、tag/Releaseは未実施。
+Verification passed: version alignment 5/5, index-policy and route checks
+77/77, daybook 79/79, `mvn validate`, and isolated `mvn package`. The generated
+archive passed with 13 internal, 13 external, 26 total, 13 source-checked, and
+12 representative routes; text-bundle generation and `git diff --check` also
+passed. Package/archive and text-bundle checks used an isolated copy under
+`/private/tmp`. `mvn validate` refreshed only the generated
+`target/release-archive-timestamp.json` for the existing version/date; existing
+ZIPs and external staging were preserved. Existing `workplace/` records were
+retained; version validation added its normal result files under
+`workplace/miku-scm/runs/20261112221012406-edd4b141-6ae7-4339-ab4e-d98c3e829a3e/`.
+The old-repository changes remain uncommitted. No push, Release, or
+installed-Skill sync has been performed.
 
-2026-11-06：利用者と合意し、activityの上書き対策を簡素化した。新規作成は同名を上書きせず次の英字へ進む。既存更新は書く直前に読み直し、元の内容と違えば保存せず再検討する。活動ごとのロック、権限管理、解除失敗の警告処理と専用テストは削除。旧Issue activity追記も同じ直前確認を使う。確認から保存までの競合は許容する合意であり、厳密な排他制御を追加し直さない。source runtime 77/77、実daybook runtime 75/75（統合コピーでも成功）、参照・配布79/79、skill形式・差分検査が成功。実daybookの6ファイルと配備済みskillへ反映し、ほかのtracked 122ファイルの不変とskill同期を確認。手順は[activity操作](skills/igapyon-miku-daybook/references/operations.md#add-an-activity)、実装は[更新CLI](skills/igapyon-miku-daybook/assets/daybook/scripts/update-activity.mjs)を参照。同日導入したロック方式とその自己レビュー修正は、この簡素化指示で撤回した。先行する版数更新 `1.20261106.1` / `20261106a` と今回の差分は未commit。
+After cleanup, the user explicitly requested a version increment. Current
+values are `pom.xml` `1.20261113.1` and Mikuku `VERSION.md` `20261113a`.
+`version.increment.validate`, the five alignment tests, and direct alignment
+check passed. Candidate tag `v20261113a` was not present in the public tag list.
+An isolated Maven package produced
+`igapyon-agent-skills-1.20261113.1.zip`; the archive checker accepted it with
+the same 13+13=26 counts and 12 routes. The in-checkout timestamp record still
+describes the earlier `.4` build; no tag or Release was created.
 
-## 現在地（2026-11-05照合）
+The old repository has no rulesets and `devel` has no branch protection. The new
+repository owns both Skills' source, tests, contracts, and CI. Do not resume
+old-repository miku-scm implementation work from historical notes below
+`TODO.md` or in dated maintenance records.
 
-最新作業は共通版を `.5` / `20261026e` へ更新した後のsync説明補完・Windows CRLF fixture修正と、候補版数human output修正。候補修正はhuman output v15、5ケースと実producer接続テストを含み、詳細は[計画・検証記録](skills/igapyon-miku-scm/docs/2026-10-26-version-candidate-output-fix-plan.md)を参照。sync pull/push本体はPR #409でmerge済み（このcheckoutのHEAD `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`）。
+## Daybook context
 
-[自己レビュー](skills/igapyon-miku-scm/docs/2026-10-26-sync-plan-self-review.md)の5件を実装へ反映した。独立したbranch-base記録、ignored途中tree保護、固定rebase option、実際のfetch/push先binding、prepare再開/取消、競合時の同じoperationによる回復を追加。候補版数human output修正も実装し、full suite **374/374**、focused tests **45/45**、contract 37件check、`mvn validate`、`git diff --check`が成功。今回の版数整合は `1.20261026.5` / `20261026e`。
+The November 11 URL/conversation capture and one-way repository-reference
+changes are implemented. Real-dialogue behavior remains unverified; see the
+[daybook plan and execution record](docs/plans/daybook-url-and-conversation-activity-capture.md).
+The November 8 Node.js-only runtime and YAML compatibility updates are also in
+source; see [TODO.md](TODO.md) for retained verification status.
 
-- 現在branchは `devel-tiga1026wce`、実装開始時HEADは `dc4c5b39a527188877ca7a94f8dbdc0e668453d9`。作業ツリーの版数更新・sync説明/fixture修正・候補版数表示修正は未stage・未commit。
-- 現在版は共通 `1.20261026.5` / Mikuku `20261026e`。POM、VERSION.md、2つのrunnerの整合は `mvn validate` で確認済み。追加increment、package、配備、commit/pushは未実施。
-- 内製15件＋外部12件＝配布対象27スキル。外部skillはPOMの固定refからビルド時に取り込む。
-- 最新検証はfull **374/374**、focused **45/45**、contract 37件check、`mvn validate`、差分検査成功。提示されたWindows hosted CIログでは当時のsuite 368件中5件がCRLF差分で失敗していた。fixture修正後のWindows hosted CI再実行成功は未確認。native Windows 11の手動smokeも未確認。
+## Next
 
-2026-11-05にdaybookの発火境界、既定priority 7、予定日の仮置き、weekly task整合を更新した。自己レビュー指摘も反映し、daybook runtime suite **69/69**、参照・配布suite **79/79**、skill形式検査、`git diff --check` は成功。実対話での発火・待機・Waypoint再開とデータ読み取り範囲は未検証で、詳細は[計画と検証記録](docs/plans/daybook-activation-priority-review-luna-implementation.md)を参照。
+The migration cleanup and version increment are complete in the worktree.
+Review the diff before any separately requested commit, push, tag, or Release.
 
-## 実装・マージ確認
-
-以下は、このcheckoutのGit履歴とsourceで確認した状態。古い「未commit」「commit/push未実施」は、各作業当時の記録である。
-
-| 対象 | 確認できた状態・根拠 |
-| --- | --- |
-| miku-scm sync pull / sync push | PR #409でmerge済み。現在のHEAD `dc4c5b3`。後続の説明補完・CRLF fixture修正・候補human output・版数 `.5` の作業ツリー差分は未commit |
-| miku-toolbox同梱、Mikuku手指方針、daybook記録方針・task-id用語 | `38e73af`、PR #408のmerge `8d8f68c` に含まれる |
-| daybookの添付テキスト優先方針 | 案からsourceへ反映済み。同じ `38e73af` に [attachments.md](skills/igapyon-miku-daybook/references/attachments.md) と各入口を追加・更新 |
-| miku-scm Issueのapprove承認改善 | `2066b3d`、PR #398のmerge `ee88c7c` |
-| miku-soft Node.js / Java互換性方針 | `31a97dc`、PR #397のmerge `454ddb3` |
-| daybook Waypoints・Backlog・添付設計 | `1c22c5c`、PR #396のmerge `5a7376d` |
-| daybook URL検索・レビュー指摘修正 | `2232cec`、PR #389のmerge `fbe24e0` |
-| index任意化・配布ZIPのsource照合 | `dc2b288` / `c6d3299`、PR #383 / #384でmerge |
-| daybook Issue取り込み・配布ZIP整理 | `ec0ec0c`、PR #382のmerge `3eb211f` |
-| Work Cycleの最初の実装・連動版更新 | `0cc8aaa`、PR #344のmerge `044734b`。旧 `27a2ed7` の公開方法を再度選ぶ必要はない |
-| Windows publication・daybook初版 | `8849b69`、PR #366のmerge `4522ec4`。Windows実機の検証完了を意味しない |
-
-## 残件・保留の入口
-
-- `sync pull` / `sync push` 本体はPR #409でmerge済み。提示されたWindows hosted CIログで368件中5件のCRLF関連失敗を確認した（ログにPR番号・run URLの記載はない）。fixture修正後のWindows再CI成功は未確認。実GitHub上のsync実運用とモデル会話routingも未確認。後続の版数・説明・fixture・候補表示差分は未stage・未commit。
-- 現在版 `.5` のpackage/ZIP照合は未実施。候補版数表示修正のWindows hosted CI再確認とnative Windows 11手動smokeは未確認。
-- day-plan生成前の `npm ci` は2026-11-06のNode.js単独runtime対応で不要になった。[実装記録](docs/plans/daybook-node-only-runtime-implementation.md)。項目2〜4の記録方針・用語は反映済み。
-- native Windows 11のjunction / CRLF / publication smokeは未確認。提示されたWindows hosted CIログで5/368のCRLF失敗を確認した。fixture修正後の成功は未確認。[Windows計画](WINDOWS11-PUSH-PLAN.md)のW02・W05・W08・W09は未完了のまま扱う。
-- Work Cycle全体のcycle artifact、作業開始のone-shot化、PR evidence統合は継続候補。[設計記録](skills/igapyon-miku-scm/docs/work-cycle-lifecycle-redesign.md)と現行sourceを再照合してから別途着手する。
-- モデル会話確認、実資料の変換、配備・運用反映、tag / Release、旧監査の残件は、この訂正で実施・完了したことにしない。個別の未確認事項と過去の検証件数は [TODO.md](TODO.md) を参照する。
-
-## 次回の読み方
-
-最新の利用者依頼、実際のGit状態、この文書とTODO冒頭を確認して対象を決める。旧branch名や「Current priority」から作業を自動選択しない。運用規則は [DEVELOPMENT.md](DEVELOPMENT.md)、利用者向け案内は [README.md](README.md) にある。
-
-整理前の引き継ぎ本文は [引き継ぎ履歴](docs/maintenance/2026-10-26-handoff-history.md) に保存した。そこにある「最新」「active」「次の操作」は当時の記録として読む。
+Do not change the user's installed Skills or local `workplace/` data as part of
+this repository migration.
