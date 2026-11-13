@@ -2,6 +2,31 @@
 
 ## AI Agent Current Tasks
 
+### 外部同梱Skillの更新確認をNode.jsへ移す（2026-11-13・実装途中）
+
+[Luna向け実装計画](docs/plans/bundled-skill-update-check-node-luna-implementation.md)を作成した。
+初回はPOM/policyからの対象取得、既定ブランチHEAD・Release照会、固定SHAの差分資料、
+少数並列・キャッシュ・短い結果出力を読み取りCLIへまとめる。既存の同梱Shell/Mavenを再利用する。
+
+- [x] 現行処理・入力・配布検査を調査し、CLI契約、変更ファイル、BUC-00〜08、異常系・効果計測を具体化。
+- [x] BUC-00〜01のCLI骨格、POM/policy入力、HEAD/Release/compare照会、差分資料保存を実装。
+- [ ] BUC-02〜08の並列・部分失敗処理、キャッシュ、CI/運用接続、広いfixtureと実repo検証を完了する。
+
+初期実装は `d8bc1b0` にcommit済み。追加したCLIのhelp/引数テスト2件と構文・JSON・diff whitespace確認は成功。
+実repoへの最新版照会、pin更新、package、版更新、配備、pushは未実施。commit時の `mvn validate` は成功。
+
+自己レビューで、確定した更新候補の消失、metadata未検証、配下の配布material未検査、
+HTTP body上限の適用遅れ、入力hash照合の欠落を確認した。
+[Luna向け対応計画](docs/plans/bundled-update-check-self-review-fixes-luna-implementation.md)に
+FIX-00〜07、具体的な状態・検証規則、fake/local Gitの回帰ケースを定義した。
+
+- [x] 自己レビュー5件の対応計画を作成（2026-11-13）。
+- [x] FIX-00〜07相当の自己レビュー修正と回帰testを実装。`npm run test:bundled-updates` 8/8、`npm run test:skill-index-policy` 77/77、`npm run test:version-alignment` 5/5、`git diff --check` 成功。
+
+自己レビュー5件への修正は完了。CLI全体は初回計画のBUC-02〜08（pair cache、運用接続、広いfixture、実repo smoke・計測等）が未完了。
+
+今回の対応計画作成ではコード・test・CIを変更せず、実装・test実行・上流照会は行っていない。
+
 ### daybook：URL受領と会話・操作過程のactivity逐次記録（2026-11-11・source実装・形式参照検証済み）
 
 [仕様と実施記録](docs/plans/daybook-url-and-conversation-activity-capture.md)に沿ってsourceへ実装。発火後はURL受領・会話途中・taskだけの操作もactivityへ記録し、過去URLとの一致は関連候補として文脈で判断する。関係未確定でも記録を進める。初回発火の境界と、明示された記録禁止・ファイル制約を維持する。
@@ -84,9 +109,13 @@
 
 合意事項と実装記録は[実装計画](docs/plans/daybook-activity-files-and-runtime-alignment.md)を参照。source suite 60/60、実daybook suite 59/59、参照・配布関連78/78成功。実データのBacklog分離・15リンク・Git管理下の記録等104ファイルの不変を確認。インストール済みskill同期、commit/push、GitHub運用反映は未実施。
 
-### miku-scm skill migration cleanup (2026-11-13)
+### miku-scm skill migration cleanup (2026-11-13, complete)
 
-The new source and public v0.8.1 Release are verified. The old-repository cleanup commit was merged as PR #442 into `devel` at `b20a37b`; its source removes the two Skill trees, dedicated CI/tests, and migration-specific maintenance documents, updates the 13 internal plus 13 external Skill catalog, and names separately installed miku-scm for daybook Issue intake. The follow-up version values are `pom.xml` `1.20261113.2` and Mikuku `VERSION.md` `20261113b`; direct alignment and `git diff --check` passed, and remote tag `v20261113b` is absent. These version changes remain unstaged and unpublished. The two migrated Skills have been synchronized one way from the `miku-scm-skills` source at `0.8.2` to the user's `~/.codex/skills/`; source and installed runner versions match and a dry-run reports no content differences. Remaining follow-ups: the new repo README references a missing `scripts/sync-codex-skill.sh`; confirm whether the new repo's final ruleset checks are enabled. No old-repository tag or Release was created.
+The canonical source is [miku-scm-skills](https://github.com/igapyon/miku-scm-skills), which has published v0.8.3. The README and INSTALL.md direct users to manually copy a selected Skill from `skills/` to `$CODEX_HOME/skills/`, one way; a sync helper is intentionally not included. The initial migration Release v0.8.1 ZIP and checksum were verified, and its required gate and platform jobs passed in [Actions run 43258029683](https://github.com/igapyon/miku-scm-skills/actions/runs/43258029683).
+
+The old-repository cleanup was merged by PR #442 at `b20a37b`; it removes both Skill trees, their dedicated CI/tests and maintenance references, updates the 13 internal plus 13 external Skill catalog, and documents the separately installed miku-scm prerequisite for daybook Issue intake. The follow-up version/catalog update was merged by PR #443 at `c9036cc`. `pom.xml` `1.20261113.2`, Mikuku `VERSION.md` `20261113b`, tag `v20261113b`, and its GitHub Release are now published.
+
+The installed `~/.codex/skills/igapyon-miku-scm` and `igapyon-github-writer` runners remain at `0.8.2` while the source is `0.8.3`; update them from the source only if a local Skill refresh is desired. The new repository's rulesets list is empty and `devel` has no branch protection. This was checked; configuring merge protection is an optional repository-policy decision, not an outstanding migration item.
 
 ### 状態文書監査の訂正と確認（commit 9e9fec5）
 

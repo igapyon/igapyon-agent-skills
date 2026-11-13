@@ -15,6 +15,10 @@ export function listInternalSkills(root = projectRoot) {
 
 export function readExternalSkillPins(root = projectRoot) {
   const pom = fs.readFileSync(path.join(root, "pom.xml"), "utf8");
+  return parseExternalSkillPins(pom);
+}
+
+export function parseExternalSkillPins(pom) {
   const externalById = new Map();
   const propertyPattern = /<external\.([A-Za-z0-9-]+)\.(repo|ref|skillName)>([^<]*)<\/external\.[^>]+>/g;
   for (const match of pom.matchAll(propertyPattern)) {
@@ -47,6 +51,13 @@ export function readSkillIndexPolicy(root = projectRoot) {
     internalSkills: listInternalSkills(root),
     externalSkills: readExternalSkillPins(root),
   });
+}
+
+export function parseSkillIndexPolicy(text, { root = projectRoot, externalSkills, internalSkills } = {}) {
+  let policy;
+  try { policy = JSON.parse(text); }
+  catch (error) { throw new Error(`Cannot parse skill-index-policy.json: ${error.message}`); }
+  return validateSkillIndexPolicy(policy, { root, externalSkills, internalSkills });
 }
 
 export function validateSkillIndexPolicy(policy, {
