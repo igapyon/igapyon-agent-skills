@@ -424,6 +424,7 @@ test("prepare generates all three canonical record types and a stable preview wi
   assert.deepEqual(activity.issue_numbers, [42]);
   assert.match(plan.issues[0].comment_body, /ローカル反映です/);
   assert.match(plan.issues[0].comment_body, /取り込み受付完了としてclose/);
+  assert.match(plan.issues[0].comment_body, /対象日により「今日の候補（予定は暫定）」または「日程要確認」/);
   assert.match(preview, /投稿予定コメント/);
   assert.match(preview, /helper-returned/);
   assert.equal(fs.existsSync(path.join(root, task.path)), false);

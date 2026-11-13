@@ -309,6 +309,8 @@ daybook利用中はactivityを共通の作業記録とし、会話の途中経�
 
 この分担は [SKILL.md](skills/igapyon-miku-daybook/SKILL.md) と [operations.md](skills/igapyon-miku-daybook/references/operations.md#task-and-activity-responsibilities) のエージェント向け編集指示として実装しています。本文に経緯や理由を記述し、既存の task ID と相対リンクで関連づけます。方針が変わったときは task を最新化し、以前の activities は当時の経緯として保持します。記録内容は会話や確認できた結果に基づいてまとめます。
 
+依頼された task の作業・再開中は、確認できた進捗、採用済み方針、残課題、次の行動をtaskの現在地へ反映し、activityに経緯を残します。明示的なactivity-only・read-only等の制約、完了根拠、目的や日付などの個別フィールド変更scopeは維持します。day-planでは対象日を含む暫定期間を「今日の候補（予定は暫定）」として示し、期限月・予定週・作業内容があれば保持します。操作規則は[Task updates during requested work](skills/igapyon-miku-daybook/references/operations.md#task-updates-during-requested-work)と[Generate a day-plan](skills/igapyon-miku-daybook/references/operations.md#generate-a-day-plan)に記載します。
+
 daybook の添付は、Git 管理下のサイズ増加を抑えるため必要なテキストを標準とします。原本は別の場所で管理して安定した参照先を記録し、原本の一時コピーや変換中間物は Git 管理外に置きます。詳しい判定・例外・配置規則は [attachments.md](skills/igapyon-miku-daybook/references/attachments.md) に集約しています。
 
 daybookを入口にして、別のディレクトリやリポジトリの作業を行えます。参照はdaybookから作業対象への一方向とし、作業対象側の文書・引き継ぎ・リポジトリ向けの説明にdaybookへのリンクやパス、再開案内を追加しません。作業対象と再開に必要な情報はdaybook側へ置きます。手順は [Waypoints](skills/igapyon-miku-daybook/references/waypoints.md) を参照してください。
