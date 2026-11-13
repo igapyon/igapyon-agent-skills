@@ -283,6 +283,14 @@ function dateReviewLine(date, task) {
   return taskLine(date, task, `日程要確認${details.length ? `：${details.join(" / ")}` : "：予定期間未設定"}`);
 }
 
+function provisionalTodayLine(date, task) {
+  const details = [`暫定期間 ${taskPeriod(task)}`];
+  if (task.frontMatter.planned_action) details.push(`作業 ${task.frontMatter.planned_action}`);
+  if (task.frontMatter.due_month) details.push(`期限月 ${task.frontMatter.due_month}`);
+  if (task.frontMatter.planned_week) details.push(`予定週 ${task.frontMatter.planned_week}`);
+  return `- ${taskId(task)}：${taskLink(date, task)}（優先度 ${taskPriority(task)}）\n  - ${details.join(" / ")}`;
+}
+
 function backlogLine(date, task) {
   const { planned_start_date: start, planned_end_date: end } = task.frontMatter;
   const details = [];
@@ -334,9 +342,16 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
   const activeTasks = tasks.filter(isActiveTask);
   const backlogTasks = activeTasks.filter(isBacklogTask).sort(comparePriorityThenId);
   const plannedTasks = activeTasks.filter((task) => !isBacklogTask(task));
+  const provisionalTodayTasks = plannedTasks.filter((task) =>
+    task.frontMatter.planned_dates_status === "provisional"
+      && task.frontMatter.planned_start_date <= targetDate
+      && targetDate <= task.frontMatter.planned_end_date)
+    .sort(comparePriorityThenId);
+  const provisionalTodayIds = new Set(provisionalTodayTasks.map(taskId));
   const datedTasks = plannedTasks.filter((task) => task.frontMatter.planned_start_date
     && task.frontMatter.planned_end_date && !needsDateReview(task));
-  const dateReviewTasks = plannedTasks.filter(needsDateReview);
+  const dateReviewTasks = plannedTasks.filter((task) => needsDateReview(task)
+    && !provisionalTodayIds.has(taskId(task)));
   const todayTasks = datedTasks.filter((task) =>
     task.frontMatter.planned_start_date <= targetDate && targetDate <= task.frontMatter.planned_end_date)
     .sort(comparePriorityThenId);
@@ -366,6 +381,9 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
     "",
     section("今日の作業予定", todayTasks.map((task) =>
       taskLine(targetDate, task, `${taskPeriod(task)}：${task.frontMatter.planned_action || "作業予定"}`))),
+    "",
+    section("今日の候補（予定は暫定）", provisionalTodayTasks
+      .map((task) => provisionalTodayLine(targetDate, task))),
     "",
     section("予定期間超過", overdueTasks
       .map((task) => `- ${taskPeriod(task)}：${taskLink(targetDate, task)}（優先度 ${taskPriority(task)}）`)),
@@ -402,7 +420,7 @@ export function buildDayPlan({ repoRoot, targetDate, generatedDate = todayInToky
     generatedDate,
     relativePath: canonicalPlanPath(targetDate),
     markdown: lines.join("\n"),
-    records: { todayTasks, overdueTasks, upcomingStartTasks, nearEndTasks, dateReviewTasks, nearSchedules, plannedWeekTasks, backlogTasks },
+    records: { todayTasks, provisionalTodayTasks, overdueTasks, upcomingStartTasks, nearEndTasks, dateReviewTasks, nearSchedules, plannedWeekTasks, backlogTasks },
   };
 }
 

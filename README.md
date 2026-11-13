@@ -241,6 +241,8 @@ You need both a current view of your work and a dated account of how you reached
 - Save short Waypoints that resume a task or an independently resumable subtask across sessions.
 - Resume daybook-managed work in another directory or repository, keeping references from daybook to the work repository without adding pointers back to daybook there.
 - Generate day-plan snapshots from those source records, or explicitly check whether a supplied URL relates to an existing task.
+- Show a complete provisional period containing the requested date as a clearly labelled work candidate, while keeping other provisional dates in review and Backlog separate.
+- When asked to work on or resume a specific task, keep its observed progress, adopted approach, remaining work, and next actions current; activities retain the dated history.
 - Keep date-planned work separate from a dedicated Backlog section; Backlog tasks can remain undated until they are scheduled.
 - Bring named GitHub Issues into the documented intake workflow and prepare the bundled GitHub Actions notification workflow when requested.
 

@@ -764,7 +764,7 @@ function issueReceiptBody(issue, records, importId, repo, importDate) {
   ];
   if (provisionalPlanned || provisionalBacklog) {
     const notes = [];
-    if (provisionalPlanned) notes.push("作業予定期間は暫定値で、日程表では「日程要確認」に表示されます。");
+    if (provisionalPlanned) notes.push("作業予定期間は暫定値です。日程表では対象日により「今日の候補（予定は暫定）」または「日程要確認」に表示されます。");
     if (provisionalBacklog) notes.push("Backlogの参考予定期間は暫定値です。");
     lines.push("", notes.join(" "));
   }

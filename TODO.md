@@ -2,6 +2,21 @@
 
 ## AI Agent Current Tasks
 
+### daybook：使い勝手・応答速度・記録と作業支援の改善（2026-11-13・source実装済み/実対話評価待ち）
+
+[改善計画と実装記録](docs/plans/daybook-usability-and-recording-improvements.md)に沿ってUX-00〜03・05をsourceへ反映済み。暫定予定候補の表示、依頼されたtask作業の現在地反映、同一会話での準備確認再利用条件を実装した。実daybookへの移行・配備は未実施。
+
+- [x] UX-00：開始時点のworktreeを確認。branch `devel-tiga1113mch`、HEAD `27ccebc`。開始前からの差分はこの計画・TODO、版数 `1.20261113.5` / `20261113e`。これらを保持した。
+- [x] UX-01：day-planの対象日を含む暫定候補、情報保持、重複除外、通知リンク、取り込みpreviewと回帰テストを実装。
+- [x] UX-02・03：task作業scope、activity先行保存、確認再利用条件を現行referencesへ整合。
+- [x] UX-05：SKILL、operations/activity/waypoint/records/notification references、root/配布README、DEVELOPMENTを更新。旧移行guideに矛盾なし。
+- [x] 集中テスト `node --test .../day-plan.test.mjs .../post-day-plan.test.mjs` 28/28。
+- [x] `npm run test:daybook` 81/81、`npm run test:skill-index-policy` 77/77、`skill-creator/scripts/quick_validate.py`、`git diff --check` が成功。
+- [ ] UX-04：隔離モデル・skill catalog harnessが見つからないため実対話と速度測定は未実施。実利用の快適さは未評価。
+- [ ] UX-06：速度測定待ち。追記CLIの採否は保留。
+
+実daybookのデータ変更、配備、versionの追加更新、commit/push/tag/releaseはこの作業に含めない。既存CAP-05や他の未完了作業を完了扱いにしない。
+
 ### miku-scm を配布ZIPへ外部同梱（2026-11-13・作業ツリーで完了）
 
 利用者の明示指示に基づき、上流 `miku-scm-skills` の v0.8.3、commit
