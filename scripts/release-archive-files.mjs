@@ -4,6 +4,10 @@ import path from "node:path";
 
 const sourceExclusions = new Set([".DS_Store", "node_modules", ".git"]);
 
+export function isExcludedSourcePath(relativePath) {
+  return String(relativePath).split("/").some((part) => sourceExclusions.has(part));
+}
+
 export function collectSourceFiles(sourceSkillDir) {
   return collectFiles(sourceSkillDir, { excludeSourcePaths: true });
 }
@@ -64,8 +68,8 @@ function collectFiles(root, { excludeSourcePaths }) {
     const entries = fs.readdirSync(directory, { withFileTypes: true })
       .sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
     for (const entry of entries) {
-      if (excludeSourcePaths && sourceExclusions.has(entry.name)) continue;
       const relative = relativeDirectory ? `${relativeDirectory}/${entry.name}` : entry.name;
+      if (excludeSourcePaths && isExcludedSourcePath(relative)) continue;
       const absolute = path.join(directory, entry.name);
       const stat = fs.lstatSync(absolute);
       if (stat.isSymbolicLink()) {

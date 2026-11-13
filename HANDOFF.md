@@ -12,21 +12,26 @@ update_when:
 
 # Handoff
 
-## Current: complete the two-Skill repository separation (2026-11-13)
+## Completed: miku-scm and GitHub Writer separation (2026-11-13)
 
-The canonical source for `igapyon-miku-scm` and `igapyon-github-writer` is now
-[miku-scm-skills](https://github.com/igapyon/miku-scm-skills). The v0.8.1 Release
-ZIP and SHA-256 sidecar were downloaded and verified against the tag source:
-2 Skills, 203 files. The migration PR's required gate and platform jobs passed
-in [Actions run 43258029683](https://github.com/igapyon/miku-scm-skills/actions/runs/43258029683).
+The canonical source for `igapyon-miku-scm` and `igapyon-github-writer` is
+[miku-scm-skills](https://github.com/igapyon/miku-scm-skills). The initial v0.8.1
+Release ZIP and SHA-256 sidecar were verified against the tag source: 2 Skills,
+203 files. The migration PR's required gate and platform jobs passed in
+[Actions run 43258029683](https://github.com/igapyon/miku-scm-skills/actions/runs/43258029683).
+The repository has since published v0.8.3. Its README and INSTALL.md describe
+manual one-way copying from `skills/` to `$CODEX_HOME/skills/`; a sync helper is
+not part of the repository.
 
 The old-repository cleanup commit `e400291ce85a3ed117d9f114f25d8465a222ee14`
 was merged by [PR #442](https://github.com/igapyon/igapyon-agent-skills/pull/442)
-at `b20a37b9690fa54984c0432a72a810f695b7ac18`. Both Skill trees, their
+at `b20a37b9690fa54984c0432a72a810f695b7ac18`. The follow-up version and
+catalog update was merged by PR #443 at `c9036cc`. Both Skill trees, their
 dedicated workflows and tests, and their maintenance references are removed.
 Catalog/archive counts are 13 internal plus 13 external Skills; daybook Issue
-intake names the separate miku-scm prerequisite. Current work branch:
-`devel-tiga1113hcc`, based on `devel` at the merge commit.
+intake names the separately installed miku-scm prerequisite. The current `devel`
+branch is at `c9036cc` (`v20261113b`). Its GitHub Release is published with
+package version `1.20261113.2`.
 
 Verification passed: version alignment 5/5, index-policy and route checks
 77/77, daybook 79/79, `mvn validate`, and isolated `mvn package`. The generated
@@ -40,24 +45,20 @@ retained; version validation added its normal result files under
 `workplace/miku-scm/runs/20261112221012406-edd4b141-6ae7-4339-ab4e-d98c3e829a3e/`.
 The public v0.8.1 Release ZIP and sidecar were verified, and the migration PR's
 required gate and platform jobs passed in Actions run 43258029683. The installed
-`igapyon-miku-scm` and `igapyon-github-writer` directories have since been
-synchronized one way from the `miku-scm-skills` source; all four source/installed
-runner version checks report `0.8.2`, and the follow-up rsync dry-run reports no
-content differences. The `miku-scm-skills` README's documented
-`scripts/sync-codex-skill.sh` is absent from that repository and should be fixed
-there before relying on that command again.
+`igapyon-miku-scm` and `igapyon-github-writer` directories were synchronized
+one way from the new source at v0.8.2 at that time. As of this handoff check,
+the installed runners remain at v0.8.2 while the new repository is at v0.8.3;
+copy from the new source only if updating the installed Skills is desired.
 
-After cleanup, the user requested another version increment. Current values are
-`pom.xml` `1.20261113.2` and Mikuku `VERSION.md` `20261113b`. The miku-scm
-candidate validation produced these values; direct version alignment and
-`git diff --check` passed. Remote tag `v20261113b` is absent. The `.2` package
-was not built, and no tag or Release was created. The version changes remain
-unstaged on `devel-tiga1113hcc`.
+After cleanup, the user requested another version increment. `pom.xml`
+`1.20261113.2` and Mikuku `VERSION.md` `20261113b` were merged by PR #443; tag
+`v20261113b` and its GitHub Release are published.
 
-The old repository has no rulesets and `devel` has no branch protection. The new
-repository owns both Skills' source, tests, contracts, and CI. Do not resume
-old-repository miku-scm implementation work from historical notes below
-`TODO.md` or in dated maintenance records.
+The new repository owns both Skills' source, tests, contracts, and CI. Its
+GitHub rulesets list is empty and `devel` has no branch protection; this was
+checked and is not a migration blocker. Do not resume old-repository miku-scm
+implementation work from historical notes below `TODO.md` or in dated
+maintenance records.
 
 ## Daybook context
 
@@ -69,9 +70,10 @@ source; see [TODO.md](TODO.md) for retained verification status.
 
 ## Next
 
-The cleanup is merged; the `.2` version increment remains unstaged. Review the
-diff before any separately requested commit, push, tag, or Release. The
-remaining migration-related follow-up is to restore the one-way sync helper
-that the new repository README documents but does not contain.
+The miku-scm separation and old-repository cleanup are complete. No miku-scm
+implementation work remains in this repository. The installed copies are still
+v0.8.2; update them from the v0.8.3 source only when a local Skill refresh is
+wanted. For other active work, resume from the daybook context and current tasks
+in `TODO.md`.
 
 Do not delete the user's installed Skills or unrelated local `workplace/` data.
