@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import {
-  copyFile,
   mkdir,
   readdir,
   readFile,
@@ -10,6 +9,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { validatePngBuffer } from "./png-validation.mjs";
+import { readArticleContext, readJsonIfExists, safeImagePath, sha256, verifyWholeSource } from "./article-provenance.mjs";
 import {
   extractSections,
   parseTodo,
@@ -57,11 +57,6 @@ function normalizeContent(value) {
   return value.replace(/\r\n/gu, "\n").replace(/\s+$/u, "");
 }
 
-function imageLink(line) {
-  const match = line.match(/^\s*!\[[^\]]*\]\(<?([^\s)>]+)>?(?:\s+["'][^)]*["'])?\)\s*$/u);
-  return match?.[1] ?? null;
-}
-
 function firstH1Line(lines) {
   let fence = null;
   for (let i = 0; i < lines.length; i += 1) {
@@ -81,20 +76,22 @@ function firstH1Line(lines) {
 function imageAfterHeading(lines, headingLine) {
   for (let i = headingLine + 1; i < Math.min(lines.length, headingLine + 5); i += 1) {
     if (!lines[i].trim()) continue;
-    return { line: i, path: imageLink(lines[i]) };
+    return i;
   }
-  return { line: -1, path: null };
+  return -1;
 }
 
-function selectedWholeStatus(runDir) {
-  const candidates = [path.join(runDir, "image-generation-report.md"), path.join(runDir, "run-state.md")];
-  return Promise.all(candidates.map(async (filePath) => {
-    const file = await exists(filePath);
-    return file ? readFile(filePath, "utf8") : "";
-  })).then((texts) => texts.some((text) =>
-    /status:\s*image-checked\b/u.test(text) ||
-    (/whole-article-selected:\s*\S/u.test(text) && /current-status:\s*image-checked\b/u.test(text))
-  ));
+async function checkedWholeImage(runDir, context) {
+  const source = await verifyWholeSource(runDir, context);
+  const checked = await readJsonIfExists(path.join(runDir, "whole-article-checked.json"));
+  const image = await readFile(path.join(runDir, "graphic-recording.png"));
+  if (!checked || checked.version !== 1 || checked.status !== "image-checked"
+    || checked.articlePath !== source.articlePath || checked.articleSha256 !== source.articleSha256
+    || checked.imageSha256 !== sha256(image)) {
+    throw new Error("Representative image has no matching inspection record; inspect the saved image and record --stage checked.");
+  }
+  validatePngBuffer(image);
+  return image;
 }
 
 async function readGeneratedSections(runDir, requestedIds) {
@@ -119,24 +116,18 @@ async function readGeneratedSections(runDir, requestedIds) {
     if (sourceSections.length !== 1) throw new Error(`Section source ${id} is not a single section.`);
     const image = await readFile(imagePath);
     validatePngBuffer(image);
-    generated.push({ id, title: sourceSections[0].title, source: sourceSections[0].content, imagePath });
+    generated.push({ id, title: sourceSections[0].title, source: sourceSections[0].content, imagePath, image });
   }
   return generated;
 }
 
-function chooseImagePath(lines, headingLine, fallbackName) {
-  const existing = imageAfterHeading(lines, headingLine);
-  if (existing.path && isSafeLocalImagePath(existing.path)) {
-    return { target: existing.path, replaceLine: existing.line };
+function chooseImagePath(lines, headingLine, fallbackName, owned, kind) {
+  const existingLine = imageAfterHeading(lines, headingLine);
+  const owner = owned.find((item) => item.kind === kind && item.link === lines[existingLine]);
+  if (owner) {
+    return { target: owner.target, replaceLine: existingLine };
   }
   return { target: `images/${fallbackName}`, replaceLine: -1 };
-}
-
-function isSafeLocalImagePath(value) {
-  if (!value || /[?#]/u.test(value) || /^(?:[a-z]+:|\/)/iu.test(value)) return false;
-  const clean = value.split(/[?#]/u, 1)[0];
-  const normalized = path.posix.normalize(clean.replaceAll("\\", "/"));
-  return normalized === clean.replaceAll("\\", "/") && !normalized.startsWith("../") && normalized !== "..";
 }
 
 function makePlan({ article, runDir, placements, dryRun }) {
@@ -167,24 +158,22 @@ async function main() {
   if (!args.runDir || !args.article) throw new Error(usage);
   const runDir = path.resolve(args.runDir);
   const articlePath = path.resolve(args.article);
-  const article = await readFile(articlePath, "utf8");
+  const context = await readArticleContext(articlePath);
+  const { article, manifest } = context;
   const articleDir = path.dirname(articlePath);
   const lines = article.split("\n");
-  const articleSections = extractSections(article);
+  const articleSections = extractSections(context.source);
   const headingLines = sectionHeadingLineIndexes(article);
   const placements = [];
 
   if (args.mode === "whole-article" || args.mode === "both") {
     const wholePath = path.join(runDir, "graphic-recording.png");
     if (!(await exists(wholePath))) throw new Error(`Representative image is missing: ${wholePath}`);
-    if (!(await selectedWholeStatus(runDir))) {
-      throw new Error("Representative image is not marked image-checked in the run record.");
-    }
-    validatePngBuffer(await readFile(wholePath));
+    const image = await checkedWholeImage(runDir, context);
     const h1 = firstH1Line(lines);
     if (h1 < 0) throw new Error("Article has no H1 title for representative image placement.");
-    const selected = chooseImagePath(lines, h1, "000.png");
-    placements.push({ kind: "whole-article", title: "article representative", source: wholePath, target: selected.target, replaceLine: selected.replaceLine, line: selected.replaceLine >= 0 ? selected.replaceLine : h1 + 1 });
+    const selected = chooseImagePath(lines, h1, "000.png", manifest.placements, "whole-article");
+    placements.push({ kind: "whole-article", title: "article representative", source: wholePath, image, target: selected.target, replaceLine: selected.replaceLine, line: selected.replaceLine >= 0 ? selected.replaceLine : h1 + 1 });
   }
 
   if (args.mode === "sections" || args.mode === "both") {
@@ -200,20 +189,13 @@ async function main() {
       const heading = headingLines[index];
       if (!heading) throw new Error(`Could not locate heading for section ${item.id}: ${item.title}`);
       const fallbackName = `${String(index + 1).padStart(3, "0")}.png`;
-      const selected = chooseImagePath(lines, heading.line, fallbackName);
-      placements.push({ kind: `section-${item.id}`, title: item.title, source: item.imagePath, target: selected.target, replaceLine: selected.replaceLine, line: selected.replaceLine >= 0 ? selected.replaceLine : heading.line + 1 });
+      const selected = chooseImagePath(lines, heading.line, fallbackName, manifest.placements, `section-${item.id}`);
+      placements.push({ kind: `section-${item.id}`, title: item.title, source: item.imagePath, image: item.image, target: selected.target, replaceLine: selected.replaceLine, line: selected.replaceLine >= 0 ? selected.replaceLine : heading.line + 1 });
     }
   }
 
-  const planPath = path.join(runDir, "article-image-placement-plan.md");
-  await writeFile(planPath, makePlan({ article: articlePath, runDir, placements, dryRun: !args.apply }), "utf8");
-  if (!args.apply) {
-    process.stdout.write(`Plan written: ${planPath}\n`);
-    return;
-  }
-
   const resolvedPlacements = placements.map((placement) => {
-    if (!isSafeLocalImagePath(placement.target)) {
+    if (!safeImagePath(placement.target)) {
       throw new Error(`Refusing unsafe local image target: ${placement.target}`);
     }
     return {
@@ -228,21 +210,39 @@ async function main() {
     }
     destinations.add(placement.destination);
     const existing = await exists(placement.destination);
+    const owner = manifest.placements.find((item) => item.target === placement.target);
+    if (existing && (!owner || placement.replaceLine < 0 || owner.sha256 !== sha256(await readFile(placement.destination)))) {
+      throw new Error(`Refusing to replace an unmanaged or externally changed image: ${placement.destination}`);
+    }
     if (existing && !args.overwrite) {
       throw new Error(`Destination exists; use --overwrite to replace it: ${placement.destination}`);
     }
   }
 
+  const planPath = path.join(runDir, "article-image-placement-plan.md");
+  await writeFile(planPath, makePlan({ article: articlePath, runDir, placements, dryRun: !args.apply }), "utf8");
+  if (!args.apply) {
+    process.stdout.write(`Plan written: ${planPath}\n`);
+    return;
+  }
+  if (await readFile(articlePath, "utf8") !== article) throw new Error("Article changed during planning; retry from a fresh dry-run.");
+
   const nextLines = [...lines];
   const ordered = [...resolvedPlacements].sort((a, b) => b.line - a.line);
   for (const placement of ordered) {
     await mkdir(path.dirname(placement.destination), { recursive: true });
-    await copyFile(placement.source, placement.destination);
-    const link = `![${placement.title}](${placement.target.replaceAll(path.sep, "/")})`;
+    await writeFile(placement.destination, placement.image, { flag: args.overwrite ? "w" : "wx" });
+    const alt = placement.title.replaceAll("\\", "\\\\").replaceAll("[", "\\[").replaceAll("]", "\\]");
+    const link = `![${alt}](${placement.target})`;
     if (placement.replaceLine >= 0) nextLines[placement.replaceLine] = link;
     else nextLines.splice(placement.line, 0, "", link, "");
+    const previous = manifest.placements.find((item) => item.target === placement.target);
+    const terminal = placement.replaceLine >= 0 ? Boolean(previous?.terminal) : placement.line === lines.length;
+    manifest.placements = manifest.placements.filter((item) => item.target !== placement.target);
+    manifest.placements.push({ kind: placement.kind, target: placement.target, link, sha256: sha256(placement.image), terminal });
   }
   await writeFile(articlePath, nextLines.join("\n"), "utf8");
+  await writeFile(context.manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf8");
   process.stdout.write(`Applied ${placements.length} image placement(s).\nPlan written: ${planPath}\n`);
 }
 

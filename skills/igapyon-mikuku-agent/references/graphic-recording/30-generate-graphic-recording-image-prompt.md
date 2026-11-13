@@ -12,6 +12,9 @@
 
 # 入力
 
+元記事のパス `{{ARTICLE_PATH}}` と、同じ実行の `whole-article-source.json` を使います。
+生成元の記録は [実行ゲート](../graphic-recording.md#実行ゲート) で整理テキスト作成前に行います。
+
 画像生成AI用プロンプトのパス:
 
 ```text
@@ -114,6 +117,20 @@ git check-ignore -q workplace/<YYYYMMDDHHmmss>-graphic-recording/graphic-recordi
 ```
 
 代表画像を採用したら、`image-generation-report.md` に候補数、採用画像、未採用理由、次工程を記録してください。採用前に [style-contract.md](style-contract.md) の「生成後の可読性確認」を実施し、背景・文字コントラストと読みにくい箇所の有無を記録してください。プロンプト監査の pass だけで画像を合格にしてはいけません。内容と可読性を確認して採用できる画像だけ `image-checked` とし、未確認は `image-generated`、可読性に問題が残る画像は `regenerate-recommended` と記録してください。
+記事全体画像の生成前に、[実行ゲート](../graphic-recording.md#実行ゲート) に従い
+`whole-article-source.json` が記録済みであることを確認します。保存した採用画像の
+目視検品が終わったら、次でその画像と生成元を結び付けます。
+これは検品結果を記録するコマンドで、目視検品そのものの代わりにはなりません。
+
+```bash
+node "{{SKILL_DIR}}/references/graphic-recording/scripts/record-whole-article.mjs" \
+  --run-dir "{{RUN_OUTPUT_DIR}}" --article "{{ARTICLE_PATH}}" --stage checked
+```
+
+画像を差し替えた場合は再検品して再記録します。記事本文が変わった場合は
+source 記録を上書きせず、新しい実行ディレクトリで生成し直します。
+ファイル保存を行わない実行では本文メモへ記録し、自動反映用の検品記録があるとは扱いません。
+
 `whole-article` の次工程は `report` です。ユーザーが章ごとの画像も明示した `whole-article-then-sections` の場合だけ、セクション用素材が未作成なら `40-article-section-graphic-recording-batch-prompt.md`、素材作成済みなら `50-generate-section-graphic-recording-images-prompt.md` へ進みます。
 
 `image-generation-report.md` には、可能な範囲で次の生成経路を別々に記録してください。

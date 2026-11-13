@@ -8,12 +8,14 @@ import { deflateSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { extractSections } from "./section-utils.mjs";
 import { validatePngBuffer } from "./png-validation.mjs";
+import { readArticleContext } from "./article-provenance.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const splitScript = path.join(scriptDir, "split-article-sections.mjs");
 const copyScript = path.join(scriptDir, "copy-section-image.mjs");
 const validateScript = path.join(scriptDir, "validate-run-dir.mjs");
 const applyScript = path.join(scriptDir, "apply-generated-images-to-article.mjs");
+const recordScript = path.join(scriptDir, "record-whole-article.mjs");
 
 function crc32(buffer) {
   let crc = 0xffffffff;
@@ -204,6 +206,12 @@ test("article image application is dry-run first and matches current section tex
   assert.match(after, /!\[One\]\(images\/001\.png\)/u);
   assert.ok((await stat(path.join(root, "images/001.png"))).isFile());
   assert.match(after, /## 参考リンク\n- \[reference\]/u);
+  run(applyScript, ["--run-dir", runDir, "--article", article, "--mode", "sections", "--apply", "--overwrite"]);
+  assert.equal(await readFile(article, "utf8"), after);
+  assert.equal((await readArticleContext(article)).source, before);
+  const nextRun = path.join(root, "next-run");
+  run(splitScript, ["--article", article, "--out", nextRun]);
+  assert.equal(await readFile(path.join(nextRun, "sections/001/section-source.md"), "utf8"), "## One\nbody\n");
 
   await writeFile(path.join(sectionDir, "section-source.md"), "## One\nchanged after generation\n");
   assert.throws(
@@ -218,11 +226,97 @@ test("whole-article mode uses the direct representative image and its checked st
   const article = path.join(root, "article.md");
   await mkdir(runDir, { recursive: true });
   await writeFile(article, "# Test\n\nintro\n");
+  run(recordScript, ["--run-dir", runDir, "--article", article, "--stage", "source"]);
   await writeFile(path.join(runDir, "graphic-recording.png"), onePixelPng());
   await writeFile(path.join(runDir, "image-generation-report.md"), "- status: image-checked\n");
+  assert.throws(() => run(applyScript, ["--run-dir", runDir, "--article", article, "--apply"]), /inspection record/u);
+  run(recordScript, ["--run-dir", runDir, "--article", article, "--stage", "checked"]);
 
   run(applyScript, ["--run-dir", runDir, "--article", article, "--mode", "whole-article", "--apply"]);
   const result = await readFile(article, "utf8");
   assert.match(result, /# Test\n\n!\[article representative\]\(images\/000\.png\)/u);
   assert.ok((await stat(path.join(root, "images/000.png"))).isFile());
+  run(applyScript, ["--run-dir", runDir, "--article", article, "--apply", "--overwrite"]);
+  assert.equal(await readFile(article, "utf8"), result);
+});
+
+async function wholeFixture(content = "# Test\n\nintro\n") {
+  const root = await mkdtemp(path.join(tmpdir(), "mikuku-provenance-"));
+  const runDir = path.join(root, "run");
+  const article = path.join(root, "article.md");
+  await writeFile(article, content);
+  run(recordScript, ["--run-dir", runDir, "--article", article, "--stage", "source"]);
+  await writeFile(path.join(runDir, "graphic-recording.png"), onePixelPng());
+  run(recordScript, ["--run-dir", runDir, "--article", article, "--stage", "checked"]);
+  return { root, runDir, article, args: ["--run-dir", runDir, "--article", article] };
+}
+
+test("whole-article application rejects wrong article, stale text and replaced inspection image", async () => {
+  const { root, runDir, article, args } = await wholeFixture();
+  const other = path.join(root, "other.md");
+  await writeFile(other, await readFile(article));
+  assert.throws(() => run(applyScript, ["--run-dir", runDir, "--article", other, "--apply"]), /source does not match/u);
+  const original = await readFile(article, "utf8");
+  await writeFile(article, original + "changed\n");
+  assert.throws(() => run(applyScript, args), /source does not match/u);
+  assert.throws(() => run(recordScript, [...args, "--stage", "source"]), /source does not match/u);
+  assert.throws(() => run(recordScript, [...args, "--stage", "checked"]), /source does not match/u);
+  await writeFile(article, original);
+  await writeFile(path.join(runDir, "graphic-recording.png"), "replaced after inspection");
+  assert.throws(() => run(applyScript, [...args, "--apply"]), /inspection record/u);
+  assert.equal(await readFile(article, "utf8"), original);
+});
+
+test("article-owned screenshots are preserved; unmanaged numbered collisions fail even with overwrite", async () => {
+  const content = "# Test\n\n![Screenshot](images/screenshot.png)\n\nintro\n";
+  const { root, article, args } = await wholeFixture(content);
+  await mkdir(path.join(root, "images"));
+  await writeFile(path.join(root, "images/screenshot.png"), "original screenshot");
+  await writeFile(path.join(root, "images/000.png"), "unmanaged existing image");
+  for (const flags of [["--overwrite"], ["--overwrite", "--apply"]]) {
+    assert.throws(() => run(applyScript, [...args, ...flags]), /unmanaged/u);
+  }
+  assert.equal(await readFile(article, "utf8"), content);
+  assert.equal(await readFile(path.join(root, "images/000.png"), "utf8"), "unmanaged existing image");
+  const second = await wholeFixture(content);
+  await mkdir(path.join(second.root, "images"));
+  await writeFile(path.join(second.root, "images/screenshot.png"), "original screenshot");
+  run(applyScript, [...second.args, "--apply"]);
+  assert.match(await readFile(second.article, "utf8"), /!\[Screenshot\]\(images\/screenshot.png\)/u);
+  assert.equal(await readFile(path.join(second.root, "images/screenshot.png"), "utf8"), "original screenshot");
+});
+
+test("managed images changed outside the helper are protected in dry-run and apply", async () => {
+  const { root, article, args } = await wholeFixture();
+  run(applyScript, [...args, "--apply"]);
+  const before = await readFile(article, "utf8");
+  await writeFile(path.join(root, "images/000.png"), "external edit");
+  assert.throws(() => run(applyScript, [...args, "--overwrite"]), /externally changed/u);
+  assert.throws(() => run(applyScript, [...args, "--overwrite", "--apply"]), /externally changed/u);
+  assert.equal(await readFile(article, "utf8"), before);
+});
+
+test("source recording cannot retrofit an old image; no-final-newline article can be reapplied", async () => {
+  const { article, runDir, args } = await wholeFixture("# Test");
+  run(applyScript, [...args, "--apply"]);
+  assert.equal((await readArticleContext(article)).source, "# Test");
+  run(applyScript, [...args, "--apply", "--overwrite"]);
+  const { unlink } = await import("node:fs/promises");
+  await unlink(path.join(runDir, "whole-article-source.json"));
+  assert.throws(() => run(recordScript, [...args, "--stage", "source"]), /Image already exists/u);
+});
+
+test("combined placement and later section-only replacement preserve whole source and unselected images", async () => {
+  const original = "# Test\n\n## One [detail]\nbody\n\n## Two\nmore\n";
+  const { runDir, article, args } = await wholeFixture(original);
+  run(splitScript, ["--article", article, "--out", runDir]);
+  const todoPath = path.join(runDir, "TODO.md");
+  await writeFile(todoPath, (await readFile(todoPath, "utf8")).replaceAll("image-pending", "image-checked"));
+  for (const id of ["001", "002"]) await writeFile(path.join(runDir, "sections", id, "graphic-recording.png"), onePixelPng());
+  run(applyScript, [...args, "--mode", "both", "--apply"]);
+  const published = await readFile(article, "utf8");
+  assert.equal((await readArticleContext(article)).source, original);
+  run(applyScript, [...args, "--mode", "sections", "--section", "001", "--overwrite", "--apply"]);
+  assert.equal(await readFile(article, "utf8"), published);
+  run(applyScript, [...args, "--mode", "both", "--overwrite"]);
 });

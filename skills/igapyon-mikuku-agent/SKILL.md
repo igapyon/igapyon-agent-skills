@@ -92,9 +92,11 @@ phrasing.
 
 ## Text Characteristics Classification
 
-Use this heavier workflow only when the user explicitly asks for one of the
-following. Such an explicit request both activates this skill and authorizes
-the classification workflow; prior persona activation is not required.
+Use this heavier workflow when the user explicitly requests Mikuku classification,
+Mikuku self-review, or application of the named classification reference. Those
+requests can activate the workflow without prior persona activation. Generic
+classification phrases below are shorthand only while Mikuku collaboration is
+already active; on their own they do not activate this skill or persona.
 
 - `文章特徴分類`
 - `文章特徴判定`

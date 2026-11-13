@@ -2,6 +2,7 @@
 
 - workflow-read: yes | no
 - article-read: yes | no
+- requested-output: text | prompt | image
 - mode: whole-article | sections | whole-article-then-sections
 - skill-dir:
 - run-output-dir:
@@ -11,15 +12,15 @@
 - style-reference:
 - article-path:
 - mikuku-prompt:
-- mikuku-prompt-exists: yes | no
-- mikuku-prompt-read: yes | no
+- mikuku-prompt-exists: yes | no | not-needed
+- mikuku-prompt-read: yes | no | not-needed
 - article-source-read-only: yes
 - article-modified: no
 - image-tool:
 - session-jsonl:
 - session-after-line:
 - session-event-line:
-- text-prompt-generation: available | unavailable
+- text-prompt-generation: available | unavailable | not-needed
 - character-prompt-embedded: yes | no
 - prompt-generator-model:
 - image-generator-model:
@@ -40,3 +41,5 @@
 - workspace-output-path:
 - next-step: section-batch | section-image-generation | report
 - current-status:
+- whole-article-source-record:
+- whole-article-checked-record:
