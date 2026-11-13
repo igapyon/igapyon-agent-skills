@@ -237,6 +237,7 @@ You need both a current view of your work and a dated account of how you reached
 
 - Create and update tasks, activities, and schedules with priorities, planned periods, current conclusions, next actions, and links to supporting material. Record distinct work episodes in separate activity files with daily letter suffixes (`a` through `z`, then `aa`, `ab`, and onward).
 - During active use, capture conversation progress, URLs, and operation outcomes in activities, including task-only changes and URLs that cannot be read. Use past URL references as context while leaving uncertain relationships open.
+- Refine same-day activities while preserving the sequence of work and decisions; preserve older accounts with dated supplements and corrections.
 - At the start of a substantive topic during active use, consider existing daybook records as context and consult them as needed, keeping speculative connections unconfirmed.
 - Save short Waypoints that resume a task or an independently resumable subtask across sessions.
 - Resume daybook-managed work in another directory or repository, keeping references from daybook to the work repository without adding pointers back to daybook there.
