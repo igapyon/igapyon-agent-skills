@@ -8,39 +8,25 @@ A Waypoint is a short Markdown note that points to a place where work can resume
 
 Keep the work's canonical state in the existing records:
 
-- **Task:** purpose, latest conclusion and approach, current status, unresolved matters, and next actions.
+- **Task:** purpose, completion conditions, latest conclusion and approach, current status, unresolved matters, and next actions.
 - **Activity:** dated work, trials, observations, failed or inconclusive approaches, and reasons for decisions.
 - **Waypoint:** the scope to resume, links to the relevant records and material, and the first thing to check.
 
 Some short overlap between the task's next action and the Waypoint's resume instruction is useful. Do not copy a full task, activity, plan, conversation, or execution log into a Waypoint. Do not change a task's status or planning state merely because a Waypoint is created, resumed, or closed. During active use, record resumed work and conversation progress under [activity-capture.md](activity-capture.md), including work in another repository.
 
-The daybook repository's `HANDOFF.md` may provide the entry instruction and select a Waypoint. Recover the current work state from the canonical records above; consult separate `GOAL.md` and other repository notes when relevant or required by local instructions.
-
-The work resumed from daybook may be in another directory or repository. Keep its location, scope, and useful references in the daybook task, activities, or Waypoint. Daybook may link to that repository and its results. Do not add links, paths, or resume pointers back to daybook in the work repository's files or repository-facing text, including its `README.md`, `AGENTS.md`, or `HANDOFF.md`. Follow the work repository's own instructions and inspect its Git state before editing there; keep its documentation and handoff usable on their own.
+The work resumed from daybook may be in another directory or repository. Keep its location, scope, and useful references in the daybook task, activities, or Waypoint. Daybook may link to that repository and its results. Do not add links, paths, or resume pointers back to daybook in the work repository's files or repository-facing text. Follow the work repository's own instructions and inspect its Git state before editing there; keep its documentation and handoff usable on their own.
 
 Git state helps protect files before an edit or other concrete operation. It does not establish the work's purpose, progress, or completion. Resolve those from the user's request and the task, activities, and linked material. Before changing files in the target daybook, follow the skill's required checks: read the target `README.md` and current Git status, and preserve unrelated changes.
 
-## Entering from a daybook handoff
+## Resume from a Waypoint
 
-The following examples belong in the daybook repository. Its normal entrypoint, such as `AGENTS.md`, can arrange to read its own `HANDOFF.md` at the start of work:
-
-```markdown
-作業開始時に HANDOFF.md があれば読み、現在のユーザー指示に沿って、そこに書かれた引き継ぎ指示に従う。
-```
-
-The handoff can name the skill without specifying an operation:
-
-```markdown
-この作業には igapyon-miku-daybook スキルを使います。
-```
-
-To direct a resume, it can name a Waypoint:
+A resume request can name a Waypoint directly:
 
 ```markdown
 igapyon-miku-daybook スキルを使い、waypoints/20261105-0900-example-00001.md から作業を再開してください。
 ```
 
-Resolve this example's relative path from the daybook's `HANDOFF.md` file. The selected Waypoint can then identify work in another repository; it does not require a corresponding pointer from that repository back to daybook.
+Resolve this example's relative path from the selected daybook repository root. Follow the entry's scope and links to the task, relevant activities, and material. When the user describes the work without naming an entry, use the selection procedure below.
 
 ## Location and names
 

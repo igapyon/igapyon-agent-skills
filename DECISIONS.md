@@ -15,6 +15,58 @@ update_when:
 This file records important decisions for the AI agent.
 Read this before making or revisiting decisions, especially when the work seems to loop.
 
+## 2026-11-13: Prefer Daybook For Work State When Used Together
+
+決定:
+daybookで管理する作業は、daybookを作業状態の正本とする。
+
+- taskに目的・完了条件・最新の状態・次の行動を保持する。
+- activityに未具体化の案や作業の経緯・試行・観察・判断理由を保持する。
+- 再開点が必要なときにWaypointを使い、関連するtask・activityへ直接進む。
+- スキルの通常手順と例はdaybookの記録でほぼ完結させ、daybookルートの
+  `GOAL.md`・`TODO.md`・`HANDOFF.md`を記録先や再開入口として案内しない。
+- 他の文書やワークフローとの併用は、利用者の意図する責務分担と正本指定に従う。
+  同じ作業状態を複数箇所で維持することを既定動作にしない。
+
+リポジトリ全体で共有すべき設計判断・運用規約は、引き続きそのリポジトリの
+`DECISIONS.md`や関連文書に保持する。
+
+理由:
+2026-11-13、利用者が実際の使用について「責務が重複してよくわからなかった」と報告した。
+daybookのtask・activity・Waypointと、ルートのTODO・HANDOFF・GOALなどが持つ
+役割の重なりに迷ったことが、この仕様変更の発端である。記録先や再開入口を選ぶたびに
+別系統の状態ファイルとの役割分担を考える負担を減らすため、daybookの標準手順を
+自身の記録でほぼ完結する構成にした。
+
+daybookを使わない運用では、TODOやHANDOFFは重要な役割を持つ。併用方法についても
+利用者の意図に柔軟に従う。そのため、スキル自身がこれらのファイルを通常の記録先・
+再開入口として案内する記述を極力減らし、利用者が選んだ責務分担を尊重する仕様とした。
+
+今後の保守でも、この実利用での迷いを判断の根拠にする。標準手順へ別の記録先や入口を
+加える際は、既存のdaybook記録と責務が重複しないか、利用者が意図する組み合わせかを
+確認する。
+
+反映範囲:
+この方針をdaybookスキルの`SKILL.md`・`references/operations.md`・
+`references/waypoints.md`へ反映した。既存データの移行は別の依頼として扱う。
+daybookを使わない場合の状態ファイルの役割は、この決定の適用範囲に含めない。
+作業リポジトリとの参照方向は別の論点とし、今回の標準手順の整理とは分けて扱う。
+
+## 2026-11-13: Bundle miku-scm From Its Upstream Source
+
+理由:
+利用者が配布ZIPへの同梱を明示的に依頼した。移行後も正本・個別テスト・CIを
+上流の `miku-scm-skills` に置き、利用者が必要とする `igapyon-miku-scm` のみ、
+確認済みの v0.8.3 commit `fe551dc33293a53df4e2b929a108f36d1c8b2be1` で取り込む。
+`igapyon-github-writer` は引き続き別配布とする。
+
+影響:
+`pom.xml` と `config/skill-index-policy.json` に同じ完全SHAを固定し、
+version・README・INSTALL・daybook Issue intake案内・release lockを揃える。
+同梱は上流での保守責任を移さず、tag・Release公開を意味しない。
+以前の「両スキルを同梱しない」という決定は、GitHub Writerの個別配布については維持し、
+miku-scmの配布方法についてのみ本決定で更新する。
+
 ## 2026-11-13: Move miku-scm and GitHub Writer into Their Own Repository
 
 The canonical source, tests, contracts, and CI for `igapyon-miku-scm` and

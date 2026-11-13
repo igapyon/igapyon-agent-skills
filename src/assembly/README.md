@@ -1,13 +1,44 @@
 # igapyon-agent-skills
 
-This archive contains 26 Agent Skills: 13 maintained in the igapyon-agent-skills
-repository and 13 bundled from pinned upstream repositories. They support
-article writing, daybook records, Git/GitHub workflows, software development
-and review, file conversion, music/audio work, and password generation.
+Practical ways to work with AI agents, drawn from igapyon's writing, software
+development, daybook records, and music work. Choose a skill for a recurring
+task, read how it works, and adapt its conventions to your own work.
+
+The skills capture decisions that matter in practice: keeping a writer's
+voice, recording why a decision was made, preparing material for an AI to
+read, and retaining an audio master while preparing a video for sharing.
+They bring task guidance together with references, templates, assets, or
+executable helpers where needed, so you can produce files and records you can
+inspect and continue using. Workflows for review and skill maintenance also
+help you improve the way you work with an agent.
+
+This archive contains **27 Agent Skills**: **13 maintained in the
+igapyon-agent-skills repository** and **14 bundled from pinned upstream
+repositories**. Install only the skills you need, including their supporting
+files. Many writing workflows target Japanese content and carry conventions
+from the author's work; the catalog and individual skills explain their scope.
 
 An Agent Skill is a directory of instructions that an AI agent reads to carry
 out a specific workflow, together with supporting files used by that workflow.
 Install the skills you want to use by following the guide below.
+
+## Choose By Task
+
+These common tasks provide starting points. Follow a link for the expected
+inputs, results, prerequisites, and an example request; the full catalog follows.
+
+| What you want to do | Where to start |
+| --- | --- |
+| Polish a Japanese post while keeping your own voice | [Music post writer](#igapyon-companion-musicpost-writer) or [tech post writer](#igapyon-companion-techpost-writer). |
+| Prepare a technical article | [Mikuku](#igapyon-mikuku-agent) for the article body, [Note writer](#igapyon-note-writer) for Note metadata and article management, or [Qiita writer](#igapyon-qiita-writer) for a Qiita article. |
+| Keep work history, decisions, and next actions connected | [Daybook](#igapyon-miku-daybook) for work records or [agent state management](#igapyon-agent-state-management) for repository work. |
+| Extract Office text or create documents from Markdown | [miku-ms-office](#igapyon-miku-ms-office) for Office extraction and conversion, or [miku-md2formats](#igapyon-miku-md2formats) for Markdown outputs. |
+| Prepare files for an AI conversation or knowledge source | [miku-text-bundle](#igapyon-miku-text-bundle) for text collections, [miku-repo-bundle](#igapyon-miku-repo-bundle) for repository material, or [AI assistant builder](#igapyon-miku-ai-assistant-builder) for Copilot or Gemini knowledge preparation. |
+| Create software or review a proposed result | [miku-soft developer](#igapyon-miku-soft-developer) for miku-soft projects or [reviewer](#igapyon-reviewer) for findings about code, documents, and other artifacts. |
+| Improve prompts or maintain an existing Agent Skill | [miku-prompt-lint](#igapyon-miku-prompt-lint) for instruction problems or [skill compactor](#igapyon-skill-compactor) for reducing and restructuring a skill while checking its behavior. |
+| Turn a project outline into a plan you can share | [miku-project](#igapyon-miku-project) for a WBS, Excel workbooks, Gantt charts, and reports. |
+| Convert score notation or prepare recorded audio | [miku-score](#igapyon-miku-score) for score formats and previews or [FFmpeg helper](#igapyon-ffmpeg-helper) for retained WAV masters and videos for YouTube. |
+| Handle Git/GitHub work or draft GitHub text | [miku-scm](#igapyon-miku-scm) for synchronization, commits, PR/Release/About drafts, approved Issue operations, and release audits. |
 
 ## Skill Catalog
 
@@ -32,7 +63,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-reviewer](#igapyon-reviewer) | Identify concrete issues before merging or publishing, with evidence and a clear fixing order. |
 | [igapyon-skill-compactor](#igapyon-skill-compactor) | Make an Agent Skill easier to load and maintain while checking what behavior is preserved. |
 
-### Bundled From Upstream Repositories (13)
+### Bundled From Upstream Repositories (14)
 
 | Skill | What it helps you achieve |
 | --- | --- |
@@ -45,6 +76,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-miku-prompt-lint](#igapyon-miku-prompt-lint) | Find instruction and context problems that can make an agent choose the wrong task or execute it inconsistently. |
 | [igapyon-miku-repo-bundle](#igapyon-miku-repo-bundle) | Prepare a portable repository reference package with source, documentation, and provenance. |
 | [igapyon-miku-repo-scale](#igapyon-miku-repo-scale) | **Experimental.** Measure a repository's file, line, role, and language mix with a pinned local CLI. |
+| [igapyon-miku-scm](#igapyon-miku-scm) | Run fixed workflows to synchronize and commit repository work, draft GitHub text, handle approved Issue operations, and audit releases. |
 | [igapyon-miku-score](#igapyon-miku-score) | Move a score between supported formats, prepare AI-editable score text, and inspect a rendered result. |
 | [igapyon-miku-text-bundle](#igapyon-miku-text-bundle) | Turn a directory of text files into manageable Markdown parts for AI handoff or knowledge preparation. |
 | [igapyon-miku-text-file-ops](#igapyon-miku-text-file-ops) | **Experimental.** Search and edit encoding-sensitive text without silently changing its encoding or line-ending conventions. |
@@ -57,11 +89,11 @@ After extracting `igapyon-agent-skills-<version>.zip`, open the
 
 | Path | Contents |
 | --- | --- |
-| `README.md` | This overview and the complete catalog of 26 skills. |
+| `README.md` | This overview and the complete catalog of 27 skills. |
 | `INSTALL.md` | Instructions for installing, updating, and checking selected skills. |
 | `LICENSE` | Distribution license. Preserve additional license and attribution files within skills. |
-| `EXTERNAL_SKILLS.lock` | Upstream repositories, pinned commit SHAs, and names of the 13 externally maintained skills. |
-| `skills/` | The 26 installable skill directories in the catalog. |
+| `EXTERNAL_SKILLS.lock` | Upstream repositories, pinned commit SHAs, and names of the 14 externally maintained skills. |
+| `skills/` | The 27 installable skill directories in the catalog. |
 
 The release ZIP records every outer archive entry at `00:00:00 UTC` on the UTC
 date when the Maven build started. ZIP timestamps do not store a timezone.
@@ -73,9 +105,10 @@ CLI artifacts such as Node.js modules or Java JARs, with launchers and runtime
 manifests. These files are part of the skill directory and should be copied
 together when installing it.
 
-`igapyon-miku-scm` and `igapyon-github-writer` are distributed separately from
-the [miku-scm-skills Releases](https://github.com/igapyon/miku-scm-skills/releases).
-Follow that repository's installation instructions to use either skill.
+For Git/GitHub operations and PR, Release, or About drafts, install
+[`igapyon-miku-scm`](#igapyon-miku-scm). GitHub Writer's capabilities are included
+in this skill; they were previously distributed through the separate
+`igapyon-github-writer` skill.
 
 Individual workflows may require programs such as Node.js, Java, FFmpeg, or
 GitHub CLI. Their setup and supported versions are documented in the selected
@@ -95,9 +128,29 @@ references, scripts, runtimes, templates, and assets when present.
 
 For Note articles, `igapyon-mikuku-agent` handles the article body;
 `igapyon-note-writer` supports publishing metadata and canonical article
-management. The `miku-scm draft recommit push` workflow is part of the separately
-distributed `igapyon-miku-scm` skill. Each included skill's `SKILL.md` defines
-its supported workflow and activation rules.
+management. Each included skill's `SKILL.md` defines its supported workflow
+and activation rules.
+
+## Before You Use A Skill
+
+Read the selected skill's description and `SKILL.md` to check what material
+you should provide, what result to expect, and how to invoke it. Many skills
+start only when explicitly requested by name. Some require Node.js, Java,
+FFmpeg, GitHub CLI, or a compatible service account; bundled helpers still
+need their documented runtime. Copy the complete skill directory so its
+references, scripts, runtimes, templates, and assets remain available.
+
+Check the conventions you are adopting. The diary workflow targets igapyon's
+diary layout, Note article management uses the `mikuku-articles` repository,
+and Mikuku has a specific character voice. Other workflows also carry their
+own file, project, or style assumptions. When adapting a skill for your work,
+update the relevant instructions, templates, and references together.
+
+Check the scope of file changes, review, and publication in the selected
+workflow. For example, the reviewer reports findings, while the FFmpeg helper
+prepares a video for manual upload to YouTube Studio. Conversion workflows
+describe format and preservation limits. These boundaries help you decide
+which steps to request and which results to inspect.
 
 ## Detailed Skill Descriptions
 
@@ -200,11 +253,13 @@ You need both a current view of your work and a dated account of how you reached
 - Create and update tasks, activities, and schedules with priorities, planned periods, current conclusions, next actions, and links to supporting material. Record distinct work episodes in separate activity files with daily letter suffixes (`a` through `z`, then `aa`, `ab`, and onward).
 - During active use, capture conversation progress, URLs, and operation outcomes in activities, including task-only changes and URLs that cannot be read. Use past URL references as context while leaving uncertain relationships open.
 - At the start of a substantive topic during active use, consider existing daybook records as context and consult them as needed, keeping speculative connections unconfirmed.
+- Save short Waypoints that resume a task or an independently resumable subtask across sessions.
 - Resume daybook-managed work in another directory or repository, keeping references from daybook to the work repository without adding pointers back to daybook there.
 - Generate day-plan snapshots from those source records, or explicitly check whether a supplied URL relates to an existing task.
+- Keep date-planned work separate from a dedicated Backlog section; Backlog tasks can remain undated until they are scheduled.
 - Bring named GitHub Issues into the documented intake workflow and prepare the bundled GitHub Actions notification workflow when requested.
 
-**Scope and prerequisites:** Markdown records are the source of truth. A clear daybook request or current repository handoff can direct use; a name mention or skill review alone does not initially start record operations. On activation without an operation, the skill waits for input; subsequent substantive discussion or a user-provided URL starts activity capture. Explicit no-recording and file restrictions take precedence. GitHub Issue intake requires the separately installed miku-scm skill from [miku-scm-skills](https://github.com/igapyon/miku-scm-skills/releases). Notification delivery requires setup in the target repository.
+**Scope and prerequisites:** Markdown records are the source of truth. The bundled `.mjs` tools need Node.js and the included skill files; they do not require `npm install` or `npm ci`. A clear daybook request or current repository handoff can direct use; a name mention or skill review alone does not initially start record operations. On activation without an operation, the skill waits for input; subsequent substantive discussion or a user-provided URL starts activity capture. Explicit no-recording and file restrictions take precedence. GitHub Issue intake requires the bundled miku-scm skill to be installed. Notification delivery requires setup in the target repository.
 
 **Example:** Use igapyon-miku-daybook to record why we changed approach today, update the task's next action, and regenerate today's plan.
 
@@ -535,6 +590,32 @@ explicitly by the product or skill name.
 show tests and generated files separately, and explain any coverage gaps.
 
 [Full workflow, setup, and invocation rules](skills/igapyon-miku-repo-scale/SKILL.md).
+
+### igapyon-miku-scm
+
+**When it helps**
+
+You explicitly request a miku-soft Git or GitHub workflow, such as syncing a
+work branch, committing changes, drafting PR, Issue, Release, or About text,
+handling an approved Issue operation, or auditing a version, tag, or Release.
+
+**What you can achieve**
+
+- Pull shared work or prepare a verified push using fixed runners and recovery records.
+- Commit ordinary repository changes.
+- Draft PR, Issue, Release, and About text from reviewed evidence.
+- Prepare approved Issue operations and version/tag/Release audits.
+
+**Scope and prerequisites:** Node.js 22+ and Git are required. Sync pull requires
+Git 2.45+. GitHub CLI is used only by workflows that require it. PR creation
+and merging, tag changes, and Release publication remain human steps.
+
+**Example:** Use miku-scm to commit the reviewed changes in this repository
+and prepare the corresponding PR draft.
+
+The `miku-scm draft recommit push` workflow is also part of this skill.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-miku-scm/SKILL.md).
 
 ### igapyon-miku-score
 
