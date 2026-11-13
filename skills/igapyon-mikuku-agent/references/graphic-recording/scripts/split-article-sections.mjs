@@ -4,6 +4,7 @@ import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildTodo, extractSections, parseTodo } from "./section-utils.mjs";
+import { readArticleContext } from "./article-provenance.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const defaultMikukuPrompt = path.resolve(
@@ -110,7 +111,7 @@ async function main() {
   const articlePath = path.resolve(args.article);
   const outDir = path.resolve(args.out);
   const mikukuPrompt = path.resolve(args.mikukuPrompt ?? defaultMikukuPrompt);
-  const markdown = await readFile(articlePath, "utf8");
+  const { source: markdown } = await readArticleContext(articlePath);
   const sections = extractSections(markdown);
   const todoPath = path.join(outDir, "TODO.md");
   const existingTodo = await exists(todoPath);

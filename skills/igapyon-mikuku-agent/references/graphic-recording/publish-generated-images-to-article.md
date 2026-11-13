@@ -29,7 +29,7 @@ YYYY/MM/YYYYMMDD/
 - グラレコ生成結果は `workplace/<RUN_ID>-graphic-recording/` 配下にある
 - 記事全体画像は実行ディレクトリ直下の `graphic-recording.png`、セクション画像は `sections/<NNN>/graphic-recording.png` にある（存在する種類だけを反映する）
 - セクション画像を記事へ反映する場合、対応する `TODO.md` の状態が `image-checked` である
-- 記事全体画像を記事へ反映する場合、`image-generation-report.md` または `run-state.md` で採用画像の状態が `image-checked` である
+- 記事全体画像を記事へ反映する場合、生成前の `whole-article-source.json` と、目視検品後の `whole-article-checked.json` があり、現在の記事と採用画像に一致する
 
 ## 基本方針
 
@@ -124,9 +124,27 @@ node "{{SKILL_DIR}}/references/graphic-recording/scripts/apply-generated-images-
   --mode whole-article-then-sections
 ```
 
-利用できるモードは `whole-article`、`sections`、`whole-article-then-sections`（または `both`）です。特定セクションだけを反映する場合は `--section 002` のように指定してください。既存のリンク先画像を置き換える場合だけ `--overwrite` を追加します。`--apply` なしでは元記事も画像ファイルも変更しません。
+利用できるモードは `whole-article`、`sections`、`whole-article-then-sections`（または `both`）です。特定セクションだけを反映する場合は `--section 002` のように指定してください。このヘルパーが配置した画像を置き換える場合だけ `--overwrite` を追加します。`--apply` なしでは元記事も画像ファイルも変更しません。
 
-ヘルパーは、生成時点の `section-source.md` と現在の記事のセクション本文を照合します。見出しの並べ替えや本文変更がある場合は自動反映せず、記事と生成結果を確認して新しい実行ディレクトリで再生成してください。
+ヘルパーは、生成時点の `section-source.md` と現在の記事のセクション本文を照合します。本文変更で一致しない場合は自動反映せず、新しい実行ディレクトリで再生成してください。見出しを並べ替えても本文が一致すれば照合できますが、既存の配置記録と衝突する場合は停止します。
+
+### 生成元と既存画像の保護
+
+記事全体画像は記事の実パスと本文 SHA-256、検品した画像の SHA-256 を照合します。
+生成前に `record-whole-article.mjs --stage source`、保存画像の目視検品後に
+`--stage checked` を実行します。詳細は [生成手順](30-generate-graphic-recording-image-prompt.md) を参照します。
+従来の Markdown の `image-checked` 表記だけでは、自動反映しません。
+古い実行に生成元記録がない場合は、現在の記事に結び付け直さず新しい実行で再生成します。
+
+配置済み画像は記事の隣の `<記事ファイル名>.graphic-recording.json` に記録します。
+記事と画像を移動する場合は、この記録も一緒に保持します。生成画像リンクとして
+ヘルパーが挿入したブロックだけを本文比較から除外し、再実行でも同じ生成元と照合します。
+セクション分割もこの記録を使い、配置済み画像リンクを生成元本文に混ぜません。
+
+見出し直後にあっても、記録のない画像は既存の構成図・スクリーンショットとして保持します。
+既定の `images/NNN.png` が記録のない画像や外部編集済み画像と衝突したら、dry-run の時点で停止します。
+`--overwrite` でもこの保護は解除しません。既存画像を上書きせず、配置先を整理してから再実行します。
+管理されたリンク自体を変更・複製した場合も、自動で所有記録を作り直さず不一致を報告します。
 
 ## images/src のコピー規則
 
