@@ -3,9 +3,10 @@
 This archive contains complete Agent Skill directories under `skills/`.
 Install one skill at a time from the extracted archive root.
 
-`igapyon-miku-scm` and `igapyon-github-writer` are not included in this archive.
-Install them separately from the [miku-scm-skills Releases](https://github.com/igapyon/miku-scm-skills/releases)
-using that repository's instructions.
+For Git/GitHub operations and PR, Release, or About drafts, set
+`SKILL_NAME=igapyon-miku-scm` in the installation commands below. This skill
+includes the GitHub text-drafting capabilities previously distributed through
+the separate `igapyon-github-writer` skill.
 
 ## Install or Update One Skill
 

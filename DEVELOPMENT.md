@@ -4,6 +4,34 @@
 
 従来のルート README にあった運用規則を、この文書へ移しています。リポジトリの保守作業では、この文書の該当節と既存の `GOAL.md`、`TODO.md`、`DECISIONS.md`、`HANDOFF.md` を確認します。
 
+## 設計の狙い
+
+このリポジトリでは、作者の執筆、開発、日々の記録、音楽活動で使う具体的な仕事の進め方を、ほかの人も読み、利用し、自分向けに調整できる Agent Skill として公開します。書き手の声を残す、判断の理由を記録する、変換元や録音マスターを保持するなど、作業で大切にすることを手順に含めます。
+
+skill は、AI に任せる判断、既存ツールで実行する処理、利用者が確認する点を結びつけます。追加・変更時は、想定する利用者の依頼と成果物を具体例で確認し、次の価値と設計の対応を保ちます。
+
+| 利用者へ届けたい価値 | 設計・保守で守ること |
+| --- | --- |
+| 意図した仕事で使える | 発火条件、対象範囲、言及・メタ依頼の扱い、開始後の継続を明確にする。呼び出し方の変更を文書と確認対象へ反映する。 |
+| 既存の作業や成果を尊重する | 正本、生成物、一時ファイルを区別し、依頼された変更対象を明確にする。文体、保存先、公開情報などの保持条件を具体的に書く。 |
+| ツールの能力と制約を把握して使える | 既存製品を扱う skill は、その API・CLI・runtime を使い、製品仕様、対応形式、診断、制約を引き継ぐ。skill は呼び出し方や作業の進め方を案内する。 |
+| 導入した場所で使える | 必要な参照資料、テンプレート、asset、実行ファイルを含め、前提となる runtime と外部サービスを明記する。配布後の構成で必要なファイルと実処理を確認する。 |
+| 必要な情報へたどり着ける | `SKILL.md` から用途別の資料へ案内し、必要な範囲を読める構成にする。索引は用途と維持価値を確認して採用する。 |
+
+作者固有の文体、character、リポジトリ配置、保存形式を前提にする skill は、その前提と利用者が調整する箇所を説明します。特定の作業で有効な規則を、全 skill の共通要件に広げる際は、適用範囲と根拠を確認します。
+
+## 変更先と文書の役割
+
+このリポジトリで保守する内部 skill の正本は `skills/` です。同梱する外部 skill の正本は、それぞれの上流リポジトリです。外部 skill の機能・手順の修正は上流で行い、ここでは確認したコミットを `pom.xml` と `config/skill-index-policy.json` に固定して取り込みます。配布 staging は生成物として扱います。具体的な取得・更新・ZIP 検査は、この文書の「同梱スキル・ライブラリの更新確認と取り込み」に従います。
+
+Git / GitHub 向けの同梱 skill は `igapyon-miku-scm` です。GitHub Writer が扱う PR・Release・About の文面作成も、同梱の miku-scm で利用できます。正本・個別テスト・CI は上流の [miku-scm-skills](https://github.com/igapyon/miku-scm-skills) で保守します。
+
+この上流からは、`pom.xml` の `external.miku-scm-skills.skillName` で指定した `igapyon-miku-scm` のみを固定 SHA から取り込みます。`igapyon-github-writer` は以前、独立した skill として配布していた経緯があります。その文面作成機能も現在の miku-scm で利用できるため、利用者向けの一覧・導入例・機能説明は `igapyon-miku-scm` に揃えます。
+
+利用者向けの `README.md` と `src/assembly/README.md` には、仕事からの選び方、必要な入力、期待する成果物、依頼例、実行環境、作者固有の前提を説明します。前者はソースリポジトリ、後者は展開した配布 ZIP から使う案内として、参照先を合わせます。`INSTALL.md` は配布 ZIP からの導入・更新手順を担当します。
+
+各 `SKILL.md` と参照資料には、エージェントが実際に守る利用条件・作業手順を置きます。開発上の背景や保守判断は、この文書や `docs/` に置き、利用者への説明、実行時の指示、検証で確かめる内容を揃えます。
+
 ## 方針
 
 - skill は `skills/` 配下に置く
@@ -46,9 +74,6 @@ repo 全体のバージョンを更新するときは、日付部分に合わせ
 `みくく` の日付・suffixが対応していることを確認します。たとえば
 `1.20260604.1` には `20260604a`、`1.20260604.2` には `20260604b` を対応させます。
 
-`igapyon-miku-scm` と `igapyon-github-writer` の正本・個別テスト・CIは
-[miku-scm-skills](https://github.com/igapyon/miku-scm-skills) で保守します。
-
 ## 保守時の確認
 
 ビルド・検査には Node.js / npm、Java / Maven、Git、`sh`、`rsync`、`unzip` を使います。Release CI の Java 設定は [.github/workflows/release-archive.yml](.github/workflows/release-archive.yml)、skill ごとの実行環境や追加依存は各 `SKILL.md` と参照資料で確認します。
@@ -68,6 +93,12 @@ repo 全体のバージョンを更新するときは、日付部分に合わせ
 | `node scripts/check-release-archive.mjs target/igapyon-agent-skills-<version>.zip` | 生成した配布 ZIP の検査 |
 
 `<version>` は `pom.xml` のプロジェクト版に置き換えます。`mvn clean package` の後に ZIP 検査を実行します。外部 skill の取得にはネットワーク接続を使います。
+
+検証結果を記録・報告するときは、何を確かめたかを次の範囲で区別します。
+
+- **配布物・参照の確認**: 必要なファイル、版、固定 SHA、参照先が揃っているかを確認します。静的な参照到達性は、モデルが適切な資料を選ぶことの実証には含めません。
+- **CLI の実処理確認**: 実行条件と入力を示し、出力、更新内容、エラーや診断を確認します。開発用 checkout と、展開した配布物のどちらで実行したかも記録します。
+- **モデルとの実対話確認**: 呼び出し、言及・メタ依頼、継続、資料選択、ツール操作など、代表的な会話での振る舞いを確認します。本文の読み合わせや形式検査とは区別します。
 
 ## daybook YAML runtime の保守
 
@@ -256,6 +287,8 @@ daybook では、課題管理に研究ノートと意思決定記録を組み合
 - **task**：仕事ごとの目的、現在の結論・採用方針、最新状態、未解決事項、次の行動を管理します。重要な変更の短い履歴と、関連する活動へのリンクを含めます。
 - **activities**：日付ごとに、取り組んだこと、試した方法、うまくいかなかったこと、検討した案、判断理由、その時点の到達点を記録します。結論が出なかった検討も活動です。読みやすい量の試行錯誤は同じ項目に収め、長い詳細は資料へ分けてリンクします。
 
+標準手順をdaybookの記録でほぼ完結させているのは、実利用で別系統の状態ファイルとの責務が重複し、利用者が迷ったためです。発端と、併用時に利用者の意図を尊重する設計理由は、[2026-11-13の決定](DECISIONS.md#2026-11-13-prefer-daybook-for-work-state-when-used-together)に記録しています。
+
 daybook利用中はactivityを共通の作業記録とし、会話の途中経過、URLの受領・閲覧結果、taskだけの操作も記録します。最初の有用な事実・案・疑問から、実質的に進んだ応答の区切りで保存し、結論や会話終了を待ちません。同じ作業は既存activityへ続け、後の判断で以前の経緯を消さないようにします。taskを操作した事実はactivityにも残し、activityへの記録だけを理由にtaskを変更しません。
 
 利用中の実質的な話題の発端では、既存のdaybook記録が発言の理解に役立つ可能性を考えます。会話で省略された目的・人物・出来事も手がかりとし、必要な記録だけを絞って参照します。話題が変わっても既存の文脈を捨てず、直近のtaskへ引き寄せることも避けます。関連が不明でも会話と記録を進め、役立つ具体的な根拠がある候補だけを未確認として残します。過去に保存した推測リンク自体を、関係が確定した根拠として使いません。会話理解に必要なtaskの参照と、URLから関連task候補を探す専用操作の境界は [topic context](skills/igapyon-miku-daybook/references/activity-capture.md#interpret-a-new-topic-in-context) に記載します。
@@ -376,7 +409,7 @@ ZIP内の `README.md` は [src/assembly/README.md](src/assembly/README.md) を�
 
 release archive には、この repo の `skills/` に加えて、外部管理の miku-soft 系 skill も同梱します。
 外部 skill は `mvn package` の `prepare-package` フェーズで `target/release-staging/skills/` に取得し、archive 化します。
-生成した `EXTERNAL_SKILLS.lock` にrepository、ref、skill名を記録します。各skillの採用状態に沿ってsourceから配布し、外部skillのskill root indexも `config/skill-index-policy.json` に従って検査します。現在の外部13 skillは補助的なファイル一覧indexを配布対象に含めず、製品が出力するindexは各製品の仕様に従って扱います。stagingでは全skillのindexを再生成しません。
+生成した `EXTERNAL_SKILLS.lock` にrepository、ref、skill名を記録します。各skillの採用状態に沿ってsourceから配布し、外部skillのskill root indexも `config/skill-index-policy.json` に従って検査します。現在の外部14 skillは補助的なファイル一覧indexを配布対象に含めず、製品が出力するindexは各製品の仕様に従って扱います。stagingでは全skillのindexを再生成しません。
 取得元は `pom.xml` の `external.*` properties で固定します。
 
 同梱する外部 skill は次の通りです。
@@ -399,7 +432,7 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
 生成されたzipの内容を検査してからGitHub Release assetとして添付します。archiveのindex要件は採用状態に従い、未採用indexをpackage処理で生成しません。配布zipからMaven packageを再実行する構成ではありません。
-archive検査では、内部13 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内で12 skillの代表参照経路も確認します。外部13 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
+archive検査では、内部13 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内で12 skillの代表参照経路も確認します。外部14 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
 
 ## 同梱スキル・ライブラリの更新確認と取り込み
 

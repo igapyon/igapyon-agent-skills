@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20261113.3</version>
+  <version>1.20261113.4</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -52,6 +52,9 @@
     <external.miku-toolbox-skills.repo>https://github.com/igapyon/miku-toolbox-skills.git</external.miku-toolbox-skills.repo>
     <external.miku-toolbox-skills.ref>ecc03c3dec6019845535140d3b920ade9909d7c2</external.miku-toolbox-skills.ref>
     <external.miku-toolbox-skills.skillName>igapyon-miku-toolbox</external.miku-toolbox-skills.skillName>
+    <external.miku-scm-skills.repo>https://github.com/igapyon/miku-scm-skills.git</external.miku-scm-skills.repo>
+    <external.miku-scm-skills.ref>fe551dc33293a53df4e2b929a108f36d1c8b2be1</external.miku-scm-skills.ref>
+    <external.miku-scm-skills.skillName>igapyon-miku-scm</external.miku-scm-skills.skillName>
   </properties>
 
   <build>
@@ -220,6 +223,9 @@
                 <argument>${external.miku-toolbox-skills.repo}</argument>
                 <argument>${external.miku-toolbox-skills.ref}</argument>
                 <argument>${external.miku-toolbox-skills.skillName}</argument>
+                <argument>${external.miku-scm-skills.repo}</argument>
+                <argument>${external.miku-scm-skills.ref}</argument>
+                <argument>${external.miku-scm-skills.skillName}</argument>
               </arguments>
             </configuration>
           </execution>

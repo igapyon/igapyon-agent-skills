@@ -2,6 +2,21 @@
 
 ## AI Agent Current Tasks
 
+### miku-scm を配布ZIPへ外部同梱（2026-11-13・作業ツリーで完了）
+
+利用者の明示指示に基づき、上流 `miku-scm-skills` の v0.8.3、commit
+`fe551dc33293a53df4e2b929a108f36d1c8b2be1` から
+`igapyon-miku-scm` だけを配布対象へ追加した。正本・個別テスト・CIは引き続き
+上流で保守する。`igapyon-github-writer` は個別配布のまま。
+
+- [x] Maven pin、index policy、`EXTERNAL_SKILLS.lock`、利用者向けcatalog・install案内、daybook Issue intake前提を更新。
+- [x] root/Mikuku versionを `1.20261113.4` / `20261113d` に合わせ、配布ZIPを生成。
+- [x] `npm run test:skill-index-policy` 77/77、`npm run test:version-alignment` 5/5、`mvn package`、ZIP checker（internal=13、external=14、total=27）、`git diff --check` が成功。
+- [x] 固定SHAのsource skillとrelease stagingの全ファイル比較が一致。
+- [ ] commit、push、tag、GitHub Releaseは未実施。
+
+配布物: `target/igapyon-agent-skills-1.20261113.4.zip`。このpin追加は下記の読み取り専用collectorの実装とは別の、後続の明示的な利用者依頼として扱う。
+
 ### 外部同梱Skillの更新確認をNode.jsへ移す（2026-11-13・実装途中）
 
 [Luna向け実装計画](docs/plans/bundled-skill-update-check-node-luna-implementation.md)を作成した。
@@ -25,7 +40,7 @@ FIX-00〜07、具体的な状態・検証規則、fake/local Gitの回帰ケー�
 
 自己レビュー5件への修正は完了。CLI全体は初回計画のBUC-02〜08（pair cache、運用接続、広いfixture、実repo smoke・計測等）が未完了。
 
-今回の対応計画作成ではコード・test・CIを変更せず、実装・test実行・上流照会は行っていない。
+FIX-00〜07の修正はPR #444へ取り込み済み。BUC-02〜08と実repo照会は引き続き未完了。
 
 ### daybook：URL受領と会話・操作過程のactivity逐次記録（2026-11-11・source実装・形式参照検証済み）
 

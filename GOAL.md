@@ -14,67 +14,45 @@ update_when:
 
 ## Objective
 
-Remove `igapyon-miku-scm` and `igapyon-github-writer` from this repository after
-their migration to [miku-scm-skills](https://github.com/igapyon/miku-scm-skills).
-Keep the daybook's explicit GitHub Issue dependency working through the
-separately installed miku-scm Skill.
+Include the upstream `igapyon-miku-scm` Skill in the release ZIP at a reviewed
+full commit SHA. Keep `igapyon-github-writer` separately distributed, and
+update the archive catalog and dependent daybook instructions.
 
 ## Status
 
-The v0.8.1 Release is public. Its ZIP and SHA-256 sidecar were downloaded; the
-checksum matched, and the ZIP verifier passed against the v0.8.1 tag source with
-2 Skills and 203 files. The migration PR's Miku SCM required gate and all
-platform jobs passed in [Actions run 43258029683](https://github.com/igapyon/miku-scm-skills/actions/runs/43258029683).
+This user-directed packaging task is complete in the worktree. The pin is
+`fe551dc33293a53df4e2b929a108f36d1c8b2be1` (miku-scm-skills v0.8.3); the
+repository version is `1.20261113.4` / `20261113d`. Maven generated
+`target/igapyon-agent-skills-1.20261113.4.zip` with 13 internal and 14
+external Skills. The archive checker accepted all 27 Skills, and the staged
+miku-scm directory matches the source checkout at that exact SHA.
 
-The cleanup commit `e400291ce85a3ed117d9f114f25d8465a222ee14` was merged by PR
-[#442](https://github.com/igapyon/igapyon-agent-skills/pull/442) into `devel`
-at `b20a37b9690fa54984c0432a72a810f695b7ac18`. The current old-repository
-work branch is `devel-tiga1113hcc` at that base.
+`npm run test:skill-index-policy` passed 77/77, `npm run
+test:version-alignment` passed 5/5, `mvn package` succeeded, the release
+archive checker succeeded, and `git diff --check` passed. No commit, push, tag,
+or GitHub Release publication was requested or performed.
 
-The follow-up version values are `1.20261113.2` / `20261113b`; alignment and
-`git diff --check` passed. Remote tag `v20261113b` is absent. No old-repository
-tag or Release was created; the version change is unstaged.
-
-Both Skills were synchronized one way from the `miku-scm-skills` source to the
-user's `~/.codex/skills/`. Both source and installed runners report `0.8.2`,
-and a follow-up dry-run found no content differences. The new repository README
-refers to `scripts/sync-codex-skill.sh`, which is absent from that checkout; a
-reproducible sync-command fix remains a separate follow-up.
+The previous read-only upstream update collector objective remains incomplete:
+BUC-02 through BUC-08 are still open in `TODO.md`. This explicit miku-scm
+packaging request was a separate task and does not count as collector work.
 
 ## Done Conditions
 
-- [x] The two Skill directories, their dedicated CI and tests, and their
-  repository-maintenance references are removed from this source repository.
-- [x] The release catalog and archive describe 13 internal plus 13 external Skills.
-- [x] Daybook Issue intake names the separate miku-scm installation as a prerequisite.
-- [x] The root/Mikuku version check remains valid without either migrated Skill.
-- [x] The remaining 12 representative Skill routes and source/archive checks pass.
-- [x] The cleanup was merged, and both migrated Skills were synchronized to the
-  user Skill directory from the new canonical source.
-- [x] The old-repository follow-up version values are aligned at
-  `1.20261113.2` / `20261113b`.
-- [ ] Commit and publish the follow-up version change through a separately
-  requested miku-scm workflow; do not create a tag or Release here.
-- [ ] Repair the new repository's documented but missing one-way sync helper.
+- [x] Pin only `igapyon-miku-scm` from its canonical upstream repository.
+- [x] Keep `igapyon-github-writer` separately distributed.
+- [x] Update the root and archive catalogs, install guidance, and daybook Issue-intake prerequisite.
+- [x] Generate and verify the 27-Skill ZIP at the aligned repository version.
+- [x] Record the upstream SHA and package verification in the release lock and task notes.
 
 ## Resume
 
-The cleanup is merged as PR #442. Before that merge, version alignment passed
-5/5; index-policy/routes 77/77; daybook 79/79; isolated Maven package and archive
-verification passed for 13 internal plus 13 external Skills, with 12
-representative routes. The `.1` archive was built in `/private/tmp`; `mvn
-validate` had refreshed only the in-checkout generated timestamp record for the
-earlier `.4` version. For the current `.2` increment, `node
-scripts/validate-version-alignment.mjs --repo .` and `git diff --check` passed;
-the full suites and package were not rerun. The installed Skill pair now matches
-the new repository's `0.8.2` source. The new repository README's sync helper
-reference is currently unresolved. Do not treat the new repository's Skill full
-suites as old-repository tests.
+Review the current worktree diff and generated ZIP if continuing this task.
+For the still-open read-only collector work, resume from its current-task entry
+in `TODO.md` and follow the implementation plan there. Keep that collector's
+scope separate from explicit user-directed release pin changes.
 
 ## Stop
 
-- If the source Skills or their dedicated documents differ from the published
-  migration, retain the old source and resolve the discrepancy first.
-- Do not delete the user's installed Skills or local operational data.
-- The `1.20261113.2` / `20261113b` increment is complete and unstaged. This
-  does not authorize commit, push, tag, or Release operations.
+- Do not include `igapyon-github-writer` as part of this miku-scm bundle change.
+- Do not claim the collector's BUC-02 through BUC-08 are complete.
+- Do not infer authorization to commit, push, tag, or publish a Release.
