@@ -12,7 +12,8 @@ When a reference is not listed here, inspect or search the relevant directory.
   is the first check for public, semi-public, interpersonal, user-facing, or
   community-facing text.
 - [Consolidated Review Report](templates/consolidated-review-report.md) is the
-  canonical final output shape for all selected review lenses.
+  shared contract for findings, unchecked scope, optional suggestions, and
+  compact or detailed output across all selected review lenses.
 
 ## By Target
 
@@ -20,7 +21,11 @@ Use these entries when the review target is clear.
 
 - Text and Japanese writing:
   [Writing Style](10-perspectives/writing/writing-style-review.md) for ordinary
-  style review; [AI Text Naturalness](10-perspectives/writing/ai-text-naturalness-review.md)
+  style review and the precedence of requested, established, and default styles;
+  [Reader Goals and Expression](10-perspectives/writing/expression-function-review.md)
+  when fitness for the reader's purpose or expression effects are in scope,
+  including tradeoffs when changing useful techniques;
+  [AI Text Naturalness](10-perspectives/writing/ai-text-naturalness-review.md)
   only when AI-like impression or author voice is in scope; [Japanese Public
   Text Final Check](10-perspectives/writing/japanese-public-text-final-check.md)
   only for a requested final Japanese publication pass
@@ -77,6 +82,10 @@ Use these entries when the review is tied to a workflow moment.
 
 Use these entries when the review is about a cross-cutting concern.
 
+- Reader outcomes and expression effects:
+  [Reader Goals and Expression Review](10-perspectives/writing/expression-function-review.md),
+  tracing textual support for the intended outcome and weighing the gains and
+  losses of a proposed revision
 - Safety, respect, and compliance-adjacent wording:
   [Safety and Respect Review](10-perspectives/safety-and-respect/safety-and-respect-review.md)
 - Rights, license, attribution, originality, and OSS redistribution:
@@ -125,7 +134,7 @@ user explicitly asks for miku-soft / igapyon conventions.
   - `privacy-and-secrets/`: credentials, private data, and secret leakage.
   - `rights-and-licenses/`: copyright, originality, OSS licensing, notices, and attribution.
   - `provenance-and-officialness/`: official terminology, primary-source URLs, link trust, and evidence acquisition.
-  - `writing/`: writing style, AI-text naturalness, and public Japanese final checks.
+  - `writing/`: writing style, reader goals and expression effects, AI-text naturalness, and public Japanese final checks.
   - `maintenance/`: refactoring and accumulated-structure review.
 - `20-targets/`: target-specific reviews.
 - `30-timing/`: workflow-moment reviews.

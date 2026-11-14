@@ -39,7 +39,9 @@ During review mode:
 
 ## Core Review Workflow
 
-1. Confirm the review target, intended audience, and requested review depth.
+1. Establish the review target, intended audience, and requested review depth
+   from the conversation and artifact. Ask only when missing context would
+   materially change the judgment; do not reconfirm information already given.
 2. Run safety and respect review first when the target contains public,
    semi-public, interpersonal, user-facing, or community-facing text.
 3. Select only the target- and timing-specific references that apply. Treat
@@ -47,9 +49,11 @@ During review mode:
    their condition is met.
 4. Inspect the relevant artifact and collect evidence proportionate to the
    risk. Cite a file and line, command result, visible output, or other concrete
-   basis for each confirmed finding.
-5. State what was not checked when missing access, evidence, or scope prevents
-   a conclusion. Do not present an unrun check as verified.
+   basis for each finding, including supported possible readings or risks.
+5. Separate findings from unchecked scope and optional suggestions. A finding
+   needs evidence of a defect, unmet requirement, or concrete harm or risk.
+   A check the reviewer did not run is not itself a defect in the target.
+   State material unchecked scope without presenting an unrun check as verified.
 6. Consolidate selected review lenses into one final report using the output
    integration rules below and the
    [consolidated report template](references/templates/consolidated-review-report.md).
@@ -73,6 +77,11 @@ For every public, semi-public, interpersonal, user-facing, or community-facing
 text, check safety and respect first using
 [references/10-perspectives/safety-and-respect/safety-and-respect-review.md](references/10-perspectives/safety-and-respect/safety-and-respect-review.md).
 
+When reviewing whether a text serves its readers or how expressions contribute,
+use [Reader Goals and Expression Review](references/10-perspectives/writing/expression-function-review.md).
+Establish the intended reader outcome, trace the textual support, then weigh
+proposed changes against the functions worth preserving.
+
 ## Output Style
 
 Prefer concise, direct review output.
@@ -81,9 +90,12 @@ Prefer concise, direct review output.
 
 Use the
 [consolidated report template](references/templates/consolidated-review-report.md)
-as the canonical output contract. Treat lens-specific assessment fields as
-optional notes, not alternate finding shapes. Unless the user asks for per-lens
-reports, produce one consolidated findings list.
+as the canonical output contract for finding eligibility, status, and compact
+or detailed format selection. Follow the user's requested format; otherwise use
+compact output for short or narrowly scoped reviews and detailed output for
+multi-file, complex, audit, or release-readiness reviews. Do not ask merely to
+choose a format. Treat lens-specific assessments as optional notes. Unless the
+user asks for per-lens reports, produce one consolidated findings list.
 
 Order findings globally by severity: Critical, High, Medium, then Low. Within
 the same severity, report safety and respect findings before other findings.

@@ -209,13 +209,16 @@ from memory when the decision matters.
 
 Flag issues when:
 
-- a project invents a new structure where a sibling convention exists
-- sibling projects clearly use a safer release, packaging, test, or docs pattern
-  but the reviewed project diverges without explanation
-- review cannot confirm an important convention because the needed sibling
-  source or artifact is missing and no request was made
-- copied sibling behavior is stale or mismatched because the current sibling
-  source was not checked
+- divergence from an adopted sibling convention breaks a shared release,
+  packaging, test, or documentation contract
+- a sibling comparison exposes a specific failure or safety gap in the
+  reviewed project's implementation
+- copied sibling behavior is demonstrably stale or mismatched with the current
+  product contract
+
+A different structure or an unperformed comparison alone is not a finding.
+If sibling evidence is unavailable, record the material scope limit rather
+than assigning severity to the reviewer's missing check or request.
 
 ## Test Sufficiency Checks
 
@@ -292,6 +295,12 @@ When the repository is intended for GitHub public use, check:
 
 ## Severity Guidance
 
+Apply the finding eligibility rules in the
+[Consolidated Review Report](../../templates/consolidated-review-report.md).
+Do not turn an unrun reviewer check into a target defect. When a required
+release check is missing, cite its requirement and explain the specific gap
+in release confidence; otherwise record material unchecked scope in notes.
+
 Use these severity levels:
 
 - Critical: release or packaging can expose secrets, private files, local work
@@ -304,7 +313,8 @@ Use these severity levels:
 - High: version, tag, runtime output, package metadata, or release asset names
   can diverge without failure.
 - High: primary workflows lack any meaningful test or smoke coverage.
-- Medium: an adopted Agent Skill `index.json` is missing, stale, or not checked.
+- Medium: an adopted Agent Skill `index.json` is missing or demonstrably stale,
+  or required index validation is absent and leaves a specific contract unverified.
   Missing index alone is not a finding when the skill has not adopted one.
 - Medium: Agent Skill `SKILL.md` contains detailed rules or long workflows that
   should be split into `references/`, making the skill harder to maintain.
@@ -323,8 +333,8 @@ Use these severity levels:
   identifier.
 - Medium: igapyon Java / Maven repository is missing required `.mvn/jvm.config`
   IPv4-preference settings.
-- Medium: sibling project conventions were relevant but not checked, causing
-  avoidable uncertainty or inconsistent structure.
+- Medium: divergence from an adopted sibling project convention causes a
+  concrete integration or maintenance problem.
 - Medium: release workflow exists but lacks artifact contents checks, smoke
   checks, or missing-file failure behavior.
 - Low: remaining polish, naming, structure, or documentation issues do not

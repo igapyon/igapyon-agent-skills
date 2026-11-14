@@ -3,9 +3,8 @@
 Use this reference to review ordinary article, documentation, README, GitHub,
 social post, and short-text writing style.
 
-By default, igapyon writing should use Japanese polite style, normally
-`です・ます調`, unless the user explicitly asks for another style or the target
-surface clearly requires another convention.
+Review style against the user's instructions and the target's purpose. Apply
+igapyon's default only when the style has not otherwise been established.
 
 ## Review Priority
 
@@ -13,26 +12,47 @@ Use this review after safety and respect review. Use it together with AI text
 naturalness review when the user asks whether text feels generated, too generic,
 or unlike the writer's voice.
 
-## Default Style Check
+For fitness for the reader's purpose or the effects of a stylistic change, use
+[Reader Goals and Expression Review](expression-function-review.md). Establish
+what the reader should gain and identify what a change would improve or lose.
+A typo-only pass does not require the additional lens.
 
-When reviewing Japanese prose, first check whether the main body uses
-`です・ます調` consistently.
+## Style Precedence
+
+Determine the intended style in this order:
+
+1. The user's explicit style or editing instructions.
+2. The style already established in the target, supported expression intent,
+   and the publication surface's requirements.
+3. Only if still undecided and the target is igapyon writing, the default
+   Japanese polite style, normally `です・ます調`.
+
+Do not apply igapyon's default to another author's writing. An existing
+consistent `だ・である調` does not need an explicit exemption to be preserved.
+Use textual cues to explain a style's function without claiming to know the
+author's intent. When established style and a surface requirement conflict,
+explain the mismatch and its consequence rather than silently imposing a
+default.
+
+## Style and Consistency Checks
 
 Flag style issues when:
 
-- the main body unexpectedly switches to plain style such as `だ・である調`
-- polite and plain styles are mixed without a clear reason
+- a shift conflicts with the selected style and obscures the speaker, sequence,
+  or intended meaning
+- mixed polite and plain styles cause a specific loss of clarity or coherence
 - endings shift between stiff technical prose and casual speech in a way that
   distracts from the content
-- a public article, README, release text, or explanatory post becomes more
-  blunt than intended because of plain-style endings
+- wording makes criticism unnecessarily personal or harsh in context; plain
+  endings alone are not evidence of disrespect
 
 Do not require every line to end with `です` or `ます`. Natural variation is
 allowed.
 
-## Allowed Exceptions
+## Variation to Assess in Context
 
-These parts may use forms other than `です・ます調` when natural:
+These parts may naturally differ from surrounding prose. Assess their function
+instead of treating them as exceptions to a universal polite-style rule:
 
 - headings and section titles
 - bullet fragments
@@ -44,7 +64,8 @@ These parts may use forms other than `です・ます調` when natural:
 - release-note fragments
 - compact checklists
 - titles where noun endings are more natural
-- intentionally formal specifications where `である調` is explicitly requested
+- specifications written consistently in `である調`
+- dialogue, changes of narrator, or deliberate scene transitions
 
 For bullet lists, either sentence style or fragment style is acceptable as long
 as the list is internally consistent and easy to scan.
@@ -54,18 +75,18 @@ as the list is internally consistent and easy to scan.
 Check these points:
 
 - the chosen style matches the publication surface
-- main explanatory paragraphs are mostly `です・ます調`
+- main explanatory paragraphs follow the selected style, with useful variation
 - bullet lists do not fight the surrounding prose
 - title and headings are concise without forcing polite endings
 - technical terms and commands are not made awkward by over-politeness
-- strong criticism remains calm and respectful in polite style
+- strong criticism remains scoped and respectful in the selected style
 
 ## Soft Assertion and Non-Harsh Tone Checks
 
 Use these checks as a reviewer-friendly subset of the `みくく` writing rules.
-Do not import the character voice itself. The goal is to keep igapyon writing
-polite, careful, and not unnecessarily sharp while still saying important
-things clearly.
+Do not import the character voice itself or override the style precedence
+above. The goal is careful, scoped criticism that still says important things
+clearly; do not soften a passage merely because it uses plain style.
 
 Check whether the text:
 

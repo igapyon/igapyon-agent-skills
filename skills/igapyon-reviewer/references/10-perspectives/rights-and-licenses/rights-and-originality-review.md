@@ -355,6 +355,13 @@ Avoid legal conclusions:
 
 ## Severity Guidance
 
+Apply the finding eligibility rules in the
+[Consolidated Review Report](../../templates/consolidated-review-report.md).
+Name the specific material, obligation or observed similarity, and affected
+publication or distribution context. Missing reviewer knowledge alone belongs
+in unchecked scope, not a severity-rated finding. A missing required rights
+check can be a finding when its basis and consequence are established.
+
 Use these severity levels:
 
 - Critical: release or publication appears to include private, proprietary, or
@@ -363,7 +370,8 @@ Use these severity levels:
 - High: visible near-copy of a specific existing work, brand, logo, character,
   article, codebase, or documentation page without attribution or permission.
 - High: third-party assets or copied code are included in release artifacts
-  with unclear or incompatible licensing.
+  with evidence of incompatible licensing or a missing required permission or
+  license record.
 - High: OSS dependencies, vendored files, or embedded third-party code are
   redistributed without an apparent notice, license text, or attribution
   mechanism.
@@ -375,10 +383,13 @@ Use these severity levels:
   checked before publication.
 - Medium: attribution, license notes, or third-party notices are missing or
   incomplete for bundled material.
-- Medium: dependency license status or OSS notice requirements are not checked
-  before a public release.
-- Low: minor similarity, generic phrasing, or unclear provenance that should be
-  cleaned up but does not obviously block internal review.
+- Medium: a mandatory dependency-license or OSS-notice release check is
+  demonstrably missing, leaving a specific distribution obligation unresolved.
+
+Generic phrasing or minor similarity alone is not a finding. If provenance
+cannot be assessed, record the material verification need without severity;
+do not label it infringement or invent an attribution obligation. Offer an
+optional change only when its benefit to the target can be explained.
 
 ## Review Output
 

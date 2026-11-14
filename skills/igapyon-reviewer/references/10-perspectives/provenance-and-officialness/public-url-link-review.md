@@ -98,9 +98,12 @@ Flag risks when:
   archives from a non-primary source without explanation
 
 When official URL correctness matters and cannot be verified from local
-context, report it as "verify primary source URL" rather than guessing. If the
-user explicitly asks for verification and network access is available, use
-official provider or project sources first.
+context, record "verify primary source URL" as unchecked scope rather than
+guessing. Not fetching a URL does not establish that it is broken, unofficial,
+or unsafe. A visible localhost address or label/domain mismatch can support a
+finding without fetching it; explain the observable problem. If the user
+explicitly asks for verification and network access is available, use official
+provider or project sources first.
 
 ## Private URL Checks
 
@@ -132,8 +135,9 @@ Use these severity levels:
   packages from a non-primary source without explanation.
 - Medium: important README, docs, release, badge, image, or download links are
   broken, stale, or point to old project/version targets.
-- Medium: primary-source URLs are unverifiable, indirect, shortened, mirrored,
-  or mismatched with the link label.
+- Medium: an indirect, shortened, mirrored, or mislabeled primary-source URL
+  demonstrably obscures provenance or directs readers to a different source
+  from the one promised.
 - Low: minor link label mismatch, non-critical stale reference, or relative link
   polish issue.
 

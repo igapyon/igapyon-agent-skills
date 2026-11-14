@@ -8,6 +8,12 @@ AI. Instead, review which textual features may make readers feel that the text
 is AI-generated, over-structured, over-neutral, or detached from the author's
 own judgment and experience.
 
+Use [Reader Goals and Expression Review](expression-function-review.md) when
+deciding whether a change would help the intended reader and what useful
+function it would lose. This assessment also applies independently of AI-like
+impression. A useful technique may feel AI-like without needing correction;
+merge any shared finding rather than reporting it twice.
+
 Do not treat structure, neutrality, completeness, or readability as problems by
 themselves. These are often signs of good documentation. Treat them as AI-like
 signals only when they make the author's purpose, evidence, judgment, or

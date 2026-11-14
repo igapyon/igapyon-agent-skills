@@ -249,16 +249,17 @@ Actively compare against sibling sources when they can clarify:
 - backend policy such as handoff-only, cli-only, cli-preferred, mcp-only, or
   mcp-preferred
 
-Flag issues when:
+Flag issues when an adopted sibling convention or a shared product contract
+applies and the divergence causes a concrete problem, for example:
 
-- the skill invents a structure where sibling skills already provide a stable
-  convention
-- CLI-backed or MCP-backed behavior diverges from sibling product contracts
-  without explanation
-- bundle, runtime, or release structure differs from sibling patterns without a
-  documented reason
-- the review needed sibling source or artifacts but they were not available and
-  no human request was made
+- activation or reference structure breaks an expected invocation or lookup
+- CLI-backed or MCP-backed behavior violates a shared operation contract
+- bundle, runtime, or release structure prevents installation or execution
+
+An existing sibling pattern alone does not make a different structure wrong.
+When needed sibling evidence is unavailable, record the resulting scope limit;
+ask only if it materially affects the judgment. The reviewer's inability to
+compare or failure to request a source is not a defect in the target skill.
 
 Do not reach into sibling skills by `../...` relative paths during normal skill
 operation. Sibling references are for design and review evidence. If shared
@@ -469,18 +470,25 @@ When packaging or release is in scope, check:
 
 ## Severity Guidance
 
+Apply the finding eligibility rules in the
+[Consolidated Review Report](../../templates/consolidated-review-report.md).
+Distinguish validation the target is required to provide from checks the
+reviewer has not performed. Missing required validation needs its requirement
+and consequence cited; unchecked reviewer scope alone has no severity.
+
 Use these severity levels:
 
 - High: skill activation is too broad and likely to trigger unexpectedly.
 - High: required runtime, reference, asset, or `SKILL.md` file is missing from
   an installable skill bundle.
-- Medium: an adopted `index.json` is missing, stale, or not validated.
+- Medium: an adopted `index.json` is missing or demonstrably stale, or required
+  index validation is absent and leaves a specific contract unverified.
 - Medium: `SKILL.md` is too large or contains detailed rules that should live in
   `references/`.
 - Medium: important references exist but are not discoverable from `SKILL.md`,
   a useful topic guide, or scoped search.
-- Medium: relevant sibling skill or product convention was not checked before
-  introducing a divergent Agent Skill structure.
+- Medium: the skill diverges from an adopted sibling or product convention
+  and the divergence causes a concrete integration or maintenance problem.
 - Medium: `references/` contains orphaned or unreachable files not discoverable
   through task links, a useful topic guide, or scoped search.
 - Medium: skill uses `../...` or other cross-skill relative paths to read
