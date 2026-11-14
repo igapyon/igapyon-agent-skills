@@ -15,10 +15,10 @@ If the user asks whether there is a skill for repository conventions, mention th
 
 ## Core Workflow
 
-1. Inspect the repository before editing.
-2. Preserve unrelated user changes.
+1. Determine whether the request is inspection or application, and limit work to the requested repositories. Inspection reports findings without editing.
+2. Inspect repository state and existing conventions before editing. Preserve unrelated user changes.
 3. Select the relevant rule or subfeature from the Reference Use section.
-4. Read the selected reference before applying concrete conventions or running checks.
+4. Read the selected reference, then choose applicable rules from the repository's configuration and intended shared files. Preserve shared examples, fixtures, and distribution files when updating ignore rules.
 5. Document repository operation rules in `README.md` when appropriate.
 6. Verify the final diff and report any pre-existing unrelated changes.
 
@@ -43,7 +43,8 @@ Keep this `SKILL.md` lean. Put detailed conventions and examples in `references/
 
 Before finishing:
 
-- run `git diff -- README.md TODO.md .gitignore .mvn/jvm.config workplace/.gitkeep CONTRIBUTING.md CONTRIBUTORS.md THIRD_PARTY_NOTICES.md`
+- for `.gitignore` changes, follow the effective-rule and shared-file checks in [repository-rules.md](references/repository-rules.md#verification-and-reporting)
+- run `git diff -- README.md TODO.md .gitignore .mvn/jvm.config workplace/.gitkeep CONTRIBUTING.md CONTRIBUTORS.md THIRD_PARTY_NOTICES.md` and inspect any other edited paths
 - run `git status --short`
 - mention any unrelated modified files that were already present or not touched
 

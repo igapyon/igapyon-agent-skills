@@ -4,7 +4,24 @@ Detailed repository conventions for `igapyon-repo-conventions`.
 
 ## .gitignore
 
-Manage common local files in the repo-side `.gitignore`.
+Manage local files in the repo-side `.gitignore` according to their role. Exclude machine-local configuration, dependencies, scratch material, and disposable generated output. Keep files needed by other clones, including shared configuration, lockfiles, sanitized examples, fixtures, and intentionally distributed artifacts. Generated files can also be shared artifacts.
+
+### Selection and scope
+
+Inspect existing root and relevant nested `.gitignore` files, tracked paths, README instructions, manifests, and build settings. Select rules from configuration or established operation even if an output directory does not exist yet. Keep discovery within the requested repositories and relevant project files; dependency trees and sibling repositories do not need a general scan.
+
+Add only missing coverage. Preserve comments, rule order, and negations; equivalent existing rules do not need normalization or duplication. Avoid blanket exclusions such as `*.json`, `.vscode/`, `.codex/`, `local-data/`, or `runtime/` unless their entire scope is confirmed machine-local or disposable.
+
+Use root-anchored paths for root-only areas, such as `/workplace/` and `/release-assets/`. Keep dependency rules such as `node_modules/` effective in child projects. For multiple applications, select configuration and output paths for each application instead of assuming that every directory with the same name is disposable.
+
+Preserve shared exceptions in the effective Git rules, as well as documenting them in `README.md`. A child exception cannot reopen an excluded parent directory. When keeping a file in an otherwise generated directory, ignoring its contents permits an exception such as:
+
+```gitignore
+/bundle/*
+!/bundle/cli.mjs
+```
+
+Adapt the path and filename to the actual shared artifact. Check relevant ancestor and nested rules before changing an existing exception.
 
 ### Common
 
@@ -12,34 +29,74 @@ Include `.DS_Store` so macOS metadata files are excluded for every clone.
 
 ### Node.js / frontend
 
-For Node.js or frontend repositories, include dependency and build output directories:
+For Node.js or frontend repositories, exclude dependencies, repository-local npm cache, and npm debug logs:
 
 ```gitignore
 node_modules/
 .npm-cache/
-dist/
-bundle/
-coverage/
-*.log
 npm-debug.log*
 ```
 
-If a repository intentionally commits generated distribution files, document that exception in `README.md`.
+Select build, coverage, and local log rules from the actual configuration or documented operation. For root output directories, typical candidates are:
+
+```gitignore
+/dist/
+/bundle/
+/coverage/
+*.log
+```
+
+Use the actual output paths for child applications. Preserve intentionally shared distribution files or log fixtures with suitable exceptions.
 
 ### Java / Maven
 
-For Java or Maven repositories, include Maven build output:
+For Java repositories, exclude compiled bytecode while preserving intentionally shared class fixtures:
+
+```gitignore
+*.class
+```
+
+For Maven repositories, also exclude build output, including that of child modules:
 
 ```gitignore
 target/
 ```
+
+Add `bin/` or another output directory when Java build or IDE settings identify it as generated output. Keep shared JARs and IDE project settings according to the repository's operation.
+
+### Local environment files
+
+When configuration, code, or documentation establishes use of local environment files, exclude actual local settings and keep sanitized examples. For an application at the repository root:
+
+```gitignore
+/.env
+/.env.*
+!/.env.example
+!/.env.*.example
+```
+
+For child applications, scope these rules to their application roots. Preserve any existing shared profiles, such as a sanitized `.env.test`, with explicit exceptions when they are part of the repository's operation. Report paths and roles rather than environment values.
+
+### Release staging
+
+When release scripts or documentation use a directory for disposable generated release files, exclude that directory. The common root staging convention is:
+
+```gitignore
+/release-assets/
+```
+
+This rule applies across technology stacks. If the staging directory contains files intentionally distributed through Git, use the contents-and-exceptions pattern above to keep those files available.
+
+### Tool-specific caches
+
+Add cache rules when the selected tooling generates them. Examples include `/.cache/` for a root cache and `*.tsbuildinfo` for TypeScript incremental build metadata. Match the actual configured paths and preserve shared fixtures; a Node.js or frontend label alone does not establish these outputs.
 
 ### VS Code MCP
 
 Ignore local VS Code MCP configuration by default:
 
 ```gitignore
-.vscode/mcp.json
+/.vscode/mcp.json
 ```
 
 If MCP settings should be shared, place a sanitized example such as `.vscode/mcp.example.json` or documentation under `docs/` instead of committing the local `.vscode/mcp.json`.
@@ -49,11 +106,21 @@ If MCP settings should be shared, place a sanitized example such as `.vscode/mcp
 For local work areas, use `workplace/` with a tracked `.gitkeep`:
 
 ```gitignore
-workplace/*
-!workplace/.gitkeep
+/workplace/*
+!/workplace/.gitkeep
 ```
 
 Create `workplace/.gitkeep` if `workplace/` is part of the repository convention and the file does not exist.
+
+### Verification and reporting
+
+For changed ignore rules:
+
+- Compare untracked paths before and after the edit within the affected scope, so newly hidden source or shared files are noticed. Summarize the relevant differences rather than dumping dependency trees.
+- Use `git check-ignore -v --no-index -- <paths>` to check representative excluded paths and protected exceptions. Paths need not be created solely for this check. A matched pattern starting with `!` denotes an exception; verbose output alone does not mean the path is ignored. Check the reported rule source so personal global exclusions do not substitute for repository rules.
+- Confirm applicable shared paths remain eligible for Git: source, lockfiles, environment examples, `workplace/.gitkeep`, and any retained fixtures or distribution files. Account for relevant nested ignore files.
+- Inspect tracked paths with `git ls-files`. Ignore rules do not stop tracking existing files. Report tracked local outputs or configuration; changing ignore rules alone does not authorize deleting files or removing them from the index.
+- Report added rules and their reasons, retained exceptions, and any tracked files that still need a separate decision. For inspection requests, report proposed changes only.
 
 ## workplace/
 
@@ -66,6 +133,12 @@ Do not add `workplace/` contents to Git, except for `workplace/.gitkeep`.
 Treat `.codex/skills/` as a local deployment or copy destination for Codex skills.
 
 When the repository keeps skill source files elsewhere, such as `skills/`, keep `.codex/skills/` out of Git. The source directory remains the canonical copy.
+
+```gitignore
+/.codex/skills/
+```
+
+When `.codex/skills/` itself contains canonical skill source, keep it available to Git. Preserve other shared `.codex/` configuration according to its role.
 
 ## Java / Maven
 
@@ -108,6 +181,7 @@ Typical README topics:
 - where canonical skill or source files live
 - how `workplace/` is used
 - what is intentionally ignored by Git
+- where sanitized environment examples live and which shared artifacts are exceptions
 - how generated files are regenerated
 - Java / Maven runtime settings, when applicable
 

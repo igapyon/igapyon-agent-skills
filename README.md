@@ -337,7 +337,8 @@ You want a repository to follow igapyon's established operating rules, with a cl
 
 **What you can achieve**
 
-- Apply ignore rules for `.DS_Store`, local Codex output, and scratch material, and set up the documented `workplace/.gitkeep` arrangement.
+- Select ignore rules for `.DS_Store`, local environment files, dependencies, generated outputs, and local Codex deployments while preserving shared examples, fixtures, and distribution files.
+- Set up the documented `workplace/.gitkeep` arrangement for local scratch material.
 - Maintain Java/Maven JVM settings and explain repository operation rules in the root README.
 - Use contribution and attribution-document templates, or inspect direct child Git repositories for uncommitted work while excluding scratch and vendored directories.
 
