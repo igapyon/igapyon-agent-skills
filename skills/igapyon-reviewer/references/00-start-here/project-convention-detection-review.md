@@ -119,8 +119,9 @@ or project family:
 - no runtime instruction reaches another skill's private files through a
   cross-skill relative path such as `../other-skill/...`
 
-For other projects, report miku-soft practices only as optional inspiration
-unless the target's own documentation adopts them.
+For other projects, offer miku-soft practices only as useful optional
+suggestions without severity, unless the target's own documentation adopts
+them. Do not add suggestions merely because another convention exists.
 
 ## Distribution and License Context
 
@@ -160,12 +161,13 @@ Use these severity levels:
   source.
 - High: the target is clearly miku-soft / nearby igapyon and misses a convention
   that affects release legality, package safety, or Agent Skill activation.
-- Medium: the project classification is unclear and a convention-dependent
-  finding cannot be judged without more evidence.
 - Medium: the target appears to follow a documented convention but applies it
   inconsistently.
-- Low: an igapyon convention could be useful as optional inspiration, but the
-  target does not claim to follow it.
+
+An unclear classification belongs in unchecked scope when it limits a
+judgment; do not assign severity to it. A convention the target has not adopted
+is not a missing requirement. Apply the finding eligibility rules in the
+[Consolidated Review Report](../templates/consolidated-review-report.md).
 
 ## Review Output
 

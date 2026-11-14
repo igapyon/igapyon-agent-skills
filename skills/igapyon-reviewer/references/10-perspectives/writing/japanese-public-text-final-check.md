@@ -34,13 +34,19 @@ Check lightly for:
 
 ## Japanese Style Checks
 
-For igapyon writing, also check:
+Follow the style precedence in
+[Writing Style Review](writing-style-review.md#style-precedence): user
+instructions first, then the target's established style and surface, then an
+igapyon default only if still undecided. In a light final pass, check:
 
-- main explanatory prose uses `です・ます調` when no other style is specified
-- polite style does not become too stiff or legalistic
+- main explanatory prose follows the selected style
+- the selected style does not become unnecessarily stiff or legalistic
 - strong claims have enough scope or qualification
 - the text does not become harsher than intended
 - bullets may remain fragments when that reads better
+
+Do not convert consistent plain-style prose to polite style simply because no
+style was specified in the request.
 
 Use [writing-style-review.md](./writing-style-review.md) for deeper style review.
 

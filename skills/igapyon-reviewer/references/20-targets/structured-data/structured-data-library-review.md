@@ -120,14 +120,18 @@ When a structured-data library is OSS, check:
 - security or CVE status is acceptable for the release target
 
 If the license is unclear, report it as a verification need before recommending
-the library.
+the library, without treating uncertainty as proven incompatibility. Follow the
+[Consolidated Review Report](../../templates/consolidated-review-report.md):
+an unperformed reviewer check belongs in notes; a missing required release
+check can be a finding when its requirement and consequence are identified.
 
 ## Severity Guidance
 
 Use these severity levels:
 
-- High: selected OSS library has an incompatible or unchecked license for the
-  intended release or redistribution model.
+- High: evidence shows that the selected OSS library's license conflicts with
+  the intended release or redistribution model, or a documented mandatory
+  license check is absent and leaves a concrete redistribution risk unresolved.
 - High: code hand-rolls XML/JSON escaping or syntax in a way likely to produce
   invalid or unsafe output.
 - High: implementation loads unbounded user input or large generated output into
@@ -136,8 +140,8 @@ Use these severity levels:
   improve performance, but current input sizes are not yet proven risky.
 - Medium: deterministic output, encoding, namespace, or JSONL line contract is
   not tested.
-- Medium: notices, source artifacts, or provenance for bundled structured-data
-  libraries are missing or unclear.
+- Medium: required notices, source artifacts, or provenance records for
+  bundled structured-data libraries are missing or incomplete.
 - Low: library choice is acceptable but could be documented better.
 
 ## Review Output
