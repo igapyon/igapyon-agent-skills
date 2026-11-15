@@ -5,7 +5,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const DATE = "2026-09-14";
-const ACTIVITY_PATH = "2026/202609/activities/activity-20260914a.md";
+const ACTIVITY_PATH = "2026/202609/activities/activity-20260914aaa.md";
 const taskPath = "2026/202609/tasks/task-202609-00001-smoke.md";
 const schedulePath = "2026/202609/schedules/schedule-20260914-smoke.md";
 
@@ -272,9 +272,9 @@ export function checkDaybookRuntime(bundleRoot, { nodeExecutable = process.execP
     );
     expectSuccess(fromFile, "activity creation from a draft file");
     if (parseJsonOutput(first, "first activity creation").path !== ACTIVITY_PATH
-      || parseJsonOutput(second, "second activity creation").path !== ACTIVITY_PATH.replace("a.md", "b.md")
-      || parseJsonOutput(fromFile, "activity creation from a draft file").path !== ACTIVITY_PATH.replace("a.md", "c.md")) {
-      fail("activity creation did not advance from suffix a through c");
+      || parseJsonOutput(second, "second activity creation").path !== ACTIVITY_PATH.replace("aaa.md", "aab.md")
+      || parseJsonOutput(fromFile, "activity creation from a draft file").path !== ACTIVITY_PATH.replace("aaa.md", "aac.md")) {
+      fail("activity creation did not advance from suffix aaa through aac");
     }
     verifyActivityUpdate({
       nodeExecutable,

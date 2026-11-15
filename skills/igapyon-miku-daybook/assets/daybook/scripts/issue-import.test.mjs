@@ -464,7 +464,7 @@ test("same-day activity records get separate letter paths and preserve each Issu
   const { plan } = prepare(root, input, decisions);
   assert.equal(plan.writes.length, 2);
   assert.deepEqual(plan.writes.map((write) => write.path), [
-    "2026/202610/activities/activity-20261005a.md", "2026/202610/activities/activity-20261005b.md",
+    "2026/202610/activities/activity-20261005aaa.md", "2026/202610/activities/activity-20261005aab.md",
   ]);
   assert.deepEqual(plan.writes.map((write) => write.issue_numbers), [[42], [43]]);
   assert.match(plan.writes[0].content, /Issue #42/);
@@ -476,11 +476,11 @@ test("same-day activity records get separate letter paths and preserve each Issu
   assert.deepEqual(prepare(root, input, decisions).plan.issues.map((entry) => entry.outcome), ["already-imported", "already-imported"]);
 });
 
-function legacyActivityFixture(t) {
+function legacyActivityFixture(t, suffix = "") {
   const root = makeRoot(t);
   const decisions = manifest([{ number: 42, decision: "import", records: [activityRecord()] }]);
   const prepared = prepare(root, source(), decisions).plan;
-  const plan = JSON.parse(JSON.stringify(prepared).replaceAll("activity-20261005a", "activity-20261005"));
+  const plan = JSON.parse(JSON.stringify(prepared).replaceAll("activity-20261005aaa", `activity-20261005${suffix}`));
   const original = "---\ntype: activity\ndate: 2026-10-05\n---\n\n# 既存日次記録\n\n## やったこと\n\n先に記録した活動。\n";
   const target = path.join(root, plan.writes[0].path);
   fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -494,14 +494,16 @@ function legacyActivityFixture(t) {
   return { root, decisions, plan, original, target, resultPath };
 }
 
-test("saved legacy daily append plans apply, resume and remain discoverable", async (t) => {
-  const { root, decisions, plan, target, resultPath } = legacyActivityFixture(t);
-  await applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath });
-  await applyIssueImport({ repoRoot: root, plan, resultPath });
-  assert.match(fs.readFileSync(target, "utf8"), /先に記録した活動/);
-  assert.equal(prepare(root, source(), decisions).plan.issues[0].outcome, "already-imported");
-  assert.equal(fs.existsSync(path.join(root, "2026/202610/activities/activity-20261005a.md")), false);
-});
+for (const suffix of ["", "a", "ab"]) {
+  test(`saved legacy activity append plans (${suffix || "unsuffixed"}) apply, resume and remain discoverable`, async (t) => {
+    const { root, decisions, plan, target, resultPath } = legacyActivityFixture(t, suffix);
+    await applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath });
+    await applyIssueImport({ repoRoot: root, plan, resultPath });
+    assert.match(fs.readFileSync(target, "utf8"), /先に記録した活動/);
+    assert.equal(prepare(root, source(), decisions).plan.issues[0].outcome, "already-imported");
+    assert.equal(fs.existsSync(path.join(root, "2026/202610/activities/activity-20261005aaa.md")), false);
+  });
+}
 
 test("an ordinary activity update after intake preflight survives a conflicting legacy append", async (t) => {
   const { root, plan, original, target, resultPath } = legacyActivityFixture(t);
@@ -514,19 +516,22 @@ test("an ordinary activity update after intake preflight survives a conflicting 
   assert.equal(JSON.parse(fs.readFileSync(resultPath, "utf8")).last_error.code, "LOCAL_CONFLICT");
 });
 
-test("one Issue allocates aa and ab after z without touching an existing daily file", (t) => {
-  const root = makeRoot(t);
-  const directory = path.join(root, "2026/202610/activities");
-  fs.mkdirSync(directory, { recursive: true });
-  const original = "---\ntype: activity\ndate: 2026-10-05\n---\n\n# Existing\n";
-  fs.writeFileSync(path.join(directory, "activity-20261005.md"), original);
-  fs.writeFileSync(path.join(directory, "activity-20261005z.md"), original);
-  const { plan } = prepare(root, source(), manifest([{
-    number: 42, decision: "import", records: [activityRecord("first"), activityRecord("second")],
-  }]));
-  assert.deepEqual(plan.writes.map((write) => path.basename(write.path)), ["activity-20261005aa.md", "activity-20261005ab.md"]);
-  assert.equal(fs.readFileSync(path.join(directory, "activity-20261005.md"), "utf8"), original);
-});
+for (const [existing, first, second] of [["z", "aaa", "aab"], ["zz", "aaa", "aab"], ["zzz", "aaaa", "aaab"]]) {
+  test(`one Issue allocates ${first} and ${second} after ${existing} while preserving existing activities`, (t) => {
+    const root = makeRoot(t);
+    const directory = path.join(root, "2026/202610/activities");
+    fs.mkdirSync(directory, { recursive: true });
+    const original = "---\ntype: activity\ndate: 2026-10-05\n---\n\n# Existing\n";
+    fs.writeFileSync(path.join(directory, "activity-20261005.md"), original);
+    fs.writeFileSync(path.join(directory, `activity-20261005${existing}.md`), original);
+    const { plan } = prepare(root, source(), manifest([{
+      number: 42, decision: "import", records: [activityRecord("first"), activityRecord("second")],
+    }]));
+    assert.deepEqual(plan.writes.map((write) => path.basename(write.path)), [`activity-20261005${first}.md`, `activity-20261005${second}.md`]);
+    assert.equal(fs.readFileSync(path.join(directory, "activity-20261005.md"), "utf8"), original);
+    assert.equal(fs.readFileSync(path.join(directory, `activity-20261005${existing}.md`), "utf8"), original);
+  });
+}
 
 test("an activity created by a peer after prepare is preserved and apply stops", async (t) => {
   const root = makeRoot(t);

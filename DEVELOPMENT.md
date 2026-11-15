@@ -301,7 +301,7 @@ activityはAsia/Tokyoの当日中に追記・補完・文章や構成の整理�
 
 | 教材の記録要素 | daybookでの対応 |
 | --- | --- |
-| 日付・題名 | `activities/activity-YYYYMMDDa.md` などに、一つの作業や出来事を記録。日内の接尾辞は `a…z, aa, ab…` と進め、同じ活動の追記は同じファイルを更新 |
+| 日付・題名 | `activities/activity-YYYYMMDDaaa.md` などに、一つの作業や出来事を記録。接尾辞は日付ごとに `aaa` から始め、`aab…aaz, aba…zzz, aaaa…` と進める。同じ活動の追記は同じファイルを更新し、既存の短い接尾辞や接尾辞なしの記録名も保持 |
 | 目的 | task に継続する目的を置き、activities にその日に取り組んだ目的を必要に応じて記載 |
 | 方法・手順と変更 | activities に試した方法と変更の経緯を記録し、参照した手順や資料へリンク |
 | 観察・結果 | activities に実行結果、失敗、不確かな結果を記録 |

@@ -14,8 +14,8 @@ daybook/
 │   ├── attachments/
 │   │   ├── task-YYYYMM-NNNNN/ # task creation month may differ from parent month
 │   │   ├── schedule-YYYYMMDD-name/
-│   │   └── activity-YYYYMMDDa/
-│   ├── activities/activity-YYYYMMDDa.md
+│   │   └── activity-YYYYMMDDaaa/
+│   ├── activities/activity-YYYYMMDDaaa.md
 │   ├── day-plan/day-plan-YYYYMMDD.md
 │   ├── schedules/schedule-YYYYMMDD-name.md
 │   └── tasks/task-YYYYMM-NNNNN-name.md
@@ -24,9 +24,9 @@ daybook/
     └── YYYYMMDD-HHMM-topic-00001.md
 ```
 
-- An activity belongs to the month in which it happened. Create a separate file for each coherent event or work episode, with a lowercase letter suffix immediately after the date: `activity-YYYYMMDDa.md`, through `z`, then `aa`, `ab`, through `zz`, then `aaa`. Restart at `a` for each activity date. Continue the same file for updates to that episode. Multiple episodes combined during concurrent work are acceptable; preserve all contributions.
-- Compare suffixes by length then alphabetically, rather than ordinary filename sorting. Allocate after the largest suffix found in current files, local Git history and pending writes; do not reuse gaps or deleted names. Use the bundled creation CLI and update CLI described in [operations.md](operations.md#add-an-activity), including updates to unsuffixed legacy files. The suffix is an allocation sequence, not an event time. Keep front matter `type: activity` and `date`; the activity date must agree with the filename and month.
-- Existing unsuffixed `activity-YYYYMMDD.md` files remain valid and may be updated for their existing episodes. Keep their links and attachments. New episodes use suffixed files; an existing unsuffixed file does not consume `a`. Do not bulk-split or rename old records.
+- An activity belongs to the month in which it happened. Create a separate file for each coherent event or work episode, with a lowercase letter suffix immediately after the date: `activity-YYYYMMDDaaa.md`, then `aab`, through `aaz`, then `aba`, and onward through `zzz`. The three-letter range covers 17,576 activities per date. On overflow, continue automatically with `aaaa`; likewise `zzzz` advances to `aaaaa`. There is no specification limit on suffix length. Restart at `aaa` for each activity date. Continue the same file for updates to that episode. Multiple episodes combined during concurrent work are acceptable; preserve all contributions.
+- Compare suffixes by length then alphabetically, rather than ordinary filename sorting. Allocate after the largest suffix found in current files, local Git history and pending writes, with a minimum new suffix of `aaa`; existing one- or two-letter suffixes do not continue the shorter sequence. Do not reuse gaps or deleted names. Use the bundled creation CLI and update CLI described in [operations.md](operations.md#add-an-activity). The suffix is an allocation sequence, not an event time. Keep front matter `type: activity` and `date`; the activity date must agree with the filename and month.
+- Existing unsuffixed `activity-YYYYMMDD.md` files and files with one- or two-letter suffixes remain valid and may be updated for their existing episodes. Keep their names, links and attachment paths. New episodes use the sequence starting at `aaa`; an existing unsuffixed file does not consume a suffix. Do not bulk-split or rename old records.
 - Updating an activity follows [Edit activities over time](activity-capture.md#edit-activities-over-time), including same-day refinement, dated supplements/corrections to older accounts, and the overnight finishing exception. Keep its actual date and saved path.
 - A schedule belongs to the month in which the event occurs and has one file per independent event. Separate unrelated events on the same day.
 - A task belongs permanently to the month in which the task was created. A September-created task for an October event stays under `YYYY/202609/tasks/`.

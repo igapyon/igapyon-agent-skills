@@ -37,7 +37,7 @@ File extensions do not determine whether content is text. Do not use base64, `da
 For a new attachment arising from an activity, use the year/month of that activity's `date`, including when recording past work later. Choose the folder name separately:
 
 - Task-related material: `YYYY/YYYYMM/attachments/<task-id>/`, using the related task's existing front matter `id`.
-- Material belonging only to the activity: `YYYY/YYYYMM/attachments/activity-YYYYMMDDa/`, using that activity's filename stem (including its letter suffix). Existing unsuffixed attachment folders remain valid.
+- Material belonging only to the activity: `YYYY/YYYYMM/attachments/activity-YYYYMMDDaaa/`, using that activity's actual filename stem (including its letter suffix). Existing unsuffixed and shorter-suffix attachment folders remain valid; keep their saved paths.
 
 The parent year/month records the activity month; the month inside a task-id records when the task was created. They may differ. For example, a November activity concerning an October task can create:
 

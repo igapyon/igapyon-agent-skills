@@ -21,26 +21,34 @@ function write(repo, relative, text = content()) {
   fs.writeFileSync(target, text);
 }
 
-test("letter carry and ordering follow a..z, aa..az, ba..zz, aaa", () => {
-  for (const [from, to] of [["", "a"], ["a", "b"], ["z", "aa"], ["az", "ba"], ["zz", "aaa"]]) {
+test("new suffixes start at aaa and grow beyond zzz while legacy names retain their order", () => {
+  assert.equal(nextActivitySuffix(), "aaa");
+  for (const [from, to] of [["", "aaa"], ["a", "aaa"], ["z", "aaa"], ["aa", "aaa"], ["az", "aaa"], ["zz", "aaa"],
+    ["aaa", "aab"], ["aaz", "aba"], ["azz", "baa"], ["zzz", "aaaa"], ["zzzz", "aaaaa"]]) {
     assert.equal(nextActivitySuffix(from), to);
   }
-  assert.deepEqual(["aa", "b", "z", "a", "aaa", "zz"].sort(compareActivitySuffixes), ["a", "b", "z", "aa", "zz", "aaa"]);
+  assert.equal(nextActivitySuffix("z".repeat(64)), "a".repeat(65));
+  assert.deepEqual(["aaaa", "aa", "b", "zzz", "z", "a", "aaa", "zz", "aab"].sort(compareActivitySuffixes),
+    ["a", "b", "z", "aa", "zz", "aaa", "aab", "zzz", "aaaa"]);
   assert.throws(() => nextActivitySuffix("A"));
 });
 
 test("allocation includes current files, deleted Git names, and pending plan paths", (t) => {
   const repo = root(t);
+  assert.equal(nextActivityPath(repo, DATE, noHistory).path, activityPath(DATE, "aaa"));
   write(repo, "2026/202611/activities/activity-20261103.md");
-  assert.equal(nextActivityPath(repo, DATE, noHistory).path, activityPath(DATE, "a"));
-  write(repo, activityPath(DATE, "z"));
-  assert.equal(nextActivityPath(repo, DATE, noHistory).path, activityPath(DATE, "aa"));
+  for (const suffix of ["a", "z", "aa", "zz"]) write(repo, activityPath(DATE, suffix));
+  assert.equal(nextActivityPath(repo, DATE, noHistory).path, activityPath(DATE, "aaa"));
+  write(repo, activityPath(DATE, "aaz"));
+  assert.equal(nextActivityPath(repo, DATE, noHistory).path, activityPath(DATE, "aba"));
+  const gitLog = () => `${activityPath(DATE, "azz")}\n2026/202611/activities/activity-20261104zzzz.md\n`;
+  assert.equal(nextActivityPath(repo, DATE, { gitLog }).path, activityPath(DATE, "baa"));
   const allocation = nextActivityPath(repo, DATE, {
-    gitLog: () => `${activityPath(DATE, "az")}\n2026/202611/activities/activity-20261104zz.md\n`,
-    reservedPaths: [activityPath(DATE, "ba")],
+    gitLog,
+    reservedPaths: [activityPath(DATE, "baa")],
   });
-  assert.equal(allocation.path, activityPath(DATE, "bb"));
-  assert.equal(nextActivityPath(repo, "2026-11-04", noHistory).path, activityPath("2026-11-04", "a"));
+  assert.equal(allocation.path, activityPath(DATE, "bab"));
+  assert.equal(nextActivityPath(repo, "2026-11-04", noHistory).path, activityPath("2026-11-04", "aaa"));
   assert.match(nextActivityPath(repo, DATE, { gitLog: () => { throw new Error("no history"); } }).warnings[0], /history is unavailable/);
 });
 
@@ -48,18 +56,18 @@ test("real local Git history reserves deleted suffixes", (t) => {
   const repo = root(t);
   const git = (...args) => execFileSync("git", args, { cwd: repo, stdio: "pipe" });
   git("init", "-q");
-  write(repo, activityPath(DATE, "zz"));
+  write(repo, activityPath(DATE, "zzz"));
   git("add", ".");
   git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.test", "commit", "-qm", "activity fixture");
-  fs.unlinkSync(path.join(repo, activityPath(DATE, "zz")));
-  assert.equal(nextActivityPath(repo, DATE).path, activityPath(DATE, "aaa"));
+  fs.unlinkSync(path.join(repo, activityPath(DATE, "zzz")));
+  assert.equal(nextActivityPath(repo, DATE).path, activityPath(DATE, "aaaa"));
 });
 
 test("creation preserves existing files, validates record dates and refuses symlink parents", (t) => {
   const repo = root(t);
   write(repo, activityPath(DATE, "a"), content("既存活動"));
   const result = createActivity({ repoRoot: repo, date: DATE, content: content("別件") }, noHistory);
-  assert.equal(result.path, activityPath(DATE, "b"));
+  assert.equal(result.path, activityPath(DATE, "aaa"));
   assert.match(fs.readFileSync(path.join(repo, activityPath(DATE, "a")), "utf8"), /既存活動/);
   assert.equal(fs.readFileSync(path.join(repo, result.path), "utf8"), content("別件"));
   assert.throws(() => createActivity({ repoRoot: repo, date: DATE, content: content().replace(DATE, "2026-11-04") }, noHistory), /must agree/);
@@ -83,28 +91,28 @@ test("a peer taking the chosen name causes a fresh allocation without replacing 
     return link(source, destination);
   });
   const result = createActivity({ repoRoot: repo, date: DATE, content: content("Own") }, noHistory);
-  assert.equal(result.path, activityPath(DATE, "b"));
-  assert.equal(fs.readFileSync(path.join(repo, activityPath(DATE, "a")), "utf8"), content("Peer"));
+  assert.equal(result.path, activityPath(DATE, "aab"));
+  assert.equal(fs.readFileSync(path.join(repo, activityPath(DATE, "aaa")), "utf8"), content("Peer"));
   assert.equal(fs.readFileSync(path.join(repo, result.path), "utf8"), content("Own"));
   assert.equal(fs.readdirSync(path.dirname(path.join(repo, result.path))).some((name) => name.endsWith(".tmp")), false);
 });
 
 test("a collision invisible to filename scanning reserves the rejected candidate", (t) => {
   const repo = root(t);
-  write(repo, activityPath(DATE, "a").replace(/\.md$/, ".MD"), content("Peer"));
+  write(repo, activityPath(DATE, "aaa").replace(/\.md$/, ".MD"), content("Peer"));
   const link = fs.linkSync;
   let attempts = 0;
   t.mock.method(fs, "linkSync", (source, destination) => {
     if (++attempts > 3) throw new Error("Repeated an invisible collision");
-    if (destination === path.join(repo, activityPath(DATE, "a"))) {
+    if (destination === path.join(repo, activityPath(DATE, "aaa"))) {
       throw Object.assign(new Error("Case-insensitive name collision"), { code: "EEXIST" });
     }
     return link(source, destination);
   });
   const result = createActivity({ repoRoot: repo, date: DATE, content: content("Own") }, noHistory);
-  assert.equal(result.path, activityPath(DATE, "b"));
+  assert.equal(result.path, activityPath(DATE, "aab"));
   assert.equal(attempts, 2);
-  assert.equal(fs.readFileSync(path.join(repo, activityPath(DATE, "a").replace(/\.md$/, ".MD")), "utf8"), content("Peer"));
+  assert.equal(fs.readFileSync(path.join(repo, activityPath(DATE, "aaa").replace(/\.md$/, ".MD")), "utf8"), content("Peer"));
   assert.equal(fs.readFileSync(path.join(repo, result.path), "utf8"), content("Own"));
 });
 
@@ -118,7 +126,7 @@ test("continuous collisions stop after 32 attempts and remove the temporary file
   });
   assert.throws(() => createActivity({ repoRoot: repo, date: DATE, content: content() }, noHistory), (error) => {
     assert.equal(error.code, "ACTIVITY_CREATE_CONFLICT");
-    assert.match(error.message, /activity-20261103af\.md/);
+    assert.match(error.message, /activity-20261103abf\.md/);
     return true;
   });
   assert.equal(attempts.length, 32);
@@ -128,15 +136,15 @@ test("continuous collisions stop after 32 attempts and remove the temporary file
 
 test("CLI skips a case variant on a case-insensitive filesystem", (t) => {
   const repo = root(t);
-  const variant = activityPath(DATE, "a").replace(/\.md$/, ".MD");
+  const variant = activityPath(DATE, "aaa").replace(/\.md$/, ".MD");
   write(repo, variant, content("Peer"));
-  if (!fs.existsSync(path.join(repo, activityPath(DATE, "a")))) return t.skip("Case-sensitive filesystem; invisible collisions are covered separately");
+  if (!fs.existsSync(path.join(repo, activityPath(DATE, "aaa")))) return t.skip("Case-sensitive filesystem; invisible collisions are covered separately");
   const draft = path.join(repo, "draft.md");
   fs.writeFileSync(draft, content("Own"));
   const cli = fileURLToPath(new URL("./create-activity.mjs", import.meta.url));
   const output = execFileSync(process.execPath, [cli, "--repo-root", repo, "--date", DATE, "--file", draft], { encoding: "utf8", timeout: 3000 });
   const result = JSON.parse(output);
-  assert.equal(result.path, activityPath(DATE, "b"));
+  assert.equal(result.path, activityPath(DATE, "aab"));
   assert.equal(fs.readFileSync(path.join(repo, variant), "utf8"), content("Peer"));
   assert.equal(fs.readFileSync(path.join(repo, result.path), "utf8"), content("Own"));
 });
@@ -158,6 +166,7 @@ test("parallel CLI creates retain both drafts under distinct names", async (t) =
   };
   const results = await Promise.all([run("Alpha"), run("Beta")]);
   assert.equal(new Set(results.map((item) => item.path)).size, 2);
+  assert.deepEqual(results.map((item) => item.path).sort(), [activityPath(DATE, "aaa"), activityPath(DATE, "aab")]);
   for (let index = 0; index < results.length; index++) {
     assert.equal(fs.readFileSync(path.join(repo, results[index].path), "utf8"), content(["Alpha", "Beta"][index]));
   }
