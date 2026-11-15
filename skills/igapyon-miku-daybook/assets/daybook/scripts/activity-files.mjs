@@ -5,9 +5,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { parseFrontMatter, validateIsoDate } from "./day-plan.mjs";
 
 export const ACTIVITY_FILENAME_PATTERN = /^activity-(\d{8})([a-z]+)?\.md$/;
+const FIRST_ACTIVITY_SUFFIX = "aaa";
 
 export function nextActivitySuffix(suffix = "") {
   if (!/^[a-z]*$/.test(suffix)) throw new Error("Activity suffix must contain lowercase a-z only");
+  // Legacy short names remain valid, but every new allocation starts at three letters.
+  if (suffix.length < FIRST_ACTIVITY_SUFFIX.length) return FIRST_ACTIVITY_SUFFIX;
   const letters = [...suffix];
   let index = letters.length - 1;
   while (index >= 0 && letters[index] === "z") letters[index--] = "a";
@@ -149,7 +152,7 @@ export function nextActivityPath(repoRoot, date, { reservedPaths = [], gitLog } 
 
 export function createActivity({ repoRoot, date, content }, dependencies = {}) {
   validateIsoDate(date);
-  validateActivityRecord(activityPath(date, "a"), content);
+  validateActivityRecord(activityPath(date, FIRST_ACTIVITY_SUFFIX), content);
   const reservedPaths = new Set(dependencies.reservedPaths ?? []);
   const directory = activityDirectory(repoRoot, date, true);
   const temporary = path.join(directory, `.activity-${randomUUID()}.tmp`);
