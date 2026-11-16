@@ -291,6 +291,8 @@ daybook では、課題管理に研究ノートと意思決定記録を組み合
 
 daybook利用中はactivityを共通の作業記録とし、会話の途中経過、URLの受領・閲覧結果、taskだけの操作も記録します。最初の有用な事実・案・疑問から、実質的に進んだ応答の区切りで保存し、結論や会話終了を待ちません。同じ作業は既存activityへ続け、後の判断で以前の経緯を消さないようにします。taskを操作した事実はactivityにも残し、activityへの記録だけを理由にtaskを変更しません。
 
+activityの記録依頼は未記録の内容を保存する依頼として扱います。対象の既存本文を確認してすべて記録済みなら、ファイルを変更せず「すでに記録済みです」と既存記録を示します。一部だけ未記録ならその内容を保存し、保存を確認できない場合は記録済みと断言しません。依頼や保存確認そのものを別のactivityにはしません。同じ作業の再実行や新しい判断・訂正は記録対象です。詳細は [Record only unsaved material](skills/igapyon-miku-daybook/references/activity-capture.md#record-only-unsaved-material) に集約します。
+
 activityはAsia/Tokyoの当日中に追記・補完・文章や構成の整理ができます。試行、観察、失敗、判断の順序は当日でも保持します。翌日以降は保存済みの経緯を残し、補足・事実訂正には実際の追記日・訂正日を明記します。後日の新しい作業や方針変更は、その日の新しいactivityから以前の記録へリンクします。意味を変えない誤字・書式修正は随時可能です。夜をまたぐ一続きの作業の直後の仕上げは同じactivityで許容し、翌日あらためて振り返る段階からは追記・訂正として扱います。この日付による区切りはdaybook独自の編集方針です。詳細は[Edit activities over time](skills/igapyon-miku-daybook/references/activity-capture.md#edit-activities-over-time)に集約します。
 
 利用中の実質的な話題の発端では、既存のdaybook記録が発言の理解に役立つ可能性を考えます。会話で省略された目的・人物・出来事も手がかりとし、必要な記録だけを絞って参照します。話題が変わっても既存の文脈を捨てず、直近のtaskへ引き寄せることも避けます。関連が不明でも会話と記録を進め、役立つ具体的な根拠がある候補だけを未確認として残します。過去に保存した推測リンク自体を、関係が確定した根拠として使いません。会話理解に必要なtaskの参照と、URLから関連task候補を探す専用操作の境界は [topic context](skills/igapyon-miku-daybook/references/activity-capture.md#interpret-a-new-topic-in-context) に記載します。
