@@ -34,10 +34,15 @@ File extensions do not determine whether content is text. Do not use base64, `da
 
 ## Store text attachments
 
-For a new attachment arising from an activity, use the year/month of that activity's `date`, including when recording past work later. Choose the folder name separately:
+After selecting material for in-repository retention, choose its location in this order:
 
-- Task-related material: `YYYY/YYYYMM/attachments/<task-id>/`, using the related task's existing front matter `id`.
-- Material belonging only to the activity: `YYYY/YYYYMM/attachments/activity-YYYYMMDDaaa/`, using that activity's actual filename stem (including its letter suffix). Existing unsuffixed and shorter-suffix attachment folders remain valid; keep their saved paths.
+1. **Already saved material:** use its saved path, including when updating it within the requested scope. A new activity, month, or task association does not move or duplicate it.
+2. **New material clearly related to an existing task:** prefer `YYYY/YYYYMM/attachments/<task-id>/`, using that task's existing front matter `id`.
+3. **New material without a task or a clear task relationship:** use `YYYY/YYYYMM/attachments/activity-YYYYMMDDaaa/`, using the actual activity filename stem, including its suffix, as the activity identifier. Existing unsuffixed and shorter-suffix names remain valid. A task is not needed for investigation or trial results to be retained here; do not create one solely to choose a storage folder.
+
+A clear task relationship means the material serves that task's purpose or is one of its work products; topic resemblance alone is insufficient. Leave an unsettled relationship open and use the activity's folder instead of forcing the material into a vaguely related task. An activity-only request can use an existing task's folder when that relationship is clear; the folder choice does not authorize editing the task.
+
+For a new artifact arising from an activity, use the year/month of that activity's `date`, including when recording past work later. A distinct new artifact or explicitly requested dated snapshot uses this new-artifact rule. An existing artifact keeps its saved path across months.
 
 The parent year/month records the activity month; the month inside a task-id records when the task was created. They may differ. For example, a November activity concerning an October task can create:
 
@@ -47,9 +52,9 @@ The parent year/month records the activity month; the month inside a task-id rec
 
 The task itself stays in its October `tasks/` directory. The same task-id may have attachment folders in multiple activity months; this is valid and does not require renaming the folder, moving the task, or creating another task. Link the material from the activity being recorded. When task editing is also in scope, use the task's links to relevant activities or material to make its supporting records discoverable. An activity-only request does not add a task edit just because the attachment folder uses a task-id.
 
-If an attachment request has no activity, for example because the user restricted written files, use the requested date of the work that produced a task attachment, defaulting to today in Asia/Tokyo, and the task-id folder. The common recording rules still apply during ordinary active use; do not create a dummy activity solely to choose an attachment location. For schedule-only material, use the event month and `attachments/schedule-YYYYMMDD-name/`.
+If an attachment request has no activity, for example because the user restricted written files, and a clearly related task exists, use the requested date of the work that produced the attachment, defaulting to today in Asia/Tokyo, and its task-id folder. The common recording rules still apply during ordinary active use; do not create a dummy activity or task solely to choose an attachment location. For schedule-only material, use the event month and `attachments/schedule-YYYYMMDD-name/`. If the requested scope prevents using or creating any relevant record, resolve the destination with the user rather than inventing an identifier.
 
-When updating or referring to an existing attachment, keep its saved path and reference that copy across months. A new activity or month does not move or duplicate existing material. A distinct new artifact or explicitly requested dated snapshot uses the new activity's month.
+When a task is later created from activities, or a previously uncertain task relationship becomes clear, link the task to the existing attachments at their saved paths within the task-edit scope. Do not automatically move, rename, or copy activity attachments into its task-id folder. New artifacts created after that task exists prefer its folder when clearly related; updates to an existing artifact still use its saved path. Keep one canonical copy when several tasks or activities use the material. Reorganization is a separate, explicitly requested operation, not a side effect of task consolidation.
 
 Use UTF-8 text, normally `.md` or `.txt`; preserve a useful native text format for reproduction scripts or selected command logs. Preserve a supplied filename when practical, avoid overwriting an existing file, create directories only when needed, and add a relative link from the record. Keep one copy of shared material and link to it from other records. Never copy attachments into generated day-plans.
 

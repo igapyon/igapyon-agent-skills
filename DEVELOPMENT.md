@@ -282,10 +282,15 @@ Note / Qiita 記事 Markdown は、媒体ごとの正本置き場で管理しま
 
 `igapyon-miku-daybook` の task と activities の役割整理では、MIT OpenCourseWare の [Guidelines for Keeping a Laboratory Notebook](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/b4c64ac11fc0a68466af7e025e29bf3e_lab_notebook.pdf) を参考にしています。これは [7.16 Experimental Molecular Biology: Biotechnology II（Spring 2005）](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/) の公開教材です。
 
-daybook では、課題管理に研究ノートと意思決定記録を組み合わせ、次のように役割を割り付けます。
+daybook では、課題管理に研究ノートと意思決定記録を組み合わせ、次のように役割を割り付けます。activityだけで作業を始め、継続し、再開できます。taskやwaypointは作業開始の前提ではありません。
 
-- **task**：仕事ごとの目的、現在の結論・採用方針、最新状態、未解決事項、次の行動を管理します。重要な変更の短い履歴と、関連する活動へのリンクを含めます。
-- **activities**：日付ごとに、取り組んだこと、試した方法、うまくいかなかったこと、検討した案、判断理由、その時点の到達点を記録します。結論が出なかった検討も活動です。読みやすい量の試行錯誤は同じ項目に収め、長い詳細は資料へ分けてリンクします。
+- **activities**：日付ごとに、取り組んだこと、試した方法、うまくいかなかったこと、検討した案、判断理由、誤りと訂正、その時点の到達点を記録します。結論が出なかった検討も活動です。読みやすい量の試行錯誤は同じ項目に収め、長い詳細は資料へ分けてリンクします。
+- **task**：蓄積した知見・結果・訂正を現在の理解としてまとめたいときや、予定・状態を管理したいときに作ります。仕事ごとの目的、現在の結論・採用方針、最新状態、未解決事項、次の行動を管理します。重要な変更の短い履歴と、関連する活動へのリンクを含め、元の活動は経緯として残します。
+- **waypoint**：必要に応じて再開地点を示す短いメモを残します。taskがなくてもactivityを直接参照できます。中断やセッション終了のたびに作る必要はありません。
+
+「こういう作業やってたっけ？」という問いには、話題・目的・日付などでactivityを絞り、誤りや訂正を含む経緯を調べて答えます。続きの作業を依頼されたら、その記録から再開できます。taskへの整理は必要になったときに依頼範囲内で行い、活動数・経過時間・中断だけを理由に自動作成しません。手順は [Find and resume earlier work](skills/igapyon-miku-daybook/references/waypoints.md#find-and-resume-earlier-work) と [Task and activity responsibilities](skills/igapyon-miku-daybook/references/operations.md#task-and-activity-responsibilities) に集約します。
+
+activityをtaskにまとめる際は、結論を中心に整理する作戦と、廃案・理由・誤り・訂正を含む判断の経緯も本文に残す作戦の両方を認めます。利用者の指示や確立した方針から選べないときは、taskを書き始める前にどちらで進めるか確認します。どちらも現在の結論を見つけやすくし、元のactivityと参照を保持します。通常の状態・日付更新で毎回この確認をする必要はありません。詳細は [Choose how to consolidate activities](skills/igapyon-miku-daybook/references/operations.md#choose-how-to-consolidate-activities) に記載します。
 
 標準手順をdaybookの記録でほぼ完結させているのは、実利用で別系統の状態ファイルとの責務が重複し、利用者が迷ったためです。発端と、併用時に利用者の意図を尊重する設計理由は、[2026-11-13の決定](DECISIONS.md#2026-11-13-prefer-daybook-for-work-state-when-used-together)に記録しています。
 
@@ -304,11 +309,11 @@ activityはAsia/Tokyoの当日中に追記・補完・文章や構成の整理�
 | 教材の記録要素 | daybookでの対応 |
 | --- | --- |
 | 日付・題名 | `activities/activity-YYYYMMDDaaa.md` などに、一つの作業や出来事を記録。接尾辞は日付ごとに `aaa` から始め、`aab…aaz, aba…zzz, aaaa…` と進める。同じ活動の追記は同じファイルを更新し、既存の短い接尾辞や接尾辞なしの記録名も保持 |
-| 目的 | task に継続する目的を置き、activities にその日に取り組んだ目的を必要に応じて記載 |
+| 目的 | activities に取り組んだ目的を必要に応じて記載し、task にまとめる場合は継続する目的を整理 |
 | 方法・手順と変更 | activities に試した方法と変更の経緯を記録し、参照した手順や資料へリンク |
 | 観察・結果 | activities に実行結果、失敗、不確かな結果を記録 |
-| 考察・結論 | activities に当時の判断と理由を残し、task に現在採用している結論を反映 |
-| 次にすること | activities にその時点の残課題を残し、task の次の行動を更新 |
+| 考察・結論 | activities に当時の判断と理由を残し、task があり編集が依頼範囲なら現在採用している結論を反映 |
+| 次にすること | activities にその時点の残課題を残し、task があり編集が依頼範囲なら次の行動を更新 |
 | データや資料の添付 | 添付は必要なテキストを標準とする。原本は別の場所で管理して安定した参照先を記録し、Git管理下へのバイナリ保存は極めて例外的な場合だけ許容する。作業中の原本・中間物は Git 管理外へ置く。活動で新しく生じた添付は活動月の `attachments/` に置き、task関連なら既存の `<task-id>/`、活動だけの資料ならactivityの記録ファイル名をフォルダ名にする。活動月とtask-id内の作成月が異なっていても正常。既存添付の更新・参照は保存済みの場所を使う |
 
 この分担は [SKILL.md](skills/igapyon-miku-daybook/SKILL.md) と [operations.md](skills/igapyon-miku-daybook/references/operations.md#task-and-activity-responsibilities) のエージェント向け編集指示として実装しています。本文に経緯や理由を記述し、既存の task ID と相対リンクで関連づけます。方針が変わったときは task を最新化し、以前の activities は当時の経緯として保持します。記録内容は会話や確認できた結果に基づいてまとめます。
@@ -316,6 +321,8 @@ activityはAsia/Tokyoの当日中に追記・補完・文章や構成の整理�
 依頼された task の作業・再開中は、確認できた進捗、採用済み方針、残課題、次の行動をtaskの現在地へ反映し、activityに経緯を残します。明示的なactivity-only・read-only等の制約、完了根拠、目的や日付などの個別フィールド変更scopeは維持します。day-planでは対象日を含む暫定期間を「今日の候補（予定は暫定）」として示し、期限月・予定週・作業内容があれば保持します。操作規則は[Task updates during requested work](skills/igapyon-miku-daybook/references/operations.md#task-updates-during-requested-work)と[Generate a day-plan](skills/igapyon-miku-daybook/references/operations.md#generate-a-day-plan)に記載します。
 
 daybook の添付は、Git 管理下のサイズ増加を抑えるため必要なテキストを標準とします。原本は別の場所で管理して安定した参照先を記録し、原本の一時コピーや変換中間物は Git 管理外に置きます。詳しい判定・例外・配置規則は [attachments.md](skills/igapyon-miku-daybook/references/attachments.md) に集約しています。
+
+添付の保存先は、まず既存資料の保存済みパスを維持します。新規資料は目的・成果物としての関係が明らかな既存taskのtask-id配下を優先し、taskがない・関係が定まらない場合はactivityの実際のファイル名から拡張子を除いた識別子を使います。添付のためだけにtaskを作りません。後からtaskにまとめても添付を自動で移動・複製せず、元の保存先へリンクします。task-id配下への保存だけではtask本文の編集を伴いません。
 
 daybookを入口にして、別のディレクトリやリポジトリの作業を行えます。参照はdaybookから作業対象への一方向とし、作業対象側の文書・引き継ぎ・リポジトリ向けの説明にdaybookへのリンクやパス、再開案内を追加しません。作業対象と再開に必要な情報はdaybook側へ置きます。手順は [Waypoints](skills/igapyon-miku-daybook/references/waypoints.md) を参照してください。
 
