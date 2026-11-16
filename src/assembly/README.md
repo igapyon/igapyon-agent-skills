@@ -54,7 +54,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-companion-techpost-writer](#igapyon-companion-techpost-writer) | **Experimental.** Turn rough technical observations into a readable Japanese post while preserving your voice. |
 | [igapyon-diary-writer](#igapyon-diary-writer) | Turn daily notes into diary source ready for igapyon's existing publishing process. |
 | [igapyon-ffmpeg-helper](#igapyon-ffmpeg-helper) | Turn an orchestra recording into a retained WAV master and a YouTube-ready video. |
-| [igapyon-miku-daybook](#igapyon-miku-daybook) | Record and resume work from activities; consolidate tasks and plans when needed. |
+| [igapyon-miku-daybook](#igapyon-miku-daybook) | Record work in activities, manage jobs with tasks, and grow thematic knowledge in topics. |
 | [igapyon-miku-soft-developer](#igapyon-miku-soft-developer) | Turn an application idea or maintenance request into a project following miku-soft's design rules. |
 | [igapyon-mikuku-agent](#igapyon-mikuku-agent) | Create Japanese technical essays and explanatory visuals with Mikuku's recognizable voice. |
 | [igapyon-note-writer](#igapyon-note-writer) | **Experimental.** Keep a Note article's publishable Markdown, metadata, and publication state in sync. |
@@ -246,16 +246,17 @@ You have a copied ZOOM H4essential rehearsal recording and want to preserve a us
 
 **When it helps**
 
-You can start, continue, and resume work from dated activities alone. When accumulated understanding needs a maintained summary or work needs task-level tracking, consolidate it into a task. Optional waypoints mark where to resume, and day-plans derive planned work from task and schedule records.
+You can start, continue, and resume work from dated activities alone. Use tasks to manage a job's progress and next actions, and topics to maintain knowledge, specifications, and adopted decisions. Tasks keep a short actionable conclusion and link to topic detail. Optional waypoints mark where to resume, and day-plans derive planned work from task and schedule records.
 
 **What you can achieve**
 
 - Record work episodes in activity files with daily letter suffixes starting at `aaa` and continuing past `zzz` to `aaaa`. Create and update tasks and schedules when needed, with priorities, planned periods, current conclusions, next actions, and links to supporting material.
-- During active use, capture conversation progress, URLs, and operation outcomes in activities, including task-only changes and URLs that cannot be read. Use past URL references as context while leaving uncertain relationships open.
+- During active use, capture conversation progress, URLs, and operation outcomes in activities, including task/topic changes and URLs that cannot be read. Use past URL references as context while leaving uncertain relationships open.
 - Refine same-day activities while preserving the sequence of work and decisions; preserve older accounts with dated supplements and corrections.
 - At the start of a substantive topic during active use, consider existing daybook records as context and consult them as needed, keeping speculative connections unconfirmed.
-- Find earlier work through its activities, including mistakes and corrections, and continue it without first creating a task or waypoint. When requested, consolidate the current understanding into a task while retaining the source activities.
-- Consolidate activities into a task around either current conclusions or conclusions with selected decision history. When the intended strategy is unclear, confirm the choice before writing the task.
+- Find earlier work through its activities, including mistakes and corrections, and continue it without first creating a task or waypoint. Consolidate knowledge directly into a topic when wanted, retaining the source activities and distinguishing confirmed findings from hypotheses.
+- Keep topics outside the date hierarchy under root `topics/`, directly there or in useful subdirectories. Save without settling a category, use links for overlapping themes, and keep existing paths stable.
+- Consolidate a particular job into a task when requested, keeping work state and next actions easy to find. Current conclusions and selected decision history are both valid strategies; when the intended strategy is unclear, confirm the choice before writing the task.
 - Keep existing attachment paths stable. For new attachments, prefer a clearly related existing task; otherwise use the activity's identifier without creating a task just for storage. A later task links to those files at their saved paths.
 - Save optional short Waypoints that point directly to activities or to a task across sessions. Ending a session does not require one.
 - Resume daybook-managed work in another directory or repository, keeping references from daybook to the work repository without adding pointers back to daybook there.

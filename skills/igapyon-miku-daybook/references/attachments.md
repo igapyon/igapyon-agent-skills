@@ -6,7 +6,9 @@ Read this reference before retaining supplied files, generated results, or suppo
 
 Use the following preference order within the requested recordkeeping scope:
 
-1. **Activity body:** Keep the work account, attempts, observations, findings, decision reasons, and remaining questions together while readable. Include enough context to understand the work without opening every linked artifact. Length alone does not require a separate file. During active use, task-only and schedule-only operations also receive the common [activity record](activity-capture.md); this does not authorize other task or schedule changes.
+This order concerns work accounts and supporting artifacts. For a requested maintained thematic summary or specification, use a [topic](topics.md), linking to its evidence. A topic is a daybook record, not an attachment or a reason to copy source material.
+
+1. **Activity body:** Keep the work account, attempts, observations, findings, decision reasons, and remaining questions together while readable. Include enough context to understand the work without opening every linked artifact. Length alone does not require a separate file. During active use, task-only, topic-only, and schedule-only operations also receive the common [activity record](activity-capture.md); this does not authorize changes to other records.
 2. **Durable storage outside daybook:** For material that needs a separate home, prefer a user-designated managed location outside this repository, including another Git repository. This applies to original material and valuable generated or human-edited results, whether text or binary. Keep the relevant findings and a stable reference in daybook.
 3. **Daybook attachments:** Choose a necessary text artifact when keeping it versioned with the record has a concrete benefit: for example, a dated investigation snapshot that supports a decision, or a compact reproduction script. An explicit request for an in-repository text attachment is sufficient. Neither receiving a file nor lacking an external destination automatically requires an attachment. Record the purpose briefly where it is not evident from the account or link label.
 
@@ -36,7 +38,7 @@ File extensions do not determine whether content is text. Do not use base64, `da
 
 After selecting material for in-repository retention, choose its location in this order:
 
-1. **Already saved material:** use its saved path, including when updating it within the requested scope. A new activity, month, or task association does not move or duplicate it.
+1. **Already saved material:** use its saved path, including when updating it within the requested scope. A new activity, month, task, or topic association does not move or duplicate it.
 2. **New material clearly related to an existing task:** prefer `YYYY/YYYYMM/attachments/<task-id>/`, using that task's existing front matter `id`.
 3. **New material without a task or a clear task relationship:** use `YYYY/YYYYMM/attachments/activity-YYYYMMDDaaa/`, using the actual activity filename stem, including its suffix, as the activity identifier. Existing unsuffixed and shorter-suffix names remain valid. A task is not needed for investigation or trial results to be retained here; do not create one solely to choose a storage folder.
 
@@ -55,6 +57,8 @@ The task itself stays in its October `tasks/` directory. The same task-id may ha
 If an attachment request has no activity, for example because the user restricted written files, and a clearly related task exists, use the requested date of the work that produced the attachment, defaulting to today in Asia/Tokyo, and its task-id folder. The common recording rules still apply during ordinary active use; do not create a dummy activity or task solely to choose an attachment location. For schedule-only material, use the event month and `attachments/schedule-YYYYMMDD-name/`. If the requested scope prevents using or creating any relevant record, resolve the destination with the user rather than inventing an identifier.
 
 When a task is later created from activities, or a previously uncertain task relationship becomes clear, link the task to the existing attachments at their saved paths within the task-edit scope. Do not automatically move, rename, or copy activity attachments into its task-id folder. New artifacts created after that task exists prefer its folder when clearly related; updates to an existing artifact still use its saved path. Keep one canonical copy when several tasks or activities use the material. Reorganization is a separate, explicitly requested operation, not a side effect of task consolidation.
+
+A topic also links to attachments at their existing paths. Creating or consolidating a topic adds no topic-specific attachment hierarchy; new supporting artifacts follow the same task/activity placement rules above, without creating a task solely for storage. Record-only scope restrictions still apply.
 
 Use UTF-8 text, normally `.md` or `.txt`; preserve a useful native text format for reproduction scripts or selected command logs. Preserve a supplied filename when practical, avoid overwriting an existing file, create directories only when needed, and add a relative link from the record. Keep one copy of shared material and link to it from other records. Never copy attachments into generated day-plans.
 
