@@ -8,7 +8,8 @@ A Waypoint is an optional short Markdown note that points to a place where work 
 
 Keep the work's canonical state in the existing records:
 
-- **Task, when present:** a maintained summary of purpose, completion conditions, latest conclusion and approach, current status, unresolved matters, and next actions.
+- **Task, when present:** purpose, completion conditions, progress, remaining work, next actions, and the short conclusion needed to act, with links to topic detail.
+- **Topic, when useful:** maintained thematic knowledge, specifications, adopted decisions, and current understanding, with links to evidence under [topics.md](topics.md).
 - **Activity:** dated work, trials, observations, failed or inconclusive approaches, corrections, and reasons for decisions; it can supply the full work context when there is no task.
 - **Waypoint, when useful:** the scope to resume, links to the relevant records and material, and the first thing to check.
 
@@ -20,11 +21,11 @@ Git state helps protect files before an edit or other concrete operation. It doe
 
 ## Find and resume earlier work
 
-For a question such as “こういう作業やってたっけ？”, use the purpose, terms, people, dates, or known paths in the conversation to search canonical `YYYY/YYYYMM/activities/activity-*.md` records, including unsuffixed legacy names. If dates are unknown, include relevant records across months and years. Narrow by filename or content before reading the useful candidates; do not load all activities or select only the newest file. Follow links to any relevant task, waypoint, or material when needed to understand the work. A missing task or waypoint is not evidence that the work was never done.
+For a question such as “こういう作業やってたっけ？”, use the purpose, terms, people, dates, or known paths in the conversation to search canonical `YYYY/YYYYMM/activities/activity-*.md` records, including unsuffixed legacy names. If dates are unknown, include relevant records across months and years. Narrow by filename or content before reading the useful candidates; do not load all activities or select only the newest file. Follow links to any relevant task, topic, waypoint, or material when needed to understand the work. A missing task or waypoint is not evidence that the work was never done.
 
 Report the matching activities with their dates and links, what was tried, the latest supported understanding, corrections to earlier conclusions, and remaining questions when known. Distinguish a proposed action from one actually performed. Keep different episodes distinct when a shared keyword alone does not identify the work. If no match is found, describe the searched scope; if multiple matches materially change the intended continuation, ask only about that ambiguity. A history question alone requests lookup and explanation, not execution of old next actions; common activity capture still follows the current recording scope.
 
-When the user requests continuation, resolve the scope from the named activity, task, or waypoint, or from the relevant records found above. Read only what is needed to reconstruct the current state. Use the activity's latest supported results and corrections; check an existing task's current state before relying on it. Continue the requested work under the work location's instructions and record new progress for its actual date under [activity-capture.md](activity-capture.md), preserving earlier accounts. A task or waypoint does not need to be created first. Task consolidation remains optional under [Task and activity responsibilities](operations.md#task-and-activity-responsibilities).
+When the user requests continuation, resolve the scope from the named activity, task, topic, or waypoint, or from the relevant records found above. Read only what is needed to reconstruct the current state. Use the activity's latest supported results and corrections; check an existing task's work state and any relevant topic's current specifications before relying on them. A topic's adopted or proposed approach alone does not establish execution or task completion. Continue the requested work under the work location's instructions and record new progress for its actual date under [activity-capture.md](activity-capture.md), preserving earlier accounts. A task or waypoint does not need to be created first. Task/topic consolidation remains optional under [record responsibilities](operations.md#task-and-activity-responsibilities).
 
 ## Resume from a Waypoint
 

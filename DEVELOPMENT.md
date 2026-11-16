@@ -282,19 +282,22 @@ Note / Qiita 記事 Markdown は、媒体ごとの正本置き場で管理しま
 
 `igapyon-miku-daybook` の task と activities の役割整理では、MIT OpenCourseWare の [Guidelines for Keeping a Laboratory Notebook](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/b4c64ac11fc0a68466af7e025e29bf3e_lab_notebook.pdf) を参考にしています。これは [7.16 Experimental Molecular Biology: Biotechnology II（Spring 2005）](https://ocw.mit.edu/courses/7-16-experimental-molecular-biology-biotechnology-ii-spring-2005/) の公開教材です。
 
-daybook では、課題管理に研究ノートと意思決定記録を組み合わせ、次のように役割を割り付けます。activityだけで作業を始め、継続し、再開できます。taskやwaypointは作業開始の前提ではありません。
+daybook では、課題管理に研究ノートと意思決定記録を組み合わせ、次のように役割を割り付けます。activityだけで作業を始め、継続し、再開できます。task・topic・waypointは作業開始の前提ではありません。
 
 - **activities**：日付ごとに、取り組んだこと、試した方法、うまくいかなかったこと、検討した案、判断理由、誤りと訂正、その時点の到達点を記録します。結論が出なかった検討も活動です。読みやすい量の試行錯誤は同じ項目に収め、長い詳細は資料へ分けてリンクします。
-- **task**：蓄積した知見・結果・訂正を現在の理解としてまとめたいときや、予定・状態を管理したいときに作ります。仕事ごとの目的、現在の結論・採用方針、最新状態、未解決事項、次の行動を管理します。重要な変更の短い履歴と、関連する活動へのリンクを含め、元の活動は経緯として残します。
+- **task**：仕事ごとの目的・完了条件・進捗・残作業・次の行動を管理します。作業を進めるための短い結論・採用方針と、topicやactivityへのリンクを残します。知見を保存するためだけにtaskを作らず、詳細な仕様や理由をtopicと二重に維持しません。仕事をtaskとしてまとめる明示的な依頼や、選択された判断経緯の記載には引き続き対応します。
+- **topic**：後から繰り返し参照したいテーマの知見・仕様・採用判断・現在の理解をまとめ、更新します。短い気づきから始められ、メモ・仮説・未確認事項も確定した知見と区別して含められます。taskを経由せずactivityから直接作れます。元のactivityへのリンクで根拠や訂正をたどれるようにし、taskの進捗や予定は持たせません。
 - **waypoint**：必要に応じて再開地点を示す短いメモを残します。taskがなくてもactivityを直接参照できます。中断やセッション終了のたびに作る必要はありません。
 
 「こういう作業やってたっけ？」という問いには、話題・目的・日付などでactivityを絞り、誤りや訂正を含む経緯を調べて答えます。続きの作業を依頼されたら、その記録から再開できます。taskへの整理は必要になったときに依頼範囲内で行い、活動数・経過時間・中断だけを理由に自動作成しません。手順は [Find and resume earlier work](skills/igapyon-miku-daybook/references/waypoints.md#find-and-resume-earlier-work) と [Task and activity responsibilities](skills/igapyon-miku-daybook/references/operations.md#task-and-activity-responsibilities) に集約します。
 
-activityをtaskにまとめる際は、結論を中心に整理する作戦と、廃案・理由・誤り・訂正を含む判断の経緯も本文に残す作戦の両方を認めます。利用者の指示や確立した方針から選べないときは、taskを書き始める前にどちらで進めるか確認します。どちらも現在の結論を見つけやすくし、元のactivityと参照を保持します。通常の状態・日付更新で毎回この確認をする必要はありません。詳細は [Choose how to consolidate activities](skills/igapyon-miku-daybook/references/operations.md#choose-how-to-consolidate-activities) に記載します。
+topicはdaybookルートの `topics/` に置き、年月の階層から独立させます。直下のファイルも任意のサブディレクトリも使えます。分類に迷う場合は直下に保存でき、保存のたびに階層設計を求めません。複数分野との関係は一つの保存先とリンクで表し、話題が広がっただけでは移動しません。必要な整理を依頼範囲内で行う際は参照リンクも整えます。新規topicは `type: topic` と実際の作成日・更新日を持ち、日付は配置を決めません。通常の会話やactivity記録だけではtopicを自動作成せず、既存taskの本文・添付の移動も始めません。詳細は [topics.md](skills/igapyon-miku-daybook/references/topics.md) に集約します。
+
+activityをまとめる際は、結論を中心に整理する作戦と、廃案・理由・誤り・訂正を含む判断の経緯も本文に残す作戦の両方を認めます。知見・仕様の整理にはtopicを使い、taskへの整理が明示された場合はその仕事の要点をまとめます。利用者の指示や確立した方針から作戦を選べないときは、まとめを書き始める前にどちらで進めるか確認します。どちらも現在の結論を見つけやすくし、元のactivityと参照を保持します。通常の状態・日付更新や限定されたtopic訂正で毎回この確認をする必要はありません。詳細は [Choose how to consolidate activities](skills/igapyon-miku-daybook/references/operations.md#choose-how-to-consolidate-activities) に記載します。
 
 標準手順をdaybookの記録でほぼ完結させているのは、実利用で別系統の状態ファイルとの責務が重複し、利用者が迷ったためです。発端と、併用時に利用者の意図を尊重する設計理由は、[2026-11-13の決定](DECISIONS.md#2026-11-13-prefer-daybook-for-work-state-when-used-together)に記録しています。
 
-daybook利用中はactivityを共通の作業記録とし、会話の途中経過、URLの受領・閲覧結果、taskだけの操作も記録します。最初の有用な事実・案・疑問から、実質的に進んだ応答の区切りで保存し、結論や会話終了を待ちません。同じ作業は既存activityへ続け、後の判断で以前の経緯を消さないようにします。taskを操作した事実はactivityにも残し、activityへの記録だけを理由にtaskを変更しません。
+daybook利用中はactivityを共通の作業記録とし、会話の途中経過、URLの受領・閲覧結果、taskやtopicだけの操作も記録します。最初の有用な事実・案・疑問から、実質的に進んだ応答の区切りで保存し、結論や会話終了を待ちません。同じ作業は既存activityへ続け、後の判断で以前の経緯を消さないようにします。taskやtopicを操作した事実はactivityにも残し、activityへの記録だけを理由にtaskやtopicを変更しません。
 
 activityの記録依頼は未記録の内容を保存する依頼として扱います。対象の既存本文を確認してすべて記録済みなら、ファイルを変更せず「すでに記録済みです」と既存記録を示します。一部だけ未記録ならその内容を保存し、保存を確認できない場合は記録済みと断言しません。依頼や保存確認そのものを別のactivityにはしません。同じ作業の再実行や新しい判断・訂正は記録対象です。詳細は [Record only unsaved material](skills/igapyon-miku-daybook/references/activity-capture.md#record-only-unsaved-material) に集約します。
 
@@ -312,11 +315,11 @@ activityはAsia/Tokyoの当日中に追記・補完・文章や構成の整理�
 | 目的 | activities に取り組んだ目的を必要に応じて記載し、task にまとめる場合は継続する目的を整理 |
 | 方法・手順と変更 | activities に試した方法と変更の経緯を記録し、参照した手順や資料へリンク |
 | 観察・結果 | activities に実行結果、失敗、不確かな結果を記録 |
-| 考察・結論 | activities に当時の判断と理由を残し、task があり編集が依頼範囲なら現在採用している結論を反映 |
+| 考察・結論 | activities に当時の判断と理由を残す。知見・仕様を維持する整理が依頼範囲ならtopicへまとめ、taskには仕事を進める短い結論と参照を保持 |
 | 次にすること | activities にその時点の残課題を残し、task があり編集が依頼範囲なら次の行動を更新 |
 | データや資料の添付 | 添付は必要なテキストを標準とする。原本は別の場所で管理して安定した参照先を記録し、Git管理下へのバイナリ保存は極めて例外的な場合だけ許容する。作業中の原本・中間物は Git 管理外へ置く。活動で新しく生じた添付は活動月の `attachments/` に置き、task関連なら既存の `<task-id>/`、活動だけの資料ならactivityの記録ファイル名をフォルダ名にする。活動月とtask-id内の作成月が異なっていても正常。既存添付の更新・参照は保存済みの場所を使う |
 
-この分担は [SKILL.md](skills/igapyon-miku-daybook/SKILL.md) と [operations.md](skills/igapyon-miku-daybook/references/operations.md#task-and-activity-responsibilities) のエージェント向け編集指示として実装しています。本文に経緯や理由を記述し、既存の task ID と相対リンクで関連づけます。方針が変わったときは task を最新化し、以前の activities は当時の経緯として保持します。記録内容は会話や確認できた結果に基づいてまとめます。
+この分担は [SKILL.md](skills/igapyon-miku-daybook/SKILL.md)・[operations.md](skills/igapyon-miku-daybook/references/operations.md#task-and-activity-responsibilities)・[topics.md](skills/igapyon-miku-daybook/references/topics.md) のエージェント向け編集指示として実装しています。本文に経緯や理由を記述し、task ID と相対リンクで関連づけます。方針が変わったときは依頼範囲内でtopicの現在の理解とtaskの短い作業状態を更新し、以前のactivitiesは当時の経緯として保持します。記録内容は会話や確認できた結果に基づいてまとめます。
 
 依頼された task の作業・再開中は、確認できた進捗、採用済み方針、残課題、次の行動をtaskの現在地へ反映し、activityに経緯を残します。明示的なactivity-only・read-only等の制約、完了根拠、目的や日付などの個別フィールド変更scopeは維持します。day-planでは対象日を含む暫定期間を「今日の候補（予定は暫定）」として示し、期限月・予定週・作業内容があれば保持します。操作規則は[Task updates during requested work](skills/igapyon-miku-daybook/references/operations.md#task-updates-during-requested-work)と[Generate a day-plan](skills/igapyon-miku-daybook/references/operations.md#generate-a-day-plan)に記載します。
 
@@ -326,7 +329,7 @@ daybook の添付は、Git 管理下のサイズ増加を抑えるため必要�
 
 daybookを入口にして、別のディレクトリやリポジトリの作業を行えます。参照はdaybookから作業対象への一方向とし、作業対象側の文書・引き継ぎ・リポジトリ向けの説明にdaybookへのリンクやパス、再開案内を追加しません。作業対象と再開に必要な情報はdaybook側へ置きます。手順は [Waypoints](skills/igapyon-miku-daybook/references/waypoints.md) を参照してください。
 
-task を最新状態として別管理すること、優先度・進捗・予定期間の管理、Markdown 記録間のリンクは daybook 側で加えた設計です。day-plan は task と schedule から既存の生成スクリプトが作る予定のスナップショットであり、教材にある週次の振り返りを自動化するものではありません。
+taskでの仕事の状態・優先度・予定期間の管理、topicでのテーマ別の理解と仕様の維持、Markdown記録間のリンクはdaybook側で加えた設計です。MIT教材がtopicという記録形式を定めているわけではありません。day-planはtaskとscheduleから既存の生成スクリプトが作る予定のスナップショットであり、topicを予定化したり、教材にある週次の振り返りを自動化したりするものではありません。
 
 task の `planning_state` は `planned` と `backlog` を分けます。planned の task は従来どおり日付をもとに「今日の作業」などへ表示し、Backlog は専用欄へ表示します。Backlog は進捗 `status` と別の属性で、日付なしでも登録できます。新しい task は `planned` を明記し、既存 task で属性が省略されている場合も planned として読み取ります。未着手や日付なしだけを理由にBacklogへ一括分類しません。
 
