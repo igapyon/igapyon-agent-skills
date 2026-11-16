@@ -130,6 +130,8 @@ Do not infer attendance, ticket purchase, registration, or a rehearsal role from
 
 ## Add an activity
 
+Before choosing creation or update, follow [Record only unsaved material](activity-capture.md#record-only-unsaved-material). If the requested information is already saved, confirm the existing record without calling a write CLI; apply the saving procedure below only when there is material to add or an explicitly requested edit.
+
 Before editing a saved activity, apply [Edit activities over time](activity-capture.md#edit-activities-over-time): same-day refinement preserves the meaningful sequence, while older accounts receive dated supplements or corrections. The same policy defines the narrow overnight finishing exception and meaning-neutral fixes.
 
 Use the Asia/Tokyo calendar date unless the user gives another date. Resolve whether this is a new episode or an update to an existing episode by reading the relevant activity titles and links for that date. New episodes use `activities/activity-YYYYMMDDaaa.md`, then `aab…aaz, aba…zzz, aaaa…`, restarting at `aaa` each date and increasing the suffix length on overflow. Continue the resolved file for a follow-up or correction to that episode. Existing unsuffixed and one- or two-letter files remain valid; preserve their names, links and attachments. When shorter legacy suffixes exist on the same date, the next new suffix is at least `aaa`. See [records.md](records.md#directory-and-filename-rules) for ordering and allocation rules. Multiple episodes in one file after parallel editing are acceptable.

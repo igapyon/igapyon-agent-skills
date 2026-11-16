@@ -36,6 +36,17 @@ Do not make a file per utterance or per task field. Skip acknowledgments and res
 
 Keep the evolving account in activities. Consolidate adopted results into a task when task editing is in scope under [operations.md](operations.md#task-updates-during-requested-work); retain a separate artifact when [attachments.md](attachments.md) justifies it. Unresolved conclusions, task association, or long-term storage do not prevent an activity record. Length alone does not require an attachment, and a conversation transcript is not the default deliverable.
 
+## Record only unsaved material
+
+Treat an activity recording request, including a repeated “activityを記録して”, as a request to save any still-unrecorded material. Repeating the save instruction alone adds no activity content. Compare the requested episode and its facts with the relevant saved activities before choosing a write. Reread their current bodies to verify coverage; an earlier success reply or filename alone is insufficient. Use known paths or scoped searches, including the actual activity date when it is earlier than today; do not scan all records for every request.
+
+- If all requested material is already saved, make no file change and do not invoke a write CLI. Reply briefly, for example “すでに記録済みです。追加する内容はありません。” with a link to the existing activity or activities. Do not rewrite for style, allocate another suffix, or record the request or this coverage check as another activity. A date change alone does not require a new record.
+- If some material is missing, save the unsaved information under the episode and date rules, preserving earlier contributions without repeating their account. This includes omissions from an earlier save, even if no work happened after it. Report the actual additions and saved paths.
+- If saved coverage cannot be verified, do not claim “記録済み”. Inspect the relevant records or report the specific uncertainty or access failure; ask for the target only when it cannot be resolved from context. A failed earlier save is not a saved record.
+- If there is no substantive material to save and no existing record to confirm, say that there is nothing to record rather than claiming it is already saved.
+
+Judge whether the same occurrence and information are recorded, rather than whether the wording matches. Work actually performed again is a new occurrence even if its result is identical. New observations, questions, decisions, or corrections remain recordable without a new execution. An explicit request to revise wording or organization follows the editing rules below.
+
 ## Edit activities over time
 
 Use the activity's front matter date and today's Asia/Tokyo calendar date to choose the editing approach. Editing a record does not renew this boundary; preserve its actual activity date and saved path.
@@ -90,4 +101,4 @@ Use the bundled creation/update CLIs under [Add an activity](operations.md#add-a
 
 Link results and supporting material using the existing record contract. New activity material uses the activity month and the related task-id folder where appropriate; updates to existing attachments keep their saved path. For work in other repositories, keep references on the daybook side and add no daybook pointers to the work repository or its repository-facing text.
 
-Report the actual saved activity path briefly after successful writing. If saving is unavailable, blocked, or fails, state what remains unrecorded instead of claiming success. Relationship uncertainty is a valid recorded result, not a save failure. Capture operates during available turns; it does not promise to preserve work interrupted before its save checkpoint or introduce background logging.
+Report the actual saved activity path briefly after successful writing. An already-saved outcome follows [Record only unsaved material](#record-only-unsaved-material) and reports the existing path without implying a new save. If saving is unavailable, blocked, or fails, state what remains unrecorded instead of claiming success. Relationship uncertainty is a valid recorded result, not a save failure. Capture operates during available turns; it does not promise to preserve work interrupted before its save checkpoint or introduce background logging.
