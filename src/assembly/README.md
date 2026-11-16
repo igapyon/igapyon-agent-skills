@@ -54,7 +54,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-companion-techpost-writer](#igapyon-companion-techpost-writer) | **Experimental.** Turn rough technical observations into a readable Japanese post while preserving your voice. |
 | [igapyon-diary-writer](#igapyon-diary-writer) | Turn daily notes into diary source ready for igapyon's existing publishing process. |
 | [igapyon-ffmpeg-helper](#igapyon-ffmpeg-helper) | Turn an orchestra recording into a retained WAV master and a YouTube-ready video. |
-| [igapyon-miku-daybook](#igapyon-miku-daybook) | Keep current tasks, the reasons behind decisions, and the next work plan connected. |
+| [igapyon-miku-daybook](#igapyon-miku-daybook) | Record and resume work from activities; consolidate tasks and plans when needed. |
 | [igapyon-miku-soft-developer](#igapyon-miku-soft-developer) | Turn an application idea or maintenance request into a project following miku-soft's design rules. |
 | [igapyon-mikuku-agent](#igapyon-mikuku-agent) | Create Japanese technical essays and explanatory visuals with Mikuku's recognizable voice. |
 | [igapyon-note-writer](#igapyon-note-writer) | **Experimental.** Keep a Note article's publishable Markdown, metadata, and publication state in sync. |
@@ -246,15 +246,18 @@ You have a copied ZOOM H4essential rehearsal recording and want to preserve a us
 
 **When it helps**
 
-You need both a current view of your work and a dated account of how you reached it. The daybook separates task state from activity history, then derives a day-plan from the records so you can see what needs attention.
+You can start, continue, and resume work from dated activities alone. When accumulated understanding needs a maintained summary or work needs task-level tracking, consolidate it into a task. Optional waypoints mark where to resume, and day-plans derive planned work from task and schedule records.
 
 **What you can achieve**
 
-- Create and update tasks, activities, and schedules with priorities, planned periods, current conclusions, next actions, and links to supporting material. Record distinct work episodes in separate activity files with daily letter suffixes (`a` through `z`, then `aa`, `ab`, and onward).
+- Record work episodes in activity files with daily letter suffixes starting at `aaa` and continuing past `zzz` to `aaaa`. Create and update tasks and schedules when needed, with priorities, planned periods, current conclusions, next actions, and links to supporting material.
 - During active use, capture conversation progress, URLs, and operation outcomes in activities, including task-only changes and URLs that cannot be read. Use past URL references as context while leaving uncertain relationships open.
 - Refine same-day activities while preserving the sequence of work and decisions; preserve older accounts with dated supplements and corrections.
 - At the start of a substantive topic during active use, consider existing daybook records as context and consult them as needed, keeping speculative connections unconfirmed.
-- Save short Waypoints that resume a task or an independently resumable subtask across sessions.
+- Find earlier work through its activities, including mistakes and corrections, and continue it without first creating a task or waypoint. When requested, consolidate the current understanding into a task while retaining the source activities.
+- Consolidate activities into a task around either current conclusions or conclusions with selected decision history. When the intended strategy is unclear, confirm the choice before writing the task.
+- Keep existing attachment paths stable. For new attachments, prefer a clearly related existing task; otherwise use the activity's identifier without creating a task just for storage. A later task links to those files at their saved paths.
+- Save optional short Waypoints that point directly to activities or to a task across sessions. Ending a session does not require one.
 - Resume daybook-managed work in another directory or repository, keeping references from daybook to the work repository without adding pointers back to daybook there.
 - Generate day-plan snapshots from those source records, or explicitly check whether a supplied URL relates to an existing task.
 - Show a complete provisional period containing the requested date as a clearly labelled work candidate, while keeping other provisional dates in review and Backlog separate.

@@ -4,6 +4,8 @@ This reference defines the file and data rules for the `daybook` repository. Rea
 
 For when to capture conversations, URLs, and operation outcomes during active use, follow [activity-capture.md](activity-capture.md). The schemas and paths below also apply to these ordinary activity records.
 
+Activities can stand alone for starting, continuing, and resuming work. Tasks and waypoints are created as needed under [Task and activity responsibilities](operations.md#task-and-activity-responsibilities) and [waypoints.md](waypoints.md); their presence in the layout below does not require one for every activity.
+
 ## Directory and filename rules
 
 Dated tasks, activities, schedules, and day-plans live under the relevant `YYYY/YYYYMM/` directory. Waypoints live at the daybook root:
@@ -33,7 +35,7 @@ daybook/
 - Keep a task in its creation-month `tasks/` directory when it becomes `done` or `cancelled`; update its status in place and do not move it to an archive or closed folder.
 - A day-plan belongs to the target date's month and is a generated snapshot.
 - Waypoints live in the daybook repository root, outside the year/month record directories. They are short resume entries; see [waypoints.md](waypoints.md) for naming, metadata, and update rules.
-- Choose record text, an external reference, or an in-repository attachment using [attachments.md](attachments.md). New activity attachments use the activity's month, with `attachments/<task-id>/` for task-related material or the activity's filename stem for material belonging only to that activity. An attachment's parent month may differ from the month in its task-id; task creation-month checks below apply to task records, not attachment folders. Keep existing attachment paths when updating or referencing them. Follow [attachments.md](attachments.md) for task-only and schedule-only placement, content selection, temporary files, and binary exceptions. Create directories only when needed.
+- Choose record text, an external reference, or an in-repository attachment using [attachments.md](attachments.md). Reuse an existing attachment's saved path first. For new activity material, use the activity's month and prefer `attachments/<task-id>/` only when an existing task's purpose or work products clearly relate to it; otherwise use the activity's actual filename stem. Do not create a task merely to store an attachment. An attachment's parent month may differ from the month in its task-id; task creation-month checks below apply to task records, not attachment folders. Keep existing attachment paths when updating or referencing them, including when a task is later created or linked. Follow [attachments.md](attachments.md) for task-only and schedule-only placement, content selection, temporary files, and binary exceptions. Create directories only when needed.
 - Use lowercase English prefixes. Tasks and schedules use a short English name suffix; activities use the letter sequence above. Preserve an existing filename and ID when updating its title or deadline.
 
 ## Task IDs and status
