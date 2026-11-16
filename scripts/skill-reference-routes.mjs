@@ -8,7 +8,7 @@ export const representativeRoutes = [
   ["igapyon-companion-techpost-writer", "polish a technical post", ["references/style-guide.md"]],
   ["igapyon-diary-writer", "write a diary entry", ["references/workflow.md"]],
   ["igapyon-ffmpeg-helper", "locate H4essential inputs", ["references/process/h4essential-input-discovery.md"]],
-  ["igapyon-miku-daybook", "capture activities and consolidate thematic knowledge", ["references/records.md", "references/operations.md", "references/activity-capture.md", "references/topics.md", "references/url-task-lookup.md", "assets/daybook/scripts/create-activity.mjs", "assets/daybook/scripts/update-activity.mjs", "assets/daybook/scripts/activity-files.mjs", "assets/daybook/scripts/vendor/yaml-runtime.mjs", "assets/daybook/scripts/vendor/yaml.LICENSE"]],
+  ["igapyon-miku-daybook", "capture activities, retain deferred todos, and consolidate thematic knowledge", ["references/records.md", "references/operations.md", "references/todos.md", "references/activity-capture.md", "references/topics.md", "references/url-task-lookup.md", "assets/daybook/scripts/create-activity.mjs", "assets/daybook/scripts/update-activity.mjs", "assets/daybook/scripts/activity-files.mjs", "assets/daybook/scripts/vendor/yaml-runtime.mjs", "assets/daybook/scripts/vendor/yaml.LICENSE"]],
   ["igapyon-miku-soft-developer", "create an Agent Skill", ["references/40-agent-skills-workflow.md"]],
   ["igapyon-mikuku-agent", "look up version, representative image, and article rules", ["references/VERSION.md", "assets/mikuku/mikuku01.png", "references/article-writing.md"]],
   ["igapyon-note-writer", "convert a Note table to an image", ["references/note-markdown-table-images.md"]],
