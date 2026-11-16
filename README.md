@@ -54,7 +54,7 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-companion-techpost-writer](#igapyon-companion-techpost-writer) | **Experimental.** Turn rough technical observations into a readable Japanese post while preserving your voice. |
 | [igapyon-diary-writer](#igapyon-diary-writer) | Turn daily notes into diary source ready for igapyon's existing publishing process. |
 | [igapyon-ffmpeg-helper](#igapyon-ffmpeg-helper) | Turn an orchestra recording into a retained WAV master and a YouTube-ready video. |
-| [igapyon-miku-daybook](#igapyon-miku-daybook) | Record work in activities, manage jobs with tasks, and grow thematic knowledge in topics. |
+| [igapyon-miku-daybook](#igapyon-miku-daybook) | Record work in activities, retain deferred actions in todos, manage jobs with tasks, and grow thematic knowledge in topics. |
 | [igapyon-miku-soft-developer](#igapyon-miku-soft-developer) | Turn an application idea or maintenance request into a project following miku-soft's design rules. |
 | [igapyon-mikuku-agent](#igapyon-mikuku-agent) | Create Japanese technical essays and explanatory visuals with Mikuku's recognizable voice. |
 | [igapyon-note-writer](#igapyon-note-writer) | **Experimental.** Keep a Note article's publishable Markdown, metadata, and publication state in sync. |
@@ -231,12 +231,13 @@ You have a copied ZOOM H4essential rehearsal recording and want to preserve a us
 
 **When it helps**
 
-You can start, continue, and resume work from dated activities alone. Use tasks to manage a job's progress and next actions, and topics to maintain knowledge, specifications, and adopted decisions. Tasks keep a short actionable conclusion and link to topic detail. Optional waypoints mark where to resume, and day-plans derive planned work from task and schedule records.
+You can start, continue, and resume work from dated activities alone. Keep actions set aside for later in lightweight todos, linked to their discovery. Use tasks to manage a job's progress and next actions, and topics to maintain knowledge, specifications, and adopted decisions. Tasks keep a short actionable conclusion and link to topic detail. Optional waypoints mark where to resume, and day-plans derive planned work from task and schedule records.
 
 **What you can achieve**
 
 - Record work episodes in activity files with daily letter suffixes starting at `aaa` and continuing past `zzz` to `aaaa`. Create and update tasks and schedules when needed, with priorities, planned periods, current conclusions, next actions, and links to supporting material.
-- During active use, capture conversation progress, URLs, and operation outcomes in activities, including task/topic changes and URLs that cannot be read. Use past URL references as context while leaving uncertain relationships open.
+- Capture separately deferred actions as todos without required priority or planned dates. List open items across months, complete them through activity-based work, or transfer them to a saved task while keeping the origin and handoff links.
+- During active use, capture conversation progress, URLs, and operation outcomes in activities, including todo/task/topic changes and URLs that cannot be read. Use past URL references as context while leaving uncertain relationships open.
 - Refine same-day activities while preserving the sequence of work and decisions; preserve older accounts with dated supplements and corrections.
 - At the start of a substantive topic during active use, consider existing daybook records as context and consult them as needed, keeping speculative connections unconfirmed.
 - Find earlier work through its activities, including mistakes and corrections, and continue it without first creating a task or waypoint. Consolidate knowledge directly into a topic when wanted, retaining the source activities and distinguishing confirmed findings from hypotheses.
@@ -244,8 +245,9 @@ You can start, continue, and resume work from dated activities alone. Use tasks 
 - Consolidate a particular job into a task when requested, keeping work state and next actions easy to find. Current conclusions and selected decision history are both valid strategies; when the intended strategy is unclear, confirm the choice before writing the task.
 - Keep existing attachment paths stable. For new attachments, prefer a clearly related existing task; otherwise use the activity's identifier without creating a task just for storage. A later task links to those files at their saved paths.
 - Save optional short Waypoints that point directly to activities or to a task across sessions. Ending a session does not require one.
+- Close the waypoint actually used to resume work when its scope finishes, after rereading it; no prior `in_use` annotation or separate close request is needed. Status inquiries report the current situation, while requested cleanup can reconcile stale entries and update them.
 - Resume daybook-managed work in another directory or repository, keeping references from daybook to the work repository without adding pointers back to daybook there.
-- Generate day-plan snapshots from those source records, or explicitly check whether a supplied URL relates to an existing task.
+- Generate day-plan snapshots from task and schedule records; open todos remain separately available in work overviews. Explicitly check whether a supplied URL relates to an existing task.
 - Show a complete provisional period containing the requested date as a clearly labelled work candidate, while keeping other provisional dates in review and Backlog separate.
 - When asked to work on or resume a specific task, keep its observed progress, adopted approach, remaining work, and next actions current; activities retain the dated history.
 - Keep date-planned work separate from a dedicated Backlog section; Backlog tasks can remain undated until they are scheduled.
@@ -253,7 +255,7 @@ You can start, continue, and resume work from dated activities alone. Use tasks 
 
 **Scope and prerequisites:** Markdown records are the source of truth. The bundled `.mjs` tools need Node.js and the included skill files; they do not require `npm install` or `npm ci`. A clear daybook request or current repository handoff can direct use; a name mention or skill review alone does not initially start record operations. On activation without an operation, the skill waits for input; subsequent substantive discussion or a user-provided URL starts activity capture. Explicit no-recording and file restrictions take precedence. GitHub Issue intake requires the bundled miku-scm skill to be installed. Notification delivery requires setup in the target repository.
 
-**Example:** Use igapyon-miku-daybook to record why we changed approach today, update the task's next action, and regenerate today's plan.
+**Example:** Use igapyon-miku-daybook to record today's investigation in an activity and keep the separately needed configuration fix as a todo, linking to that activity.
 
 [Full workflow, setup, and invocation rules](skills/igapyon-miku-daybook/SKILL.md).
 

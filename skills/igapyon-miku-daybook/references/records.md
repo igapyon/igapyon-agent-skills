@@ -4,11 +4,11 @@ This reference defines the file and data rules for the `daybook` repository. Rea
 
 For when to capture conversations, URLs, and operation outcomes during active use, follow [activity-capture.md](activity-capture.md). The schemas and paths below also apply to these ordinary activity records.
 
-Activities can stand alone for starting, continuing, and resuming work. Tasks, topics, and waypoints are created as needed under [record responsibilities](operations.md#task-and-activity-responsibilities), [topics.md](topics.md), and [waypoints.md](waypoints.md); their presence in the layout below does not require one for every activity.
+Activities can stand alone for starting, continuing, and resuming work. Todos, tasks, topics, and waypoints are created as needed under [todos.md](todos.md), [record responsibilities](operations.md#task-and-activity-responsibilities), [topics.md](topics.md), and [waypoints.md](waypoints.md); their presence in the layout below does not require one for every activity.
 
 ## Directory and filename rules
 
-Dated tasks, activities, schedules, and day-plans live under the relevant `YYYY/YYYYMM/` directory. Topics and waypoints live at the daybook root:
+Dated todos, tasks, activities, schedules, and day-plans live under the relevant `YYYY/YYYYMM/` directory. Topics and waypoints live at the daybook root:
 
 ```text
 daybook/
@@ -20,7 +20,8 @@ daybook/
 │   ├── activities/activity-YYYYMMDDaaa.md
 │   ├── day-plan/day-plan-YYYYMMDD.md
 │   ├── schedules/schedule-YYYYMMDD-name.md
-│   └── tasks/task-YYYYMM-NNNNN-name.md
+│   ├── tasks/task-YYYYMM-NNNNN-name.md
+│   └── todos/todo-YYYYMM-NNNNN-name.md
 ├── topics/
 │   ├── text-conversion.md         # saving directly here is valid
 │   └── daybook/                  # optional thematic grouping
@@ -35,13 +36,14 @@ daybook/
 - Existing unsuffixed `activity-YYYYMMDD.md` files and files with one- or two-letter suffixes remain valid and may be updated for their existing episodes. Keep their names, links and attachment paths. New episodes use the sequence starting at `aaa`; an existing unsuffixed file does not consume a suffix. Do not bulk-split or rename old records.
 - Updating an activity follows [Edit activities over time](activity-capture.md#edit-activities-over-time), including same-day refinement, dated supplements/corrections to older accounts, and the overnight finishing exception. Keep its actual date and saved path.
 - A schedule belongs to the month in which the event occurs and has one file per independent event. Separate unrelated events on the same day.
+- A todo belongs permanently to its creation-month `todos/` directory, including after completion, cancellation, or transfer. Its `todo-YYYYMM-NNNNN` ID uses a separate monthly sequence; follow [todos.md](todos.md) for allocation, metadata, and states.
 - A task belongs permanently to the month in which the task was created. A September-created task for an October event stays under `YYYY/202609/tasks/`.
 - Keep a task in its creation-month `tasks/` directory when it becomes `done` or `cancelled`; update its status in place and do not move it to an archive or closed folder.
 - A day-plan belongs to the target date's month and is a generated snapshot.
 - Topics live under root `topics/`, outside the year/month hierarchy. Use a short descriptive lowercase English filename with hyphens and `.md`, directly in that directory or a useful subdirectory. Their creation/update dates do not determine their location. Keep saved paths stable and represent other relationships with links; see [topics.md](topics.md) for scope, content, metadata, and optional organization.
 - Waypoints live in the daybook repository root, outside the year/month record directories. They are short resume entries; see [waypoints.md](waypoints.md) for naming, metadata, and update rules.
 - Choose record text, an external reference, or an in-repository attachment using [attachments.md](attachments.md). Reuse an existing attachment's saved path first. For new activity material, use the activity's month and prefer `attachments/<task-id>/` only when an existing task's purpose or work products clearly relate to it; otherwise use the activity's actual filename stem. Do not create a task merely to store an attachment. An attachment's parent month may differ from the month in its task-id; task creation-month checks below apply to task records, not attachment folders. Keep existing attachment paths when updating or referencing them, including when a task is later created or linked. Follow [attachments.md](attachments.md) for task-only and schedule-only placement, content selection, temporary files, and binary exceptions. Create directories only when needed.
-- Use lowercase English prefixes. Tasks and schedules use a short English name suffix; activities use the letter sequence above. Preserve an existing filename and ID when updating its title or deadline.
+- Use lowercase English prefixes. Todos, tasks, and schedules use a short English name suffix; activities use the letter sequence above. Preserve an existing filename and ID when updating its title or deadline.
 
 ## Task IDs and status
 
@@ -147,6 +149,10 @@ generated: YYYY-MM-DD
 ---
 ```
 
+## Todos
+
+For a new todo, use `type: todo`, persistent `id: todo-YYYYMM-NNNNN`, scalar `status: open`, and actual `created: YYYY-MM-DD`. The supported states are `open`, `done`, `cancelled`, and `transferred`; transfer requires a saved task covering the remaining action and a destination link. Priority, planned dates, `planning_state`, and a body status checkbox are not required. Use [todos.md](todos.md) for capture, cross-day updates, lists, execution, and handoff; do not confuse this record type with a task's `status: todo`.
+
 ## Topics
 
 For a new topic, use `type: topic`, `created: YYYY-MM-DD`, and `updated: YYYY-MM-DD` with actual Asia/Tokyo dates. Preserve the creation date and update `updated` only on an actual change. A topic uses its saved path as its reference; no task-id, allocation suffix, priority, status, completion checkbox, or planned dates are required. Existing topic conventions and unknown historical dates are handled under [topics.md](topics.md#content-and-dates). Topics are maintained thematic records, not task/schedule inputs to the day-plan generator.
@@ -161,7 +167,7 @@ When a task has implementation milestones or a firm external deadline in additio
 
 ## List display
 
-For a task-list request, display this header and one row per selected task:
+For a todo list or a broader remaining-work overview, follow [Lists and related records](todos.md#lists-and-related-records); todo lists include open items across months, separately from task lists. For a task-list request, display this header and one row per selected task:
 
 ```text
 ID / Priority / Status / Planning state / Planned start / Planned end / Title

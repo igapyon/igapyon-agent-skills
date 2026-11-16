@@ -58,6 +58,8 @@ If an attachment request has no activity, for example because the user restricte
 
 When a task is later created from activities, or a previously uncertain task relationship becomes clear, link the task to the existing attachments at their saved paths within the task-edit scope. Do not automatically move, rename, or copy activity attachments into its task-id folder. New artifacts created after that task exists prefer its folder when clearly related; updates to an existing artifact still use its saved path. Keep one canonical copy when several tasks or activities use the material. Reorganization is a separate, explicitly requested operation, not a side effect of task consolidation.
 
+A todo links to existing material and uses the same task/activity rules for new supporting artifacts; there is no todo-id attachment folder. Later transfer to a task keeps those paths.
+
 A topic also links to attachments at their existing paths. Creating or consolidating a topic adds no topic-specific attachment hierarchy; new supporting artifacts follow the same task/activity placement rules above, without creating a task solely for storage. Record-only scope restrictions still apply.
 
 Use UTF-8 text, normally `.md` or `.txt`; preserve a useful native text format for reproduction scripts or selected command logs. Preserve a supplied filename when practical, avoid overwriting an existing file, create directories only when needed, and add a relative link from the record. Keep one copy of shared material and link to it from other records. Never copy attachments into generated day-plans.
