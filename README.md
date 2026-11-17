@@ -466,7 +466,7 @@ may differ. The skill asks for a target format when it is unclear.
 **Example:** Use miku-md2formats to convert this Markdown guide to DOCX, keeping
 the source file and using a requested output path.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-md2formats-skills/blob/181b25087a82b52c35fb86e12003c087583119dd/skills/igapyon-miku-md2formats/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-md2formats-skills/blob/ddfd99f8c53411e536ca07c90f13084c2ad1c2e1/skills/igapyon-miku-md2formats/SKILL.md).
 
 ### igapyon-miku-ms-office
 

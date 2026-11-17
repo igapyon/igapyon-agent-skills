@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20261118.1</version>
+  <version>1.20261118.2</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -38,7 +38,7 @@
     <external.miku-ms-office-skills.ref>1b2dbd8ea7e7d7681664a0f12a954b61d8130e17</external.miku-ms-office-skills.ref>
     <external.miku-ms-office-skills.skillName>igapyon-miku-ms-office</external.miku-ms-office-skills.skillName>
     <external.miku-md2formats-skills.repo>https://github.com/igapyon/miku-md2formats-skills.git</external.miku-md2formats-skills.repo>
-    <external.miku-md2formats-skills.ref>181b25087a82b52c35fb86e12003c087583119dd</external.miku-md2formats-skills.ref>
+    <external.miku-md2formats-skills.ref>ddfd99f8c53411e536ca07c90f13084c2ad1c2e1</external.miku-md2formats-skills.ref>
     <external.miku-md2formats-skills.skillName>igapyon-miku-md2formats</external.miku-md2formats-skills.skillName>
     <external.miku-json2xlsx-skills.repo>https://github.com/igapyon/miku-json2xlsx-skills.git</external.miku-json2xlsx-skills.repo>
     <external.miku-json2xlsx-skills.ref>aab690d54a55022a7366b5325b103a5832d85a99</external.miku-json2xlsx-skills.ref>
