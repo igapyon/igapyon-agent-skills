@@ -2,6 +2,17 @@
 
 ## AI Agent Current Tasks
 
+### daybook：確定した記録階層をスキルへ反映（2026-11-17・計画済み／実装未着手）
+
+[確定仕様](docs/plans/daybook-record-layout.md)を運用用のSKILL・references・同梱CLIへ反映する[実装計画](docs/plans/daybook-record-layout-implementation.md)を作成しました。新規保存先を種別ルートへ変更し、旧配置の読み取り・更新・採番を維持します。
+
+- [x] 現行sourceを調査し、LAY-00〜07の実装順序・変更箇所・検証条件を整理。
+- [ ] LAY-01〜04：共通path処理、activity、day-plan/通知、Issue取り込みを対応。
+- [ ] LAY-05〜06：指示文・配布構成と新旧記録の動作を検証。
+- [ ] LAY-07：同期対象の開発依存除外を整合し、検証済みskillをユーザー用ディレクトリへ再同期。
+
+対象daybook内のruntime配備と実データ移行は後続工程です。作成日不明の旧taskは開始日を移行時の配置日に使い、以後は保存先を固定します。作成日・開始日とも不明のtaskだけ旧配置で保留します。
+
 ### daybook：使い勝手・応答速度・記録と作業支援の改善（2026-11-13・source実装済み/実対話評価待ち）
 
 [改善計画と実装記録](docs/plans/daybook-usability-and-recording-improvements.md)に沿ってUX-00〜03・05をsourceへ反映済み。暫定予定候補の表示、依頼されたtask作業の現在地反映、同一会話での準備確認再利用条件を実装した。実daybookへの移行・配備は未実施。
