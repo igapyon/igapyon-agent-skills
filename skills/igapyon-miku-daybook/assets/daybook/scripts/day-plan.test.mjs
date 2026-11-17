@@ -300,6 +300,77 @@ test("record discovery reads canonical records across months and skips backups a
   assert.equal(schedules.find((schedule) => schedule.frontMatter.status === "scheduled")?.frontMatter.status, "scheduled");
 });
 
+test("record discovery reads current and legacy layouts and accepts migrated tasks with a different ID month", (t) => {
+  const root = fixtureRoot();
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const currentTasks = path.join(root, "tasks/2026/202611/20261117");
+  fs.mkdirSync(currentTasks, { recursive: true });
+  writeRecord(currentTasks, "task-202611-00001-current.md", {
+    type: "task", id: "task-202611-00001", status: "todo", created: "2026-11-17",
+    planned_start_date: "2026-11-17", planned_end_date: "2026-11-17", planned_dates_status: "confirmed",
+  }, "Current task");
+  writeRecord(currentTasks, "task-202610-00014-migrated.md", {
+    type: "task", id: "task-202610-00014", status: "todo", planning_state: "backlog",
+    planned_date: "2026-11-19",
+  }, "Migrated task");
+  const legacyTaskDirectory = path.join(root, "2026/202610/tasks");
+  fs.mkdirSync(legacyTaskDirectory, { recursive: true });
+  writeRecord(legacyTaskDirectory, "task-202610-00015-legacy.md", {
+    type: "task", id: "task-202610-00015", status: "todo", created: "2026-10-01",
+  }, "Legacy task");
+  const currentSchedules = path.join(root, "schedules/2026/202611");
+  fs.mkdirSync(currentSchedules, { recursive: true });
+  writeRecord(currentSchedules, "schedule-20261117-current.md", {
+    type: "schedule", date: "2026-11-17", status: "scheduled",
+  }, "Current schedule");
+  const legacySchedules = path.join(root, "2026/202611/schedules");
+  fs.mkdirSync(legacySchedules, { recursive: true });
+  writeRecord(legacySchedules, "schedule-20261118-legacy.md", {
+    type: "schedule", date: "2026-11-18", status: "scheduled",
+  }, "Legacy schedule");
+
+  const { tasks, schedules } = loadRecords(root);
+  const migrated = tasks.find((task) => task.frontMatter.id === "task-202610-00014");
+  assert.equal(migrated.relativePath, "tasks/2026/202611/20261117/task-202610-00014-migrated.md");
+  assert.equal(migrated.frontMatter.created, undefined);
+  assert.equal(schedules.length, 5); // Three legacy fixture schedules plus current and legacy November schedules.
+  assert.ok(schedules.some((schedule) => schedule.relativePath === "schedules/2026/202611/schedule-20261117-current.md"));
+  assert.ok(schedules.some((schedule) => schedule.relativePath === "2026/202611/schedules/schedule-20261118-legacy.md"));
+
+  const plan = buildDayPlan({ repoRoot: root, targetDate: "2026-11-17", generatedDate: "2026-11-17" });
+  assert.equal(plan.records.backlogTasks.some((task) => task.frontMatter.id === "task-202610-00014"), true);
+  assert.equal(plan.records.todayTasks.some((task) => task.frontMatter.id === "task-202611-00001"), true);
+  writeRecord(currentTasks, "task-202610-00014-migrated.md", {
+    type: "task", id: "task-202610-00014", status: "todo", planning_state: "backlog",
+    planned_date: "2026-11-21",
+  }, "Migrated task");
+  assert.equal(loadRecords(root).tasks.find((task) => task.frontMatter.id === "task-202610-00014").relativePath, migrated.relativePath);
+});
+
+test("duplicate task IDs across current and legacy layouts stop discovery", (t) => {
+  const root = fixtureRoot();
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const duplicateDirectory = path.join(root, "tasks/2026/202609/20260901");
+  fs.mkdirSync(duplicateDirectory, { recursive: true });
+  writeRecord(duplicateDirectory, "task-202609-00001-duplicate.md", {
+    type: "task", id: "task-202609-00001", status: "todo", created: "2026-09-01",
+  }, "Duplicate task");
+  assert.throws(() => loadRecords(root), (error) => error.code === "DUPLICATE_RECORD"
+    && error.paths.some((item) => item.startsWith("2026/202609/tasks/"))
+    && error.paths.some((item) => item.startsWith("tasks/2026/202609/20260901/")));
+});
+
+test("current task placement validates created day and ID month while allowing migrated tasks without created", (t) => {
+  const root = fixtureRoot();
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const directory = path.join(root, "tasks/2026/202611/20261117");
+  fs.mkdirSync(directory, { recursive: true });
+  writeRecord(directory, "task-202611-00001-created-mismatch.md", {
+    type: "task", id: "task-202611-00001", status: "todo", created: "2026-11-18",
+  }, "Created mismatch");
+  assert.throws(() => loadRecords(root), /created date, path, and ID month must agree/);
+});
+
 test("invalid schedule status and mismatched task month are rejected", () => {
   const root = fixtureRoot();
   const schedules = path.join(root, "2026/202609/schedules");
@@ -314,7 +385,7 @@ test("invalid schedule status and mismatched task month are rejected", () => {
   writeRecord(wrongMonth, "task-202609-00010-wrong-month.md", {
     type: "task", id: "task-202609-00010", status: "todo", created: "2026-09-01",
   }, "月不一致");
-  assert.throws(() => loadRecords(root), /task path, filename, and ID must agree/);
+  assert.throws(() => loadRecords(root), /ID month must agree/);
 });
 
 test("schedule status must be a scalar string", () => {
@@ -339,7 +410,7 @@ test("task created month must match its creation-month directory", () => {
   writeRecord(tasks, "task-202610-00001-wrong-created-month.md", {
     type: "task", id: "task-202610-00001", status: "todo", created: "2026-09-30",
   }, "created 月不一致");
-  assert.throws(() => loadRecords(root), /task created month must agree with its directory and ID/);
+  assert.throws(() => loadRecords(root), /task created month must agree with its legacy directory/);
   fs.unlinkSync(path.join(tasks, "task-202610-00001-wrong-created-month.md"));
 
   writeRecord(tasks, "task-202610-00002-invalid-created.md", {
@@ -391,7 +462,7 @@ test("provisional periods containing the target date appear as candidates and ot
     assert.equal(section.some((task) => [20, 21, 22].includes(Number(task.frontMatter.id.slice(-5)))), false);
   }
   assert.match(plan.markdown, /## 今日の候補（予定は暫定）/);
-  assert.match(plan.markdown, /task-202609-00020：\[provisional-today\]\(\.\.\/tasks\/task-202609-00020-provisional-today\.md\)（優先度 7）\n  - 暫定期間 2026-09-14〜2026-09-14 \/ 作業 作業する \/ 期限月 2026-10 \/ 予定週 2026-09-14/);
+  assert.match(plan.markdown, /task-202609-00020：\[provisional-today\]\(\.\.\/\.\.\/\.\.\/2026\/202609\/tasks\/task-202609-00020-provisional-today\.md\)（優先度 7）\n  - 暫定期間 2026-09-14〜2026-09-14 \/ 作業 作業する \/ 期限月 2026-10 \/ 予定週 2026-09-14/);
   assert.match(plan.markdown, /日程要確認：暫定期間 2026-09-15〜2026-09-15/);
   assert.doesNotMatch(plan.markdown, /provisional-done|provisional-cancelled/);
 });
@@ -537,7 +608,7 @@ test("invalid task priority and schedule filename date are rejected", () => {
 
 test("day-plan output for a date is overwritten on regeneration", () => {
   const root = fixtureRoot();
-  const destination = path.join(root, "2026/202609/day-plan/day-plan-20260914.md");
+  const destination = path.join(root, "day-plans/2026/202609/day-plan-20260914.md");
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   fs.writeFileSync(destination, "手書きの内容\n");
   const plan = writeDayPlan({
@@ -561,7 +632,7 @@ test("CLI uses the canonical default output and honors an output-root override w
   const bundleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const scripts = path.join(root, "scripts");
   fs.mkdirSync(scripts, { recursive: true });
-  for (const filename of ["day-plan.mjs", "generate-day-plan.mjs"]) {
+  for (const filename of ["day-plan.mjs", "generate-day-plan.mjs", "record-paths.mjs"]) {
     fs.copyFileSync(path.join(bundleRoot, "scripts", filename), path.join(scripts, filename));
   }
   fs.cpSync(path.join(bundleRoot, "scripts/vendor"), path.join(scripts, "vendor"), { recursive: true });
@@ -584,11 +655,11 @@ test("CLI uses the canonical default output and honors an output-root override w
   const before = sourceSnapshot();
   const defaultRun = runGenerator([]);
   assert.equal(defaultRun.status, 0, defaultRun.stderr);
-  const canonicalPlan = path.join(fs.realpathSync(root), "2026/202609/day-plan/day-plan-20260914.md");
+  const canonicalPlan = path.join(fs.realpathSync(root), "day-plans/2026/202609/day-plan-20260914.md");
   assert.equal(defaultRun.stdout.trim(), `Generated ${canonicalPlan}`);
   assert.match(fs.readFileSync(canonicalPlan, "utf8"), /期限超過/);
   assert.match(fs.readFileSync(canonicalPlan, "utf8"), /## 今日の候補（予定は暫定）/);
-  assert.match(fs.readFileSync(canonicalPlan, "utf8"), /\[CLI provisional candidate\]\(\.\.\/tasks\/task-202609-00079-cli-provisional\.md\)/);
+  assert.match(fs.readFileSync(canonicalPlan, "utf8"), /\[CLI provisional candidate\]\(\.\.\/\.\.\/\.\.\/2026\/202609\/tasks\/task-202609-00079-cli-provisional\.md\)/);
   assert.match(fs.readFileSync(canonicalPlan, "utf8"), /## Backlog/);
   assert.match(fs.readFileSync(canonicalPlan, "utf8"), /CLI Backlog/);
 
@@ -596,13 +667,13 @@ test("CLI uses the canonical default output and honors an output-root override w
   const canonicalBeforeStaging = fs.readFileSync(canonicalPlan, "utf8");
   const stagedRun = runGenerator(["--output-root", stagedRoot]);
   assert.equal(stagedRun.status, 0, stagedRun.stderr);
-  const stagedPlan = path.join(stagedRoot, "2026/202609/day-plan/day-plan-20260914.md");
+  const stagedPlan = path.join(stagedRoot, "day-plans/2026/202609/day-plan-20260914.md");
   assert.equal(stagedRun.stdout.trim(), `Generated ${stagedPlan}`);
   const stagedMarkdown = fs.readFileSync(stagedPlan, "utf8");
   assert.match(stagedMarkdown, /期限超過/);
   assert.match(stagedMarkdown, /## 今日の候補（予定は暫定）/);
-  assert.match(stagedMarkdown, /\[CLI provisional candidate\]\(\.\.\/tasks\/task-202609-00079-cli-provisional\.md\)/);
-  assert.match(stagedMarkdown, /\]\(\.\.\/tasks\/task-202609-00006/);
+  assert.match(stagedMarkdown, /\[CLI provisional candidate\]\(\.\.\/\.\.\/\.\.\/2026\/202609\/tasks\/task-202609-00079-cli-provisional\.md\)/);
+  assert.match(stagedMarkdown, /\]\(\.\.\/\.\.\/\.\.\/2026\/202609\/tasks\/task-202609-00006/);
   assert.equal(fs.readFileSync(canonicalPlan, "utf8"), canonicalBeforeStaging);
   assert.deepEqual(sourceSnapshot(), before);
 });
@@ -610,10 +681,14 @@ test("CLI uses the canonical default output and honors an output-root override w
 test("day-plan links are relative to the canonical day-plan directory", () => {
   assert.equal(
     relativeLinkFromDayPlan("2026-09-14", "2026/202609/tasks/task-202609-00001-today.md"),
-    "../tasks/task-202609-00001-today.md",
+    "../../../2026/202609/tasks/task-202609-00001-today.md",
   );
   assert.equal(
     relativeLinkFromDayPlan("2026-09-14", "2026/202610/schedules/schedule-20261003-concert.md"),
-    "../../202610/schedules/schedule-20261003-concert.md",
+    "../../../2026/202610/schedules/schedule-20261003-concert.md",
+  );
+  assert.equal(
+    relativeLinkFromDayPlan("2026-09-14", "tasks/2026/202609/20260901/task-202609-00001-current.md"),
+    "../../../tasks/2026/202609/20260901/task-202609-00001-current.md",
   );
 });

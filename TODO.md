@@ -2,16 +2,18 @@
 
 ## AI Agent Current Tasks
 
-### daybook：確定した記録階層をスキルへ反映（2026-11-17・計画済み／実装未着手）
+### daybook：確定した記録階層をスキルへ反映（2026-11-17〜18・source実装・ユーザー用skill同期済み）
 
-[確定仕様](docs/plans/daybook-record-layout.md)を運用用のSKILL・references・同梱CLIへ反映する[実装計画](docs/plans/daybook-record-layout-implementation.md)を作成しました。新規保存先を種別ルートへ変更し、旧配置の読み取り・更新・採番を維持します。
+[確定仕様](docs/plans/daybook-record-layout.md)を運用用のSKILL・references・同梱CLIへ反映する[実装計画](docs/plans/daybook-record-layout-implementation.md)を完了しました。新規保存先を種別ルートへ変更し、旧配置の読み取り・更新・採番を維持します。ユーザー用skillもsourceと同期済みです。
 
 - [x] 現行sourceを調査し、LAY-00〜07の実装順序・変更箇所・検証条件を整理。
-- [ ] LAY-01〜04：共通path処理、activity、day-plan/通知、Issue取り込みを対応。
-- [ ] LAY-05〜06：指示文・配布構成と新旧記録の動作を検証。
-- [ ] LAY-07：同期対象の開発依存除外を整合し、検証済みskillをユーザー用ディレクトリへ再同期。
+- [x] LAY-01〜04：共通path処理、activity、day-plan/通知、Issue取り込みを対応。
+- [x] LAY-05〜06：指示文・配布構成を更新し、新旧記録の隔離動作を検証。
+- [x] LAY-07：同期対象の`node_modules/`除外を整合し、検証済みskillをユーザー用ディレクトリへ再同期・照合。
+- [x] 自己レビューでactivityの新旧重複検出と移行taskの削除済みID履歴検索を補強。
+- [x] `npm run test:daybook` 99/99、`npm run test:skill-index-policy` 78/78、skill-creator `quick_validate.py`、local link/anchor check、`git diff --check`が成功。
 
-対象daybook内のruntime配備と実データ移行は後続工程です。作成日不明の旧taskは開始日を移行時の配置日に使い、以後は保存先を固定します。作成日・開始日とも不明のtaskだけ旧配置で保留します。
+対象daybook内のruntime配備と実データ移行は後続工程です。作成日不明の旧taskは開始日を移行時の配置日に使い、以後は保存先を固定します。作成日・開始日とも不明のtaskだけ旧配置で保留します。task/todoのモデル指示を使った実対話評価は未実施です。
 
 ### daybook：使い勝手・応答速度・記録と作業支援の改善（2026-11-13・source実装済み/実対話評価待ち）
 
@@ -81,7 +83,7 @@ FIX-00〜07の修正はPR #444へ取り込み済み。BUC-02〜08と実repo照�
 ### daybook：活動月の添付と他リポジトリへの一方向参照（2026-11-11）
 
 - [x] [添付規則](skills/igapyon-miku-daybook/references/attachments.md#store-text-attachments)を活動月基準へ更新。関連task-id内の作成月が保存先の月と異なる場合を正常として説明し、既存添付の更新・参照は保存済みの場所を維持する。
-- [x] 別ディレクトリ・リポジトリでの作業をスキルの対応範囲へ明記。参照はdaybookから作業対象への一方向とし、[HANDOFFの例](skills/igapyon-miku-daybook/references/waypoints.md#entering-from-a-daybook-handoff)をdaybook自身の入口へ修正。関連する規則と利用者向け案内も整合。
+- [x] 別ディレクトリ・リポジトリでの作業をスキルの対応範囲へ明記。参照はdaybookから作業対象への一方向とし、[Waypoint再開例](skills/igapyon-miku-daybook/references/waypoints.md#resume-from-a-waypoint)をdaybook自身の入口へ修正。関連する規則と利用者向け案内も整合。
 - [x] `quick_validate.py`、既存の参照・配布suite（79/79）、`git diff --check`が成功。文書の分岐・例を確認した。実対話による動作確認は未実施。
 
 ### daybook：同梱CLIのNode.js単独実行（2026-11-08・自己レビュー2件を修正・検証済み）

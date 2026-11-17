@@ -290,7 +290,7 @@ daybook では、課題管理に研究ノートと意思決定記録を組み合
 - **topic**：後から繰り返し参照したいテーマの知見・仕様・採用判断・現在の理解をまとめ、更新します。短い気づきから始められ、メモ・仮説・未確認事項も確定した知見と区別して含められます。taskを経由せずactivityから直接作れます。元のactivityへのリンクで根拠や訂正をたどれるようにし、taskの進捗や予定は持たせません。
 - **waypoint**：必要に応じて再開地点を示す短いメモを残します。taskがなくてもactivityを直接参照できます。中断やセッション終了のたびに作る必要はありません。
 
-todoは作成月の `YYYY/YYYYMM/todos/todo-YYYYMM-NNNNN-name.md` に一件ずつ保存し、taskとは独立したIDを使います。状態は `open`・`done`・`cancelled`・`transferred` とし、着手・一部完了・待機中は `open` を保ちます。taskへ引き継ぐ場合は、既存taskを優先して残作業の保存を確認した後に `transferred` とし、実作業の完了と区別します。既存のactivity・添付は移動せず参照します。
+todoは作成日の `todos/YYYY/YYYYMM/YYYYMMDD/todo-YYYYMM-NNNNN-name.md` に一件ずつ保存し、taskとは独立した月単位IDを使います。従来の `YYYY/YYYYMM/todos/` にある記録は保存先を保って読み書きします。状態は `open`・`done`・`cancelled`・`transferred` とし、着手・一部完了・待機中は `open` を保ちます。taskへ引き継ぐ場合は、既存taskを優先して残作業の保存を確認した後に `transferred` とし、実作業の完了と区別します。既存のactivity・添付は移動せず参照します。
 
 「TODO追加」はtodo登録として扱い、「別途やる」と明確になった行動も依頼範囲内で拾います。提案や思いつきを自動的に義務へ変えず、activity-only等の制約を優先します。未処理一覧は全月の `open` を対象とし、日々の通常作業で全件を点検しません。task一覧と区別し、daybook全体の残作業を問われた場合は両方を示します。day-plan・通知の入力は既存のtask・scheduleとし、todoは別に参照します。詳細は [todos.md](skills/igapyon-miku-daybook/references/todos.md) に集約します。
 

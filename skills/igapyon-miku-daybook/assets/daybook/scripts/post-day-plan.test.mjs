@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { markerForDate, postDayPlan, renderComment } from "./post-day-plan.mjs";
+import { markerForDate, postDayPlan, renderComment, resolvePlanPath } from "./post-day-plan.mjs";
 import { buildDayPlan } from "./day-plan.mjs";
 
 test("renderComment omits an unset or empty mention and keeps commit-pinned source links", () => {
@@ -17,7 +17,7 @@ generated: 2026-09-14
 
 # 9月14日 デイリーブリーフ
 
-- [今日のタスク](../tasks/task-202609-00001-today.md)
+- [今日のタスク](../../../tasks/2026/202609/20260914/task-202609-00001-today.md)
 - [外部資料](https://example.com/reference)
 `;
     for (const value of [undefined, ""]) {
@@ -33,13 +33,43 @@ generated: 2026-09-14
       assert.equal(markerForDate("2026-09-14", "0 3 * * *"), markerForDate("2026-09-14"));
       assert.match(body, /<!-- daybook-briefing:2026-09-14 -->/);
       assert.doesNotMatch(body, /^@[^\n]+$/m);
-      assert.match(body, /https:\/\/github\.com\/igapyon\/daybook\/blob\/abc123\/2026\/202609\/tasks\/task-202609-00001-today\.md/);
+      assert.match(body, /https:\/\/github\.com\/igapyon\/daybook\/blob\/abc123\/tasks\/2026\/202609\/20260914\/task-202609-00001-today\.md/);
       assert.match(body, /https:\/\/example\.com\/reference/);
     }
   } finally {
     if (previousMention === undefined) delete process.env.DAYBOOK_MENTION;
     else process.env.DAYBOOK_MENTION = previousMention;
   }
+});
+
+test("resolvePlanPath recognizes canonical current and legacy plan paths in copied artifacts", () => {
+  const root = path.join(os.tmpdir(), "copied-plan-artifact");
+  assert.equal(resolvePlanPath({
+    date: "2026-09-14",
+    filePath: path.join(root, "day-plans/2026/202609/day-plan-20260914.md"),
+  }), "day-plans/2026/202609/day-plan-20260914.md");
+  assert.equal(resolvePlanPath({
+    date: "2026-09-14",
+    filePath: path.join(root, "2026/202609/day-plan/day-plan-20260914.md"),
+  }), "2026/202609/day-plan/day-plan-20260914.md");
+  assert.equal(resolvePlanPath({
+    date: "2026-09-14",
+    filePath: path.join(root, "artifact.md"),
+    planPath: "2026/202609/day-plan/day-plan-20260914.md",
+  }), "2026/202609/day-plan/day-plan-20260914.md");
+  assert.throws(() => resolvePlanPath({
+    date: "2026-09-14",
+    planPath: "day-plans/2026/202609/day-plan-20260915.md",
+  }), /must be a canonical day-plan path/);
+
+  const legacyComment = renderComment({
+    markdown: `---\ntype: day-plan\ndate: 2026-09-14\ngenerated: 2026-09-14\n---\n\n- [legacy task](../tasks/task-202609-00001-old.md)\n`,
+    date: "2026-09-14",
+    repo: "igapyon/daybook",
+    sha: "abc123",
+    planPath: "2026/202609/day-plan/day-plan-20260914.md",
+  });
+  assert.match(legacyComment, /https:\/\/github\.com\/igapyon\/daybook\/blob\/abc123\/2026\/202609\/tasks\/task-202609-00001-old\.md/);
 });
 
 test("renderComment uses a configured mention", () => {

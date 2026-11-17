@@ -89,7 +89,7 @@ test("CLI prepare and apply create only the planned local activity and run artif
   const prepared = JSON.parse(prepare.stdout);
   assert.match(prepared.plan_id, /^[a-f0-9]{64}$/);
   assert.equal(prepared.writes, 1);
-  assert.equal(fs.existsSync(path.join(root, "2026/202610/activities/activity-20261005.md")), false);
+  assert.equal(fs.existsSync(path.join(root, "activities/2026/202610/20261005/activity-20261005.md")), false);
   assert.equal(fs.existsSync(path.join(directory, "preview.md")), true);
   const apply = run(root, [
     "apply", "--repo-root", root, "--plan", rel("plan.json"),
@@ -99,7 +99,7 @@ test("CLI prepare and apply create only the planned local activity and run artif
   const result = JSON.parse(fs.readFileSync(path.join(directory, "result.json"), "utf8"));
   assert.equal(result.status, "local-written");
   assert.equal(result.issues[0].comment.status, "pending");
-  assert.match(fs.readFileSync(path.join(root, "2026/202610/activities/activity-20261005aaa.md"), "utf8"), /合奏に参加した/);
+  assert.match(fs.readFileSync(path.join(root, "activities/2026/202610/20261005/activity-20261005aaa.md"), "utf8"), /合奏に参加した/);
   assert.equal(fs.existsSync(path.join(directory, "comment-42.md")), true);
   assert.equal(fs.existsSync(path.join(root, "workplace/issue-import.lock")), false);
 });

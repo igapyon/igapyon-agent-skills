@@ -5,7 +5,7 @@ import path from "node:path";
 import { execFileSync, spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { activityPath, compareActivitySuffixes, createActivity, nextActivityPath, nextActivitySuffix, validateActivityRecord } from "./activity-files.mjs";
+import { activityPath, compareActivitySuffixes, createActivity, nextActivityPath, nextActivitySuffix, readActivity, updateActivity, validateActivityRecord } from "./activity-files.mjs";
 
 const DATE = "2026-11-03";
 const noHistory = { gitLog: () => "" };
@@ -19,6 +19,11 @@ function write(repo, relative, text = content()) {
   const target = path.join(repo, relative);
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, text);
+}
+function legacyActivityPath(date, suffix = "") {
+  const compact = date.replaceAll("-", "");
+  const month = compact.slice(0, 6);
+  return `${compact.slice(0, 4)}/${month}/activities/activity-${compact}${suffix}.md`;
 }
 
 test("new suffixes start at aaa and grow beyond zzz while legacy names retain their order", () => {
@@ -36,8 +41,8 @@ test("new suffixes start at aaa and grow beyond zzz while legacy names retain th
 test("allocation includes current files, deleted Git names, and pending plan paths", (t) => {
   const repo = root(t);
   assert.equal(nextActivityPath(repo, DATE, noHistory).path, activityPath(DATE, "aaa"));
-  write(repo, "2026/202611/activities/activity-20261103.md");
-  for (const suffix of ["a", "z", "aa", "zz"]) write(repo, activityPath(DATE, suffix));
+  write(repo, legacyActivityPath(DATE));
+  for (const suffix of ["a", "z", "aa", "zz"]) write(repo, legacyActivityPath(DATE, suffix));
   assert.equal(nextActivityPath(repo, DATE, noHistory).path, activityPath(DATE, "aaa"));
   write(repo, activityPath(DATE, "aaz"));
   assert.equal(nextActivityPath(repo, DATE, noHistory).path, activityPath(DATE, "aba"));
@@ -50,6 +55,17 @@ test("allocation includes current files, deleted Git names, and pending plan pat
   assert.equal(allocation.path, activityPath(DATE, "bab"));
   assert.equal(nextActivityPath(repo, "2026-11-04", noHistory).path, activityPath("2026-11-04", "aaa"));
   assert.match(nextActivityPath(repo, DATE, { gitLog: () => { throw new Error("no history"); } }).warnings[0], /history is unavailable/);
+});
+
+test("allocation stops when the same activity identity exists in current and legacy layouts", (t) => {
+  const repo = root(t);
+  write(repo, activityPath(DATE, "aaa"));
+  write(repo, legacyActivityPath(DATE, "aaa"));
+  assert.throws(() => nextActivityPath(repo, DATE, noHistory), (error) => {
+    assert.equal(error.code, "DUPLICATE_RECORD");
+    assert.deepEqual(error.paths, [legacyActivityPath(DATE, "aaa"), activityPath(DATE, "aaa")]);
+    return true;
+  });
 });
 
 test("real local Git history reserves deleted suffixes", (t) => {
@@ -65,16 +81,16 @@ test("real local Git history reserves deleted suffixes", (t) => {
 
 test("creation preserves existing files, validates record dates and refuses symlink parents", (t) => {
   const repo = root(t);
-  write(repo, activityPath(DATE, "a"), content("既存活動"));
+  write(repo, legacyActivityPath(DATE, "a"), content("既存活動"));
   const result = createActivity({ repoRoot: repo, date: DATE, content: content("別件") }, noHistory);
   assert.equal(result.path, activityPath(DATE, "aaa"));
-  assert.match(fs.readFileSync(path.join(repo, activityPath(DATE, "a")), "utf8"), /既存活動/);
+  assert.match(fs.readFileSync(path.join(repo, legacyActivityPath(DATE, "a")), "utf8"), /既存活動/);
   assert.equal(fs.readFileSync(path.join(repo, result.path), "utf8"), content("別件"));
   assert.throws(() => createActivity({ repoRoot: repo, date: DATE, content: content().replace(DATE, "2026-11-04") }, noHistory), /must agree/);
   assert.throws(() => validateActivityRecord("2026/202610/activities/activity-20261103a.md", content()), /must agree/);
-  assert.throws(() => validateActivityRecord("2026/202611/activities/activity-20261103A.md", content()), /Invalid activity path/);
+  assert.throws(() => validateActivityRecord("2026/202611/activities/activity-20261103A.md", content()), /Invalid activity filename/);
   const other = root(t), outside = root(t);
-  fs.symlinkSync(outside, path.join(other, "2026"), "dir");
+  fs.symlinkSync(outside, path.join(other, "activities"), "dir");
   assert.throws(() => createActivity({ repoRoot: other, date: DATE, content: content() }, noHistory), { code: "PATH_OUTSIDE_REPO" });
   assert.deepEqual(fs.readdirSync(outside), []);
 });
@@ -131,7 +147,24 @@ test("continuous collisions stop after 32 attempts and remove the temporary file
   });
   assert.equal(attempts.length, 32);
   assert.equal(new Set(attempts).size, 32);
-  assert.deepEqual(fs.readdirSync(path.join(repo, "2026/202611/activities")), []);
+  assert.deepEqual(fs.readdirSync(path.join(repo, "activities/2026/202611/20261103")), []);
+});
+
+test("legacy activities are read and updated at their original path", (t) => {
+  const repo = root(t);
+  const legacyPath = "2026/202611/activities/activity-20261103ab.md";
+  write(repo, legacyPath, content("Legacy activity"));
+  const snapshot = readActivity({ repoRoot: repo, path: legacyPath });
+  const updatedContent = `${snapshot.content}\nLegacy path retained.\n`;
+  const updated = updateActivity({
+    repoRoot: repo,
+    path: legacyPath,
+    expectedSha256: snapshot.sha256,
+    content: updatedContent,
+  });
+  assert.equal(updated.path, legacyPath);
+  assert.equal(fs.readFileSync(path.join(repo, legacyPath), "utf8"), updatedContent);
+  assert.equal(fs.existsSync(path.join(repo, activityPath(DATE, "aaa"))), false);
 });
 
 test("CLI skips a case variant on a case-insensitive filesystem", (t) => {

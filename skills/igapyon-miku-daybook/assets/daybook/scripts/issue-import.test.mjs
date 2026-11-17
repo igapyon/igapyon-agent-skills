@@ -25,6 +25,7 @@ import {
 } from "./issue-import.mjs";
 import { buildDayPlan, loadRecords } from "./day-plan.mjs";
 import { updateActivity } from "./activity-files.mjs";
+import { parseRecordPath } from "./record-paths.mjs";
 
 const REPO = "acme/daybook";
 const IMPORT_DATE = "2026-10-06";
@@ -330,7 +331,7 @@ test("a saved schema v1 plan and result without planning_state still apply and r
   const { plan } = prepare(root, source(), manifest([{
     number: 42, decision: "import", records: [taskRecord("legacy")],
   }]));
-  const taskWrite = plan.writes.find((write) => write.path.includes("/tasks/"));
+  const taskWrite = plan.writes.find((write) => parseRecordPath(write.path).type === "task");
   taskWrite.content = taskWrite.content.replace(/^planning_state: planned\n/m, "");
   taskWrite.after_hash = sha256(taskWrite.content);
   const taskRecordRef = plan.issues[0].records.find((record) => record.type === "task");
@@ -378,7 +379,7 @@ test("provisional date evidence cannot shadow the generated import receipt", (t)
     date_evidence: { planned_start_date: injected, planned_end_date: "仮置き：来週中" },
   })] }]));
   const issueResult = result.plan.issues[0];
-  const writtenTask = result.plan.writes.find((write) => write.path.includes("/tasks/"));
+  const writtenTask = result.plan.writes.find((write) => parseRecordPath(write.path).type === "task");
   assert.doesNotMatch(issueResult.comment_body, /<!-- daybook-issue-import-data:v1 \{\} -->/);
   assert.match(issueResult.comment_body, /&lt;!-- daybook-issue-import-data:v1 \{\} --&gt;/);
   assert.match(writtenTask.content, /&lt;!-- daybook-issue-import-data:v1 \{\} --&gt;/);
@@ -412,9 +413,9 @@ test("prepare generates all three canonical record types and a stable preview wi
   const { plan, preview } = result;
   assert.match(plan.plan_id, /^[a-f0-9]{64}$/);
   assert.equal(plan.writes.length, 3);
-  const task = plan.writes.find((write) => write.path.includes("/tasks/"));
-  const schedule = plan.writes.find((write) => write.path.includes("/schedules/"));
-  const activity = plan.writes.find((write) => write.path.includes("/activities/"));
+  const task = plan.writes.find((write) => parseRecordPath(write.path).type === "task");
+  const schedule = plan.writes.find((write) => parseRecordPath(write.path).type === "schedule");
+  const activity = plan.writes.find((write) => parseRecordPath(write.path).type === "activity");
   assert.match(task.path, /task-202610-00006-pay-fee\.md$/);
   assert.match(task.content, /planning_state: planned/);
   assert.match(task.content, /planned_dates_status: provisional/);
@@ -464,7 +465,7 @@ test("same-day activity records get separate letter paths and preserve each Issu
   const { plan } = prepare(root, input, decisions);
   assert.equal(plan.writes.length, 2);
   assert.deepEqual(plan.writes.map((write) => write.path), [
-    "2026/202610/activities/activity-20261005aaa.md", "2026/202610/activities/activity-20261005aab.md",
+    "activities/2026/202610/20261005/activity-20261005aaa.md", "activities/2026/202610/20261005/activity-20261005aab.md",
   ]);
   assert.deepEqual(plan.writes.map((write) => write.issue_numbers), [[42], [43]]);
   assert.match(plan.writes[0].content, /Issue #42/);
@@ -480,7 +481,21 @@ function legacyActivityFixture(t, suffix = "") {
   const root = makeRoot(t);
   const decisions = manifest([{ number: 42, decision: "import", records: [activityRecord()] }]);
   const prepared = prepare(root, source(), decisions).plan;
-  const plan = JSON.parse(JSON.stringify(prepared).replaceAll("activity-20261005aaa", `activity-20261005${suffix}`));
+  const currentPath = "activities/2026/202610/20261005/activity-20261005aaa.md";
+  const legacyPath = `2026/202610/activities/activity-20261005${suffix}.md`;
+  const plan = JSON.parse(JSON.stringify(prepared).replaceAll(currentPath, legacyPath));
+  const legacyId = path.posix.basename(legacyPath, ".md");
+  const record = plan.issues[0].records[0];
+  record.id = legacyId;
+  record.path = legacyPath;
+  const receiptPattern = /(<!-- daybook-issue-import-data:v1 )(\{[^\n]*\})( -->)/;
+  const receiptMatch = receiptPattern.exec(plan.issues[0].comment_body);
+  assert.ok(receiptMatch, "prepared plan includes a receipt data marker");
+  const receipt = JSON.parse(receiptMatch[2]);
+  receipt.records[0] = { ...receipt.records[0], id: legacyId, path: legacyPath };
+  plan.issues[0].comment_body = plan.issues[0].comment_body.replace(
+    receiptMatch[0], `${receiptMatch[1]}${stableStringify(receipt)}${receiptMatch[3]}`,
+  );
   const original = "---\ntype: activity\ndate: 2026-10-05\n---\n\n# 既存日次記録\n\n## やったこと\n\n先に記録した活動。\n";
   const target = path.join(root, plan.writes[0].path);
   fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -501,7 +516,7 @@ for (const suffix of ["", "a", "ab"]) {
     await applyIssueImport({ repoRoot: root, plan, resultPath });
     assert.match(fs.readFileSync(target, "utf8"), /先に記録した活動/);
     assert.equal(prepare(root, source(), decisions).plan.issues[0].outcome, "already-imported");
-    assert.equal(fs.existsSync(path.join(root, "2026/202610/activities/activity-20261005aaa.md")), false);
+    assert.equal(fs.existsSync(path.join(root, "activities/2026/202610/20261005/activity-20261005aaa.md")), false);
   });
 }
 
@@ -597,6 +612,40 @@ test("existing task can be linked without changing its content or completion sta
   assert.equal(fs.readFileSync(target, "utf8"), original);
 });
 
+test("a migrated current task with an older ID month can be linked at its saved path", (t) => {
+  const root = makeRoot(t);
+  const relative = "tasks/2026/202611/20261117/task-202610-00014-migrated.md";
+  const target = path.join(root, relative);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, "---\ntype: task\nid: task-202610-00014\nstatus: todo\nplanned_start_date: 2026-11-19\n---\n\n# Migrated task\n");
+  const { plan } = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [
+    { key: "migrated", type: "task", action: "link-existing", title: "Migrated task", target_path: relative },
+  ] }]), { gitLog: () => "" });
+  assert.equal(plan.writes[0].path, relative);
+  assert.match(plan.writes[0].content, /id: task-202610-00014/);
+});
+
+test("an old plan does not recreate an Issue activity moved to a different canonical layout", async (t) => {
+  const root = makeRoot(t);
+  const { plan } = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord()] }]));
+  const oldPath = path.join(root, plan.writes[0].path);
+  const legacyRelative = "2026/202610/activities/activity-20261005aaa.md";
+  const legacyPath = path.join(root, legacyRelative);
+  fs.mkdirSync(path.dirname(legacyPath), { recursive: true });
+  fs.mkdirSync(path.dirname(oldPath), { recursive: true });
+  fs.writeFileSync(oldPath, plan.writes[0].content);
+  fs.renameSync(oldPath, legacyPath);
+  const movedContent = fs.readFileSync(legacyPath, "utf8");
+  await assert.rejects(applyIssueImport({
+    repoRoot: root,
+    plan,
+    refreshSource: source(),
+    resultPath: path.join(root, "workplace/issue-import/moved-activity/result.json"),
+  }), { code: "SOURCE_CONFLICT" });
+  assert.equal(fs.existsSync(oldPath), false);
+  assert.equal(fs.readFileSync(legacyPath, "utf8"), movedContent);
+});
+
 test("peer edits during prepare are preserved for linked tasks and schedules", (t) => {
   for (const type of ["task", "schedule"]) {
     const root = makeRoot(t);
@@ -635,15 +684,19 @@ test("linked record hashes describe the exact input and apply preserves its body
 
 test("apply rejects an Issue published between source scanning and allocation", async (t) => {
   const root = makeRoot(t);
-  const directory = path.join(root, "2026/202610/activities");
+  const directory = path.join(root, "activities/2026/202610/20261005");
   fs.mkdirSync(directory, { recursive: true });
   const peer = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord()] }])).plan;
   const readDir = fs.readdirSync;
   let published = false;
+  let activityDirectoryReads = 0;
   const mock = t.mock.method(fs, "readdirSync", function (directoryPath, options) {
-    if (!published && directoryPath === directory && options === undefined) {
-      published = true;
-      fs.writeFileSync(path.join(root, peer.writes[0].path), peer.writes[0].content, { flag: "wx" });
+    if (directoryPath === directory) {
+      activityDirectoryReads += 1;
+      if (!published && activityDirectoryReads === 2) {
+        published = true;
+        fs.writeFileSync(path.join(root, peer.writes[0].path), peer.writes[0].content, { flag: "wx" });
+      }
     }
     return readDir.apply(this, arguments);
   });
@@ -651,7 +704,7 @@ test("apply rejects an Issue published between source scanning and allocation", 
   try { ({ plan } = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord(), taskRecord()] }]))); }
   finally { mock.mock.restore(); }
   assert.equal(published, true);
-  assert.notEqual(plan.writes.find((write) => write.path.includes("/activities/")).path, peer.writes[0].path);
+  assert.notEqual(plan.writes.find((write) => parseRecordPath(write.path).type === "activity").path, peer.writes[0].path);
   const resultPath = path.join(root, "workplace/issue-import/duplicate/result.json");
   await assert.rejects(applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath }), { code: "SOURCE_CONFLICT" });
   assert.equal(fs.readFileSync(path.join(root, peer.writes[0].path), "utf8"), peer.writes[0].content);
@@ -704,7 +757,7 @@ test("apply, comment-result, and close-result retain the local todo state and co
   assert.equal(result.issues[0].local_status, "local-written");
   assert.equal(result.issues[0].comment.status, "pending");
   assert.equal(fs.existsSync(path.join(runDirectory, "comment-42.md")), true);
-  const taskPath = path.join(root, ...plan.writes.find((write) => write.path.includes("/tasks/")).path.split("/"));
+  const taskPath = path.join(root, ...plan.writes.find((write) => parseRecordPath(write.path).type === "task").path.split("/"));
   assert.match(fs.readFileSync(taskPath, "utf8"), /status: todo/);
   await assert.rejects(recordIssueCloseResult({ repoRoot: root, resultPath, issueNumber: 42, status: "pending" }), { code: "INVALID_RESULT_TRANSITION" });
   await recordIssueCommentResult({ repoRoot: root, resultPath, issueNumber: 42, status: "sending", handoffId: "comment-handoff" });
@@ -786,7 +839,7 @@ test("task sequencing considers working files, deleted Git history, and ID exhau
   fs.mkdirSync(tasks, { recursive: true });
   fs.writeFileSync(path.join(tasks, "task-202610-00004-working.md"), "working\n");
   assert.equal(nextTaskSequence(root, "202610", { gitLog: () => "2026/202610/tasks/task-202610-00009-deleted.md\n" }), 10);
-  assert.throws(() => nextTaskSequence(root, "202610", { gitLog: () => "task-202610-99999-removed.md" }), { code: "ID_EXHAUSTED" });
+  assert.throws(() => nextTaskSequence(root, "202610", { gitLog: () => "tasks/2026/202610/20261009/task-202610-99999-removed.md" }), { code: "ID_EXHAUSTED" });
   assert.throws(() => nextTaskSequence(root, "202610", { gitLog: () => { throw new Error("unavailable"); } }), { code: "ID_HISTORY_UNAVAILABLE" });
 });
 
@@ -814,6 +867,32 @@ test("task sequencing reads deleted names from a temporary Git repository", (t) 
   git(["commit", "-qm", "remove historical task"]);
   assert.equal(fs.existsSync(target), false);
   assert.equal(nextTaskSequence(root, "202610"), 8);
+});
+
+test("task sequencing reserves deleted migrated IDs from any current directory month", (t) => {
+  const root = makeRoot(t);
+  const relative = "tasks/2026/202611/20261117/task-202610-00015-migrated.md";
+  const target = path.join(root, relative);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, "historical migrated task\n");
+  const env = {
+    ...process.env,
+    GIT_AUTHOR_NAME: "Issue Import Test",
+    GIT_AUTHOR_EMAIL: "issue-import-test@example.invalid",
+    GIT_COMMITTER_NAME: "Issue Import Test",
+    GIT_COMMITTER_EMAIL: "issue-import-test@example.invalid",
+  };
+  const git = (args) => {
+    const result = spawnSync("git", args, { cwd: root, env, encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+  };
+  git(["init", "-q"]);
+  git(["add", relative]);
+  git(["commit", "-qm", "add migrated task"]);
+  git(["rm", "-q", relative]);
+  git(["commit", "-qm", "remove migrated task"]);
+  assert.equal(fs.existsSync(target), false);
+  assert.equal(nextTaskSequence(root, "202610"), 16);
 });
 
 test("capabilities only check PATH entries and report gh unavailable without failing daybook", () => {

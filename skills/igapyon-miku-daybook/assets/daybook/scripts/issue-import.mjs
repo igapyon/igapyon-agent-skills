@@ -6,7 +6,14 @@ import path from "node:path";
 
 import { stringify as stringifyYaml } from "./vendor/yaml-runtime.mjs";
 import { DEFAULT_TASK_PRIORITY, parseFrontMatter, todayInTokyo, validateIsoDate } from "./day-plan.mjs";
-import { ACTIVITY_FILENAME_PATTERN, nextActivityPath, updateActivity, validateActivityRecord } from "./activity-files.mjs";
+import { nextActivityPath, updateActivity, validateActivityRecord } from "./activity-files.mjs";
+import {
+  assertUniqueRecordPaths,
+  listCanonicalRecordFiles,
+  parseRecordPath,
+  schedulePath,
+  taskPath,
+} from "./record-paths.mjs";
 
 export const ISSUE_IMPORT_SCHEMA_VERSION = 1;
 export const ISSUE_IMPORT_MARKER = "daybook-issue-import:v1";
@@ -254,10 +261,10 @@ function receiptMarkers(comment, repo, number) {
       if (keys.has(record.key)) return { malformed: true };
       keys.add(record.key);
       const recordPath = safeRelativeWritePath(record.path);
-      const task = /\/tasks\/(task-\d{6}-\d{5}-.+\.md)$/.exec(recordPath);
-      const other = /\/(?:schedules|activities)\/([^/]+\.md)$/.exec(recordPath);
-      const expectedId = task?.[1].match(/^(task-\d{6}-\d{5})-/)?.[1] ?? other?.[1].replace(/\.md$/, "");
-      if (!expectedId || record.id !== expectedId) return { malformed: true };
+      const parsedPath = parseRecordPath(recordPath);
+      if (!new Set(["task", "schedule", "activity"]).has(parsedPath.type) || record.id !== parsedPath.id) {
+        return { malformed: true };
+      }
     }
   } catch { return { malformed: true }; }
   return { data };
@@ -498,25 +505,6 @@ function recordReference(record, issueNumber, createdPath) {
   };
 }
 
-function canonicalDirectories(repoRoot) {
-  const roots = [];
-  for (const year of fs.readdirSync(repoRoot, { withFileTypes: true })) {
-    if (!year.isDirectory() || !/^\d{4}$/.test(year.name)) continue;
-    const yearPath = path.join(repoRoot, year.name);
-    for (const month of fs.readdirSync(yearPath, { withFileTypes: true })) {
-      if (!month.isDirectory() || !new RegExp(`^${year.name}(0[1-9]|1[0-2])$`).test(month.name)) continue;
-      const monthPath = path.join(yearPath, month.name);
-      for (const kind of ["tasks", "schedules", "activities"]) {
-        const directory = path.join(monthPath, kind);
-        if (fs.existsSync(directory) && fs.lstatSync(directory).isDirectory() && !fs.lstatSync(directory).isSymbolicLink()) {
-          roots.push({ directory, kind });
-        }
-      }
-    }
-  }
-  return roots;
-}
-
 function sourceKey(number, url, key) {
   return `${url}\0${number}\0${key}`;
 }
@@ -590,26 +578,49 @@ export function scanIssueSources(repoRoot) {
     urls.push(item);
     byUrl.set(item.url, urls);
   };
-  for (const { directory, kind } of canonicalDirectories(repoRoot)) {
-    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
-      if (kind === "activities" && !ACTIVITY_FILENAME_PATTERN.test(entry.name)) continue;
-      if (kind === "tasks" && !/^task-\d{6}-\d{5}-.+\.md$/.test(entry.name)) continue;
-      if (kind === "schedules" && !/^schedule-\d{8}-.+\.md$/.test(entry.name)) continue;
-      const filePath = path.join(directory, entry.name);
-      const relativePath = path.relative(repoRoot, filePath).split(path.sep).join("/");
-      const text = fs.readFileSync(filePath, "utf8");
-      if (kind === "activities") {
-        validateActivityRecord(relativePath, text);
-        for (const item of parseActivityMarkers(text, relativePath)) add(item);
-        continue;
-      }
-      const parsed = parseFrontMatter(text, relativePath);
-      const expected = kind === "tasks" ? "task" : "schedule";
-      if (parsed.frontMatter.type !== expected) continue;
-      const item = issueSourceFromFrontMatter(parsed.rawFrontMatter, relativePath);
-      if (item) add(item);
+  const recordPaths = listCanonicalRecordFiles(repoRoot, ["activity", "task", "schedule"]);
+  try { assertUniqueRecordPaths(recordPaths, "SOURCE_CONFLICT"); }
+  catch (error) { fail("SOURCE_CONFLICT", error.message, { paths: error.paths ?? [] }); }
+  for (const recordPath of recordPaths) {
+    const relativePath = recordPath.relativePath;
+    const filePath = path.join(repoRoot, ...relativePath.split("/"));
+    const text = fs.readFileSync(filePath, "utf8");
+    if (recordPath.type === "activity") {
+      validateActivityRecord(relativePath, text);
+      for (const item of parseActivityMarkers(text, relativePath)) add(item);
+      continue;
     }
+    const parsed = parseFrontMatter(text, relativePath);
+    if (parsed.frontMatter.type !== recordPath.type) {
+      fail("SOURCE_CONFLICT", `Canonical path contains a non-${recordPath.type} record`, { path: relativePath });
+    }
+    if (recordPath.type === "task") {
+      if (parsed.frontMatter.id !== recordPath.id) {
+        fail("SOURCE_CONFLICT", "Task path, filename, and ID must agree", { path: relativePath });
+      }
+      const hasCreated = Object.hasOwn(parsed.rawFrontMatter, "created");
+      if (recordPath.layout === "legacy") {
+        if (hasCreated) {
+          try { validateIsoDate(parsed.frontMatter.created, `${relativePath}: created`); }
+          catch { fail("SOURCE_CONFLICT", "Task created date is invalid", { path: relativePath }); }
+          if (parsed.frontMatter.created.slice(0, 7).replace("-", "") !== recordPath.month) {
+            fail("SOURCE_CONFLICT", "Task created month must agree with its legacy directory", { path: relativePath });
+          }
+        }
+      } else if (hasCreated) {
+        try { validateIsoDate(parsed.frontMatter.created, `${relativePath}: created`); }
+        catch { fail("SOURCE_CONFLICT", "Task created date is invalid", { path: relativePath }); }
+        if (parsed.frontMatter.created !== recordPath.date
+          || parsed.frontMatter.created.slice(0, 7).replace("-", "") !== recordPath.idMonth) {
+          fail("SOURCE_CONFLICT", "Task created date, path, and ID month must agree", { path: relativePath });
+        }
+      }
+    }
+    if (recordPath.type === "schedule" && parsed.frontMatter.date !== recordPath.date) {
+      fail("SOURCE_CONFLICT", "Schedule path, filename, and date must agree", { path: relativePath });
+    }
+    const item = issueSourceFromFrontMatter(parsed.rawFrontMatter, relativePath);
+    if (item) add(item);
   }
   for (const [key, items] of byKey) {
     if (items.length > 1) fail("SOURCE_CONFLICT", "The same Issue and record key appear in multiple records", { key, paths: items.map((item) => item.path) });
@@ -786,12 +797,11 @@ function renderImportComment(issue, records, importId, repo, importDate) {
 export { renderImportComment, renderActivityBlock, renderTask, renderSchedule };
 
 function canonicalTaskPath(importDate, id, key) {
-  const month = importDate.slice(0, 7).replace("-", "");
-  return `${importDate.slice(0, 4)}/${month}/tasks/${id}-${key}.md`;
+  return taskPath(importDate, id, key);
 }
 
 function canonicalSchedulePath(date, number, key) {
-  return `${date.slice(0, 4)}/${date.slice(0, 7).replace("-", "")}/schedules/schedule-${date.replaceAll("-", "")}-issue-${number}-${key}.md`;
+  return schedulePath(date, `schedule-${date.replaceAll("-", "")}-issue-${number}-${key}.md`);
 }
 
 function renderActivityFile(record, context) {
@@ -806,27 +816,34 @@ export function nextTaskSequence(repoRoot, month, dependencies = {}) {
   if (!/^\d{6}$/.test(month)) fail("INVALID_SOURCE", "Task creation month must use YYYYMM");
   const used = new Set();
   const filenamePattern = taskSequencePrefix(month);
-  const monthRoot = path.join(repoRoot, month.slice(0, 4), month);
-  const taskDirectory = path.join(monthRoot, "tasks");
-  if (fs.existsSync(taskDirectory) && fs.lstatSync(taskDirectory).isDirectory() && !fs.lstatSync(taskDirectory).isSymbolicLink()) {
-    for (const entry of fs.readdirSync(taskDirectory, { withFileTypes: true })) {
-      if (!entry.isFile()) continue;
-      const match = filenamePattern.exec(entry.name);
+  const records = listCanonicalRecordFiles(repoRoot, ["task"]);
+  try { assertUniqueRecordPaths(records, "DUPLICATE_RECORD"); }
+  catch (error) { fail("DUPLICATE_RECORD", error.message, { paths: error.paths ?? [] }); }
+  for (const record of records) {
+    if (record.idMonth === month) {
+      const match = filenamePattern.exec(record.filename);
       if (match) used.add(Number(match[1]));
     }
   }
   let history;
   try {
+    // Migrated tasks can be stored under a different path month than their immutable ID month.
+    const newPathspec = `:(glob)tasks/**/task-${month}-*.md`;
+    const legacyPathspec = `:(glob)${month.slice(0, 4)}/${month}/tasks/task-${month}-*.md`;
     history = dependencies.gitLog
       ? dependencies.gitLog(repoRoot, month)
-      : execFileSync("git", ["log", "--all", "--format=", "--name-only", "--", `:(glob)${month.slice(0, 4)}/${month}/tasks/task-${month}-*.md`], { cwd: repoRoot, encoding: "utf8" });
+      : execFileSync("git", ["log", "--all", "--format=", "--name-only", "--", newPathspec, legacyPathspec], { cwd: repoRoot, encoding: "utf8" });
   } catch (error) {
     fail("ID_HISTORY_UNAVAILABLE", "Could not read local Git history for task IDs", { month, detail: error.message });
   }
   for (const line of String(history).split(/\r?\n/)) {
-    const basename = path.posix.basename(line.trim());
-    const match = filenamePattern.exec(basename);
-    if (match) used.add(Number(match[1]));
+    const relativePath = line.trim();
+    if (!relativePath) continue;
+    try {
+      const record = parseRecordPath(relativePath);
+      const match = record.type === "task" && record.idMonth === month ? filenamePattern.exec(record.filename) : null;
+      if (match) used.add(Number(match[1]));
+    } catch { /* History lines outside canonical task paths do not reserve task IDs. */ }
   }
   const maximum = used.size ? Math.max(...used) : 0;
   if (maximum >= 99999) fail("ID_EXHAUSTED", "No task IDs remain in this month", { month });
@@ -856,10 +873,10 @@ function validateLinkTarget(repoRoot, record) {
   }
   const resolved = path.resolve(repoRoot, value);
   const relative = path.relative(repoRoot, resolved).split(path.sep).join("/");
-  const typeOk = record.type === "task"
-    ? /^\d{4}\/\d{6}\/tasks\/task-\d{6}-\d{5}-.+\.md$/.test(relative)
-    : /^\d{4}\/\d{6}\/schedules\/schedule-\d{8}-.+\.md$/.test(relative);
-  if (!typeOk || !fs.existsSync(resolved)) {
+  let recordPath;
+  try { recordPath = parseRecordPath(relative); }
+  catch { recordPath = null; }
+  if (!recordPath || recordPath.type !== record.type || !fs.existsSync(resolved)) {
     fail("INVALID_MANIFEST", "link-existing target must be an existing canonical record of the requested type", { path: value, type: record.type });
   }
   assertSafeRepoPath(repoRoot, relative, { allowMissing: false });
@@ -867,16 +884,29 @@ function validateLinkTarget(repoRoot, record) {
   const contents = bytes.toString("utf8");
   const parsed = parseFrontMatter(contents, relative);
   if (parsed.frontMatter.type !== record.type) fail("INVALID_MANIFEST", "link-existing target type does not match", { path: value });
-  const segments = relative.split("/");
   if (record.type === "task") {
-    const filename = /^task-(\d{6})-(\d{5})-.+\.md$/.exec(path.posix.basename(relative));
-    if (!filename || filename[1] !== segments[1] || parsed.frontMatter.id !== `task-${filename[1]}-${filename[2]}`) {
+    if (parsed.frontMatter.id !== recordPath.id) {
       fail("INVALID_MANIFEST", "link-existing task path, filename, and ID must agree", { path: value });
     }
+    const hasCreated = Object.hasOwn(parsed.rawFrontMatter, "created");
+    if (recordPath.layout === "legacy") {
+      if (hasCreated) {
+        try { validateIsoDate(parsed.frontMatter.created, `${value}: created`); }
+        catch { fail("INVALID_MANIFEST", "link-existing task creation date is invalid", { path: value }); }
+        if (parsed.frontMatter.created.slice(0, 7).replace("-", "") !== recordPath.month) {
+          fail("INVALID_MANIFEST", "link-existing task creation month must agree with its legacy directory", { path: value });
+        }
+      }
+    } else if (hasCreated) {
+      try { validateIsoDate(parsed.frontMatter.created, `${value}: created`); }
+      catch { fail("INVALID_MANIFEST", "link-existing task creation date is invalid", { path: value }); }
+      if (parsed.frontMatter.created !== recordPath.date
+        || parsed.frontMatter.created.slice(0, 7).replace("-", "") !== recordPath.idMonth) {
+        fail("INVALID_MANIFEST", "link-existing task creation date, path, and ID month must agree", { path: value });
+      }
+    }
   } else {
-    const filename = /^schedule-(\d{8})-.+\.md$/.exec(path.posix.basename(relative));
-    const expectedDate = filename && `${filename[1].slice(0, 4)}-${filename[1].slice(4, 6)}-${filename[1].slice(6, 8)}`;
-    if (!filename || parsed.frontMatter.date !== expectedDate || filename[1].slice(0, 6) !== segments[1]) {
+    if (parsed.frontMatter.date !== recordPath.date) {
       fail("INVALID_MANIFEST", "link-existing schedule path and date must agree", { path: value });
     }
   }
@@ -943,25 +973,12 @@ function emptyPlan(source) {
 }
 
 function safeRelativeWritePath(value) {
-  if (typeof value !== "string" || !value || value.includes("\\") || path.posix.isAbsolute(value)
-    || path.posix.normalize(value) !== value || value.split("/").some((part) => part === ".." || part === "")) {
-    fail("PATH_OUTSIDE_REPO", "Write path must be a normalized repository-relative path", { path: value });
+  let record;
+  try { record = parseRecordPath(value); }
+  catch (error) { fail("PATH_OUTSIDE_REPO", error.message, { path: value }); }
+  if (!new Set(["task", "schedule", "activity"]).has(record.type)) {
+    fail("PATH_OUTSIDE_REPO", "Write path is outside canonical writable record types", { path: value });
   }
-  const task = /^(\d{4})\/(\d{6})\/tasks\/task-(\d{6})-\d{5}-.+\.md$/.exec(value);
-  const schedule = /^(\d{4})\/(\d{6})\/schedules\/schedule-(\d{8})-.+\.md$/.exec(value);
-  const activity = /^(\d{4})\/(\d{6})\/activities\/activity-(\d{8})(?:[a-z]+)?\.md$/.exec(value);
-  const directories = [task && [task[1], task[2]], schedule && [schedule[1], schedule[2]], activity && [activity[1], activity[2]]].filter(Boolean);
-  for (const [year, month] of directories) {
-    if (!/^\d{4}(0[1-9]|1[0-2])$/.test(month) || year !== month.slice(0, 4)) {
-      fail("PATH_OUTSIDE_REPO", "Write path has an invalid year/month directory", { path: value });
-    }
-  }
-  if (schedule) validateIsoDate(`${schedule[3].slice(0, 4)}-${schedule[3].slice(4, 6)}-${schedule[3].slice(6, 8)}`, "schedule path date");
-  if (activity) validateIsoDate(`${activity[3].slice(0, 4)}-${activity[3].slice(4, 6)}-${activity[3].slice(6, 8)}`, "activity path date");
-  const valid = (task && task[1] === task[2].slice(0, 4) && task[2] === task[3] && task[3].slice(0, 4) === task[1])
-    || (schedule && schedule[1] === schedule[2].slice(0, 4) && schedule[2] === schedule[3].slice(0, 6))
-    || (activity && activity[1] === activity[2].slice(0, 4) && activity[2] === activity[3].slice(0, 6));
-  if (!valid) fail("PATH_OUTSIDE_REPO", "Write path is outside canonical record directories", { path: value });
   return value;
 }
 
@@ -1258,10 +1275,8 @@ function validatePlan(plan, repoRoot) {
         }
         recordKeys.add(record.key);
         const recordPath = safeRelativeWritePath(record.path);
-        const kind = recordPath.includes("/tasks/") ? "task" : recordPath.includes("/schedules/") ? "schedule" : "activity";
-        const filename = path.posix.basename(recordPath, ".md");
-        const expectedId = kind === "task" ? filename.match(/^(task-\d{6}-\d{5})-/)?.[1] : filename;
-        if (record.type !== kind || record.id !== expectedId
+        const parsedPath = parseRecordPath(recordPath);
+        if (record.type !== parsedPath.type || record.id !== parsedPath.id
           || !plan.writes.some((write) => write.path === recordPath && write.issue_numbers.includes(issue.number))) {
           fail("INVALID_MANIFEST", "Plan record has no matching canonical write", { issue: issue.number, key: record.key, path: recordPath });
         }
@@ -1486,7 +1501,8 @@ function verifyWriteSourceContent(write, plan) {
     fail("PLAN_CHANGED", "Write issue_numbers do not match its record references", { path: write.path });
   }
   let actual;
-  if (write.path.includes("/activities/")) {
+  const recordPath = parseRecordPath(write.path);
+  if (recordPath.type === "activity") {
     validateActivityRecord(write.path, write.content);
     actual = parseActivityMarkers(write.content, write.path);
   } else {
@@ -1547,17 +1563,18 @@ async function ensureRecordParents(repoRoot, relativePath) {
 
 async function applyOneWrite(repoRoot, write) {
   const destination = assertSafeRepoPath(repoRoot, write.path);
+  const recordPath = parseRecordPath(write.path);
   await ensureRecordParents(repoRoot, write.path);
   const before = getCurrentHash(repoRoot, write.path);
   if (before !== write.before_hash) fail("LOCAL_CONFLICT", "Record changed after apply preflight", { path: write.path });
-  if (write.before_hash !== null && write.path.includes("/activities/")) {
+  if (write.before_hash !== null && recordPath.type === "activity") {
     try {
       updateActivity({ repoRoot, path: write.path, expectedSha256: write.before_hash, content: write.content });
     } catch (error) {
       if (error.code === "ACTIVITY_UPDATE_CONFLICT") fail("LOCAL_CONFLICT", error.message, { path: write.path });
       throw error;
     }
-  } else if (write.before_hash === null && write.path.includes("/activities/")) {
+  } else if (write.before_hash === null && recordPath.type === "activity") {
     // Readers must see complete Markdown, just as with ordinary activity creation.
     try { await atomicWrite(destination, write.content, { exclusive: true }); }
     catch (error) {

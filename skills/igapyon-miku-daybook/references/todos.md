@@ -12,7 +12,9 @@ Keep writes within scope. An activity-only, read-only, no-recording, or named-fi
 
 ## Location, identity, and content
 
-Save one item per file at `YYYY/YYYYMM/todos/todo-YYYYMM-NNNNN-name.md`, using its creation month. The persistent `id` is `todo-YYYYMM-NNNNN`; use a five-digit monthly sequence independent of task IDs. Inspect current todos, local Git history, and pending writes before allocating after the largest number for that month. Never reuse deleted numbers or gaps; check the destination is unused. Keep the ID, filename, and creation-month directory unchanged on later updates, including completion or transfer. Create directories only when needed.
+Save one item per file at `todos/YYYY/YYYYMM/YYYYMMDD/todo-YYYYMM-NNNNN-name.md`, using its creation date. The persistent `id` is `todo-YYYYMM-NNNNN`; use a five-digit monthly sequence independent of task IDs. Inspect todos across every date folder, local Git history, and pending writes before allocating after the largest number for that ID month. Never reuse deleted numbers or gaps; check the destination is unused. Keep the ID, filename, and saved path unchanged on later updates, including completion or transfer. Create directories only when needed.
+
+Existing todos at `YYYY/YYYYMM/todos/` remain readable and keep their saved paths when updated. During a requested migration, preserve each todo's ID and `created` date and place it under the matching day folder. Do not move todos during ordinary updates.
 
 New records use this minimum front matter:
 
@@ -25,7 +27,7 @@ created: 2026-11-17
 ---
 ```
 
-Use the actual Asia/Tokyo creation date. The filename, directory, `id`, and `created` month must agree. `type: todo` identifies this record; a task's `status: todo` continues to mean an unstarted task. Do not search or classify records by that status word alone.
+Use the actual Asia/Tokyo creation date. For a new record, the directory's year/month/day, the `created` date, and the ID month must agree. `type: todo` identifies this record; a task's `status: todo` continues to mean an unstarted task. Do not search or classify records by that status word alone.
 
 Write a Japanese title and a concise actionable description, with enough reason or context to understand it later. Link to the originating activity and relevant retained material when available. Direct registration is allowed without an earlier activity; normal common capture records the request, while file restrictions may suppress that activity. Do not invent a source or create a dummy record. No priority, planned dates, `planning_state`, completion checkbox, or fixed body sections are required. Preserve a supplied deadline or constraint with its meaning and source; do not infer a planned period. If the user wants date-based planning or notification delivery, follow the requested task/schedule workflow.
 
@@ -60,7 +62,7 @@ A failed task save leaves the todo untransferred. If the task was saved but the 
 
 ## Lists and related records
 
-For “TODO一覧” or “未処理のtodo”, inspect canonical `YYYY/YYYYMM/todos/todo-*.md` records across all years and months and show `open` items by default. Do not restrict them to today or the current month unless requested. Display `ID / Status / Title / Source`, linking the todo and its available origin; order by creation date then full ID. Include closed states when requested and show a destination for transferred items. Report invalid or unsearchable records as such rather than silently treating them as open or claiming a complete list. Listing does not change the inspected todos.
+For “TODO一覧” or “未処理のtodo”, inspect both `todos/YYYY/YYYYMM/YYYYMMDD/todo-*.md` and legacy `YYYY/YYYYMM/todos/todo-*.md` records across all years and months and show `open` items by default. Do not restrict them to today or the current month unless requested. Display `ID / Status / Title / Source`, linking the todo and its available origin; order by creation date then full ID. Include closed states when requested and show a destination for transferred items. Report invalid or unsearchable records as such rather than silently treating them as open or claiming a complete list. Listing does not change the inspected todos.
 
 A task-list request retains its existing meaning. For a broad “残っているやること” or “何から始めるか” request across daybook, include open todos alongside the relevant tasks, in separately labelled groups; use the existing day-plan generator when its planning candidates are needed. Do not assign dates or task priorities to todos to rank them. Suggest a small next step from the user's context and constraints without executing it or changing state just because it was suggested.
 

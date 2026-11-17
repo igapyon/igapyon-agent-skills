@@ -61,7 +61,7 @@ jobs:
           node scripts/generate-day-plan.mjs --date "$date_value" --output-root "$output_root"
           compact_date="${date_value//-/}"
           month="${date_value:0:4}${date_value:5:2}"
-          plan_path="$output_root/${date_value:0:4}/$month/day-plan/day-plan-$compact_date.md"
+          plan_path="$output_root/day-plans/${date_value:0:4}/$month/day-plan-$compact_date.md"
           echo "date=$date_value" >> "$GITHUB_OUTPUT"
           echo "plan_path=$plan_path" >> "$GITHUB_OUTPUT"
 
