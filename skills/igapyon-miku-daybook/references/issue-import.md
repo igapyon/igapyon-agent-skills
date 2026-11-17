@@ -27,11 +27,12 @@ The source bundle is the `assets/daybook/` directory next to the `SKILL.md` that
 | `scripts/issue-import.mjs` | CLI core; imports the shared modules; bundle source `assets/daybook/scripts/issue-import.mjs`. |
 | `scripts/activity-files.mjs` | Shared activity naming, path validation and guarded updates; bundle source `assets/daybook/scripts/activity-files.mjs`. |
 | `scripts/day-plan.mjs` | Shared parsing and day-plan module; bundle source `assets/daybook/scripts/day-plan.mjs`. |
+| `scripts/record-paths.mjs` | Shared current/legacy path parsing, discovery, and safe resolution; bundle source `assets/daybook/scripts/record-paths.mjs`. |
 | `scripts/vendor/yaml-runtime.mjs` | Self-contained YAML ESM runtime imported by the CLI modules; bundle source [assets/daybook/scripts/vendor/yaml-runtime.mjs](../assets/daybook/scripts/vendor/yaml-runtime.mjs). |
 | `scripts/vendor/yaml.LICENSE` | License for the bundled YAML runtime; bundle source [assets/daybook/scripts/vendor/yaml.LICENSE](../assets/daybook/scripts/vendor/yaml.LICENSE). |
 | miku-scm | Required for remote Issue reads, comments, and closes. Locate its installed skill and runner through that skill's own instructions/configuration. |
 
-Check every target file in the table. Add missing files from the same bundle. If a target file already matches its bundle counterpart, leave it untouched. If it differs, compare the file and its callers; preserve target-specific behavior. If compatibility cannot be established, stop before replacing it and report the exact conflicting path and behavior that needs a decision. Never overwrite an existing customized `day-plan.mjs` merely because the intake CLI needs it. Copy the complete `vendor/` directory when copying the scripts; keep any target `package.json` and lockfile unchanged.
+Check every target file in the table. Add missing files from the same bundle. If a target file already matches its bundle counterpart, leave it untouched. If it differs, compare the file and its callers; preserve target-specific behavior. If compatibility cannot be established, stop before replacing it and report the exact conflicting path and behavior that needs a decision. Never overwrite an existing customized `day-plan.mjs` merely because the intake CLI needs it. Copy the complete `vendor/` directory when copying the scripts; keep any target `package.json` and lockfile unchanged. The new `record-paths.mjs` is a required companion for both the current and legacy layouts.
 
 After the helpers and dependencies are ready, from the target repository root run:
 

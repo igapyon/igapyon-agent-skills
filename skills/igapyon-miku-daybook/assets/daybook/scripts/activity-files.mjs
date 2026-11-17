@@ -2,7 +2,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { parseFrontMatter, validateIsoDate } from "./day-plan.mjs";
+import { parseFrontMatter } from "./day-plan.mjs";
+import {
+  activityPath as canonicalActivityPath,
+  assertUniqueRecordPaths,
+  listCanonicalRecordFiles,
+  parseRecordPath,
+  resolveRecordPath,
+  validateIsoDate,
+} from "./record-paths.mjs";
 
 export const ACTIVITY_FILENAME_PATTERN = /^activity-(\d{8})([a-z]+)?\.md$/;
 const FIRST_ACTIVITY_SUFFIX = "aaa";
@@ -24,20 +32,13 @@ export function compareActivitySuffixes(left, right) {
 }
 
 export function activityPath(date, suffix) {
-  validateIsoDate(date);
-  if (!/^[a-z]+$/.test(suffix)) throw new Error("New activity requires a lowercase letter suffix");
-  return `${date.slice(0, 4)}/${date.slice(0, 7).replace("-", "")}/activities/activity-${date.replaceAll("-", "")}${suffix}.md`;
+  return canonicalActivityPath(date, suffix);
 }
 
 function parseActivityPath(relativePath) {
-  const match = /^(\d{4})\/(\d{6})\/activities\/activity-(\d{8})([a-z]+)?\.md$/.exec(relativePath);
-  if (!match) throw new Error(`Invalid activity path: ${relativePath}`);
-  const date = `${match[3].slice(0, 4)}-${match[3].slice(4, 6)}-${match[3].slice(6, 8)}`;
-  validateIsoDate(date, relativePath);
-  if (match[1] !== match[2].slice(0, 4) || match[2] !== match[3].slice(0, 6)) {
-    throw new Error(`Activity path and date must agree: ${relativePath}`);
-  }
-  return { date, suffix: match[4] ?? "" };
+  const parsed = parseRecordPath(relativePath);
+  if (parsed.type !== "activity") throw new Error(`Invalid activity path: ${relativePath}`);
+  return { date: parsed.date, suffix: parsed.suffix };
 }
 
 export function validateActivityRecord(relativePath, text) {
@@ -61,8 +62,8 @@ function activityError(code, message, details = {}) {
 }
 
 function activityTarget(repoRoot, relativePath) {
-  const { date } = parseActivityPath(relativePath);
-  return path.join(activityDirectory(repoRoot, date), path.basename(relativePath));
+  parseActivityPath(relativePath);
+  return resolveRecordPath(repoRoot, relativePath);
 }
 
 function readCurrentActivity(repoRoot, relativePath) {
@@ -105,36 +106,25 @@ export function updateActivity({ repoRoot, path: relativePath, expectedSha256, c
   return { path: relativePath, sha256: activityHash(content) };
 }
 
-// Check every parent, including before reading the directory or creating a file.
 function activityDirectory(repoRoot, date, create = false) {
-  let current = fs.realpathSync(repoRoot);
-  for (const part of [date.slice(0, 4), date.slice(0, 7).replace("-", ""), "activities"]) {
-    current = path.join(current, part);
-    if (create) {
-      try { fs.mkdirSync(current); } catch (error) { if (error.code !== "EEXIST") throw error; }
-    }
-    try {
-      const stat = fs.lstatSync(current);
-      if (stat.isSymbolicLink() || !stat.isDirectory()) {
-        const error = new Error(`Activity parent must be a real directory: ${current}`);
-        error.code = "PATH_OUTSIDE_REPO";
-        throw error;
-      }
-    } catch (error) { if (error.code !== "ENOENT") throw error; }
-  }
-  return current;
+  const candidate = canonicalActivityPath(date, FIRST_ACTIVITY_SUFFIX);
+  return path.dirname(resolveRecordPath(repoRoot, candidate, { createParents: create }));
 }
 
 export function nextActivityPath(repoRoot, date, { reservedPaths = [], gitLog } = {}) {
   validateIsoDate(date);
-  const directory = activityDirectory(repoRoot, date);
-  const prefix = `${date.slice(0, 4)}/${date.slice(0, 7).replace("-", "")}/activities/`;
-  const usedPaths = [...reservedPaths];
-  if (fs.existsSync(directory)) usedPaths.push(...fs.readdirSync(directory).map((name) => prefix + name));
+  const records = listCanonicalRecordFiles(repoRoot, ["activity"]);
+  assertUniqueRecordPaths(records);
+  const usedPaths = [...reservedPaths, ...records.map((entry) => entry.relativePath)];
   const warnings = [];
   try {
+    const compactDate = date.replaceAll("-", "");
+    const year = date.slice(0, 4);
+    const month = compactDate.slice(0, 6);
+    const currentPathspec = `:(glob)activities/${year}/${month}/${compactDate}/activity-${compactDate}*.md`;
+    const legacyPathspec = `:(glob)${year}/${month}/activities/activity-${compactDate}*.md`;
     const history = gitLog ? gitLog(repoRoot, date) : execFileSync("git", [
-      "log", "--all", "--format=", "--name-only", "--", prefix,
+      "log", "--all", "--format=", "--name-only", "--", currentPathspec, legacyPathspec,
     ], { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
     usedPaths.push(...String(history).split(/\r?\n/));
   } catch {
@@ -142,10 +132,11 @@ export function nextActivityPath(repoRoot, date, { reservedPaths = [], gitLog } 
   }
   let maximum = "";
   for (const usedPath of usedPaths) {
-    if (!usedPath.startsWith(prefix)) continue;
-    const match = ACTIVITY_FILENAME_PATTERN.exec(usedPath.slice(prefix.length));
-    if (match?.[1] === date.replaceAll("-", "") && match[2]
-      && compareActivitySuffixes(match[2], maximum) > 0) maximum = match[2];
+    try {
+      const parsed = parseRecordPath(usedPath);
+      if (parsed.type === "activity" && parsed.date === date && parsed.suffix
+        && compareActivitySuffixes(parsed.suffix, maximum) > 0) maximum = parsed.suffix;
+    } catch { /* Noncanonical history lines are not activity reservations. */ }
   }
   return { path: activityPath(date, nextActivitySuffix(maximum)), warnings };
 }

@@ -1,23 +1,20 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parse as parseYaml } from "./vendor/yaml-runtime.mjs";
+import {
+  assertUniqueRecordPaths,
+  dayPlanPath,
+  listCanonicalRecordFiles,
+  validateIsoDate,
+} from "./record-paths.mjs";
+
+export { validateIsoDate } from "./record-paths.mjs";
 
 const TOKYO = "Asia/Tokyo";
 const TERMINAL_STATUSES = new Set(["done", "cancelled"]);
 const SCHEDULE_STATUSES = new Set(["scheduled", "cancelled"]);
 const TASK_PLANNING_STATES = new Set(["planned", "backlog"]);
 export const DEFAULT_TASK_PRIORITY = 7;
-
-export function validateIsoDate(value, label = "date") {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new Error(`${label} must be YYYY-MM-DD: ${value ?? ""}`);
-  }
-  const parsed = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
-    throw new Error(`${label} is not a valid date: ${value}`);
-  }
-  return value;
-}
 
 export function addDays(value, amount) {
   const parsed = new Date(`${validateIsoDate(value)}T00:00:00Z`);
@@ -144,48 +141,34 @@ export function loadRecords(repoRoot) {
   const tasks = [];
   const schedules = [];
   if (!fs.existsSync(repoRoot)) return { tasks, schedules };
-
-  for (const yearEntry of fs.readdirSync(repoRoot, { withFileTypes: true })) {
-    if (!yearEntry.isDirectory() || !/^\d{4}$/.test(yearEntry.name)) continue;
-    const yearPath = path.join(repoRoot, yearEntry.name);
-    for (const monthEntry of fs.readdirSync(yearPath, { withFileTypes: true })) {
-      if (!monthEntry.isDirectory() || !/^\d{4}(0[1-9]|1[0-2])$/.test(monthEntry.name)
-        || !monthEntry.name.startsWith(yearEntry.name)) continue;
-      const monthPath = path.join(yearPath, monthEntry.name);
-      for (const [directoryName, type, filenamePattern] of [
-        ["tasks", "task", /^task-(\d{6})-(\d{5})-(.+)\.md$/],
-        ["schedules", "schedule", /^schedule-(\d{8})-(.+)\.md$/],
-      ]) {
-        const recordDirectory = path.join(monthPath, directoryName);
-        if (!fs.existsSync(recordDirectory)) continue;
-        for (const entry of fs.readdirSync(recordDirectory, { withFileTypes: true })) {
-          if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
-          const match = filenamePattern.exec(entry.name);
-          if (!match) continue;
-          const filePath = path.join(recordDirectory, entry.name);
-          const record = recordFromFile(repoRoot, filePath, type);
-          if (type === "task") {
-            const [, idMonth, sequence] = match;
-            const expectedId = `task-${idMonth}-${sequence}`;
-            if (idMonth !== monthEntry.name || record.frontMatter.id !== expectedId) {
-              throw new Error(`task path, filename, and ID must agree: ${filePath}`);
-            }
-            const createdMonth = record.frontMatter.created?.slice(0, 7).replace("-", "");
-            if (createdMonth && createdMonth !== monthEntry.name) {
-              throw new Error(`task created month must agree with its directory and ID: ${filePath}`);
-            }
-            tasks.push(record);
-          } else {
-            const [, compactDate] = match;
-            const date = `${compactDate.slice(0, 4)}-${compactDate.slice(4, 6)}-${compactDate.slice(6, 8)}`;
-            validateIsoDate(date, `${filePath}: filename date`);
-            if (compactDate.slice(0, 6) !== monthEntry.name || record.frontMatter.date !== date) {
-              throw new Error(`schedule path, filename, and date must agree: ${filePath}`);
-            }
-            schedules.push(record);
-          }
+  const paths = listCanonicalRecordFiles(repoRoot, ["task", "schedule"]);
+  assertUniqueRecordPaths(paths);
+  for (const recordPath of paths) {
+    const filePath = path.join(repoRoot, ...recordPath.relativePath.split("/"));
+    const type = recordPath.type;
+    const record = recordFromFile(repoRoot, filePath, type);
+    if (type === "task") {
+      const expectedId = `task-${recordPath.idMonth}-${String(recordPath.sequence).padStart(5, "0")}`;
+      if (record.frontMatter.id !== expectedId) {
+        throw new Error(`task path, filename, and ID must agree: ${filePath}`);
+      }
+      if (recordPath.layout === "legacy") {
+        const createdMonth = record.frontMatter.created?.slice(0, 7).replace("-", "");
+        if (createdMonth && createdMonth !== recordPath.month) {
+          throw new Error(`task created month must agree with its legacy directory: ${filePath}`);
+        }
+      } else if (record.frontMatter.created) {
+        if (record.frontMatter.created !== recordPath.date
+          || record.frontMatter.created.slice(0, 7).replace("-", "") !== recordPath.idMonth) {
+          throw new Error(`task created date, path, and ID month must agree: ${filePath}`);
         }
       }
+      tasks.push(record);
+    } else {
+      if (record.frontMatter.date !== recordPath.date) {
+        throw new Error(`schedule path, filename, and date must agree: ${filePath}`);
+      }
+      schedules.push(record);
     }
   }
   tasks.sort((left, right) => left.relativePath.localeCompare(right.relativePath));
@@ -246,7 +229,7 @@ function formatScheduleTime(schedule) {
 }
 
 export function canonicalPlanPath(date) {
-  return `${date.slice(0, 4)}/${date.slice(0, 7).replace("-", "")}/day-plan/day-plan-${date.replaceAll("-", "")}.md`;
+  return dayPlanPath(date);
 }
 
 export function relativeLinkFromDayPlan(date, sourcePath) {

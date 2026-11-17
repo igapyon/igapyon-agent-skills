@@ -8,20 +8,19 @@ Activities can stand alone for starting, continuing, and resuming work. Todos, t
 
 ## Directory and filename rules
 
-Dated todos, tasks, activities, schedules, and day-plans live under the relevant `YYYY/YYYYMM/` directory. Topics and waypoints live at the daybook root:
+Dated records use type-first roots, then calendar folders. Topics and waypoints live at the daybook root:
 
 ```text
 daybook/
-├── YYYY/YYYYMM/
-│   ├── attachments/
-│   │   ├── task-YYYYMM-NNNNN/ # task creation month may differ from parent month
-│   │   ├── schedule-YYYYMMDD-name/
-│   │   └── activity-YYYYMMDDaaa/
-│   ├── activities/activity-YYYYMMDDaaa.md
-│   ├── day-plan/day-plan-YYYYMMDD.md
-│   ├── schedules/schedule-YYYYMMDD-name.md
-│   ├── tasks/task-YYYYMM-NNNNN-name.md
-│   └── todos/todo-YYYYMM-NNNNN-name.md
+├── activities/YYYY/YYYYMM/YYYYMMDD/activity-YYYYMMDDaaa.md
+├── tasks/YYYY/YYYYMM/YYYYMMDD/task-YYYYMM-NNNNN-name.md
+├── todos/YYYY/YYYYMM/YYYYMMDD/todo-YYYYMM-NNNNN-name.md
+├── schedules/YYYY/YYYYMM/schedule-YYYYMMDD-name.md
+├── day-plans/YYYY/YYYYMM/day-plan-YYYYMMDD.md
+├── attachments/YYYY/YYYYMM/
+│   ├── task-YYYYMM-NNNNN/ # task ID month may differ from attachment month
+│   ├── schedule-YYYYMMDD-name/
+│   └── activity-YYYYMMDDaaa/
 ├── topics/
 │   ├── text-conversion.md         # saving directly here is valid
 │   └── daybook/                  # optional thematic grouping
@@ -31,25 +30,28 @@ daybook/
     └── YYYYMMDD-HHMM-topic-00001.md
 ```
 
-- An activity belongs to the month in which it happened. Create a separate file for each coherent event or work episode, with a lowercase letter suffix immediately after the date: `activity-YYYYMMDDaaa.md`, then `aab`, through `aaz`, then `aba`, and onward through `zzz`. The three-letter range covers 17,576 activities per date. On overflow, continue automatically with `aaaa`; likewise `zzzz` advances to `aaaaa`. There is no specification limit on suffix length. Restart at `aaa` for each activity date. Continue the same file for updates to that episode. Multiple episodes combined during concurrent work are acceptable; preserve all contributions.
+Read and update existing records at their saved paths. During transition, the former `YYYY/YYYYMM/{activities,tasks,todos,schedules,day-plan,attachments}/` layout remains valid; do not rename a record or attachment as a side effect of ordinary work. The bundled record helpers read both record layouts. New records use the type-first paths above.
+
+- An activity belongs to the date on which it happened. New files go in `activities/YYYY/YYYYMM/YYYYMMDD/`. Create a separate file for each coherent event or work episode, with a lowercase letter suffix immediately after the date: `activity-YYYYMMDDaaa.md`, then `aab`, through `aaz`, then `aba`, and onward through `zzz`. The three-letter range covers 17,576 activities per date. On overflow, continue automatically with `aaaa`; likewise `zzzz` advances to `aaaaa`. There is no specification limit on suffix length. Restart at `aaa` for each activity date. Continue the same file for updates to that episode. Multiple episodes combined during concurrent work are acceptable; preserve all contributions.
 - Compare suffixes by length then alphabetically, rather than ordinary filename sorting. Allocate after the largest suffix found in current files, local Git history and pending writes, with a minimum new suffix of `aaa`; existing one- or two-letter suffixes do not continue the shorter sequence. Do not reuse gaps or deleted names. Use the bundled creation CLI and update CLI described in [operations.md](operations.md#add-an-activity). The suffix is an allocation sequence, not an event time. Keep front matter `type: activity` and `date`; the activity date must agree with the filename and month.
 - Existing unsuffixed `activity-YYYYMMDD.md` files and files with one- or two-letter suffixes remain valid and may be updated for their existing episodes. Keep their names, links and attachment paths. New episodes use the sequence starting at `aaa`; an existing unsuffixed file does not consume a suffix. Do not bulk-split or rename old records.
 - Updating an activity follows [Edit activities over time](activity-capture.md#edit-activities-over-time), including same-day refinement, dated supplements/corrections to older accounts, and the overnight finishing exception. Keep its actual date and saved path.
-- A schedule belongs to the month in which the event occurs and has one file per independent event. Separate unrelated events on the same day.
-- A todo belongs permanently to its creation-month `todos/` directory, including after completion, cancellation, or transfer. Its `todo-YYYYMM-NNNNN` ID uses a separate monthly sequence; follow [todos.md](todos.md) for allocation, metadata, and states.
-- A task belongs permanently to the month in which the task was created. A September-created task for an October event stays under `YYYY/202609/tasks/`.
-- Keep a task in its creation-month `tasks/` directory when it becomes `done` or `cancelled`; update its status in place and do not move it to an archive or closed folder.
-- A day-plan belongs to the target date's month and is a generated snapshot.
+- A schedule belongs to the month in which the event occurs: `schedules/YYYY/YYYYMM/`. Keep one file per independent event and separate unrelated events on the same day.
+- A todo belongs permanently to its creation date's `todos/YYYY/YYYYMM/YYYYMMDD/` directory, including after completion, cancellation, or transfer. Its `todo-YYYYMM-NNNNN` ID uses a separate monthly sequence; follow [todos.md](todos.md) for allocation, metadata, and states.
+- A new task belongs permanently to its creation date's `tasks/YYYY/YYYYMM/YYYYMMDD/` directory. The five-digit ID sequence remains monthly and its `YYYYMM` comes from `created`. A September-created task for an October event stays under `tasks/YYYY/202609/YYYYMMDD/` using its September creation day.
+- For an existing task with no known `created` date, an explicitly requested layout migration may use its valid start date (`planned_start_date`, or legacy `planned_date`) as the placement date. Keep its existing task ID and leave `created` absent. The placement day and task ID month may differ. Record the choice in the migration mapping and task history. Once placed, keep the task path stable when planned dates or state change.
+- Keep a task at its saved path when it becomes `done` or `cancelled`; update its status in place and do not move it to an archive or closed folder.
+- A day-plan belongs to the target date's month at `day-plans/YYYY/YYYYMM/` and is a generated snapshot.
 - Topics live under root `topics/`, outside the year/month hierarchy. Use a short descriptive lowercase English filename with hyphens and `.md`, directly in that directory or a useful subdirectory. Their creation/update dates do not determine their location. Keep saved paths stable and represent other relationships with links; see [topics.md](topics.md) for scope, content, metadata, and optional organization.
 - Waypoints live in the daybook repository root, outside the year/month record directories. They are short resume entries; see [waypoints.md](waypoints.md) for naming, metadata, and update rules.
-- Choose record text, an external reference, or an in-repository attachment using [attachments.md](attachments.md). Reuse an existing attachment's saved path first. For new activity material, use the activity's month and prefer `attachments/<task-id>/` only when an existing task's purpose or work products clearly relate to it; otherwise use the activity's actual filename stem. Do not create a task merely to store an attachment. An attachment's parent month may differ from the month in its task-id; task creation-month checks below apply to task records, not attachment folders. Keep existing attachment paths when updating or referencing them, including when a task is later created or linked. Follow [attachments.md](attachments.md) for task-only and schedule-only placement, content selection, temporary files, and binary exceptions. Create directories only when needed.
+- Choose record text, an external reference, or an in-repository attachment using [attachments.md](attachments.md). Reuse an existing attachment's saved path first. New attachments use `attachments/YYYY/YYYYMM/<record-id>/` at the month when the material arose; prefer an existing task's ID only when its purpose or work products clearly relate to it, otherwise use the activity's actual filename stem. Do not create a task merely to store an attachment. An attachment's parent month may differ from the month in its task-id; task creation-date checks below apply to task records, not attachment folders. Keep existing attachment paths when updating or referencing them, including when a task is later created or linked. Follow [attachments.md](attachments.md) for task-only and schedule-only placement, content selection, temporary files, and binary exceptions. Create directories only when needed.
 - Use lowercase English prefixes. Todos, tasks, and schedules use a short English name suffix; activities use the letter sequence above. Preserve an existing filename and ID when updating its title or deadline.
 
 ## Task IDs and status
 
-`task-id` (task ID) is the task's persistent identifier, stored in front matter as `id`, in `task-YYYYMM-NNNNN` format. For example, `task-202610-00014` is the task-id of `task-202610-00014-prepare-materials.md`; the corresponding attachment folder is `attachments/task-202610-00014/`. Keep the YAML field name as `id`.
+`task-id` (task ID) is the task's persistent identifier, stored in front matter as `id`, in `task-YYYYMM-NNNNN` format. For example, `task-202610-00014` is the task-id of `task-202610-00014-prepare-materials.md`; the corresponding attachment folder is `attachments/YYYY/YYYYMM/task-202610-00014/`. Keep the YAML field name as `id`.
 
-`NNNNN` is a five-digit sequence within the creation month. Inspect current files and Git history before assigning the next number. Never reuse a deleted number or close a gap. A filename's ID, front matter `id`, and displayed ID must agree. The ID month and directory month must also agree with `created` when that field is present. Existing tasks without `created` remain readable; validate the date and month whenever it is supplied.
+`NNNNN` is a five-digit sequence within the creation month. Inspect current files in every date folder and Git history before assigning the next number. Never reuse a deleted number or close a gap. A filename's ID, front matter `id`, and displayed ID must agree. For new tasks, the directory date, ID month, and `created` must agree. Existing legacy tasks remain readable; for an existing task in the new layout, a supplied `created` must match its day directory and ID month. A migrated task with no `created` keeps its saved placement date even if its ID month differs from the placement month; do not infer a created date from its start date.
 
 Use these statuses:
 
@@ -173,4 +175,4 @@ For a todo list or a broader remaining-work overview, follow [Lists and related 
 ID / Priority / Status / Planning state / Planned start / Planned end / Title
 ```
 
-`Planning state` is `planning_state`, or `planned` when omitted. Include planned and Backlog tasks by default, in separate groups. Sort planned confirmed or legacy dated tasks by ascending priority, planned end date, planned start date, then full task ID. Show planned tasks with provisional or incomplete periods in `日程要確認`, sorted by priority and ID. Show an unbounded weekly task without a planned period after dated planned tasks and before `日程要確認`, sorted by priority and full task ID; do not flag it for date review. Sort Backlog by ascending priority and then full task ID; do not date-filter it unless requested. Treat an omitted legacy priority as `7` without changing its file. Read existing records across all year/month directories. For weekly tasks, also show `Next` from `next_occurrence`; do not substitute it for either end of the task's planned period or use it as a sort key. By default list active tasks across all year/month directories. Apply a date window only when the user asks for a window or asks for a day-plan.
+`Planning state` is `planning_state`, or `planned` when omitted. Include planned and Backlog tasks by default, in separate groups. Sort planned confirmed or legacy dated tasks by ascending priority, planned end date, planned start date, then full task ID. Show planned tasks with provisional or incomplete periods in `日程要確認`, sorted by priority and ID. Show an unbounded weekly task without a planned period after dated planned tasks and before `日程要確認`, sorted by priority and full task ID; do not flag it for date review. Sort Backlog by ascending priority and then full task ID; do not date-filter it unless requested. Treat an omitted legacy priority as `7` without changing its file. Read current `tasks/YYYY/YYYYMM/YYYYMMDD/` and legacy `YYYY/YYYYMM/tasks/` records across all years. For weekly tasks, also show `Next` from `next_occurrence`; do not substitute it for either end of the task's planned period or use it as a sort key. By default list active tasks across both layouts. Apply a date window only when the user asks for a window or asks for a day-plan.

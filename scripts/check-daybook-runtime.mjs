@@ -5,9 +5,12 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const DATE = "2026-09-14";
-const ACTIVITY_PATH = "2026/202609/activities/activity-20260914aaa.md";
-const taskPath = "2026/202609/tasks/task-202609-00001-smoke.md";
-const schedulePath = "2026/202609/schedules/schedule-20260914-smoke.md";
+const ACTIVITY_PATH = "activities/2026/202609/20260914/activity-20260914aaa.md";
+const taskPath = "tasks/2026/202609/20260914/task-202609-00003-smoke.md";
+const schedulePath = "schedules/2026/202609/schedule-20260914-smoke.md";
+const legacyTaskPath = "2026/202609/tasks/task-202609-00002-legacy-smoke.md";
+const legacySchedulePath = "2026/202609/schedules/schedule-20260915-legacy-smoke.md";
+const migratedTaskPath = "tasks/2026/202611/20261117/task-202610-00014-migrated.md";
 
 function fail(message) {
   throw new Error(message);
@@ -166,7 +169,7 @@ function verifyIssueImport({ nodeExecutable, scriptsDirectory, repoRoot, cwd, en
     "--result", `${relativeRun}/result.json`,
   ], { cwd, env });
   expectSuccess(apply, "local Issue import apply");
-  const taskWrite = plan.writes.find((write) => write.path.includes("/tasks/task-202609-00001-"));
+  const taskWrite = plan.writes.find((write) => write.path.includes("task-202609-00001-"));
   if (!taskWrite) fail("Issue import plan did not include its task record");
   const written = fs.readFileSync(path.join(repoRoot, ...taskWrite.path.split("/")), "utf8");
   if (!written.includes("source_issue_number: 42") || !written.includes("Issue import YAML smoke")) {
@@ -179,10 +182,13 @@ function verifyIssueImport({ nodeExecutable, scriptsDirectory, repoRoot, cwd, en
 }
 
 function verifyDayPlanAndDryRun({ nodeExecutable, scriptsDirectory, repoRoot, cwd, env }) {
-  writeRecord(repoRoot, taskPath, `---\ntype: task\nid: task-202609-00001\nstatus: todo\nplanning_state: planned\npriority: 1\ncreated: 2026-09-01\nplanned_start_date: ${DATE}\nplanned_end_date: ${DATE}\nplanned_dates_status: confirmed\nplanned_action: !!binary SGVsbG8=\n---\n\n# Isolated day-plan smoke\n`);
+  writeRecord(repoRoot, taskPath, `---\ntype: task\nid: task-202609-00003\nstatus: todo\nplanning_state: planned\npriority: 1\ncreated: ${DATE}\nplanned_start_date: ${DATE}\nplanned_end_date: ${DATE}\nplanned_dates_status: confirmed\nplanned_action: !!binary SGVsbG8=\n---\n\n# Isolated day-plan smoke\n`);
   writeRecord(repoRoot, schedulePath, `---\ntype: schedule\ndate: ${DATE}\nstatus: scheduled\n---\n\n# Isolated schedule smoke\n`);
+  writeRecord(repoRoot, legacyTaskPath, `---\ntype: task\nid: task-202609-00002\nstatus: todo\nplanning_state: backlog\ncreated: 2026-09-01\n---\n\n# Legacy task smoke\n`);
+  writeRecord(repoRoot, legacySchedulePath, `---\ntype: schedule\ndate: 2026-09-15\nstatus: scheduled\n---\n\n# Legacy schedule smoke\n`);
+  writeRecord(repoRoot, migratedTaskPath, `---\ntype: task\nid: task-202610-00014\nstatus: todo\nplanning_state: backlog\nplanned_start_date: 2026-11-19\n---\n\n# Migrated task smoke\n`);
 
-  const sourceSnapshot = [taskPath, schedulePath].map((relative) => [
+  const sourceSnapshot = [taskPath, schedulePath, legacyTaskPath, legacySchedulePath, migratedTaskPath].map((relative) => [
     relative,
     fs.readFileSync(path.join(repoRoot, ...relative.split("/")), "utf8"),
   ]);
@@ -191,10 +197,12 @@ function verifyDayPlanAndDryRun({ nodeExecutable, scriptsDirectory, repoRoot, cw
     env,
   });
   expectSuccess(generator, "day-plan generation");
-  const planPath = path.join(repoRoot, "2026/202609/day-plan/day-plan-20260914.md");
+  const planPath = path.join(repoRoot, "day-plans/2026/202609/day-plan-20260914.md");
   const markdown = fs.readFileSync(planPath, "utf8");
-  if (!markdown.includes("Isolated day-plan smoke") || !markdown.includes("Isolated schedule smoke")) {
-    fail("generated day-plan omitted fixture records");
+  if (!markdown.includes("Isolated day-plan smoke") || !markdown.includes("Isolated schedule smoke")
+    || !markdown.includes("Legacy task smoke") || !markdown.includes("Legacy schedule smoke")
+    || !markdown.includes("Migrated task smoke")) {
+    fail("generated day-plan omitted new, legacy, or migrated fixture records");
   }
   if (!markdown.includes("：Hello\n")) fail("generated day-plan did not decode its binary planned action");
   for (const [relative, original] of sourceSnapshot) {

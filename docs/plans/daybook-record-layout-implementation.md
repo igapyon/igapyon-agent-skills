@@ -1,13 +1,13 @@
 ---
 title: miku-daybookの記録階層更新の実装計画
-status: planned
+status: complete
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-18
 ---
 
 # miku-daybookの記録階層更新の実装計画
 
-[確定したディレクトリ仕様](daybook-record-layout.md)を、`skills/igapyon-miku-daybook/`の指示文と同梱runtimeへ反映する計画です。計画作成は完了し、実装は未着手です。
+[確定したディレクトリ仕様](daybook-record-layout.md)を、`skills/igapyon-miku-daybook/`の指示文と同梱runtimeへ反映し、検証済みsourceをユーザー用skillへ同期しました。本書末尾に実施結果を記録します。
 
 ## 目的と対象範囲
 
@@ -19,13 +19,13 @@ updated: 2026-11-17
 
 ## 調査時点
 
-- branchは`devel-tiga1117wcj`、HEADは`b51f6b5a528f7398daef4a2ebac19287bb4531d8`、開始時のworktreeはcleanです。実装開始時に再確認します。
-- 確定仕様は設計資料に保存済みです。運用用の`SKILL.md`・references・同梱runtimeは旧配置を前提にしています。
-- ユーザー用skillは直前にsourceから同期しましたが、同期は新階層の実装を意味しません。
-- task・schedule・activityのpath生成、走査、検証が`day-plan.mjs`、`activity-files.mjs`、`issue-import.mjs`に分散しています。
+- 実装開始時点はbranch `devel-tiga1117wfj`、HEAD `102b80e60cab407705f873cb290b75973fb57cb3`、worktree cleanでした。
+- 確定仕様は設計資料に保存済みでした。実装前の`SKILL.md`・references・同梱runtimeは旧配置を前提にしていました。
+- 開始時のユーザー用skillはsourceと同期済みでしたが、新階層の実装は含んでいませんでした。今回source更新後に再同期しました。
+- task・schedule・activityのpath生成、走査、検証は`day-plan.mjs`、`activity-files.mjs`、`issue-import.mjs`に分散していました。共通`record-paths.mjs`へ集約しました。
 - todoの専用CLIはありません。task/todoの通常操作はMarkdown編集で、todoはday-plan生成とIssue取り込みの入力対象ではありません。この階層変更のためにtodo対応をそれらへ追加しません。
 - 通知workflowのテンプレートも旧day-planパスを組み立てています。generatorだけの更新ではartifact取得・通知が壊れます。
-- ローカル同期スクリプトは`node_modules`を除外していません。前回同期のsourceにはGit無視対象の`assets/daybook/node_modules/`があり、再同期前に配布と同期の対象を揃える必要があります。
+- ローカル同期スクリプトは`node_modules`を除外していませんでした。syncと`--check`の双方を除外対象へ揃え、既存の配備先依存を保持する一時fixtureで確認しました。
 
 ## 実装上の契約
 
@@ -74,16 +74,16 @@ workflowテンプレートの`plan_path`、artifact、posting stepも同じ新�
 
 ## 作業順序と完了条件
 
-| ID | 作業と主な変更先 | 完了条件 |
-| --- | --- | --- |
-| LAY-00 | source、配備済みskill、必要な対象runtimeの版・差分を固定 | 最新Git状態と対象を確認し、前提と固有変更を記録 |
-| LAY-01 | `record-paths.mjs`と利用側の依存関係 | 新旧パスの生成・解釈・探索と日付照合が共有され、循環importがない |
-| LAY-02 | `activity-files.mjs`、create/update CLIとtests | 新規は新配置、旧記録は元パスで更新。採番と競合対策が維持される |
-| LAY-03 | `day-plan.mjs`、`generate-day-plan.mjs`、`post-day-plan.mjs`、通知workflowとtests | 新旧入力から新出力を生成し、通知リンクとartifactが正しい |
-| LAY-04 | `issue-import.mjs`、import CLIとtests | 新規保存、既存関連付け、receipt、出典検出、旧plan互換と再applyが整合 |
-| LAY-05 | `SKILL.md`・全references・README類・DEVELOPMENT | 指示・例・探索パターン・同梱ファイル一覧がruntimeと一致 |
-| LAY-06 | 同梱runtimeの隔離実行、参照・配布チェック | npm依存なしでコピー先・別cwdから動き、共通moduleの欠落を検出できる |
-| LAY-07 | ローカル同期手順と一時配備先の検証 | 開発用`node_modules`を混ぜず、検証済みsourceを対象skillだけへ再同期できる |
+| ID | 作業と主な変更先 | 完了条件 | 状況 |
+| --- | --- | --- | --- |
+| LAY-00 | source、配備済みskill、必要な対象runtimeの版・差分を固定 | 最新Git状態と対象を確認し、前提と固有変更を記録 | 完了 |
+| LAY-01 | `record-paths.mjs`と利用側の依存関係 | 新旧パスの生成・解釈・探索と日付照合が共有され、循環importがない | 完了 |
+| LAY-02 | `activity-files.mjs`、create/update CLIとtests | 新規は新配置、旧記録は元パスで更新。採番と競合対策が維持される | 完了 |
+| LAY-03 | `day-plan.mjs`、`generate-day-plan.mjs`、`post-day-plan.mjs`、通知workflowとtests | 新旧入力から新出力を生成し、通知リンクとartifactが正しい | 完了 |
+| LAY-04 | `issue-import.mjs`、import CLIとtests | 新規保存、既存関連付け、receipt、出典検出、旧plan互換と再applyが整合 | 完了 |
+| LAY-05 | `SKILL.md`・全references・README類・DEVELOPMENT | 指示・例・探索パターン・同梱ファイル一覧がruntimeと一致 | 完了 |
+| LAY-06 | 同梱runtimeの隔離実行、参照・配布チェック | npm依存なしでコピー先・別cwdから動き、共通moduleの欠落を検出できる | 完了 |
+| LAY-07 | ローカル同期手順と一時配備先の検証 | 開発用`node_modules`を混ぜず、検証済みsourceを対象skillだけへ再同期できる | 完了 |
 
 LAY-00→01を行い、02→03→04を順に実装します。05は各runtime変更と合わせて更新し、全体が揃ってから06・07へ進めます。中間状態の文書だけをユーザー用skillへ配備しません。
 
@@ -141,6 +141,14 @@ task/todoの通常操作はモデルの指示解釈を含むため、共通modul
 
 ## 完了の判定と今回の実施内容
 
-source実装の完了はLAY-01〜06と対応する動作確認が揃った時点、ユーザー用skillの更新完了はLAY-07の再同期と内容一致まで確認した時点とします。対象daybookへのruntime配備と実データ移行は、それぞれ別に実施状況を報告します。版数更新・commit・pushは依頼された時点のmiku-scm手順に従います。
+source実装とユーザー用skillの同期は完了しました。対象daybookへのruntime配備と実データ移行は別工程です。版数更新・commit・pushは依頼された時点のmiku-scm手順に従います。
 
-今回はsourceの調査、本計画、確定仕様とTODOからの入口を追加しました。runtime・運用用の指示文・インストール先・実daybookは変更していません。実装testは未実施です。
+### 実施結果
+
+- LAY-00：開始branch `devel-tiga1117wfj`、HEAD `102b80e60cab407705f873cb290b75973fb57cb3`、clean worktreeを確認しました。対象はskill sourceとユーザー用skillで、実daybookは含めませんでした。
+- LAY-01〜04：新旧記録を扱う共通path moduleを追加し、activity・day-plan/通知・Issue取り込みへ接続しました。旧配置の更新・既存planの検証、新配置の生成、開始日を代用して移行したtaskのID月差を扱います。自己レビューで見つけた新旧配置間のactivity重複検出と、移行taskの削除済みID履歴検索も修正しました。
+- LAY-05：SKILL、関連references、通知workflow template、DEVELOPMENTとruntime fixtureを更新しました。topics・waypointsの配置やtodoのday-plan/Issue入力範囲は広げていません。
+- LAY-06：隔離bundleでCLI起動、activity作成・更新、新旧task/scheduleからのday-plan、Issue取り込み、通知dry-runを確認しました。npm依存なしで実行し、共通moduleのrouteも配布suiteで検査します。
+- LAY-07：syncと`--check`の双方から`node_modules/`を除外するよう変更し、隔離同期testを追加しました。ユーザー用`~/.codex/skills/igapyon-miku-daybook/`をsourceから同期し、`--check`で一致を確認しました。除外される既存依存は削除していません。
+- `npm run test:daybook` 99/99、`npm run test:skill-index-policy` 78/78、skill-creator `quick_validate.py`、ローカルMarkdown link/anchor確認、`git diff --check`がすべて成功しました。
+- task/todoのモデル指示を使った実対話評価は実施していません。実daybookのruntime配備と記録・添付の移動も未実施です。

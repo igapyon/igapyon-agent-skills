@@ -2,12 +2,12 @@
 title: daybookの記録種別をルートに置くディレクトリ仕様
 status: specification_confirmed
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-18
 ---
 
 # daybookの記録ディレクトリ仕様
 
-2026-11-17、利用者との検討により以下の仕様を確定しました。sourceのCLI・運用用のSKILL/referencesへの実装、および実daybookへの移行は未着手です。本書は次の標準配置を定め、現在配布されるCLIの対応済み仕様を示すものではありません。
+2026-11-17、利用者との検討により以下の仕様を確定し、source skillの指示文・references・同梱CLIへ実装しました。検証後のsourceはユーザー用`~/.codex/skills/igapyon-miku-daybook/`へ同期済みです。対象daybookへのruntime配備と既存データの移行は未実施です。本書は次の標準配置を定めます。
 
 source skill・runtimeの更新順序と検証、ユーザー用skillへの再同期は[実装計画](daybook-record-layout-implementation.md)にまとめています。
 
@@ -79,9 +79,9 @@ task関連の新規添付でも、資料が生じた活動月とtaskの作成月
 
 保存済みのIssue取り込みplan/resultなどが旧パスを指す場合は、その参照を確認します。実際のファイル移動後に古いplanを黙って別パスへ読み替えてapplyせず、再prepareまたは個別の移行処理で整合させます。
 
-## 実装時に揃える箇所
+## 実装済み箇所
 
-以下は確定仕様を実装するための作業項目です。現在の実装位置を示すリンクであり、新配置への対応済みを意味しません。
+以下のsourceとskill文書を更新しました。詳細な変更・検証記録は[実装計画の完了記録](daybook-record-layout-implementation.md)にあります。
 
 - [記録形式](../../skills/igapyon-miku-daybook/references/records.md)、[操作手順](../../skills/igapyon-miku-daybook/references/operations.md)、[todo](../../skills/igapyon-miku-daybook/references/todos.md)、[活動検索](../../skills/igapyon-miku-daybook/references/activity-capture.md)、添付・Waypoint・URL関連付け・Issue取り込み・通知の参照パスと例を揃えます。
 - [activity helper](../../skills/igapyon-miku-daybook/assets/daybook/scripts/activity-files.mjs)の作成先、旧記録の読み取りと更新、採番探索、親ディレクトリ検証を対応させます。排他的な新規作成と更新前ハッシュ照合を維持します。
@@ -89,4 +89,4 @@ task関連の新規添付でも、資料が生じた活動月とtaskの作成月
 - [Issue取り込み](../../skills/igapyon-miku-daybook/assets/daybook/scripts/issue-import.mjs)の出典探索、月単位task採番、新規パス生成、既存記録へのリンク、パス検証、activity書き込み判定、再apply時の整合を対応させます。
 - README、配布用案内、運用用SKILL/referencesと同梱runtimeを同じ仕様へ揃えます。対象daybookのREADME・runtimeとの統合、実データ移行、インストール済みskillの更新は、それぞれ実施状況を記録します。
 
-実装後は、新規作成、月をまたぐ一覧、task/todoの同月別日での採番、旧記録の読み取りと更新、新旧配置をまたぐ採番、相対リンク、day-planと通知、Issue取り込みの出典検出・重複防止・再applyを確認します。既存の記録内容と日付の意味が保たれることも移行前後で確認します。
+sourceの検証では、新規作成、task/todoの月単位採番と全日横断、旧記録の読み取り・更新、新旧配置をまたぐ探索、相対リンク、day-planと通知、Issue取り込みの出典検出・重複防止・再applyを確認しました。実daybookの移行前後に記録内容と日付の意味を確認する工程は、対象repoが特定された後続作業です。

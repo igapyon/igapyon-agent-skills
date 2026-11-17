@@ -4,12 +4,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { canonicalPlanPath, parseFrontMatter, validateIsoDate } from "./day-plan.mjs";
+import { parseRecordPath } from "./record-paths.mjs";
 
 function parseArgs(args) {
   const options = { serverUrl: process.env.GITHUB_SERVER_URL || "https://github.com", apiUrl: process.env.GITHUB_API_URL };
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === "--file") options.file = args[++index];
+    else if (arg === "--plan-path") options.planPath = args[++index];
     else if (arg === "--date") options.date = args[++index];
     else if (arg === "--issue-number") options.issueNumber = args[++index];
     else if (arg === "--repo") options.repo = args[++index];
@@ -36,11 +38,37 @@ export function markerForDate(date) {
   return `<!-- daybook-briefing:${date} -->`;
 }
 
-export function renderComment({ markdown, date, repo, sha, mention = process.env.DAYBOOK_MENTION, serverUrl = "https://github.com" }) {
+export function resolvePlanPath({ date, filePath, planPath }) {
+  validateIsoDate(date, "date");
+  if (planPath !== undefined) {
+    const parsed = parseRecordPath(planPath);
+    if (parsed.type !== "day-plan" || parsed.date !== date) {
+      throw new Error(`--plan-path must be a canonical day-plan path for ${date}`);
+    }
+    return parsed.relativePath;
+  }
+  if (typeof filePath === "string") {
+    const normalized = filePath.split(path.sep).join("/");
+    const parts = normalized.split("/");
+    for (let index = 0; index < parts.length - 3; index += 1) {
+      let parsed;
+      try {
+        parsed = parseRecordPath(parts.slice(index).join("/"));
+      } catch { /* The artifact path may be arbitrary; inspect its remaining canonical suffixes. */ }
+      if (parsed?.type === "day-plan") {
+        if (parsed.date !== date) throw new Error(`--file day-plan date ${parsed.date} does not match --date ${date}`);
+        return parsed.relativePath;
+      }
+    }
+  }
+  return canonicalPlanPath(date);
+}
+
+export function renderComment({ markdown, date, repo, sha, planPath, mention = process.env.DAYBOOK_MENTION, serverUrl = "https://github.com" }) {
   validateIsoDate(date, "date");
   if (!repo || !sha) throw new Error("repo and sha are required to render a GitHub comment");
   const parsed = parseFrontMatter(markdown, "day-plan");
-  const canonicalPath = canonicalPlanPath(date);
+  const canonicalPath = resolvePlanPath({ date, planPath });
   const body = parsed.body.trim().replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, href) => {
     if (/^(?:[a-z][a-z0-9+.-]*:|#|\/\/)/i.test(href)) return match;
     const sourcePath = path.posix.normalize(path.posix.join(path.posix.dirname(canonicalPath), href));
@@ -138,7 +166,7 @@ export async function postDayPlan(options) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
-    console.log("Usage: node scripts/post-day-plan.mjs --file FILE --date YYYY-MM-DD --issue-number NUMBER --repo OWNER/REPO --sha SHA [--dry-run] [--allow-duplicate]");
+    console.log("Usage: node scripts/post-day-plan.mjs --file FILE --date YYYY-MM-DD --issue-number NUMBER --repo OWNER/REPO --sha SHA [--plan-path CANONICAL-PATH] [--dry-run] [--allow-duplicate]");
     return;
   }
   const file = path.resolve(requireOption(options, "file"));
@@ -148,7 +176,8 @@ async function main() {
   const repo = requireOption(options, "repo");
   const sha = requireOption(options, "sha");
   const markdown = fs.readFileSync(file, "utf8");
-  const result = await postDayPlan({ ...options, file, date, issueNumber, repo, sha, markdown });
+  const planPath = resolvePlanPath({ date, filePath: file, planPath: options.planPath });
+  const result = await postDayPlan({ ...options, file, date, planPath, issueNumber, repo, sha, markdown });
   console.log(JSON.stringify(result, null, 2));
   if (result.status === "dry-run") console.log(result.body);
 }
