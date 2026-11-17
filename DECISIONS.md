@@ -15,6 +15,25 @@ update_when:
 This file records important decisions for the AI agent.
 Read this before making or revisiting decisions, especially when the work seems to loop.
 
+## 2026-11-17: Place Daybook Record Types At The Repository Root
+
+決定:
+daybookの次の標準配置は、記録種別をルートに置きます。
+activities・tasks・todosは`YYYY/YYYYMM/YYYYMMDD/`、schedules・day-plansは
+`YYYY/YYYYMM/`まで分割します。attachmentsは月の下に関連記録の識別子を置き、
+topics・waypointsは既存のルート配置を維持します。
+
+taskとtodoの日別ディレクトリは作成日で固定し、IDの月単位採番を維持します。
+新規activityの接尾辞は引き続き`aaa`から開始します。
+
+理由:
+ヘビーユースで増える活動記録の粒度を保ちながら、一つのディレクトリに集中する
+ファイルを分散させ、記録種別から検索・閲覧する入口を明確にするためです。
+利用者との検討により、本日この仕様で確定しました。
+
+詳細と実装対象は[記録ディレクトリ仕様](docs/plans/daybook-record-layout.md)に保持します。
+仕様は確定済みで、CLI・運用用SKILL/referencesへの実装と実daybookの移行は未着手です。
+
 ## 2026-11-13: Prefer Daybook For Work State When Used Together
 
 決定:
