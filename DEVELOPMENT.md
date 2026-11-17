@@ -449,7 +449,7 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 - `miku-prompt-lint-skills` `v0.9.0`: `skills/igapyon-miku-prompt-lint/`
 - `miku-ai-assistant-builder-skills` `v0.14.0`: `skills/igapyon-miku-ai-assistant-builder/`
 - `miku-ms-office-skills` `v0.7.3`: `skills/igapyon-miku-ms-office/`
-- `miku-md2formats-skills` `v0.3.6`: `skills/igapyon-miku-md2formats/`
+- `miku-md2formats-skills` `v0.6.0`: `skills/igapyon-miku-md2formats/`
 - `miku-json2xlsx-skills` `v0.5.0`: `skills/igapyon-miku-json2xlsx/`
 - `miku-project-skills` `v1.1.2`: `skills/igapyon-miku-project/`
 - `miku-score-skills` `v0.6.1`: `skills/igapyon-miku-score/`
