@@ -306,9 +306,9 @@ activityをまとめる際は、結論を中心に整理する作戦と、廃案
 
 標準手順をdaybookの記録でほぼ完結させているのは、実利用で別系統の状態ファイルとの責務が重複し、利用者が迷ったためです。発端と、併用時に利用者の意図を尊重する設計理由は、[2026-11-13の決定](DECISIONS.md#2026-11-13-prefer-daybook-for-work-state-when-used-together)に記録しています。
 
-daybook利用中はactivityを共通の作業記録とし、会話の途中経過、URLの受領・閲覧結果、todo・task・topicだけの操作も記録します。最初の有用な事実・案・疑問から、実質的に進んだ応答の区切りで保存し、結論や会話終了を待ちません。同じ作業は既存activityへ続け、後の判断で以前の経緯を消さないようにします。todo・task・topicを操作した事実はactivityにも残し、activityへの記録だけを理由にそれらを変更しません。
+daybook利用中はactivityを共通の作業記録とし、会話の途中経過、URLの受領・閲覧結果、todo・task・topicだけの操作も記録します。既定の **Checkpoint Mode** では、調査結果が出た、方針が決まった、作業が中断したなどの切れ目で未保存分をまとめます。**Detailed Activity Mode** では、試行やコマンドの意味のあるまとまりごとに記録します。再現に必要な場合は、実行場所、条件、実際の引数と結果も残します。どちらのモードでも同じ作業は既存activityへ続け、以前の経緯を保持します。操作上必要な保存順は個別手順に従います。モードの詳細は [Choose the recording mode](skills/igapyon-miku-daybook/references/activity-capture.md#choose-the-recording-mode) に集約します。
 
-activityの記録依頼は未記録の内容を保存する依頼として扱います。対象の既存本文を確認してすべて記録済みなら、ファイルを変更せず「すでに記録済みです」と既存記録を示します。一部だけ未記録ならその内容を保存し、保存を確認できない場合は記録済みと断言しません。依頼や保存確認そのものを別のactivityにはしません。同じ作業の再実行や新しい判断・訂正は記録対象です。詳細は [Record only unsaved material](skills/igapyon-miku-daybook/references/activity-capture.md#record-only-unsaved-material) に集約します。
+「activity記録して」「コマンドを記録して」などの指示は、その場での未保存分の記録と Detailed Activity Mode への切替を求めます。すべて記録済みなら、既存本文を確認してファイルを変更せず、記録済みのファイルを示します。この場合も切替は有効です。「ここまでだけ記録して」は単発の保存で、「activityあまり記録しないで」は Checkpoint Mode に戻す指示です。一部だけ未記録ならその内容を保存し、保存を確認できない場合は記録済みと断言しません。同じ作業の再実行や新しい判断・訂正は記録対象です。詳細は [Record only unsaved material](skills/igapyon-miku-daybook/references/activity-capture.md#record-only-unsaved-material) に集約します。
 
 activityはAsia/Tokyoの当日中に追記・補完・文章や構成の整理ができます。試行、観察、失敗、判断の順序は当日でも保持します。翌日以降は保存済みの経緯を残し、補足・事実訂正には実際の追記日・訂正日を明記します。後日の新しい作業や方針変更は、その日の新しいactivityから以前の記録へリンクします。意味を変えない誤字・書式修正は随時可能です。夜をまたぐ一続きの作業の直後の仕上げは同じactivityで許容し、翌日あらためて振り返る段階からは追記・訂正として扱います。この日付による区切りはdaybook独自の編集方針です。詳細は[Edit activities over time](skills/igapyon-miku-daybook/references/activity-capture.md#edit-activities-over-time)に集約します。
 
