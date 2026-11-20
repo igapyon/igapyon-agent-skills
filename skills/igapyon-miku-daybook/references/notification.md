@@ -10,7 +10,9 @@ The current generator includes a separate `今日の候補（予定は暫定）`
 
 The bundled default schedule is once per day at approximately 06:00 Asia/Tokyo, using the UTC cron `0 21 * * *`. GitHub schedule events are best effort and can be delayed or dropped. Before changing or reporting the target time, read the target repository's `.github/workflows/day-plan-notify.yml` because this value is operational configuration.
 
-The comment marker is date-only: `<!-- daybook-briefing:YYYY-MM-DD -->`. The posting script also recognizes previous date-only and date-plus-slot markers, so migrating an existing Issue does not create another comment for a date that was already posted. A scheduled retry and a manual non-dry-run for the same target date are skipped when a Bot comment for that date exists. A manual dispatch may explicitly set `allow_duplicate: true` to post again; scheduled runs always deduplicate. Dry-runs never post.
+The comment marker is date-only: `<!-- daybook-briefing:YYYY-MM-DD -->`. The posting script also recognizes previous date-only and date-plus-slot markers, so migrating an existing Issue does not create another comment for a date that was already posted. A scheduled run and a manual non-dry-run for the same target date are skipped when a Bot comment for that date exists. A manual dispatch may explicitly set `allow_duplicate: true` to post again; scheduled runs always deduplicate. Dry-runs never post.
+
+If any POST loses its response, the script reads the Issue comments again. For a regular post, it reports a matching same-date Bot comment if found. For a manual repost with `allow_duplicate: true`, it requires a single new Bot comment with the exact submitted body. If the outcome remains unknown or comment lookup fails, the script stops after that one POST and reports the Issue and target date. Check that Issue's comments before dispatching another post. The Actions step returns a failure when the script cannot verify the outcome.
 
 ## Bundled runnable files
 

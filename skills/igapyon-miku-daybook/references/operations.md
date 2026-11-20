@@ -188,9 +188,9 @@ When editing an existing episode, obtain a fresh snapshot of its current content
 node scripts/update-activity.mjs --path activities/2026/202611/20261106/activity-20261106aaa.md --read
 ```
 
-Read the returned JSON `content`, make the relevant edits while preserving other contributions, and submit the updated Markdown through `--stdin` with `--path` and `--expected-sha256` set to that snapshot's `sha256`. Immediately before writing, the CLI rereads the file and compares its hash with the original snapshot. A changed or missing file stops with `ACTIVITY_UPDATE_CONFLICT`; read the latest content and reconsider the edit before retrying. Never submit a stale draft with only a fresh hash attached. Successful updates return `path` and `sha256`.
+Read the returned JSON `content`, make the relevant edits while preserving other contributions, and submit the updated Markdown through `--stdin` with `--path` and `--expected-sha256` set to that snapshot's `sha256`. The CLI writes and syncs the complete draft in a temporary file beside the activity. It preserves the activity's file permissions, then rereads the original and checks its hash immediately before replacing it. A changed or missing file stops with `ACTIVITY_UPDATE_CONFLICT`. Read the latest content and reconsider the edit before retrying. Never submit a stale draft with only a fresh hash attached. Successful updates return `path` and `sha256`.
 
-Activity updates use a normal file write after this check, with no per-activity lock or permission-management workflow. A concurrent write starting between the final check and save can still race; this procedure does not promise strict exclusion of simultaneous updates.
+If staging or replacement fails, the original activity stays intact. A concurrent write between the final check and replacement can still race.
 
 Keep a single coherent event together when its place, activity, and instrument belong to one event. For example, an afternoon ensemble at a named venue while playing violin is one activity item.
 

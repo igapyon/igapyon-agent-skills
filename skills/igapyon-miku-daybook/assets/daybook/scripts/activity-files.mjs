@@ -75,7 +75,7 @@ function readCurrentActivity(repoRoot, relativePath) {
       throw activityError("PATH_OUTSIDE_REPO", "Activity must be a regular file", { path: relativePath });
     }
     const content = fs.readFileSync(destination);
-    return { destination, content, sha256: activityHash(content) };
+    return { destination, content, sha256: activityHash(content), mode: stat.mode & 0o777 };
   } catch (error) {
     if (error.code === "ENOENT") {
       throw activityError("ACTIVITY_UPDATE_CONFLICT", "Activity disappeared; reread before updating", { path: relativePath });
@@ -230,12 +230,32 @@ export function updateActivity({ repoRoot, path: relativePath, expectedSha256, c
     throw new Error("--expected-sha256 must be the SHA-256 returned with the original activity snapshot");
   }
   validateActivityRecord(relativePath, content);
-  // Reread immediately before saving. This detects intervening edits, not simultaneous writes.
-  const current = readCurrentActivity(repoRoot, relativePath);
-  if (current.sha256 !== expectedSha256) {
+  const original = readCurrentActivity(repoRoot, relativePath);
+  if (original.sha256 !== expectedSha256) {
     throw activityError("ACTIVITY_UPDATE_CONFLICT", "Activity changed; reread and reconsider the update", { path: relativePath });
   }
-  fs.writeFileSync(current.destination, content, "utf8");
+  const temporary = path.join(path.dirname(original.destination), `.activity-${randomUUID()}.tmp`);
+  let fd = fs.openSync(temporary, "wx", 0o600);
+  try {
+    fs.writeFileSync(fd, content, "utf8");
+    fs.fchmodSync(fd, original.mode);
+    fs.fsyncSync(fd);
+    fs.closeSync(fd);
+    fd = undefined;
+
+    // The final reread catches intervening edits, but does not lock out simultaneous writers.
+    const current = readCurrentActivity(repoRoot, relativePath);
+    if (current.sha256 !== expectedSha256 || current.mode !== original.mode || current.destination !== original.destination) {
+      throw activityError("ACTIVITY_UPDATE_CONFLICT", "Activity changed; reread and reconsider the update", { path: relativePath });
+    }
+    fs.renameSync(temporary, original.destination);
+  } catch (error) {
+    if (fd !== undefined) {
+      try { fs.closeSync(fd); } catch { /* Preserve the original error. */ }
+    }
+    try { fs.unlinkSync(temporary); } catch { /* Preserve the original error. */ }
+    throw error;
+  }
   return { path: relativePath, sha256: activityHash(content) };
 }
 

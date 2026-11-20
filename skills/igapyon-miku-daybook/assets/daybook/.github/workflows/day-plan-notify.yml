@@ -94,6 +94,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           duplicate_args=()
           if [ "${DAYBOOK_ALLOW_DUPLICATE,,}" = "true" ] && [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             duplicate_args+=(--allow-duplicate)

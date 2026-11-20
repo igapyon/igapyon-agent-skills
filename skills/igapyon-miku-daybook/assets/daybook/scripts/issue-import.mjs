@@ -569,6 +569,7 @@ function parseActivityMarkers(text, relativePath) {
 export function scanIssueSources(repoRoot) {
   const byKey = new Map();
   const byUrl = new Map();
+  const taskPathsById = new Map();
   const add = (item) => {
     const key = sourceKey(item.number, item.url, item.key);
     const existing = byKey.get(key) ?? [];
@@ -598,6 +599,7 @@ export function scanIssueSources(repoRoot) {
       if (parsed.frontMatter.id !== recordPath.id) {
         fail("SOURCE_CONFLICT", "Task path, filename, and ID must agree", { path: relativePath });
       }
+      taskPathsById.set(recordPath.id, relativePath);
       const hasCreated = Object.hasOwn(parsed.rawFrontMatter, "created");
       if (recordPath.layout === "legacy") {
         if (hasCreated) {
@@ -625,7 +627,7 @@ export function scanIssueSources(repoRoot) {
   for (const [key, items] of byKey) {
     if (items.length > 1) fail("SOURCE_CONFLICT", "The same Issue and record key appear in multiple records", { key, paths: items.map((item) => item.path) });
   }
-  return { byKey, byUrl };
+  return { byKey, byUrl, taskPathsById };
 }
 
 function markdownEscape(value) {
@@ -1486,6 +1488,28 @@ async function saveResult(resultPath, result) {
   await atomicWrite(resultPath, `${JSON.stringify(result, null, 2)}\n`);
 }
 
+async function ensureCommentDraft(runDirectory, issue) {
+  const draftPath = path.join(runDirectory, issue.comment_file);
+  const expected = Buffer.from(`${issue.comment_body}\n`, "utf8");
+  try {
+    const stat = await fsp.lstat(draftPath);
+    if (!stat.isFile()) fail("LOCAL_CONFLICT", "Comment draft must be a regular file", { path: draftPath });
+    const current = await fsp.readFile(draftPath);
+    if (!current.equals(expected)) {
+      fail("LOCAL_CONFLICT", "Comment draft already exists with different content", { path: draftPath });
+    }
+    return;
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  try {
+    await atomicWrite(draftPath, expected, { exclusive: true });
+  } catch (error) {
+    if (error.code === "EEXIST") fail("LOCAL_CONFLICT", "Comment draft appeared during apply", { path: draftPath });
+    throw error;
+  }
+}
+
 function getCurrentHash(repoRoot, relativePath) {
   const absolute = assertSafeRepoPath(repoRoot, relativePath);
   return fs.existsSync(absolute) ? sha256(fs.readFileSync(absolute)) : null;
@@ -1625,6 +1649,17 @@ function verifyCurrentIssueSources(repoRoot, plan) {
   }
   const index = scanIssueSources(repoRoot);
   const writes = new Map(plan.writes.map((write) => [write.path, write]));
+  for (const write of plan.writes) {
+    const record = parseRecordPath(write.path);
+    if (record.type !== "task") continue;
+    const otherPath = index.taskPathsById.get(record.id);
+    if (otherPath && otherPath !== write.path) {
+      fail("SOURCE_CONFLICT", `Task ID ${record.id} is assigned to two paths: ${otherPath}, ${write.path}`, {
+        id: record.id, paths: [otherPath, write.path],
+      });
+    }
+    index.taskPathsById.set(record.id, write.path);
+  }
   for (const issue of plan.issues.filter((item) => item.outcome === "create")) {
     for (const found of index.byUrl.get(issue.url) ?? []) {
       const record = issue.records.find((item) => item.key === found.key && item.path === found.path);
@@ -1654,13 +1689,9 @@ export async function applyIssueImport({ repoRoot, plan, refreshSource, resultPa
     } else {
       result = createInitialResult(plan);
       await saveResult(paths.absolute, result);
-      for (const issue of result.issues.filter((item) => item.outcome === "create")) {
-        const commentPath = path.join(paths.runDirectory, issue.comment_file);
-        const expected = `${issue.comment_body}\n`;
-        if (fs.existsSync(commentPath)) {
-          if (await fsp.readFile(commentPath, "utf8") !== expected) fail("LOCAL_CONFLICT", "Comment draft already exists with different content", { issue: issue.number });
-        } else await atomicWrite(commentPath, expected, { exclusive: true });
-      }
+    }
+    for (const issue of result.issues) {
+      if (issue.outcome === "create") await ensureCommentDraft(paths.runDirectory, issue);
     }
     const currentStates = [];
     let everyWriteAlreadyApplied = true;

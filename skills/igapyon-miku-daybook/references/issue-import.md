@@ -202,6 +202,10 @@ The CLI locks one repo-level apply, verifies the refreshed source and all paths/
 
 If apply returns `PARTIAL_WRITE`, retain all completed files and the same run. Do not delete or roll back successful writes. Re-run apply with the same `plan.json`, `result.json`, and a fresh `refresh-source.json` if writes remain; a file at its planned `after_hash` is recognized as applied. Any other current hash is a local conflict and requires user review.
 
+Apply also checks task IDs across the current and legacy layouts under the repository lock. If another run or edit claimed a planned ID at a different path, apply reports `SOURCE_CONFLICT` with the ID and both paths before writing any records. When no records from the conflicting plan have been applied, prepare again and review the newly assigned ID and paths before applying. Keep any already applied records for review before preparing a replacement plan.
+
+On both initial apply and resume, the CLI checks each `comment-<number>.md` against the reviewed plan before writing records. It restores a missing draft, reuses a matching draft, and reports `LOCAL_CONFLICT` with the path when a draft differs. Resolve a draft conflict against the reviewed plan before resuming. A restored draft carries the same receipt, and the existing result retains the recorded comment and close states.
+
 `plan.json` and `result.json` are run-local recovery data under ignored `workplace/`; they are not the daybook record source of truth. Do not start a new run to retry a partial application. If `result.json` is lost while planned files exist, applying can recover local writes from exact after hashes and source markers, but the comment becomes `uncertain`. Read GitHub before any remote recovery; never infer that a comment was or was not posted.
 
 ## 7. Post and verify the receipt with miku-scm
