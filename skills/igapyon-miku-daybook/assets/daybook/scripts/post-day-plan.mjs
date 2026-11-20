@@ -145,21 +145,35 @@ export async function postDayPlan(options) {
   if (!token) throw new Error("GITHUB_TOKEN is required unless --dry-run is used");
   const defaultApiUrl = options.serverUrl === "https://github.com" ? "https://api.github.com" : `${options.serverUrl}/api/v3`;
   const apiUrl = (options.apiUrl || process.env.GITHUB_API_URL || defaultApiUrl).replace(/\/$/, "");
-  const issue = await getIssue({ apiUrl, repo: options.repo, issueNumber: options.issueNumber, token });
+  const request = { apiUrl, repo: options.repo, issueNumber: options.issueNumber, token };
+  const issue = await getIssue(request);
   if (issue.pull_request) throw new Error(`target is a pull request, not an issue: #${options.issueNumber}`);
   if (issue.state !== "open") throw new Error(`target issue is not open: #${options.issueNumber}`);
-  const comments = await listComments({ apiUrl, repo: options.repo, issueNumber: options.issueNumber, token });
+  const comments = await listComments(request);
   const existing = options.allowDuplicate ? null : existingBriefing(comments, options.date);
   if (existing) return { status: "skipped", marker, url: existing.html_url };
+  const priorCommentIds = new Set(comments.map((comment) => comment.id));
   try {
-    const created = await postComment({ apiUrl, repo: options.repo, issueNumber: options.issueNumber, token, body });
+    const created = await postComment({ ...request, body });
     return { status: "created", marker, url: created.html_url };
-  } catch (error) {
-    const afterFailure = await listComments({ apiUrl, repo: options.repo, issueNumber: options.issueNumber, token });
-    const accepted = options.allowDuplicate ? null : existingBriefing(afterFailure, options.date);
+  } catch (postError) {
+    const uncertain = `Posting outcome is unknown for ${options.repo} issue #${options.issueNumber} on ${options.date}. Check the Issue before reposting.`;
+    let afterFailure;
+    try {
+      afterFailure = await listComments(request);
+    } catch (readError) {
+      throw new Error(`${uncertain} Could not verify comments: ${readError.message}`, { cause: postError });
+    }
+    if (options.allowDuplicate) {
+      // The exact body includes the date marker. A previous copy cannot confirm this attempt.
+      const matches = afterFailure.filter((comment) => comment.id != null && !priorCommentIds.has(comment.id)
+        && comment.user?.type === "Bot" && comment.body === body);
+      if (matches.length !== 1 || !matches[0].html_url) throw new Error(uncertain, { cause: postError });
+      return { status: "skipped-after-uncertain-post", marker, url: matches[0].html_url };
+    }
+    const accepted = existingBriefing(afterFailure, options.date);
     if (accepted) return { status: "skipped-after-uncertain-post", marker, url: accepted.html_url };
-    const retry = await postComment({ apiUrl, repo: options.repo, issueNumber: options.issueNumber, token, body });
-    return { status: "created-after-retry", marker, url: retry.html_url };
+    throw new Error(uncertain, { cause: postError });
   }
 }
 

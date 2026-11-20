@@ -318,6 +318,98 @@ generated: 2026-09-14
   }
 });
 
+for (const outcome of ["visible", "not visible", "multiple matches", "lookup failed"]) {
+  test(`manual repost sends only once when the response is lost and the new comment is ${outcome}`, async (t) => {
+    const args = {
+      markdown: "---\ntype: day-plan\ndate: 2026-09-14\n---\n\n# Daily briefing\n",
+      date: "2026-09-14",
+      repo: "igapyon/daybook",
+      sha: "abc123",
+      issueNumber: 42,
+      apiUrl: "https://api.github.test",
+      token: "test-token",
+      mention: "",
+      allowDuplicate: true,
+    };
+    const body = renderComment(args);
+    const comment = (id, text = body, type = "Bot") => ({
+      id, user: { type }, body: text, html_url: `https://github.com/${args.repo}/issues/42#issuecomment-${id}`,
+    });
+    const comments = [comment(10)];
+    let posted, postCount = 0, listCount = 0;
+    t.mock.method(globalThis, "fetch", async (url, options = {}) => {
+      if (url.endsWith("/issues/42")) return response({ state: "open" });
+      if (options.method === "POST") {
+        postCount++;
+        posted = comment(11, JSON.parse(options.body).body);
+        throw new Error("Lost POST response after accepting the comment");
+      }
+      listCount++;
+      if (listCount === 1) return response(comments);
+      if (outcome === "lookup failed") return response({ message: "Service unavailable" }, 503);
+      const visible = [...comments, comment(9, body, "User"), comment(13, body + "different text")];
+      if (outcome === "visible" || outcome === "multiple matches") visible.push(posted);
+      if (outcome === "multiple matches") visible.push(comment(12));
+      return response(visible);
+    });
+
+    if (outcome === "visible") {
+      assert.deepEqual(await postDayPlan(args), {
+        status: "skipped-after-uncertain-post", marker: markerForDate(args.date), url: comment(11).html_url,
+      });
+    } else {
+      await assert.rejects(postDayPlan(args), /Posting outcome is unknown for igapyon\/daybook issue #42 on 2026-09-14/);
+    }
+    assert.equal(postCount, 1);
+    assert.equal(listCount, 2);
+    assert.equal(posted.body, body);
+  });
+}
+
+for (const outcome of ["visible", "not visible", "lookup failed"]) {
+  test(`scheduled post stops after one lost response when the resulting comment is ${outcome}`, async (t) => {
+    const args = {
+      markdown: "---\ntype: day-plan\ndate: 2026-09-14\n---\n\n# Daily briefing\n",
+      date: "2026-09-14",
+      repo: "igapyon/daybook",
+      sha: "abc123",
+      issueNumber: 42,
+      apiUrl: "https://api.github.test",
+      token: "test-token",
+      mention: "",
+    };
+    const body = renderComment(args);
+    const created = {
+      id: 11,
+      user: { type: "Bot" },
+      body,
+      html_url: "https://github.com/igapyon/daybook/issues/42#issuecomment-11",
+    };
+    let postCount = 0, listCount = 0;
+    t.mock.method(globalThis, "fetch", async (url, options = {}) => {
+      if (url.endsWith("/issues/42")) return response({ state: "open" });
+      if (options.method === "POST") {
+        postCount++;
+        throw new Error("Lost POST response after accepting the comment");
+      }
+      listCount++;
+      if (listCount === 1) return response([]);
+      if (outcome === "lookup failed") return response({ message: "Service unavailable" }, 503);
+      return response(outcome === "visible" ? [created] : []);
+    });
+
+    if (outcome === "visible") {
+      assert.deepEqual(await postDayPlan(args), {
+        status: "skipped-after-uncertain-post", marker: markerForDate(args.date), url: created.html_url,
+      });
+    } else {
+      await assert.rejects(postDayPlan(args), /Posting outcome is unknown for igapyon\/daybook issue #42 on 2026-09-14/);
+    }
+    assert.equal(postCount, 1);
+    assert.equal(listCount, 2);
+  });
+}
+
 test("postDayPlan dry-run does not call GitHub", async () => {
   const originalFetch = globalThis.fetch;
   try {

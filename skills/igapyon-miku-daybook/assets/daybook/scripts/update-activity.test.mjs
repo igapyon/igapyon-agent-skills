@@ -32,6 +32,7 @@ test("read snapshot and stdin update preserve content, links and legacy unsuffix
   const f = fixture(t, RELATIVE.replace("a.md", ".md"));
   const original = content("Original").replaceAll("\n", "\r\n");
   fs.writeFileSync(f.target, original);
+  fs.chmodSync(f.target, 0o640);
   const read = cli(f.repoRoot, ["--path", f.relative, "--read"]);
   assert.equal(read.status, 0, read.stderr);
   const snapshot = JSON.parse(read.stdout);
@@ -42,6 +43,7 @@ test("read snapshot and stdin update preserve content, links and legacy unsuffix
   assert.equal(saved.status, 0, saved.stderr);
   assert.equal(JSON.parse(saved.stdout).sha256, activityHash(updated));
   assert.equal(fs.readFileSync(f.target, "utf8"), updated);
+  assert.equal(fs.statSync(f.target).mode & 0o777, 0o640);
   const draftDirectory = fs.mkdtempSync(path.join(f.repoRoot, "draft-"));
   const draft = path.join(draftDirectory, "updated.md");
   fs.writeFileSync(draft, updated.replace("Original", "New"), { flag: "wx" });
@@ -74,31 +76,51 @@ test("a peer edit seen by the final reread stops the update", (t) => {
   const f = fixture(t);
   const read = fs.readFileSync;
   const peer = content("Peer's latest edit");
-  let changed = false;
+  let reads = 0;
   t.mock.method(fs, "readFileSync", (file, ...args) => {
-    if (file === f.target && !changed) {
-      changed = true;
+    if (file === f.target && ++reads === 2) {
+      assert.ok(fs.readdirSync(path.dirname(f.target)).some((name) => name.endsWith(".tmp")));
       fs.writeFileSync(f.target, peer);
     }
     return read(file, ...args);
   });
   assert.throws(() => updateActivity({ repoRoot: f.repoRoot, path: f.relative,
     expectedSha256: activityHash(content("Original")), content: content("Stale draft") }), { code: "ACTIVITY_UPDATE_CONFLICT" });
-  assert.equal(changed, true);
+  assert.equal(reads, 2);
   assert.equal(fs.readFileSync(f.target, "utf8"), peer);
-  assert.equal(fs.existsSync(path.join(f.repoRoot, "workplace")), false);
+  assert.deepEqual(fs.readdirSync(path.dirname(f.target)), [path.basename(f.target)]);
 });
 
-test("write errors are reported directly without creating recovery files", (t) => {
+test("a partial write failure preserves the original bytes and removes the draft", (t) => {
   const f = fixture(t);
+  const original = fs.readFileSync(f.target);
   const write = fs.writeFileSync;
-  t.mock.method(fs, "writeFileSync", (file, ...args) => {
-    if (file === f.target) throw Object.assign(new Error("Write failure fixture"), { code: "EIO" });
-    return write(file, ...args);
+  t.mock.method(fs, "writeFileSync", (file, text, encoding) => {
+    write(file, text.slice(0, 12), encoding);
+    throw Object.assign(new Error("Partial write fixture"), { code: "ENOSPC" });
   });
   assert.throws(() => updateActivity({ repoRoot: f.repoRoot, path: f.relative,
-    expectedSha256: activityHash(content("Original")), content: content("Draft") }), { code: "EIO" });
-  assert.equal(fs.existsSync(path.join(f.repoRoot, "workplace")), false);
+    expectedSha256: activityHash(original), content: content("Draft") }), { code: "ENOSPC" });
+  assert.deepEqual(fs.readFileSync(f.target), original);
+  assert.deepEqual(fs.readdirSync(path.dirname(f.target)), [path.basename(f.target)]);
+});
+
+test("a failed rename preserves the original bytes and removes the draft", (t) => {
+  const f = fixture(t);
+  const original = fs.readFileSync(f.target);
+  const updated = content("Draft");
+  const error = Object.assign(new Error("Rename failure fixture"), { code: "EIO" });
+  t.mock.method(fs, "renameSync", (draft, target) => {
+    assert.equal(target, f.target);
+    assert.equal(path.dirname(draft), path.dirname(target));
+    assert.equal(fs.readFileSync(draft, "utf8"), updated);
+    assert.deepEqual(fs.readFileSync(target), original);
+    throw error;
+  });
+  assert.throws(() => updateActivity({ repoRoot: f.repoRoot, path: f.relative,
+    expectedSha256: activityHash(original), content: updated }), (actual) => actual === error);
+  assert.deepEqual(fs.readFileSync(f.target), original);
+  assert.deepEqual(fs.readdirSync(path.dirname(f.target)), [path.basename(f.target)]);
 });
 
 test("invalid input modes, dates, paths and symlinks cannot modify an activity", (t) => {

@@ -722,6 +722,50 @@ test("apply checks Issue identity even when a competing import uses another reco
   assert.equal(fs.existsSync(path.join(root, plan.writes[0].path)), false);
 });
 
+test("applying a stale plan rejects a task ID already applied at another path", async (t) => {
+  const root = makeRoot(t);
+  const firstSource = source([issue(42)]);
+  const staleSource = source([issue(43)]);
+  const firstDecisions = manifest([{ number: 42, decision: "import", records: [taskRecord("first")] }]);
+  const staleDecisions = manifest([{ number: 43, decision: "import", records: [taskRecord("second"), activityRecord()] }]);
+  const firstPlan = prepare(root, firstSource, firstDecisions).plan;
+  const stalePlan = prepare(root, staleSource, staleDecisions).plan;
+  const [firstTask] = firstPlan.issues[0].records;
+  const staleTask = stalePlan.issues[0].records.find((record) => record.type === "task");
+  assert.equal(firstTask.id, staleTask.id);
+  assert.notEqual(firstTask.path, staleTask.path);
+  const resultPathFor = (run) => path.join(root, "workplace/issue-import", run, "result.json");
+
+  await applyIssueImport({ repoRoot: root, plan: firstPlan, refreshSource: firstSource, resultPath: resultPathFor("first") });
+  await assert.rejects(applyIssueImport({
+    repoRoot: root, plan: stalePlan, refreshSource: staleSource, resultPath: resultPathFor("stale"),
+  }), { code: "SOURCE_CONFLICT", details: { id: staleTask.id, paths: [firstTask.path, staleTask.path] } });
+  for (const write of stalePlan.writes) assert.equal(fs.existsSync(path.join(root, write.path)), false);
+  assert.equal(fs.readFileSync(path.join(root, firstTask.path), "utf8"), firstPlan.writes[0].content);
+
+  const freshPlan = prepare(root, staleSource, staleDecisions).plan;
+  const freshTask = freshPlan.issues[0].records.find((record) => record.type === "task");
+  assert.notEqual(freshTask.id, firstTask.id);
+  await applyIssueImport({ repoRoot: root, plan: freshPlan, refreshSource: staleSource, resultPath: resultPathFor("fresh") });
+  const dayPlan = buildDayPlan({ repoRoot: root, targetDate: IMPORT_DATE });
+  assert.ok(dayPlan.markdown.includes(firstTask.id));
+  assert.ok(dayPlan.markdown.includes(freshTask.id));
+});
+
+test("task ID preflight includes migrated tasks without Issue provenance", async (t) => {
+  const root = makeRoot(t);
+  const input = source();
+  const { plan } = prepare(root, input, manifest([{ number: 42, decision: "import", records: [taskRecord()] }]));
+  const [task] = plan.issues[0].records;
+  const existingPath = `tasks/2026/202611/20261101/${task.id}-migrated.md`;
+  fs.mkdirSync(path.dirname(path.join(root, existingPath)), { recursive: true });
+  fs.writeFileSync(path.join(root, existingPath), `---\ntype: task\nid: ${task.id}\nstatus: todo\n---\n\n# Migrated\n`);
+  await assert.rejects(applyIssueImport({
+    repoRoot: root, plan, refreshSource: input, resultPath: path.join(root, "workplace/issue-import/migrated-conflict/result.json"),
+  }), { code: "SOURCE_CONFLICT", details: { id: task.id, paths: [existingPath, task.path] } });
+  assert.equal(fs.existsSync(path.join(root, task.path)), false);
+});
+
 test("activity recovery accepts only its own exact published writes", async (t) => {
   const root = makeRoot(t);
   const { plan } = prepare(root, source(), manifest([{ number: 42, decision: "import", records: [activityRecord("first"), activityRecord("second")] }]));
@@ -771,6 +815,46 @@ test("apply, comment-result, and close-result retain the local todo state and co
   assert.equal(complete.issues[0].close.status, "closed");
   assert.match(fs.readFileSync(taskPath, "utf8"), /status: todo/);
   await assert.rejects(recordIssueCommentResult({ repoRoot: root, resultPath, issueNumber: 42, status: "pending" }), { code: "INVALID_RESULT_TRANSITION" });
+  const draftPath = path.join(runDirectory, "comment-42.md");
+  fs.unlinkSync(draftPath);
+  const resumed = await applyIssueImport({ repoRoot: root, plan, resultPath });
+  assert.deepEqual(resumed, complete);
+  assert.equal(fs.readFileSync(draftPath, "utf8"), `${plan.issues[0].comment_body}\n`);
+});
+
+test("apply restores missing comment drafts after an interruption and reuses matching drafts", async (t) => {
+  const root = makeRoot(t);
+  const input = source([issue(42), issue(43)]);
+  const decisions = manifest([
+    { number: 42, decision: "import", records: [taskRecord("first")] },
+    { number: 43, decision: "import", records: [taskRecord("second")] },
+  ]);
+  const { plan } = prepare(root, input, decisions);
+  const runDirectory = path.join(root, "workplace/issue-import/run-drafts");
+  const resultPath = path.join(runDirectory, "result.json");
+  const firstDraft = path.join(runDirectory, "comment-42.md");
+  const secondDraft = path.join(runDirectory, "comment-43.md");
+  const link = fsp.link;
+  let interrupt = true;
+  const published = [];
+  t.mock.method(fsp, "link", async (from, to) => {
+    if (to === secondDraft && interrupt) throw Object.assign(new Error("Interrupted during draft creation"), { code: "EIO" });
+    if (to === firstDraft || to === secondDraft) published.push(to);
+    return link(from, to);
+  });
+  await assert.rejects(applyIssueImport({ repoRoot: root, plan, refreshSource: input, resultPath }), { code: "EIO" });
+  assert.equal(JSON.parse(fs.readFileSync(resultPath, "utf8")).status, "prepared");
+  assert.equal(fs.existsSync(firstDraft), true);
+  assert.equal(fs.existsSync(secondDraft), false);
+  for (const write of plan.writes) assert.equal(fs.existsSync(path.join(root, write.path)), false);
+
+  interrupt = false;
+  const resumed = await applyIssueImport({ repoRoot: root, plan, refreshSource: input, resultPath });
+  assert.equal(resumed.status, "local-written");
+  assert.equal(fs.readFileSync(firstDraft, "utf8"), `${plan.issues[0].comment_body}\n`);
+  assert.equal(fs.readFileSync(secondDraft, "utf8"), `${plan.issues[1].comment_body}\n`);
+  await applyIssueImport({ repoRoot: root, plan, resultPath });
+  assert.deepEqual(published, [firstDraft, secondDraft]);
 });
 
 test("apply resumes a partial write without replacing completed records", async (t) => {
@@ -789,6 +873,14 @@ test("apply resumes a partial write without replacing completed records", async 
   assert.equal(partial.status, "partial");
   assert.equal(partial.writes.filter((write) => write.status === "written").length, 1);
   const firstContent = fs.readFileSync(path.join(root, ...partial.writes[0].path.split("/")), "utf8");
+  const draftPath = path.join(runDirectory, "comment-42.md");
+  fs.writeFileSync(draftPath, "Edited draft\n");
+  await assert.rejects(applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath }),
+    { code: "LOCAL_CONFLICT", details: { path: draftPath } });
+  assert.equal(fs.readFileSync(draftPath, "utf8"), "Edited draft\n");
+  assert.equal(fs.readFileSync(path.join(root, partial.writes[0].path), "utf8"), firstContent);
+  assert.equal(fs.existsSync(path.join(root, partial.writes[1].path)), false);
+  fs.unlinkSync(draftPath);
   const resumed = await applyIssueImport({ repoRoot: root, plan, refreshSource: source(), resultPath });
   assert.equal(resumed.status, "local-written");
   assert.equal(resumed.writes.every((write) => write.status === "written"), true);
