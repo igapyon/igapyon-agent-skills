@@ -64,6 +64,7 @@ function runHelpChecks({ nodeExecutable, scriptsDirectory, cwd, env }) {
   const commands = [
     ["create-activity.mjs", "--help"],
     ["update-activity.mjs", "--help"],
+    ["activity-history.mjs", "--help"],
     ["generate-day-plan.mjs", "--help"],
     ["import-issues.mjs", "--help"],
     ["post-day-plan.mjs", "--help"],
@@ -101,6 +102,29 @@ function verifyActivityUpdate({ nodeExecutable, scriptsDirectory, repoRoot, cwd,
   if (fs.readFileSync(path.join(repoRoot, ...relativePath.split("/")), "utf8") !== saved) {
     fail("stale activity update changed the existing record");
   }
+}
+
+function verifyActivityHistory({ nodeExecutable, scriptsDirectory, repoRoot, cwd, env }) {
+  const previous = "2026/202609/activities/activity-20260913.md";
+  const oldRecord = "---\ntype: activity\ndate: 2026-09-13\n---\n\n# 旧形式の調査\n\n次は日付の扱いを確認。\n";
+  const previousFile = writeRecord(repoRoot, previous, oldRecord);
+  const creation = runNode(nodeExecutable, path.join(scriptsDirectory, "create-activity.mjs"), [
+    "--repo-root", repoRoot, "--date", DATE, "--previous", previous, "--stdin",
+  ], { cwd, input: activity("調査の続き"), env });
+  expectSuccess(creation, "activity creation with previous link");
+  const { path: child } = parseJsonOutput(creation, "activity creation with previous link");
+  const cli = path.join(scriptsDirectory, "activity-history.mjs");
+  const list = runNode(nodeExecutable, cli, ["list", "--repo-root", repoRoot, "--date", DATE, "--query", "調査"], { cwd, env });
+  expectSuccess(list, "activity history list");
+  const matches = parseJsonOutput(list, "activity history list").records;
+  if (matches.length !== 1 || matches[0].path !== child) fail("activity history list did not isolate the selected work");
+  const trace = runNode(nodeExecutable, cli, ["trace", "--repo-root", repoRoot, "--path", child], { cwd, env });
+  expectSuccess(trace, "activity history trace");
+  const { records, stop } = parseJsonOutput(trace, "activity history trace");
+  if (records.length !== 2 || records[0].path !== previous || records[1].path !== child || stop.reason !== "no_previous") {
+    fail("activity history trace did not return the legacy parent before its child");
+  }
+  if (fs.readFileSync(previousFile, "utf8") !== oldRecord) fail("activity history changed the legacy record");
 }
 
 function createIssueFixtures(runDirectory) {
@@ -299,6 +323,9 @@ export function checkDaybookRuntime(bundleRoot, { nodeExecutable = process.execP
       cwd,
       env,
       creation: second,
+    });
+    verifyActivityHistory({
+      nodeExecutable, scriptsDirectory: path.join(installAlias, "scripts"), repoRoot: directRepo, cwd, env,
     });
 
     const noGitRepo = path.join(tempRoot, "daybook without git");

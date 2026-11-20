@@ -26,6 +26,29 @@ function legacyActivityPath(date, suffix = "") {
   return `${compact.slice(0, 4)}/${month}/activities/activity-${compact}${suffix}.md`;
 }
 
+test("creation writes only the child and preserves an existing matching previous link", (t) => {
+  const repo = root(t);
+  const previous = legacyActivityPath(DATE, "a");
+  const original = content("前回");
+  write(repo, previous, original);
+  const newDate = "2026-11-04";
+  const draft = content("続き").replace(DATE, newDate).replaceAll("\n", "\r\n");
+  const first = createActivity({ repoRoot: repo, date: newDate, content: draft, previous }, noHistory);
+  const saved = readActivity({ repoRoot: repo, path: first.path }).content;
+  const link = "../../../../" + previous;
+  assert.ok(saved.endsWith("\r\n\r\n前回の記録 → [activity-20261103a](" + link + ")\r\n"));
+  const second = createActivity({ repoRoot: repo, date: newDate, content: saved, previous }, noHistory);
+  assert.equal(readActivity({ repoRoot: repo, path: second.path }).content, saved);
+  assert.equal(fs.readFileSync(path.join(repo, previous), "utf8"), original);
+  assert.throws(() => createActivity({ repoRoot: repo, date: newDate, content: saved, previous: first.path }, noHistory),
+    { code: "INVALID_PREVIOUS_ACTIVITY" });
+  for (const invalid of [legacyActivityPath(DATE, "z"), "../" + previous]) {
+    assert.throws(() => createActivity({ repoRoot: repo, date: newDate, content: draft, previous: invalid }, noHistory));
+  }
+  assert.deepEqual(fs.readdirSync(path.dirname(path.join(repo, first.path))).sort(),
+    [path.basename(first.path), path.basename(second.path)].sort());
+});
+
 test("new suffixes start at aaa and grow beyond zzz while legacy names retain their order", () => {
   assert.equal(nextActivitySuffix(), "aaa");
   for (const [from, to] of [["", "aaa"], ["a", "aaa"], ["z", "aaa"], ["aa", "aaa"], ["az", "aaa"], ["zz", "aaa"],

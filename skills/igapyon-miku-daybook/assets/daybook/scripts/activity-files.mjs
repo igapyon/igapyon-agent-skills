@@ -14,6 +14,7 @@ import {
 
 export const ACTIVITY_FILENAME_PATTERN = /^activity-(\d{8})([a-z]+)?\.md$/;
 const FIRST_ACTIVITY_SUFFIX = "aaa";
+const PREVIOUS_LABEL = "前回の記録 →";
 
 export function nextActivitySuffix(suffix = "") {
   if (!/^[a-z]*$/.test(suffix)) throw new Error("Activity suffix must contain lowercase a-z only");
@@ -91,6 +92,138 @@ export function readActivity({ repoRoot, path: relativePath }) {
   return { path: relativePath, sha256: current.sha256, content };
 }
 
+function paragraphBoundary(line) {
+  return !line?.trim() || /^ {0,3}#{1,6}(?:[ \t]|$)/.test(line);
+}
+
+function isThematicBreak(line) {
+  return /^ {0,3}(?:(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|(?:-[ \t]*){3,})$/.test(line);
+}
+
+function startsContainer(line, afterParagraph) {
+  if (/^ {0,3}>/.test(line)) return true;
+  // An interrupting list needs a nonempty item and any numbering must start at 1.
+  return afterParagraph
+    ? /^ {0,3}(?:[-+*]|0{0,8}1[.)])[ \t]+\S/.test(line)
+    : /^ {0,3}(?:[-+*]|\d{1,9}[.)])(?:[ \t]|$)/.test(line);
+}
+
+function startsBlockAfterParagraph(line) {
+  // Uninterrupted dashes turn the link line into a heading, so the link is no longer a paragraph.
+  return paragraphBoundary(line) || startsContainer(line, true)
+    || (isThematicBreak(line) && !/^ {0,3}-+[ \t]*$/.test(line));
+}
+
+function* proseLines(body) {
+  const lines = body.split(/\r?\n/);
+  let fence = "";
+  let htmlEnd = null;
+  for (const [index, line] of lines.entries()) {
+    const marker = /^ {0,3}(\x60{3,}|~{3,})(.*)$/.exec(line);
+    if (fence) {
+      if (marker && marker[1].startsWith(fence) && !marker[2].trim()) fence = "";
+      continue;
+    }
+    if (htmlEnd) {
+      if (htmlEnd.test(line)) htmlEnd = null;
+      continue;
+    }
+    const htmlStart = /^ {0,3}(?:<!--|<(pre|script|style|textarea)(?=[ \t>]|$))/i.exec(line);
+    if (htmlStart) {
+      const close = htmlStart[1] ? new RegExp("</" + htmlStart[1] + ">", "i") : /-->/;
+      if (!close.test(line.slice(htmlStart[0].length))) htmlEnd = close;
+      continue;
+    }
+    if (marker && (marker[1][0] === "~" || !marker[2].includes("\x60"))) {
+      fence = marker[1];
+      continue;
+    }
+    yield { line, index };
+  }
+}
+
+function* activityLines(body) {
+  let previousIndex = -2;
+  let paragraph = [];
+  let inContainer = false;
+  for (const { line, index } of proseLines(body)) {
+    if (index !== previousIndex + 1) {
+      paragraph = [];
+      inContainer = false;
+    }
+    previousIndex = index;
+    const underline = /^ {0,3}(=+|-+)[ \t]*$/.exec(line);
+    const setext = Boolean(underline && paragraph.length);
+    const atxTitle = /^ {0,3}#[ \t]+(.+)$/.exec(line)?.[1].trim();
+    const title = setext && underline[1][0] === "=" ? paragraph.join(" ") : atxTitle;
+    const endsBlock = setext || paragraphBoundary(line) || isThematicBreak(line);
+    if (endsBlock) {
+      paragraph = [];
+      inContainer = false;
+    } else if (startsContainer(line, paragraph.length > 0)) {
+      paragraph = [];
+      inContainer = true;
+    } else if (!inContainer && (paragraph.length || /^ {0,3}\S/.test(line))) {
+      paragraph.push(line.trim());
+    }
+    yield { line, index, endsBlock, title };
+  }
+}
+
+export function activityTitle(body, relativePath) {
+  for (const { title } of activityLines(body)) {
+    if (title) return title;
+  }
+  return path.posix.basename(relativePath, ".md");
+}
+
+export function previousActivityPath(body, relativePath) {
+  const prose = [...activityLines(body)];
+  const declarations = prose.filter(({ line, index }, offset) => {
+    if (!line.startsWith(PREVIOUS_LABEL)) return false;
+    const before = prose[offset - 1];
+    const after = prose[offset + 1];
+    return (before?.index !== index - 1 || before.endsBlock)
+      && (after?.index !== index + 1 || startsBlockAfterParagraph(after.line));
+  });
+  if (!declarations.length) return null;
+  const invalidLink = (message, target) =>
+    activityError("INVALID_PREVIOUS_ACTIVITY", message, { path: relativePath, target });
+  if (declarations.length > 1) throw invalidLink("Activity has multiple previous-record links");
+
+  const link = /^前回の記録 → \[([^\]]+)\]\(([^)]+)\)[ \t]*$/.exec(declarations[0].line);
+  if (!link) throw invalidLink("Invalid previous-record link");
+  const [, label, href] = link;
+  if (!/^[a-zA-Z0-9._/-]+$/.test(href) || path.posix.isAbsolute(href)) {
+    throw invalidLink("Previous-record link must use a relative Markdown path", href);
+  }
+  const target = path.posix.join(path.posix.dirname(relativePath), href);
+  try { parseActivityPath(target); }
+  catch { throw invalidLink("Previous-record link must resolve to a daybook activity", target); }
+  if (label !== path.posix.basename(target, ".md")) {
+    throw invalidLink("Previous-record label must match the activity filename", target);
+  }
+  return target;
+}
+
+function addPreviousActivity({ repoRoot, relativePath, previous, content }) {
+  readActivity({ repoRoot, path: previous });
+  const existing = previousActivityPath(parseFrontMatter(content).body, relativePath);
+  if (existing === previous) return content;
+  if (existing) {
+    throw activityError("INVALID_PREVIOUS_ACTIVITY", "Draft already links to a different previous activity");
+  }
+  const label = path.posix.basename(previous, ".md");
+  const href = path.posix.relative(path.posix.dirname(relativePath), previous);
+  const newline = content.includes("\r\n") ? "\r\n" : "\n";
+  const updated = content.replace(/(?:\r?\n[ \t]*)*$/, "")
+    + newline.repeat(2) + PREVIOUS_LABEL + " [" + label + "](" + href + ")" + newline;
+  if (previousActivityPath(parseFrontMatter(updated).body, relativePath) !== previous) {
+    throw activityError("INVALID_PREVIOUS_ACTIVITY", "Could not place the previous-record link outside a code block or raw HTML");
+  }
+  return updated;
+}
+
 export function updateActivity({ repoRoot, path: relativePath, expectedSha256, content }) {
   parseActivityPath(relativePath);
   if (typeof expectedSha256 !== "string" || !/^[a-f0-9]{64}$/.test(expectedSha256)) {
@@ -141,9 +274,14 @@ export function nextActivityPath(repoRoot, date, { reservedPaths = [], gitLog } 
   return { path: activityPath(date, nextActivitySuffix(maximum)), warnings };
 }
 
-export function createActivity({ repoRoot, date, content }, dependencies = {}) {
+export function createActivity({ repoRoot, date, content, previous }, dependencies = {}) {
   validateIsoDate(date);
-  validateActivityRecord(activityPath(date, FIRST_ACTIVITY_SUFFIX), content);
+  const samplePath = activityPath(date, FIRST_ACTIVITY_SUFFIX);
+  validateActivityRecord(samplePath, content);
+  // Every collision retry uses the same directory, so its relative link is identical.
+  if (previous !== undefined) {
+    content = addPreviousActivity({ repoRoot, relativePath: samplePath, previous, content });
+  }
   const reservedPaths = new Set(dependencies.reservedPaths ?? []);
   const directory = activityDirectory(repoRoot, date, true);
   const temporary = path.join(directory, `.activity-${randomUUID()}.tmp`);

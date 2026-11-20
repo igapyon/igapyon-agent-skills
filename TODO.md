@@ -2,6 +2,10 @@
 
 ## AI Agent Current Tasks
 
+### daybook：activity の履歴による再開と waypoint 廃止（実装・配布検査済み）
+
+前回リンクの作成、一覧・検索、履歴取得を同梱 CLI に実装しました。通常の再開案内を activity に移し、名指しされた旧 waypoint は読み取り用の引き継ぎ資料として扱います。検証結果と対象範囲は [Sol 向け実装計画](docs/plans/daybook-activity-history-sol-implementation.md#実装結果) に記載しました。
+
 ### daybook：確定した記録階層をスキルへ反映（2026-11-17〜18・source実装・ユーザー用skill同期済み）
 
 [確定仕様](docs/plans/daybook-record-layout.md)を運用用のSKILL・references・同梱CLIへ反映する[実装計画](docs/plans/daybook-record-layout-implementation.md)を完了しました。新規保存先を種別ルートへ変更し、旧配置の読み取り・更新・採番を維持します。ユーザー用skillもsourceと同期済みです。

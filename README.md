@@ -231,7 +231,7 @@ You have a copied ZOOM H4essential rehearsal recording and want to preserve a us
 
 **When it helps**
 
-You can start, continue, and resume work from dated activities alone. Keep actions set aside for later in lightweight todos, linked to their discovery. Use tasks to manage a job's progress and next actions, and topics to maintain knowledge, specifications, and adopted decisions. Tasks keep a short actionable conclusion and link to topic detail. Optional waypoints mark where to resume, and day-plans derive planned work from task and schedule records.
+You can start, continue, and resume work from dated activities alone. Keep actions set aside for later in lightweight todos, linked to their discovery. Use tasks to manage a job's progress and next actions, and topics to maintain knowledge, specifications, and adopted decisions. Tasks keep a short actionable conclusion and link to topic detail. Day-plans derive planned work from task and schedule records.
 
 **What you can achieve**
 
@@ -241,12 +241,11 @@ You can start, continue, and resume work from dated activities alone. Keep actio
 - Activities capture conversation progress, todo/task/topic changes, and URL results, including access failures. Use past URL references as context while leaving uncertain relationships open.
 - Refine same-day activities while preserving the sequence of work and decisions; preserve older accounts with dated supplements and corrections.
 - At the start of a substantive topic during active use, consider existing daybook records as context and consult them as needed, keeping speculative connections unconfirmed.
-- Find earlier work through its activities, including mistakes and corrections, and continue it without first creating a task or waypoint. Consolidate knowledge directly into a topic when wanted, retaining the source activities and distinguishing confirmed findings from hypotheses.
+- List and search activities by date and text. Use the previous-record links to read attempts, corrections, and decisions in order and resume the selected work. Consolidate knowledge directly into a topic when wanted, with links to its source activities.
 - Keep topics outside the date hierarchy under root `topics/`, directly there or in useful subdirectories. Save without settling a category, use links for overlapping themes, and keep existing paths stable.
 - Consolidate a particular job into a task when requested, keeping work state and next actions easy to find. Current conclusions and selected decision history are both valid strategies; when the intended strategy is unclear, confirm the choice before writing the task.
 - Keep existing attachment paths stable. For new attachments, prefer a clearly related existing task; otherwise use the activity's identifier without creating a task just for storage. A later task links to those files at their saved paths.
-- Save optional short Waypoints that point directly to activities or to a task across sessions. Ending a session does not require one.
-- Close the waypoint actually used to resume work when its scope finishes, after rereading it; no prior `in_use` annotation or separate close request is needed. Status inquiries report the current situation, while requested cleanup can reconcile stale entries and update them.
+- Resume from an activity or a named legacy waypoint. Share an activity link and the intended scope for a new handoff.
 - Resume daybook-managed work in another directory or repository, keeping references from daybook to the work repository without adding pointers back to daybook there.
 - Generate day-plan snapshots from task and schedule records; open todos remain separately available in work overviews. Explicitly check whether a supplied URL relates to an existing task.
 - Show a complete provisional period containing the requested date as a clearly labelled work candidate, while keeping other provisional dates in review and Backlog separate.

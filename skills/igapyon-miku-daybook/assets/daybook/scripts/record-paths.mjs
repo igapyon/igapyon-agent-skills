@@ -214,8 +214,9 @@ function realDirectory(parent, name, relativePath) {
   }
 }
 
-function directoryEntries(directory, relativePath) {
+function directoryEntries(directory, relativePath, includeName) {
   return fs.readdirSync(directory, { withFileTypes: true }).filter((entry) => {
+    if (includeName && !includeName(entry.name)) return false;
     if (!entry.isSymbolicLink()) return entry.isDirectory();
     throw pathError("Canonical record directories must not be symlinks", `${relativePath}/${entry.name}`, "PATH_OUTSIDE_REPO");
   });
@@ -226,8 +227,9 @@ function validMonthDirectory(year, name) {
     && Number(name.slice(4)) >= 1 && Number(name.slice(4)) <= 12;
 }
 
-function recordFileNames(type, directory, relativeDirectory) {
+function recordFileNames(type, directory, relativeDirectory, includeName) {
   return fs.readdirSync(directory, { withFileTypes: true }).filter((entry) => {
+    if (includeName && !includeName(entry.name)) return false;
     if (entry.isSymbolicLink()) throw pathError("Canonical record files must not be symlinks", `${relativeDirectory}/${entry.name}`, "PATH_OUTSIDE_REPO");
     if (!entry.isFile()) return false;
     const patterns = {
@@ -241,16 +243,28 @@ function recordFileNames(type, directory, relativeDirectory) {
   }).map((entry) => entry.name);
 }
 
-export function listCanonicalRecordFiles(repoRoot, requestedTypes = [...RECORD_ROOTS.keys()]) {
+export function listCanonicalRecordFiles(repoRoot, requestedTypes = [...RECORD_ROOTS.keys()], { activityRange } = {}) {
   const root = path.resolve(repoRoot);
   if (!fs.existsSync(root)) return [];
   const rootStat = fs.lstatSync(root);
   if (rootStat.isSymbolicLink() || !rootStat.isDirectory()) throw new Error("Repository root must be a real directory");
   const types = new Set(requestedTypes);
   const files = [];
-  const addDirectory = (directory, relativeDirectory, expectedType) => {
+  const from = activityRange?.from?.replaceAll("-", "");
+  const to = activityRange?.to?.replaceAll("-", "");
+  const scoped = Boolean(from || to);
+  function withinRange(stamp) {
+    return (!from || stamp >= from.slice(0, stamp.length)) && (!to || stamp <= to.slice(0, stamp.length));
+  }
+  const directoryScope = (length) => (name) => name.length === length && /^\d+$/.test(name) && withinRange(name);
+  // Current activities are grouped by day. Legacy activities share a monthly directory.
+  const legacyFileScope = scoped ? (name) => {
+    const match = /^activity-(\d{8})[a-z]*\.md$/.exec(name);
+    return Boolean(match && withinRange(match[1]));
+  } : undefined;
+  const addDirectory = (directory, relativeDirectory, expectedType, includeName) => {
     if (!directory) return;
-    for (const filename of recordFileNames(expectedType, directory, relativeDirectory)) {
+    for (const filename of recordFileNames(expectedType, directory, relativeDirectory, includeName)) {
       const relativePath = `${relativeDirectory}/${filename}`;
       const parsed = parseRecordPath(relativePath);
       if (parsed.type !== expectedType) throw pathError("Record path type does not match directory", relativePath);
@@ -264,13 +278,15 @@ export function listCanonicalRecordFiles(repoRoot, requestedTypes = [...RECORD_R
     if (["activity", "task", "todo"].includes(type)) {
       const currentRoot = realDirectory(root, rootName, rootName);
       if (currentRoot) {
-        for (const yearEntry of directoryEntries(currentRoot, rootName)) {
+        const scope = scoped && type === "activity";
+        for (const yearEntry of directoryEntries(currentRoot, rootName, scope ? directoryScope(4) : undefined)) {
           if (!/^\d{4}$/.test(yearEntry.name)) continue;
           const yearPath = path.join(currentRoot, yearEntry.name);
-          for (const monthEntry of directoryEntries(yearPath, `${rootName}/${yearEntry.name}`)) {
+          for (const monthEntry of directoryEntries(yearPath, `${rootName}/${yearEntry.name}`, scope ? directoryScope(6) : undefined)) {
             if (!validMonthDirectory(yearEntry.name, monthEntry.name)) continue;
             const monthPath = path.join(yearPath, monthEntry.name);
-            for (const dayEntry of directoryEntries(monthPath, `${rootName}/${yearEntry.name}/${monthEntry.name}`)) {
+            const monthDirectory = `${rootName}/${yearEntry.name}/${monthEntry.name}`;
+            for (const dayEntry of directoryEntries(monthPath, monthDirectory, scope ? directoryScope(8) : undefined)) {
               if (!/^\d{8}$/.test(dayEntry.name)) continue;
               const relativeDirectory = `${rootName}/${yearEntry.name}/${monthEntry.name}/${dayEntry.name}`;
               const date = `${dayEntry.name.slice(0, 4)}-${dayEntry.name.slice(4, 6)}-${dayEntry.name.slice(6, 8)}`;
@@ -297,17 +313,21 @@ export function listCanonicalRecordFiles(repoRoot, requestedTypes = [...RECORD_R
     }
   }
 
+  const legacyScope = scoped && types.size === 1 && types.has("activity");
   for (const yearEntry of fs.readdirSync(root, { withFileTypes: true })) {
     if (!yearEntry.isDirectory() || !/^\d{4}$/.test(yearEntry.name)) continue;
+    if (legacyScope && !withinRange(yearEntry.name)) continue;
     const yearPath = path.join(root, yearEntry.name);
-    for (const monthEntry of directoryEntries(yearPath, yearEntry.name)) {
+    for (const monthEntry of directoryEntries(yearPath, yearEntry.name, legacyScope ? directoryScope(6) : undefined)) {
       if (!validMonthDirectory(yearEntry.name, monthEntry.name)) continue;
       const monthPath = path.join(yearPath, monthEntry.name);
       for (const type of types) {
         if (!RECORD_ROOTS.has(type)) continue;
         const legacyName = type === "day-plan" ? "day-plan" : RECORD_ROOTS.get(type);
         const relativeDirectory = `${yearEntry.name}/${monthEntry.name}/${legacyName}`;
-        addDirectory(realDirectory(monthPath, legacyName, relativeDirectory), relativeDirectory, type);
+        if (scoped && type === "activity" && !withinRange(monthEntry.name)) continue;
+        addDirectory(realDirectory(monthPath, legacyName, relativeDirectory), relativeDirectory, type,
+          type === "activity" ? legacyFileScope : undefined);
       }
     }
   }

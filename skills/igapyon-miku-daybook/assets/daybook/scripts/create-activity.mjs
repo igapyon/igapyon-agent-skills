@@ -10,15 +10,15 @@ export function main(args = process.argv.slice(2)) {
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === "--help") {
-      console.log("Usage: node scripts/create-activity.mjs (--stdin | --file DRAFT.md) [--date YYYY-MM-DD] [--repo-root DIRECTORY]");
+      console.log("Usage: node scripts/create-activity.mjs (--stdin | --file DRAFT.md) [--date YYYY-MM-DD] [--repo-root DIRECTORY] [--previous ACTIVITY.md]");
       return;
     }
     if (arg === "--stdin" && !options.stdin) { options.stdin = true; continue; }
-    if (!["--file", "--date", "--repo-root"].includes(arg) || !args[index + 1] || args[index + 1].startsWith("--")) {
+    if (!["--file", "--date", "--repo-root", "--previous"].includes(arg) || !args[index + 1] || args[index + 1].startsWith("--")) {
       throw new Error(`Unknown option or missing value: ${arg}`);
     }
-    const key = { "--file": "file", "--date": "date", "--repo-root": "repoRoot" }[arg];
-    if (options[key] && key === "file") throw new Error(`Duplicate option: ${arg}`);
+    const key = { "--file": "file", "--date": "date", "--repo-root": "repoRoot", "--previous": "previous" }[arg];
+    if (options[key] && (key === "file" || key === "previous")) throw new Error(`Duplicate option: ${arg}`);
     options[key] = args[++index];
   }
   const content = readActivityInput(options);
