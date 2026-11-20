@@ -4,11 +4,11 @@ This reference defines the file and data rules for the `daybook` repository. Rea
 
 For when to capture conversations, URLs, and operation outcomes during active use, follow [activity-capture.md](activity-capture.md). The schemas and paths below also apply to these ordinary activity records.
 
-Activities can stand alone for starting, continuing, and resuming work. Todos, tasks, topics, and waypoints are created as needed under [todos.md](todos.md), [record responsibilities](operations.md#task-and-activity-responsibilities), [topics.md](topics.md), and [waypoints.md](waypoints.md); their presence in the layout below does not require one for every activity.
+Activities can stand alone for starting, continuing, and resuming work. Create todos, tasks, and topics as needed. See [todos.md](todos.md), [record responsibilities](operations.md#task-and-activity-responsibilities), and [topics.md](topics.md).
 
 ## Directory and filename rules
 
-Dated records use type-first roots, then calendar folders. Topics and waypoints live at the daybook root:
+Dated records use type-first roots, then calendar folders. Topics live at the daybook root:
 
 ```text
 daybook/
@@ -21,13 +21,10 @@ daybook/
 │   ├── task-YYYYMM-NNNNN/ # task ID month may differ from attachment month
 │   ├── schedule-YYYYMMDD-name/
 │   └── activity-YYYYMMDDaaa/
-├── topics/
-│   ├── text-conversion.md         # saving directly here is valid
-│   └── daybook/                  # optional thematic grouping
-│       └── activity-identifiers.md
-└── waypoints/
-    ├── YYYYMMDD-HHMM-topic.md
-    └── YYYYMMDD-HHMM-topic-00001.md
+└── topics/
+    ├── text-conversion.md         # saving directly here is valid
+    └── daybook/                  # optional thematic grouping
+        └── activity-identifiers.md
 ```
 
 Read and update existing records at their saved paths. During transition, the former `YYYY/YYYYMM/{activities,tasks,todos,schedules,day-plan,attachments}/` layout remains valid; do not rename a record or attachment as a side effect of ordinary work. The bundled record helpers read both record layouts. New records use the type-first paths above.
@@ -43,7 +40,6 @@ Read and update existing records at their saved paths. During transition, the fo
 - Keep a task at its saved path when it becomes `done` or `cancelled`; update its status in place and do not move it to an archive or closed folder.
 - A day-plan belongs to the target date's month at `day-plans/YYYY/YYYYMM/` and is a generated snapshot.
 - Topics live under root `topics/`, outside the year/month hierarchy. Use a short descriptive lowercase English filename with hyphens and `.md`, directly in that directory or a useful subdirectory. Their creation/update dates do not determine their location. Keep saved paths stable and represent other relationships with links; see [topics.md](topics.md) for scope, content, metadata, and optional organization.
-- Waypoints live in the daybook repository root, outside the year/month record directories. They are short resume entries; see [waypoints.md](waypoints.md) for naming, metadata, and update rules.
 - Choose record text, an external reference, or an in-repository attachment using [attachments.md](attachments.md). Reuse an existing attachment's saved path first. New attachments use `attachments/YYYY/YYYYMM/<record-id>/` at the month when the material arose; prefer an existing task's ID only when its purpose or work products clearly relate to it, otherwise use the activity's actual filename stem. Do not create a task merely to store an attachment. An attachment's parent month may differ from the month in its task-id; task creation-date checks below apply to task records, not attachment folders. Keep existing attachment paths when updating or referencing them, including when a task is later created or linked. Follow [attachments.md](attachments.md) for task-only and schedule-only placement, content selection, temporary files, and binary exceptions. Create directories only when needed.
 - Use lowercase English prefixes. Todos, tasks, and schedules use a short English name suffix; activities use the letter sequence above. Preserve an existing filename and ID when updating its title or deadline.
 
@@ -160,6 +156,14 @@ For a new todo, use `type: todo`, persistent `id: todo-YYYYMM-NNNNN`, scalar `st
 For a new topic, use `type: topic`, `created: YYYY-MM-DD`, and `updated: YYYY-MM-DD` with actual Asia/Tokyo dates. Preserve the creation date and update `updated` only on an actual change. A topic uses its saved path as its reference; no task-id, allocation suffix, priority, status, completion checkbox, or planned dates are required. Existing topic conventions and unknown historical dates are handled under [topics.md](topics.md#content-and-dates). Topics are maintained thematic records, not task/schedule inputs to the day-plan generator.
 
 ## Relationship rules
+
+When a new activity continues a known previous activity, it may contain one dedicated paragraph with a Markdown link. Use the previous activity's filename stem as the label and its path relative to the new activity as the link destination:
+
+```markdown
+前回の記録 → [activity-20261119aab](../20261119/activity-20261119aab.md)
+```
+
+Use the [creation CLI](operations.md#add-an-activity) to insert this link. The previous activity remains at its saved path. The link is optional and can point across current and legacy layouts. Use ordinary Markdown links for materials or related activities outside this chain.
 
 Use relative links between records and to retained text files under `attachments/`, including links across months, and check that each target exists after edits. Keep supplied source URLs for event pages and emails. If multiple records use the same supporting file, reference one canonical copy at its saved path; use [attachments.md](attachments.md) when choosing a new attachment location. Prefer stable references to originals and retained results managed outside daybook, including another Git repository; never use a temporary-file path as a permanent link. References to other work repositories belong on the daybook side; do not add references back to daybook in those repositories. Treat the original task and schedule as authoritative; a day-plan is a snapshot and should not become a second source of truth.
 
