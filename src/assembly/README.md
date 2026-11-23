@@ -613,6 +613,7 @@ handling an approved Issue operation, or auditing a version, tag, or Release.
 - Commit ordinary repository changes.
 - Draft PR, Issue, Release, and About text from reviewed evidence.
 - Prepare approved Issue operations and version/tag/Release audits.
+- Recover work from frozen `*-done` and `rescue/done/*` branches using the documented recovery flow.
 
 **Scope and prerequisites:** Node.js 22+ and Git are required. Sync pull requires
 Git 2.45+. GitHub CLI is used only by workflows that require it. PR creation

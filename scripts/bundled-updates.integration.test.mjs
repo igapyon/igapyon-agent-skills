@@ -149,3 +149,33 @@ test("tree inspection keeps file changes and reports selected symlink material",
     assert.ok(changeDoc.invalidMaterials.some((item) => item.path === "assets/alias" && item.mode === "120000" && item.side === "after"));
   } finally { await fs.rm(temp, { recursive: true, force: true }); }
 });
+
+test("complete ahead comparison is complete evidence for a changed external skill", async () => {
+  const temp = await fs.mkdtemp(path.join(os.tmpdir(), "bundled-update-complete-ahead-"));
+  const pin = shaA, head = shaB, beforeBlob = "c".repeat(40), afterBlob = "d".repeat(40);
+  const release = { id: 7, tag_name: "v1.0", draft: false, prerelease: false, url: "https://api.github.com/repos/acme/tool/releases/7", html_url: "https://github.com/acme/tool/releases/tag/v1.0", created_at: "2025-01-01T00:00:00Z", published_at: "2025-01-01T00:00:00Z", name: "v1.0", body: "" };
+  const compare = { url: `https://api.github.com/repos/acme/tool/compare/${pin}...${head}`, html_url: `https://github.com/acme/tool/compare/${pin}...${head}`, base_commit: { sha: pin }, status: "ahead", ahead_by: 1, behind_by: 0, total_commits: 1, commits: [{ sha: head, commit: { message: "Update skill" }, html_url: `https://github.com/acme/tool/commit/${head}` }] };
+  try {
+    const result = await checkEntry({ skill: "fixture-skill", repo: "https://github.com/acme/tool", ref: pin }, temp, temp, {
+      now: () => new Date("2026-01-01T00:00:00Z"),
+      async requestJson(url) { return url.endsWith("/releases/latest") ? { status: "ok", data: release } : { status: "ok", data: compare }; },
+      async exec(_command, args) {
+        if (args[0] === "ls-remote") return Buffer.from(`ref: refs/heads/main\tHEAD\n${head}\tHEAD\n`);
+        if (args[0] === "init") return Buffer.from("");
+        if (args[0] === "-C" && args[2] === "fetch") return Buffer.from("");
+        if (args[0] === "-C" && args[2] === "rev-parse") return Buffer.from(`${args[4].startsWith(pin) ? pin : head}\n`);
+        if (args[0] === "-C" && args[2] === "ls-tree" && args.includes("--full-tree")) {
+          const side = args.includes(pin) ? pin : head;
+          return Buffer.from(`100644 blob ${side === pin ? beforeBlob : afterBlob}\tskills/fixture-skill/SKILL.md\0`);
+        }
+        if (args[0] === "-C" && args[2] === "ls-tree") return Buffer.from(`040000 tree ${"e".repeat(40)}\tskills/fixture-skill\0`);
+        if (args[0] === "-C" && args[2] === "show") return Buffer.from(args[3].startsWith(pin) ? "# Before\n" : "# After\n");
+        throw new Error(`unexpected git invocation: ${args.join(" ")}`);
+      },
+    });
+    assert.equal(result.pinStatus, "changed");
+    assert.equal(result.history.status, "ahead");
+    assert.equal(result.history.complete, true);
+    assert.equal(result.evidenceStatus, "complete");
+  } finally { await fs.rm(temp, { recursive: true, force: true }); }
+});

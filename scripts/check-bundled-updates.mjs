@@ -152,7 +152,7 @@ export async function checkEntry(entry, repoRoot, runDir, deps) {
     result.skillChange = "identical"; result.changes.distributedFiles = 0; result.changes.skillDefinitionChanged = false; result.history = { status: "not-needed" };
   }
   const metadataComplete = result.release.status === "ok";
-  const historyComplete = result.history.status === "ok" || result.history.status === "not-needed";
+  const historyComplete = result.history.status === "not-needed" || result.history.complete === true;
   const sourceError = result.errors.some((error) => error.phase === "source");
   result.evidenceStatus = head && metadataComplete && historyComplete && !sourceError ? "complete" : "partial";
   return result;
