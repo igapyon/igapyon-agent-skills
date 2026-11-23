@@ -600,6 +600,7 @@ handling an approved Issue operation, or auditing a version, tag, or Release.
 - Commit ordinary repository changes.
 - Draft PR, Issue, Release, and About text from reviewed evidence.
 - Prepare approved Issue operations and version/tag/Release audits.
+- Recover work from frozen `*-done` and `rescue/done/*` branches using the documented recovery flow.
 
 **Scope and prerequisites:** Node.js 22+ and Git are required. Sync pull requires
 Git 2.45+. GitHub CLI is used only by workflows that require it. PR creation
@@ -610,7 +611,7 @@ and prepare the corresponding PR draft.
 
 The `miku-scm draft recommit push` workflow is also part of this skill.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-scm-skills/blob/fe551dc33293a53df4e2b929a108f36d1c8b2be1/skills/igapyon-miku-scm/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-scm-skills/blob/0c4f5bd235e2f8a33ecd5f1684c8e91f0c3f08e4/skills/igapyon-miku-scm/SKILL.md).
 
 ### igapyon-miku-score
 

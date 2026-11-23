@@ -451,6 +451,7 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 - `miku-project-skills` `v1.1.2`: `skills/igapyon-miku-project/`
 - `miku-score-skills` `v0.6.1`: `skills/igapyon-miku-score/`
 - `miku-toolbox-skills` `v0.4.0`: `skills/igapyon-miku-toolbox/`
+- `miku-scm-skills` `v0.9.0`: `skills/igapyon-miku-scm/`
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
 生成されたzipの内容を検査してからGitHub Release assetとして添付します。archiveのindex要件は採用状態に従い、未採用indexをpackage処理で生成しません。配布zipからMaven packageを再実行する構成ではありません。
