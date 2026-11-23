@@ -41,7 +41,7 @@ Weekly recurrence is maintained only for an explicit weekly-task registration or
 
 The current user's instructions take precedence over earlier conversation and repository handoff instructions. Carry forward any still-applicable operation from those sources. If an operation is specified, proceed within that scope; otherwise briefly acknowledge readiness and wait, deferring target-daybook discovery, README/Git checks, record reads, and operation-specific references.
 
-After activation, a user-provided URL or a substantive discussion is eligible for activity capture even without an explicit recording command. Use the current mode below to decide when to save. Reading this skill for a meta task does not itself establish active daybook use. Follow the user's instruction to end daybook use, stop recording, or limit file changes. Leave an excluded interval out of later saves unless the user explicitly requests its material.
+After activation, a user-provided URL or a substantive discussion is eligible for activity capture even without an explicit recording command. Use the current mode below to decide when to save. Reading this skill for a meta task does not itself establish active daybook use. An ordinary end-of-work or pause signal triggers the final checkpoint below. A request to stop recording or a restriction on file changes takes effect as stated and suppresses any disallowed save. Leave an excluded interval out of later saves unless the user explicitly requests its material.
 
 For an activity list, history question, or request to resume daybook-managed work, follow [Find and resume earlier work](references/activity-capture.md#find-and-resume-earlier-work). Use the date and subject to find the entry, then follow its previous links as needed. A history question calls for lookup and explanation. If the user names a [legacy waypoint](references/waypoints.md), read it for resumption context.
 
@@ -51,11 +51,13 @@ During active use, at the start of each substantive topic, consider whether exis
 
 ## Activity capture during active use
 
-Activity is the common record of meaningful conversation progress, user-provided URLs, and operation outcomes during active daybook use. In the default **Checkpoint Mode**, save the relevant unsaved material at a meaningful work boundary, such as a finding, decision, pause, or topic change. In **Detailed Activity Mode**, save at each meaningful group of attempts or commands.
+Activity is the common record of meaningful conversation progress, user-provided URLs, and operation outcomes during active daybook use. In the default **Checkpoint Mode**, save the relevant unsaved material at a meaningful work boundary, such as a finding, decision, pause, or topic change. In **Detailed Activity Mode**, save at each meaningful group of attempts or commands. Before sending a final reply, handle any save due under the current mode. Follow [Save and report the record](references/activity-capture.md#save-and-report-the-record) when a save fails or its outcome is uncertain.
 
 When used as activity instructions, “activity記録して”, “コマンドを記録して”, and “再現できるようにして” request a save of eligible unsaved material and switch to Detailed Activity Mode. A one-off save keeps the current mode. “activityあまり記録しないで” returns to Checkpoint Mode. Follow [activity-capture.md](references/activity-capture.md#choose-the-recording-mode) for switching, save timing, and restrictions.
 
 Use the existing [activity CLIs](references/operations.md#add-an-activity) and continue the same episode in its existing activity under the [date editing rules](references/activity-capture.md#edit-activities-over-time). Todo, task, and topic operations normally also produce activity records. Activity capture alone does not authorize changes to those other records. Explicit restrictions on recording or file changes override both modes.
+
+During active daybook use, a clear signal that the work or session is ending, pausing, being handed off, or about to restart is an immediate checkpoint in either mode. Check for eligible unsaved material in the scope that is ending and handle the save before the closing reply. Follow [Session-ending checkpoints](references/activity-capture.md#session-ending-checkpoints) for what to save and what to report.
 
 ## Required checks for a concrete operation
 
