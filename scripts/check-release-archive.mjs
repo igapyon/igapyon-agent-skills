@@ -7,7 +7,6 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { assertIndexPresence, readSkillIndexPolicy } from "./skill-index-policy.mjs";
 import { assertSkillFilesMatchSource } from "./release-archive-files.mjs";
-import { checkDaybookRuntime } from "./check-daybook-runtime.mjs";
 import { assertRepresentativeRoutes } from "./skill-reference-routes.mjs";
 import { parseOutputTimestamp, TIMESTAMP_RECORD_SCHEMA } from "./record-release-archive-timestamp.mjs";
 import { assertZipEntryTimestamps } from "./zip-entry-timestamps.mjs";
@@ -193,6 +192,30 @@ function validateSkill(skillName, skillRoot, indexIsAdopted) {
   if (hasIndex) validateIndex(skillName, skillDir);
 }
 
+function checkDaybookRuntime(skillDir) {
+  const daybook = path.join(skillDir, "assets", "daybook");
+  const date = "2026-09-14";
+  const compactDate = date.replaceAll("-", "");
+  const title = "Isolated day-plan schedule";
+  const month = path.join(daybook, "schedules", "2026", "202609");
+  fs.mkdirSync(month, { recursive: true });
+  fs.writeFileSync(path.join(month, `schedule-${compactDate}-archive-smoke.md`),
+    `---\ntype: schedule\ndate: ${date}\nstatus: scheduled\n---\n\n# ${title}\n`, { flag: "wx" });
+  const result = spawnSync(process.execPath,
+    [path.join(daybook, "scripts", "generate-day-plan.mjs"), "--date", date], {
+      cwd: daybook,
+      encoding: "utf8",
+      timeout: 30_000,
+    });
+  if (result.error || result.status !== 0) {
+    fail("Daybook ZIP CLI failed: " + (result.error?.message || result.stderr || result.status));
+  }
+  const plan = path.join(daybook, "day-plans", "2026", "202609", `day-plan-${compactDate}.md`);
+  if (!fs.existsSync(plan) || !fs.readFileSync(plan, "utf8").includes(title)) {
+    fail("Daybook ZIP CLI did not include the sample schedule in the generated day-plan");
+  }
+}
+
 function validateArchive(archivePath) {
   const { artifactId, version, externalSkills, policy } = readProjectMetadata();
   const expectedRoot = artifactId + "-" + version;
@@ -331,22 +354,20 @@ function validateArchive(archivePath) {
         ? internalIndexes.has(skillName)
         : externalIndexes.get(skillName);
       validateSkill(skillName, skillRoot, indexIsAdopted);
+      const skillDir = path.join(skillRoot, skillName);
       if (internalNames.has(skillName)) {
         assertSkillFilesMatchSource({
           skillName,
           sourceSkillDir: path.join(projectRoot, "skills", skillName),
-          archiveSkillDir: path.join(skillRoot, skillName),
+          archiveSkillDir: skillDir,
         });
         sourceChecked++;
-        const routes = assertRepresentativeRoutes({
-          skillName,
-          skillDir: path.join(skillRoot, skillName),
-        });
-        if (routes.checked) representativeRouteCount++;
-        if (skillName === "igapyon-miku-daybook") {
-          const runtime = checkDaybookRuntime(path.join(skillRoot, skillName, "assets/daybook"));
-          daybookRuntimeChecked = runtime.checked;
-        }
+      }
+      const routes = assertRepresentativeRoutes({ skillName, skillDir });
+      if (routes.checked) representativeRouteCount++;
+      if (skillName === "igapyon-miku-daybook") {
+        checkDaybookRuntime(skillDir);
+        daybookRuntimeChecked = true;
       }
     }
 

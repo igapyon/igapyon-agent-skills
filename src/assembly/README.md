@@ -12,8 +12,8 @@ executable helpers where needed, so you can produce files and records you can
 inspect and continue using. Workflows for review and skill maintenance also
 help you improve the way you work with an agent.
 
-This archive contains **27 Agent Skills**: **13 maintained in the
-igapyon-agent-skills repository** and **14 bundled from pinned upstream
+This archive contains **27 Agent Skills**: **12 maintained in the
+igapyon-agent-skills repository** and **15 bundled from pinned upstream
 repositories**. Install only the skills you need, including their supporting
 files. Many writing workflows target Japanese content and carry conventions
 from the author's work; the catalog and individual skills explain their scope.
@@ -45,7 +45,7 @@ inputs, results, prerequisites, and an example request; the full catalog follows
 Both tables describe the complete set shipped in this archive. Use a skill
 name to jump to its detailed explanation, expected results, and example.
 
-### Maintained In This Repository (13)
+### Maintained In This Repository (12)
 
 | Skill | What it helps you achieve |
 | --- | --- |
@@ -54,7 +54,6 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-companion-techpost-writer](#igapyon-companion-techpost-writer) | **Experimental.** Turn rough technical observations into a readable Japanese post while preserving your voice. |
 | [igapyon-diary-writer](#igapyon-diary-writer) | Turn daily notes into diary source ready for igapyon's existing publishing process. |
 | [igapyon-ffmpeg-helper](#igapyon-ffmpeg-helper) | Turn an orchestra recording into a retained WAV master and a YouTube-ready video. |
-| [igapyon-miku-daybook](#igapyon-miku-daybook) | Record work in activities, retain deferred actions in todos, manage jobs with tasks, and grow thematic knowledge in topics. |
 | [igapyon-miku-soft-developer](#igapyon-miku-soft-developer) | Turn an application idea or maintenance request into a project following miku-soft's design rules. |
 | [igapyon-mikuku-agent](#igapyon-mikuku-agent) | Create Japanese technical essays and explanatory visuals with Mikuku's recognizable voice. |
 | [igapyon-note-writer](#igapyon-note-writer) | **Experimental.** Keep a Note article's publishable Markdown, metadata, and publication state in sync. |
@@ -63,11 +62,12 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-reviewer](#igapyon-reviewer) | Identify concrete issues before merging or publishing, with evidence and a clear fixing order. |
 | [igapyon-skill-compactor](#igapyon-skill-compactor) | Make an Agent Skill easier to load and maintain while checking what behavior is preserved. |
 
-### Bundled From Upstream Repositories (14)
+### Bundled From Upstream Repositories (15)
 
 | Skill | What it helps you achieve |
 | --- | --- |
 | [igapyon-miku-ai-assistant-builder](#igapyon-miku-ai-assistant-builder) | Turn a mixed folder into reviewable knowledge files and instructions for a Copilot agent or Gemini Gem. |
+| [igapyon-miku-daybook](#igapyon-miku-daybook) | Record work in activities, retain deferred actions in todos, manage jobs with tasks, and grow thematic knowledge in topics. |
 | [igapyon-miku-indexgen](#igapyon-miku-indexgen) | Make a directory easier to navigate or consume through a generated file catalog. |
 | [igapyon-miku-json2xlsx](#igapyon-miku-json2xlsx) | Turn JSON records into an inspectable Excel workbook with an explicit account of the data layout. |
 | [igapyon-miku-md2formats](#igapyon-miku-md2formats) | Convert Markdown into self-contained HTML, editable DOCX, XLSX, or PPTX with local miku-soft tools. |
@@ -92,7 +92,7 @@ After extracting `igapyon-agent-skills-<version>.zip`, open the
 | `README.md` | This overview and the complete catalog of 27 skills. |
 | `INSTALL.md` | Instructions for installing, updating, and checking selected skills. |
 | `LICENSE` | Distribution license. Preserve additional license and attribution files within skills. |
-| `EXTERNAL_SKILLS.lock` | Upstream repositories, pinned commit SHAs, and names of the 14 externally maintained skills. |
+| `EXTERNAL_SKILLS.lock` | Upstream repositories, pinned commit SHAs, and names of the 15 externally maintained skills. |
 | `skills/` | The 27 installable skill directories in the catalog. |
 
 The release ZIP records every outer archive entry at `00:00:00 UTC` on the UTC

@@ -34,9 +34,6 @@ jobs:
       - name: Check skill index policy and reference routes
         run: npm run test:skill-index-policy
 
-      - name: Check daybook runtime
-        run: npm run test:daybook
-
       - name: Build release archive
         run: mvn clean package
 
