@@ -10,6 +10,7 @@
     }
   ],
   "external": [
+    {"repo":"https://github.com/igapyon/miku-daybook-skills.git","ref":"2b9294195d3037eef25966f899f70a2eae2e710f","skill":"igapyon-miku-daybook","disposition":"remove","reason":"SKILL.md and its workflow references route directly to the bundled materials.","evidence":"https://github.com/igapyon/miku-daybook-skills/tree/2b9294195d3037eef25966f899f70a2eae2e710f/skills/igapyon-miku-daybook"},
     {"repo":"https://github.com/igapyon/miku-indexgen-skills.git","ref":"cc6578a2aea71aea71955398231e249a96561e29","skill":"igapyon-miku-indexgen","disposition":"remove","reason":"Migrated source ref omits the skill inventory and retains product index generation.","evidence":"docs/maintenance/index-json-migration-inventory.md"},
     {"repo":"https://github.com/igapyon/miku-text-bundle-skills.git","ref":"4fbe80c649f084fd6dbff1ca0944adda6892cbe7","skill":"igapyon-miku-text-bundle","disposition":"remove","reason":"Migrated source ref removes the skill inventory dependency while retaining the product workflow.","evidence":"docs/maintenance/index-json-migration-inventory.md"},
     {"repo":"https://github.com/igapyon/miku-repo-bundle-skills.git","ref":"f2bf8522f8ec87ff261bbe4d0ebf1d6a790c9089","skill":"igapyon-miku-repo-bundle","disposition":"remove","reason":"Migrated source ref removes the skill inventory while preserving product-generated indexes.","evidence":"docs/maintenance/index-json-migration-inventory.md"},

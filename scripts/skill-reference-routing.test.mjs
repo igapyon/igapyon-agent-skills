@@ -4,12 +4,14 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
-import { projectRoot } from "./skill-index-policy.mjs";
+import { projectRoot, readExternalSkillPins } from "./skill-index-policy.mjs";
 import { assertRepresentativeRoutes, representativeRoutes } from "./skill-reference-routes.mjs";
 
 // These check source reachability in an isolated install, not model behavior,
 // article-selection quality, or token/time improvements.
+const externalSkills = new Set(readExternalSkillPins().map(({ skill }) => skill));
 for (const [skill, task, expected] of representativeRoutes) {
+  if (externalSkills.has(skill)) continue; // Checked in the extracted release archive.
   test(`${skill}: index-free isolated routing for ${task}`, (context) => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "skill-reference-route-"));
     context.after(() => fs.rmSync(root, { recursive: true, force: true }));

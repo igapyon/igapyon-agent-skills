@@ -5,7 +5,7 @@
 
   <groupId>jp.igapyon</groupId>
   <artifactId>igapyon-agent-skills</artifactId>
-  <version>1.20261123.1</version>
+  <version>1.20261123.3</version>
   <packaging>pom</packaging>
 
   <name>igapyon-agent-skills</name>
@@ -55,6 +55,9 @@
     <external.miku-scm-skills.repo>https://github.com/igapyon/miku-scm-skills.git</external.miku-scm-skills.repo>
     <external.miku-scm-skills.ref>0c4f5bd235e2f8a33ecd5f1684c8e91f0c3f08e4</external.miku-scm-skills.ref>
     <external.miku-scm-skills.skillName>igapyon-miku-scm</external.miku-scm-skills.skillName>
+    <external.miku-daybook-skills.repo>https://github.com/igapyon/miku-daybook-skills.git</external.miku-daybook-skills.repo>
+    <external.miku-daybook-skills.ref>2b9294195d3037eef25966f899f70a2eae2e710f</external.miku-daybook-skills.ref>
+    <external.miku-daybook-skills.skillName>igapyon-miku-daybook</external.miku-daybook-skills.skillName>
   </properties>
 
   <build>
@@ -226,6 +229,9 @@
                 <argument>${external.miku-scm-skills.repo}</argument>
                 <argument>${external.miku-scm-skills.ref}</argument>
                 <argument>${external.miku-scm-skills.skillName}</argument>
+                <argument>${external.miku-daybook-skills.repo}</argument>
+                <argument>${external.miku-daybook-skills.ref}</argument>
+                <argument>${external.miku-daybook-skills.skillName}</argument>
               </arguments>
             </configuration>
           </execution>
