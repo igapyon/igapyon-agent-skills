@@ -2,6 +2,18 @@
 
 ## AI Agent Current Tasks
 
+### miku-scm外部同梱をv0.9.3 HEADへ更新（2026-11-27・配布ZIP生成・検査済み）
+
+外部同梱15件の更新確認は全件完了し、13件はpin一致、miku-daybookとmiku-scmは更新候補でした。利用者指示によりmiku-scmのみ、既定ブランチ `devel` の観測SHA `feb305f3d5ee56a155b6a170b2b00e119fb4e085` へ更新しました。最新Releaseはv0.9.3です。8コミット・配布ファイル28件の差分を取り込み、通常のsync push後にDraft PRを作成・確認する動作などを利用者向け案内へ反映しました。
+
+- [x] POM、skill index policy、root/配布README、DEVELOPMENTの版表記を更新。
+- [x] root/Mikuku版を `1.20261127.1` / `20261127a` に整合。
+- [x] `mvn package` で `target/igapyon-agent-skills-1.20261127.1.zip` を生成。ZIP検査はinternal=12、external=15、total=27で成功。
+- [x] 配布stagingと固定SHAのmiku-scm sourceを照合し、lockへ新SHAが記録されることを確認。`git diff --check` 成功。
+- [ ] commit、push、tag、GitHub Release公開、ローカルSkill配備は未実施。
+
+同じ更新確認で候補になったmiku-daybookは今回の依頼範囲外で、現行pinのままです。確認結果は `workplace/bundled-updates/runs/2026-11-26T23-31-45.845Z-1b15451d-4bd6-4da7-b50d-c8a2814a05ef/` にあります。
+
 ### daybook：activity の履歴による再開と waypoint 廃止（実装・配布検査済み）
 
 前回リンクの作成、一覧・検索、履歴取得を同梱 CLI に実装しました。通常の再開案内を activity に移し、名指しされた旧 waypoint は読み取り用の引き継ぎ資料として扱います。検証結果と対象範囲は [Sol 向け実装計画](docs/plans/daybook-activity-history-sol-implementation.md#実装結果) に記載しました。

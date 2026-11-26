@@ -609,15 +609,17 @@ handling an approved Issue operation, or auditing a version, tag, or Release.
 
 **What you can achieve**
 
-- Pull shared work or prepare a verified push using fixed runners and recovery records.
+- Pull shared work or prepare a verified push using fixed runners and recovery records; a successful sync push creates or verifies a Draft PR.
 - Commit ordinary repository changes.
 - Draft PR, Issue, Release, and About text from reviewed evidence.
 - Prepare approved Issue operations and version/tag/Release audits.
 - Recover work from frozen `*-done` and `rescue/done/*` branches using the documented recovery flow.
 
 **Scope and prerequisites:** Node.js 22+ and Git are required. Sync pull requires
-Git 2.45+. GitHub CLI is used only by workflows that require it. PR creation
-and merging, tag changes, and Release publication remain human steps.
+Git 2.45+. GitHub CLI is used only by workflows that require it. After a
+successful sync push, the workflow creates or verifies a Draft PR. Humans
+review and merge it; tag changes and Release publication also remain human
+steps.
 
 **Example:** Use miku-scm to commit the reviewed changes in this repository
 and prepare the corresponding PR draft.
