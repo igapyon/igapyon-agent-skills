@@ -416,7 +416,7 @@ ZIP内の `README.md` は [src/assembly/README.md](src/assembly/README.md) を�
 
 release archive には、この repo の `skills/` に加えて、外部管理の miku-soft 系 skill も同梱します。
 外部 skill は `mvn package` の `prepare-package` フェーズで `target/release-staging/skills/` に取得し、archive 化します。
-生成した `EXTERNAL_SKILLS.lock` にrepository、ref、skill名を記録します。各skillの採用状態に沿ってsourceから配布し、外部skillのskill root indexも `config/skill-index-policy.json` に従って検査します。現在の外部15 skillは補助的なファイル一覧indexを配布対象に含めず、製品が出力するindexは各製品の仕様に従って扱います。stagingでは全skillのindexを再生成しません。
+生成した `EXTERNAL_SKILLS.lock` にrepository、ref、skill名を記録します。各skillの採用状態に沿ってsourceから配布し、外部skillのskill root indexも `config/skill-index-policy.json` に従って検査します。現在の外部16 skillは補助的なファイル一覧indexを配布対象に含めず、製品が出力するindexは各製品の仕様に従って扱います。stagingでは全skillのindexを再生成しません。
 取得元は `pom.xml` の `external.*` properties で固定します。
 
 同梱する外部 skill は次の通りです。
@@ -437,11 +437,12 @@ release archive には、この repo の `skills/` に加えて、外部管理�
 - `miku-score-skills` `v0.6.1`: `skills/igapyon-miku-score/`
 - `miku-toolbox-skills` `v0.4.0`: `skills/igapyon-miku-toolbox/`
 - `miku-daybook-skills` `v0.7.1`: `skills/igapyon-miku-daybook/`
+- `miku-bpmn-skills` `v0.4.1`: `skills/igapyon-miku-bpmn/`
 - `miku-scm-skills` `v0.9.5`: `skills/igapyon-miku-scm/`
 
 GitHub では `v*` tag が push されたときに GitHub Actions で `mvn clean package` を実行し、
 生成されたzipの内容を検査してからGitHub Release assetとして添付します。archiveのindex要件は採用状態に従い、未採用indexをpackage処理で生成しません。配布zipからMaven packageを再実行する構成ではありません。
-archive検査では、内部12 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内では daybook を含む12 skillの代表参照経路と、同梱CLIでサンプルの day-plan が生成できることを確認します。外部15 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
+archive検査では、内部12 skillの配布ファイル集合と内容をsourceと照合し、展開したZIP内では daybook を含む12 skillの代表参照経路と、同梱CLIでサンプルの day-plan が生成できることを確認します。外部16 skillは現行pinのlock・index検査を行いますが、外部sourceとの全ファイル照合は新ref統合時の別工程です。
 
 ## 同梱スキル・ライブラリの更新確認と取り込み
 

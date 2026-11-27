@@ -12,8 +12,8 @@ executable helpers where needed, so you can produce files and records you can
 inspect and continue using. Workflows for review and skill maintenance also
 help you improve the way you work with an agent.
 
-This archive contains **27 Agent Skills**: **12 maintained in the
-igapyon-agent-skills repository** and **15 bundled from pinned upstream
+This archive contains **28 Agent Skills**: **12 maintained in the
+igapyon-agent-skills repository** and **16 bundled from pinned upstream
 repositories**. Install only the skills you need, including their supporting
 files. Many writing workflows target Japanese content and carry conventions
 from the author's work; the catalog and individual skills explain their scope.
@@ -62,11 +62,12 @@ name to jump to its detailed explanation, expected results, and example.
 | [igapyon-reviewer](#igapyon-reviewer) | Identify concrete issues before merging or publishing, with evidence and a clear fixing order. |
 | [igapyon-skill-compactor](#igapyon-skill-compactor) | Make an Agent Skill easier to load and maintain while checking what behavior is preserved. |
 
-### Bundled From Upstream Repositories (15)
+### Bundled From Upstream Repositories (16)
 
 | Skill | What it helps you achieve |
 | --- | --- |
 | [igapyon-miku-ai-assistant-builder](#igapyon-miku-ai-assistant-builder) | Turn a mixed folder into reviewable knowledge files and instructions for a Copilot agent or Gemini Gem. |
+| [igapyon-miku-bpmn](#igapyon-miku-bpmn) | Discover reusable processes from daybook activities and run selected processes in order. |
 | [igapyon-miku-daybook](#igapyon-miku-daybook) | Record work in activities, retain deferred actions in todos, manage jobs with tasks, and grow thematic knowledge in topics. |
 | [igapyon-miku-indexgen](#igapyon-miku-indexgen) | Make a directory easier to navigate or consume through a generated file catalog. |
 | [igapyon-miku-json2xlsx](#igapyon-miku-json2xlsx) | Turn JSON records into an inspectable Excel workbook with an explicit account of the data layout. |
@@ -89,11 +90,11 @@ After extracting `igapyon-agent-skills-<version>.zip`, open the
 
 | Path | Contents |
 | --- | --- |
-| `README.md` | This overview and the complete catalog of 27 skills. |
+| `README.md` | This overview and the complete catalog of 28 skills. |
 | `INSTALL.md` | Instructions for installing, updating, and checking selected skills. |
 | `LICENSE` | Distribution license. Preserve additional license and attribution files within skills. |
-| `EXTERNAL_SKILLS.lock` | Upstream repositories, pinned commit SHAs, and names of the 15 externally maintained skills. |
-| `skills/` | The 27 installable skill directories in the catalog. |
+| `EXTERNAL_SKILLS.lock` | Upstream repositories, pinned commit SHAs, and names of the 16 externally maintained skills. |
+| `skills/` | The 28 installable skill directories in the catalog. |
 
 The release ZIP records every outer archive entry at `00:00:00 UTC` on the UTC
 date when the Maven build started. ZIP timestamps do not store a timezone.
@@ -400,6 +401,32 @@ A skill has become large or repetitive and is read often enough that its organiz
 **Example:** Use igapyon-skill-compactor to reduce this frequently read SKILL.md, preserve its workflow boundaries, and report the tradeoffs.
 
 [Full workflow, setup, and invocation rules](skills/igapyon-skill-compactor/SKILL.md).
+
+### igapyon-miku-bpmn
+
+**When it helps**
+
+You want to discover reusable processes from miku-daybook activities and
+related tasks, define them with BPMN concepts, or assemble and run a parent
+Process from selected processes.
+
+**What you can achieve**
+
+- Identify reusable work from activity history, distinguishing recorded work
+  from proposals and labeling inferences.
+- Define each process with task instructions and BPMN structure, then compose a
+  parent Process that calls selected processes in the requested order.
+- Run the parent Process, pause for human decisions at User Tasks, and report
+  completed work and resulting artifacts.
+
+**Scope and prerequisites:** `igapyon-miku-daybook` is required for locating
+activities and related tasks and recording run outcomes. The skill is a
+workflow layer and does not require a standalone CLI.
+
+**Example:** Use miku-bpmn to find a reusable process in these activities,
+show its evidence, and assemble the selected processes for this task in order.
+
+[Full workflow, setup, and invocation rules](skills/igapyon-miku-bpmn/SKILL.md).
 
 ### igapyon-miku-ai-assistant-builder
 
