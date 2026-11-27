@@ -613,7 +613,7 @@ and prepare the corresponding PR draft.
 
 The `miku-scm draft recommit push` workflow is also part of this skill.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-scm-skills/blob/f305af684a2410d9ac9043ef09686f492ac25a89/skills/igapyon-miku-scm/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-scm-skills/blob/9055840b7098d68ce7027a9d63b650fc0a7144c8/skills/igapyon-miku-scm/SKILL.md).
 
 ### igapyon-miku-score
 
