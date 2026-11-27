@@ -596,22 +596,24 @@ handling an approved Issue operation, or auditing a version, tag, or Release.
 
 **What you can achieve**
 
-- Pull shared work or prepare a verified push using fixed runners and recovery records.
+- Pull shared work or prepare a verified push using fixed runners and recovery records; a successful sync push creates or verifies a Draft PR.
 - Commit ordinary repository changes.
 - Draft PR, Issue, Release, and About text from reviewed evidence.
 - Prepare approved Issue operations and version/tag/Release audits.
 - Recover work from frozen `*-done` and `rescue/done/*` branches using the documented recovery flow.
 
 **Scope and prerequisites:** Node.js 22+ and Git are required. Sync pull requires
-Git 2.45+. GitHub CLI is used only by workflows that require it. PR creation
-and merging, tag changes, and Release publication remain human steps.
+Git 2.45+. GitHub CLI is used only by workflows that require it. After a
+successful sync push, the workflow creates or verifies a Draft PR. Humans
+review and merge it; tag changes and Release publication also remain human
+steps.
 
 **Example:** Use miku-scm to commit the reviewed changes in this repository
 and prepare the corresponding PR draft.
 
 The `miku-scm draft recommit push` workflow is also part of this skill.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-scm-skills/blob/0c4f5bd235e2f8a33ecd5f1684c8e91f0c3f08e4/skills/igapyon-miku-scm/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-scm-skills/blob/feb305f3d5ee56a155b6a170b2b00e119fb4e085/skills/igapyon-miku-scm/SKILL.md).
 
 ### igapyon-miku-score
 
