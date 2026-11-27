@@ -260,7 +260,7 @@ You can start, continue, and resume work from dated activities alone. Keep actio
 - Consolidate a particular job into a task when requested, keeping work state and next actions easy to find. Current conclusions and selected decision history are both valid strategies; when the intended strategy is unclear, confirm the choice before writing the task.
 - Keep existing attachment paths stable. For new attachments, prefer a clearly related existing task; otherwise use the activity's identifier without creating a task just for storage. A later task links to those files at their saved paths.
 - Resume from an activity or a named legacy waypoint. Share an activity link and the intended scope for a new handoff.
-- Resume daybook-managed work in another directory or repository, keeping references from daybook to the work repository without adding pointers back to daybook there.
+- Use a repository or directory as a daybook, and resume related project work from another path while keeping references one-way from daybook to project.
 - Generate day-plan snapshots from task and schedule records; open todos remain separately available in work overviews. Explicitly check whether a supplied URL relates to an existing task.
 - Show a complete provisional period containing the requested date as a clearly labelled work candidate, while keeping other provisional dates in review and Backlog separate.
 - When asked to work on or resume a specific task, keep its observed progress, adopted approach, remaining work, and next actions current; activities retain the dated history.

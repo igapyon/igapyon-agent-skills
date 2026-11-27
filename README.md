@@ -246,7 +246,7 @@ You can start, continue, and resume work from dated activities alone. Keep actio
 - Consolidate a particular job into a task when requested, keeping work state and next actions easy to find. Current conclusions and selected decision history are both valid strategies; when the intended strategy is unclear, confirm the choice before writing the task.
 - Keep existing attachment paths stable. For new attachments, prefer a clearly related existing task; otherwise use the activity's identifier without creating a task just for storage. A later task links to those files at their saved paths.
 - Resume from an activity or a named legacy waypoint. Share an activity link and the intended scope for a new handoff.
-- Resume daybook-managed work in another directory or repository, keeping references from daybook to the work repository without adding pointers back to daybook there.
+- Use a repository or directory as a daybook, and resume related project work from another path while keeping references one-way from daybook to project.
 - Generate day-plan snapshots from task and schedule records; open todos remain separately available in work overviews. Explicitly check whether a supplied URL relates to an existing task.
 - Show a complete provisional period containing the requested date as a clearly labelled work candidate, while keeping other provisional dates in review and Backlog separate.
 - When asked to work on or resume a specific task, keep its observed progress, adopted approach, remaining work, and next actions current; activities retain the dated history.
@@ -257,7 +257,7 @@ You can start, continue, and resume work from dated activities alone. Keep actio
 
 **Example:** Use igapyon-miku-daybook to record today's investigation in an activity and keep the separately needed configuration fix as a todo, linking to that activity.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-daybook-skills/blob/2b9294195d3037eef25966f899f70a2eae2e710f/skills/igapyon-miku-daybook/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-daybook-skills/blob/7cb989659fb4f752941b2cb2ffbbce6c474bf08a/skills/igapyon-miku-daybook/SKILL.md).
 
 ### igapyon-miku-soft-developer
 
@@ -613,7 +613,7 @@ and prepare the corresponding PR draft.
 
 The `miku-scm draft recommit push` workflow is also part of this skill.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-scm-skills/blob/feb305f3d5ee56a155b6a170b2b00e119fb4e085/skills/igapyon-miku-scm/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-scm-skills/blob/f305af684a2410d9ac9043ef09686f492ac25a89/skills/igapyon-miku-scm/SKILL.md).
 
 ### igapyon-miku-score
 
