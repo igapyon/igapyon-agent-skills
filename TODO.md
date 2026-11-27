@@ -2,6 +2,15 @@
 
 ## AI Agent Current Tasks
 
+### miku-bpmn を外部同梱Skillへ追加（2026-11-28・ZIP検査済み）
+
+`miku-bpmn-skills` v0.4.1をcommit `4ce58db40036959e4811a3cac10a380e9cf1cf33` に固定し、外部同梱対象へ追加した。Release asset `igapyon-miku-bpmn-skills-0.4.1.zip` のSHA-256は `c27d6c6349dd68f7da1c2a5b9895762d5fec4c56e6d5019d63d1b0d466c1664d`。同梱 ZIP は12 internal + 16 external = 28 Skillsとして生成・検査済み。
+
+- [x] POMのpin/staging引数、index方針、root/配布README、DEVELOPMENTのカタログを更新。
+- [x] repository/Mikuku versionを `1.20261128.2` / `20261128b` に整合（miku-scm候補検証・`mvn validate` 成功）。
+- [x] `mvn package` で `target/igapyon-agent-skills-1.20261128.2.zip` を生成。Release archive checker、skill-index-policy 77/77、version-alignment 5/5、`mvn validate`、`git diff --check` が成功。
+- [ ] commit、push、tag、GitHub Release公開、ローカルSkill配備は未実施。
+
 ### miku-scm外部同梱をv0.9.3 HEADへ更新（2026-11-27・配布ZIP生成・検査済み）
 
 外部同梱15件の更新確認は全件完了し、13件はpin一致、miku-daybookとmiku-scmは更新候補でした。利用者指示によりmiku-scmのみ、既定ブランチ `devel` の観測SHA `feb305f3d5ee56a155b6a170b2b00e119fb4e085` へ更新しました。最新Releaseはv0.9.3です。8コミット・配布ファイル28件の差分を取り込み、通常のsync push後にDraft PRを作成・確認する動作などを利用者向け案内へ反映しました。
