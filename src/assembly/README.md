@@ -414,8 +414,8 @@ process through use.
 
 - Identify reusable work from activity history and relevant tasks; distinguish
   recorded actions from plans and mark inferences.
-- Define processes with task instructions and BPMN structure, then compose a
-  parent Process that calls selected processes in the requested order.
+- Define processes with task instructions and BPMN structure; run saved
+  processes or compose a parent Process that calls selected processes in order.
 - Prepare work for later process discovery by recording meaningful action
   groups in Detailed Activity Mode.
 - Guide human User Tasks one operation at a time or as a group, check reports,
