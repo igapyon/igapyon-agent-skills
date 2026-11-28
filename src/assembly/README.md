@@ -67,7 +67,7 @@ name to jump to its detailed explanation, expected results, and example.
 | Skill | What it helps you achieve |
 | --- | --- |
 | [igapyon-miku-ai-assistant-builder](#igapyon-miku-ai-assistant-builder) | Turn a mixed folder into reviewable knowledge files and instructions for a Copilot agent or Gemini Gem. |
-| [igapyon-miku-bpmn](#igapyon-miku-bpmn) | Discover reusable processes from daybook activities and run selected processes in order. |
+| [igapyon-miku-bpmn](#igapyon-miku-bpmn) | Discover reusable processes from daybook activities, define them with BPMN, and run or refine them with recorded human handoffs. |
 | [igapyon-miku-daybook](#igapyon-miku-daybook) | Record work in activities, retain deferred actions in todos, manage jobs with tasks, and grow thematic knowledge in topics. |
 | [igapyon-miku-indexgen](#igapyon-miku-indexgen) | Make a directory easier to navigate or consume through a generated file catalog. |
 | [igapyon-miku-json2xlsx](#igapyon-miku-json2xlsx) | Turn JSON records into an inspectable Excel workbook with an explicit account of the data layout. |
@@ -406,25 +406,30 @@ A skill has become large or repetitive and is read often enough that its organiz
 
 **When it helps**
 
-You want to discover reusable processes from miku-daybook activities and
-related tasks, define them with BPMN concepts, or assemble and run a parent
-Process from selected processes.
+You want to discover, define, assemble, or run processes based on
+a miku-daybook activity and related tasks, or validate and refine a saved
+process through use.
 
 **What you can achieve**
 
-- Identify reusable work from activity history, distinguishing recorded work
-  from proposals and labeling inferences.
-- Define each process with task instructions and BPMN structure, then compose a
+- Identify reusable work from activity history and relevant tasks; distinguish
+  recorded actions from plans and mark inferences.
+- Define processes with task instructions and BPMN structure, then compose a
   parent Process that calls selected processes in the requested order.
-- Run the parent Process, pause for human decisions at User Tasks, and report
-  completed work and resulting artifacts.
+- Prepare work for later process discovery by recording meaningful action
+  groups in Detailed Activity Mode.
+- Guide human User Tasks one operation at a time or as a group, check reports,
+  and resume at the first incomplete operation.
+- Compare recorded runs with a saved definition and refine the process from
+  evidence.
 
-**Scope and prerequisites:** `igapyon-miku-daybook` is required for locating
+**Scope and prerequisites:** igapyon-miku-daybook is required for locating
 activities and related tasks and recording run outcomes. The skill is a
 workflow layer and does not require a standalone CLI.
 
-**Example:** Use miku-bpmn to find a reusable process in these activities,
-show its evidence, and assemble the selected processes for this task in order.
+**Example:** Use miku-bpmn to discover a reusable process from selected
+activities, show its evidence, then run a parent Process and record its human
+handoffs and result.
 
 [Full workflow, setup, and invocation rules](skills/igapyon-miku-bpmn/SKILL.md).
 
