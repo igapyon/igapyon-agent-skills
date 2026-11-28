@@ -401,8 +401,8 @@ process through use.
 
 - Identify reusable work from activity history and relevant tasks; distinguish
   recorded actions from plans and mark inferences.
-- Define processes with task instructions and BPMN structure, then compose a
-  parent Process that calls selected processes in the requested order.
+- Define processes with task instructions and BPMN structure; run saved
+  processes or compose a parent Process that calls selected processes in order.
 - Prepare work for later process discovery by recording meaningful action
   groups in Detailed Activity Mode.
 - Guide human User Tasks one operation at a time or as a group, check reports,
@@ -418,7 +418,7 @@ workflow layer and does not require a standalone CLI.
 activities, show its evidence, then run a parent Process and record its human
 handoffs and result.
 
-[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-bpmn-skills/blob/194980f81b33d550908bc7df88e0495467bb70c8/skills/igapyon-miku-bpmn/SKILL.md).
+[Full workflow, setup, and invocation rules](https://github.com/igapyon/miku-bpmn-skills/blob/92758a4e4e29d6307af5c5d80a1eb7fc69f1025c/skills/igapyon-miku-bpmn/SKILL.md).
 
 ### igapyon-miku-ai-assistant-builder
 
